@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Capybot — Café Baras Solo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+    :root{
+        /* Shared house style: black/white/gray/blue, one thematic accent per bot */
+        --bg-0:#0b0e12; --bg-1:#12161c; --surface:#181d25; --surface-2:#20262f;
+        --border:#2b323d; --text:#eef1f5; --text-dim:#9aa4b2;
+        --blue:#4f8cff; --blue-soft:#274168; --blue-glow:rgba(79,140,255,0.35);
+        --accent:#c17f3e; /* Café Baras nod: warm coffee caramel */
+        --accent-dim:#8a5a2c;
+        --good:#5fd68a; --warn:#e0b23c; --bad:#e05555;
+        --font-display:'Fredoka','Segoe UI',sans-serif;
+        --font-body:'Inter','Segoe UI',Tahoma,Geneva,Verdana,sans-serif;
+        --radius:14px;
+    }
+    *{box-sizing:border-box;}
+    html{-webkit-text-size-adjust:100%;}
+    body{
+        font-family:var(--font-body);
+        background:
+            radial-gradient(circle at 15% 0%, rgba(79,140,255,0.08), transparent 55%),
+            radial-gradient(circle at 85% 100%, rgba(193,127,62,0.08), transparent 50%),
+            linear-gradient(180deg, var(--bg-0), var(--bg-1));
+        background-attachment:fixed;
+        color:var(--text);
+        max-width:720px;
+        margin:0 auto;
+        padding:18px;
+        padding-left:max(18px, env(safe-area-inset-left));
+        padding-right:max(18px, env(safe-area-inset-right));
+        padding-bottom:max(18px, env(safe-area-inset-bottom));
+        -webkit-tap-highlight-color:transparent;
+    }
+    button, select, .tree-line{ touch-action:manipulation; }
+
+    @keyframes fadeSlideUp{ from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);} }
+    @keyframes popIn{ 0%{transform:scale(0.85); opacity:0;} 60%{transform:scale(1.04);} 100%{transform:scale(1); opacity:1;} }
+
+    .hero{ position:relative; border-radius:var(--radius); overflow:hidden; margin-bottom:18px; border:1px solid var(--border); animation:fadeSlideUp 0.5s ease both; }
+    .hero img{ width:100%; height:150px; object-fit:cover; object-position:50% 15%; display:block; filter:saturate(0.9) brightness(0.65); }
+    .hero::after{ content:''; position:absolute; inset:0; background:linear-gradient(180deg, rgba(11,14,18,0.25) 0%, rgba(11,14,18,0.55) 45%, rgba(11,14,18,0.97) 100%); }
+    .hero-content{ position:absolute; inset:0; display:flex; flex-direction:column; justify-content:flex-end; padding:14px 18px; }
+    h1{ font-family:var(--font-display); font-weight:600; letter-spacing:0.5px; margin:0; font-size:2em; color:#fff; text-shadow:0 2px 10px rgba(0,0,0,0.6); }
+    .subtitle{ color:var(--accent); font-size:0.9em; letter-spacing:0.5px; margin-top:2px; font-weight:700; }
+
+    h2{ font-family:var(--font-display); font-weight:600; letter-spacing:0.3px; color:var(--accent); margin:0 0 14px; display:flex; align-items:center; gap:10px; font-size:1.3em; }
+    h2 svg{ width:24px; height:24px; flex-shrink:0; }
+    h3{ color:var(--text); font-family:var(--font-body); font-size:1em; margin:16px 0 8px; }
+
+    .card{ background:var(--surface); padding:20px; border-radius:var(--radius); border:1px solid var(--border); box-shadow:0 6px 18px rgba(0,0,0,0.35); margin-bottom:18px; animation:fadeSlideUp 0.45s ease both; transition:border-color 0.25s, box-shadow 0.25s; }
+    .card:hover{ border-color:#374050; }
+
+    .icon{ width:1.5em; height:1.5em; vertical-align:middle; flex-shrink:0; }
+
+    button{ width:100%; padding:14px; background:linear-gradient(180deg,#2a3442,#1c232c); color:var(--text); border:1px solid var(--border); border-radius:10px; font-family:var(--font-body); font-weight:600; letter-spacing:0.3px; font-size:16px; cursor:pointer; transition:background 0.2s, transform 0.1s, box-shadow 0.2s, border-color 0.2s; margin-top:8px; }
+    button.primary{ background:linear-gradient(180deg, var(--blue), #2f63c9); border-color:#3f6fd6; color:#fff; }
+    button:active{ transform:translateY(1px) scale(0.995); }
+    button:disabled{ background:#20262f; color:#5b6472; border-color:var(--border); cursor:not-allowed; box-shadow:none; }
+    button.btn-small{ width:auto; padding:9px 14px; font-size:14px; margin:4px; }
+    @media (hover:hover) and (pointer:fine){
+        button:not(:disabled):hover{ border-color:var(--blue); box-shadow:0 0 0 3px var(--blue-soft); }
+        button.primary:not(:disabled):hover{ box-shadow:0 0 14px var(--blue-glow); }
+    }
+    button.btn-secondary{ background:linear-gradient(180deg,#3a2f20,#241c12); border-color:var(--accent-dim); }
+    button.btn-warn{ background:linear-gradient(180deg,#3a2222,#241414); border-color:#5a3a3a; }
+    .btn-row{ display:flex; gap:8px; flex-wrap:wrap; }
+    .btn-row button{ flex:1; min-width:140px; }
+
+    .rules-list li{ margin-bottom:10px; line-height:1.5; color:var(--text-dim); }
+    .rules-list li strong{ color:var(--text); }
+    .setup-list li{ margin-bottom:12px; line-height:1.55; }
+
+    .status-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(110px,1fr)); gap:10px; text-align:center; }
+    .status-box{ background:var(--surface-2); border:1px solid var(--border); border-radius:12px; padding:12px 6px; transition:box-shadow 0.3s; }
+    .status-box .label{ font-size:0.7em; text-transform:uppercase; color:var(--text-dim); display:flex; align-items:center; justify-content:center; gap:5px; letter-spacing:0.5px; }
+    .status-box .value{ font-size:1.6em; font-weight:800; color:var(--blue); margin:4px 0; }
+    .adjust-row{ display:flex; justify-content:center; gap:8px; margin-top:2px; }
+    .adjust-row button{ width:38px; height:34px; padding:0; font-size:16px; margin:0; }
+
+    .type-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(84px,1fr)); gap:8px; margin-top:8px; }
+    .type-box{ background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:8px 4px; text-align:center; }
+    .type-box svg{ width:20px; height:20px; color:var(--accent); }
+    .type-box .tcount{ font-weight:800; font-size:1.2em; margin-top:2px; }
+    .type-box .tlabel{ font-size:0.65em; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.3px; }
+
+    .tree-line{ background:rgba(0,0,0,0.3); padding:9px 12px; border-left:3px solid var(--accent); border-radius:0 8px 8px 0; line-height:1.4; display:flex; gap:9px; align-items:baseline; margin-bottom:8px; }
+    .tree-num{ color:var(--accent); font-weight:800; font-size:0.85em; min-width:1.5em; flex-shrink:0; }
+    .tree-body{ flex:1; color:var(--text); }
+    .tree-cond{ color:var(--accent); font-weight:700; }
+    .tree-tie{ display:block; margin-top:4px; font-size:0.8em; font-style:italic; color:var(--text-dim); opacity:0.85; }
+
+    .pending-form{ background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:14px; margin-top:10px; animation:fadeSlideUp 0.3s ease both; }
+    .pending-form label{ display:block; margin:10px 0 4px; font-weight:600; font-size:0.9em; color:var(--text-dim); }
+    .pending-form select, .pending-form input{ width:100%; padding:10px; border-radius:8px; border:1px solid var(--border); box-sizing:border-box; font-size:16px; background:var(--bg-1); color:var(--text); }
+    .pending-form .checkline{ display:flex; align-items:center; gap:10px; margin-top:12px; }
+    .pending-form .checkline input{ width:20px; height:20px; accent-color:var(--blue); }
+    .hidden{ display:none !important; }
+
+    .log-panel{ max-height:190px; overflow-y:auto; -webkit-overflow-scrolling:touch; font-size:0.86em; background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:8px 12px; }
+    .log-panel div{ padding:5px 0; border-bottom:1px dashed var(--border); color:var(--text-dim); }
+    .log-panel div:first-child{ color:var(--text); font-weight:600; }
+
+    .small{ font-size:0.85em; color:var(--text-dim); }
+    label.field-label{ display:block; font-weight:600; margin:8px 0 4px; color:var(--text-dim); }
+    input[type=number]{ width:100%; padding:10px; margin:6px 0; border-radius:8px; border:1px solid var(--border); box-sizing:border-box; font-size:16px; background:var(--bg-1); color:var(--text); }
+    select{ width:100%; padding:10px; margin:6px 0; border-radius:8px; border:1px solid var(--border); box-sizing:border-box; font-size:16px; background:var(--bg-1); color:var(--text); }
+
+    .end-banner{ text-align:center; padding:16px; border-radius:10px; font-family:var(--font-display); font-size:1.2em; margin-bottom:14px; animation:fadeSlideUp 0.4s ease both; background:#3a2f1a; color:var(--warn); border:1px solid var(--accent-dim); }
+
+    .special-row{ display:flex; align-items:center; gap:10px; background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:10px; margin-bottom:8px; }
+    .special-row input[type=number]{ margin:0; width:90px; }
+    .special-row .checkline{ display:flex; align-items:center; gap:6px; flex:1; }
+    .special-row input[type=checkbox]{ width:20px; height:20px; accent-color:var(--blue); }
+    .special-row button{ width:auto; margin:0; padding:8px 12px; }
+    .score-line{ display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px dashed var(--border); color:var(--text-dim); }
+    .score-line strong{ color:var(--text); }
+    .score-total{ display:flex; justify-content:space-between; padding:12px 0 4px; font-size:1.3em; font-family:var(--font-display); color:var(--accent); }
+
+    .credits{ display:flex; align-items:center; gap:14px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:14px 16px; margin-top:8px; animation:fadeSlideUp 0.5s ease both; }
+    .credits img{ width:52px; height:52px; object-fit:cover; border-radius:8px; border:1px solid var(--border); flex-shrink:0; }
+    .credits-text{ font-size:0.85em; color:var(--text-dim); line-height:1.5; }
+    .credits-text strong{ color:var(--text); }
+    .credits-text a{ color:var(--blue); text-decoration:none; }
+    .credits-text a:hover{ text-decoration:underline; }
+
+    @media (min-width:700px){
+        #game-area{ display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:20px; align-items:start; }
+        #game-area .card{ margin-bottom:0; height:100%; }
+    }
+    @media (min-width:900px){ body{ max-width:1300px; } }
+
+    .btn-help-float{ position:fixed; bottom:18px; right:18px; z-index:60; width:48px; height:48px; border-radius:50%; background:linear-gradient(180deg, var(--blue), #2f63c9); color:#fff; border:1px solid #3f6fd6; font-weight:800; font-size:1.3em; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 14px rgba(0,0,0,0.45); cursor:pointer; transition:transform 0.15s, box-shadow 0.2s; margin:0; padding:0; }
+    .btn-help-float:active{ transform:scale(0.92); }
+    @media (hover:hover) and (pointer:fine){ .btn-help-float:hover{ box-shadow:0 0 16px var(--blue-glow); } }
+
+    .btn-reset-float{ position:fixed; bottom:18px; left:18px; z-index:60; width:auto; margin:0; padding:10px 16px; border-radius:999px; background:var(--surface); color:var(--text-dim); border:1px solid var(--border); font-weight:700; font-size:0.8em; box-shadow:0 4px 14px rgba(0,0,0,0.35); }
+    .btn-reset-float:active{ transform:scale(0.96); }
+
+    .lang-switch{ position:fixed; top:14px; right:14px; z-index:60; display:flex; gap:2px; background:var(--surface); border:1px solid var(--border); border-radius:999px; padding:4px; box-shadow:0 4px 14px rgba(0,0,0,0.35); }
+    .lang-btn{ width:auto; margin:0; padding:6px 12px; font-size:0.78em; border-radius:999px; border:none; background:transparent; color:var(--text-dim); font-weight:700; }
+    .lang-btn.active{ background:var(--blue); color:#fff; }
+
+    .modal-overlay{ display:none; position:fixed; inset:0; background:rgba(5,7,10,0.75); z-index:100; padding:20px 14px; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+    .modal-overlay.open{ display:block; animation:fadeSlideUp 0.2s ease both; }
+    .modal-content{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); max-width:640px; margin:20px auto; padding:24px; position:relative; }
+    .modal-close{ position:absolute; top:14px; right:14px; width:36px; height:36px; margin:0; padding:0; border-radius:50%; font-size:1.1em; }
+    .modal-content h3{ color:var(--accent); margin:20px 0 8px; }
+    .modal-content h3:first-of-type{ margin-top:4px; }
+    .modal-content p{ color:var(--text-dim); line-height:1.55; }
+    .modal-tabs{ display:flex; gap:8px; justify-content:center; margin-bottom:18px; }
+    .modal-tabs button{ padding:10px 20px; font-size:0.8em; width:auto; }
+    .modal-tabs button.active{ background:var(--blue); color:#fff; border-color:#3f6fd6; }
+
+    details{ margin-bottom:6px; }
+    details > summary{ cursor:pointer; font-weight:700; color:var(--text); padding:10px 0; list-style:none; display:flex; align-items:center; gap:8px; font-family:var(--font-body); }
+    details > summary::-webkit-details-marker{ display:none; }
+    details > summary::before{ content:'▸'; color:var(--blue); transition:transform 0.2s; display:inline-block; }
+    details[open] > summary::before{ transform:rotate(90deg); }
+    details .setup-list{ margin-top:2px; }
+</style>
+</head>
+<body>
+
+<button class="btn-help-float" onclick="openHelp('help')" aria-label="Help">?</button>
+<button class="btn-reset-float hidden" id="btnResetGame" onclick="resetGame()" data-i18n="resetBtn">🔄 Nova Partida</button>
+<div class="lang-switch">
+    <button class="lang-btn" id="langBtnPt" onclick="setLang('pt')">PT</button>
+    <button class="lang-btn" id="langBtnEn" onclick="setLang('en')">EN</button>
+</div>
+
+<div class="hero">
+    <img src="cafebaras.webp" alt="Café Baras box art">
+    <div class="hero-content">
+        <h1>CAPYBOT</h1>
+        <div class="subtitle">CAFÉ BARAS — SOLO</div>
+    </div>
+</div>
+
+<div id="setup-screen">
+    <div class="card">
+        <h2><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20h16M6 20V10l6-6 6 6v10M9 20v-6h6v6"/></svg><span data-i18n="setupTitle">Preparação Física</span></h2>
+        <p class="small" data-i18n="setupIntro">Prepare a mesa como em uma partida normal de 2 jogadores, com estes ajustes:</p>
+        <details open>
+            <summary data-i18n="setupDisplayHeading">☕ Baralho e Exibição</summary>
+            <div data-i18n-html="setupDisplayBody"></div>
+        </details>
+        <details open>
+            <summary data-i18n="setupCapybotHeading">🐹 Café do Capybot</summary>
+            <div data-i18n-html="setupCapybotBody"></div>
+        </details>
+        <details>
+            <summary data-i18n="setupYouHeading">🙂 Seu Café</summary>
+            <div data-i18n-html="setupYouBody"></div>
+        </details>
+        <details>
+            <summary data-i18n="setupSpecialHeading">⭐ Clientes Especiais</summary>
+            <div data-i18n-html="setupSpecialBody"></div>
+        </details>
+    </div>
+
+    <div class="card">
+        <h2><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg><span data-i18n="matchConfigTitle">Configuração da Partida</span></h2>
+        <label class="field-label" for="selPlayerCount" data-i18n="playerCountLabel">Número de jogadores humanos (na partida física)</label>
+        <select id="selPlayerCount">
+            <option value="1">1 (<span data-i18n="onlyYou">só você</span>)</option>
+            <option value="2" selected>2</option>
+            <option value="3">3</option>
+        </select>
+        <p class="small" data-i18n="playerCountHint">Usado para calcular quantos Clientes Regulares acionam o fim de jogo (o Capybot conta como mais um jogador na mesa).</p>
+
+        <label class="field-label" for="selCounterType" data-i18n="counterTypeLabel">Carta de Balcão do Capybot (sorteada)</label>
+        <select id="selCounterType">
+            <option value="coffee">☕ <span data-i18n="foodCoffee">Café</span></option>
+            <option value="tea">🍵 <span data-i18n="foodTea">Chá</span></option>
+        </select>
+
+        <label class="field-label" for="inpStartCoins" data-i18n="startCoinsLabel">Moedas iniciais do Capybot (dificuldade)</label>
+        <input type="number" id="inpStartCoins" value="7" min="0">
+        <p class="small" data-i18n="startCoinsHint">Padrão: 7 (igual ao humano). Aumente para deixar o Capybot mais difícil de vencer.</p>
+
+        <button class="primary" onclick="startGame()" data-i18n="startBtn">Iniciar Partida contra o Capybot</button>
+    </div>
+</div>
+
+<div id="game-area" class="hidden">
+    <div class="card">
+        <h2><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-6 8-6s8 2 8 6"/></svg><span data-i18n="statusTitle">Café do Capybot</span> <span id="turnLabel" style="margin-left:auto; font-size:0.5em; color:var(--text-dim);"></span></h2>
+        <div class="status-grid">
+            <div class="status-box">
+                <div class="label"><svg class="icon" style="width:1.1em;height:1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9.5 15c0 1 1 1.5 2.5 1.5s2.5-.7 2.5-1.7c0-2.6-5-1-5-3.6C9.5 10.2 10.5 9.5 12 9.5s2.5.5 2.5 1.5M12 8v1M12 15v1"/></svg><span data-i18n="statCoinsLabel">Moedas</span></div>
+                <div class="value" id="statCoins">7</div>
+                <div class="adjust-row"><button class="btn-small" onclick="adjustCoins(-1)">−</button><button class="btn-small" onclick="adjustCoins(1)">+</button></div>
+            </div>
+            <div class="status-box">
+                <div class="label"><svg class="icon" style="width:1.1em;height:1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3 2.6 5.6 6.1.6-4.6 4.1 1.3 6-5.4-3.1-5.4 3.1 1.3-6-4.6-4.1 6.1-.6L12 3Z"/></svg><span data-i18n="statRegularsLabel">Regulares</span></div>
+                <div class="value" id="statRegulars">0</div>
+                <div class="adjust-row"><button class="btn-small" onclick="adjustRegulars(-1)">−</button><button class="btn-small" onclick="adjustRegulars(1)">+</button></div>
+            </div>
+        </div>
+
+        <h3 data-i18n="foodTypesHeading">Alimentos no Café</h3>
+        <div class="type-grid" id="foodGrid"></div>
+        <h3 data-i18n="decorTypesHeading">Decorações no Café</h3>
+        <div class="type-grid" id="decorGrid"></div>
+
+        <div id="endGameBanner" class="hidden"></div>
+        <div id="abilitiesBox"></div>
+    </div>
+
+    <div class="card">
+        <h2><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg><span data-i18n="treeTitle">Decisão do Capybot</span></h2>
+        <p class="small" data-i18n="treeIntro">Avalie as 4 cartas da exibição (e o café acima) contra estas linhas, na ordem — use a primeira que se aplicar:</p>
+        <div id="treeBox"></div>
+
+        <div id="actionChoice">
+            <div class="btn-row">
+                <button class="primary" onclick="showAddForm()" data-i18n="btnCapybotAdds">Capybot ADICIONA uma carta</button>
+                <button class="btn-secondary" onclick="showServeForm()" data-i18n="btnCapybotServes">Capybot SERVE um cliente</button>
+            </div>
+        </div>
+
+        <div id="addForm" class="pending-form hidden">
+            <label class="field-label" data-i18n="formSlotLabel">Posição na exibição (1-4, opcional)</label>
+            <select id="addSlot"><option value="">—</option><option>1</option><option>2</option><option>3</option><option>4</option></select>
+            <label class="field-label" data-i18n="formCostLabel">Custo em moedas</label>
+            <input type="number" id="addCost" value="0" min="0">
+            <label class="field-label" data-i18n="formTypeLabel">Tipo oferecido pela carta</label>
+            <select id="addType">
+                <optgroup id="addTypeFoodGroup" label="Alimento">
+                    <option value="coffee">Café</option><option value="tea">Chá</option><option value="coldDrink">Bebida Gelada</option>
+                    <option value="snack">Petisco</option><option value="soup">Sopa</option><option value="sweet">Doce</option>
+                </optgroup>
+                <optgroup id="addTypeDecorGroup" label="Decoração">
+                    <option value="rustic">Rústico</option><option value="retro">Retrô</option><option value="modern">Moderno</option>
+                </optgroup>
+            </select>
+            <div class="checkline">
+                <input type="checkbox" id="addHasAbility">
+                <label for="addHasAbility" style="margin:0;" data-i18n="formAbilityLabel">Esta carta tem uma ação contínua (caixa branca)</label>
+            </div>
+            <div id="addAbilityNoteWrap" class="hidden">
+                <label class="field-label" data-i18n="formAbilityNoteLabel">Anotação rápida sobre a ação (opcional)</label>
+                <input type="text" id="addAbilityNote" placeholder="ex: +1 moeda ao adicionar Doce">
+            </div>
+            <div class="btn-row">
+                <button class="primary" onclick="confirmAdd()" data-i18n="btnConfirm">Confirmar Turno</button>
+                <button onclick="cancelForm()" data-i18n="btnCancel">Cancelar</button>
+            </div>
+        </div>
+
+        <div id="serveForm" class="pending-form hidden">
+            <label class="field-label" data-i18n="formSlotLabel">Posição na exibição (1-4, opcional)</label>
+            <select id="serveSlot"><option value="">—</option><option>1</option><option>2</option><option>3</option><option>4</option></select>
+            <label class="field-label" data-i18n="formCoinsGainedLabel">Moedas ganhas ao servir</label>
+            <input type="number" id="serveCoins" value="0" min="0">
+            <div class="checkline">
+                <input type="checkbox" id="serveBecomesRegular">
+                <label for="serveBecomesRegular" style="margin:0;" data-i18n="formBecomesRegularLabel">O cliente virou Regular (3 desejos + decoração atendidos)</label>
+            </div>
+            <div class="btn-row">
+                <button class="primary" onclick="confirmServe()" data-i18n="btnConfirm">Confirmar Turno</button>
+                <button onclick="cancelForm()" data-i18n="btnCancel">Cancelar</button>
+            </div>
+        </div>
+
+        <button class="btn-small" style="width:auto;" onclick="undoLast()" id="btnUndo" disabled data-i18n="btnUndo">↩ Desfazer Último Turno</button>
+    </div>
+
+    <div class="card">
+        <h2><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/></svg><span data-i18n="logTitle">Histórico</span></h2>
+        <div class="log-panel" id="logPanel"></div>
+    </div>
+
+    <div class="card">
+        <h2><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 21h8M12 17v4M7 4h10v3a5 5 0 0 1-10 0V4Z"/><path d="M17 5h2a2 2 0 0 1 2 2c0 2-2 3-4 3M7 5H5a2 2 0 0 0-2 2c0 2 2 3 4 3"/></svg><span data-i18n="scoreTitle">Pontuação Final</span></h2>
+        <p class="small" data-i18n="scoreIntro">Ao final da partida, adicione os Clientes Especiais revelados que o café do Capybot satisfaz e quaisquer bônus condicionais de cartas específicas.</p>
+        <div id="specialRows"></div>
+        <button class="btn-small" style="width:auto;" onclick="addSpecialRow()" data-i18n="btnAddSpecial">+ Cliente Especial</button>
+        <label class="field-label" for="inpMisc" data-i18n="miscBonusLabel">Outros bônus condicionais (cartas de Café com pontuação variável)</label>
+        <input type="number" id="inpMisc" value="0">
+        <button class="primary" onclick="finalizeScore()" data-i18n="btnFinalize">Calcular Pontuação Final</button>
+        <div id="scoreBreakdown"></div>
+    </div>
+</div>
+
+<div class="credits">
+    <img src="cafebaras.webp" alt="Café Baras">
+    <div class="credits-text" data-i18n-html="creditsText"></div>
+</div>
+
+<div id="helpModal" class="modal-overlay">
+    <div class="modal-content">
+        <button class="modal-close" onclick="closeHelp()">✕</button>
+        <div class="modal-tabs">
+            <button class="modal-tab" id="tabBtnHelp" onclick="switchTab('help')" data-i18n="tabHelp">Como Usar o App</button>
+            <button class="modal-tab" id="tabBtnRules" onclick="switchTab('rules')" data-i18n="tabRules">Regras Rápidas</button>
+        </div>
+        <div id="tabPanelHelp" data-i18n-html="helpBody"></div>
+        <div id="tabPanelRules" class="hidden" data-i18n-html="rulesBody"></div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('touchstart', function(){}, {passive:true});
+
+const LANG_KEY = 'cafebaras_lang_v1';
+const STORAGE_KEY = 'cafebaras_state_v1';
+let lang = localStorage.getItem(LANG_KEY) || 'pt';
+
+const FOOD_TYPES = ['coffee','tea','coldDrink','snack','soup','sweet'];
+const DECOR_TYPES = ['rustic','retro','modern'];
+
+const ICONS = {
+    coffee: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 9h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V9Z"/><path d="M17 10h1a3 3 0 0 1 0 6h-1"/><path d="M8 4c0 1-1 1-1 2M12 4c0 1-1 1-1 2"/></svg>',
+    tea: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 9h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V9Z"/><path d="M17 10h1a3 3 0 0 1 0 6h-1"/><path d="M11 3c3 1 3 4 0 5"/></svg>',
+    coldDrink: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 4h12l-1 16H7L6 4Z"/><path d="M14 2v6M6 8h12"/></svg>',
+    snack: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><circle cx="9" cy="10" r="1" fill="currentColor" stroke="none"/><circle cx="14" cy="9" r="1" fill="currentColor" stroke="none"/><circle cx="12" cy="14" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="14" r="1" fill="currentColor" stroke="none"/></svg>',
+    soup: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12h18a9 6 0 0 1-18 0Z"/><path d="M9 4c0 1-1 1-1 2M13 4c0 1-1 1-1 2"/></svg>',
+    sweet: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 12h10l-1 8H8l-1-8Z"/><path d="M6 12c0-3 2.5-5 6-5s6 2 6 5"/><path d="M12 3v3"/></svg>',
+    rustic: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20c8 0 14-6 16-16-10 2-16 8-16 16Z"/><path d="M6 18c3-3 6-6 12-12"/></svg>',
+    retro: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/></svg>',
+    modern: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3Z"/><path d="M4 7.5 12 12l8-4.5M12 12v9"/></svg>'
+};
+
+const TYPE_LABEL = {
+    coffee: {pt:'Café', en:'Coffee'}, tea: {pt:'Chá', en:'Tea'}, coldDrink: {pt:'Bebida Gelada', en:'Cold Drink'},
+    snack: {pt:'Petisco', en:'Snack'}, soup: {pt:'Sopa', en:'Soup'}, sweet: {pt:'Doce', en:'Sweet'},
+    rustic: {pt:'Rústico', en:'Rustic'}, retro: {pt:'Retrô', en:'Retro'}, modern: {pt:'Moderno', en:'Modern'}
+};
+
+const I18N = {
+    pt: {
+        setupTitle: 'Preparação Física',
+        setupIntro: 'Prepare a mesa como em uma partida normal de 2 jogadores, com estes ajustes:',
+        setupDisplayHeading: '☕ Baralho e Exibição',
+        setupDisplayBody: '<ul class="setup-list"><li>Embaralhe as 83 cartas de Café e revele 4 viradas para cima ao lado do baralho, com espaço para uma pilha de descarte.</li><li><strong>Variante para preencher a exibição:</strong> ao repor um espaço vazio (seu ou do Capybot), deslize as cartas restantes à esquerda desse espaço uma posição para a direita, e sempre insira a carta nova no espaço mais à esquerda. Isso vale para os turnos de todos.</li><li>Embaralhe as 12 cartas de Cliente Especial e revele 5 ao lado da exibição.</li></ul>',
+        setupCapybotHeading: '🐹 Café do Capybot',
+        setupCapybotBody: '<ul class="setup-list"><li>O Capybot não tem mão — ele age diretamente sobre a carta da exibição escolhida pela árvore de decisão abaixo.</li><li>Sorteie (ou escolha) uma carta de Balcão para o Capybot e coloque-a à frente dele; ela mostra Café ou Chá — informe isso na Configuração da Partida.</li><li>Toda carta que o Capybot Adicionar deve ser colocada fisicamente na fileira do café dele, para que você possa reler seu custo/tipo em turnos futuros.</li></ul>',
+        setupYouHeading: '🙂 Seu Café',
+        setupYouBody: '<ul class="setup-list"><li>Prepare-se normalmente: 7 moedas, 4 cartas de Café na mão (mantenha em segredo), e uma carta de Balcão aleatória.</li></ul>',
+        setupSpecialHeading: '⭐ Clientes Especiais',
+        setupSpecialBody: '<ul class="setup-list"><li>No final da partida, qualquer jogador (incluindo o Capybot) que atenda ao critério de um Cliente Especial revelado ganha os pontos dele — não é exclusivo de quem chegar primeiro.</li></ul>',
+        matchConfigTitle: 'Configuração da Partida',
+        playerCountLabel: 'Número de jogadores humanos (na partida física)',
+        playerCountHint: 'Usado para calcular quantos Clientes Regulares acionam o fim de jogo (o Capybot conta como mais um jogador na mesa).',
+        onlyYou: 'só você',
+        counterTypeLabel: 'Carta de Balcão do Capybot (sorteada)',
+        foodCoffee: 'Café', foodTea: 'Chá',
+        startCoinsLabel: 'Moedas iniciais do Capybot (dificuldade)',
+        startCoinsHint: 'Padrão: 7 (igual ao humano). Aumente para deixar o Capybot mais difícil de vencer.',
+        startBtn: 'Iniciar Partida contra o Capybot',
+        statusTitle: 'Café do Capybot',
+        statCoinsLabel: 'Moedas', statRegularsLabel: 'Regulares',
+        foodTypesHeading: 'Alimentos no Café', decorTypesHeading: 'Decorações no Café',
+        treeTitle: 'Decisão do Capybot',
+        treeIntro: 'Avalie as 4 cartas da exibição (e o café acima) contra estas linhas, na ordem — use a primeira que se aplicar:',
+        btnCapybotAdds: 'Capybot ADICIONA uma carta',
+        btnCapybotServes: 'Capybot SERVE um cliente',
+        formSlotLabel: 'Posição na exibição (1-4, opcional)',
+        formCostLabel: 'Custo em moedas',
+        formTypeLabel: 'Tipo oferecido pela carta',
+        formAbilityLabel: 'Esta carta tem uma ação contínua (caixa branca)',
+        formAbilityNoteLabel: 'Anotação rápida sobre a ação (opcional)',
+        formCoinsGainedLabel: 'Moedas ganhas ao servir',
+        formBecomesRegularLabel: 'O cliente virou Regular (3 desejos + decoração atendidos)',
+        btnConfirm: 'Confirmar Turno', btnCancel: 'Cancelar', btnUndo: '↩ Desfazer Último Turno',
+        logTitle: 'Histórico',
+        scoreTitle: 'Pontuação Final',
+        scoreIntro: 'Ao final da partida, adicione os Clientes Especiais revelados que o café do Capybot satisfaz e quaisquer bônus condicionais de cartas específicas.',
+        btnAddSpecial: '+ Cliente Especial',
+        miscBonusLabel: 'Outros bônus condicionais (cartas de Café com pontuação variável)',
+        btnFinalize: 'Calcular Pontuação Final',
+        resetBtn: '🔄 Nova Partida',
+        resetConfirm: 'Isso vai apagar a partida atual do Capybot. Tem certeza?',
+        tabHelp: 'Como Usar o App', tabRules: 'Regras Rápidas',
+        specialPointsPlaceholder: 'Pontos',
+        specialLabel: (n) => `Cliente Especial #${n}`,
+        logStart: (coins, counter) => `Partida iniciada. Capybot começa com ${coins} moedas e Balcão de ${TYPE_LABEL[counter].pt}.`,
+        logAdd: (turn, cost, type, coinsBefore, coinsAfter, ability) => `Turno ${turn}: Capybot ADICIONOU uma carta de ${TYPE_LABEL[type].pt} (custo ${cost}). Moedas ${coinsBefore}→${coinsAfter}.${ability ? ' [Ação contínua: '+ability+']' : ''}`,
+        logServe: (turn, coinsGained, coinsBefore, coinsAfter, becameRegular, regularsCount) => `Turno ${turn}: Capybot SERVIU um cliente, ganhando ${coinsGained} moeda(s). Moedas ${coinsBefore}→${coinsAfter}.${becameRegular ? ' Virou Regular! (Regulares: '+regularsCount+')' : ''}`,
+        logUndo: (turn) => `Turno ${turn} desfeito.`,
+        endGameTriggered: (regulars) => `⚠️ O Capybot conquistou seu ${regulars}º Regular — fim de jogo acionado! Cada jogador (incluindo você) joga mais 1 turno completo, depois a partida termina.`,
+        helpBody: `<h2 data-i18n="tabHelp">❓ Como Usar o App</h2>
+            <p>Este app conduz o Capybot, um oponente automático para o modo solo de <em>Café Baras</em>, usando uma árvore de decisão (como as automas de David Turczi) em vez de apenas "sempre pegue a carta mais à direita".</p>
+            <h3>Preparação</h3>
+            <p>Preencha a Configuração da Partida (jogadores, carta de Balcão do Capybot, moedas iniciais) e toque em Iniciar.</p>
+            <h3>No turno do Capybot</h3>
+            <p>Leia as 4 cartas da exibição física. Compare-as com as linhas numeradas da Decisão do Capybot (use a primeira que se aplicar) e escolha a carta indicada. Depois, toque em "Capybot ADICIONA" ou "Capybot SERVE" e preencha os poucos campos pedidos (custo, tipo, moedas ganhas etc.) — o app calcula e guarda o resto automaticamente (moedas, alimentos, decorações, regulares).</p>
+            <h3>Fim de jogo e pontuação</h3>
+            <p>O app avisa automaticamente quando o Capybot conquista o Regular que aciona o fim de jogo. Ao final, use a seção Pontuação Final para somar Clientes Especiais satisfeitos e quaisquer bônus condicionais — o app já soma Regulares×4 e Moedas÷2.</p>`,
+        rulesBody: `<h2 data-i18n="tabRules">📖 Regras Rápidas</h2>
+            <h3>Cada carta é duas coisas</h3>
+            <p>A parte de cima é algo para Adicionar ao seu café (alimento ou decoração, com um custo em moedas). A parte de baixo é um cliente que você pode Servir (mostra 3 desejos de alimento e uma decoração preferida).</p>
+            <h3>Servindo</h3>
+            <p>Para cada alimento desejado que seu café já oferece, ganhe 1 moeda (ou várias, se o alimento for "amado" — símbolo de coração). Decoração não rende moedas ao servir. Se os 3 desejos forem atendidos E você tiver a decoração preferida, o cliente vira Regular (guardado sob seu Balcão, vale 4 pontos no final).</p>
+            <h3>Fim de jogo</h3>
+            <p>Acionado quando qualquer jogador consegue seu 3º Regular (4º em partida de 2 jogadores) e/ou o baralho é reembaralhado pela 2ª vez. Todos jogam mais um turno completo, depois a pontuação final é somada.</p>
+            <h3>Pontuação final</h3>
+            <p>Regulares × 4, mais pontos de Clientes Especiais satisfeitos, mais Moedas ÷ 2 (arredondado para baixo), mais os valores de pontos (fixos ou condicionais) das cartas de Café no seu café.</p>`,
+        creditsText: 'Feito por Thiago Colletes de Carvalho (<a href="mailto:colletes@gmail.com">colletes@gmail.com</a>) e Gemini — árvore de decisão original do autor, inspirada no conceito comunitário do "Capybot" (variante solo simples compartilhada pela comunidade) e no estilo de automas de David Turczi. <em>Café Baras</em> design de Roberta Taylor, © 2024 KTBG (Kids Table Board Gaming), versão brasileira Ludofun. Uso pessoal, sem fins comerciais.'
+    },
+    en: {
+        setupTitle: 'Physical Setup',
+        setupIntro: 'Set up the table as in a normal 2-player game, with these adjustments:',
+        setupDisplayHeading: '☕ Deck & Display',
+        setupDisplayBody: '<ul class="setup-list"><li>Shuffle the 83 Café cards and reveal 4 face up next to the deck, leaving room for a discard pile.</li><li><strong>Display refill variant:</strong> when refilling an empty spot (yours or the Capybot\'s), slide the remaining cards to the left of that spot one position to the right, and always insert the new card in the leftmost spot. This applies to every player\'s turn.</li><li>Shuffle the 12 Special Customer cards and reveal 5 next to the display.</li></ul>',
+        setupCapybotHeading: '🐹 Capybot\'s Café',
+        setupCapybotBody: '<ul class="setup-list"><li>The Capybot has no hand — it acts directly on the display card chosen by the decision tree below.</li><li>Draw (or pick) a Counter card for the Capybot and place it in front of it; it shows Coffee or Tea — enter that in Match Setup.</li><li>Every card the Capybot Adds must be physically placed in its café row, so you can reread its cost/type on future turns.</li></ul>',
+        setupYouHeading: '🙂 Your Café',
+        setupYouBody: '<ul class="setup-list"><li>Set up normally: 7 coins, 4 Café cards in hand (kept secret), and a random Counter card.</li></ul>',
+        setupSpecialHeading: '⭐ Special Customers',
+        setupSpecialBody: '<ul class="setup-list"><li>At game end, any player (including the Capybot) who meets a revealed Special Customer\'s criteria scores its points — it is not exclusive to whoever gets there first.</li></ul>',
+        matchConfigTitle: 'Match Setup',
+        playerCountLabel: 'Number of human players (in the physical game)',
+        playerCountHint: 'Used to compute how many Regulars trigger the end game (the Capybot counts as one more player at the table).',
+        onlyYou: 'just you',
+        counterTypeLabel: 'Capybot\'s Counter Card (drawn)',
+        foodCoffee: 'Coffee', foodTea: 'Tea',
+        startCoinsLabel: 'Capybot\'s starting coins (difficulty)',
+        startCoinsHint: 'Default: 7 (same as the human). Increase it to make the Capybot harder to beat.',
+        startBtn: 'Start Match Against the Capybot',
+        statusTitle: 'Capybot\'s Café',
+        statCoinsLabel: 'Coins', statRegularsLabel: 'Regulars',
+        foodTypesHeading: 'Food in the Café', decorTypesHeading: 'Decoration in the Café',
+        treeTitle: 'Capybot\'s Decision',
+        treeIntro: 'Compare the 4 displayed cards (and the café above) against these lines, in order — use the first one that applies:',
+        btnCapybotAdds: 'Capybot ADDS a card',
+        btnCapybotServes: 'Capybot SERVES a customer',
+        formSlotLabel: 'Display position (1-4, optional)',
+        formCostLabel: 'Cost in coins',
+        formTypeLabel: 'Type offered by the card',
+        formAbilityLabel: 'This card has a continuous action (white box)',
+        formAbilityNoteLabel: 'Quick note about the action (optional)',
+        formCoinsGainedLabel: 'Coins gained by serving',
+        formBecomesRegularLabel: 'The customer became a Regular (3 wishes + decoration met)',
+        btnConfirm: 'Confirm Turn', btnCancel: 'Cancel', btnUndo: '↩ Undo Last Turn',
+        logTitle: 'History',
+        scoreTitle: 'Final Score',
+        scoreIntro: 'At game end, add the revealed Special Customers the Capybot\'s café satisfies and any conditional card bonuses.',
+        btnAddSpecial: '+ Special Customer',
+        miscBonusLabel: 'Other conditional bonuses (Café cards with variable scoring)',
+        btnFinalize: 'Calculate Final Score',
+        resetBtn: '🔄 New Match',
+        resetConfirm: 'This will erase the Capybot\'s current match. Are you sure?',
+        tabHelp: 'How to Use the App', tabRules: 'Quick Rules',
+        specialPointsPlaceholder: 'Points',
+        specialLabel: (n) => `Special Customer #${n}`,
+        logStart: (coins, counter) => `Match started. Capybot begins with ${coins} coins and a ${TYPE_LABEL[counter].en} Counter card.`,
+        logAdd: (turn, cost, type, coinsBefore, coinsAfter, ability) => `Turn ${turn}: Capybot ADDED a ${TYPE_LABEL[type].en} card (cost ${cost}). Coins ${coinsBefore}→${coinsAfter}.${ability ? ' [Continuous action: '+ability+']' : ''}`,
+        logServe: (turn, coinsGained, coinsBefore, coinsAfter, becameRegular, regularsCount) => `Turn ${turn}: Capybot SERVED a customer, gaining ${coinsGained} coin(s). Coins ${coinsBefore}→${coinsAfter}.${becameRegular ? ' Became a Regular! (Regulars: '+regularsCount+')' : ''}`,
+        logUndo: (turn) => `Turn ${turn} undone.`,
+        endGameTriggered: (regulars) => `⚠️ The Capybot got its ${regulars}${regulars===1?'st':(regulars===2?'nd':(regulars===3?'rd':'th'))} Regular — end game triggered! Every player (including you) takes one more full turn, then the match ends.`,
+        helpBody: `<h2 data-i18n="tabHelp">❓ How to Use the App</h2>
+            <p>This app drives the Capybot, an automated opponent for <em>Café Baras</em>'s solo mode, using a decision tree (in the style of David Turczi's automas) instead of just "always take the rightmost card".</p>
+            <h3>Setup</h3>
+            <p>Fill in Match Setup (players, Capybot's Counter card, starting coins) and tap Start.</p>
+            <h3>On the Capybot's turn</h3>
+            <p>Read the 4 physical display cards. Compare them against the numbered lines in Capybot's Decision (use the first one that applies) and pick the indicated card. Then tap "Capybot ADDS" or "Capybot SERVES" and fill in the few requested fields (cost, type, coins gained, etc.) — the app computes and tracks the rest automatically (coins, food, decoration, regulars).</p>
+            <h3>End game and scoring</h3>
+            <p>The app automatically warns you when the Capybot earns the Regular that triggers the end game. At the end, use the Final Score section to add satisfied Special Customers and any conditional bonuses — the app already sums Regulars×4 and Coins÷2.</p>`,
+        rulesBody: `<h2 data-i18n="tabRules">📖 Quick Rules</h2>
+            <h3>Every card is two things</h3>
+            <p>The top is something to Add to your café (food or decoration, with a coin cost). The bottom is a customer you can Serve (shows 3 food wishes and a preferred decoration).</p>
+            <h3>Serving</h3>
+            <p>For each desired food your café already offers, gain 1 coin (or more, if the food is "loved" — heart symbol). Decoration doesn't earn coins when serving. If all 3 wishes are met AND you have the preferred decoration, the customer becomes a Regular (kept under your Counter card, worth 4 points at game end).</p>
+            <h3>End game</h3>
+            <p>Triggered when any player gets their 3rd Regular (4th in a 2-player game) and/or the deck is reshuffled for the 2nd time. Everyone takes one more full turn, then final scoring happens.</p>
+            <h3>Final scoring</h3>
+            <p>Regulars × 4, plus points from satisfied Special Customers, plus Coins ÷ 2 (rounded down), plus the (fixed or conditional) point values on the Café cards in your café.</p>`,
+        creditsText: 'Made by Thiago Colletes de Carvalho (<a href="mailto:colletes@gmail.com">colletes@gmail.com</a>) and Gemini — original decision tree by the author, inspired by the community\'s "Capybot" concept (a simple fan-shared solo variant) and David Turczi\'s automa design style. <em>Café Baras</em> designed by Roberta Taylor, © 2024 KTBG (Kids Table Board Gaming), Brazilian version by Ludofun. Personal, non-commercial use.'
+    }
+};
+
+function S(){ return I18N[lang]; }
+function applyI18n(){
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.dataset.i18n;
+        if (typeof S()[key] === 'string') el.textContent = S()[key];
+    });
+    document.querySelectorAll('[data-i18n-html]').forEach(el => {
+        const key = el.dataset.i18nHtml;
+        if (typeof S()[key] === 'string') el.innerHTML = S()[key];
+    });
+    document.getElementById('langBtnPt').classList.toggle('active', lang === 'pt');
+    document.getElementById('langBtnEn').classList.toggle('active', lang === 'en');
+    document.documentElement.lang = lang === 'pt' ? 'pt-BR' : 'en';
+    renderTree();
+    if (state) { renderStatus(); renderLog(); renderSpecialRows(); }
+}
+function setLang(l){
+    lang = l;
+    localStorage.setItem(LANG_KEY, l);
+    applyI18n();
+}
+
+// --- Turczi/Undaunted-style decision tree for the Capybot's turn ---
+const TREE = [
+    { cond: {pt:'Alguma carta da exibição já pode virar Regular agora (as 3 vontades de alimento do cliente atendidas pelo café do Capybot E há ao menos 1 exemplar da decoração preferida)', en:"A displayed card can already become a Regular right now (the customer's 3 food wishes are met by the Capybot's café AND it has at least 1 of the preferred decoration)"},
+      action: {pt:'Sirva essa carta (a de maior pontuação de cliente, se houver mais de uma)', en:"Serve that card (the one with the highest customer point value, if more than one qualifies)"},
+      tie: {pt:'Pontuação do cliente > mais à esquerda', en:'Customer point value > leftmost'} },
+    { cond: {pt:'Senão, alguma carta oferece (ao Adicionar) um Alimento ou Decoração que o café do Capybot ainda não tem, com custo pagável', en:"Otherwise, a card offers (when Added) a Food or Decoration type the Capybot's café doesn't have yet, at an affordable cost"},
+      action: {pt:'Adicione a mais barata dessas cartas', en:'Add the cheapest of those cards'},
+      tie: {pt:'Custo mais baixo > maior Pontos > mais à esquerda', en:'Lowest cost > highest Points > leftmost'} },
+    { cond: {pt:'Senão, alguma carta pode ser Servida agora rendendo ao menos 1 moeda', en:'Otherwise, a card can be Served right now for at least 1 coin'},
+      action: {pt:'Sirva a carta que renderia mais moedas', en:'Serve the card that would yield the most coins'},
+      tie: {pt:'Moedas rendidas > pontuação do cliente > mais à esquerda', en:'Coins yielded > customer point value > leftmost'} },
+    { cond: null,
+      action: {pt:'Adicione a carta mais barata que o Capybot possa pagar; se nenhuma for pagável, Sirva a carta mais à esquerda (mesmo que renda 0 moedas)', en:"Add the cheapest card the Capybot can afford; if none is affordable, Serve the leftmost card (even if it yields 0 coins)"},
+      tie: {pt:'mais à esquerda', en:'leftmost'} }
+];
+function renderTree(){
+    const box = document.getElementById('treeBox');
+    if (!box) return;
+    const roman = ['I','II','III','IV'];
+    box.innerHTML = TREE.map((line, i) => {
+        const cond = line.cond ? `<span class="tree-cond">${tr(line.cond)}:</span> ` : '';
+        const tie = line.tie ? `<span class="tree-tie">[${tr(line.tie)}]</span>` : '';
+        return `<div class="tree-line"><span class="tree-num">${roman[i]}</span><span class="tree-body">${cond}${tr(line.action)}${tie}</span></div>`;
+    }).join('');
+}
+function tr(obj){ return obj ? (obj[lang] !== undefined ? obj[lang] : obj.pt) : ''; }
+
+// --- Game state ---
+let state = null;
+let lastSnapshot = null;
+
+function defaultFoodCounts(){ const o = {}; FOOD_TYPES.forEach(t => o[t] = 0); return o; }
+function defaultDecorCounts(){ const o = {}; DECOR_TYPES.forEach(t => o[t] = 0); return o; }
+
+function regularsThreshold(){
+    const humanPlayers = parseInt(document.getElementById('selPlayerCount').value, 10);
+    return humanPlayers <= 1 ? 4 : 3;
+}
+
+function startGame(){
+    const startCoins = Math.max(0, parseInt(document.getElementById('inpStartCoins').value, 10) || 0);
+    const counter = document.getElementById('selCounterType').value;
+    const food = defaultFoodCounts();
+    food[counter] = 1;
+    state = {
+        coins: startCoins,
+        food: food,
+        decor: defaultDecorCounts(),
+        regulars: 0,
+        turn: 0,
+        abilities: [],
+        log: [S().logStart(startCoins, counter)],
+        regularsThreshold: regularsThreshold(),
+        endTriggered: false,
+        version: 1
+    };
+    lastSnapshot = null;
+    saveState();
+    document.getElementById('setup-screen').classList.add('hidden');
+    document.getElementById('game-area').classList.remove('hidden');
+    document.getElementById('btnResetGame').classList.remove('hidden');
+    document.getElementById('specialRows').innerHTML = '';
+    document.getElementById('scoreBreakdown').innerHTML = '';
+    render();
+}
+
+function saveState(){ if (state) localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+function loadState(){
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    try {
+        const parsed = JSON.parse(raw);
+        if (parsed && parsed.version === 1) {
+            state = parsed;
+            document.getElementById('setup-screen').classList.add('hidden');
+            document.getElementById('game-area').classList.remove('hidden');
+            document.getElementById('btnResetGame').classList.remove('hidden');
+        }
+    } catch(e) { /* ignore corrupt saved state */ }
+}
+
+function resetGame(){
+    if (!confirm(S().resetConfirm)) return;
+    localStorage.removeItem(STORAGE_KEY);
+    state = null;
+    document.getElementById('game-area').classList.add('hidden');
+    document.getElementById('setup-screen').classList.remove('hidden');
+    document.getElementById('btnResetGame').classList.add('hidden');
+}
+
+function render(){ renderStatus(); renderLog(); }
+
+function renderStatus(){
+    if (!state) return;
+    document.getElementById('statCoins').textContent = state.coins;
+    document.getElementById('statRegulars').textContent = state.regulars;
+    document.getElementById('turnLabel').textContent = 'T' + state.turn;
+
+    const foodGrid = document.getElementById('foodGrid');
+    foodGrid.innerHTML = FOOD_TYPES.map(t => `<div class="type-box">${ICONS[t]}<div class="tcount">${state.food[t]}</div><div class="tlabel">${tr(TYPE_LABEL[t])}</div></div>`).join('');
+    const decorGrid = document.getElementById('decorGrid');
+    decorGrid.innerHTML = DECOR_TYPES.map(t => `<div class="type-box">${ICONS[t]}<div class="tcount">${state.decor[t]}</div><div class="tlabel">${tr(TYPE_LABEL[t])}</div></div>`).join('');
+
+    const banner = document.getElementById('endGameBanner');
+    if (state.endTriggered) {
+        banner.classList.remove('hidden');
+        banner.innerHTML = `<div class="end-banner">${S().endGameTriggered(state.regulars)}</div>`;
+    } else {
+        banner.classList.add('hidden');
+        banner.innerHTML = '';
+    }
+
+    const abilitiesBox = document.getElementById('abilitiesBox');
+    if (state.abilities.length) {
+        abilitiesBox.innerHTML = '<h3>' + (lang === 'pt' ? 'Ações Contínuas Ativas' : 'Active Continuous Actions') + '</h3><ul class="rules-list">' + state.abilities.map(a => `<li>${a}</li>`).join('') + '</ul>';
+    } else {
+        abilitiesBox.innerHTML = '';
+    }
+
+    document.getElementById('btnUndo').disabled = !lastSnapshot;
+}
+
+function renderLog(){
+    if (!state) return;
+    const panel = document.getElementById('logPanel');
+    panel.innerHTML = state.log.slice().reverse().map(l => `<div>${l}</div>`).join('');
+}
+
+function adjustCoins(delta){ if (!state) return; state.coins = Math.max(0, state.coins + delta); saveState(); renderStatus(); }
+function adjustRegulars(delta){
+    if (!state) return;
+    state.regulars = Math.max(0, state.regulars + delta);
+    checkEndGame();
+    saveState();
+    renderStatus();
+}
+
+function checkEndGame(){
+    if (state.regulars >= state.regularsThreshold && !state.endTriggered) {
+        state.endTriggered = true;
+    }
+}
+
+function showAddForm(){
+    document.getElementById('actionChoice').classList.add('hidden');
+    document.getElementById('addForm').classList.remove('hidden');
+    document.getElementById('serveForm').classList.add('hidden');
+}
+function showServeForm(){
+    document.getElementById('actionChoice').classList.add('hidden');
+    document.getElementById('serveForm').classList.remove('hidden');
+    document.getElementById('addForm').classList.add('hidden');
+}
+function cancelForm(){
+    document.getElementById('actionChoice').classList.remove('hidden');
+    document.getElementById('addForm').classList.add('hidden');
+    document.getElementById('serveForm').classList.add('hidden');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const cb = document.getElementById('addHasAbility');
+    if (cb) cb.addEventListener('change', () => {
+        document.getElementById('addAbilityNoteWrap').classList.toggle('hidden', !cb.checked);
+    });
+});
+
+function snapshot(){ return JSON.parse(JSON.stringify(state)); }
+
+function confirmAdd(){
+    if (!state) return;
+    lastSnapshot = snapshot();
+    const cost = Math.max(0, parseInt(document.getElementById('addCost').value, 10) || 0);
+    const type = document.getElementById('addType').value;
+    const hasAbility = document.getElementById('addHasAbility').checked;
+    const note = document.getElementById('addAbilityNote').value.trim();
+    const coinsBefore = state.coins;
+    state.coins = Math.max(0, state.coins - cost);
+    if (FOOD_TYPES.includes(type)) state.food[type]++;
+    else if (DECOR_TYPES.includes(type)) state.decor[type]++;
+    state.turn++;
+    if (hasAbility) {
+        state.abilities.push(note || (lang === 'pt' ? ('Carta com ação contínua adicionada no turno ' + state.turn) : ('Card with a continuous action added on turn ' + state.turn)));
+    }
+    state.log.push(S().logAdd(state.turn, cost, type, coinsBefore, state.coins, hasAbility ? (note || '—') : null));
+    saveState();
+    cancelForm();
+    document.getElementById('addCost').value = 0;
+    document.getElementById('addHasAbility').checked = false;
+    document.getElementById('addAbilityNote').value = '';
+    document.getElementById('addAbilityNoteWrap').classList.add('hidden');
+    render();
+}
+
+function confirmServe(){
+    if (!state) return;
+    lastSnapshot = snapshot();
+    const coinsGained = Math.max(0, parseInt(document.getElementById('serveCoins').value, 10) || 0);
+    const becomesRegular = document.getElementById('serveBecomesRegular').checked;
+    const coinsBefore = state.coins;
+    state.coins += coinsGained;
+    state.turn++;
+    if (becomesRegular) {
+        state.regulars++;
+        checkEndGame();
+    }
+    state.log.push(S().logServe(state.turn, coinsGained, coinsBefore, state.coins, becomesRegular, state.regulars));
+    saveState();
+    cancelForm();
+    document.getElementById('serveCoins').value = 0;
+    document.getElementById('serveBecomesRegular').checked = false;
+    render();
+}
+
+function undoLast(){
+    if (!lastSnapshot) return;
+    const undoneTurn = state.turn;
+    state = lastSnapshot;
+    lastSnapshot = null;
+    state.log.push(S().logUndo(undoneTurn));
+    saveState();
+    render();
+}
+
+// --- End-game special-customer scoring ---
+let specialRowCount = 0;
+function addSpecialRow(){
+    specialRowCount++;
+    const wrap = document.getElementById('specialRows');
+    const row = document.createElement('div');
+    row.className = 'special-row';
+    row.dataset.idx = specialRowCount;
+    row.innerHTML = `<div class="checkline"><input type="checkbox" class="specialSatisfied"><span>${S().specialLabel(specialRowCount)}</span></div><input type="number" class="specialPoints" placeholder="${S().specialPointsPlaceholder}" value="0" min="0"><button class="btn-small" onclick="this.parentElement.remove()">✕</button>`;
+    wrap.appendChild(row);
+}
+function renderSpecialRows(){
+    document.querySelectorAll('#specialRows .special-row').forEach(row => {
+        const idx = row.dataset.idx;
+        const span = row.querySelector('.checkline span');
+        if (span) span.textContent = S().specialLabel(idx);
+        const pointsInput = row.querySelector('.specialPoints');
+        if (pointsInput) pointsInput.placeholder = S().specialPointsPlaceholder;
+    });
+}
+
+function finalizeScore(){
+    if (!state) return;
+    const regularsPts = state.regulars * 4;
+    const coinsPts = Math.floor(state.coins / 2);
+    let specialPts = 0;
+    document.querySelectorAll('#specialRows .special-row').forEach(row => {
+        if (row.querySelector('.specialSatisfied').checked) {
+            specialPts += parseInt(row.querySelector('.specialPoints').value, 10) || 0;
+        }
+    });
+    const misc = parseInt(document.getElementById('inpMisc').value, 10) || 0;
+    const total = regularsPts + coinsPts + specialPts + misc;
+
+    const isPt = lang === 'pt';
+    const box = document.getElementById('scoreBreakdown');
+    box.innerHTML = `
+        <div class="score-line"><span>${isPt ? 'Regulares' : 'Regulars'} (${state.regulars} × 4)</span><strong>${regularsPts}</strong></div>
+        <div class="score-line"><span>${isPt ? 'Moedas' : 'Coins'} (${state.coins} ÷ 2)</span><strong>${coinsPts}</strong></div>
+        <div class="score-line"><span>${isPt ? 'Clientes Especiais' : 'Special Customers'}</span><strong>${specialPts}</strong></div>
+        <div class="score-line"><span>${isPt ? 'Outros bônus' : 'Other bonuses'}</span><strong>${misc}</strong></div>
+        <div class="score-total"><span>${isPt ? 'TOTAL' : 'TOTAL'}</span><strong>${total}</strong></div>
+    `;
+}
+
+// --- Help modal ---
+function switchTab(tab){
+    document.getElementById('tabBtnHelp').classList.toggle('active', tab === 'help');
+    document.getElementById('tabBtnRules').classList.toggle('active', tab === 'rules');
+    document.getElementById('tabPanelHelp').classList.toggle('hidden', tab !== 'help');
+    document.getElementById('tabPanelRules').classList.toggle('hidden', tab !== 'rules');
+}
+function openHelp(tab){ document.getElementById('helpModal').classList.add('open'); switchTab(tab || 'help'); }
+function closeHelp(){ document.getElementById('helpModal').classList.remove('open'); }
+
+// --- Init ---
+loadState();
+applyI18n();
+if (state) render();
+</script>
+</body>
+</html>

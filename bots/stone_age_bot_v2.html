@@ -1,0 +1,1622 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Automa — Stone Age Solo (v2)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Rye&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root{
+            /* Shared "house style": black / white / gray / blue, one thematic accent per bot */
+            --bg-0:#0b0e12;
+            --bg-1:#12161c;
+            --surface:#181d25;
+            --surface-2:#20262f;
+            --border:#2b323d;
+            --text:#eef1f5;
+            --text-dim:#9aa4b2;
+            --blue:#4f8cff;
+            --blue-soft:#274168;
+            --blue-glow:rgba(79,140,255,0.35);
+            --accent:#c9971f; /* Stone Age nod: amber/ochre like the game's cave-painting art */
+            --accent-dim:#8a6a2e;
+            --wood:#a97c50; --clay:#c1683f; --stone:#8a8f98; --gold:#e0b23c;
+            --font-display:'Rye','Segoe UI',serif;
+            --font-body:'Inter','Segoe UI',Tahoma,Geneva,Verdana,sans-serif;
+            --radius:14px;
+        }
+        *{box-sizing:border-box;}
+        html{-webkit-text-size-adjust:100%;}
+        body{
+            font-family:var(--font-body);
+            background:
+                radial-gradient(circle at 15% 0%, rgba(79,140,255,0.08), transparent 55%),
+                radial-gradient(circle at 85% 100%, rgba(201,151,31,0.06), transparent 50%),
+                linear-gradient(180deg, var(--bg-0), var(--bg-1));
+            background-attachment:fixed;
+            color:var(--text);
+            max-width:720px;
+            margin:0 auto;
+            padding:18px;
+            padding-left:max(18px, env(safe-area-inset-left));
+            padding-right:max(18px, env(safe-area-inset-right));
+            padding-bottom:max(18px, env(safe-area-inset-bottom));
+            -webkit-tap-highlight-color:transparent;
+        }
+        button, select, .loc-cell{ touch-action:manipulation; }
+
+        @keyframes fadeSlideUp{ from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);} }
+        @keyframes softGlow{ 0%,100%{box-shadow:0 0 0 rgba(79,140,255,0);} 50%{box-shadow:0 0 16px var(--blue-glow);} }
+        @keyframes popIn{ 0%{transform:scale(0.85); opacity:0;} 60%{transform:scale(1.04);} 100%{transform:scale(1); opacity:1;} }
+
+        /* --- Header / hero banner --- */
+        .hero{
+            position:relative;
+            border-radius:var(--radius);
+            overflow:hidden;
+            margin-bottom:18px;
+            border:1px solid var(--border);
+            animation:fadeSlideUp 0.5s ease both;
+        }
+        .hero img{ width:100%; height:150px; object-fit:cover; display:block; filter:saturate(0.85) brightness(0.65); }
+        .hero::after{ content:''; position:absolute; inset:0; background:linear-gradient(180deg, rgba(11,14,18,0.15), rgba(11,14,18,0.92)); }
+        .hero-content{ position:absolute; inset:0; display:flex; flex-direction:column; justify-content:flex-end; padding:14px 18px; }
+        h1{
+            font-family:var(--font-display);
+            font-weight:normal;
+            letter-spacing:1px;
+            margin:0;
+            font-size:2em;
+            color:#fff;
+            text-shadow:0 2px 10px rgba(0,0,0,0.6);
+        }
+        .subtitle{ color:var(--accent); font-size:0.9em; letter-spacing:0.5px; margin-top:2px; font-weight:600; }
+
+        h2{
+            font-family:var(--font-display);
+            font-weight:normal;
+            letter-spacing:0.5px;
+            color:var(--accent);
+            margin:0 0 14px;
+            display:flex;
+            align-items:center;
+            gap:10px;
+            font-size:1.35em;
+        }
+        h2 svg{ width:26px; height:26px; flex-shrink:0; }
+        h3{ color:var(--text); font-family:var(--font-body); font-size:1em; margin:16px 0 8px; }
+
+        .card{
+            background:var(--surface);
+            padding:20px;
+            border-radius:var(--radius);
+            border:1px solid var(--border);
+            box-shadow:0 6px 18px rgba(0,0,0,0.35);
+            margin-bottom:18px;
+            animation:fadeSlideUp 0.45s ease both;
+            transition:border-color 0.25s, box-shadow 0.25s;
+        }
+        .card:hover{ border-color:#374050; }
+
+        .icon{ width:1.5em; height:1.5em; vertical-align:middle; flex-shrink:0; }
+        .icon-lg{ width:2.4em; height:2.4em; }
+
+        .dice-container{ display:flex; justify-content:center; gap:16px; margin-bottom:20px; }
+        .die{
+            width:64px; height:64px;
+            background:linear-gradient(145deg,#232a34,#171b21);
+            border:2px solid var(--border);
+            border-radius:12px;
+            display:flex; align-items:center; justify-content:center;
+            font-family:var(--font-display);
+            font-size:32px;
+            color:var(--blue);
+            box-shadow:inset 0 -4px 0 rgba(0,0,0,0.35), 0 3px 8px rgba(0,0,0,0.4);
+            transition:transform 0.25s ease;
+        }
+        .die.rolled{ animation:popIn 0.35s ease; }
+
+        button{
+            width:100%;
+            padding:14px;
+            background:linear-gradient(180deg,#2a3442,#1c232c);
+            color:var(--text);
+            border:1px solid var(--border);
+            border-radius:10px;
+            font-family:var(--font-body);
+            font-weight:600;
+            letter-spacing:0.3px;
+            font-size:16px;
+            cursor:pointer;
+            transition:background 0.2s, transform 0.1s, box-shadow 0.2s, border-color 0.2s;
+            margin-top:8px;
+        }
+        button.primary{ background:linear-gradient(180deg, var(--blue), #2f63c9); border-color:#3f6fd6; color:#fff; }
+        button:active{ transform:translateY(1px) scale(0.995); }
+        button:disabled{ background:#20262f; color:#5b6472; border-color:var(--border); cursor:not-allowed; box-shadow:none; }
+        button.btn-small{ width:auto; padding:9px 14px; font-size:14px; margin:4px; }
+        @media (hover:hover) and (pointer:fine){
+            button:not(:disabled):hover{ border-color:var(--blue); box-shadow:0 0 0 3px var(--blue-soft); }
+            button.primary:not(:disabled):hover{ box-shadow:0 0 14px var(--blue-glow); }
+        }
+        button.btn-secondary{ background:linear-gradient(180deg,#3a2f20,#241c12); border-color:var(--accent-dim); }
+
+        .result-title{ font-size:1.05em; text-align:center; margin-top:18px; color:var(--text-dim); }
+        .result-location{
+            font-size:1.3em; font-weight:700; text-align:center; color:var(--accent);
+            margin:10px 0; padding:12px; background:var(--surface-2);
+            border:1px solid var(--border); border-radius:10px;
+            transition:all 0.25s ease;
+        }
+        .result-effect{ text-align:center; font-size:1.05em; padding:8px; color:#5fd68a; font-weight:600; }
+        .fallback{ font-size:0.9em; color:var(--text-dim); text-align:center; line-height:1.5; padding:10px; border-top:1px dashed var(--border); }
+
+        .rules-list li{ margin-bottom:10px; line-height:1.5; color:var(--text-dim); }
+        .rules-list li strong{ color:var(--text); }
+        .setup-list li{ margin-bottom:12px; line-height:1.55; }
+
+        .status-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:10px; text-align:center; }
+        .status-box{
+            background:var(--surface-2); border:1px solid var(--border); border-radius:12px; padding:12px 6px;
+            transition:box-shadow 0.3s;
+        }
+        .status-box .label{ font-size:0.72em; text-transform:uppercase; color:var(--text-dim); display:flex; align-items:center; justify-content:center; gap:5px; letter-spacing:0.5px; }
+        .status-box .value{ font-size:1.7em; font-weight:800; color:var(--blue); margin:4px 0; }
+        .adjust-row{ display:flex; justify-content:center; gap:8px; margin-top:2px; }
+        .adjust-row button{ width:42px; height:38px; padding:0; font-size:18px; margin:0; }
+
+        .loc-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(90px,1fr)); gap:9px; margin:15px 0; }
+        .loc-cell{
+            border:2px solid var(--border); background:var(--surface-2); border-radius:10px;
+            padding:10px 6px; min-height:52px; text-align:center; font-size:0.76em;
+            cursor:pointer; user-select:none; color:var(--text-dim);
+            display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
+            transition:transform 0.15s, border-color 0.15s, background 0.15s;
+        }
+        .loc-cell:active{ transform:scale(0.96); }
+        .loc-cell .num{ font-weight:800; font-size:1.25em; font-family:var(--font-display); color:var(--text); }
+        .loc-cell.resource-wood{ border-color:var(--wood); }
+        .loc-cell.resource-clay{ border-color:var(--clay); }
+        .loc-cell.resource-stone{ border-color:var(--stone); }
+        .loc-cell.resource-gold{ border-color:var(--gold); }
+        .loc-cell.occupied{ background:#2a1f1f; opacity:0.65; text-decoration:line-through; border-color:#5a3a3a; }
+        .loc-icon{ width:22px; height:22px; }
+
+        .log-panel{
+            max-height:170px; overflow-y:auto; -webkit-overflow-scrolling:touch; font-size:0.86em;
+            background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:8px 12px;
+        }
+        .log-panel div{ padding:5px 0; border-bottom:1px dashed var(--border); color:var(--text-dim); }
+        .log-panel div:first-child{ color:var(--text); font-weight:600; }
+
+        .pending-form{ background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:14px; margin-top:10px; animation:fadeSlideUp 0.3s ease both; }
+        .pending-form label{ display:block; margin:10px 0 4px; font-weight:600; font-size:0.9em; color:var(--text-dim); }
+        .pending-form select, .pending-form input{ width:100%; padding:10px; border-radius:8px; border:1px solid var(--border); box-sizing:border-box; font-size:16px; background:var(--bg-1); color:var(--text); }
+        .hidden{ display:none !important; }
+
+        table{ width:100%; border-collapse:collapse; margin:10px 0 16px; font-size:0.9em; }
+        th,td{ padding:8px; border:1px solid var(--border); }
+        th{ background:var(--surface-2); text-align:left; color:var(--text); }
+        td{ color:var(--text-dim); }
+        td .res-cell{ display:flex; align-items:center; gap:8px; color:var(--text); }
+
+        .small{ font-size:0.85em; color:var(--text-dim); }
+        label.field-label{ display:block; font-weight:600; margin:8px 0 4px; color:var(--text-dim); }
+        input[type=number]{ width:100%; padding:10px; margin:6px 0; border-radius:8px; border:1px solid var(--border); box-sizing:border-box; font-size:16px; background:var(--bg-1); color:var(--text); }
+
+        /* --- Credits footer (shared component across all bots) --- */
+        .credits{
+            display:flex; align-items:center; gap:14px;
+            background:var(--surface);
+            border:1px solid var(--border);
+            border-radius:var(--radius);
+            padding:14px 16px;
+            margin-top:8px;
+            animation:fadeSlideUp 0.5s ease both;
+        }
+        .credits img{ width:52px; height:52px; object-fit:cover; border-radius:8px; border:1px solid var(--border); flex-shrink:0; }
+        .credits-text{ font-size:0.85em; color:var(--text-dim); line-height:1.5; }
+        .credits-text strong{ color:var(--text); }
+        .credits-text a{ color:var(--blue); text-decoration:none; }
+        .credits-text a:hover{ text-decoration:underline; }
+
+        /* Widescreen: distribui os cards lado a lado em vez de empilhar tudo na vertical.
+           Baseado em min-width (não em aspect-ratio) para reagir corretamente a qualquer rotação
+           de tela (celular retrato/paisagem, tablet, desktop). */
+        @media (min-width:700px){
+            #game-area{ display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:20px; align-items:start; }
+            #game-area .card{ margin-bottom:0; height:100%; }
+        }
+        @media (min-width:900px){
+            body{ max-width:1300px; }
+        }
+
+        /* --- Floating help button & language switch (shared pattern across all bots) --- */
+        .btn-help-float{
+            position:fixed; bottom:18px; right:18px; z-index:60;
+            width:48px; height:48px; border-radius:50%;
+            background:linear-gradient(180deg, var(--blue), #2f63c9);
+            color:#fff; border:1px solid #3f6fd6; font-weight:800; font-size:1.3em;
+            display:flex; align-items:center; justify-content:center;
+            box-shadow:0 4px 14px rgba(0,0,0,0.45);
+            cursor:pointer; transition:transform 0.15s, box-shadow 0.2s; margin:0; padding:0;
+        }
+        .btn-help-float:active{ transform:scale(0.92); }
+        @media (hover:hover) and (pointer:fine){ .btn-help-float:hover{ box-shadow:0 0 16px var(--blue-glow); } }
+
+        .btn-reset-float{
+            position:fixed; bottom:18px; left:18px; z-index:60;
+            width:auto; margin:0; padding:10px 16px; border-radius:999px;
+            background:var(--surface); color:var(--text-dim); border:1px solid var(--border);
+            font-weight:700; font-size:0.8em; box-shadow:0 4px 14px rgba(0,0,0,0.35);
+        }
+        .btn-reset-float:active{ transform:scale(0.96); }
+
+        .lang-switch{ position:fixed; top:14px; right:14px; z-index:60; display:flex; gap:2px; background:var(--surface); border:1px solid var(--border); border-radius:999px; padding:4px; box-shadow:0 4px 14px rgba(0,0,0,0.35); }
+        .lang-btn{ width:auto; margin:0; padding:6px 12px; font-size:0.78em; border-radius:999px; border:none; background:transparent; color:var(--text-dim); font-weight:700; }
+        .lang-btn.active{ background:var(--blue); color:#fff; }
+
+        /* --- Help modal (shared pattern) --- */
+        .modal-overlay{ display:none; position:fixed; inset:0; background:rgba(5,7,10,0.75); z-index:100; padding:20px 14px; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+        .modal-overlay.open{ display:block; animation:fadeSlideUp 0.2s ease both; }
+        .modal-content{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); max-width:640px; margin:20px auto; padding:24px; position:relative; }
+        .modal-close{ position:absolute; top:14px; right:14px; width:36px; height:36px; margin:0; padding:0; border-radius:50%; font-size:1.1em; }
+        .modal-content h3{ color:var(--accent); margin:20px 0 8px; }
+        .modal-content h3:first-of-type{ margin-top:4px; }
+        .modal-content p{ color:var(--text-dim); line-height:1.55; }
+
+        details{ margin-bottom:6px; }
+        details > summary{ cursor:pointer; font-weight:700; color:var(--text); padding:10px 0; list-style:none; display:flex; align-items:center; gap:8px; font-family:var(--font-body); }
+        details > summary::-webkit-details-marker{ display:none; }
+        details > summary::before{ content:'▸'; color:var(--blue); transition:transform 0.2s; display:inline-block; }
+        details[open] > summary::before{ transform:rotate(90deg); }
+        details .setup-list{ margin-top:2px; }
+
+        /* --- Solo mode picker (Automa vs Official survival mode) --- */
+        body.mode-official .automa-only{ display:none !important; }
+        body.mode-automa .official-only{ display:none !important; }
+        .mode-select-row{ display:flex; align-items:flex-start; gap:12px; padding:12px; border:1px solid var(--border); background:var(--surface-2); border-radius:10px; margin-bottom:10px; cursor:pointer; transition:border-color 0.2s; }
+        .mode-select-row:hover{ border-color:var(--blue); }
+        .mode-select-row input[type=radio]{ width:20px; height:20px; margin-top:2px; accent-color:var(--blue); flex-shrink:0; }
+        .mode-select-row strong{ color:var(--text); display:block; margin-bottom:3px; }
+        .mode-select-row p{ margin:0; }
+        .exhaustion-value.warn{ color:#e05555 !important; }
+        .end-banner{ text-align:center; padding:18px; border-radius:10px; font-family:var(--font-display); font-size:1.4em; margin-bottom:14px; animation:fadeSlideUp 0.4s ease both; }
+        .end-banner.lose{ background:#3a1f1f; color:#ff8080; border:1px solid #5a3a3a; }
+        .end-banner.win{ background:#1f3a24; color:#7fe89a; border:1px solid #3a5a3f; }
+    </style>
+</head>
+<body class="mode-automa">
+
+    <button class="btn-help-float" onclick="openHelp()" aria-label="Help">?</button>
+    <button class="btn-reset-float hidden" id="btnResetGame" onclick="resetGame()" data-i18n="resetBtn">🔄 Nova Partida</button>
+    <div class="lang-switch">
+        <button class="lang-btn" id="langBtnPt" onclick="setLang('pt')">PT</button>
+        <button class="lang-btn" id="langBtnEn" onclick="setLang('en')">EN</button>
+    </div>
+
+    <div class="hero">
+        <img src="stoneage.webp" alt="Stone Age box art">
+        <div class="hero-content">
+            <h1><span data-i18n="heroTitle">Assistente Automa</span></h1>
+            <div class="subtitle">STONE AGE — SOLO</div>
+        </div>
+    </div>
+
+    <div id="setup-screen">
+    <div class="card">
+        <h2><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg><span data-i18n="modeSelectTitle">Escolha o Modo de Jogo</span></h2>
+        <label class="mode-select-row" for="modeAutoma">
+            <input type="radio" name="soloMode" id="modeAutoma" value="automa" checked onchange="setMode('automa')">
+            <div><strong data-i18n="modeAutomaTitle">🤖 Automa (variante de César Borja)</strong><p class="small" data-i18n="modeAutomaDesc">Um segundo jogador virtual ocupa espaços do tabuleiro por você e converte os bônus em pontos automaticamente.</p></div>
+        </label>
+        <label class="mode-select-row" for="modeOfficial">
+            <input type="radio" name="soloMode" id="modeOfficial" value="official" onchange="setMode('official')">
+            <div><strong data-i18n="modeOfficialTitle">🧭 Modo Solo Oficial (Sobrevivência)</strong><p class="small" data-i18n="modeOfficialDesc">Você controla as 4 cores sozinho e tenta sobreviver o máximo possível antes que sua Exaustão chegue a zero. Pontos de Vitória não contam neste modo.</p></div>
+        </label>
+    </div>
+
+    <div class="card">
+        <h2><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20h16M6 20V10l6-6 6 6v10M9 20v-6h6v6"/></svg><span data-i18n="setupTitle">Componentes Físicos (Setup)</span></h2>
+        <p class="small" data-i18n="setupIntro">Transcrito da variante solo original — prepare a mesa assim antes de iniciar:</p>
+        <div class="automa-only">
+            <details open>
+                <summary data-i18n="setupAutomaHeading">🤖 Jogador Automático</summary>
+                <div data-i18n-html="setupAutomaBody"></div>
+            </details>
+            <details open>
+                <summary data-i18n="setupSoloHeading">🙂 Jogador Solo (você)</summary>
+                <div data-i18n-html="setupSoloBody"></div>
+            </details>
+            <details>
+                <summary data-i18n="setupCivHeading">📜 Cartas de Civilização</summary>
+                <div data-i18n-html="setupCivBody"></div>
+            </details>
+        </div>
+        <div class="official-only">
+            <details open>
+                <summary data-i18n="officialSetupCivHeading">📜 Cartas de Civilização</summary>
+                <div data-i18n-html="officialSetupCivBody"></div>
+            </details>
+            <details open>
+                <summary data-i18n="officialSetupBoardHeading">🙂 Tabuleiro de Jogador</summary>
+                <div data-i18n-html="officialSetupBoardBody"></div>
+            </details>
+            <details>
+                <summary data-i18n="officialSetupBuildingsHeading">🏛️ Construções</summary>
+                <div data-i18n-html="officialSetupBuildingsBody"></div>
+            </details>
+            <details>
+                <summary data-i18n="officialSetupMeeplesHeading">🧍 Figuras (Meeples)</summary>
+                <div data-i18n-html="officialSetupMeeplesBody"></div>
+            </details>
+            <details>
+                <summary data-i18n="officialSetupTracksHeading">📊 Trilhas de Pontuação e Agricultura</summary>
+                <div data-i18n-html="officialSetupTracksBody"></div>
+            </details>
+        </div>
+        <p class="small" data-i18n="setupFinish">Finalize a preparação do restante do tabuleiro (construções, trilha de comida, etc.) como de costume.</p>
+    </div>
+
+    <div class="card automa-only">
+        <h2><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg><span data-i18n="matchConfigTitle">Configuração da Partida</span></h2>
+        <label class="field-label" for="initialScore" data-i18n="initialScoreLabel">Pontuação inicial do Automa (dificuldade)</label>
+        <input type="number" id="initialScore" value="0">
+        <p class="small" data-i18n="initialScoreHint">Dica: se na última partida você venceu por 30 pontos, coloque 40 aqui para aumentar a dificuldade.</p>
+        <button class="primary" onclick="startGame()" data-i18n="startBtn">Iniciar Nova Partida</button>
+    </div>
+
+    <div class="card official-only">
+        <h2><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg><span data-i18n="officialConfigTitle">Configuração da Partida — Modo Oficial</span></h2>
+        <label class="field-label" for="officialDifficulty" data-i18n="officialDifficultyLabel">Nível de Dificuldade</label>
+        <select id="officialDifficulty" onchange="onOfficialDifficultyChange()">
+            <option value="1" data-i18n="officialDiff1Title">Nível 1 — Básico</option>
+            <option value="2" data-i18n="officialDiff2Title">Nível 2 — Noite Gélida</option>
+            <option value="3" data-i18n="officialDiff3Title">Nível 3 — Grande Tribo</option>
+            <option value="4" data-i18n="officialDiff4Title">Nível 4 — Inverno Eterno</option>
+        </select>
+        <p class="small" id="officialDifficultyDesc"></p>
+        <label class="field-label" for="officialStartFood" data-i18n="officialStartFoodLabel">Comida Inicial</label>
+        <input type="number" id="officialStartFood" value="20">
+        <label class="field-label" for="officialStartExhaustion" data-i18n="officialStartExhaustionLabel">Limite de Exaustão Inicial</label>
+        <input type="number" id="officialStartExhaustion" value="15">
+        <p class="small" data-i18n="officialConfigHint">Os valores acima são preenchidos automaticamente pelo nível escolhido, mas você pode ajustá-los manualmente. Figuras por tabuleiro, comida por figura e construções descartadas por rodada também podem ser ajustadas depois, na tela do jogo.</p>
+        <button class="primary" onclick="startGame()" data-i18n="officialStartBtn">Iniciar Modo Solo Oficial</button>
+    </div>
+    </div>
+
+    <div id="game-area" class="hidden">
+        <div class="card automa-only">
+            <h2>
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-6 8-6s8 2 8 6"/></svg>
+                <span data-i18n="statusTitle">Status do Automa</span> <span id="roundLabel" style="margin-left:auto; font-size:0.55em; color:var(--text-dim);"></span>
+            </h2>
+            <div class="status-grid">
+                <div class="status-box">
+                    <div class="label"><svg class="icon" style="width:1.1em;height:1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 21h8M12 17v4M7 4h10v3a5 5 0 0 1-10 0V4Z"/><path d="M17 5h2a2 2 0 0 1 2 2c0 2-2 3-4 3M7 5H5a2 2 0 0 0-2 2c0 2 2 3 4 3"/></svg><span data-i18n="statScoreLabel">Pontos</span></div>
+                    <div class="value" id="statScore">0</div>
+                    <div class="adjust-row"><button class="btn-small" onclick="adjust('score',-1)">−</button><button class="btn-small" onclick="adjust('score',1)">+</button></div>
+                </div>
+                <div class="status-box">
+                    <div class="label"><svg class="icon" style="width:1.1em;height:1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="3"/><path d="M2 21c0-3.5 3-5 7-5s7 1.5 7 5"/><circle cx="17" cy="8" r="2.4"/><path d="M15.5 21c.2-2.6 1.8-4 4-4.3"/></svg><span data-i18n="statWorkersLabel">Trabalhadores</span></div>
+                    <div class="value" id="statWorkers">5</div>
+                    <div class="adjust-row"><button class="btn-small" onclick="adjust('workers',-1)">−</button><button class="btn-small" onclick="adjust('workers',1)">+</button></div>
+                </div>
+                <div class="status-box">
+                    <div class="label"><svg class="icon" style="width:1.1em;height:1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 3.5 20.5 9.5 9.5 20.5 3.5 14.5Z"/><path d="M3.5 14.5 7 18"/></svg><span data-i18n="statToolsLabel">Ferramentas</span></div>
+                    <div class="value" id="statTools">0</div>
+                    <div class="adjust-row"><button class="btn-small" onclick="adjust('tools',-1)">−</button><button class="btn-small" onclick="adjust('tools',1)">+</button></div>
+                </div>
+                <div class="status-box">
+                    <div class="label"><svg class="icon" style="width:1.1em;height:1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21c0-6 3-9 3-9s3 3 3 9M12 21c0-6-3-9-3-9s-3 3-3 9M12 3v6"/></svg><span data-i18n="statAgriLabel">Agricultura</span></div>
+                    <div class="value" id="statAgri">0</div>
+                    <div class="adjust-row"><button class="btn-small" onclick="adjust('agriculture',-1)">−</button><button class="btn-small" onclick="adjust('agriculture',1)">+</button></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card automa-only">
+            <h2><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12h18M3 6h18M3 18h18"/></svg><span data-i18n="roundCardTitle">Rodada</span></h2>
+            <label style="display:flex; align-items:center; gap:10px; font-size:0.95em; font-weight:normal; color:var(--text);">
+                <input type="checkbox" id="soloHasWorkers" checked onchange="onSoloToggle()" style="width:20px;height:20px;accent-color:var(--blue);">
+                <span data-i18n="soloCheckboxLabel">Jogador solo ainda tem trabalhadores não alocados</span>
+            </label>
+            <p class="small" style="margin:6px 0 0;" data-i18n="soloCheckboxHint">O automa só aloca enquanto esta caixa estiver marcada. Toque em um local abaixo para marcá-lo como ocupado pelo jogador solo (bloqueia o automa).</p>
+            <div class="loc-grid" id="locGrid"></div>
+
+            <button class="primary" id="btnRoll" onclick="rollAutoma()" data-i18n="rollBtn">Rolar Alocação do Automato (2d6)</button>
+            <div class="dice-container">
+                <div class="die" id="die1">-</div>
+                <div class="die" id="die2">-</div>
+            </div>
+            <div class="result-title" data-i18n="locationResultLabel">Local do Automato:</div>
+            <div class="result-location" id="location" data-i18n="waitingRoll">Aguardando rolagem...</div>
+            <div class="result-effect" id="effect"></div>
+            <div class="fallback" id="fallback"></div>
+
+            <div id="pendingPanel"></div>
+
+            <button class="btn-secondary" onclick="newRound()" data-i18n="endRoundBtn">Encerrar Rodada / Nova Rodada</button>
+        </div>
+
+        <div class="card automa-only">
+            <h2><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/></svg><span data-i18n="logTitle">Histórico</span></h2>
+            <div class="log-panel" id="logPanel"></div>
+        </div>
+
+        <div class="card official-only" id="officialEndBannerWrap" style="display:none;"></div>
+
+        <div class="card official-only">
+            <h2>
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-6 8-6s8 2 8 6"/></svg>
+                <span data-i18n="officialStatusTitle">Status da Sobrevivência</span> <span id="officialRoundLabel" style="margin-left:auto; font-size:0.55em; color:var(--text-dim);"></span>
+            </h2>
+            <div class="status-grid">
+                <div class="status-box">
+                    <div class="label"><svg class="icon" style="width:1.1em;height:1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21c0-6 3-9 3-9s3 3 3 9M12 21c0-6-3-9-3-9s-3 3-3 9M12 3v6"/></svg><span data-i18n="officialFoodLabel">Comida</span></div>
+                    <div class="value" id="officialFood">20</div>
+                    <div class="adjust-row"><button class="btn-small" onclick="officialAdjust('food',-1)">−</button><button class="btn-small" onclick="officialAdjust('food',1)">+</button></div>
+                </div>
+                <div class="status-box">
+                    <div class="label"><svg class="icon" style="width:1.1em;height:1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 3.5 20.5 9.5 9.5 20.5 3.5 14.5Z"/><path d="M3.5 14.5 7 18"/></svg><span data-i18n="officialExhaustionLabel">Exaustão</span></div>
+                    <div class="value exhaustion-value" id="officialExhaustion">15</div>
+                    <div class="adjust-row"><button class="btn-small" onclick="officialAdjust('exhaustion',-1)">−</button><button class="btn-small" onclick="officialAdjust('exhaustion',1)">+</button></div>
+                </div>
+                <div class="status-box">
+                    <div class="label"><svg class="icon" style="width:1.1em;height:1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21c0-6 3-9 3-9s3 3 3 9M12 21c0-6-3-9-3-9s-3 3-3 9M12 3v6"/></svg><span data-i18n="officialAgriLabel">Agricultura</span></div>
+                    <div class="value" id="officialAgri">0</div>
+                    <div class="adjust-row"><button class="btn-small" onclick="officialAdjust('agriculture',-1)">−</button><button class="btn-small" onclick="officialAdjust('agriculture',1)">+</button></div>
+                </div>
+                <div class="status-box">
+                    <div class="label"><svg class="icon" style="width:1.1em;height:1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="3"/><path d="M2 21c0-3.5 3-5 7-5s7 1.5 7 5"/><circle cx="17" cy="8" r="2.4"/><path d="M15.5 21c.2-2.6 1.8-4 4-4.3"/></svg><span data-i18n="officialFiguresLabel">Figuras no Tabuleiro</span></div>
+                    <div class="value" id="officialFigures">8</div>
+                    <div class="adjust-row"><button class="btn-small" onclick="officialAdjust('totalFigures',-1)">−</button><button class="btn-small" onclick="officialAdjust('totalFigures',1)">+</button></div>
+                </div>
+                <div class="status-box">
+                    <div class="label"><svg class="icon" style="width:1.1em;height:1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 21h8M12 17v4M7 4h10v3a5 5 0 0 1-10 0V4Z"/><path d="M17 5h2a2 2 0 0 1 2 2c0 2-2 3-4 3M7 5H5a2 2 0 0 0-2 2c0 2 2 3 4 3"/></svg><span data-i18n="officialFoodPerFigureLabel">Comida/Figura</span></div>
+                    <div class="value" id="officialFoodPerFigure">1</div>
+                    <div class="adjust-row"><button class="btn-small" onclick="officialAdjust('foodPerFigure',-1)">−</button><button class="btn-small" onclick="officialAdjust('foodPerFigure',1)">+</button></div>
+                </div>
+                <div class="status-box">
+                    <div class="label"><svg class="icon" style="width:1.1em;height:1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21V8l9-5 9 5v13"/><path d="M9 21v-6h6v6"/></svg><span data-i18n="officialBuildingsPileLabel">Construções Descartadas</span></div>
+                    <div class="value" id="officialBuildingsPile">0</div>
+                    <div class="adjust-row"><button class="btn-small" onclick="officialAdjust('buildingsPile',-1)">−</button><button class="btn-small" onclick="officialAdjust('buildingsPile',1)">+</button></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card official-only">
+            <h2><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21c0-6 3-9 3-9s3 3 3 9M12 21c0-6-3-9-3-9s-3 3-3 9M12 3v6"/></svg><span data-i18n="officialFeedingTitle">Fase de Alimentação</span></h2>
+            <p class="small" data-i18n="officialFeedingIntro">Selecione o tipo da carta coberta no espaço de custo 4 para calcular a comida extra devida nesta rodada.</p>
+            <label class="field-label" for="officialCost4Type" data-i18n="officialCost4TypeLabel">Tipo da Carta (espaço de custo 4)</label>
+            <select id="officialCost4Type" onchange="onOfficialCost4TypeChange()">
+                <option value="green" data-i18n="officialCardGreen">Verde (+4 Comida fixo)</option>
+                <option value="sorcerer" data-i18n="officialCardSorcerer">Feiticeiro (1/figura da cor com mais figuras)</option>
+                <option value="builder" data-i18n="officialCardBuilder">Construtor (1/construção descartada)</option>
+                <option value="farmer" data-i18n="officialCardFarmer">Fazendeiro (1/marcador de Agricultura)</option>
+                <option value="toolsmith" data-i18n="officialCardToolsmith">Ferramenteiro (1/ferramenta)</option>
+            </select>
+            <div id="officialCost4ValueWrap">
+                <label class="field-label" for="officialCost4Value" id="officialCost4ValueLabel"></label>
+                <input type="number" id="officialCost4Value" value="0" min="0" oninput="onOfficialCost4ValueInput()">
+            </div>
+            <p class="small" id="officialFeedingBreakdown" style="margin-top:10px;"></p>
+            <button class="primary" onclick="applyFeeding()" data-i18n="officialApplyFeedingBtn">Aplicar Alimentação</button>
+        </div>
+
+        <div class="card official-only">
+            <h2><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 21V8l9-5 9 5v13"/><path d="M9 21v-6h6v6"/></svg><span data-i18n="officialRoundCardTitle">Rodada</span></h2>
+            <div data-i18n-html="officialRoundReminders"></div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <button class="btn-small" style="flex:1;" onclick="discardBuilding()" data-i18n="officialDiscardBuildingBtn">Descartei a(s) Construção(ões)</button>
+                <button class="btn-small" style="flex:1;" onclick="cantDiscardBuilding()" data-i18n="officialCantDiscardBtn">Não Consegui Descartar (−3 Exaustão)</button>
+            </div>
+            <button class="btn-secondary" onclick="newRoundOfficial()" data-i18n="officialEndRoundBtn">Encerrar Rodada / Nova Rodada</button>
+            <button onclick="markOfficialWin()" data-i18n="officialMarkWinBtn">Fiquei sem Cartas de Civilização (Vitória!)</button>
+        </div>
+
+        <div class="card official-only">
+            <h2><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/></svg><span data-i18n="logTitle">Histórico</span></h2>
+            <div class="log-panel" id="officialLogPanel"></div>
+        </div>
+    </div>
+
+    <div class="credits">
+        <img src="stoneage.webp" alt="Stone Age">
+        <div class="credits-text automa-only" data-i18n-html="creditsText"></div>
+        <div class="credits-text official-only" data-i18n-html="creditsTextOfficial"></div>
+    </div>
+
+    <!-- Help Modal -->
+    <div id="helpModal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeHelp()">✕</button>
+            <h2 data-i18n="helpTitle">❓ Como funciona este assistente</h2>
+            <div class="automa-only" data-i18n-html="helpBody"></div>
+            <div class="official-only" data-i18n-html="helpBodyOfficial"></div>
+        </div>
+    </div>
+
+    <script>
+        // Forces iOS Safari to treat the first tap as a click instead of only "hovering" (WebKit quirk).
+        document.addEventListener('touchstart', function(){}, {passive: true});
+
+        function openHelp(){ document.getElementById('helpModal').classList.add('open'); }
+        function closeHelp(){ document.getElementById('helpModal').classList.remove('open'); }
+
+        const LOCATIONS = {
+            2: { name: {pt:"Pedreira (Pedra)", en:"Stone Quarry"}, type: "resource", resource: "stone" },
+            3: { name: {pt:"Mina de Ouro", en:"Gold Mine"}, type: "resource", resource: "gold" },
+            4: { name: {pt:"Cabana de Ferramentas", en:"Toolmaker's Hut"}, type: "tool" },
+            5: { name: {pt:"Cabana de Acasalamento", en:"Hut of Procreation"}, type: "mating" },
+            6: { name: {pt:"Civilização (Custo 1)", en:"Civilization (Cost 1)"}, type: "civ" },
+            7: { name: {pt:"Civilização (Custo 2)", en:"Civilization (Cost 2)"}, type: "civ" },
+            8: { name: {pt:"Cabana de Agricultura", en:"Agriculture Hut"}, type: "agri" },
+            9: { name: {pt:"1ª Construção", en:"1st Building"}, type: "building" },
+            10: { name: {pt:"2ª Construção", en:"2nd Building"}, type: "building" },
+            11: { name: {pt:"Floresta (Madeira)", en:"Forest (Wood)"}, type: "resource", resource: "wood" },
+            12: { name: {pt:"Barreira de Barro", en:"Clay Mound"}, type: "resource", resource: "clay" }
+        };
+        const RESOURCE_POINTS = { wood: 1, clay: 2, stone: 3, gold: 4 };
+        const RESOURCE_LABEL = { wood: {pt:"Madeira",en:"Wood"}, clay: {pt:"Barro",en:"Clay"}, stone: {pt:"Pedra",en:"Stone"}, gold: {pt:"Ouro",en:"Gold"} };
+        const STORAGE_KEY = "stoneage_state_v3"; // bumped: state now carries a `mode` field (automa | official) with different shapes
+        const LANG_KEY = "stoneage_lang_v1";
+        const PENDING_MODE_KEY = "stoneage_pending_mode_v1";
+
+        const OFFICIAL_DIFFICULTY = {
+            1: { food: 20, exhaustion: 15, figures: 8, foodPerFigure: 1, buildingsPerRound: 1 },
+            2: { food: 20, exhaustion: 15, figures: 8, foodPerFigure: 1, buildingsPerRound: 2 },
+            3: { food: 25, exhaustion: 10, figures: 12, foodPerFigure: 2, buildingsPerRound: 1 },
+            4: { food: 20, exhaustion: 10, figures: 8, foodPerFigure: 1, buildingsPerRound: 1 }
+        };
+
+        const I18N = {
+            pt: {
+                heroTitle: "Assistente Automa",
+                setupTitle: "Componentes Físicos (Setup)",
+                setupIntro: "Transcrito da variante solo original — prepare a mesa assim antes de iniciar:",
+                setupAutomaHeading: "🤖 Jogador Automático",
+                setupAutomaBody: `<ul class="setup-list rules-list">
+                    <li>Pegue um <strong>tabuleiro individual</strong> extra e coloque nele <strong>5 trabalhadores</strong> de uma cor disponível (não usada pelos jogadores humanos).</li>
+                    <li>Coloque o <strong>cubo de agricultura</strong> dessa cor na posição inicial (0) da trilha de agricultura do tabuleiro do Automa.</li>
+                    <li>Coloque o <strong>marcador de pontos</strong> dessa cor na trilha de pontuação, na posição escolhida como pontuação inicial (dificuldade) — ajuste esse valor no campo abaixo.</li>
+                    <li>O Automa <strong>não administra recursos</strong> e <strong>não participa da fase de alimentação</strong>. A trilha de agricultura e o número de trabalhadores contam apenas para a pontuação final.</li>
+                </ul>`,
+                setupSoloHeading: "🙂 Jogador Solo (você)",
+                setupSoloBody: `<ul class="setup-list rules-list">
+                    <li>Pegue um tabuleiro de jogador normal e coloque <strong>5 trabalhadores</strong> de uma cor disponível.</li>
+                    <li>Coloque seu cubo de agricultura na posição inicial (0) e seu marcador de pontos em 0.</li>
+                </ul>`,
+                setupCivHeading: "📜 Cartas de Civilização",
+                setupCivBody: `<ul class="setup-list rules-list">
+                    <li>Embaralhe o baralho e coloque-o virado para baixo no espaço de custo = 3 recursos.</li>
+                    <li>Revele 2 cartas nos espaços de custo = 1 e custo = 2 recursos.</li>
+                    <li>Diferente do jogo normal: ao fim de cada rodada, cartas não adquiridas são descartadas e 2 novas são reveladas.</li>
+                </ul>`,
+                setupFinish: "Finalize a preparação do restante do tabuleiro (construções, trilha de comida, etc.) como de costume.",
+                matchConfigTitle: "Configuração da Partida",
+                initialScoreLabel: "Pontuação inicial do Automa (dificuldade)",
+                initialScoreHint: "Dica: se na última partida você venceu por 30 pontos, coloque 40 aqui para aumentar a dificuldade.",
+                startBtn: "Iniciar Nova Partida",
+                resetBtn: "🔄 Nova Partida",
+                resetConfirm: "Isso vai apagar o progresso da partida atual e voltar para a tela de configuração. Continuar?",
+                statusTitle: "Status do Automa",
+                statScoreLabel: "Pontos",
+                statWorkersLabel: "Trabalhadores",
+                statToolsLabel: "Ferramentas",
+                statAgriLabel: "Agricultura",
+                roundCardTitle: "Rodada",
+                soloCheckboxLabel: "Jogador solo ainda tem trabalhadores não alocados",
+                soloCheckboxHint: "O automa só aloca enquanto esta caixa estiver marcada. Toque em um local abaixo para marcá-lo como ocupado pelo jogador solo (bloqueia o automa).",
+                rollBtn: "Rolar Alocação do Automato (2d6)",
+                locationResultLabel: "Local do Automato:",
+                waitingRoll: "Aguardando rolagem...",
+                endRoundBtn: "Encerrar Rodada / Nova Rodada",
+                logTitle: "Histórico",
+                roundLabelPrefix: "Rodada ",
+                helpTitle: "❓ Como funciona este assistente",
+                helpBody: `
+                    <h3>O que este app faz</h3>
+                    <p>Ele substitui o segundo jogador humano por um <strong>Automa</strong> simplificado: a cada turno dele, você rola 2d6 aqui no app, que calcula o local do tabuleiro onde ele "trabalharia" e converte o resultado diretamente em pontos, seguindo a variante solo criada por César Augusto Borja.</p>
+                    <h3>Passo a passo de uma rodada</h3>
+                    <ul class="rules-list">
+                        <li>Enquanto você (jogador solo) ainda tiver trabalhadores não alocados, mantenha a caixinha marcada — o Automa só joga enquanto ela estiver marcada.</li>
+                        <li>Toque em "Rolar Alocação do Automato" para rolar 2d6 pelo Automa. O app já calcula automaticamente o próximo local livre, caso o local sorteado já esteja ocupado.</li>
+                        <li>Se o local for um recurso, ferramenta, acasalamento ou agricultura, os pontos/efeitos são aplicados automaticamente.</li>
+                        <li>Se for uma carta de civilização ou construção, revele a carta/peça física e use o formulário que aparece para resolver a bonificação em pontos.</li>
+                        <li>Toque em algum local do grid para marcá-lo manualmente como ocupado por você (isso bloqueia o Automa de usá-lo, exatamente como no jogo físico).</li>
+                        <li>Ao final da rodada, toque em "Encerrar Rodada / Nova Rodada" para liberar todos os locais novamente.</li>
+                    </ul>
+                    <h3>Lembretes de Regras</h3>
+                    <ul class="rules-list">
+                        <li><strong>Primeiro jogador:</strong> o Automa é sempre o primeiro a jogar em toda rodada.</li>
+                        <li><strong>Ordem:</strong> o Automa só aloca um trabalhador se você ainda tiver trabalhadores não alocados no seu tabuleiro.</li>
+                        <li><strong>Bloqueio de Recursos:</strong> locais de coleta (madeira, barro, pedra, ouro) só podem ser usados por um único jogador na rodada.</li>
+                        <li><strong>Regra N+2:</strong> o número máximo de trabalhadores que você pode colocar em um local com múltiplos espaços é N+2, sendo N os trabalhadores do Automa já alocados lá.</li>
+                        <li><strong>Ocupação:</strong> o Automa aloca apenas 1 trabalhador por vez, bloqueando o local inteiro, inclusive a cabana de acasalamento.</li>
+                        <li><strong>Fim do turno de alocação:</strong> quando todos os seus trabalhadores estiverem alocados, o turno termina, mesmo que o Automa ainda tenha trabalhadores livres.</li>
+                        <li><strong>Alimentação:</strong> ao fim de cada rodada, apenas você alimenta sua tribo. O Automa não participa da fase de alimentação.</li>
+                        <li><strong>Cartas de civilização:</strong> ao fim de cada rodada, cartas não adquiridas são descartadas e 2 novas são reveladas.</li>
+                        <li><strong>Fim de partida:</strong> a partida termina se o monte de cartas de civilização acabar ou se todas as construções forem adquiridas.</li>
+                        <li><strong>Pontuação final:</strong> use as mesmas regras de pontuação final do jogo para 2 jogadores.</li>
+                    </ul>
+                    <h3>Civilização e Construções</h3>
+                    <p>O Automa nunca administra recursos de verdade — tudo vira pontos na hora, segundo esta tabela de conversão:</p>
+                    <table>
+                        <tr><th>Recurso</th><th>Pontos por unidade</th></tr>
+                        <tr><td><span class="res-cell"><svg class="loc-icon" viewBox="0 0 24 24" fill="none" stroke="var(--wood)" stroke-width="2"><path d="M12 2v20M8 6l4-4 4 4M8 12l4-4 4 4M8 18l4-4 4 4"/></svg>Madeira</span></td><td style="text-align:center;">1</td></tr>
+                        <tr><td><span class="res-cell"><svg class="loc-icon" viewBox="0 0 24 24" fill="none" stroke="var(--clay)" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>Barro</span></td><td style="text-align:center;">2</td></tr>
+                        <tr><td><span class="res-cell"><svg class="loc-icon" viewBox="0 0 24 24" fill="none" stroke="var(--stone)" stroke-width="2"><path d="M4 15 9 4h6l5 11-3 5H7Z"/></svg>Pedra</span></td><td style="text-align:center;">3</td></tr>
+                        <tr><td><span class="res-cell"><svg class="loc-icon" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><path d="M12 2 2 9l10 13L22 9Z"/></svg>Ouro</span></td><td style="text-align:center;">4</td></tr>
+                    </table>
+                    <ul class="rules-list">
+                        <li><strong>Bônus de Pontos:</strong> a carta dá uma quantidade fixa de pontos impressa nela.</li>
+                        <li><strong>Bônus de Recurso Único:</strong> a carta dá X unidades de um único tipo de recurso (às vezes à sua escolha). Escolha sempre o recurso de <strong>maior valor</strong> disponível — <em>ex.: "2 recursos quaisquer" = 2 Ouros = 2 × 4 = 8 pontos</em>.</li>
+                        <li><strong>Bônus de Recursos Diversos (2 dados):</strong> role os 2 dados pelo botão dedicado; o recurso indicado pela carta física para o <strong>maior</strong> valor sorteado é o que o Automa recebe.</li>
+                        <li><strong>Bônus de Comida:</strong> a quantidade de comida da carta vira pontos na mesma proporção (3 comidas = 3 pontos).</li>
+                        <li><strong>Bônus de Agricultura:</strong> avança 1 espaço na trilha de agricultura do Automa.</li>
+                        <li><strong>Bônus de Ferramenta:</strong> o Automa recebe a próxima ferramenta (máximo 3) — só conta para a pontuação final.</li>
+                        <li><strong>Bônus de Carta:</strong> o Automa compra imediatamente outra carta de civilização e resolve a bonificação dela em seguida.</li>
+                        <li><strong>Construção de pontuação fixa:</strong> digite os pontos impressos na peça.</li>
+                        <li><strong>Construção 4x / 5x / 7x:</strong> informe quantos dados a peça manda rolar e a soma vira os pontos da construção.</li>
+                    </ul>`,
+                creditsText: `Feito por <strong>Thiago Colletes de Carvalho</strong> (<a href="mailto:colletes@gmail.com">colletes@gmail.com</a>) — variante solo com Automa que pontua criada por <strong>César Augusto Borja</strong> (<a href="https://ludopedia.com.br/usuario/caborja" target="_blank" rel="noopener">Ludopedia</a>). Stone Age © Hans im Glück / Z-Man Games. Uso pessoal, sem fins comerciais.`,
+                civFormTitle: "Resolver Carta de Civilização: ",
+                civPointsLabel: "Bônus de Pontos",
+                applyPointsBtn: "Aplicar Pontos",
+                civResourceLabel: "Bônus de Recurso Único (maior valor se houver escolha)",
+                qtyPlaceholder: "Quantidade",
+                applyResourceBtn: "Aplicar Recurso",
+                civMixedLabel: "Bônus de Recursos Diversos (role 2 dados, maior número indica o recurso na carta)",
+                rollTwoDiceBtn: "Rolar 2 Dados",
+                applyIndicatedResourceBtn: "Aplicar Recurso Indicado",
+                civFoodLabel: "Bônus de Comida",
+                applyFoodBtn: "Aplicar Comida",
+                civAgriBtn: "Bônus de Agricultura (+1)",
+                civToolBtn: "Bônus de Ferramenta (+1)",
+                civDrawBtn: "Bônus de Carta (compra outra)",
+                buildingFormTitle: "Resolver Construção: ",
+                buildingFixedLabel: "Construção de Pontuação Fixa",
+                applyFixedPointsBtn: "Aplicar Pontos Fixos",
+                buildingDiceLabel: "Construção Variável (role N dados e some)",
+                diceCountPlaceholder: "Nº de dados (4, 5 ou 7)",
+                rollApplyBtn: "Rolar e Aplicar",
+                mixedRollResult: (d1,d2) => `Dados: ${d1} e ${d2} — use o maior para achar o recurso indicado na carta física.`,
+                resolvedSuffix: " (resolvido)",
+                alertNoWorkers: "O jogador solo não tem mais trabalhadores disponíveis — o Automa não aloca mais nesta rodada.",
+                alertPendingFirst: "Resolva a alocação pendente antes de rolar novamente.",
+                diceSumLabel: (sum) => `Soma dos dados: ${sum}`,
+                diceSumAdvanced: (sum, landed) => `Soma dos dados: ${sum} (local ocupado) &rarr; avançou até o próximo local livre: <strong>${landed}</strong>`,
+                effectPoints: (pts, resLabel) => `+${pts} ponto(s) (${resLabel})`,
+                effectTool: (n) => `Ferramenta obtida (total: ${n})`,
+                effectMating: (n) => `+1 trabalhador (total: ${n})`,
+                effectAgri: (n) => `Agricultura avança para ${n}`,
+                effectCivPending: "Resolva a carta de civilização abaixo.",
+                effectBuildingPending: "Resolva a construção abaixo.",
+                logGameStarted: (score) => `Partida iniciada. Automa começa com ${score} pontos.`,
+                logMarkedOccupied: (pos,name) => `Você marcou o local ${pos} (${name}) como ocupado.`,
+                logAllocatedResource: (pos,name,pts) => `Automa alocou em [${pos}] ${name}: +${pts} pontos.`,
+                logAllocatedTool: (pos,n) => `Automa alocou em [${pos}] Cabana de Ferramentas: ferramenta ${n}.`,
+                logAllocatedMating: (pos,n) => `Automa alocou em [${pos}] Cabana de Acasalamento: +1 trabalhador (total: ${n}).`,
+                logAllocatedAgri: (pos,n) => `Automa alocou em [${pos}] Cabana de Agricultura: agricultura +1 (total: ${n}).`,
+                logCivPoints: (name,pts) => `Carta de civilização (${name}): +${pts} pontos diretos.`,
+                logCivResource: (name,qty,resLabel,pts) => `Carta de civilização (${name}): ${qty}x ${resLabel} = +${pts} pontos.`,
+                logCivFood: (name,qty) => `Carta de civilização (${name}): +${qty} pontos (comida).`,
+                logCivAgri: (name) => `Carta de civilização (${name}): agricultura +1.`,
+                logCivTool: (name,n) => `Carta de civilização (${name}): ferramenta obtida (total: ${n}).`,
+                logCivMixed: (name,resLabel,pts) => `Carta de civilização (${name}, recursos diversos): ${resLabel} = +${pts} pontos.`,
+                logCivDraw: (name) => `Carta de civilização (${name}): Automa comprou uma nova carta — resolva sua bonificação imediatamente.`,
+                logBuildingFixed: (name,pts) => `Construção (${name}): +${pts} pontos fixos.`,
+                logBuildingDice: (name,n,rolls,sum) => `Construção (${name}): rolou ${n}d6 [${rolls.join(', ')}] = +${sum} pontos.`,
+                logNewRound: (round) => `--- Nova rodada (${round}). Lembre-se de alimentar sua tribo. ---`,
+
+                modeSelectTitle: "Escolha o Modo de Jogo",
+                modeAutomaTitle: "🤖 Automa (variante de César Borja)",
+                modeAutomaDesc: "Um segundo jogador virtual ocupa espaços do tabuleiro por você e converte os bônus em pontos automaticamente.",
+                modeOfficialTitle: "🧭 Modo Solo Oficial (Sobrevivência)",
+                modeOfficialDesc: "Você controla as 4 cores sozinho e tenta sobreviver o máximo possível antes que sua Exaustão chegue a zero. Pontos de Vitória não contam neste modo.",
+
+                officialSetupCivHeading: "📜 Cartas de Civilização",
+                officialSetupCivBody: `<ul class="setup-list rules-list">
+                    <li>Revele 2 cartas nos espaços de custo = 1 e custo = 2 recursos, como no jogo normal.</li>
+                    <li>Revele também uma carta no espaço de custo = 4 recursos, mas <strong>cubra os símbolos de custo dela</strong> (com uma ficha, marcador ou o dedo por cima) — essa carta nunca poderá ser comprada. Anote apenas o <strong>tipo</strong> dela (Verde, Feiticeiro, Construtor, Fazendeiro ou Ferramenteiro): ele determina a comida extra que você deve pagar ao fim da rodada.</li>
+                    <li>O espaço de custo = 3 recursos <strong>permanece vazio durante toda a partida</strong>.</li>
+                    <li>Ao fim de cada rodada, descarte as cartas não compradas dos espaços de custo 1, 2 e 4, e revele novas cartas (incluindo uma nova carta coberta no espaço de custo 4).</li>
+                </ul>`,
+                officialSetupBoardHeading: "🙂 Tabuleiro de Jogador",
+                officialSetupBoardBody: `<ul class="setup-list rules-list">
+                    <li>Ao contrário do jogo normal, você não escolhe uma cor — pegue <strong>2 figuras de CADA uma das 4 cores</strong> (8 figuras no total, ou 12 no Nível 3) e coloque-as no seu tabuleiro de jogador.</li>
+                    <li>Pegue a quantidade de Comida indicada pelo nível de dificuldade escolhido (veja o card de configuração abaixo).</li>
+                </ul>`,
+                officialSetupBuildingsHeading: "🏛️ Construções",
+                officialSetupBuildingsBody: `<ul class="setup-list rules-list">
+                    <li>Separe as 3 construções com custo de 1 a 7 recursos e coloque-as diretamente ao lado do seu tabuleiro — elas já fazem parte do seu jogo desde o início, sem precisar ser "compradas".</li>
+                    <li>Embaralhe as construções restantes e forme 2 pilhas de 7 peças cada nos espaços centrais do tabuleiro principal, como de costume.</li>
+                </ul>`,
+                officialSetupMeeplesHeading: "🧍 Figuras (Meeples)",
+                officialSetupMeeplesBody: `<ul class="setup-list rules-list">
+                    <li>Coloque 1 meeple de cada uma das 4 cores no espaço 1 da trilha de pontuação — eles representam a <strong>ordem de iniciativa</strong> de cada rodada, não pontos de vitória.</li>
+                    <li>Separe uma reserva geral de 5 meeples de cada cor perto do tabuleiro, para uso durante a partida.</li>
+                </ul>`,
+                officialSetupTracksHeading: "📊 Trilhas de Pontuação e Agricultura",
+                officialSetupTracksBody: `<ul class="setup-list rules-list">
+                    <li>Coloque um marcador de "Limite de Exaustão" no espaço da trilha de pontuação indicado pelo nível de dificuldade escolhido (15 ou 10) — se esse marcador chegar a 0, você perde imediatamente.</li>
+                    <li>Coloque seu marcador de Agricultura na posição inicial (0) da trilha de agricultura.</li>
+                </ul>`,
+
+                officialConfigTitle: "Configuração da Partida — Modo Oficial",
+                officialDifficultyLabel: "Nível de Dificuldade",
+                officialDiff1Title: "Nível 1 — Básico",
+                officialDiff1Desc: "20 Comida inicial, Limite de Exaustão em 15, 8 figuras (2 de cada cor), 1 Comida por figura, descarte 1 construção por rodada.",
+                officialDiff2Title: "Nível 2 — Noite Gélida",
+                officialDiff2Desc: "20 Comida inicial, Limite de Exaustão em 15, 8 figuras (2 de cada cor), 1 Comida por figura, descarte 2 construções por rodada.",
+                officialDiff3Title: "Nível 3 — Grande Tribo",
+                officialDiff3Desc: "25 Comida inicial, Limite de Exaustão em 10, 12 figuras (3 de cada cor), 2 Comida por figura, descarte 1 construção por rodada.",
+                officialDiff4Title: "Nível 4 — Inverno Eterno",
+                officialDiff4Desc: "20 Comida inicial, Limite de Exaustão em 10, 8 figuras (2 de cada cor), 1 Comida por figura, descarte 1 construção por rodada. Além disso, você só pode comprar 1 carta de civilização por rodada.",
+                officialStartFoodLabel: "Comida Inicial",
+                officialStartExhaustionLabel: "Limite de Exaustão Inicial",
+                officialConfigHint: "Os valores acima são preenchidos automaticamente pelo nível escolhido, mas você pode ajustá-los manualmente. Figuras por tabuleiro, comida por figura e construções descartadas por rodada também podem ser ajustadas depois, na tela do jogo.",
+                officialStartBtn: "Iniciar Modo Solo Oficial",
+
+                officialStatusTitle: "Status da Sobrevivência",
+                officialFoodLabel: "Comida",
+                officialExhaustionLabel: "Exaustão",
+                officialAgriLabel: "Agricultura",
+                officialFiguresLabel: "Figuras no Tabuleiro",
+                officialFoodPerFigureLabel: "Comida/Figura",
+                officialBuildingsPileLabel: "Construções Descartadas",
+
+                officialFeedingTitle: "Fase de Alimentação",
+                officialFeedingIntro: "Selecione o tipo da carta coberta no espaço de custo 4 para calcular a comida extra devida nesta rodada.",
+                officialCost4TypeLabel: "Tipo da Carta (espaço de custo 4)",
+                officialCardGreen: "🟢 Verde (+4 Comida fixo)",
+                officialCardSorcerer: "🧙 Feiticeiro (+1 Comida / figura da cor com mais figuras)",
+                officialCardBuilder: "🧱 Construtor (+1 Comida / construção descartada)",
+                officialCardFarmer: "🌾 Fazendeiro (+1 Comida / marcador de Agricultura)",
+                officialCardToolsmith: "🔨 Ferramenteiro (+1 Comida / ferramenta)",
+                officialCost4ValueLabelSorcerer: "Figuras da cor com mais figuras no tabuleiro",
+                officialCost4ValueLabelToolsmith: "Soma de todas as suas ferramentas",
+                officialApplyFeedingBtn: "Aplicar Alimentação",
+                officialFeedingBreakdown: (base, extra, owed, food) => `Base: ${base} (figuras × comida/figura) + Extra: ${extra} = <strong>${owed} Comida devida</strong>. Você tem ${food} Comida.`,
+
+                officialRoundCardTitle: "Rodada",
+                officialRoundReminders: `<ul class="rules-list">
+                    <li><strong>Fase 1 — Colocação:</strong> role um dado para cada figura que quiser colocar, na ordem determinada pelos marcadores de iniciativa (do menor para o maior); ao colocar uma figura, avance seu marcador de iniciativa para o final da fila.</li>
+                    <li><strong>Fase 2 — Ações:</strong> resolva as ações dos espaços ocupados, na mesma ordem em que as figuras foram colocadas.</li>
+                    <li><strong>Fase 3 — Alimentação:</strong> pague a Comida devida (calculada acima) e descarte a(s) construção(ões) indicada(s) pelo nível de dificuldade.</li>
+                </ul>`,
+                officialDiscardBuildingBtn: "Descartei a(s) Construção(ões)",
+                officialCantDiscardBtn: "Não Consegui Descartar (−3 Exaustão)",
+                officialEndRoundBtn: "Encerrar Rodada / Nova Rodada",
+                officialMarkWinBtn: "Fiquei sem Cartas de Civilização (Vitória!)",
+
+                officialLogGameStarted: (diffLabel, food, exhaustion) => `Modo Solo Oficial iniciado (${diffLabel}). Comida: ${food}, Limite de Exaustão: ${exhaustion}.`,
+                officialLogFeedingApplied: (owed, paid, shortfall) => shortfall > 0 ? `Alimentação: ${owed} Comida devida, ${paid} paga, Exaustão reduzida em ${shortfall}.` : `Alimentação: ${owed} Comida devida e paga integralmente.`,
+                officialLogDiscardBuilding: (n, total) => `Descartada(s) ${n} construção(ões) (total acumulado: ${total}).`,
+                officialLogCantDiscard: (exhaustion) => `Não foi possível descartar construção — Exaustão reduzida em 3 (agora: ${exhaustion}).`,
+                officialLogNewRound: (round) => `--- Nova rodada (${round}). Revele novas cartas de civilização e escolha o novo tipo da carta de custo 4. ---`,
+                officialLogWin: () => `Vitória! As cartas de civilização acabaram.`,
+                officialLogLoss: () => `Derrota — o Limite de Exaustão chegou a 0.`,
+                officialWinBanner: "🏆 Vitória! Você sobreviveu até as cartas de civilização acabarem.",
+                officialLoseBanner: "💀 Derrota — seu Limite de Exaustão chegou a 0.",
+
+                helpBodyOfficial: `
+                    <h3>O que este modo faz</h3>
+                    <p>Neste modo você joga sozinho com as 4 cores, sem um Automa oponente. O app funciona como um <strong>painel de controle</strong>: acompanha sua Comida, seu Limite de Exaustão, sua Agricultura e suas construções descartadas, além de calcular automaticamente a comida extra devida a cada rodada.</p>
+                    <h3>Estrutura de uma rodada</h3>
+                    <ul class="rules-list">
+                        <li><strong>Fase 1 (Colocação):</strong> role 1 dado para cada figura que for colocar, seguindo a ordem de iniciativa (menor primeiro); depois de colocar, mova seu marcador de iniciativa para o fim da fila.</li>
+                        <li><strong>Fase 2 (Ações):</strong> resolva as ações dos espaços ocupados, na mesma ordem em que as figuras foram colocadas.</li>
+                        <li><strong>Fase 3 (Alimentação):</strong> escolha o tipo da carta coberta no espaço de custo 4, confira a comida devida calculada pelo app e toque em "Aplicar Alimentação". Se faltar comida, o app reduz automaticamente seu Limite de Exaustão pela diferença.</li>
+                        <li>Descarte a(s) construção(ões) indicada(s) pelo seu nível de dificuldade (toque no botão correspondente) — se não puder, toque em "Não Consegui Descartar" para perder 3 de Exaustão.</li>
+                        <li>Toque em "Encerrar Rodada / Nova Rodada" para avançar, revelar novas cartas de civilização e escolher o próximo tipo de carta de custo 4.</li>
+                    </ul>
+                    <h3>Comida Extra por Tipo de Carta (custo 4)</h3>
+                    <table>
+                        <tr><th>Tipo</th><th>Comida extra</th></tr>
+                        <tr><td>🟢 Verde</td><td style="text-align:center;">Fixo: +4</td></tr>
+                        <tr><td>🧙 Feiticeiro</td><td style="text-align:center;">+1 por figura da cor com mais figuras no tabuleiro</td></tr>
+                        <tr><td>🧱 Construtor</td><td style="text-align:center;">+1 por construção descartada até agora (acumulado)</td></tr>
+                        <tr><td>🌾 Fazendeiro</td><td style="text-align:center;">+1 por posição do marcador de Agricultura</td></tr>
+                        <tr><td>🔨 Ferramenteiro</td><td style="text-align:center;">+1 por ferramenta que você possui</td></tr>
+                    </table>
+                    <h3>Fim de Jogo</h3>
+                    <ul class="rules-list">
+                        <li><strong>Derrota:</strong> se seu Limite de Exaustão chegar a 0, a partida termina imediatamente (detectado automaticamente pelo app).</li>
+                        <li><strong>Vitória:</strong> se as cartas de civilização acabarem antes disso, toque em "Fiquei sem Cartas de Civilização" para declarar vitória.</li>
+                    </ul>`,
+                creditsTextOfficial: `Feito por <strong>Thiago Colletes de Carvalho</strong> (<a href="mailto:colletes@gmail.com">colletes@gmail.com</a>) — Modo Solo Oficial de Stone Age, tradução de <strong>Raphael Gurian</strong>. Stone Age © 2020 Hans im Glück Verlags-GmbH. Uso pessoal, sem fins comerciais.`
+            },
+            en: {
+                heroTitle: "Automa Assistant",
+                setupTitle: "Physical Components (Setup)",
+                setupIntro: "Transcribed from the original solo variant — set up the table like this before starting:",
+                setupAutomaHeading: "🤖 Automatic Player",
+                setupAutomaBody: `<ul class="setup-list rules-list">
+                    <li>Take an extra <strong>individual player board</strong> and place <strong>5 workers</strong> of an available color on it (not used by the human players).</li>
+                    <li>Place the <strong>agriculture cube</strong> of that color at the starting position (0) of the Automa's agriculture track.</li>
+                    <li>Place the <strong>score marker</strong> of that color on the scoring track, at the position chosen as the starting score (difficulty) — adjust that value in the field below.</li>
+                    <li>The Automa <strong>does not manage resources</strong> and <strong>does not take part in the feeding phase</strong>. The agriculture track and worker count are only used for its final score.</li>
+                </ul>`,
+                setupSoloHeading: "🙂 Solo Player (you)",
+                setupSoloBody: `<ul class="setup-list rules-list">
+                    <li>Take a normal player board and place <strong>5 workers</strong> of an available color.</li>
+                    <li>Place your agriculture cube at the starting position (0) and your score marker at 0.</li>
+                </ul>`,
+                setupCivHeading: "📜 Civilization Cards",
+                setupCivBody: `<ul class="setup-list rules-list">
+                    <li>Shuffle the deck and place it face down on the cost = 3 resources space.</li>
+                    <li>Reveal 2 cards on the cost = 1 and cost = 2 resources spaces.</li>
+                    <li>Unlike the normal game: at the end of each round, unclaimed cards are discarded and 2 new ones are revealed.</li>
+                </ul>`,
+                setupFinish: "Finish setting up the rest of the board (buildings, food track, etc.) as usual.",
+                matchConfigTitle: "Match Setup",
+                initialScoreLabel: "Automa's starting score (difficulty)",
+                initialScoreHint: "Tip: if you won your last game by 30 points, set this to 40 to raise the difficulty.",
+                startBtn: "Start New Game",
+                resetBtn: "🔄 New Game",
+                resetConfirm: "This will erase the current game's progress and return to the setup screen. Continue?",
+                statusTitle: "Automa Status",
+                statScoreLabel: "Score",
+                statWorkersLabel: "Workers",
+                statToolsLabel: "Tools",
+                statAgriLabel: "Agriculture",
+                roundCardTitle: "Round",
+                soloCheckboxLabel: "Solo player still has unplaced workers",
+                soloCheckboxHint: "The Automa only allocates while this box is checked. Tap a location below to mark it as occupied by the solo player (blocks the Automa from using it).",
+                rollBtn: "Roll Automa Allocation (2d6)",
+                locationResultLabel: "Automa's Location:",
+                waitingRoll: "Waiting for roll...",
+                endRoundBtn: "End Round / New Round",
+                logTitle: "History",
+                roundLabelPrefix: "Round ",
+                helpTitle: "❓ How this assistant works",
+                helpBody: `
+                    <h3>What this app does</h3>
+                    <p>It replaces the second human player with a simplified <strong>Automa</strong>: on its turn, you roll 2d6 here in the app, which works out the board location it would "work" and converts the result directly into points, following the solo variant created by César Augusto Borja.</p>
+                    <h3>Step-by-step for a round</h3>
+                    <ul class="rules-list">
+                        <li>While you (the solo player) still have unplaced workers, keep the checkbox checked — the Automa only plays while it's checked.</li>
+                        <li>Tap "Roll Automa Allocation" to roll 2d6 for the Automa. The app automatically advances to the next free location if the rolled one is already occupied.</li>
+                        <li>If the location is a resource, tool, mating, or agriculture space, points/effects are applied automatically.</li>
+                        <li>If it's a civilization card or building, reveal the matching physical card/piece and use the form that appears to resolve its bonus into points.</li>
+                        <li>Tap a location in the grid to manually mark it as occupied by you (this blocks the Automa from using it, exactly like on the physical board).</li>
+                        <li>At the end of the round, tap "End Round / New Round" to free up all locations again.</li>
+                    </ul>
+                    <h3>Rules Reminders</h3>
+                    <ul class="rules-list">
+                        <li><strong>First player:</strong> the Automa always goes first every round.</li>
+                        <li><strong>Order:</strong> the Automa only allocates a worker if you still have unplaced workers on your board.</li>
+                        <li><strong>Resource blocking:</strong> gathering locations (wood, clay, stone, gold) can only be used by a single player per round.</li>
+                        <li><strong>N+2 rule:</strong> the maximum number of workers you may place on a multi-space location is N+2, where N is the Automa's workers already there.</li>
+                        <li><strong>Occupation:</strong> the Automa allocates only 1 worker at a time, blocking the whole location, including the Hut of Procreation.</li>
+                        <li><strong>End of the allocation turn:</strong> once all your workers are placed, the turn ends, even if the Automa still has free workers.</li>
+                        <li><strong>Feeding:</strong> at the end of each round, only you feed your tribe. The Automa doesn't take part in the feeding phase.</li>
+                        <li><strong>Civilization cards:</strong> at the end of each round, unclaimed cards are discarded and 2 new ones are revealed.</li>
+                        <li><strong>End of game:</strong> the game ends if the civilization card deck runs out or all buildings are claimed.</li>
+                        <li><strong>Final scoring:</strong> use the same final-scoring rules as the 2-player game.</li>
+                    </ul>
+                    <h3>Civilization Cards & Buildings</h3>
+                    <p>The Automa never manages real resources — everything becomes points immediately, using this conversion table:</p>
+                    <table>
+                        <tr><th>Resource</th><th>Points per unit</th></tr>
+                        <tr><td><span class="res-cell"><svg class="loc-icon" viewBox="0 0 24 24" fill="none" stroke="var(--wood)" stroke-width="2"><path d="M12 2v20M8 6l4-4 4 4M8 12l4-4 4 4M8 18l4-4 4 4"/></svg>Wood</span></td><td style="text-align:center;">1</td></tr>
+                        <tr><td><span class="res-cell"><svg class="loc-icon" viewBox="0 0 24 24" fill="none" stroke="var(--clay)" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>Clay</span></td><td style="text-align:center;">2</td></tr>
+                        <tr><td><span class="res-cell"><svg class="loc-icon" viewBox="0 0 24 24" fill="none" stroke="var(--stone)" stroke-width="2"><path d="M4 15 9 4h6l5 11-3 5H7Z"/></svg>Stone</span></td><td style="text-align:center;">3</td></tr>
+                        <tr><td><span class="res-cell"><svg class="loc-icon" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><path d="M12 2 2 9l10 13L22 9Z"/></svg>Gold</span></td><td style="text-align:center;">4</td></tr>
+                    </table>
+                    <ul class="rules-list">
+                        <li><strong>Point bonus:</strong> the card gives a fixed amount of points printed on it.</li>
+                        <li><strong>Single resource bonus:</strong> the card gives X units of a single resource type (sometimes your choice). Always pick the <strong>highest-value</strong> resource available — <em>e.g. "2 of any resource" = 2 Gold = 2 × 4 = 8 points</em>.</li>
+                        <li><strong>Mixed resources bonus (2 dice):</strong> roll the 2 dice with the dedicated button; the resource indicated by the physical card for the <strong>higher</strong> die is what the Automa receives.</li>
+                        <li><strong>Food bonus:</strong> the card's food amount becomes points at the same rate (3 food = 3 points).</li>
+                        <li><strong>Agriculture bonus:</strong> advances 1 space on the Automa's agriculture track.</li>
+                        <li><strong>Tool bonus:</strong> the Automa receives the next tool (max 3) — only counts toward final scoring.</li>
+                        <li><strong>Card bonus:</strong> the Automa immediately draws another civilization card and resolves its bonus right after.</li>
+                        <li><strong>Fixed-score building:</strong> enter the points printed on the piece.</li>
+                        <li><strong>4x / 5x / 7x building:</strong> enter how many dice the piece calls for and the sum becomes the building's points.</li>
+                    </ul>`,
+                creditsText: `Made by <strong>Thiago Colletes de Carvalho</strong> (<a href="mailto:colletes@gmail.com">colletes@gmail.com</a>) — scoring Automa solo variant created by <strong>César Augusto Borja</strong> (<a href="https://ludopedia.com.br/usuario/caborja" target="_blank" rel="noopener">Ludopedia</a>). Stone Age © Hans im Glück / Z-Man Games. Personal, non-commercial use.`,
+                civFormTitle: "Resolve Civilization Card: ",
+                civPointsLabel: "Point Bonus",
+                applyPointsBtn: "Apply Points",
+                civResourceLabel: "Single Resource Bonus (highest value if a choice)",
+                qtyPlaceholder: "Quantity",
+                applyResourceBtn: "Apply Resource",
+                civMixedLabel: "Mixed Resources Bonus (roll 2 dice, higher number indicates the resource on the card)",
+                rollTwoDiceBtn: "Roll 2 Dice",
+                applyIndicatedResourceBtn: "Apply Indicated Resource",
+                civFoodLabel: "Food Bonus",
+                applyFoodBtn: "Apply Food",
+                civAgriBtn: "Agriculture Bonus (+1)",
+                civToolBtn: "Tool Bonus (+1)",
+                civDrawBtn: "Card Bonus (draws another)",
+                buildingFormTitle: "Resolve Building: ",
+                buildingFixedLabel: "Fixed-Score Building",
+                applyFixedPointsBtn: "Apply Fixed Points",
+                buildingDiceLabel: "Variable Building (roll N dice and sum)",
+                diceCountPlaceholder: "No. of dice (4, 5 or 7)",
+                rollApplyBtn: "Roll and Apply",
+                mixedRollResult: (d1,d2) => `Dice: ${d1} and ${d2} — use the higher one to find the resource indicated on the physical card.`,
+                resolvedSuffix: " (resolved)",
+                alertNoWorkers: "The solo player has no more available workers — the Automa won't allocate again this round.",
+                alertPendingFirst: "Resolve the pending allocation before rolling again.",
+                diceSumLabel: (sum) => `Dice sum: ${sum}`,
+                diceSumAdvanced: (sum, landed) => `Dice sum: ${sum} (location occupied) &rarr; advanced to the next free location: <strong>${landed}</strong>`,
+                effectPoints: (pts, resLabel) => `+${pts} point(s) (${resLabel})`,
+                effectTool: (n) => `Tool obtained (total: ${n})`,
+                effectMating: (n) => `+1 worker (total: ${n})`,
+                effectAgri: (n) => `Agriculture advances to ${n}`,
+                effectCivPending: "Resolve the civilization card below.",
+                effectBuildingPending: "Resolve the building below.",
+                logGameStarted: (score) => `Game started. The Automa begins with ${score} points.`,
+                logMarkedOccupied: (pos,name) => `You marked location ${pos} (${name}) as occupied.`,
+                logAllocatedResource: (pos,name,pts) => `The Automa allocated to [${pos}] ${name}: +${pts} points.`,
+                logAllocatedTool: (pos,n) => `The Automa allocated to [${pos}] Toolmaker's Hut: tool ${n}.`,
+                logAllocatedMating: (pos,n) => `The Automa allocated to [${pos}] Hut of Procreation: +1 worker (total: ${n}).`,
+                logAllocatedAgri: (pos,n) => `The Automa allocated to [${pos}] Agriculture Hut: agriculture +1 (total: ${n}).`,
+                logCivPoints: (name,pts) => `Civilization card (${name}): +${pts} direct points.`,
+                logCivResource: (name,qty,resLabel,pts) => `Civilization card (${name}): ${qty}x ${resLabel} = +${pts} points.`,
+                logCivFood: (name,qty) => `Civilization card (${name}): +${qty} points (food).`,
+                logCivAgri: (name) => `Civilization card (${name}): agriculture +1.`,
+                logCivTool: (name,n) => `Civilization card (${name}): tool obtained (total: ${n}).`,
+                logCivMixed: (name,resLabel,pts) => `Civilization card (${name}, mixed resources): ${resLabel} = +${pts} points.`,
+                logCivDraw: (name) => `Civilization card (${name}): the Automa drew a new card — resolve its bonus immediately.`,
+                logBuildingFixed: (name,pts) => `Building (${name}): +${pts} fixed points.`,
+                logBuildingDice: (name,n,rolls,sum) => `Building (${name}): rolled ${n}d6 [${rolls.join(', ')}] = +${sum} points.`,
+                logNewRound: (round) => `--- New round (${round}). Remember to feed your tribe. ---`,
+
+                modeSelectTitle: "Choose Your Game Mode",
+                modeAutomaTitle: "🤖 Automa (César Borja's variant)",
+                modeAutomaDesc: "A virtual second player occupies board spaces for you and automatically converts bonuses into points.",
+                modeOfficialTitle: "🧭 Official Solo Mode (Survival)",
+                modeOfficialDesc: "You control all 4 colors by yourself and try to survive as long as possible before your Exhaustion reaches zero. Victory Points don't count in this mode.",
+
+                officialSetupCivHeading: "📜 Civilization Cards",
+                officialSetupCivBody: `<ul class="setup-list rules-list">
+                    <li>Reveal 2 cards on the cost = 1 and cost = 2 resources spaces, just like in the normal game.</li>
+                    <li>Also reveal a card on the cost = 4 resources space, but <strong>cover its cost icons</strong> (with a token, marker, or your finger) — this card can never be bought. Just note its <strong>type</strong> (Green, Sorcerer, Builder, Farmer, or Toolsmith): it determines the extra food you must pay at the end of the round.</li>
+                    <li>The cost = 3 resources space <strong>stays empty for the entire game</strong>.</li>
+                    <li>At the end of each round, discard the unclaimed cards from the cost 1, 2, and 4 spaces, and reveal new ones (including a new covered card at cost 4).</li>
+                </ul>`,
+                officialSetupBoardHeading: "🙂 Player Board",
+                officialSetupBoardBody: `<ul class="setup-list rules-list">
+                    <li>Unlike the normal game, you don't choose a color — take <strong>2 figures of EACH of the 4 colors</strong> (8 total, or 12 at Level 3) and place them on your player board.</li>
+                    <li>Take the amount of Food indicated by the chosen difficulty level (see the setup card below).</li>
+                </ul>`,
+                officialSetupBuildingsHeading: "🏛️ Buildings",
+                officialSetupBuildingsBody: `<ul class="setup-list rules-list">
+                    <li>Set aside the 3 buildings costing 1 to 7 resources and place them directly next to your board — they're already part of your game from the start, no need to "buy" them.</li>
+                    <li>Shuffle the remaining building tiles and form 2 stacks of 7 tiles each on the central board spaces, as usual.</li>
+                </ul>`,
+                officialSetupMeeplesHeading: "🧍 Figures (Meeples)",
+                officialSetupMeeplesBody: `<ul class="setup-list rules-list">
+                    <li>Place 1 meeple of each of the 4 colors on space 1 of the scoring track — they represent each color's <strong>initiative order</strong> for the round, not victory points.</li>
+                    <li>Set aside a general supply of 5 meeples of each color near the board, for use during the game.</li>
+                </ul>`,
+                officialSetupTracksHeading: "📊 Scoring & Agriculture Tracks",
+                officialSetupTracksBody: `<ul class="setup-list rules-list">
+                    <li>Place an "Exhaustion Limit" marker on the scoring track space indicated by the chosen difficulty level (15 or 10) — if this marker reaches 0, you lose immediately.</li>
+                    <li>Place your Agriculture marker at the starting position (0) of the agriculture track.</li>
+                </ul>`,
+
+                officialConfigTitle: "Match Setup — Official Mode",
+                officialDifficultyLabel: "Difficulty Level",
+                officialDiff1Title: "Level 1 — Basic",
+                officialDiff1Desc: "20 starting Food, Exhaustion Limit at 15, 8 figures (2 of each color), 1 Food per figure, discard 1 building per round.",
+                officialDiff2Title: "Level 2 — Frosty Night",
+                officialDiff2Desc: "20 starting Food, Exhaustion Limit at 15, 8 figures (2 of each color), 1 Food per figure, discard 2 buildings per round.",
+                officialDiff3Title: "Level 3 — Big Tribe",
+                officialDiff3Desc: "25 starting Food, Exhaustion Limit at 10, 12 figures (3 of each color), 2 Food per figure, discard 1 building per round.",
+                officialDiff4Title: "Level 4 — Eternal Winter",
+                officialDiff4Desc: "20 starting Food, Exhaustion Limit at 10, 8 figures (2 of each color), 1 Food per figure, discard 1 building per round. Additionally, you may only buy 1 civilization card per round.",
+                officialStartFoodLabel: "Starting Food",
+                officialStartExhaustionLabel: "Starting Exhaustion Limit",
+                officialConfigHint: "The values above are auto-filled by the chosen level, but you can adjust them manually. Figures per board, food per figure, and buildings discarded per round can also be adjusted later, on the game screen.",
+                officialStartBtn: "Start Official Solo Mode",
+
+                officialStatusTitle: "Survival Status",
+                officialFoodLabel: "Food",
+                officialExhaustionLabel: "Exhaustion",
+                officialAgriLabel: "Agriculture",
+                officialFiguresLabel: "Figures on Board",
+                officialFoodPerFigureLabel: "Food/Figure",
+                officialBuildingsPileLabel: "Buildings Discarded",
+
+                officialFeedingTitle: "Feeding Phase",
+                officialFeedingIntro: "Select the type of the covered card on the cost-4 space to calculate the extra food owed this round.",
+                officialCost4TypeLabel: "Card Type (cost-4 space)",
+                officialCardGreen: "🟢 Green (+4 Food flat)",
+                officialCardSorcerer: "🧙 Sorcerer (+1 Food / figure of the color with most figures)",
+                officialCardBuilder: "🧱 Builder (+1 Food / discarded building)",
+                officialCardFarmer: "🌾 Farmer (+1 Food / Agriculture marker)",
+                officialCardToolsmith: "🔨 Toolsmith (+1 Food / tool)",
+                officialCost4ValueLabelSorcerer: "Figures of the color with the most figures on the board",
+                officialCost4ValueLabelToolsmith: "Sum of all your tools",
+                officialApplyFeedingBtn: "Apply Feeding",
+                officialFeedingBreakdown: (base, extra, owed, food) => `Base: ${base} (figures × food/figure) + Extra: ${extra} = <strong>${owed} Food owed</strong>. You have ${food} Food.`,
+
+                officialRoundCardTitle: "Round",
+                officialRoundReminders: `<ul class="rules-list">
+                    <li><strong>Phase 1 — Placement:</strong> roll one die for each figure you want to place, in the order determined by the initiative markers (lowest first); after placing a figure, move your initiative marker to the back of the line.</li>
+                    <li><strong>Phase 2 — Actions:</strong> resolve the actions of the occupied spaces, in the same order the figures were placed.</li>
+                    <li><strong>Phase 3 — Feeding:</strong> pay the Food owed (calculated above) and discard the building(s) indicated by your difficulty level.</li>
+                </ul>`,
+                officialDiscardBuildingBtn: "I Discarded the Building(s)",
+                officialCantDiscardBtn: "Couldn't Discard (−3 Exhaustion)",
+                officialEndRoundBtn: "End Round / New Round",
+                officialMarkWinBtn: "Ran Out of Civilization Cards (Victory!)",
+
+                officialLogGameStarted: (diffLabel, food, exhaustion) => `Official Solo Mode started (${diffLabel}). Food: ${food}, Exhaustion Limit: ${exhaustion}.`,
+                officialLogFeedingApplied: (owed, paid, shortfall) => shortfall > 0 ? `Feeding: ${owed} Food owed, ${paid} paid, Exhaustion reduced by ${shortfall}.` : `Feeding: ${owed} Food owed and paid in full.`,
+                officialLogDiscardBuilding: (n, total) => `Discarded ${n} building(s) (accumulated total: ${total}).`,
+                officialLogCantDiscard: (exhaustion) => `Could not discard a building — Exhaustion reduced by 3 (now: ${exhaustion}).`,
+                officialLogNewRound: (round) => `--- New round (${round}). Reveal new civilization cards and choose the new cost-4 card type. ---`,
+                officialLogWin: () => `Victory! The civilization cards ran out.`,
+                officialLogLoss: () => `Defeat — the Exhaustion Limit reached 0.`,
+                officialWinBanner: "🏆 Victory! You survived until the civilization cards ran out.",
+                officialLoseBanner: "💀 Defeat — your Exhaustion Limit reached 0.",
+
+                helpBodyOfficial: `
+                    <h3>What this mode does</h3>
+                    <p>In this mode you play alone with all 4 colors, with no Automa opponent. The app works as a <strong>control panel</strong>: it tracks your Food, Exhaustion Limit, Agriculture, and discarded buildings, and automatically calculates the extra food owed each round.</p>
+                    <h3>Structure of a round</h3>
+                    <ul class="rules-list">
+                        <li><strong>Phase 1 (Placement):</strong> roll 1 die for each figure you're placing, following initiative order (lowest first); after placing, move your initiative marker to the back of the line.</li>
+                        <li><strong>Phase 2 (Actions):</strong> resolve the actions of the occupied spaces, in the same order the figures were placed.</li>
+                        <li><strong>Phase 3 (Feeding):</strong> choose the type of the covered cost-4 card, check the food owed calculated by the app, and tap "Apply Feeding". If you're short on food, the app automatically reduces your Exhaustion Limit by the difference.</li>
+                        <li>Discard the building(s) indicated by your difficulty level (tap the matching button) — if you can't, tap "Couldn't Discard" to lose 3 Exhaustion.</li>
+                        <li>Tap "End Round / New Round" to advance, reveal new civilization cards, and choose the next cost-4 card type.</li>
+                    </ul>
+                    <h3>Extra Food by Card Type (cost 4)</h3>
+                    <table>
+                        <tr><th>Type</th><th>Extra food</th></tr>
+                        <tr><td>🟢 Green</td><td style="text-align:center;">Flat: +4</td></tr>
+                        <tr><td>🧙 Sorcerer</td><td style="text-align:center;">+1 per figure of the color with the most figures on the board</td></tr>
+                        <tr><td>🧱 Builder</td><td style="text-align:center;">+1 per building discarded so far (accumulated)</td></tr>
+                        <tr><td>🌾 Farmer</td><td style="text-align:center;">+1 per position of the Agriculture marker</td></tr>
+                        <tr><td>🔨 Toolsmith</td><td style="text-align:center;">+1 per tool you own</td></tr>
+                    </table>
+                    <h3>End of Game</h3>
+                    <ul class="rules-list">
+                        <li><strong>Defeat:</strong> if your Exhaustion Limit reaches 0, the game ends immediately (detected automatically by the app).</li>
+                        <li><strong>Victory:</strong> if the civilization cards run out before that, tap "Ran Out of Civilization Cards" to declare victory.</li>
+                    </ul>`,
+                creditsTextOfficial: `Made by <strong>Thiago Colletes de Carvalho</strong> (<a href="mailto:colletes@gmail.com">colletes@gmail.com</a>) — Stone Age Official Solo Mode, translated by <strong>Raphael Gurian</strong>. Stone Age © 2020 Hans im Glück Verlags-GmbH. Personal, non-commercial use.`
+            }
+        };
+
+        let lang = localStorage.getItem(LANG_KEY) || 'pt';
+        function S(){ return I18N[lang]; }
+        function t(key){ return I18N[lang][key]; }
+        function tr(obj){ return obj ? (obj[lang] !== undefined ? obj[lang] : obj.pt) : ''; }
+
+        function applyI18n(){
+            document.documentElement.lang = lang === 'pt' ? 'pt-BR' : 'en';
+            document.querySelectorAll('[data-i18n]').forEach(el => { const k = el.getAttribute('data-i18n'); if (I18N[lang][k] !== undefined) el.textContent = I18N[lang][k]; });
+            document.querySelectorAll('[data-i18n-html]').forEach(el => { const k = el.getAttribute('data-i18n-html'); if (I18N[lang][k] !== undefined) el.innerHTML = I18N[lang][k]; });
+            document.getElementById('langBtnPt').classList.toggle('active', lang === 'pt');
+            document.getElementById('langBtnEn').classList.toggle('active', lang === 'en');
+        }
+
+        function setLang(l){
+            lang = l;
+            localStorage.setItem(LANG_KEY, l);
+            applyI18n();
+            if (state) render();
+        }
+
+        let pendingMode = localStorage.getItem(PENDING_MODE_KEY) || 'automa';
+
+        function setMode(mode) {
+            pendingMode = mode;
+            localStorage.setItem(PENDING_MODE_KEY, mode);
+            syncModeUI(mode);
+        }
+
+        function syncModeUI(mode) {
+            document.body.classList.toggle('mode-official', mode === 'official');
+            document.body.classList.toggle('mode-automa', mode !== 'official');
+            document.getElementById('modeAutoma').checked = mode !== 'official';
+            document.getElementById('modeOfficial').checked = mode === 'official';
+        }
+
+        function onOfficialDifficultyChange() {
+            const difficulty = parseInt(document.getElementById('officialDifficulty').value) || 1;
+            const preset = OFFICIAL_DIFFICULTY[difficulty];
+            document.getElementById('officialStartFood').value = preset.food;
+            document.getElementById('officialStartExhaustion').value = preset.exhaustion;
+            document.getElementById('officialDifficultyDesc').innerText = S()['officialDiff' + difficulty + 'Desc'];
+        }
+
+        let state = null;
+
+        function defaultState(initialScore) {
+            return {
+                mode: 'automa',
+                round: 1,
+                score: initialScore,
+                workers: 5,
+                tools: 0,
+                agriculture: 0,
+                occupied: [],
+                soloHasWorkers: true,
+                pending: null,
+                log: [S().logGameStarted(initialScore)]
+            };
+        }
+
+        function defaultOfficialState(difficulty, preset, food, exhaustion) {
+            return {
+                mode: 'official',
+                round: 1,
+                difficulty: difficulty,
+                food: food,
+                exhaustion: exhaustion,
+                agriculture: 0,
+                totalFigures: preset.figures,
+                foodPerFigure: preset.foodPerFigure,
+                buildingsPile: 0,
+                buildingsPerRound: preset.buildingsPerRound,
+                cost4Type: 'green',
+                cost4Value: 0,
+                ended: null,
+                log: [S().officialLogGameStarted(S()['officialDiff' + difficulty + 'Title'], food, exhaustion)]
+            };
+        }
+
+        function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+
+        function startGame() {
+            if (pendingMode === 'official') {
+                const difficulty = parseInt(document.getElementById('officialDifficulty').value) || 1;
+                const preset = OFFICIAL_DIFFICULTY[difficulty];
+                const food = parseInt(document.getElementById('officialStartFood').value);
+                const exhaustion = parseInt(document.getElementById('officialStartExhaustion').value);
+                state = defaultOfficialState(difficulty, preset, isNaN(food) ? preset.food : food, isNaN(exhaustion) ? preset.exhaustion : exhaustion);
+            } else {
+                const initial = parseInt(document.getElementById('initialScore').value) || 0;
+                state = defaultState(initial);
+            }
+            save();
+            document.getElementById('setup-screen').classList.add('hidden');
+            document.getElementById('game-area').classList.remove('hidden');
+            document.getElementById('btnResetGame').classList.remove('hidden');
+            render();
+        }
+
+        function resetGame() {
+            if (!confirm(S().resetConfirm)) return;
+            localStorage.removeItem(STORAGE_KEY);
+            state = null;
+            document.getElementById('game-area').classList.add('hidden');
+            document.getElementById('btnResetGame').classList.add('hidden');
+            document.getElementById('setup-screen').classList.remove('hidden');
+            syncModeUI(pendingMode);
+        }
+
+        function logMsg(msg) {
+            state.log.unshift(msg);
+            if (state.log.length > 50) state.log.pop();
+        }
+
+        function adjust(field, delta) {
+            state[field] = Math.max(0, (state[field] || 0) + delta);
+            save();
+            render();
+        }
+
+        function onSoloToggle() {
+            state.soloHasWorkers = document.getElementById('soloHasWorkers').checked;
+            save();
+            render();
+        }
+
+        function toggleOccupied(pos) {
+            if (state.pending) return;
+            const idx = state.occupied.indexOf(pos);
+            if (idx === -1) {
+                state.occupied.push(pos);
+                logMsg(S().logMarkedOccupied(pos, tr(LOCATIONS[pos].name)));
+            } else {
+                state.occupied.splice(idx, 1);
+            }
+            save();
+            render();
+        }
+
+        function findLanding(sum) {
+            let pos = sum;
+            while (state.occupied.includes(pos)) {
+                pos++;
+                if (pos > 12) pos = 2;
+            }
+            return pos;
+        }
+
+        function rollAutoma() {
+            if (!state.soloHasWorkers) {
+                alert(S().alertNoWorkers);
+                return;
+            }
+            if (state.pending) {
+                alert(S().alertPendingFirst);
+                return;
+            }
+            const d1 = Math.floor(Math.random() * 6) + 1;
+            const d2 = Math.floor(Math.random() * 6) + 1;
+            const sum = d1 + d2;
+            const die1El = document.getElementById('die1');
+            const die2El = document.getElementById('die2');
+            die1El.innerText = d1;
+            die2El.innerText = d2;
+            die1El.classList.remove('rolled'); void die1El.offsetWidth; die1El.classList.add('rolled');
+            die2El.classList.remove('rolled'); void die2El.offsetWidth; die2El.classList.add('rolled');
+
+            const landed = findLanding(sum);
+            const loc = LOCATIONS[landed];
+            const locName = tr(loc.name);
+            document.getElementById('location').innerText = `[${landed}] - ${locName}`;
+            document.getElementById('fallback').innerHTML = landed === sum
+                ? S().diceSumLabel(sum)
+                : S().diceSumAdvanced(sum, landed);
+
+            state.occupied.push(landed);
+
+            let effectText = "";
+            if (loc.type === "resource") {
+                const pts = RESOURCE_POINTS[loc.resource];
+                state.score += pts;
+                effectText = S().effectPoints(pts, tr(RESOURCE_LABEL[loc.resource]));
+                logMsg(S().logAllocatedResource(landed, locName, pts));
+                state.pending = null;
+            } else if (loc.type === "tool") {
+                state.tools = Math.min(3, state.tools + 1);
+                effectText = S().effectTool(state.tools);
+                logMsg(S().logAllocatedTool(landed, state.tools));
+                state.pending = null;
+            } else if (loc.type === "mating") {
+                state.workers += 1;
+                effectText = S().effectMating(state.workers);
+                logMsg(S().logAllocatedMating(landed, state.workers));
+                state.pending = null;
+            } else if (loc.type === "agri") {
+                state.agriculture += 1;
+                effectText = S().effectAgri(state.agriculture);
+                logMsg(S().logAllocatedAgri(landed, state.agriculture));
+                state.pending = null;
+            } else if (loc.type === "civ") {
+                effectText = S().effectCivPending;
+                state.pending = { kind: "civ", pos: landed, name: loc.name };
+            } else if (loc.type === "building") {
+                effectText = S().effectBuildingPending;
+                state.pending = { kind: "building", pos: landed, name: loc.name };
+            }
+            document.getElementById('effect').innerText = effectText;
+
+            save();
+            render();
+        }
+
+        function resolveCivPoints() {
+            const pts = parseInt(document.getElementById('civPointsInput').value) || 0;
+            state.score += pts;
+            logMsg(S().logCivPoints(tr(state.pending.name), pts));
+            clearPending();
+        }
+        function resolveCivResource() {
+            const resource = document.getElementById('civResourceSelect').value;
+            const qty = parseInt(document.getElementById('civResourceQty').value) || 1;
+            const pts = RESOURCE_POINTS[resource] * qty;
+            state.score += pts;
+            logMsg(S().logCivResource(tr(state.pending.name), qty, tr(RESOURCE_LABEL[resource]), pts));
+            clearPending();
+        }
+        function resolveCivFood() {
+            const qty = parseInt(document.getElementById('civFoodQty').value) || 0;
+            state.score += qty;
+            logMsg(S().logCivFood(tr(state.pending.name), qty));
+            clearPending();
+        }
+        function resolveCivAgri() {
+            state.agriculture += 1;
+            logMsg(S().logCivAgri(tr(state.pending.name)));
+            clearPending();
+        }
+        function resolveCivTool() {
+            state.tools = Math.min(3, state.tools + 1);
+            logMsg(S().logCivTool(tr(state.pending.name), state.tools));
+            clearPending();
+        }
+        function resolveCivMixedRoll() {
+            const d1 = Math.floor(Math.random() * 6) + 1;
+            const d2 = Math.floor(Math.random() * 6) + 1;
+            document.getElementById('civMixedResult').innerText = S().mixedRollResult(d1, d2);
+        }
+        function resolveCivMixedConfirm() {
+            const resource = document.getElementById('civMixedResourceSelect').value;
+            const pts = RESOURCE_POINTS[resource];
+            state.score += pts;
+            logMsg(S().logCivMixed(tr(state.pending.name), tr(RESOURCE_LABEL[resource]), pts));
+            clearPending();
+        }
+        function resolveCivDraw() {
+            logMsg(S().logCivDraw(tr(state.pending.name)));
+            clearPending();
+        }
+        function resolveBuildingFixed() {
+            const pts = parseInt(document.getElementById('buildingFixedInput').value) || 0;
+            state.score += pts;
+            logMsg(S().logBuildingFixed(tr(state.pending.name), pts));
+            clearPending();
+        }
+        function resolveBuildingDice() {
+            const n = parseInt(document.getElementById('buildingDiceCount').value) || 4;
+            let sum = 0, rolls = [];
+            for (let i = 0; i < n; i++) { const r = Math.floor(Math.random() * 6) + 1; rolls.push(r); sum += r; }
+            state.score += sum;
+            logMsg(S().logBuildingDice(tr(state.pending.name), n, rolls, sum));
+            clearPending();
+        }
+        function clearPending() {
+            state.pending = null;
+            document.getElementById('effect').innerText += S().resolvedSuffix;
+            save();
+            render();
+        }
+
+        function newRound() {
+            state.round += 1;
+            state.occupied = [];
+            state.soloHasWorkers = true;
+            state.pending = null;
+            document.getElementById('die1').innerText = "-";
+            document.getElementById('die2').innerText = "-";
+            document.getElementById('location').innerText = S().waitingRoll;
+            document.getElementById('effect').innerText = "";
+            document.getElementById('fallback').innerHTML = "";
+            logMsg(S().logNewRound(state.round));
+            save();
+            render();
+        }
+
+        function renderPending() {
+            const panel = document.getElementById('pendingPanel');
+            if (!state.pending) { panel.innerHTML = ""; return; }
+            const name = tr(state.pending.name);
+            if (state.pending.kind === "civ") {
+                panel.innerHTML = `
+                    <div class="pending-form">
+                        <strong>${S().civFormTitle}${name}</strong>
+                        <label>${S().civPointsLabel}</label>
+                        <input type="number" id="civPointsInput" value="1" min="0">
+                        <button class="btn-small" onclick="resolveCivPoints()">${S().applyPointsBtn}</button>
+
+                        <label>${S().civResourceLabel}</label>
+                        <select id="civResourceSelect">
+                            <option value="gold">${tr(RESOURCE_LABEL.gold)} (4 pts/un.)</option>
+                            <option value="stone">${tr(RESOURCE_LABEL.stone)} (3 pts/un.)</option>
+                            <option value="clay">${tr(RESOURCE_LABEL.clay)} (2 pts/un.)</option>
+                            <option value="wood">${tr(RESOURCE_LABEL.wood)} (1 pt/un.)</option>
+                        </select>
+                        <input type="number" id="civResourceQty" value="1" min="1" placeholder="${S().qtyPlaceholder}">
+                        <button class="btn-small" onclick="resolveCivResource()">${S().applyResourceBtn}</button>
+
+                        <label>${S().civMixedLabel}</label>
+                        <button class="btn-small" onclick="resolveCivMixedRoll()">${S().rollTwoDiceBtn}</button>
+                        <div id="civMixedResult" style="font-size:0.85em; margin:4px 0; color:var(--text-dim);"></div>
+                        <select id="civMixedResourceSelect">
+                            <option value="gold">${tr(RESOURCE_LABEL.gold)} (4 pts)</option>
+                            <option value="stone">${tr(RESOURCE_LABEL.stone)} (3 pts)</option>
+                            <option value="clay">${tr(RESOURCE_LABEL.clay)} (2 pts)</option>
+                            <option value="wood">${tr(RESOURCE_LABEL.wood)} (1 pt)</option>
+                        </select>
+                        <button class="btn-small" onclick="resolveCivMixedConfirm()">${S().applyIndicatedResourceBtn}</button>
+
+                        <label>${S().civFoodLabel}</label>
+                        <input type="number" id="civFoodQty" value="1" min="0">
+                        <button class="btn-small" onclick="resolveCivFood()">${S().applyFoodBtn}</button>
+
+                        <div style="margin-top:8px;">
+                            <button class="btn-small" onclick="resolveCivAgri()">${S().civAgriBtn}</button>
+                            <button class="btn-small" onclick="resolveCivTool()">${S().civToolBtn}</button>
+                            <button class="btn-small" onclick="resolveCivDraw()">${S().civDrawBtn}</button>
+                        </div>
+                    </div>`;
+            } else if (state.pending.kind === "building") {
+                panel.innerHTML = `
+                    <div class="pending-form">
+                        <strong>${S().buildingFormTitle}${name}</strong>
+                        <label>${S().buildingFixedLabel}</label>
+                        <input type="number" id="buildingFixedInput" value="1" min="0">
+                        <button class="btn-small" onclick="resolveBuildingFixed()">${S().applyFixedPointsBtn}</button>
+
+                        <label>${S().buildingDiceLabel}</label>
+                        <input type="number" id="buildingDiceCount" value="4" min="1" max="7" placeholder="${S().diceCountPlaceholder}">
+                        <button class="btn-small" onclick="resolveBuildingDice()">${S().rollApplyBtn}</button>
+                    </div>`;
+            }
+        }
+
+        const LOC_ICONS = {
+            resource: '<svg class="loc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 2 9l10 13L22 9Z"/></svg>',
+            tool: '<svg class="loc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 3.5 20.5 9.5 9.5 20.5 3.5 14.5Z"/></svg>',
+            mating: '<svg class="loc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8Z"/></svg>',
+            civ: '<svg class="loc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/></svg>',
+            agri: '<svg class="loc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21c0-6 3-9 3-9s3 3 3 9M12 21c0-6-3-9-3-9s-3 3-3 9M12 3v6"/></svg>',
+            building: '<svg class="loc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21V8l9-5 9 5v13"/><path d="M9 21v-6h6v6"/></svg>'
+        };
+
+        function render() {
+            if (state.mode === 'official') renderOfficial();
+            else renderAutoma();
+        }
+
+        function renderAutoma() {
+            document.getElementById('roundLabel').innerText = `${S().roundLabelPrefix}${state.round}`;
+            document.getElementById('statScore').innerText = state.score;
+            document.getElementById('statWorkers').innerText = state.workers;
+            document.getElementById('statTools').innerText = state.tools;
+            document.getElementById('statAgri').innerText = state.agriculture;
+            document.getElementById('soloHasWorkers').checked = state.soloHasWorkers;
+            document.getElementById('btnRoll').disabled = !state.soloHasWorkers || !!state.pending;
+
+            const grid = document.getElementById('locGrid');
+            grid.innerHTML = '';
+            Object.keys(LOCATIONS).forEach(k => {
+                const pos = parseInt(k);
+                const loc = LOCATIONS[pos];
+                const occupied = state.occupied.includes(pos);
+                const resClass = loc.type === 'resource' ? `resource-${loc.resource}` : '';
+                const cell = document.createElement('div');
+                cell.className = `loc-cell ${resClass} ${occupied ? 'occupied' : ''}`;
+                cell.innerHTML = `<span class="num">${pos}</span>${LOC_ICONS[loc.type] || ''}${tr(loc.name)}`;
+                cell.onclick = () => toggleOccupied(pos);
+                grid.appendChild(cell);
+            });
+
+            document.getElementById('logPanel').innerHTML = state.log.map(l => `<div>${l}</div>`).join('');
+
+            renderPending();
+            save();
+        }
+
+        function officialAdjust(field, delta) {
+            state[field] = Math.max(0, (state[field] || 0) + delta);
+            save();
+            render();
+        }
+
+        function onOfficialCost4TypeChange() {
+            state.cost4Type = document.getElementById('officialCost4Type').value;
+            state.cost4Value = 0;
+            save();
+            render();
+        }
+
+        function onOfficialCost4ValueInput() {
+            state.cost4Value = parseInt(document.getElementById('officialCost4Value').value) || 0;
+            save();
+            render();
+        }
+
+        function officialCost4Extra() {
+            const type = state.cost4Type;
+            if (type === 'green') return 4;
+            if (type === 'builder') return state.buildingsPile;
+            if (type === 'farmer') return state.agriculture;
+            if (type === 'sorcerer' || type === 'toolsmith') return state.cost4Value || 0;
+            return 0;
+        }
+
+        function officialTotalOwed() {
+            return (state.totalFigures * state.foodPerFigure) + officialCost4Extra();
+        }
+
+        function applyFeeding() {
+            const owed = officialTotalOwed();
+            const paid = Math.min(state.food, owed);
+            const shortfall = owed - paid;
+            state.food -= paid;
+            if (shortfall > 0) state.exhaustion = Math.max(0, state.exhaustion - shortfall);
+            logMsg(S().officialLogFeedingApplied(owed, paid, shortfall));
+            save();
+            render();
+        }
+
+        function discardBuilding() {
+            state.buildingsPile += state.buildingsPerRound;
+            logMsg(S().officialLogDiscardBuilding(state.buildingsPerRound, state.buildingsPile));
+            save();
+            render();
+        }
+
+        function cantDiscardBuilding() {
+            state.exhaustion = Math.max(0, state.exhaustion - 3);
+            logMsg(S().officialLogCantDiscard(state.exhaustion));
+            save();
+            render();
+        }
+
+        function newRoundOfficial() {
+            state.round += 1;
+            state.cost4Value = 0;
+            logMsg(S().officialLogNewRound(state.round));
+            save();
+            render();
+        }
+
+        function markOfficialWin() {
+            state.ended = 'win';
+            logMsg(S().officialLogWin());
+            save();
+            render();
+        }
+
+        function renderOfficial() {
+            if (!state.ended && state.exhaustion <= 0) {
+                state.ended = 'loss';
+                logMsg(S().officialLogLoss());
+            }
+
+            document.getElementById('officialRoundLabel').innerText = `${S().roundLabelPrefix}${state.round}`;
+            document.getElementById('officialFood').innerText = state.food;
+            const exhEl = document.getElementById('officialExhaustion');
+            exhEl.innerText = state.exhaustion;
+            exhEl.classList.toggle('warn', state.exhaustion <= 3);
+            document.getElementById('officialAgri').innerText = state.agriculture;
+            document.getElementById('officialFigures').innerText = state.totalFigures;
+            document.getElementById('officialFoodPerFigure').innerText = state.foodPerFigure;
+            document.getElementById('officialBuildingsPile').innerText = state.buildingsPile;
+
+            document.getElementById('officialCost4Type').value = state.cost4Type;
+            const needsInput = state.cost4Type === 'sorcerer' || state.cost4Type === 'toolsmith';
+            document.getElementById('officialCost4ValueWrap').style.display = needsInput ? 'block' : 'none';
+            if (needsInput) {
+                document.getElementById('officialCost4ValueLabel').innerText = state.cost4Type === 'sorcerer' ? S().officialCost4ValueLabelSorcerer : S().officialCost4ValueLabelToolsmith;
+                document.getElementById('officialCost4Value').value = state.cost4Value || 0;
+            }
+            const extra = officialCost4Extra();
+            const base = state.totalFigures * state.foodPerFigure;
+            const owed = base + extra;
+            document.getElementById('officialFeedingBreakdown').innerHTML = S().officialFeedingBreakdown(base, extra, owed, state.food);
+
+            const bannerWrap = document.getElementById('officialEndBannerWrap');
+            if (state.ended === 'win') {
+                bannerWrap.style.display = 'block';
+                bannerWrap.innerHTML = `<div class="end-banner win">${S().officialWinBanner}</div>`;
+            } else if (state.ended === 'loss') {
+                bannerWrap.style.display = 'block';
+                bannerWrap.innerHTML = `<div class="end-banner lose">${S().officialLoseBanner}</div>`;
+            } else {
+                bannerWrap.style.display = 'none';
+                bannerWrap.innerHTML = '';
+            }
+
+            document.getElementById('officialLogPanel').innerHTML = state.log.map(l => `<div>${l}</div>`).join('');
+
+            save();
+        }
+
+        (function init() {
+            applyI18n();
+            onOfficialDifficultyChange();
+            const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+            if (saved) {
+                state = saved;
+                syncModeUI(state.mode || 'automa');
+                document.getElementById('setup-screen').classList.add('hidden');
+                document.getElementById('game-area').classList.remove('hidden');
+                document.getElementById('btnResetGame').classList.remove('hidden');
+                render();
+            } else {
+                syncModeUI(pendingMode);
+            }
+        })();
+    </script>
+</body>
+</html>
+

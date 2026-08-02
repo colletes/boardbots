@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>A.B.A. - Heroscape Solo Bot</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Metamorphous&display=swap');
+
+  :root {
+    --gold: #d4af37;
+    --gold-dark: #8b6b22;
+    --gold-glow: rgba(212, 175, 55, 0.5);
+    --purple-bg: #0b0e12;
+    --panel-bg: rgba(24, 29, 37, 0.9);
+    --text-light: #eef1f5;
+    --text-dim: #9aa4b2;
+    --blue: #4f8cff;
+    --blue-soft: #274168;
+    --blue-glow: rgba(79, 140, 255, 0.35);
+    --border: #2b323d;
+  }
+
+  html { -webkit-text-size-adjust: 100%; }
+  body { 
+    font-family: 'Segoe UI', Tahoma, sans-serif; 
+    background-color: var(--purple-bg); 
+    background-image:
+      radial-gradient(circle at 15% 0%, rgba(79,140,255,0.08), transparent 55%),
+      radial-gradient(circle at 85% 100%, rgba(212,175,55,0.06), transparent 50%),
+      radial-gradient(circle at 50% 50%, #12161c 0%, #0b0e12 100%);
+    background-attachment: fixed;
+    color: var(--text-light); 
+    max-width: 720px; 
+    margin: 0 auto; 
+    padding: 20px; 
+    padding-left: max(20px, env(safe-area-inset-left));
+    padding-right: max(20px, env(safe-area-inset-right));
+    padding-bottom: max(20px, env(safe-area-inset-bottom));
+    -webkit-tap-highlight-color: transparent;
+  }
+  button, select, .step, .close { touch-action: manipulation; }
+
+  @keyframes fadeSlideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes popIn { 0% { transform: scale(0.85); opacity: 0; } 60% { transform: scale(1.04); } 100% { transform: scale(1); opacity: 1; } }
+
+  h1 { 
+    font-family: 'Metamorphous', serif;
+    color: #fff; 
+    text-align: left; 
+    font-size: 1.9em;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.7);
+    border-bottom: none; 
+    padding-bottom: 0; 
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  h1 svg { width: 0.85em; height: 0.85em; color: var(--gold); flex-shrink: 0; }
+
+  .subtitle {
+    text-align: left;
+    font-family: 'Cinzel', serif;
+    color: var(--gold);
+    margin-top: 4px;
+    margin-bottom: 0;
+    letter-spacing: 2px;
+    font-size: 0.85em;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+
+  .hero {
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 20px;
+    border: 1px solid var(--border);
+    animation: fadeSlideUp 0.5s ease both;
+  }
+  .hero img { width: 100%; height: 150px; object-fit: cover; display: block; filter: saturate(0.9) brightness(0.6); }
+  .hero::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(11,14,18,0.1), rgba(11,14,18,0.92)); }
+  .hero-content { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end; padding: 16px 18px; }
+
+  .btn-help-float {
+    position: fixed; bottom: 18px; right: 18px; z-index: 60;
+    width: 48px; height: 48px; border-radius: 50%;
+    background: linear-gradient(180deg, var(--blue), #2f63c9);
+    color: #fff; border: 1px solid #3f6fd6; font-weight: 800; font-size: 1.3em;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.45);
+    cursor: pointer; transition: transform 0.15s, box-shadow 0.2s; margin: 0; padding: 0;
+  }
+  .btn-help-float:active { transform: scale(0.92); }
+
+  .lang-switch {
+    position: fixed; top: 14px; right: 14px; z-index: 60; display: flex; gap: 2px;
+    background: var(--panel-bg); border: 1px solid var(--border); border-radius: 999px;
+    padding: 4px; box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+  }
+  .lang-btn {
+    width: auto; margin: 0; padding: 6px 12px; font-size: 0.78em; border-radius: 999px;
+    border: none; background: transparent; color: var(--text-light); opacity: 0.6; font-weight: 700;
+    font-family: 'Cinzel', serif;
+  }
+  .lang-btn.active { background: var(--gold); color: #1a0b26; opacity: 1; }
+
+  h2 { 
+    font-family: 'Cinzel', serif;
+    color: var(--gold); 
+    font-size: 1.3em; 
+    border-bottom: 1px dashed var(--gold-dark); 
+    padding-bottom: 5px; 
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  h2 svg { width: 24px; height: 24px; flex-shrink: 0; }
+
+  .section { 
+    background: var(--panel-bg); 
+    padding: 20px; 
+    margin-bottom: 25px; 
+    border: 1px solid var(--border);
+    border-radius: 8px; 
+    box-shadow: inset 0 0 15px rgba(0,0,0,0.8), 0 4px 10px rgba(0,0,0,0.5); 
+    animation: fadeSlideUp 0.45s ease both;
+  }
+
+  button { 
+    background: linear-gradient(to bottom, #8b6b22, #4d3a0f);
+    color: #f7f1db; 
+    border: 1px solid var(--gold); 
+    padding: 12px 15px; 
+    cursor: pointer; 
+    border-radius: 8px; 
+    font-family: 'Cinzel', serif;
+    font-weight: bold; 
+    font-size: 16px; 
+    width: 100%; 
+    margin-top: 10px; 
+    text-transform: uppercase;
+    transition: all 0.3s;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  button svg { width: 22px; height: 22px; flex-shrink: 0; }
+
+  select { 
+    width: 100%; padding: 10px; margin-top: 10px; 
+    border-radius: 4px; border: 1px solid var(--gold-dark); 
+    background: #11061a; color: var(--gold); font-size: 16px; 
+    font-family: inherit;
+  }
+
+  .result { 
+    margin-top: 15px; font-size: 1.1em; 
+    color: #fff; text-align: center; min-height: 25px; 
+    background: rgba(0,0,0,0.4);
+    padding: 10px;
+    border-radius: 5px;
+    border-left: 3px solid var(--gold);
+  }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr; gap: 10px; }
+  
+  .action-btn { background: linear-gradient(to bottom, #2a4166, #16233d); border-color: var(--blue); }
+
+  .perda-btn { background: linear-gradient(to bottom, #5e2b2b, #361212); border-color: #9e4b4b; }
+
+  .hex-btn { background: linear-gradient(to bottom, #1f4a6a, #12303f); border-color: #4b9ecf; }
+  
+  .highlight { color: var(--gold); font-weight: bold; font-size: 1.2em; }
+
+  /* Modal de Ajuda */
+  .modal {
+    display: none; 
+    position: fixed; 
+    z-index: 1000; 
+    left: 0; top: 0; 
+    width: 100%; height: 100%; 
+    background-color: rgba(0,0,0,0.85);
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .modal-content {
+    background: var(--purple-bg);
+    margin: 10% auto;
+    padding: 25px;
+    border: 2px solid var(--gold);
+    border-radius: 8px;
+    width: 85%;
+    max-width: 500px;
+    box-shadow: 0 0 20px var(--gold-glow);
+  }
+  .close {
+    color: var(--gold);
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    line-height: 1;
+    padding: 8px;
+    margin: -8px -8px 0 0;
+  }
+  .modal h3 { font-family: 'Cinzel', serif; color: var(--gold); margin-top: 0; display: flex; align-items: center; gap: 8px; }
+  .modal h3 svg { width: 22px; height: 22px; flex-shrink: 0; }
+  .modal ul { padding-left: 20px; line-height: 1.5; }
+  .modal li { margin-bottom: 10px; }
+
+  /* Footer de Créditos (componente padrão da "casa") */
+  .credits {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: var(--panel-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-top: 25px;
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    animation: fadeSlideUp 0.5s ease both;
+  }
+  .credits img {
+    width: 52px; height: 52px; object-fit: cover; border-radius: 8px;
+    border: 1px solid var(--border); flex-shrink: 0;
+  }
+  .credits-text {
+    font-size: 0.82em;
+    color: var(--text-dim);
+    line-height: 1.5;
+  }
+  .credits-text strong { color: var(--text-light); }
+  .credits-text a {
+    color: var(--blue);
+    text-decoration: none;
+    font-weight: bold;
+    transition: text-shadow 0.2s;
+  }
+
+  .hidden { display: none; }
+
+  /* Textura de fundo em hexágonos (temática) */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: -1;
+    opacity: 0.35;
+    background-image:
+      repeating-linear-gradient(60deg, rgba(212,175,55,0.05) 0px, rgba(212,175,55,0.05) 1px, transparent 1px, transparent 26px),
+      repeating-linear-gradient(-60deg, rgba(212,175,55,0.05) 0px, rgba(212,175,55,0.05) 1px, transparent 1px, transparent 26px),
+      repeating-linear-gradient(0deg, rgba(212,175,55,0.04) 0px, rgba(212,175,55,0.04) 1px, transparent 1px, transparent 26px);
+  }
+
+  .hex-icon { font-size: 0.7em; vertical-align: middle; color: var(--gold-dark); }
+
+  /* Banner de seção (estilo Carta de Exército) */
+  .section h2 {
+    position: relative;
+    margin: -20px -20px 15px -20px;
+    padding: 10px 20px;
+    background: linear-gradient(90deg, #5e1c1c, #8b2c2c 60%, transparent);
+    border-bottom: none;
+    border-radius: 6px 6px 0 0;
+    color: #f7e6b8;
+    text-shadow: 0 0 6px rgba(0,0,0,0.8);
+    font-size: 1.15em;
+  }
+
+  /* Stepper - guia de turno */
+  .stepper {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 25px;
+    padding: 12px 5px;
+    background: var(--panel-bg);
+    border: 1px solid var(--gold-dark);
+    border-radius: 8px;
+  }
+  .step {
+    flex: 1;
+    text-align: center;
+    cursor: pointer;
+    color: #8a7a99;
+    font-family: 'Cinzel', serif;
+    font-size: 0.7em;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: color 0.2s;
+  }
+  .step .step-num {
+    display: block;
+    width: 28px; height: 28px;
+    line-height: 28px;
+    margin: 0 auto 5px auto;
+    border-radius: 50%;
+    background: #11061a;
+    border: 2px solid var(--gold-dark);
+    color: var(--gold-dark);
+    font-weight: bold;
+  }
+  .step.active { color: var(--gold); }
+  .step.active .step-num { border-color: var(--gold); color: var(--gold); box-shadow: 0 0 10px var(--gold-glow); background: rgba(212,175,55,0.15); }
+
+  /* Toggle / checkbox estilizado */
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(0,0,0,0.3);
+    padding: 10px 12px;
+    border-radius: 6px;
+    margin-bottom: 12px;
+    font-size: 0.9em;
+    line-height: 1.3;
+  }
+  .toggle-row input[type="checkbox"] {
+    width: 22px; height: 22px; accent-color: var(--gold); flex-shrink: 0; cursor: pointer;
+  }
+  .toggle-row label { cursor: pointer; }
+
+  .point-blank-btn { background: linear-gradient(to bottom, #345080, #1c2c4a); border-color: #6fa8ff; }
+
+  /* Info estática de Ordens de Marcha sem rolagem (Guard/Patrol/Support) */
+  .order-type-info {
+    background: rgba(0,0,0,0.35);
+    border-left: 3px solid var(--gold-dark);
+    border-radius: 5px;
+    padding: 12px 14px;
+    margin-top: 10px;
+    font-size: 0.92em;
+    line-height: 1.5;
+  }
+
+  /* Hover-only styles gated so iOS touch doesn't require a first tap to "hover" before the second tap clicks */
+  @media (hover: hover) and (pointer: fine) {
+    .btn-help-float:hover { box-shadow: 0 0 16px var(--blue-glow); }
+    button:hover { background: linear-gradient(to bottom, #a38232, #6b5218); box-shadow: 0 0 12px var(--gold-glow); text-shadow: 0 0 5px #fff; }
+    .action-btn:hover { background: linear-gradient(to bottom, #35507d, #1d304f); box-shadow: 0 0 12px var(--blue-glow); }
+    .perda-btn:hover { background: linear-gradient(to bottom, #7a3d3d, #4a1c1c); box-shadow: 0 0 12px rgba(158, 75, 75, 0.6); }
+    .hex-btn:hover { background: linear-gradient(to bottom, #2a5b82, #1a3c52); box-shadow: 0 0 12px rgba(75, 158, 207, 0.6); }
+    .close:hover { color: #fff; }
+    .credits-text a:hover { text-shadow: 0 0 8px var(--blue-glow); }
+    .step:hover { color: var(--text-light); }
+    .step:hover .step-num { border-color: var(--gold); color: var(--gold); }
+    .point-blank-btn:hover { background: linear-gradient(to bottom, #3f5f95, #24395c); box-shadow: 0 0 12px var(--blue-glow); }
+  }
+  .order-type-info strong { color: var(--gold); }
+
+  /* Roseta de direção (Sweep / Meander) */
+  .dial-wrap { display: flex; justify-content: center; margin: 20px 0 10px 0; }
+  .dial {
+    position: relative;
+    width: 240px; height: 240px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #1c2430 0%, #0e1218 70%);
+    border: 2px solid var(--border);
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.7);
+  }
+  .dial-center {
+    position: absolute;
+    left: 50%; top: 50%;
+    width: 70px; height: 70px;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background: #11151c;
+    border: 2px solid var(--gold);
+    display: flex; align-items: center; justify-content: center;
+    text-align: center;
+    font-family: 'Cinzel', serif;
+    font-size: 0.8em;
+    color: var(--gold);
+    letter-spacing: 1px;
+    z-index: 3;
+  }
+  .dial-needle {
+    position: absolute;
+    left: 50%; top: 50%;
+    width: 4px; height: 92px;
+    margin-left: -2px; margin-top: -92px;
+    transform-origin: 50% 100%;
+    background: linear-gradient(to top, var(--gold), transparent);
+    transition: transform 0.5s cubic-bezier(.2,1.5,.4,1);
+    z-index: 2;
+    border-radius: 3px;
+  }
+  .dial-wedge {
+    position: absolute;
+    min-width: 40px;
+    padding: 3px 6px;
+    transform: translate(-50%, -50%);
+    background: var(--panel-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 0.72em;
+    font-weight: bold;
+    text-align: center;
+    color: var(--text-dim);
+    transition: all 0.3s;
+    z-index: 1;
+  }
+  .dial-wedge.full-move { border-color: var(--gold-dark); color: #f2d98a; }
+  .dial-wedge.hit {
+    background: var(--gold);
+    color: var(--purple-bg);
+    border-color: #fff;
+    box-shadow: 0 0 15px var(--gold-glow);
+    transform: translate(-50%, -50%) scale(1.25);
+    z-index: 4;
+  }
+  .dial-legend { text-align: center; font-size: 0.8em; color: var(--text-dim); margin-top: 8px; }
+  .dial-legend span { color: var(--gold); font-weight: bold; }
+
+  .sections-grid .section { height: 100%; box-sizing: border-box; }
+
+  /* Widescreen: usa o espa\u00e7o horizontal em vez de empilhar tudo na vertical */
+  @media (min-width: 900px) and (min-aspect-ratio: 1/1) {
+    body { max-width: 1400px; }
+    .stepper { max-width: 1400px; margin-left: auto; margin-right: auto; }
+    .sections-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+      gap: 20px;
+      align-items: start;
+    }
+  }
+</style>
+</head>
+<body>
+
+<button class="btn-help-float" onclick="abrirModal()" aria-label="Help">?</button>
+<div class="lang-switch">
+  <button class="lang-btn" id="langBtnPt" onclick="setLang('pt')">PT</button>
+  <button class="lang-btn" id="langBtnEn" onclick="setLang('en')">EN</button>
+</div>
+
+<div class="hero">
+  <img src="heroscape.webp" alt="Heroscape box art">
+  <div class="hero-content">
+    <h1><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l8.66 5v10L12 22l-8.66-5V7L12 2Z"/></svg><span data-i18n="heroTitle">HEROSCAPE</span></h1>
+    <div class="subtitle" data-i18n="heroSubtitle">A.B.A. — Automated Battle Analyzer</div>
+  </div>
+</div>
+
+<div class="stepper">
+  <div class="step" onclick="goToStep(this, 'secMarcadores')"><span class="step-num">1</span><span data-i18n="stepMarkers">Marcadores</span></div>
+  <div class="step" onclick="goToStep(this, 'secIniciativa')"><span class="step-num">2</span><span data-i18n="stepInitiative">Iniciativa</span></div>
+  <div class="step" onclick="goToStep(this, 'secAlvo')"><span class="step-num">3</span><span data-i18n="stepTarget">Alvo</span></div>
+  <div class="step" onclick="goToStep(this, 'secMovimento')"><span class="step-num">4</span><span data-i18n="stepMovement">Movimento</span></div>
+</div>
+
+<!-- Modal de Ajuda -->
+<div id="helpModal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="fecharModal()">&times;</span>
+    <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/></svg><span data-i18n="helpTitle">Guia Rápido — Automated Battle v.2</span></h3>
+    <p data-i18n-html="helpIntro">Referência rápida das regras oficiais de <strong>Scott Campbell</strong> para jogar Heroscape sozinho ou cooperativamente contra um exército automatizado.</p>
+
+    <h3 data-i18n="helpSetupTitle">0. Configuração Física</h3>
+    <ul data-i18n-html="helpSetupList">
+      <li>Monte o campo de batalha normalmente (ladrilhos de terreno, glifos, etc.), como combinado entre os jogadores.</li>
+      <li>Defina o total de pontos do exército e escolha suas Cartas de Exército/figuras dentro do orçamento; faça o mesmo para a(s) divisão(ões) que o A.B.A. vai controlar (pode ser 1 ou mais divisões separadas).</li>
+      <li>Posicione suas figuras na sua zona de partida normalmente; posicione as figuras da divisão automatizada na zona de partida dela.</li>
+      <li>No início de cada rodada, informe ao app quantas Cartas de Exército (vivas) cada divisão automatizada possui — ele indica como distribuir os 3 Marcadores de Ordem físicos (1, 2 e 3) entre as cartas dela (Seção I). Coloque os marcadores físicos virados para baixo nas cartas indicadas.</li>
+      <li>Role o d20 físico normalmente para cada divisão automatizada, como se fosse outro jogador, para determinar a Iniciativa da rodada (Seção II).</li>
+      <li>A partir daí, resolva cada marcador de ordem seguindo as seções de Aquisição de Alvos e Movimento abaixo, usando os dados de combate físicos normalmente para ataque/defesa.</li>
+    </ul>
+
+    <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3"/><path d="M18 3v4h-4M6 21v-4h4"/></svg><span data-i18n="helpSeqTitle">Sequência do Turno de uma Unidade</span></h3>
+    <ul data-i18n-html="helpSeqList">
+      <li><strong>1. Poderes Especiais:</strong> resolva ativações de poderes que exigem rolagem.</li>
+      <li><strong>2. Checar Alvo:</strong> pule se já engajada em combate corpo-a-corpo. Veja a Seção III.</li>
+      <li><strong>3. Mover:</strong> com alvo ativo, mova conforme o Tipo de Ataque (Melee/Missile); sem alvo, siga as Ordens de Marcha (Seção IV).</li>
+      <li><strong>4. Unidades Missile:</strong> se ainda sem alvo após mover, cheque novamente por um alvo.</li>
+      <li><strong>5. Atacar:</strong> com alvo ativo, resolva o ataque com os dados físicos do Heroscape.</li>
+    </ul>
+
+    <h3 data-i18n="helpMarkersTitle">I. Marcadores de Ordem</h3>
+    <p data-i18n-html="helpMarkersBody">No início de cada rodada, informe quantas Cartas de Exército (vivas) a divisão possui. O A.B.A. distribui os marcadores 1, 2 e 3 pela tabela oficial de probabilidades. Remova cartas derrotadas da contagem.</p>
+
+    <h3 data-i18n="helpInitTitle">II. Iniciativa</h3>
+    <p data-i18n-html="helpInitBody">Role o D20 normalmente para cada divisão inimiga, como se fosse outro jogador, para determinar a ordem de ação na rodada.</p>
+
+    <h3 data-i18n="helpTargetTitle">III. Aquisição de Alvos</h3>
+    <ul data-i18n-html="helpTargetList">
+      <li><strong>Visão Direta:</strong> role 8+ para engajar um alvo dentro da Distância de Visão. Se o alvo já atacou este autômato antes, ele é adquirido automaticamente, sem rolagem.</li>
+      <li><strong>Point-Blank:</strong> um alvo dentro de metade da Distância de Visão (arredondado para cima) é adquirido automaticamente — exceto se estiver em Cobertura.</li>
+      <li><strong>Cobertura:</strong> role 15+ (ou 8+ se o alvo já atacou este autômato antes) para engajar um alvo parcialmente obstruído.</li>
+      <li><strong>Perda de Alvo:</strong> sempre que o alvo atual sai da linha de visão, role o D20. Em 1-7, o alvo é perdido. Caso contrário, a unidade continua em direção a ele.</li>
+      <li>Entre múltiplos alvos válidos, escolha sempre o mais próximo; em empate, o de menor Defesa (com Vantagem de Altura).</li>
+    </ul>
+
+    <h3 data-i18n="helpMoveTitle">IV. Movimento (Ordens de Marcha)</h3>
+    <ul data-i18n-html="helpMoveList">
+      <li><strong>Sweep:</strong> avança na direção estabelecida. As 3 direções centrais (douradas) são Movimento Completo; as demais, Meio Movimento.</li>
+      <li><strong>Meander:</strong> movimento errático, sempre em Meio Movimento. Em 19-20, os jogadores escolhem livremente.</li>
+      <li><strong>Guard:</strong> permanece parado, defendendo um ponto; só ataca dentro da Distância Máxima de Ataque.</li>
+      <li><strong>Patrol:</strong> segue de waypoint em waypoint, em linha reta, com Movimento Completo.</li>
+      <li><strong>Support:</strong> persegue sua Unidade Mestre, herdando os alvos e (ao morrer a Mestre) as Ordens de Marcha dela.</li>
+    </ul>
+    <p style="font-size:0.85em; color:var(--text-dim);" data-i18n-html="helpMoveNote">Movimento com alvo ativo: unidades Melee avançam pelo caminho mais direto até ficar adjacentes; unidades Missile recuam ou avançam para manter o Alcance máximo, sem nunca perder a linha de visão.</p>
+  </div>
+</div>
+
+<div class="sections-grid" id="game-area">
+<!-- Marcadores de Ordem -->
+<div class="section" id="secMarcadores">
+  <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="9" y="14" width="6" height="6" rx="1"/></svg><span data-i18n="sec1Title">I. Ordem de Batalha (Marcadores)</span></h2>
+  <label for="armyCards" data-i18n="armyCardsLabel">Unidades ativas nesta Divisão (1-7):</label>
+  <select id="armyCards">
+    <option value="1" data-i18n="cardOpt1">1 Carta de Exército</option>
+    <option value="2" data-i18n="cardOpt2">2 Cartas de Exército</option>
+    <option value="3" data-i18n="cardOpt3">3 Cartas de Exército</option>
+    <option value="4" data-i18n="cardOpt4">4 Cartas de Exército</option>
+    <option value="5" data-i18n="cardOpt5">5 Cartas de Exército</option>
+    <option value="6" data-i18n="cardOpt6">6 Cartas de Exército</option>
+    <option value="7" data-i18n="cardOpt7">7 Cartas de Exército</option>
+  </select>
+  <button onclick="sortearMarcadores()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="8.5" y="14" width="7" height="7" rx="1.5"/></svg><span data-i18n="btnMarkers">Posicionar Marcadores (1, 2, 3)</span></button>
+  <div id="resMarcadores" class="result" data-i18n="waitingCmd">Aguardando comando...</div>
+</div>
+
+<!-- Iniciativa -->
+<div class="section" id="secIniciativa">
+  <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z"/></svg><span data-i18n="sec2Title">II. Iniciativa da Divisão</span></h2>
+  <button class="action-btn" onclick="rolarIniciativa()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2 2 8.5 12 15l10-6.5L12 2Z"/><path d="M2 15.5 12 22l10-6.5"/></svg><span data-i18n="btnInitiative">Rolar D20 de Iniciativa</span></button>
+  <div id="resIniciativa" class="result">-</div>
+</div>
+
+<!-- Aquisição de Alvos -->
+<div class="section" id="secAlvo">
+  <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="0.6" fill="currentColor"/></svg><span data-i18n="sec3Title">III. Aquisição de Alvos (Targeting)</span></h2>
+  <div class="toggle-row">
+    <input type="checkbox" id="atacouAntes">
+    <label for="atacouAntes" data-i18n="atacouAntesLabel">Este alvo já atacou o autômato num turno anterior?</label>
+  </div>
+  <div class="grid-2">
+    <button class="action-btn" onclick="checarAlvo('visao')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="0.6" fill="currentColor"/></svg><span data-i18n="btnVisao">Linha de Visão Direta</span></button>
+    <button class="point-blank-btn" onclick="checarAlvo('pontoBlank')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="10" width="18" height="4" rx="1"/><path d="M7 10v4M11 10v4M15 10v4M19 10v4"/></svg><span data-i18n="btnPontoBlank">Alvo em Point-Blank (½ Distância)</span></button>
+    <button class="action-btn" onclick="checarAlvo('cobertura')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2C8 6 5 10 5 13.5A7 7 0 0 0 12 20.5 7 7 0 0 0 19 13.5C19 10 16 6 12 2Z"/><path d="M12 12v8.5"/></svg><span data-i18n="btnCobertura">Alvo em Cobertura</span></button>
+    <button class="perda-btn" onclick="checarAlvo('perda')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/><path d="M4 4l16 16"/></svg><span data-i18n="btnPerda">Perda de Visão / Ocultou?</span></button>
+  </div>
+  <div id="resAlvo" class="result">-</div>
+</div>
+
+<!-- Ordens de Marcha -->
+<div class="section" id="secMovimento">
+  <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12h14M13 6l6 6-6 6"/></svg><span data-i18n="sec4Title">IV. Ordens de Marcha (Movimento)</span></h2>
+  <label for="orderType" data-i18n="orderTypeLabel">Tipo de Ordem de Marcha:</label>
+  <select id="orderType" onchange="updateOrderTypeView()">
+    <option value="sweep" data-i18n="orderSweep">Sweep (Avanço)</option>
+    <option value="meander" data-i18n="orderMeander">Meander (Errático)</option>
+    <option value="guard" data-i18n="orderGuard">Guard (Guarda)</option>
+    <option value="patrol" data-i18n="orderPatrol">Patrol (Patrulha)</option>
+    <option value="support" data-i18n="orderSupport">Support (Apoio)</option>
+  </select>
+
+  <div id="viewSweep">
+    <div class="dial-wrap">
+      <div class="dial" id="dialSweep">
+        <div class="dial-needle" id="needleSweep"></div>
+        <div class="dial-center">SWEEP</div>
+      </div>
+    </div>
+    <button class="hex-btn" onclick="rollMovement('sweep')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2 2 8.5 12 15l10-6.5L12 2Z"/><path d="M2 15.5 12 22l10-6.5"/></svg><span data-i18n="btnRollSweep">Rolar D20 (Sweep)</span></button>
+    <div class="dial-legend" data-i18n-html="legendSweep"><span>Dourado</span> = Movimento Completo &nbsp;|&nbsp; Roxo = Meio Movimento</div>
+  </div>
+
+  <div id="viewMeander" class="hidden">
+    <div class="dial-wrap">
+      <div class="dial" id="dialMeander">
+        <div class="dial-needle" id="needleMeander"></div>
+        <div class="dial-center">MEANDER</div>
+      </div>
+    </div>
+    <button class="hex-btn" onclick="rollMovement('meander')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2 2 8.5 12 15l10-6.5L12 2Z"/><path d="M2 15.5 12 22l10-6.5"/></svg><span data-i18n="btnRollMeander">Rolar D20 (Meander)</span></button>
+    <div class="dial-legend" data-i18n-html="legendMeander">Toda movimentação Meander é <span>Meio Movimento</span>. Em 19-20, os jogadores escolhem a direção.</div>
+  </div>
+
+  <div id="viewGuard" class="order-type-info hidden" data-i18n-html="infoGuard">
+    <strong>Guard:</strong> a unidade permanece parada em seu posto. Se for afastada dele sem alvo, retorna ao posto com Movimento Completo. Não pode se afastar mais que a Distância Máxima de Ataque definida (padrão: 8 espaços) para atacar.
+  </div>
+  <div id="viewPatrol" class="order-type-info hidden" data-i18n-html="infoPatrol">
+    <strong>Patrol:</strong> a unidade se move em linha reta, com Movimento Completo, sempre em direção ao próximo ponto de patrulha (waypoint) definido no cenário.
+  </div>
+  <div id="viewSupport" class="order-type-info hidden" data-i18n-html="infoSupport">
+    <strong>Support:</strong> a unidade se move diretamente em direção à sua "Unidade Mestre", tentando ficar adjacente a ela. Sempre que a Mestre adquire um alvo, esta unidade adquire o mesmo alvo automaticamente.
+  </div>
+
+  <div id="resMarcha" class="result">-</div>
+</div>
+</div>
+
+<!-- Rodapé com Créditos -->
+<div class="credits">
+  <img src="heroscape.webp" alt="Heroscape">
+  <div class="credits-text" data-i18n-html="creditsHtml"></div>
+</div>
+
+<script>
+  // Forces iOS Safari to treat the first tap as a click instead of only "hovering" (WebKit quirk).
+  document.addEventListener('touchstart', function(){}, {passive: true});
+  // Funções do Modal de Ajuda
+  const modal = document.getElementById("helpModal");
+  function abrirModal() { modal.style.display = "block"; }
+  function fecharModal() { modal.style.display = "none"; }
+  window.onclick = function(event) {
+    if (event.target == modal) { modal.style.display = "none"; }
+  }
+
+  // Guia de passos - rola até a seção e destaca o passo atual
+  function goToStep(el, sectionId) {
+    document.getElementById(sectionId).scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  // --- i18n ---
+  const LANG_KEY = "heroscape_lang_v1";
+  const I18N = {
+    pt: {
+      heroTitle: "HEROSCAPE",
+      heroSubtitle: "A.B.A. — Automated Battle Analyzer",
+      stepMarkers: "Marcadores",
+      stepInitiative: "Iniciativa",
+      stepTarget: "Alvo",
+      stepMovement: "Movimento",
+      helpTitle: "Guia Rápido — Automated Battle v.2",
+      helpIntro: `Referência rápida das regras oficiais de <strong>Scott Campbell</strong> para jogar Heroscape sozinho ou cooperativamente contra um exército automatizado.`,
+      helpSetupTitle: `0. Configuração Física`,
+      helpSetupList: `
+        <li>Monte o campo de batalha normalmente (ladrilhos de terreno, glifos, etc.), como combinado entre os jogadores.</li>
+        <li>Defina o total de pontos do exército e escolha suas Cartas de Exército/figuras dentro do orçamento; faça o mesmo para a(s) divisão(ões) que o A.B.A. vai controlar (pode ser 1 ou mais divisões separadas).</li>
+        <li>Posicione suas figuras na sua zona de partida normalmente; posicione as figuras da divisão automatizada na zona de partida dela.</li>
+        <li>No início de cada rodada, informe ao app quantas Cartas de Exército (vivas) cada divisão automatizada possui — ele indica como distribuir os 3 Marcadores de Ordem físicos (1, 2 e 3) entre as cartas dela (Seção I). Coloque os marcadores físicos virados para baixo nas cartas indicadas.</li>
+        <li>Role o d20 físico normalmente para cada divisão automatizada, como se fosse outro jogador, para determinar a Iniciativa da rodada (Seção II).</li>
+        <li>A partir daí, resolva cada marcador de ordem seguindo as seções de Aquisição de Alvos e Movimento abaixo, usando os dados de combate físicos normalmente para ataque/defesa.</li>
+      `,
+      helpSeqTitle: "Sequência do Turno de uma Unidade",
+      helpSeqList: `
+      <li><strong>1. Poderes Especiais:</strong> resolva ativações de poderes que exigem rolagem.</li>
+      <li><strong>2. Checar Alvo:</strong> pule se já engajada em combate corpo-a-corpo. Veja a Seção III.</li>
+      <li><strong>3. Mover:</strong> com alvo ativo, mova conforme o Tipo de Ataque (Melee/Missile); sem alvo, siga as Ordens de Marcha (Seção IV).</li>
+      <li><strong>4. Unidades Missile:</strong> se ainda sem alvo após mover, cheque novamente por um alvo.</li>
+      <li><strong>5. Atacar:</strong> com alvo ativo, resolva o ataque com os dados físicos do Heroscape.</li>`,
+      helpMarkersTitle: "I. Marcadores de Ordem",
+      helpMarkersBody: `No início de cada rodada, informe quantas Cartas de Exército (vivas) a divisão possui. O A.B.A. distribui os marcadores 1, 2 e 3 pela tabela oficial de probabilidades. Remova cartas derrotadas da contagem.`,
+      helpInitTitle: "II. Iniciativa",
+      helpInitBody: `Role o D20 normalmente para cada divisão inimiga, como se fosse outro jogador, para determinar a ordem de ação na rodada.`,
+      helpTargetTitle: "III. Aquisição de Alvos",
+      helpTargetList: `
+      <li><strong>Visão Direta:</strong> role 8+ para engajar um alvo dentro da Distância de Visão. Se o alvo já atacou este autômato antes, ele é adquirido automaticamente, sem rolagem.</li>
+      <li><strong>Point-Blank:</strong> um alvo dentro de metade da Distância de Visão (arredondado para cima) é adquirido automaticamente — exceto se estiver em Cobertura.</li>
+      <li><strong>Cobertura:</strong> role 15+ (ou 8+ se o alvo já atacou este autômato antes) para engajar um alvo parcialmente obstruído.</li>
+      <li><strong>Perda de Alvo:</strong> sempre que o alvo atual sai da linha de visão, role o D20. Em 1-7, o alvo é perdido. Caso contrário, a unidade continua em direção a ele.</li>
+      <li>Entre múltiplos alvos válidos, escolha sempre o mais próximo; em empate, o de menor Defesa (com Vantagem de Altura).</li>`,
+      helpMoveTitle: "IV. Movimento (Ordens de Marcha)",
+      helpMoveList: `
+      <li><strong>Sweep:</strong> avança na direção estabelecida. As 3 direções centrais (douradas) são Movimento Completo; as demais, Meio Movimento.</li>
+      <li><strong>Meander:</strong> movimento errático, sempre em Meio Movimento. Em 19-20, os jogadores escolhem livremente.</li>
+      <li><strong>Guard:</strong> permanece parado, defendendo um ponto; só ataca dentro da Distância Máxima de Ataque.</li>
+      <li><strong>Patrol:</strong> segue de waypoint em waypoint, em linha reta, com Movimento Completo.</li>
+      <li><strong>Support:</strong> persegue sua Unidade Mestre, herdando os alvos e (ao morrer a Mestre) as Ordens de Marcha dela.</li>`,
+      helpMoveNote: `Movimento com alvo ativo: unidades Melee avançam pelo caminho mais direto até ficar adjacentes; unidades Missile recuam ou avançam para manter o Alcance máximo, sem nunca perder a linha de visão.`,
+      sec1Title: "I. Ordem de Batalha (Marcadores)",
+      armyCardsLabel: "Unidades ativas nesta Divisão (1-7):",
+      cardOpt1: "1 Carta de Exército", cardOpt2: "2 Cartas de Exército", cardOpt3: "3 Cartas de Exército",
+      cardOpt4: "4 Cartas de Exército", cardOpt5: "5 Cartas de Exército", cardOpt6: "6 Cartas de Exército", cardOpt7: "7 Cartas de Exército",
+      btnMarkers: "Posicionar Marcadores (1, 2, 3)",
+      waitingCmd: "Aguardando comando...",
+      sec2Title: "II. Iniciativa da Divisão",
+      btnInitiative: "Rolar D20 de Iniciativa",
+      sec3Title: "III. Aquisição de Alvos (Targeting)",
+      atacouAntesLabel: "Este alvo já atacou o autômato num turno anterior?",
+      btnVisao: "Linha de Visão Direta",
+      btnPontoBlank: "Alvo em Point-Blank (½ Distância)",
+      btnCobertura: "Alvo em Cobertura",
+      btnPerda: "Perda de Visão / Ocultou?",
+      sec4Title: "IV. Ordens de Marcha (Movimento)",
+      orderTypeLabel: "Tipo de Ordem de Marcha:",
+      orderSweep: "Sweep (Avanço)", orderMeander: "Meander (Errático)", orderGuard: "Guard (Guarda)", orderPatrol: "Patrol (Patrulha)", orderSupport: "Support (Apoio)",
+      btnRollSweep: "Rolar D20 (Sweep)",
+      btnRollMeander: "Rolar D20 (Meander)",
+      legendSweep: `<span>Dourado</span> = Movimento Completo &nbsp;|&nbsp; Roxo = Meio Movimento`,
+      legendMeander: `Toda movimentação Meander é <span>Meio Movimento</span>. Em 19-20, os jogadores escolhem a direção.`,
+      infoGuard: `<strong>Guard:</strong> a unidade permanece parada em seu posto. Se for afastada dele sem alvo, retorna ao posto com Movimento Completo. Não pode se afastar mais que a Distância Máxima de Ataque definida (padrão: 8 espaços) para atacar.`,
+      infoPatrol: `<strong>Patrol:</strong> a unidade se move em linha reta, com Movimento Completo, sempre em direção ao próximo ponto de patrulha (waypoint) definido no cenário.`,
+      infoSupport: `<strong>Support:</strong> a unidade se move diretamente em direção à sua "Unidade Mestre", tentando ficar adjacente a ela. Sempre que a Mestre adquire um alvo, esta unidade adquire o mesmo alvo automaticamente.`,
+      creditsHtml: `Feito por <strong>Thiago Colletes de Carvalho</strong> (<a href="mailto:colletes@gmail.com">colletes@gmail.com</a>) e Gemini — app baseado no sistema de batalha automatizada ("Automated Battle Analyzer") criado por <strong>Scott Campbell</strong> para partidas solo/cooperativas de Heroscape. Heroscape © Hasbro / Milton Bradley. Uso pessoal, sem fins comerciais.`,
+      resInitiative: `Iniciativa da Divisão: <span class="highlight">{d}</span>`,
+      targetAutoAttacked: `<span style="color:#5fcf64">✔️ Alvo Automático!</span> Este alvo já atacou o autômato antes — adquirido sem rolagem.`,
+      targetVisionSuccess: `<span style="color:#5fcf64">✔️ Sucesso!</span> D20 = {d}. Alvo Adquirido.`,
+      targetVisionFail: `<span style="color:#e84c4c">❌ Falha!</span> D20 = {d}. O autômato não engajou.`,
+      targetPointBlank: `<span style="color:#5fcf64">✔️ Alvo Automático!</span> Dentro de metade da Distância de Visão, o alvo é adquirido sem rolagem — a menos que esteja em Cobertura.`,
+      targetCoverSuccess: `<span style="color:#5fcf64">✔️ Sucesso!</span> D20 = {d} (necessário {n}+). Alvo fixado através da cobertura.`,
+      targetCoverFail: `<span style="color:#e84c4c">❌ Falha!</span> D20 = {d} (necessário {n}+). A cobertura protegeu o alvo.`,
+      targetLostYes: `<span style="color:#e84c4c">⚠️ Alvo Perdido!</span> D20 = {d} (1-7 = perdido). Retornando aos parâmetros de marcha.`,
+      targetLostNo: `<span style="color:#5fcf64">✔️ Rastreio Mantido!</span> D20 = {d}. Continue a perseguição.`,
+      markerLine: `<span class="highlight">Marcador {m}</span> ➔ Unidade {c} <span style="font-size:0.8em;color:var(--text-dim);">[D20: {d}]</span>`,
+      moveMeanderChoice: `D20 = <span class="highlight">{d}</span><br>🎲 <span style="color:#5fcf64">Escolha dos Jogadores!</span> Decidam livremente a direção.`,
+      moveResult: `D20 = <span class="highlight">{d}</span><br>🧭 Direção destacada na roseta acima — <strong>{type}</strong>.`,
+      moveFull: `Movimento Completo`,
+      moveHalf: `Meio Movimento (Arred. p/ cima)`
+    },
+    en: {
+      heroTitle: "HEROSCAPE",
+      heroSubtitle: "A.B.A. — Automated Battle Analyzer",
+      stepMarkers: "Markers",
+      stepInitiative: "Initiative",
+      stepTarget: "Target",
+      stepMovement: "Movement",
+      helpTitle: "Quick Guide — Automated Battle v.2",
+      helpIntro: `Quick reference for the official rules by <strong>Scott Campbell</strong>, for playing Heroscape solo or co-operatively against an automated army.`,
+      helpSetupTitle: `0. Physical Setup`,
+      helpSetupList: `
+        <li>Build the battlefield as normal (terrain tiles, glyphs, etc.), as agreed between players.</li>
+        <li>Set the total army point budget and choose your Army Cards/figures within it; do the same for the division(s) the A.B.A. will control (can be 1 or more separate divisions).</li>
+        <li>Place your figures in your starting zone as normal; place the automated division's figures in its own starting zone.</li>
+        <li>At the start of each round, tell the app how many (living) Army Cards each automated division has — it tells you how to distribute its 3 physical Order Markers (1, 2, and 3) among its cards (Section I). Place the physical markers face-down on the indicated cards.</li>
+        <li>Roll the physical d20 normally for each automated division, as if it were another player, to determine Initiative for the round (Section II).</li>
+        <li>From there, resolve each order marker turn using the Target Acquisition and Movement sections below, using your physical combat dice normally for attack/defense.</li>
+      `,
+      helpSeqTitle: "A Unit's Turn Sequence",
+      helpSeqList: `
+      <li><strong>1. Special Powers:</strong> resolve power activations that require a roll.</li>
+      <li><strong>2. Check Target:</strong> skip if already engaged in melee combat. See Section III.</li>
+      <li><strong>3. Move:</strong> with an active target, move according to the Attack Type (Melee/Missile); with no target, follow the Marching Orders (Section IV).</li>
+      <li><strong>4. Missile Units:</strong> if still without a target after moving, check for a target again.</li>
+      <li><strong>5. Attack:</strong> with an active target, resolve the attack with Heroscape's physical dice.</li>`,
+      helpMarkersTitle: "I. Order Markers",
+      helpMarkersBody: `At the start of each round, state how many (living) Army Cards the division has. The A.B.A. distributes markers 1, 2 and 3 using the official probability table. Remove defeated cards from the count.`,
+      helpInitTitle: "II. Initiative",
+      helpInitBody: `Roll the D20 normally for each enemy division, as if it were another player, to determine the round's action order.`,
+      helpTargetTitle: "III. Target Acquisition",
+      helpTargetList: `
+      <li><strong>Direct Line of Sight:</strong> roll 8+ to engage a target within Line of Sight range. If the target has already attacked this automaton before, it is acquired automatically, without a roll.</li>
+      <li><strong>Point-Blank:</strong> a target within half the Line of Sight range (rounded up) is acquired automatically — unless it is in Cover.</li>
+      <li><strong>Cover:</strong> roll 15+ (or 8+ if the target has already attacked this automaton before) to engage a partially obstructed target.</li>
+      <li><strong>Loss of Target:</strong> whenever the current target leaves the line of sight, roll the D20. On 1-7, the target is lost. Otherwise, the unit continues toward it.</li>
+      <li>Among multiple valid targets, always choose the closest one; on a tie, the one with the lowest Defense (with Height Advantage).</li>`,
+      helpMoveTitle: "IV. Movement (Marching Orders)",
+      helpMoveList: `
+      <li><strong>Sweep:</strong> advances in the established direction. The 3 central (golden) directions are Full Move; the rest are Half Move.</li>
+      <li><strong>Meander:</strong> erratic movement, always at Half Move. On 19-20, the players choose freely.</li>
+      <li><strong>Guard:</strong> stays put defending a point; only attacks within the Maximum Attack Distance.</li>
+      <li><strong>Patrol:</strong> moves from waypoint to waypoint, in a straight line, with Full Move.</li>
+      <li><strong>Support:</strong> chases its Master Unit, inheriting its targets and (upon the Master's death) its Marching Orders.</li>`,
+      helpMoveNote: `Movement with an active target: Melee units advance along the most direct path until adjacent; Missile units retreat or advance to maintain maximum Range, without ever losing line of sight.`,
+      sec1Title: "I. Order of Battle (Markers)",
+      armyCardsLabel: "Active units in this Division (1-7):",
+      cardOpt1: "1 Army Card", cardOpt2: "2 Army Cards", cardOpt3: "3 Army Cards",
+      cardOpt4: "4 Army Cards", cardOpt5: "5 Army Cards", cardOpt6: "6 Army Cards", cardOpt7: "7 Army Cards",
+      btnMarkers: "Place Markers (1, 2, 3)",
+      waitingCmd: "Awaiting command...",
+      sec2Title: "II. Division Initiative",
+      btnInitiative: "Roll D20 for Initiative",
+      sec3Title: "III. Target Acquisition (Targeting)",
+      atacouAntesLabel: "Has this target already attacked the automaton on a previous turn?",
+      btnVisao: "Direct Line of Sight",
+      btnPontoBlank: "Target at Point-Blank (½ Range)",
+      btnCobertura: "Target in Cover",
+      btnPerda: "Loss of Sight / Hidden?",
+      sec4Title: "IV. Marching Orders (Movement)",
+      orderTypeLabel: "Marching Order Type:",
+      orderSweep: "Sweep (Advance)", orderMeander: "Meander (Erratic)", orderGuard: "Guard", orderPatrol: "Patrol", orderSupport: "Support",
+      btnRollSweep: "Roll D20 (Sweep)",
+      btnRollMeander: "Roll D20 (Meander)",
+      legendSweep: `<span>Gold</span> = Full Move &nbsp;|&nbsp; Purple = Half Move`,
+      legendMeander: `All Meander movement is <span>Half Move</span>. On 19-20, the players choose the direction.`,
+      infoGuard: `<strong>Guard:</strong> the unit remains in place at its post. If moved away from it with no target, it returns to its post with a Full Move. It cannot move further than the defined Maximum Attack Distance (default: 8 spaces) to attack.`,
+      infoPatrol: `<strong>Patrol:</strong> the unit moves in a straight line, with a Full Move, always toward the next patrol waypoint defined in the scenario.`,
+      infoSupport: `<strong>Support:</strong> the unit moves directly toward its "Master Unit", trying to stay adjacent to it. Whenever the Master acquires a target, this unit acquires the same target automatically.`,
+      creditsHtml: `Made by <strong>Thiago Colletes de Carvalho</strong> (<a href="mailto:colletes@gmail.com">colletes@gmail.com</a>) and Gemini — app based on the "Automated Battle Analyzer" system created by <strong>Scott Campbell</strong> for solo/co-op Heroscape play. Heroscape © Hasbro / Milton Bradley. Personal, non-commercial use.`,
+      resInitiative: `Division Initiative: <span class="highlight">{d}</span>`,
+      targetAutoAttacked: `<span style="color:#5fcf64">✔️ Automatic Target!</span> This target has already attacked the automaton before — acquired without a roll.`,
+      targetVisionSuccess: `<span style="color:#5fcf64">✔️ Success!</span> D20 = {d}. Target Acquired.`,
+      targetVisionFail: `<span style="color:#e84c4c">❌ Failure!</span> D20 = {d}. The automaton did not engage.`,
+      targetPointBlank: `<span style="color:#5fcf64">✔️ Automatic Target!</span> Within half the Line of Sight range, the target is acquired without a roll — unless it is in Cover.`,
+      targetCoverSuccess: `<span style="color:#5fcf64">✔️ Success!</span> D20 = {d} (needed {n}+). Target locked through the cover.`,
+      targetCoverFail: `<span style="color:#e84c4c">❌ Failure!</span> D20 = {d} (needed {n}+). The cover protected the target.`,
+      targetLostYes: `<span style="color:#e84c4c">⚠️ Target Lost!</span> D20 = {d} (1-7 = lost). Returning to marching order parameters.`,
+      targetLostNo: `<span style="color:#5fcf64">✔️ Tracking Maintained!</span> D20 = {d}. Continue the pursuit.`,
+      markerLine: `<span class="highlight">Marker {m}</span> ➔ Unit {c} <span style="font-size:0.8em;color:var(--text-dim);">[D20: {d}]</span>`,
+      moveMeanderChoice: `D20 = <span class="highlight">{d}</span><br>🎲 <span style="color:#5fcf64">Players' Choice!</span> Freely decide the direction.`,
+      moveResult: `D20 = <span class="highlight">{d}</span><br>🧭 Direction highlighted on the dial above — <strong>{type}</strong>.`,
+      moveFull: `Full Move`,
+      moveHalf: `Half Move (round up)`
+    }
+  };
+
+  let lang = localStorage.getItem(LANG_KEY) || 'pt';
+  function S() { return I18N[lang]; }
+
+  function applyI18n() {
+    document.documentElement.lang = lang === 'pt' ? 'pt-BR' : 'en';
+    document.querySelectorAll('[data-i18n]').forEach(el => { const k = el.getAttribute('data-i18n'); if (S()[k] !== undefined) el.textContent = S()[k]; });
+    document.querySelectorAll('[data-i18n-html]').forEach(el => { const k = el.getAttribute('data-i18n-html'); if (S()[k] !== undefined) el.innerHTML = S()[k]; });
+    document.getElementById('langBtnPt').classList.toggle('active', lang === 'pt');
+    document.getElementById('langBtnEn').classList.toggle('active', lang === 'en');
+  }
+
+  function setLang(l) {
+    lang = l;
+    localStorage.setItem(LANG_KEY, l);
+    applyI18n();
+  }
+
+  // Lógica de Dados
+  function rolarD20() { return Math.floor(Math.random() * 20) + 1; }
+
+  function rolarIniciativa() {
+    document.getElementById('resIniciativa').innerHTML = S().resInitiative.replace('{d}', rolarD20());
+  }
+
+  function checarAlvo(tipo) {
+    const atacouAntes = document.getElementById('atacouAntes').checked;
+    const dado = rolarD20();
+    let res = "";
+
+    if (tipo === 'visao') {
+      if (atacouAntes) {
+        res = S().targetAutoAttacked;
+      } else if (dado >= 8) {
+        res = S().targetVisionSuccess.replace('{d}', dado);
+      } else {
+        res = S().targetVisionFail.replace('{d}', dado);
+      }
+    } else if (tipo === 'pontoBlank') {
+      res = S().targetPointBlank;
+    } else if (tipo === 'cobertura') {
+      const limite = atacouAntes ? 8 : 15;
+      if (dado >= limite) res = S().targetCoverSuccess.replace('{d}', dado).replace('{n}', limite);
+      else res = S().targetCoverFail.replace('{d}', dado).replace('{n}', limite);
+    } else if (tipo === 'perda') {
+      if (dado <= 7) res = S().targetLostYes.replace('{d}', dado);
+      else res = S().targetLostNo.replace('{d}', dado);
+    }
+    document.getElementById('resAlvo').innerHTML = res;
+  }
+
+  function sortearMarcadores() {
+    const qtd = parseInt(document.getElementById('armyCards').value);
+    
+    const ranges = {
+      1: [[1, 20]],
+      2: [[1, 10], [11, 20]],
+      3: [[1, 7], [8, 14], [15, 20]],
+      4: [[1, 5], [6, 10], [11, 15], [16, 20]],
+      5: [[1, 4], [5, 8], [9, 12], [13, 16], [17, 20]],
+      6: [[1, 3], [4, 6], [7, 10], [11, 13], [14, 16], [17, 20]],
+      7: [[1, 3], [4, 6], [7, 9], [10, 12], [13, 15], [16, 18], [19, 20]]
+    };
+    
+    const divRanges = ranges[qtd];
+    let marcadores = [1, 2, 3];
+    let textoFinal = [];
+
+    marcadores.forEach(m => {
+      const d20 = rolarD20();
+      let cartaSelecionada = 1;
+      
+      for (let i = 0; i < divRanges.length; i++) {
+        if (d20 >= divRanges[i][0] && d20 <= divRanges[i][1]) {
+          cartaSelecionada = i + 1;
+          break;
+        }
+      }
+      textoFinal.push(S().markerLine.replace('{m}', m).replace('{c}', cartaSelecionada).replace('{d}', d20));
+    });
+
+    document.getElementById('resMarcadores').innerHTML = textoFinal.join("<br>");
+  }
+
+  // --- ORDENS DE MARCHA: Sweep / Meander (rosetas oficiais do manual) ---
+  // Ângulo 0° = topo (Frente estabelecida), sentido horário - igual ao diagrama impresso.
+  const sweepData = [
+    { min: 9,  max: 13, angle: 0,   full: true  },
+    { min: 14, max: 16, angle: 36,  full: true  },
+    { min: 17, max: 18, angle: 72,  full: false },
+    { min: 19, max: 19, angle: 108, full: false },
+    { min: 20, max: 20, angle: 144, full: false },
+    { min: 1,  max: 1,  angle: 180, full: false },
+    { min: 2,  max: 2,  angle: 216, full: false },
+    { min: 3,  max: 3,  angle: 252, full: false },
+    { min: 4,  max: 5,  angle: 288, full: false },
+    { min: 6,  max: 8,  angle: 324, full: true  }
+  ];
+
+  const meanderData = [
+    { min: 10, max: 11, angle: 0   },
+    { min: 12, max: 12, angle: 30  },
+    { min: 13, max: 14, angle: 60  },
+    { min: 15, max: 15, angle: 90  },
+    { min: 16, max: 17, angle: 120 },
+    { min: 18, max: 18, angle: 150 },
+    { min: 1,  max: 2,  angle: 180 },
+    { min: 3,  max: 3,  angle: 210 },
+    { min: 4,  max: 5,  angle: 240 },
+    { min: 6,  max: 6,  angle: 270 },
+    { min: 7,  max: 8,  angle: 300 },
+    { min: 9,  max: 9,  angle: 330 }
+  ];
+
+  function buildDial(dialId, data) {
+    const dial = document.getElementById(dialId);
+    const size = dial.clientWidth;
+    const center = size / 2;
+    const radius = center - 28;
+    data.forEach(entry => {
+      const rad = entry.angle * Math.PI / 180;
+      const x = center + radius * Math.sin(rad);
+      const y = center - radius * Math.cos(rad);
+      const wedge = document.createElement('div');
+      wedge.className = 'dial-wedge' + (entry.full ? ' full-move' : '');
+      wedge.style.left = x + 'px';
+      wedge.style.top = y + 'px';
+      wedge.innerText = entry.min === entry.max ? entry.min : `${entry.min}-${entry.max}`;
+      dial.appendChild(wedge);
+      entry.el = wedge;
+    });
+  }
+
+  buildDial('dialSweep', sweepData);
+  buildDial('dialMeander', meanderData);
+
+  function rollMovement(type) {
+    const data = type === 'sweep' ? sweepData : meanderData;
+    const needle = document.getElementById(type === 'sweep' ? 'needleSweep' : 'needleMeander');
+    const dado = rolarD20();
+
+    data.forEach(entry => entry.el.classList.remove('hit'));
+
+    if (type === 'meander' && dado >= 19) {
+      document.getElementById('resMarcha').innerHTML = S().moveMeanderChoice.replace('{d}', dado);
+      return;
+    }
+
+    const found = data.find(entry => dado >= entry.min && dado <= entry.max);
+    found.el.classList.add('hit');
+    needle.style.transform = `rotate(${found.angle}deg)`;
+
+    const moveType = (type === 'sweep' && found.full) ? S().moveFull : S().moveHalf;
+
+    document.getElementById('resMarcha').innerHTML = S().moveResult.replace('{d}', dado).replace('{type}', moveType);
+  }
+
+  function updateOrderTypeView() {
+    const type = document.getElementById('orderType').value;
+    ['viewSweep', 'viewMeander', 'viewGuard', 'viewPatrol', 'viewSupport'].forEach(id => {
+      document.getElementById(id).classList.add('hidden');
+    });
+    document.getElementById('view' + type.charAt(0).toUpperCase() + type.slice(1)).classList.remove('hidden');
+  }
+
+  applyI18n();
+</script>
+</body>
+</html>
