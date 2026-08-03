@@ -1,0 +1,21 @@
+rules_version = '2';
+
+// Board Bots — public vote/visit counters.
+// No login required: anyone can read all counts, and can only ever move a
+// counter's `count` field by exactly +1 or -1 per write (or create it starting
+// at 1). This blocks setting arbitrary values, deleting counters, or reading/
+// writing anything outside the `counters` collection.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /counters/{counterId} {
+      allow read: if true;
+      allow create: if request.resource.data.count == 1;
+      allow update: if request.resource.data.count == resource.data.count + 1
+                    || request.resource.data.count == resource.data.count - 1;
+      allow delete: if false;
+    }
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

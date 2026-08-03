@@ -1,43 +1,41 @@
-// Board Bots — visitor count + per-bot like/dislike, backed by CounterAPI v1
-// (https://docs.counterapi.dev/api/endpoints/v1/ — free, public, no-auth counters).
-// Note: since these counters are fully public/no-auth, anyone who knows the
-// namespace+name could inflate them — treat these as fun vanity stats, not
-// rigorous analytics (use GoatCounter for that).
-const COUNTER_BASE = 'https://api.counterapi.dev/v1';
-const COUNTER_NS = 'colletes-boardbots';
+// Board Bots — visitor count + per-bot like/dislike, backed by Firebase Firestore.
+// Firestore security rules (see firestore.rules) restrict public writes to a
+// safe +1/-1 increment on the `count` field only — no auth/login needed, and
+// this client config is not a secret (access control lives in the rules, not
+// in hiding this key). Fill in REPLACE_WITH_* below with your Firebase project's
+// web app config (Firebase console → Project settings → Your apps).
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js';
+import { getFirestore, doc, getDoc, setDoc, increment } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
+
+const firebaseConfig = {
+  apiKey: 'REPLACE_WITH_YOUR_API_KEY',
+  authDomain: 'REPLACE_WITH_YOUR_PROJECT.firebaseapp.com',
+  projectId: 'REPLACE_WITH_YOUR_PROJECT',
+  storageBucket: 'REPLACE_WITH_YOUR_PROJECT.appspot.com',
+  messagingSenderId: 'REPLACE_WITH_YOUR_SENDER_ID',
+  appId: 'REPLACE_WITH_YOUR_APP_ID'
+};
+
+// Placeholder config short-circuits to "not configured" so the widgets degrade
+// cleanly instead of retrying forever against a bogus Firebase project.
+const CONFIGURED = !firebaseConfig.apiKey.startsWith('REPLACE_WITH_');
+const app = CONFIGURED ? initializeApp(firebaseConfig) : null;
+const db = CONFIGURED ? getFirestore(app) : null;
 const VOTE_KEY_PREFIX = 'boardbots_vote_';
 
-function wait(ms){ return new Promise(r => setTimeout(r, ms)); }
-
-async function counterRequestOnce(name, action){
-  const path = action ? `${name}/${action}` : `${name}/`;
-  const res = await fetch(`${COUNTER_BASE}/${COUNTER_NS}/${path}`);
-  if (res.status === 400) {
-    // "record not found" = counter never incremented yet, safe to treat as zero.
-    // Any other message is a real backend error (this free service is occasionally
-    // unstable) and should surface as an error rather than a fake zero.
-    const body = await res.json().catch(() => null);
-    if (body && body.message === 'record not found') return 0;
-    throw new Error('counter backend error: ' + (body?.message || res.status));
-  }
-  if (!res.ok) throw new Error('counter request failed: ' + res.status);
-  const data = await res.json();
-  return data.count;
+// Applies a +1/-1 delta and returns the resulting count.
+async function bump(counterId, delta){
+  if (!CONFIGURED) throw new Error('Firebase not configured yet');
+  const ref = doc(db, 'counters', counterId);
+  await setDoc(ref, { count: increment(delta) }, { merge: true });
+  const snap = await getDoc(ref);
+  return snap.exists() ? (snap.data().count || 0) : 0;
 }
 
-// CounterAPI's free v1 backend occasionally hits its own connection-pool limit
-// and returns a transient 400 (a real backend error, not "record not found").
-// Retry a couple of times with a short backoff before giving up — in practice
-// these failures clear up within a second or two.
-async function counterRequest(name, action, retries = 3){
-  for (let attempt = 0; ; attempt++) {
-    try {
-      return await counterRequestOnce(name, action);
-    } catch (e) {
-      if (attempt >= retries) throw e;
-      await wait(400 * (attempt + 1));
-    }
-  }
+async function readCount(counterId){
+  if (!CONFIGURED) throw new Error('Firebase not configured yet');
+  const snap = await getDoc(doc(db, 'counters', counterId));
+  return snap.exists() ? (snap.data().count || 0) : 0;
 }
 
 function formatCount(n){
@@ -50,9 +48,10 @@ async function initVisitCounter(){
   const el = document.getElementById('visitCount');
   if (!el) return;
   try {
-    const count = await counterRequest('site-visits', 'up');
+    const count = await bump('site-visits', 1);
     el.textContent = formatCount(count);
   } catch (e) {
+    console.warn('Board Bots: visit counter failed', e);
     badge?.classList.add('hidden');
   }
 }
@@ -66,10 +65,10 @@ async function castVote(bot, choice, likeBtn, dislikeBtn, likeCountEl, dislikeCo
   dislikeBtn.disabled = true;
   try {
     if (current) {
-      const undoCount = await counterRequest(`${current}-${bot}`, 'down');
+      const undoCount = await bump(`${current}-${bot}`, -1);
       (current === 'like' ? likeCountEl : dislikeCountEl).textContent = formatCount(undoCount);
     }
-    const newCount = await counterRequest(`${choice}-${bot}`, 'up');
+    const newCount = await bump(`${choice}-${bot}`, 1);
     (choice === 'like' ? likeCountEl : dislikeCountEl).textContent = formatCount(newCount);
     localStorage.setItem(votedKey, choice);
     likeBtn.classList.toggle('voted', choice === 'like');
@@ -94,8 +93,8 @@ async function initVoteButtons(){
 
     try {
       const [likeCount, dislikeCount] = await Promise.all([
-        counterRequest(`like-${bot}`),
-        counterRequest(`dislike-${bot}`)
+        readCount(`like-${bot}`),
+        readCount(`dislike-${bot}`)
       ]);
       likeCountEl.textContent = formatCount(likeCount);
       dislikeCountEl.textContent = formatCount(dislikeCount);
