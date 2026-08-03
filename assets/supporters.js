@@ -25,18 +25,16 @@ function describe(supporter){
   const t = s();
   const name = supporter.name || 'Anonymous';
   switch (supporter.type) {
-    case 'donation.created':
-    case 'extra_purchase.created':
-    case 'wishlist_payment.created': {
-      const count = supporter.coffeeCount || 1;
+    case 'coffee': {
+      const count = supporter.count || 1;
       const tpl = count === 1 ? t.supporter_coffee_one : t.supporter_coffee_many;
       return (tpl || '{name}').replace('{name}', name).replace('{count}', count);
     }
-    case 'commission_order.created':
+    case 'commission':
       return (t.supporter_commission || '{name}').replace('{name}', name);
-    case 'membership.started':
-      return (t.supporter_membership || '{name}').replace('{name}', name).replace('{level}', supporter.membershipLevel || '');
-    case 'recurring_donation.started':
+    case 'membership':
+      return (t.supporter_membership || '{name}').replace('{name}', name).replace('{level}', supporter.level || '');
+    case 'recurring':
       return (t.supporter_recurring || '{name}').replace('{name}', name);
     default:
       return name;
