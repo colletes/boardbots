@@ -2,24 +2,10 @@
 // Firestore security rules (see firestore.rules) restrict public writes to a
 // safe +1/-1 increment on the `count` field only — no auth/login needed, and
 // this client config is not a secret (access control lives in the rules, not
-// in hiding this key). Fill in REPLACE_WITH_* below with your Firebase project's
-// web app config (Firebase console → Project settings → Your apps).
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js';
+// in hiding this key).
 import { initializeFirestore, doc, getDoc, setDoc, increment } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
+import { app, CONFIGURED } from './firebase-init.js';
 
-const firebaseConfig = {
-  apiKey: 'AIzaSyBtqtwZvQeG9cz0Vqd2J0MqPGO4mGeL-B8',
-  authDomain: 'boardbots-641cc.firebaseapp.com',
-  projectId: 'boardbots-641cc',
-  storageBucket: 'boardbots-641cc.firebasestorage.app',
-  messagingSenderId: '567514929457',
-  appId: '1:567514929457:web:f04172437b22deeae07810'
-};
-
-// Placeholder config short-circuits to "not configured" so the widgets degrade
-// cleanly instead of retrying forever against a bogus Firebase project.
-const CONFIGURED = !firebaseConfig.apiKey.startsWith('REPLACE_WITH_');
-const app = CONFIGURED ? initializeApp(firebaseConfig) : null;
 // Auto-detect long-polling: some networks/browsers block Firestore's default
 // WebChannel streaming transport, causing requests to hang indefinitely.
 const db = CONFIGURED ? initializeFirestore(app, { experimentalAutoDetectLongPolling: true }) : null;
