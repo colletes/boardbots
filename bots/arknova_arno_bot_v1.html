@@ -437,7 +437,7 @@ function startGame(){
     sides:{ animals:'I', cards:'I', build:'I', sponsors:'I', association:'I' },
     appeal:0, rep:0, cons, brk:0, cards:0, zoos:0, unis:0, workers:3, fsTokens:0,
     assocSlots:{2:false,3:false,4:false,5:false},
-    lastPos:null, lastKey:null, round:1, history:[]
+    lastPos:null, lastKey:null, pendingCycle:null, round:1, history:[]
   };
   save();
   document.getElementById('setup-screen').classList.add('hidden');
@@ -493,6 +493,9 @@ function lvlIdx(){ return Math.min(state.level,6)-1; }
 function refreshCardsUI(){
   const grid = document.getElementById('cardsGrid');
   if(!grid) return;
+  // FLIP animation: remember each card's on-screen position (by identity) so a slot change can slide smoothly instead of snapping.
+  const prevRects = {};
+  grid.querySelectorAll('.acard').forEach(el=>{ prevRects[el.dataset.key] = el.getBoundingClientRect(); });
   grid.innerHTML='';
   const order = [1,2,3,4,5].map(p=> ({key: state && state.slots ? state.slots[p] : (p===1?'animals':ACTION_KEYS[p-2]), slot:p}));
   order.forEach(o=>{
@@ -500,6 +503,7 @@ function refreshCardsUI(){
     // Highlight by card identity, not slot — slots 2-5 cycle after each use (Ark Nova rules p.8), so the used card no longer sits at the rolled position.
     const isActive = state && state.lastKey && o.key===state.lastKey;
     div.className = 'acard' + (isActive ? ' active' : '');
+    div.dataset.key = o.key;
     div.style.setProperty('--ac-color', ACTION_COLOR[o.key]);
     const side = state ? state.sides[o.key] : 'I';
     div.innerHTML = `<div class="slot">#${o.slot}</div>
@@ -509,6 +513,19 @@ function refreshCardsUI(){
         <button class="btn" onclick="flipSide('${o.key}')">${side}</button>
       </div>`;
     grid.appendChild(div);
+  });
+  grid.querySelectorAll('.acard').forEach(el=>{
+    const prev = prevRects[el.dataset.key];
+    if(!prev) return;
+    const next = el.getBoundingClientRect();
+    const dx = prev.left - next.left, dy = prev.top - next.top;
+    if(!dx && !dy) return;
+    el.style.transition = 'none';
+    el.style.transform = `translate(${dx}px, ${dy}px)`;
+    requestAnimationFrame(()=>{
+      el.style.transition = 'transform .5s ease';
+      el.style.transform = '';
+    });
   });
 }
 function flipSide(key){
@@ -554,6 +571,7 @@ function spinFace(face, ms){
 // Rolls the configured virtual die with a short spin animation, transparently re-rolling on 1/6 (D6) until a valid position lands.
 async function rollDice(){
   if(!state) return;
+  await performPendingCycle();
   const btn = document.getElementById('btnRoll');
   const face = document.getElementById('dieFace');
   const flash = document.getElementById('rerollFlash');
@@ -578,8 +596,9 @@ async function rollDice(){
   applyTurn(pos, value);
 }
 
-function resolveManualRoll(){
+async function resolveManualRoll(){
   if(!state) return;
+  await performPendingCycle();
   const v = parseInt(document.getElementById('rollInput').value,10);
   if(!v || v<1 || v>state.die) return;
   const face = document.getElementById('dieFace');
@@ -601,6 +620,17 @@ function cycleUsedSlot(pos){
   [1,2,3,4,5].forEach((p,k)=>{ state.slots[p]=order[k]; });
 }
 
+// The cycle move is deferred until the start of the next roll (see performPendingCycle) so the just-used
+// card visibly slides into slot 1 instead of snapping there the instant this turn resolves.
+async function performPendingCycle(){
+  if(state.pendingCycle==null) return;
+  const pos = state.pendingCycle;
+  state.pendingCycle = null;
+  cycleUsedSlot(pos);
+  save(); refreshCardsUI();
+  await sleep(550);
+}
+
 function applyTurn(pos, rolledValue){
   state.lastPos = pos;
   const idx = lvlIdx();
@@ -610,7 +640,7 @@ function applyTurn(pos, rolledValue){
   const side = state.sides[actionKey];
   lines.push(...effectLines(actionKey, side, pos, idx));
   state.lastKey = actionKey;
-  cycleUsedSlot(pos);
+  state.pendingCycle = pos;
 
   const out = document.getElementById('rollOut');
   out.innerHTML = `<div class="effect-box">
