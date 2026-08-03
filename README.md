@@ -6,22 +6,26 @@
 
 # Board Bots
 
-🌐 **Acesse online:** [colletes.github.io/boardbots](https://colletes.github.io/boardbots/)
-
-Uma coleção de **companheiros de jogo solo** ("bots") para diversos jogos de tabuleiro — apps de página única em HTML/CSS/JavaScript, sem instalação, sem dependências e sem necessidade de servidor: basta abrir o arquivo `.html` em qualquer navegador (computador ou celular).
+Uma coleção de **companheiros de jogo solo** ("bots") para diversos jogos de tabuleiro — apps de página única em HTML/CSS/JavaScript, sem instalação, sem dependências e sem necessidade de servidor.
 
 Cada bot simula um adversário automático ("Automa"), aplica variantes de modo solo oficiais/comunitárias ou oferece uma ferramenta de apoio para jogar sozinho, seguindo o fluxo de decisão do próprio jogo (ao estilo dos automas de David Turczi/Undaunted).
 
 ### 🎲 Como usar
 
-1. Baixe (ou clone) este repositório.
-2. Abra o arquivo `.html` do jogo desejado, na pasta [`bots/`](bots/), diretamente no seu navegador (duplo clique no arquivo, ou arraste para uma aba do navegador).
+**Forma recomendada — direto pelo navegador, sem instalar nada:**
+
+1. Acesse **[colletes.github.io/boardbots](https://colletes.github.io/boardbots/)**.
+2. Escolha o jogo desejado na tela inicial e toque em "Jogar".
 3. Cada app tem uma tela inicial com o **preparo físico** do jogo (o que fazer no tabuleiro real) antes de iniciar a partida no app.
 4. Use o botão de idioma (PT/EN) para alternar o idioma da interface a qualquer momento.
 5. Use o botão de ajuda ("?") dentro de cada app para consultar as regras do modo solo a qualquer momento durante a partida.
-6. O progresso da partida é salvo automaticamente no seu navegador (`localStorage`) — você pode fechar e reabrir o app sem perder o andamento da partida.
+6. O progresso da partida é salvo automaticamente no seu navegador (`localStorage`) — você pode fechar e reabrir o app (ou a aba) sem perder o andamento da partida.
 
-Nenhum dado é enviado para a internet — tudo roda localmente, no seu navegador.
+Nenhum dado é enviado para a internet — tudo roda localmente, no seu navegador, mesmo usando o site.
+
+**Alternativa — baixar e usar offline:**
+
+Se preferir não depender de internet durante o jogo (ex: mesa sem Wi-Fi), baixe (ou clone) este repositório e abra o arquivo `.html` do jogo desejado, na pasta [`bots/`](bots/), diretamente no seu navegador (duplo clique no arquivo, ou arraste para uma aba). O funcionamento é idêntico ao do site.
 
 ### 📋 Jogos disponíveis
 
@@ -53,22 +57,26 @@ Feito por **Thiago Colletes de Carvalho** ([colletes@gmail.com](mailto:colletes@
 
 # Board Bots
 
-🌐 **Live site:** [colletes.github.io/boardbots](https://colletes.github.io/boardbots/)
-
-A collection of **solo-play companion apps** ("bots") for various board games — single-file HTML/CSS/JavaScript apps, no installation, no dependencies, no server required: just open the `.html` file in any browser (desktop or mobile).
+A collection of **solo-play companion apps** ("bots") for various board games — single-file HTML/CSS/JavaScript apps, no installation, no dependencies, no server required.
 
 Each bot simulates an automated opponent ("Automa"), applies official/community solo-mode variants, or provides a decision-support tool for solo play, following the game's own logic flow (in the style of David Turczi/Undaunted-style automas).
 
 ### 🎲 How to use
 
-1. Download (or clone) this repository.
-2. Open the `.html` file for the game you want, in the [`bots/`](bots/) folder, directly in your browser (double-click the file, or drag it into a browser tab).
+**Recommended — right in your browser, nothing to install:**
+
+1. Go to **[colletes.github.io/boardbots](https://colletes.github.io/boardbots/)**.
+2. Pick the game you want on the landing screen and tap "Play".
 3. Every app has a landing screen with the **physical setup** for the real board/table before starting the match in the app.
 4. Use the language toggle (PT/EN) to switch the interface language at any time.
 5. Use the help button ("?") inside each app to check the solo-mode rules at any time during the match.
-6. Match progress is saved automatically in your browser (`localStorage`) — you can close and reopen the app without losing your progress.
+6. Match progress is saved automatically in your browser (`localStorage`) — you can close and reopen the app (or tab) without losing your progress.
 
-No data is ever sent over the internet — everything runs locally in your browser.
+No data is ever sent over the internet — everything runs locally in your browser, even when using the site.
+
+**Alternative — download and use offline:**
+
+If you'd rather not depend on internet access while playing (e.g. a table with no Wi-Fi), download (or clone) this repository and open the `.html` file for the game you want, in the [`bots/`](bots/) folder, directly in your browser (double-click the file, or drag it into a tab). It works identically to the site.
 
 ### 📋 Available games
 
