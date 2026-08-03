@@ -427,7 +427,7 @@ function startGame(){
   const die = parseInt(document.getElementById('selDie').value,10);
   const marine = document.getElementById('chkMarine').checked;
   const cpModule = document.getElementById('chkCPModule').checked;
-  const slots = { ...setupSlots };
+  const slots = { 1:'animals', ...setupSlots };
 
   let cons = -5 + Math.max(0, level-6);
   if(marine) cons += 2;
@@ -494,8 +494,7 @@ function refreshCardsUI(){
   const grid = document.getElementById('cardsGrid');
   if(!grid) return;
   grid.innerHTML='';
-  const order = [{key:'animals', slot:1}];
-  [2,3,4,5].forEach(p=> order.push({key:state && state.slots ? state.slots[p] : ACTION_KEYS[p-2], slot:p}));
+  const order = [1,2,3,4,5].map(p=> ({key: state && state.slots ? state.slots[p] : (p===1?'animals':ACTION_KEYS[p-2]), slot:p}));
   order.forEach(o=>{
     const div = document.createElement('div');
     // Highlight by card identity, not slot — slots 2-5 cycle after each use (Ark Nova rules p.8), so the used card no longer sits at the rolled position.
@@ -593,25 +592,19 @@ function resolveManualRoll(){
 }
 
 // Applies the rolled position's effects directly to ARNO's counters and logs the turn in history.
-// Ark Nova rules p.8: after using a card, it returns to the lowest slot and the cards left of it shift right.
-// ARNO's slot 1 is permanently reserved for Animals, so the cycle only applies within slots 2-5.
+// Ark Nova rules p.8: after using a card, it returns to the lowest slot (1) and the cards left of it shift right.
+// Animals is only fixed at slot 1 for the initial setup/turn 1 — after that it cycles like any other card.
 function cycleUsedSlot(pos){
-  const order = [2,3,4,5].map(p=>state.slots[p]);
-  const used = order.splice(pos-2,1)[0];
+  const order = [1,2,3,4,5].map(p=>state.slots[p]);
+  const used = order.splice(pos-1,1)[0];
   order.unshift(used);
-  [2,3,4,5].forEach((p,k)=>{ state.slots[p]=order[k]; });
+  [1,2,3,4,5].forEach((p,k)=>{ state.slots[p]=order[k]; });
 }
 
 function applyTurn(pos, rolledValue){
   state.lastPos = pos;
   const idx = lvlIdx();
   const lines = [];
-
-  const animSide = state.sides.animals;
-  const animBonus = ANIMALS[animSide][idx];
-  const animalsAppeal = pos + animBonus;
-  state.appeal += animalsAppeal;
-  lines.push({label:`${ACTION_LABEL[lang].animals} (${animSide})`, text:`${lang==='pt'?'Atração':'Appeal'} +${animalsAppeal}`});
 
   const actionKey = state.slots[pos];
   const side = state.sides[actionKey];
@@ -647,7 +640,11 @@ function renderHistory(){
 function effectLines(key, side, pos, idx){
   const L = lang;
   const lines = [];
-  if(key==='cards'){
+  if(key==='animals'){
+    const gain = pos + ANIMALS[side][idx];
+    state.appeal += gain;
+    lines.push({label:`Animals ${side} (#${pos})`, text:`${L==='pt'?'Atração':'Appeal'} +${gain}`});
+  } else if(key==='cards'){
     const t = CARDS[side];
     const parts = [];
     if(t.appeal){ state.appeal += t.appeal[idx]; parts.push(`${L==='pt'?'Atração':'Appeal'} +${t.appeal[idx]}`); }
