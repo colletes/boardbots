@@ -17,6 +17,8 @@ const SITE_I18N = {
     feedback_title: 'Problema? Sugestão? Fale comigo!',
     feedback_desc: 'Encontrou um bug, um dado errado, ou tem uma ideia para um novo bot? Adoraria ouvir.',
     feedback_btn: 'Mandar e-mail',
+    social_title: 'Me siga',
+    social_x_aria: 'X (Twitter)',
 
     game_stoneage_title: 'Stone Age',
     game_stoneage_desc: 'Automa com dois modos: variante solo comunitária (César Augusto Borja) e Modo Solo Oficial de sobrevivência.',
@@ -67,6 +69,8 @@ const SITE_I18N = {
     feedback_title: 'Trouble? Feedback? Get in touch!',
     feedback_desc: 'Found a bug, a wrong stat, or have an idea for a new bot? I\'d love to hear it.',
     feedback_btn: 'Send an e-mail',
+    social_title: 'Follow me',
+    social_x_aria: 'X (Twitter)',
 
     game_stoneage_title: 'Stone Age',
     game_stoneage_desc: 'Automa with two modes: community solo variant (César Augusto Borja) and Official survival Solo Mode.',
