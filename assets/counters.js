@@ -3,12 +3,9 @@
 // safe +1/-1 increment on the `count` field only — no auth/login needed, and
 // this client config is not a secret (access control lives in the rules, not
 // in hiding this key).
-import { initializeFirestore, doc, getDoc, setDoc, increment } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
-import { app, CONFIGURED } from './firebase-init.js';
+import { doc, getDoc, setDoc, increment } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
+import { db, CONFIGURED } from './firebase-init.js';
 
-// Auto-detect long-polling: some networks/browsers block Firestore's default
-// WebChannel streaming transport, causing requests to hang indefinitely.
-const db = CONFIGURED ? initializeFirestore(app, { experimentalAutoDetectLongPolling: true }) : null;
 const VOTE_KEY_PREFIX = 'boardbots_vote_';
 
 // Applies a +1/-1 delta and returns the resulting count.

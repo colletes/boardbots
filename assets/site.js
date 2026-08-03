@@ -18,6 +18,13 @@ const SITE_I18N = {
     feedback_desc: 'Encontrou um bug, um dado errado, ou tem uma ideia para um novo bot? Adoraria ouvir.',
     feedback_btn: 'Mandar e-mail',
     bmc_btn: 'Me pague um café',
+    supporters_title: 'Últimos apoiadores',
+    supporters_empty: 'Seja o primeiro a apoiar este projeto!',
+    supporter_coffee_one: '{name} pagou um café ☕',
+    supporter_coffee_many: '{name} pagou {count} cafés ☕',
+    supporter_commission: '{name} encomendou algo especial',
+    supporter_membership: '{name} virou associado {level}',
+    supporter_recurring: '{name} passou a apoiar mensalmente',
     social_title: 'Me siga',
     social_x_aria: 'X (Twitter)',
 
@@ -74,6 +81,13 @@ const SITE_I18N = {
     feedback_desc: 'Found a bug, a wrong stat, or have an idea for a new bot? I\'d love to hear it.',
     feedback_btn: 'Send an e-mail',
     bmc_btn: 'Buy me a coffee',
+    supporters_title: 'Latest supporters',
+    supporters_empty: 'Be the first to support this project!',
+    supporter_coffee_one: '{name} bought a coffee ☕',
+    supporter_coffee_many: '{name} bought {count} coffees ☕',
+    supporter_commission: '{name} ordered something special',
+    supporter_membership: '{name} became a {level} member',
+    supporter_recurring: '{name} started monthly support',
     social_title: 'Follow me',
     social_x_aria: 'X (Twitter)',
 
@@ -141,6 +155,7 @@ function applySiteI18n(){
 function setSiteLang(lang){
   localStorage.setItem(LANG_KEY, lang);
   applySiteI18n();
+  window.dispatchEvent(new CustomEvent('boardbots:langchange', { detail: { lang } }));
 }
 
 document.addEventListener('DOMContentLoaded', applySiteI18n);

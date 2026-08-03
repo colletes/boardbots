@@ -14,6 +14,13 @@ service cloud.firestore {
                     || request.resource.data.count == resource.data.count - 1;
       allow delete: if false;
     }
+    // Populated only by the bmcWebhook Cloud Function (Admin SDK, bypasses
+    // these rules) from verified BuyMeACoffee webhook events. Public can
+    // only read the rolling supporters feed, never write to it directly.
+    match /supporters/{supporterId} {
+      allow read: if true;
+      allow write: if false;
+    }
     match /{document=**} {
       allow read, write: if false;
     }

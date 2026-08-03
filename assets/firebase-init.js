@@ -2,6 +2,7 @@
 // and analytics.js (Analytics) so the app is only initialized once even when
 // both scripts load on the same page.
 import { initializeApp, getApps, getApp } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js';
+import { initializeFirestore } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
 
 export const firebaseConfig = {
   apiKey: 'AIzaSyBtqtwZvQeG9cz0Vqd2J0MqPGO4mGeL-B8',
@@ -18,3 +19,9 @@ export const firebaseConfig = {
 export const CONFIGURED = !firebaseConfig.apiKey.startsWith('REPLACE_WITH_');
 export const ANALYTICS_CONFIGURED = CONFIGURED && !firebaseConfig.measurementId.startsWith('REPLACE_WITH_');
 export const app = CONFIGURED ? (getApps().length ? getApp() : initializeApp(firebaseConfig)) : null;
+
+// Auto-detect long-polling: some networks/browsers block Firestore's default
+// WebChannel streaming transport, causing requests to hang indefinitely.
+// Shared here (rather than per-module) since a Firestore instance can only
+// be initialized once per app — a second initializeFirestore() call throws.
+export const db = CONFIGURED ? initializeFirestore(app, { experimentalAutoDetectLongPolling: true }) : null;
