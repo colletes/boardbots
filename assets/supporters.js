@@ -8,6 +8,7 @@
 // count: only used for type 'coffee' (number of coffees in that purchase)
 // level: only used for type 'membership' (membership tier name)
 const SUPPORTERS = [
+  { name: 'Lucas Lima (Mesa para Um)', type: 'coffee', count: 1 },
   // { name: 'Alex', type: 'coffee', count: 1 },
   // { name: 'Sam', type: 'membership', level: 'Gold' },
 ];
