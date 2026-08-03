@@ -10,7 +10,7 @@ export const firebaseConfig = {
   storageBucket: 'boardbots-641cc.firebasestorage.app',
   messagingSenderId: '567514929457',
   appId: '1:567514929457:web:f04172437b22deeae07810',
-  measurementId: 'REPLACE_WITH_MEASUREMENT_ID'
+  measurementId: 'G-F8M45E31V5'
 };
 
 // Placeholder config short-circuits to "not configured" so widgets degrade
