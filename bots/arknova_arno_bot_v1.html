@@ -268,15 +268,15 @@ const BUILD = {
     // pos4: draw 1 card + Reputation +1, flat at every level (both tiers)
   },
   II: {
-    pos2_rep:  [1,1,1, 2,2,2],   // + draw 1 card (side II only, unlike side I's pos2)
+    pos2_rep:  [1,1,1, 2,2,2],   // per the ARNO cards: flat 1 for L1-3, flat 2 for L4-6+, no card draw on side II
     pos3_app:  [3,3,4, 5,5,5],
-    pos4_fs:   [1,1,1, 2,2,2],   // Final Scoring tokens placed (+ draw 1 card)
+    pos4_fs:   [1,1,1, 2,2,2],   // Final Scoring tokens placed; no card draw on side II
     pos5_cons: [3,3,3, 4,4,4]
   }
 };
-const SPONSORS = { // Reputation +1 only on side I; both sides: Break +X, place 1 Final Scoring token (or Conservation +2 if maxed)
+const SPONSORS = { // Reputation +1 only on side I; both sides: Break +X, place 1 Final Scoring token
   I:  { rep:1 },
-  II: {}          // side II additionally grants Appeal +X
+  II: {}          // side II additionally grants Appeal +X; the "maxed FS card -> Conservation +2" fallback is side I only
 };
 const ASSOCIATION = {
   // effect granted by the task slot a worker is placed on (same for side I and II)
@@ -648,9 +648,9 @@ function effectLines(key, side, pos, idx){
     const t = BUILD[side];
     let extra;
     if(pos===2){
-      state.rep += t.pos2_rep[idx];
-      extra = `${L==='pt'?'Reputação':'Reputation'} +${t.pos2_rep[idx]}`;
-      if(side==='II'){ state.cards += 1; extra += (L==='pt' ? ', compra 1 carta' : ', draw 1 card'); }
+      const repGain = t.pos2_rep[idx];
+      state.rep += repGain;
+      extra = `${L==='pt'?'Reputação':'Reputation'} +${repGain}`;
     } else if(pos===3){
       state.appeal += t.pos3_app[idx];
       extra = `${L==='pt'?'Atração':'Appeal'} +${t.pos3_app[idx]}`;
@@ -659,10 +659,10 @@ function effectLines(key, side, pos, idx){
         state.cards += 1; state.rep += 1;
         extra = L==='pt' ? 'Compra 1 carta, Reputação +1' : 'Draw 1 card, Reputation +1';
       } else {
+        // Side II only places Final Scoring tokens, no card draw (rulebook has no draw here).
         const n = t.pos4_fs[idx];
-        state.cards += 1;
         state.fsTokens = Math.min(6, state.fsTokens + n);
-        extra = L==='pt' ? `Compra 1 carta, coloca ${n} ficha(s) de Pontuação Final` : `Draw 1 card, place ${n} Final Scoring token(s)`;
+        extra = L==='pt' ? `Coloca ${n} ficha(s) de Pontuação Final` : `Place ${n} Final Scoring token(s)`;
       }
     } else {
       state.cons += t.pos5_cons[idx];
@@ -676,8 +676,11 @@ function effectLines(key, side, pos, idx){
     parts.push(`${L==='pt'?'Pausa':'Break'} +${pos}`);
     if(side==='II'){ state.appeal += pos; parts.push(`${L==='pt'?'Atração':'Appeal'} +${pos}`); }
     if(state.fsTokens>=6){
-      state.cons += 2;
-      parts.push(L==='pt' ? 'Conservação +2 (fichas de Pontuação Final no máximo)' : 'Conservation +2 (Final Scoring tokens maxed)');
+      // Rulebook: the maxed-out Conservation +2 conversion only applies "as long as the Action card is on level I".
+      if(side==='I'){
+        state.cons += 2;
+        parts.push(L==='pt' ? 'Conservação +2 (fichas de Pontuação Final no máximo)' : 'Conservation +2 (Final Scoring tokens maxed)');
+      }
     } else {
       state.fsTokens++;
       parts.push(L==='pt' ? 'coloca 1 ficha de Pontuação Final' : 'place 1 Final Scoring token');
@@ -704,7 +707,13 @@ function effectLines(key, side, pos, idx){
       const redirNote = target!==pos ? (L==='pt'?` (redirecionado do #${pos})`:` (redirected from #${pos})`) : '';
       state.assocSlots[target] = true;
       state.workers--;
-      lines.push({label:`Association ${side} (#${target})${redirNote}`, text:`${effectText}, ${L==='pt'?'coloca 1 associado':'places 1 worker'}`});
+      let placedText = `${effectText}, ${L==='pt'?'coloca 1 associado':'places 1 worker'}`;
+      if(side==='II'){
+        // Rulebook: side II also makes a donation whenever a worker is placed.
+        state.cons += 1;
+        placedText += L==='pt' ? ', doação: Conservação +1' : ', donation: Conservation +1';
+      }
+      lines.push({label:`Association ${side} (#${target})${redirNote}`, text: placedText});
     }
   }
   return lines;
