@@ -44,7 +44,7 @@ Se preferir não depender de internet durante o jogo (ex: mesa sem Wi-Fi), baixe
 
 - Estes apps são **ferramentas de apoio não-oficiais**, feitas por fãs para uso pessoal, sem fins comerciais.
 - Cada jogo mencionado é propriedade de seus respectivos criadores/editoras — os apps não incluem regras completas, textos de cartas ou qualquer material protegido dos jogos originais, apenas a lógica necessária para conduzir um oponente automático.
-- Manuais, PDFs e artes de capa (box art) usados durante o desenvolvimento **não fazem parte deste repositório**, por respeito aos direitos autorais dos editores.
+- Manuais e PDFs usados durante o desenvolvimento **não fazem parte deste repositório**, por respeito aos direitos autorais dos editores. Pequenas imagens de capa (box art) de cada jogo são usadas apenas como ilustração para identificação, nas telas dos apps e na página inicial.
 - Créditos aos criadores de cada variante solo/automa estão descritos dentro de cada app, na seção "Créditos".
 
 ### 👤 Autor
@@ -95,7 +95,7 @@ If you'd rather not depend on internet access while playing (e.g. a table with n
 
 - These apps are **unofficial companion tools**, made by a fan for personal, non-commercial use.
 - Each game mentioned is the property of its respective creators/publishers — the apps do not include full rules, card text, or any protected material from the original games, only the logic needed to run an automated opponent.
-- Rulebooks, PDFs, and box art used during development are **not included in this repository**, out of respect for publishers' copyrights.
+- Rulebooks and PDFs used during development are **not included in this repository**, out of respect for publishers' copyrights. Small box-art images for each game are used only for identification purposes, in the app screens and on the landing page.
 - Credits to the creators of each solo/automa variant are listed inside each app, in the "Credits" section.
 
 ### 👤 Author
