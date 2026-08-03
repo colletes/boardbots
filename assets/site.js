@@ -17,6 +17,7 @@ const SITE_I18N = {
     feedback_title: 'Problema? Sugestão? Fale comigo!',
     feedback_desc: 'Encontrou um bug, um dado errado, ou tem uma ideia para um novo bot? Adoraria ouvir.',
     feedback_btn: 'Mandar e-mail',
+    bmc_btn: 'Me pague um café',
     social_title: 'Me siga',
     social_x_aria: 'X (Twitter)',
 
@@ -69,6 +70,7 @@ const SITE_I18N = {
     feedback_title: 'Trouble? Feedback? Get in touch!',
     feedback_desc: 'Found a bug, a wrong stat, or have an idea for a new bot? I\'d love to hear it.',
     feedback_btn: 'Send an e-mail',
+    bmc_btn: 'Buy me a coffee',
     social_title: 'Follow me',
     social_x_aria: 'X (Twitter)',
 
