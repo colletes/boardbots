@@ -6,6 +6,8 @@
 
 # Board Bots
 
+🌐 **Acesse online:** [colletes.github.io/boardbots](https://colletes.github.io/boardbots/)
+
 Uma coleção de **companheiros de jogo solo** ("bots") para diversos jogos de tabuleiro — apps de página única em HTML/CSS/JavaScript, sem instalação, sem dependências e sem necessidade de servidor: basta abrir o arquivo `.html` em qualquer navegador (computador ou celular).
 
 Cada bot simula um adversário automático ("Automa"), aplica variantes de modo solo oficiais/comunitárias ou oferece uma ferramenta de apoio para jogar sozinho, seguindo o fluxo de decisão do próprio jogo (ao estilo dos automas de David Turczi/Undaunted).
@@ -50,6 +52,8 @@ Feito por **Thiago Colletes de Carvalho** ([colletes@gmail.com](mailto:colletes@
 ## 🇺🇸 English
 
 # Board Bots
+
+🌐 **Live site:** [colletes.github.io/boardbots](https://colletes.github.io/boardbots/)
 
 A collection of **solo-play companion apps** ("bots") for various board games — single-file HTML/CSS/JavaScript apps, no installation, no dependencies, no server required: just open the `.html` file in any browser (desktop or mobile).
 

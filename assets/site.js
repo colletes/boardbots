@@ -1,0 +1,116 @@
+// Board Bots — shared site i18n (index.html + credits.html)
+const LANG_KEY = 'boardbots_lang';
+
+const SITE_I18N = {
+  pt: {
+    site_title: 'Board Bots',
+    site_tagline: 'Companheiros de jogo solo para os seus jogos de tabuleiro favoritos',
+    intro_html: 'Escolha um jogo abaixo para abrir o app do bot. Cada um roda <strong>direto no navegador</strong>, sem instalação — e o progresso da partida fica salvo automaticamente no seu aparelho.',
+    play_btn: 'Jogar',
+    footer_credits: 'Créditos',
+    footer_github: 'Ver no GitHub',
+    footer_note: 'Ferramentas de apoio não-oficiais, feitas por fã, sem fins comerciais.',
+
+    game_stoneage_title: 'Stone Age',
+    game_stoneage_desc: 'Automa com dois modos: variante solo comunitária (César Augusto Borja) e Modo Solo Oficial de sobrevivência.',
+    game_hoth_title: 'Star Wars: Legion — Battle of Hoth',
+    game_hoth_desc: '"Holocron Commander" — assistente de decisão tática para conduzir o oponente automático nos cenários de Hoth.',
+    game_heroscape_title: 'Heroscape',
+    game_heroscape_desc: 'Automated Battle Analyzer (sistema solo de Scott Campbell) para batalhas solo.',
+    game_mysticvale_title: 'Mystic Vale',
+    game_mysticvale_desc: 'Modo solo oficial "Nemesis", criado por John D. Clair.',
+    game_mick_title: 'Rock Hard: 1977',
+    game_mick_desc: 'Adaptação da variante solo de Mick "baseballbuzz" para o modo de um jogador.',
+    game_trv_title: 'Thunder Road: Vendetta',
+    game_trv_desc: 'Bot para os veículos rivais controlados por IA, incluindo as expansões Big Rig (SDBR) e Final Five (SDFF).',
+    game_utek_title: 'Ultra Tiny Epic Kingdoms',
+    game_utek_desc: 'Dois modos: variante solo comunitária e o Modo Solo Oficial do manual, com a "Bússola" de ações.',
+    game_cafebaras_title: 'Café Baras',
+    game_cafebaras_desc: '"Capybot" — oponente automático com árvore de decisão própria, mais estratégico que a variante fã simples.',
+
+    credits_title: 'Créditos',
+    back_link: 'Voltar aos bots',
+    credits_author_heading: 'Autor',
+    credits_author_html: 'Feito por <strong>Thiago Colletes de Carvalho</strong>, com apoio de IA (Gemini / GitHub Copilot) para implementação. Dúvidas, sugestões ou correções são muito bem-vindas por e-mail.',
+    credits_games_heading: 'Créditos por jogo',
+    credits_legal_heading: 'Direitos autorais e uso',
+    credits_legal_html: 'Estes apps são <strong>ferramentas de apoio não-oficiais</strong>, feitas por fã para uso pessoal, sem fins comerciais. Cada jogo mencionado é propriedade de seus respectivos criadores/editoras — os apps não incluem regras completas, textos de cartas ou qualquer material protegido dos jogos originais, apenas a lógica necessária para conduzir um oponente automático. Manuais, PDFs e artes de capa usados durante o desenvolvimento não fazem parte deste repositório, por respeito aos direitos autorais dos editores. Código-fonte disponível sob a licença MIT.',
+
+    credit_stoneage: '<strong>Stone Age</strong> — variante solo com Automa criada por César Augusto Borja (<a href="https://ludopedia.com.br/usuario/caborja" target="_blank" rel="noopener">Ludopedia</a>); Modo Solo Oficial traduzido por Raphael Gurian. Stone Age © Hans im Glück / Z-Man Games.',
+    credit_hoth: '<strong>Star Wars: Legion — Battle of Hoth</strong> — 100% conteúdo, táticas e app originais do autor. Star Wars: Battle of Hoth © Days of Wonder / Lucasfilm Ltd.',
+    credit_heroscape: '<strong>Heroscape</strong> — baseado no "Automated Battle Analyzer", sistema solo criado por Scott Campbell. Heroscape © Hasbro / Milton Bradley.',
+    credit_mysticvale: '<strong>Mystic Vale</strong> — baseado nas regras oficiais do modo "Nemesis", criado por John D. Clair. Mystic Vale © Alderac Entertainment Group (AEG).',
+    credit_mick: '<strong>Rock Hard: 1977</strong> — baseado no mod criado por <a href="https://boardgamegeek.com/profile/baseballbuzz" target="_blank" rel="noopener">baseballbuzz</a>.',
+    credit_trv: '<strong>Thunder Road: Vendetta</strong> — baseado no jogo oficial (e expansões Big Rig/Final Five) da Restoration Games, e no sistema de bot criado por <a href="https://boardgamegeek.com/profile/mayrik" target="_blank" rel="noopener">Padey Mayrik</a>.',
+    credit_utek: '<strong>Ultra Tiny Epic Kingdoms</strong> — baseado na variante solo fã da <a href="https://gjjgames.blogspot.com/" target="_blank" rel="noopener">GJJ Games</a> para Tiny Epic Kingdoms. Ultra Tiny Epic Kingdoms © Gamelyn Games.',
+    credit_cafebaras: '<strong>Café Baras</strong> — árvore de decisão original do autor, inspirada no conceito comunitário do "Capybot" e no estilo de automas de David Turczi. Café Baras design de Roberta Taylor, © 2024 KTBG (Kids Table Board Gaming), versão brasileira Ludofun.',
+  },
+  en: {
+    site_title: 'Board Bots',
+    site_tagline: 'Solo-play companions for your favorite board games',
+    intro_html: 'Pick a game below to open its bot app. Each one runs <strong>right in the browser</strong>, no install needed — and match progress is saved automatically on your device.',
+    play_btn: 'Play',
+    footer_credits: 'Credits',
+    footer_github: 'View on GitHub',
+    footer_note: 'Unofficial fan-made companion tools, for personal, non-commercial use.',
+
+    game_stoneage_title: 'Stone Age',
+    game_stoneage_desc: 'Automa with two modes: community solo variant (César Augusto Borja) and Official survival Solo Mode.',
+    game_hoth_title: 'Star Wars: Legion — Battle of Hoth',
+    game_hoth_desc: '"Holocron Commander" — a tactical decision assistant to run the automated opponent in Battle of Hoth scenarios.',
+    game_heroscape_title: 'Heroscape',
+    game_heroscape_desc: 'Automated Battle Analyzer (solo system by Scott Campbell) for solo battles.',
+    game_mysticvale_title: 'Mystic Vale',
+    game_mysticvale_desc: 'Official "Nemesis" solo mode, created by John D. Clair.',
+    game_mick_title: 'Rock Hard: 1977',
+    game_mick_desc: 'Adaptation of Mick "baseballbuzz"\'s solo variant for one-player mode.',
+    game_trv_title: 'Thunder Road: Vendetta',
+    game_trv_desc: 'Bot for AI-controlled rival vehicles, including the Big Rig (SDBR) and Final Five (SDFF) expansions.',
+    game_utek_title: 'Ultra Tiny Epic Kingdoms',
+    game_utek_desc: 'Two modes: community solo variant and the rulebook\'s Official Solo Mode, with the action "Compass".',
+    game_cafebaras_title: 'Café Baras',
+    game_cafebaras_desc: '"Capybot" — an automated opponent with its own decision tree, more strategic than the simple fan variant.',
+
+    credits_title: 'Credits',
+    back_link: 'Back to bots',
+    credits_author_heading: 'Author',
+    credits_author_html: 'Made by <strong>Thiago Colletes de Carvalho</strong>, with AI assistance (Gemini / GitHub Copilot) for implementation. Questions, suggestions or fixes are very welcome by e-mail.',
+    credits_games_heading: 'Per-game credits',
+    credits_legal_heading: 'Copyright and usage',
+    credits_legal_html: 'These apps are <strong>unofficial companion tools</strong>, made by a fan for personal, non-commercial use. Each game mentioned is the property of its respective creators/publishers — the apps do not include full rules, card text, or any protected material from the original games, only the logic needed to run an automated opponent. Rulebooks, PDFs, and box art used during development are not included in this repository, out of respect for publishers\' copyrights. Source code available under the MIT license.',
+
+    credit_stoneage: '<strong>Stone Age</strong> — scoring Automa solo variant created by César Augusto Borja (<a href="https://ludopedia.com.br/usuario/caborja" target="_blank" rel="noopener">Ludopedia</a>); Official Solo Mode translated by Raphael Gurian. Stone Age © Hans im Glück / Z-Man Games.',
+    credit_hoth: '<strong>Star Wars: Legion — Battle of Hoth</strong> — 100% original content, tactics and app by the author. Star Wars: Battle of Hoth © Days of Wonder / Lucasfilm Ltd.',
+    credit_heroscape: '<strong>Heroscape</strong> — based on the "Automated Battle Analyzer", a solo system created by Scott Campbell. Heroscape © Hasbro / Milton Bradley.',
+    credit_mysticvale: '<strong>Mystic Vale</strong> — based on the official "Nemesis" mode rules, designed by John D. Clair. Mystic Vale © Alderac Entertainment Group (AEG).',
+    credit_mick: '<strong>Rock Hard: 1977</strong> — based on the mod created by <a href="https://boardgamegeek.com/profile/baseballbuzz" target="_blank" rel="noopener">baseballbuzz</a>.',
+    credit_trv: '<strong>Thunder Road: Vendetta</strong> — based on the official game (and Big Rig/Final Five expansions) by Restoration Games, and on the bot system created by <a href="https://boardgamegeek.com/profile/mayrik" target="_blank" rel="noopener">Padey Mayrik</a>.',
+    credit_utek: '<strong>Ultra Tiny Epic Kingdoms</strong> — based on the <a href="https://gjjgames.blogspot.com/" target="_blank" rel="noopener">GJJ Games</a> fan solo variant for Tiny Epic Kingdoms. Ultra Tiny Epic Kingdoms © Gamelyn Games.',
+    credit_cafebaras: '<strong>Café Baras</strong> — original decision tree by the author, inspired by the community\'s "Capybot" concept and David Turczi\'s automa design style. Café Baras designed by Roberta Taylor, © 2024 KTBG (Kids Table Board Gaming), Brazilian version by Ludofun.',
+  }
+};
+
+function S(){ return SITE_I18N[localStorage.getItem(LANG_KEY) || 'pt']; }
+
+function applySiteI18n(){
+  const lang = localStorage.getItem(LANG_KEY) || 'pt';
+  document.documentElement.lang = lang === 'pt' ? 'pt-BR' : 'en';
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (S()[key] !== undefined) el.textContent = S()[key];
+  });
+  document.querySelectorAll('[data-i18n-html]').forEach(el => {
+    const key = el.getAttribute('data-i18n-html');
+    if (S()[key] !== undefined) el.innerHTML = S()[key];
+  });
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.lang === lang);
+  });
+}
+
+function setSiteLang(lang){
+  localStorage.setItem(LANG_KEY, lang);
+  applySiteI18n();
+}
+
+document.addEventListener('DOMContentLoaded', applySiteI18n);
