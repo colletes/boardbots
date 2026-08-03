@@ -437,7 +437,7 @@ function startGame(){
     sides:{ animals:'I', cards:'I', build:'I', sponsors:'I', association:'I' },
     appeal:0, rep:0, cons, brk:0, cards:0, zoos:0, unis:0, workers:3, fsTokens:0,
     assocSlots:{2:false,3:false,4:false,5:false},
-    lastPos:null, round:1, history:[]
+    lastPos:null, lastKey:null, round:1, history:[]
   };
   save();
   document.getElementById('setup-screen').classList.add('hidden');
@@ -498,8 +498,8 @@ function refreshCardsUI(){
   [2,3,4,5].forEach(p=> order.push({key:state && state.slots ? state.slots[p] : ACTION_KEYS[p-2], slot:p}));
   order.forEach(o=>{
     const div = document.createElement('div');
-    // Only the rolled position lights up (matches brdgm.me) — Animals' appeal bonus is a background calc, not a "selected" card.
-    const isActive = state && state.lastPos && o.slot===state.lastPos;
+    // Highlight by card identity, not slot — slots 2-5 cycle after each use (Ark Nova rules p.8), so the used card no longer sits at the rolled position.
+    const isActive = state && state.lastKey && o.key===state.lastKey;
     div.className = 'acard' + (isActive ? ' active' : '');
     div.style.setProperty('--ac-color', ACTION_COLOR[o.key]);
     const side = state ? state.sides[o.key] : 'I';
@@ -593,6 +593,15 @@ function resolveManualRoll(){
 }
 
 // Applies the rolled position's effects directly to ARNO's counters and logs the turn in history.
+// Ark Nova rules p.8: after using a card, it returns to the lowest slot and the cards left of it shift right.
+// ARNO's slot 1 is permanently reserved for Animals, so the cycle only applies within slots 2-5.
+function cycleUsedSlot(pos){
+  const order = [2,3,4,5].map(p=>state.slots[p]);
+  const used = order.splice(pos-2,1)[0];
+  order.unshift(used);
+  [2,3,4,5].forEach((p,k)=>{ state.slots[p]=order[k]; });
+}
+
 function applyTurn(pos, rolledValue){
   state.lastPos = pos;
   const idx = lvlIdx();
@@ -607,6 +616,8 @@ function applyTurn(pos, rolledValue){
   const actionKey = state.slots[pos];
   const side = state.sides[actionKey];
   lines.push(...effectLines(actionKey, side, pos, idx));
+  state.lastKey = actionKey;
+  cycleUsedSlot(pos);
 
   const out = document.getElementById('rollOut');
   out.innerHTML = `<div class="effect-box">
