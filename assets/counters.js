@@ -7,7 +7,9 @@ const COUNTER_BASE = 'https://api.counterapi.dev/v1';
 const COUNTER_NS = 'colletes-boardbots';
 const VOTE_KEY_PREFIX = 'boardbots_vote_';
 
-async function counterRequest(name, action){
+function wait(ms){ return new Promise(r => setTimeout(r, ms)); }
+
+async function counterRequestOnce(name, action){
   const path = action ? `${name}/${action}` : `${name}/`;
   const res = await fetch(`${COUNTER_BASE}/${COUNTER_NS}/${path}`);
   if (res.status === 400) {
@@ -21,6 +23,21 @@ async function counterRequest(name, action){
   if (!res.ok) throw new Error('counter request failed: ' + res.status);
   const data = await res.json();
   return data.count;
+}
+
+// CounterAPI's free v1 backend occasionally hits its own connection-pool limit
+// and returns a transient 400 (a real backend error, not "record not found").
+// Retry a couple of times with a short backoff before giving up — in practice
+// these failures clear up within a second or two.
+async function counterRequest(name, action, retries = 3){
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await counterRequestOnce(name, action);
+    } catch (e) {
+      if (attempt >= retries) throw e;
+      await wait(400 * (attempt + 1));
+    }
+  }
 }
 
 function formatCount(n){
