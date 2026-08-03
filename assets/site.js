@@ -37,6 +37,8 @@ const SITE_I18N = {
     game_utek_desc: 'Dois modos: variante solo comunitária e o Modo Solo Oficial do manual, com a "Bússola" de ações.',
     game_cafebaras_title: 'Café Baras',
     game_cafebaras_desc: '"Capybot" — oponente automático com árvore de decisão própria, mais estratégico que a variante fã simples.',
+    game_arknova_title: 'Ark Nova',
+    game_arknova_desc: 'Automa "ARNO" — oponente por dado com cartas de ação, criado por Andre K.',
 
     credits_title: 'Créditos',
     back_link: 'Voltar aos bots',
@@ -54,6 +56,7 @@ const SITE_I18N = {
     credit_trv: '<strong>Thunder Road: Vendetta</strong> — baseado no jogo oficial (e expansões Big Rig/Final Five) da Restoration Games, e no sistema de bot criado por <a href="https://boardgamegeek.com/profile/mayrik" target="_blank" rel="noopener">Padey Mayrik</a>.',
     credit_utek: '<strong>Ultra Tiny Epic Kingdoms</strong> — baseado na variante solo fã da <a href="https://gjjgames.blogspot.com/" target="_blank" rel="noopener">GJJ Games</a> para Tiny Epic Kingdoms. Ultra Tiny Epic Kingdoms © Gamelyn Games.',
     credit_cafebaras: '<strong>Café Baras</strong> — árvore de decisão original do autor, inspirada no conceito comunitário do "Capybot" e no estilo de automas de David Turczi. Café Baras design de Roberta Taylor, © 2024 KTBG (Kids Table Board Gaming), versão brasileira Ludofun.',
+    credit_arknova: '<strong>Ark Nova</strong> — baseado no automa "ARNO", criado por Andre K. Ark Nova © Feuerland Spiele / Capstone Games.',
   },
   en: {
     site_title: 'Board Bots',
@@ -90,6 +93,8 @@ const SITE_I18N = {
     game_utek_desc: 'Two modes: community solo variant and the rulebook\'s Official Solo Mode, with the action "Compass".',
     game_cafebaras_title: 'Café Baras',
     game_cafebaras_desc: '"Capybot" — an automated opponent with its own decision tree, more strategic than the simple fan variant.',
+    game_arknova_title: 'Ark Nova',
+    game_arknova_desc: '"ARNO" Automa — a dice-driven opponent with action cards, created by Andre K.',
 
     credits_title: 'Credits',
     back_link: 'Back to bots',
@@ -107,6 +112,7 @@ const SITE_I18N = {
     credit_trv: '<strong>Thunder Road: Vendetta</strong> — based on the official game (and Big Rig/Final Five expansions) by Restoration Games, and on the bot system created by <a href="https://boardgamegeek.com/profile/mayrik" target="_blank" rel="noopener">Padey Mayrik</a>.',
     credit_utek: '<strong>Ultra Tiny Epic Kingdoms</strong> — based on the <a href="https://gjjgames.blogspot.com/" target="_blank" rel="noopener">GJJ Games</a> fan solo variant for Tiny Epic Kingdoms. Ultra Tiny Epic Kingdoms © Gamelyn Games.',
     credit_cafebaras: '<strong>Café Baras</strong> — original decision tree by the author, inspired by the community\'s "Capybot" concept and David Turczi\'s automa design style. Café Baras designed by Roberta Taylor, © 2024 KTBG (Kids Table Board Gaming), Brazilian version by Ludofun.',
+    credit_arknova: '<strong>Ark Nova</strong> — based on the "ARNO" automa, created by Andre K. Ark Nova © Feuerland Spiele / Capstone Games.',
   }
 };
 
