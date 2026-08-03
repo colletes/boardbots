@@ -11,6 +11,13 @@ const SITE_I18N = {
     footer_github: 'Ver no GitHub',
     footer_note: 'Ferramentas de apoio não-oficiais, feitas por fã, sem fins comerciais.',
 
+    visits_label: 'Visitas',
+    vote_like_aria: 'Gostei',
+    vote_dislike_aria: 'Não gostei',
+    feedback_title: 'Problema? Sugestão? Fale comigo!',
+    feedback_desc: 'Encontrou um bug, um dado errado, ou tem uma ideia para um novo bot? Adoraria ouvir.',
+    feedback_btn: 'Mandar e-mail',
+
     game_stoneage_title: 'Stone Age',
     game_stoneage_desc: 'Automa com dois modos: variante solo comunitária (César Augusto Borja) e Modo Solo Oficial de sobrevivência.',
     game_hoth_title: 'Star Wars: Legion — Battle of Hoth',
@@ -53,6 +60,13 @@ const SITE_I18N = {
     footer_credits: 'Credits',
     footer_github: 'View on GitHub',
     footer_note: 'Unofficial fan-made companion tools, for personal, non-commercial use.',
+
+    visits_label: 'Visits',
+    vote_like_aria: 'Like',
+    vote_dislike_aria: 'Dislike',
+    feedback_title: 'Trouble? Feedback? Get in touch!',
+    feedback_desc: 'Found a bug, a wrong stat, or have an idea for a new bot? I\'d love to hear it.',
+    feedback_btn: 'Send an e-mail',
 
     game_stoneage_title: 'Stone Age',
     game_stoneage_desc: 'Automa with two modes: community solo variant (César Augusto Borja) and Official survival Solo Mode.',
@@ -102,6 +116,10 @@ function applySiteI18n(){
   document.querySelectorAll('[data-i18n-html]').forEach(el => {
     const key = el.getAttribute('data-i18n-html');
     if (S()[key] !== undefined) el.innerHTML = S()[key];
+  });
+  document.querySelectorAll('[data-i18n-aria]').forEach(el => {
+    const key = el.getAttribute('data-i18n-aria');
+    if (S()[key] !== undefined) el.setAttribute('aria-label', S()[key]);
   });
   document.querySelectorAll('.lang-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.lang === lang);
