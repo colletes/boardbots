@@ -1,8 +1,16 @@
-// Board Bots — rolling "latest supporters" marquee, fed by the bmcWebhook
-// Cloud Function (functions/index.js), which writes one doc per BuyMeACoffee
-// event into Firestore's `supporters` collection. This module only reads.
-import { collection, query, orderBy, limit, getDocs } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
-import { db, CONFIGURED } from './firebase-init.js';
+// Board Bots — rolling "latest supporters" marquee.
+//
+// This is a manually-curated list (no backend/database — keeps things 100%
+// free). Whenever BuyMeACoffee emails about a new supporter, add one entry
+// below (newest first) and the marquee updates automatically on next visit.
+//
+// type: 'coffee' | 'commission' | 'membership' | 'recurring'
+// count: only used for type 'coffee' (number of coffees in that purchase)
+// level: only used for type 'membership' (membership tier name)
+const SUPPORTERS = [
+  // { name: 'Alex', type: 'coffee', count: 1 },
+  // { name: 'Sam', type: 'membership', level: 'Gold' },
+];
 
 const MAX_SHOWN = 12;
 
@@ -56,23 +64,8 @@ function render(list){
   wrap.innerHTML = `<div class="supporters-track">${chips}${chips}</div>`;
 }
 
-async function init(){
-  const wrap = document.getElementById('supportersMarquee');
-  if (!wrap) return;
-  if (!CONFIGURED) {
-    document.getElementById('supportersEmpty')?.classList.remove('hidden');
-    wrap.classList.add('hidden');
-    return;
-  }
-  try {
-    const q = query(collection(db, 'supporters'), orderBy('createdAt', 'desc'), limit(MAX_SHOWN));
-    const snap = await getDocs(q);
-    render(snap.docs.map(d => d.data()));
-  } catch (e) {
-    console.warn('Board Bots: supporters feed failed', e);
-    document.getElementById('supportersEmpty')?.classList.remove('hidden');
-    wrap.classList.add('hidden');
-  }
+function init(){
+  render(SUPPORTERS.slice(0, MAX_SHOWN));
 }
 
 document.addEventListener('DOMContentLoaded', init);
