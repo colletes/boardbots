@@ -27,6 +27,7 @@ const SITE_I18N = {
     supporter_recurring: '{name} passou a apoiar mensalmente',
     social_title: 'Me siga',
     social_x_aria: 'X (Twitter)',
+    social_instagram_aria: 'Instagram',
 
     game_stoneage_title: 'Stone Age',
     game_stoneage_desc: 'Automa com dois modos: variante solo comunitária (César Augusto Borja) e Modo Solo Oficial de sobrevivência.',
@@ -46,6 +47,8 @@ const SITE_I18N = {
     game_cafebaras_desc: '"Capybot" — oponente automático com árvore de decisão própria, mais estratégico que a variante fã simples.',
     game_arknova_title: 'Ark Nova',
     game_arknova_desc: 'Automa "ARNO" — oponente por dado com cartas de ação, criado por Andre K.',
+    game_sanctuary_title: 'Sanctuary',
+    game_sanctuary_desc: 'Automa solo com mecânicas adaptadas do ARNO de Ark Nova.',
 
     credits_title: 'Créditos',
     back_link: 'Voltar aos bots',
@@ -64,6 +67,7 @@ const SITE_I18N = {
     credit_utek: '<strong>Ultra Tiny Epic Kingdoms</strong> — baseado na variante solo fã da <a href="https://gjjgames.blogspot.com/" target="_blank" rel="noopener">GJJ Games</a> para Tiny Epic Kingdoms. Ultra Tiny Epic Kingdoms © Gamelyn Games.',
     credit_cafebaras: '<strong>Café Baras</strong> — árvore de decisão original do autor, inspirada no conceito comunitário do "Capybot" e no estilo de automas de David Turczi. Café Baras design de Roberta Taylor, © 2024 KTBG (Kids Table Board Gaming), versão brasileira Ludofun.',
     credit_arknova: '<strong>Ark Nova</strong> — baseado no automa "ARNO", criado por Andre K. Ark Nova © Feuerland Spiele / Capstone Games.',
+    credit_sanctuary: '<strong>Sanctuary</strong> — automa adaptado a partir do "ARNO" de Ark Nova. Sanctuary © Capstone Games.',
   },
   en: {
     site_title: 'Board Bots',
@@ -90,6 +94,7 @@ const SITE_I18N = {
     supporter_recurring: '{name} started monthly support',
     social_title: 'Follow me',
     social_x_aria: 'X (Twitter)',
+    social_instagram_aria: 'Instagram',
 
     game_stoneage_title: 'Stone Age',
     game_stoneage_desc: 'Automa with two modes: community solo variant (César Augusto Borja) and Official survival Solo Mode.',
@@ -109,6 +114,8 @@ const SITE_I18N = {
     game_cafebaras_desc: '"Capybot" — an automated opponent with its own decision tree, more strategic than the simple fan variant.',
     game_arknova_title: 'Ark Nova',
     game_arknova_desc: '"ARNO" Automa — a dice-driven opponent with action cards, created by Andre K.',
+    game_sanctuary_title: 'Sanctuary',
+    game_sanctuary_desc: 'Solo Automa with mechanics adapted from Ark Nova\'s ARNO.',
 
     credits_title: 'Credits',
     back_link: 'Back to bots',
@@ -127,6 +134,7 @@ const SITE_I18N = {
     credit_utek: '<strong>Ultra Tiny Epic Kingdoms</strong> — based on the <a href="https://gjjgames.blogspot.com/" target="_blank" rel="noopener">GJJ Games</a> fan solo variant for Tiny Epic Kingdoms. Ultra Tiny Epic Kingdoms © Gamelyn Games.',
     credit_cafebaras: '<strong>Café Baras</strong> — original decision tree by the author, inspired by the community\'s "Capybot" concept and David Turczi\'s automa design style. Café Baras designed by Roberta Taylor, © 2024 KTBG (Kids Table Board Gaming), Brazilian version by Ludofun.',
     credit_arknova: '<strong>Ark Nova</strong> — based on the "ARNO" automa, created by Andre K. Ark Nova © Feuerland Spiele / Capstone Games.',
+    credit_sanctuary: '<strong>Sanctuary</strong> — automa adapted from Ark Nova\'s "ARNO". Sanctuary © Capstone Games.',
   }
 };
 
