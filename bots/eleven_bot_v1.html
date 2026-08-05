@@ -53,6 +53,13 @@ label{ display:block; margin:10px 0 6px; font-size:0.9em; color:var(--text-dim);
 select, input[type=number], input[type=text]{ width:100%; padding:11px 12px; font-size:16px; background:var(--surface-2); color:var(--text); border:1px solid var(--border); border-radius:10px; }
 .checkbox-group{ display:flex; align-items:center; gap:10px; margin-top:14px; }
 .checkbox-group label{ margin:0; color:var(--text); }
+.label-row{ display:flex; align-items:center; gap:6px; margin:10px 0 6px; }
+.label-row label{ margin:0; }
+.info-icon-btn{ display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:50%; border:1px solid var(--border); background:transparent; color:var(--text-dim); cursor:pointer; padding:0; flex-shrink:0; }
+.info-icon-btn:hover, .info-icon-btn:focus-visible{ color:#fff; border-color:var(--blue); background:var(--blue-soft); }
+.info-icon-btn svg{ width:12px; height:12px; }
+.diff-help-text{ background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:10px 12px; margin:-2px 0 12px; font-size:0.85em; color:var(--text-dim); }
+.critical-flag{ color:#ffb84f !important; font-weight:700; }
 .btn{ display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:12px 18px; border-radius:10px; border:1px solid var(--border); background:var(--surface-2); color:var(--text); font-weight:600; font-size:0.95em; cursor:pointer; min-height:44px; }
 .btn:active{ transform:scale(0.97); }
 @media (hover:hover) and (pointer:fine){ .btn:hover{ border-color:var(--blue); } .btn-primary:hover{ filter:brightness(1.1); } }
@@ -213,18 +220,26 @@ select, input[type=number], input[type=text]{ width:100%; padding:11px 12px; fon
   <input type="text" id="camp-team" data-i18n-placeholder="placeholderTeam" class="hidden" style="margin-top:8px;">
   <p class="intro hidden" id="camp-custom-hint" style="margin:6px 0 0; font-size:0.8em;" data-i18n="customTeamHint"></p>
 
-  <label data-i18n="lblDifficulty"></label>
+  <div class="label-row">
+    <label data-i18n="lblDifficulty"></label>
+    <button type="button" class="info-icon-btn" onclick="document.getElementById('difficulty-help-text').classList.toggle('hidden')" data-i18n-aria="difficultyHelpAria" aria-label="Difficulty info">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="11" x2="12" y2="16"/><circle cx="12" cy="7.5" r="0.6" fill="currentColor" stroke="none"/></svg>
+    </button>
+  </div>
   <select id="camp-difficulty">
     <option value="easy" data-i18n="optEasy"></option>
     <option value="medium" selected data-i18n="optMedium"></option>
     <option value="hard" data-i18n="optHard"></option>
   </select>
+  <p class="diff-help-text hidden" id="difficulty-help-text" data-i18n="difficultyHelpText"></p>
 
   <label data-i18n="lblChapters"></label>
   <select id="camp-chapters">
     <option value="1" data-i18n="opt1ch"></option>
     <option value="2" data-i18n="opt2ch"></option>
     <option value="3" selected data-i18n="opt3ch"></option>
+    <option value="4" data-i18n="opt4ch"></option>
+    <option value="5" data-i18n="opt5ch"></option>
   </select>
 
   <div class="checkbox-group">
@@ -323,7 +338,9 @@ const I18N = {
     optCustomTeam:'Time personalizado...', customTeamHint:'Time fictício/personalizado: os capítulos usarão cenários genéricos baseados na sua divisão e dificuldade, sem notícias reais de um clube específico.',
     lblDivision:'Divisão Atual do Time', opt3rd:'3ª Divisão', opt2nd:'2ª Divisão', opt1st:'1ª Divisão',
     lblDifficulty:'Nível de Dificuldade', optEasy:'Fácil', optMedium:'Médio', optHard:'Difícil',
-    lblChapters:'Capítulos da Campanha', opt1ch:'1 Capítulo (Curta)', opt2ch:'2 Capítulos (Média)', opt3ch:'3 Capítulos (Longa)',
+    difficultyHelpAria:'O que é o nível de dificuldade?',
+    difficultyHelpText:'O nível escolhido ajusta as metas numéricas dos objetivos (ex: pontos na Tabela da Liga, Youngsters a promover) — Fácil pede menos, Difícil pede mais. Além disso, dentro da mesma campanha os objetivos ficam progressivamente mais difíceis a cada capítulo. Falhar não te demite automaticamente: normalmente você continua no comando, mas o próximo capítulo fica ainda mais exigente. Só capítulos decisivos (marcados com ⚠) — como o desfecho da campanha ou o risco de rebaixamento — resultam em demissão.',
+    lblChapters:'Capítulos da Campanha', opt1ch:'1 Capítulo (Curta)', opt2ch:'2 Capítulos (Média)', opt3ch:'3 Capítulos (Longa)', opt4ch:'4 Capítulos (Extensa)', opt5ch:'5 Capítulos (Épica)',
     chkPromotion:'Permitir subida de divisão entre capítulos?',
     btnGenerate:'Gerar Campanha',
     loaderText:'Buscando dados na Wikipedia e gerando história...',
@@ -360,7 +377,9 @@ const I18N = {
     optCustomTeam:'Custom team...', customTeamHint:'Fictional/custom team: chapters will use generic scenarios based on your division and difficulty, without real news for a specific club.',
     lblDivision:'Team\'s Current Division', opt3rd:'3rd Division', opt2nd:'2nd Division', opt1st:'1st Division',
     lblDifficulty:'Difficulty Level', optEasy:'Easy', optMedium:'Medium', optHard:'Hard',
-    lblChapters:'Campaign Chapters', opt1ch:'1 Chapter (Short)', opt2ch:'2 Chapters (Medium)', opt3ch:'3 Chapters (Long)',
+    difficultyHelpAria:'What does the difficulty level do?',
+    difficultyHelpText:'The chosen level adjusts the numeric objective targets (e.g. League Table points, Youngsters to promote) — Easy asks for less, Hard asks for more. On top of that, objectives get progressively harder each chapter within the same campaign. Failing doesn\'t get you fired automatically: you usually stay in charge, but the next chapter becomes even more demanding. Only decisive chapters (marked with ⚠) — like the campaign\'s finale or a relegation risk — result in getting fired.',
+    lblChapters:'Campaign Chapters', opt1ch:'1 Chapter (Short)', opt2ch:'2 Chapters (Medium)', opt3ch:'3 Chapters (Long)', opt4ch:'4 Chapters (Extended)', opt5ch:'5 Chapters (Epic)',
     chkPromotion:'Allow moving up a division between chapters?',
     btnGenerate:'Generate Campaign',
     loaderText:'Fetching Wikipedia data and generating the story...',
@@ -394,6 +413,7 @@ function applyI18n(){
   document.querySelectorAll('[data-i18n]').forEach(el=>{ el.textContent = t(el.dataset.i18n); });
   document.querySelectorAll('[data-i18n-html]').forEach(el=>{ el.innerHTML = t(el.dataset.i18nHtml); });
   document.querySelectorAll('[data-i18n-placeholder]').forEach(el=>{ el.placeholder = t(el.dataset.i18nPlaceholder); });
+  document.querySelectorAll('[data-i18n-aria]').forEach(el=>{ el.setAttribute('aria-label', t(el.dataset.i18nAria)); });
   document.getElementById('btnPt').classList.toggle('active', lang==='pt');
   document.getElementById('btnEn').classList.toggle('active', lang==='en');
   document.documentElement.lang = lang==='en' ? 'en' : 'pt-BR';

@@ -36,7 +36,9 @@ const CAMPAIGN_UI = {
         setupTitle: 'MUDANÇAS DE SETUP', resultTitle: 'RESULTADO DO CENÁRIO',
         resultComplete: 'Se você completou os objetivos exigidos, avance para o próximo capítulo!',
         resultPromote: 'Se terminar em 1º ou 2º, você pode subir para a Divisão',
-        resultFail: 'Se falhou, você foi demitido. Recomece o capítulo ou a campanha.',
+        resultFail: 'Se falhou neste capítulo decisivo, você foi demitido. Recomece o capítulo ou a campanha.',
+        resultFailSoft: 'Se falhou, você continua no cargo — mas a diretoria perdeu a paciência. O próximo capítulo será ainda mais exigente.',
+        difficultyLabel: 'Dificuldade do Capítulo', criticalChapterNote: 'Capítulo decisivo: falhar aqui resulta em demissão.',
         continuityNote: 'Continuidade: se esta campanha não for jogada em sequência direta, anote o estado do seu clube (posição na liga, elenco, infraestrutura) ao final de cada capítulo para retomar depois.',
         pdfFilename: 'Eleven_Campanha.pdf'
     },
@@ -48,7 +50,9 @@ const CAMPAIGN_UI = {
         setupTitle: 'SETUP CHANGES', resultTitle: 'SCENARIO OUTCOME',
         resultComplete: 'If you completed the required objectives, advance to the next chapter!',
         resultPromote: 'If you finish 1st or 2nd, you may move up to Division',
-        resultFail: 'If you failed, you were fired. Restart the chapter or the campaign.',
+        resultFail: 'If you failed this decisive chapter, you were fired. Restart the chapter or the campaign.',
+        resultFailSoft: 'If you failed, you keep your job — but the board\'s patience is wearing thin. The next chapter will demand even more.',
+        difficultyLabel: 'Chapter Difficulty', criticalChapterNote: 'Decisive chapter: failing here results in getting fired.',
         continuityNote: 'Continuity: if this campaign isn\'t played back-to-back, jot down your club\'s state (league position, squad, infrastructure) at the end of each chapter so you can pick it back up later.',
         pdfFilename: 'Eleven_Campaign.pdf'
     }
@@ -142,9 +146,18 @@ function getSelectedTeamName() {
     return document.getElementById('camp-team-select').value;
 }
 
-// Picks a numeric threshold that scales with the chosen difficulty.
-function pickNum(difficulty, easy, medium, hard) {
-    return ({ easy, medium, hard })[difficulty] ?? medium;
+// Picks a numeric threshold that scales with the chosen difficulty, then
+// optionally escalates it further by `chapterFactor` (0 for chapter 1,
+// increasing for later chapters in the same campaign) so later chapters
+// demand tougher numeric targets. Only threaded through objectives whose
+// number is an "at least N"-style threshold — never through ordinal/fixed
+// rule numbers (e.g. "1st place", "bottom 2 places") or SETUP_CHANGES
+// (some of which have reversed easy/hard semantics, e.g. a bigger bonus is
+// easier, not harder).
+function pickNum(difficulty, easy, medium, hard, chapterFactor) {
+    const base = ({ easy, medium, hard })[difficulty] ?? medium;
+    if (!chapterFactor) return base;
+    return Math.max(base, Math.round(base * (1 + chapterFactor)));
 }
 
 // ---- Story Arcs ------------------------------------------------------
@@ -163,7 +176,9 @@ const STORY_ARCS = [
             title: 'Primeiro Amor',
             stages: [
                 { label: 'A Volta', text: 'Você voltou para casa. {team} é o clube da sua infância, e a torcida ainda lembra do seu nome. {fact} Agora começa sua primeira temporada no comando — mostre que valeu a pena te trazer de volta.' },
+                { label: 'Os Primeiros Passos', text: 'Os primeiros resultados no comando do {team} começam a aparecer, ainda que de forma modesta. {fact} A torcida observa com cautela, mas já dá sinais de que está disposta a acreditar em você.' },
                 { label: 'Ganhando Confiança', text: 'Uma temporada já se passou desde que você assumiu o {team}, e aos poucos a torcida começa a confiar no seu trabalho. {fact} É hora de consolidar as mudanças que você começou e provar que não foi sorte.' },
+                { label: 'Provado pelo Fogo', text: 'Uma sequência difícil de resultados coloca à prova a confiança que o {team} depositou em você. {fact} É hora de mostrar que a volta para casa não foi só sentimentalismo.' },
                 { label: 'Legado', text: 'Chegou a temporada decisiva da sua passagem pelo {team} nesta história. {fact} É hora de decidir que tipo de legado você deixará para o clube que te viu crescer.' }
             ]
         },
@@ -171,7 +186,9 @@ const STORY_ARCS = [
             title: 'First Love',
             stages: [
                 { label: 'The Return', text: 'You have come home. {team} is the club of your childhood, and the fans still remember your name. {fact} Now begins your first season in charge — show that bringing you back was worth it.' },
+                { label: 'First Steps', text: 'The first results in charge of {team} are starting to show, however modest. {fact} The fans are watching cautiously, but already showing signs they are willing to believe in you.' },
                 { label: 'Earning Trust', text: 'A season has passed since you took charge of {team}, and the fans are slowly starting to trust your work. {fact} It is time to consolidate the changes you started and prove it wasn\'t just luck.' },
+                { label: 'Trial by Fire', text: 'A difficult run of results puts the trust {team} placed in you to the test. {fact} It is time to show that coming home wasn\'t just sentimentality.' },
                 { label: 'Legacy', text: 'This is the decisive season of your time at {team} in this story. {fact} It is time to decide what kind of legacy you will leave for the club that saw you grow up.' }
             ]
         }
@@ -182,7 +199,9 @@ const STORY_ARCS = [
             title: 'Tempos de Crise',
             stages: [
                 { label: 'O Colapso', text: '{team} acaba de perder seu principal patrocinador, e as contas simplesmente não fecham. {fact} Você assume o comando em meio ao caos, com a missão de estancar a sangria financeira.' },
+                { label: 'Cortes Difíceis', text: 'Decisões impopulares de corte de gastos precisam ser tomadas no {team}, e nem todos concordam com o caminho escolhido. {fact} Ainda é cedo para colher resultados, mas os primeiros passos da reconstrução já foram dados.' },
                 { label: 'Reconstrução', text: 'Depois de uma temporada de cortes e sacrifícios, o {team} começa a enxergar luz no fim do túnel. {fact} Mas a diretoria ainda cobra resultados rápidos para justificar a paciência que teve com você.' },
+                { label: 'Sinais de Vida', text: 'Depois de tanto sacrifício, o {team} finalmente mostra sinais de vida dentro de campo. {fact} A diretoria observa com cautela, mas o otimismo começa a voltar ao clube.' },
                 { label: 'Superação', text: 'É a temporada que vai definir se a crise no {team} ficou para trás de vez. {fact} Prove que o clube saiu mais forte da tempestade que você ajudou a atravessar.' }
             ]
         },
@@ -190,7 +209,9 @@ const STORY_ARCS = [
             title: 'Times of Crisis',
             stages: [
                 { label: 'The Collapse', text: '{team} has just lost its main sponsor, and the books simply don\'t balance. {fact} You take charge amid the chaos, tasked with stopping the financial bleeding.' },
+                { label: 'Hard Cuts', text: 'Unpopular cost-cutting decisions must be made at {team}, and not everyone agrees with the chosen path. {fact} It is still early to see results, but the first steps of the rebuild have been taken.' },
                 { label: 'Rebuilding', text: 'After a season of cuts and sacrifices, {team} starts to see light at the end of the tunnel. {fact} But the board still demands quick results to justify the patience it has shown you.' },
+                { label: 'Signs of Life', text: 'After so much sacrifice, {team} is finally showing signs of life on the pitch. {fact} The board is watching cautiously, but optimism is starting to return to the club.' },
                 { label: 'Turnaround', text: 'This is the season that will decide whether the crisis at {team} is truly behind it. {fact} Prove the club came out stronger from the storm you helped it weather.' }
             ]
         }
@@ -201,7 +222,9 @@ const STORY_ARCS = [
             title: 'A Caminho da Glória',
             stages: [
                 { label: 'O Investimento', text: 'Os torcedores do {team} estão empolgados como há anos não se via, e a diretoria acabou de liberar fundos para investir pesado. {fact} Só que o dinheiro vem acompanhado de uma cobrança implacável por resultados imediatos.' },
+                { label: 'Primeiras Contratações', text: 'As primeiras grandes contratações chegam ao {team}, e a expectativa da torcida dispara. {fact} Agora é preciso transformar o time no papel em resultados dentro de campo.' },
                 { label: 'Subindo de Patamar', text: 'O projeto vencedor do {team} está em andamento, e as expectativas só aumentaram desde a temporada passada. {fact} Chegou a hora de transformar o investimento em títulos de verdade.' },
+                { label: 'A Reta Final', text: 'A briga pelo título entra na reta final, e cada ponto do {team} pesa mais do que nunca. {fact} Um deslize agora pode custar tudo o que foi construído até aqui.' },
                 { label: 'O Ápice', text: 'Esta é a temporada que pode coroar todo o trabalho feito no {team} desde que o projeto começou. {fact} A torcida sonha com a glória máxima — não a decepcione agora.' }
             ]
         },
@@ -209,7 +232,9 @@ const STORY_ARCS = [
             title: 'On the Road to Glory',
             stages: [
                 { label: 'The Investment', text: 'Fans of {team} haven\'t been this excited in years, and the board has just released funds to invest heavily. {fact} But the money comes with a relentless demand for immediate results.' },
+                { label: 'First Signings', text: 'The first big-name signings arrive at {team}, and fan expectations skyrocket. {fact} Now the team on paper needs to become results on the pitch.' },
                 { label: 'Stepping Up', text: 'The winning project at {team} is underway, and expectations have only grown since last season. {fact} It\'s time to turn that investment into real silverware.' },
+                { label: 'The Home Stretch', text: 'The title race enters its final stretch, and every point {team} drops matters more than ever. {fact} One slip now could cost everything built so far.' },
                 { label: 'The Peak', text: 'This is the season that can crown all the work done at {team} since the project began. {fact} The fans dream of ultimate glory — don\'t disappoint them now.' }
             ]
         }
@@ -220,7 +245,9 @@ const STORY_ARCS = [
             title: 'Novos Donos, Novas Regras',
             stages: [
                 { label: 'A Chegada', text: 'Um novo grupo investidor acabou de assumir o comando do {team}. {fact} Eles falam em "projeto vencedor" e não têm paciência para desculpas — e você é a primeira contratação dessa nova era.' },
+                { label: 'Primeiras Exigências', text: 'Os novos donos do {team} apresentam suas primeiras exigências concretas de resultado. {fact} É hora de mostrar que você entendeu o recado.' },
                 { label: 'Sob Pressão', text: 'Os novos donos do {team} já perceberam que reconstruir um clube leva tempo, mas a paciência deles está se esgotando. {fact} Esta temporada precisa mostrar progresso real, ou seu contrato pode não ser renovado.' },
+                { label: 'A Corda Bamba', text: 'O {team} caminha na corda bamba: um novo tropeço pode esgotar de vez a paciência dos novos donos. {fact} Cada decisão agora tem peso redobrado.' },
                 { label: 'Resultados ou Saída', text: 'Chegou a temporada da verdade para você e para os novos donos do {team}. {fact} Prove que a visão deles sobre o clube — e a confiança que depositaram em você — foi a escolha certa.' }
             ]
         },
@@ -228,7 +255,9 @@ const STORY_ARCS = [
             title: 'New Owners, New Rules',
             stages: [
                 { label: 'The Takeover', text: 'A new ownership group has just taken over {team}. {fact} They talk of a "winning project" and have no patience for excuses — and you are the first hire of this new era.' },
+                { label: 'First Demands', text: 'The new owners at {team} present their first concrete performance demands. {fact} It is time to show that you got the message.' },
                 { label: 'Under Pressure', text: 'The new owners at {team} have already realized rebuilding a club takes time, but their patience is running out. {fact} This season needs to show real progress, or your contract may not be renewed.' },
+                { label: 'Walking the Tightrope', text: '{team} is walking a tightrope: one more stumble could finally exhaust the new owners\' patience. {fact} Every decision now carries double the weight.' },
                 { label: 'Results or the Door', text: 'The season of truth has arrived for you and {team}\'s new owners. {fact} Prove that their vision for the club — and the trust they placed in you — was the right choice.' }
             ]
         }
@@ -239,7 +268,9 @@ const STORY_ARCS = [
             title: 'A Base do Futuro',
             stages: [
                 { label: 'Plantando Sementes', text: 'A diretoria do {team} decidiu apostar nas categorias de base para reduzir gastos e criar uma identidade própria. {fact} Cabe a você começar a transformar Youngsters promissores em peças do time principal.' },
+                { label: 'Crescendo Dentro de Campo', text: 'Os primeiros Youngsters promovidos no {team} ainda cometem erros de inexperiência, mas mostram lampejos de talento. {fact} É hora de ter paciência com o processo que você mesmo escolheu seguir.' },
                 { label: 'Colhendo Frutos', text: 'Os primeiros Youngsters promovidos no {team} já começam a mostrar serviço no time principal. {fact} É hora de aprofundar a aposta na base e provar que o projeto de formação é sustentável.' },
+                { label: 'Consolidando o Projeto', text: 'O projeto de base do {team} começa a se consolidar como a verdadeira identidade do clube. {fact} Falta pouco para a nova geração assumir de vez o protagonismo.' },
                 { label: 'A Nova Geração', text: 'Chegou a temporada em que a nova geração do {team}, formada nas categorias de base, precisa assumir de vez o protagonismo. {fact} Mostre que apostar nos próprios jogadores foi a decisão certa.' }
             ]
         },
@@ -247,7 +278,9 @@ const STORY_ARCS = [
             title: 'The Future Starts Here',
             stages: [
                 { label: 'Planting Seeds', text: 'The board at {team} has decided to invest in the youth academy to cut costs and build its own identity. {fact} It\'s up to you to start turning promising Youngsters into first-team players.' },
+                { label: 'Growing Pains', text: 'The first Youngsters promoted at {team} still make rookie mistakes, but show flashes of real talent. {fact} It is time to be patient with the process you chose to follow.' },
                 { label: 'Reaping Rewards', text: 'The first Youngsters promoted at {team} are already starting to show up in the first team. {fact} It\'s time to deepen the investment in the academy and prove the project is sustainable.' },
+                { label: 'Consolidating the Project', text: 'The academy project at {team} is starting to become the club\'s true identity. {fact} The new generation is close to finally taking center stage.' },
                 { label: 'The New Generation', text: 'This is the season when {team}\'s new generation, forged in the academy, must finally take center stage. {fact} Show that betting on your own players was the right call.' }
             ]
         }
@@ -258,7 +291,9 @@ const STORY_ARCS = [
             title: 'O Fim de uma Era',
             stages: [
                 { label: 'O Vazio', text: 'O maior ídolo recente do {team} acabou de ser vendido para um clube maior, e o vestiário sente o baque. {fact} Reconstruir o time sem sua estrela será o desafio da sua primeira temporada no comando.' },
+                { label: 'Buscando Substitutos', text: 'O {team} ainda sente falta do ídolo que partiu, e as tentativas de substituí-lo nem sempre dão certo. {fact} É preciso paciência para encontrar as peças certas.' },
                 { label: 'Novos Líderes', text: 'Sem o antigo ídolo, o {team} começa a encontrar novas referências dentro de campo. {fact} É hora de consolidar esses novos líderes e provar que o time é maior do que qualquer jogador individual.' },
+                { label: 'Uma Nova Identidade', text: 'Aos poucos, o {team} começa a construir uma identidade própria, diferente da era do antigo ídolo. {fact} Está quase na hora de virar a página de vez.' },
                 { label: 'Virando a Página', text: 'Chegou a temporada em que o {team} finalmente vira a página da antiga era. {fact} Mostre à torcida que o futuro do clube pode ser tão brilhante quanto o passado.' }
             ]
         },
@@ -266,7 +301,9 @@ const STORY_ARCS = [
             title: 'End of an Era',
             stages: [
                 { label: 'The Void', text: '{team}\'s biggest recent star has just been sold to a bigger club, and the dressing room feels the blow. {fact} Rebuilding the squad without your star man will be the challenge of your first season in charge.' },
+                { label: 'Searching for Replacements', text: '{team} still feels the absence of the idol who left, and attempts to replace him don\'t always work out. {fact} Patience is needed to find the right pieces.' },
                 { label: 'New Leaders', text: 'Without the old idol, {team} starts finding new leaders on the pitch. {fact} It\'s time to build up those new leaders and prove the team is bigger than any single player.' },
+                { label: 'A New Identity', text: 'Little by little, {team} is building an identity of its own, different from the old idol\'s era. {fact} It is almost time to finally turn the page.' },
                 { label: 'Turning the Page', text: 'This is the season when {team} finally turns the page on its old era. {fact} Show the fans that the club\'s future can be just as bright as its past.' }
             ]
         }
@@ -277,7 +314,9 @@ const STORY_ARCS = [
             title: 'Rivalidade Local',
             stages: [
                 { label: 'A Provocação', text: 'O clássico contra o maior rival está mais próximo do que nunca, e o {team} não vence esse confronto há tempos. {fact} A cidade inteira espera um resultado digno de orgulho já na sua primeira temporada.' },
+                { label: 'Aquecendo os Ânimos', text: 'As provocações entre torcidas do {team} e do rival local aumentam a cada rodada que se aproxima do próximo clássico. {fact} A tensão na cidade já é perceptível nas ruas.' },
                 { label: 'Reviravolta', text: 'Depois de uma temporada de trabalho, o {team} finalmente sente que pode competir de igual para igual com o rival local. {fact} É hora de transformar essa confiança recém-conquistada em resultados dentro de campo.' },
+                { label: 'A Véspera da Decisão', text: 'Falta apenas um clássico para decidir, de vez, quem manda na cidade — e o {team} não pode desperdiçar essa chance. {fact} A torcida já conta os dias.' },
                 { label: 'Supremacia Local', text: 'Chegou a temporada decisiva na briga do {team} pela supremacia da cidade. {fact} Vença o respeito do rival de uma vez por todas.' }
             ]
         },
@@ -285,7 +324,9 @@ const STORY_ARCS = [
             title: 'Local Rivalry',
             stages: [
                 { label: 'The Taunt', text: 'The derby against the biggest rival is closer than ever, and {team} hasn\'t won that fixture in a long while. {fact} The whole city is hoping for a result worth celebrating already in your first season.' },
+                { label: 'Turning Up the Heat', text: 'Taunts between {team}\'s fans and the local rival\'s grow with every matchday closer to the next derby. {fact} Tension in the city is already noticeable on the streets.' },
                 { label: 'Turning the Tide', text: 'After a season of work, {team} finally feels it can compete on equal footing with the local rival. {fact} It\'s time to turn that newfound confidence into results on the pitch.' },
+                { label: 'The Eve of the Decider', text: 'Only one more derby stands between {team} and settling once and for all who runs the city. {fact} The fans are already counting down the days.' },
                 { label: 'Local Supremacy', text: 'This is the decisive season in {team}\'s fight for supremacy of the city. {fact} Earn the rival\'s respect once and for all.' }
             ]
         }
@@ -296,7 +337,9 @@ const STORY_ARCS = [
             title: 'Última Dança',
             stages: [
                 { label: 'A Despedida Anunciada', text: 'Esta é a primeira de suas últimas temporadas no comando do {team} antes da aposentadoria. {fact} Você quer ser lembrado não só pelas conquistas, mas por ter deixado o clube em boas mãos.' },
+                { label: 'Ainda Há Tempo', text: 'Mesmo sabendo que o tempo é curto, você decide aproveitar cada temporada que resta no {team} da melhor forma possível. {fact} Ainda há tempo de deixar sua marca.' },
                 { label: 'Contando os Dias', text: 'O relógio da sua carreira no {team} continua correndo, e cada decisão pesa mais no legado que você vai deixar. {fact} Aproveite o tempo que resta para preparar o clube para o dia em que você não estiver mais lá.' },
+                { label: 'As Últimas Peças', text: 'Faltam poucos capítulos para o fim da sua história no {team}, e cada decisão agora ajuda a montar as últimas peças do seu legado. {fact} Não há mais tempo a perder.' },
                 { label: 'O Último Capítulo', text: 'Esta é, finalmente, sua última temporada no comando do {team}. {fact} Dê tudo de si nesta despedida — é sua última chance de escrever o final da sua própria história no clube.' }
             ]
         },
@@ -304,7 +347,9 @@ const STORY_ARCS = [
             title: 'One Last Dance',
             stages: [
                 { label: 'The Announced Farewell', text: 'This is the first of your final seasons in charge of {team} before retirement. {fact} You want to be remembered not only for the trophies, but for leaving the club in good hands.' },
+                { label: 'There\'s Still Time', text: 'Even knowing time is short, you decide to make the most of every remaining season at {team}. {fact} There is still time to leave your mark.' },
                 { label: 'Counting Down', text: 'The clock on your career at {team} keeps ticking, and every decision weighs more heavily on the legacy you\'ll leave behind. {fact} Use the time you have left to prepare the club for the day you\'re no longer there.' },
+                { label: 'The Final Pieces', text: 'Only a few chapters remain in your story at {team}, and every decision now helps put the last pieces of your legacy in place. {fact} There is no more time to lose.' },
                 { label: 'The Final Chapter', text: 'This is, at last, your final season in charge of {team}. {fact} Give it everything in this farewell — it\'s your last chance to write the ending of your own story at the club.' }
             ]
         }
@@ -416,11 +461,12 @@ function pickAvoidingRecent(poolLength, historyKey, historyLimit) {
 const MAIN_OBJECTIVES = [
     {
         appliesDiv: () => true,
-        pt: d => `Tenha uma pontuação final de pelo menos ${pickNum(d, 10, 14, 18)} na Tabela da Liga.`,
-        en: d => `Have a final score of at least ${pickNum(d, 10, 14, 18)} on the League Table.`
+        pt: (d, esc) => `Tenha uma pontuação final de pelo menos ${pickNum(d, 10, 14, 18, esc)} na Tabela da Liga.`,
+        en: (d, esc) => `Have a final score of at least ${pickNum(d, 10, 14, 18, esc)} on the League Table.`
     },
     {
         appliesDiv: () => true,
+        critical: true,
         pt: () => `Evite o rebaixamento — termine fora das 2 últimas posições da Tabela da Liga.`,
         en: () => `Avoid relegation — finish outside the bottom 2 places of the League Table.`
     },
@@ -436,18 +482,18 @@ const MAIN_OBJECTIVES = [
     },
     {
         appliesDiv: () => true,
-        pt: d => `Avance pelo menos ${pickNum(d, 2, 3, 4)} posições na trilha do Escritório (Office).`,
-        en: d => `Advance at least ${pickNum(d, 2, 3, 4)} spaces on the Office track.`
+        pt: (d, esc) => `Avance pelo menos ${pickNum(d, 2, 3, 4, esc)} posições na trilha do Escritório (Office).`,
+        en: (d, esc) => `Advance at least ${pickNum(d, 2, 3, 4, esc)} spaces on the Office track.`
     },
     {
         appliesDiv: () => true,
-        pt: d => `Construa pelo menos ${pickNum(d, 2, 3, 4)} peças de Infraestrutura do Estádio (Arquibancadas, Escritório, Placas, Iluminação, Loja ou Centro de Treinamento).`,
-        en: d => `Build at least ${pickNum(d, 2, 3, 4)} Stadium Infrastructure tokens (Stands, Office, Adboard, Lighting, Merchandise Store, or Training Ground).`
+        pt: (d, esc) => `Construa pelo menos ${pickNum(d, 2, 3, 4, esc)} peças de Infraestrutura do Estádio (Arquibancadas, Escritório, Placas, Iluminação, Loja ou Centro de Treinamento).`,
+        en: (d, esc) => `Build at least ${pickNum(d, 2, 3, 4, esc)} Stadium Infrastructure tokens (Stands, Office, Adboard, Lighting, Merchandise Store, or Training Ground).`
     },
     {
         appliesDiv: () => true,
-        pt: d => `Promova pelo menos ${pickNum(d, 2, 3, 4)} Youngsters ao time principal durante a temporada.`,
-        en: d => `Promote at least ${pickNum(d, 2, 3, 4)} Youngsters to the first team during the season.`
+        pt: (d, esc) => `Promova pelo menos ${pickNum(d, 2, 3, 4, esc)} Youngsters ao time principal durante a temporada.`,
+        en: (d, esc) => `Promote at least ${pickNum(d, 2, 3, 4, esc)} Youngsters to the first team during the season.`
     },
     {
         appliesDiv: () => true,
@@ -456,56 +502,56 @@ const MAIN_OBJECTIVES = [
     },
     {
         appliesDiv: () => true,
-        pt: d => `Termine a temporada com pelo menos ${pickNum(d, 0, 3, 6)} de Dinheiro em caixa, sem dívidas.`,
-        en: d => `End the season with at least ${pickNum(d, 0, 3, 6)} Money in the bank, with no debts.`
+        pt: (d, esc) => `Termine a temporada com pelo menos ${pickNum(d, 0, 3, 6, esc)} de Dinheiro em caixa, sem dívidas.`,
+        en: (d, esc) => `End the season with at least ${pickNum(d, 0, 3, 6, esc)} Money in the bank, with no debts.`
     },
     {
         appliesDiv: () => true,
-        pt: d => `Faça o marcador de Torcida (Fan Base) alcançar o nível ${pickNum(d, 3, 5, 7)} até o fim da temporada.`,
-        en: d => `Get the Fan Base marker to reach level ${pickNum(d, 3, 5, 7)} by the end of the season.`
+        pt: (d, esc) => `Faça o marcador de Torcida (Fan Base) alcançar o nível ${pickNum(d, 3, 5, 7, esc)} até o fim da temporada.`,
+        en: (d, esc) => `Get the Fan Base marker to reach level ${pickNum(d, 3, 5, 7, esc)} by the end of the season.`
     }
 ];
 
 const SECONDARY_OBJECTIVES = [
     {
-        pt: d => `Complete pelo menos ${pickNum(d, 2, 3, 4)} cartas de Objetivo perfeitamente.`,
-        en: d => `Complete at least ${pickNum(d, 2, 3, 4)} Objective cards perfectly.`
+        pt: (d, esc) => `Complete pelo menos ${pickNum(d, 2, 3, 4, esc)} cartas de Objetivo perfeitamente.`,
+        en: (d, esc) => `Complete at least ${pickNum(d, 2, 3, 4, esc)} Objective cards perfectly.`
     },
     {
         pt: () => `Termine em 2º lugar ou superior na Tabela da Liga.`,
         en: () => `Finish 2nd place or higher on the League Table.`
     },
     {
-        pt: d => `Contrate pelo menos ${pickNum(d, 1, 2, 3)} Patrocinadores durante a temporada.`,
-        en: d => `Sign at least ${pickNum(d, 1, 2, 3)} Sponsors during the season.`
+        pt: (d, esc) => `Contrate pelo menos ${pickNum(d, 1, 2, 3, esc)} Patrocinadores durante a temporada.`,
+        en: (d, esc) => `Sign at least ${pickNum(d, 1, 2, 3, esc)} Sponsors during the season.`
     },
     {
-        pt: d => `Contrate pelo menos ${pickNum(d, 2, 3, 4)} Youngsters, promovidos ou não.`,
-        en: d => `Sign at least ${pickNum(d, 2, 3, 4)} Youngsters, promoted or not.`
+        pt: (d, esc) => `Contrate pelo menos ${pickNum(d, 2, 3, 4, esc)} Youngsters, promovidos ou não.`,
+        en: (d, esc) => `Sign at least ${pickNum(d, 2, 3, 4, esc)} Youngsters, promoted or not.`
     },
     {
         pt: () => `Mantenha o elenco titular livre de lesões durante toda a temporada.`,
         en: () => `Keep your starting squad injury-free for the entire season.`
     },
     {
-        pt: d => `Venda pelo menos ${pickNum(d, 1, 1, 2)} Jogador(es) com lucro sobre o custo de contratação.`,
-        en: d => `Sell at least ${pickNum(d, 1, 1, 2)} Player(s) for a profit over their hiring cost.`
+        pt: (d, esc) => `Venda pelo menos ${pickNum(d, 1, 1, 2, esc)} Jogador(es) com lucro sobre o custo de contratação.`,
+        en: (d, esc) => `Sell at least ${pickNum(d, 1, 1, 2, esc)} Player(s) for a profit over their hiring cost.`
     },
     {
-        pt: d => `Tenha pelo menos ${pickNum(d, 2, 3, 4)} Patrocinadores ativos ao mesmo tempo em algum momento da temporada.`,
-        en: d => `Have at least ${pickNum(d, 2, 3, 4)} Sponsors active at the same time at some point in the season.`
+        pt: (d, esc) => `Tenha pelo menos ${pickNum(d, 2, 3, 4, esc)} Patrocinadores ativos ao mesmo tempo em algum momento da temporada.`,
+        en: (d, esc) => `Have at least ${pickNum(d, 2, 3, 4, esc)} Sponsors active at the same time at some point in the season.`
     },
     {
-        pt: d => `Construa pelo menos ${pickNum(d, 1, 2, 3)} Arquibancada(s) no seu estádio.`,
-        en: d => `Build at least ${pickNum(d, 1, 2, 3)} Stand(s) at your stadium.`
+        pt: (d, esc) => `Construa pelo menos ${pickNum(d, 1, 2, 3, esc)} Arquibancada(s) no seu estádio.`,
+        en: (d, esc) => `Build at least ${pickNum(d, 1, 2, 3, esc)} Stand(s) at your stadium.`
     },
     {
-        pt: d => `Contrate pelo menos ${pickNum(d, 2, 3, 4)} cartas de Staff durante a temporada.`,
-        en: d => `Hire at least ${pickNum(d, 2, 3, 4)} Staff cards during the season.`
+        pt: (d, esc) => `Contrate pelo menos ${pickNum(d, 2, 3, 4, esc)} cartas de Staff durante a temporada.`,
+        en: (d, esc) => `Hire at least ${pickNum(d, 2, 3, 4, esc)} Staff cards during the season.`
     },
     {
-        pt: d => `Termine a temporada com o valor de Luvas do seu goleiro em ${pickNum(d, 1, 2, 3)} ou mais.`,
-        en: d => `End the season with your goalkeeper's Gloves value at ${pickNum(d, 1, 2, 3)} or higher.`
+        pt: (d, esc) => `Termine a temporada com o valor de Luvas do seu goleiro em ${pickNum(d, 1, 2, 3, esc)} ou mais.`,
+        en: (d, esc) => `End the season with your goalkeeper's Gloves value at ${pickNum(d, 1, 2, 3, esc)} or higher.`
     }
 ];
 
@@ -555,7 +601,7 @@ const SETUP_CHANGES = [
 // Draws `count` distinct (not-yet-`used`) items from `pool`, optionally
 // filtered by `filterFn`. Falls back to allowing repeats only if the pool
 // (after filtering) genuinely runs out — should not normally happen for the
-// max 3-chapter campaigns this tool generates against a pool of 10 items.
+// max 5-chapter campaigns this tool generates against a pool of 10 items.
 function pickUnique(pool, count, filterFn, used) {
     const candidates = pool.filter((item, idx) => (!filterFn || filterFn(item)) && !used.has(idx));
     const picks = [];
@@ -630,13 +676,27 @@ async function generateCampaign() {
         const twist = twistPool[twistIdx].replace('{team}', team);
         const introText = `${stage.text} ${twist}`.replace('{team}', team).replace('{fact}', fact).replace(/\s{2,}/g, ' ').trim();
 
+        // Each chapter after the first demands numerically tougher targets
+        // than the one before it (only for MAIN/SECONDARY objectives — see
+        // pickNum's comment for why SETUP_CHANGES is excluded).
+        const chapterFactor = (i - 1) * 0.12;
+        const pipCount = 4;
+        const pipsFilled = chapters > 1 ? Math.round((i - 1) * pipCount / (chapters - 1)) : 0;
+        const difficultyPips = '●'.repeat(pipsFilled) + '○'.repeat(pipCount - pipsFilled);
+
         const mainPicks = pickUnique(MAIN_OBJECTIVES, 2, o => o.appliesDiv(currentDiv), usedMain);
         const secondaryPicks = pickUnique(SECONDARY_OBJECTIVES, 2, null, usedSecondary);
         const setupPicks = pickUnique(SETUP_CHANGES, 2, null, usedSetup);
 
-        const goals = mainPicks.map(o => o[lang](diff));
-        const extraGoals = secondaryPicks.map(o => o[lang](diff));
+        const goals = mainPicks.map(o => o[lang](diff, chapterFactor));
+        const extraGoals = secondaryPicks.map(o => o[lang](diff, chapterFactor));
         const setup = setupPicks.map(o => o[lang](diff));
+
+        // Failure isn't always a firing offense: only the campaign's finale
+        // or a chapter carrying a `critical` objective (e.g. avoiding
+        // relegation) results in getting fired. Any other failed chapter
+        // just means the board's patience wears thinner going forward.
+        const isCritical = (i === chapters) || mainPicks.some(o => o.critical);
 
         let chapterHtml = `
             <div class="pdf-preview" id="chapter-${i}">
@@ -650,6 +710,8 @@ async function generateCampaign() {
                         <div class="chapter-badge">${ui.chapter} ${i}/${chapters}</div>
                         <div class="meta-line">${ui.league}: ${league.toUpperCase()}</div>
                         <div class="meta-line">${ui.division}: ${currentDiv}</div>
+                        <div class="meta-line">${ui.difficultyLabel}: ${difficultyPips}</div>
+                        ${isCritical ? `<div class="meta-line critical-flag">⚠ ${ui.criticalChapterNote}</div>` : ''}
                     </div>
                 </div>
 
@@ -676,7 +738,7 @@ async function generateCampaign() {
                 <div class="pdf-result">
                     <span class="result-tab">${ui.resultTitle}</span>
                     <p>${ui.resultComplete} ${canPromote && i < chapters && currentDiv > 1 ? ui.resultPromote + ' ' + (currentDiv - 1) + '.' : ''}</p>
-                    <p>${ui.resultFail}</p>
+                    <p>${isCritical ? ui.resultFail : ui.resultFailSoft}</p>
                 </div>
 
                 <div class="pdf-continuity">${ui.continuityNote}</div>
