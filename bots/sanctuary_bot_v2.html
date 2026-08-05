@@ -287,13 +287,18 @@ const I18N = {
     endBannerTitle:'Fim de jogo acionado!',
     endBannerGrace:' Quem atingiu a condição pega o marcador de Fim-de-Jogo de 10 pontos; todos os outros jogadores (incluindo o Bot, se ele não a atingiu) jogam mais 1 turno cada. Se alguém também atingir uma condição nesse turno extra, pega o marcador de 5 pontos. Depois disso, vá para a pontuação final.',
     endBannerImmediate:' Como a pilha de fichas esgotou antes de alguém apoiar 4 objetivos ou preencher o mapa, o jogo termina IMEDIATAMENTE após este turno — vá direto para a pontuação final.',
+    marketTakeOne:'🛒 Mercado: retire a ficha da posição {p} da Exibição (e reponha ao final do turno).',
+    marketTakeTwo:'🛒 Mercado: retire as fichas das posições {p1} e {p2} da Exibição (e reponha ao final do turno).',
     btnReset:'Reiniciar automa',
+    lblSideI:'Face I',
+    lblSideII:'Face II',
     btnClose:'Fechar',
     helpTitle:'Como jogar contra o Bot',
     helpBody:`<h3 style="margin-top:0;">Turno do bot</h3>
       <p>Toque em <b>Sortear Ação</b> para o app escolher aleatoriamente um espaço (1 a 4). A carta daquele espaço é ativada com força igual ao número do espaço (+1 se estiver na face II) e desliza para o espaço 1, empurrando as demais uma posição para a direita — exatamente como as cartas de ação físicas do Sanctuary funcionam.</p>
       <p><b>Projetos:</b> o bot ganha Pontos e joga 1 ficha (Fichas Jogadas +1). Com força 4+, ele também apoia 1 Objetivo de Conservação (máx. 4, abstraindo a exigência de ícones correspondentes no zoológico).</p>
       <p><b>Animais (Rocha, Floresta, Água):</b> o bot ganha Pontos com base na força da ação e joga 2 fichas (Animal + Área Aberta).</p>
+      <p><b>Mercado:</b> como o Bot não rastreia fichas específicas, cada resultado também diz qual(is) posição(ões) (1–6) da Exibição física você deve retirar por ele — sempre a(s) posição(ões) mais alta(s) disponível(is): dentro do alcance da força atual para Projetos, ou as 2 posições mais altas para ações de Animais. Depois, reponha a Exibição com uma nova ficha da pilha, como de costume.</p>
       <h3>Preparação física</h3>
       <p>Veja o quadro "Preparação física da mesa" na tela de configuração para o passo a passo completo. Resumindo: apenas você monta um jogo físico completo; o Bot é 100% abstrato neste app. Escolha quem começa para definir corretamente o espaço inicial da carta de Projetos do Bot.</p>
       <h3>Fim de jogo e pontuação final</h3>
@@ -348,13 +353,18 @@ const I18N = {
     endBannerTitle:'End of game triggered!',
     endBannerGrace:" Whoever met the condition takes the 10-point End-of-game marker; every other player (including the Bot, if it didn't meet the condition) gets 1 more turn each. If anyone also meets a condition on that extra turn, they take the 5-point marker instead. After that, move to final scoring.",
     endBannerImmediate:' Since the tile pile ran out before anyone supported 4 objectives or filled their map, the game ends IMMEDIATELY after this turn — go straight to final scoring.',
+    marketTakeOne:'🛒 Market: take the tile from Display position {p} (then refill it at the end of the turn).',
+    marketTakeTwo:'🛒 Market: take the tiles from Display positions {p1} and {p2} (then refill them at the end of the turn).',
     btnReset:'Reset automa',
+    lblSideI:'Side I',
+    lblSideII:'Side II',
     btnClose:'Close',
     helpTitle:'How to play against the Bot',
     helpBody:`<h3 style="margin-top:0;">Bot's turn</h3>
       <p>Tap <b>Draw Action</b> for the app to randomly select a slot (1 to 4). The card in that slot activates with strength equal to its slot number (+1 if on side II) and slides to slot 1, pushing the others one slot to the right — exactly how Sanctuary's physical action cards work.</p>
       <p><b>Projects:</b> the bot gains Points and plays 1 tile (Tiles Played +1). At strength 4+, it also supports 1 Conservation Objective (max 4, abstracting the matching-icon requirement in the zoo).</p>
       <p><b>Animals (Rock, Forest, Water):</b> the bot gains Points based on action strength and plays 2 tiles (Animal + Open Area).</p>
+      <p><b>Market:</b> since the Bot doesn't track specific tiles, every result also tells you which Display position(s) (1–6) to physically remove on its behalf — always the highest available position(s): within range of the current strength for Projects, or the 2 highest positions for Animal actions. Afterwards, refill the Display with a new tile from the pile as usual.</p>
       <h3>Physical setup</h3>
       <p>See the "Physical table setup" panel on the setup screen for the full checklist. In short: only you build a full physical player set; the Bot is 100% abstracted in this app. Pick who goes first to correctly set the Bot's Projects card starting slot.</p>
       <h3>End of game &amp; final scoring</h3>
@@ -379,6 +389,7 @@ function applyI18n(){
   refreshCardsUI();
   renderSetupSlotsPreview();
   renderStats();
+  renderHistory();
 }
 function setLang(l){ lang=l; localStorage.setItem(LANG_KEY,l); applyI18n(); }
 
@@ -446,6 +457,7 @@ function startGame(){
 function resetGame(){
   if(confirm(lang==='pt'?'Tem certeza que deseja reiniciar?':'Are you sure you want to reset?')){
     localStorage.removeItem(STORAGE_KEY);
+    state = null; // must clear in-memory state too, or loadState() keeps the old finished game
     initUI();
   }
 }
@@ -526,7 +538,7 @@ function refreshCardsUI(){
     div.innerHTML = `<div class="slot">${idx+1}</div>
       <div class="ac-icon">${ACTION_ICON[c.id]}</div>
       <div class="name">${ACTION_LABEL[lang][c.id]}</div>
-      <div class="side-toggle"><button class="btn btn-block" onclick="toggleLevel('${c.id}')">${c.lvl===1?'Side I':'Side II'}</button></div>`;
+      <div class="side-toggle"><button class="btn btn-block" onclick="toggleLevel('${c.id}')">${c.lvl===1?t('lblSideI'):t('lblSideII')}</button></div>`;
     cont.appendChild(div);
   });
   cont.querySelectorAll('.acard').forEach(el=>{
@@ -591,6 +603,22 @@ function rollDice(){
   }, 600);
 }
 
+// Priority-based market selector: since the app doesn't track individual tile identities on the
+// Display, it just tells the player which slot(s) (1-6, highest = newest/rightmost) to physically
+// remove for the Bot. Projects respects the real "take within range" rule (range = its own strength);
+// Animal actions have no such restriction in the rulebook (they draw blind from the pile instead), so
+// they always take the 2 highest slots as a simple house-rule stand-in.
+function getMarketPositions(card, strength){
+  if(card.id === 'projects'){
+    const count = card.lvl === 2 ? 2 : 1;
+    const base = Math.min(strength, 6);
+    const positions = [];
+    for(let i=0; i<count; i++){ const p = base - i; if(p >= 1) positions.push(p); }
+    return positions;
+  }
+  return [6, 5];
+}
+
 function resolveTurn(slotVal){
   const idx = slotVal - 1;
   const card = state.cards[idx];
@@ -614,7 +642,11 @@ function resolveTurn(slotVal){
     state.stats.coverage += 2; // Animal + Open Area
     hLines.push(`+${pts} ${t('statPoints')} | +2 ${t('statCoverage')}`);
   }
-  
+
+  const positions = getMarketPositions(card, strength);
+  if(positions.length === 2) hLines.push(t('marketTakeTwo').replace('{p1}', positions[0]).replace('{p2}', positions[1]));
+  else if(positions.length === 1) hLines.push(t('marketTakeOne').replace('{p}', positions[0]));
+
   const out = document.getElementById('rollOut');
   out.innerHTML = `<div style="background:var(--surface-2); padding:14px; border-radius:12px; border:1px solid var(--border);">
     <div style="font-size:1.1em; font-weight:700; color:${ACTION_COLOR[card.id]}; margin-bottom:8px;">${name} (${t('lblStrength')} ${strength})</div>
