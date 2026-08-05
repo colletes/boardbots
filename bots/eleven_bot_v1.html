@@ -398,7 +398,6 @@ const I18N = {
     lblTactic:'Carta de Tática', optNoTactic:'Sem tática (montagem manual)',
     lblFormation:'Formação:', btnAutoArrange:'Montar automaticamente',
     chkOppAboveLeague:'Adversário está acima de você na tabela da Liga',
-    tacticBonusGoal:'Bônus da tática {tactic}! Gol extra marcado.',
     areaLeft:'Ponta Esquerda', areaRight:'Ponta Direita', areaAttack:'Ataque Central', areaMid:'Meio Central', areaDefense:'Defesa Central',
     addPlayerBtn:'+ Adicionar Jogador',
     lblPow:'F:', lblType:'T:', optAttacker:'Atacante', optDefender:'Defensor', lblShirt:'Nº:', lblZone:'Área:',
@@ -441,7 +440,6 @@ const I18N = {
     lblTactic:'Tactic Card', optNoTactic:'No tactic (manual setup)',
     lblFormation:'Formation:', btnAutoArrange:'Auto-arrange',
     chkOppAboveLeague:'Opponent is above you on the League table',
-    tacticBonusGoal:'{tactic} tactic bonus! Extra goal scored.',
     areaLeft:'Left Wing', areaRight:'Right Wing', areaAttack:'Central Attack', areaMid:'Central Midfield', areaDefense:'Central Defense',
     addPlayerBtn:'+ Add Player',
     lblPow:'Pw:', lblType:'Ty:', optAttacker:'Attacker', optDefender:'Defender', lblShirt:'No.:', lblZone:'Zone:',
@@ -597,7 +595,9 @@ const COMMENTARY = {
     actHeaderNpc:['Contra-ataque do adversário!','Agora o rival parte para cima.','O adversário responde com perigo!'],
     goal:['GOOOOL! Camisa {shirt} não desperdiça e balança as redes pela {area}!','É GOL! Estourou a rede, Camisa {shirt}!','Que finalização! Camisa {shirt} marca um golaço pela {area}!','Sem chances para o goleiro! Camisa {shirt} confirma o gol.'],
     save:['DEFESAAA fantástica! O goleiro evita o gol de Camisa {shirt}!','Que milagre! Encaixou a bola e negou o gol do Camisa {shirt}.','O goleiro se estica todo e espalma a finalização de Camisa {shirt}!','Segurou bonito! O arqueiro nega o gol certo de Camisa {shirt}.'],
-    fulltime:['Apito final! Fim de jogo.','Está encerrada a partida!','E é o apito final do árbitro!']
+    fulltime:['Apito final! Fim de jogo.','Está encerrada a partida!','E é o apito final do árbitro!'],
+    injuryTime:['⏱ Já nos acréscimos...','Estamos nos minutos finais da partida...','Faltam só os acréscimos para o apito final...'],
+    tacticBonusFlavor:['Um contra-ataque incrível nos acréscimos! A tática {tactic} vira o placar!','Direto do banco de táticas: {tactic} entra em ação e decide a partida nos minutos finais!','Que virada nos acréscimos! A tática {tactic} garante mais um gol para o seu time!','Nos instantes finais, a tática {tactic} rouba a cena e sela o resultado!']
   },
   en:{
     kickoff:['Kickoff! The match is under way.','Everything is set! Time to decide this match.','The referee blows the whistle. Let\'s get started!'],
@@ -607,7 +607,9 @@ const COMMENTARY = {
     actHeaderNpc:['The opponent counter-attacks!','Now the rival pushes forward.','The opponent responds dangerously!'],
     goal:['GOAAAL! Shirt {shirt} makes no mistake down the {area}!','It\'s a GOAL! The net bulges, shirt {shirt}!','What a finish! Shirt {shirt} scores a beauty down the {area}!','No chance for the keeper! Shirt {shirt} confirms the goal.'],
     save:['WHAT A SAVE! The keeper denies shirt {shirt}!','Unbelievable stop! The keeper keeps out shirt {shirt}\'s effort.','The keeper stretches out to palm away shirt {shirt}\'s shot!','Superbly held! The keeper denies a certain goal from shirt {shirt}.'],
-    fulltime:['Full time! The match is over.','That\'s the final whistle!','And there goes the referee\'s final whistle!']
+    fulltime:['Full time! The match is over.','That\'s the final whistle!','And there goes the referee\'s final whistle!'],
+    injuryTime:['⏱ Deep into injury time...','We\'re in the dying minutes of the match...','Only stoppage time remains before the final whistle...'],
+    tacticBonusFlavor:['An amazing last-minute counterattack! The {tactic} tactic turns the match around!','Straight from the tactics bench: {tactic} kicks in and decides the match in the final minutes!','What a turnaround in injury time! The {tactic} tactic secures one more goal for your side!','In the dying seconds, the {tactic} tactic steals the show and seals the result!']
   }
 };
 function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
@@ -615,7 +617,7 @@ function fill(str, vars){ return str.replace(/\{(\w+)\}/g, (_,k)=> vars[k] !== u
 
 let broadcastTimer = null;
 
-function buildBeats(res){
+function buildBeats(res, tacticBonusInfo){
   const beats = [];
   beats.push({kind:'kickoff'});
   res.chances.forEach(c=>{
@@ -630,6 +632,10 @@ function buildBeats(res){
   if(res.finish.npc.length){
     beats.push({kind:'actHeader', side:'npc'});
     res.finish.npc.forEach(f=> beats.push({kind:f.result, side:'npc', shirt:f.shot.shirt, area:f.shot.area}));
+  }
+  if(tacticBonusInfo){
+    beats.push({kind:'injuryTime'});
+    beats.push({kind:'tacticBonus', tactic:tacticBonusInfo.tactic});
   }
   beats.push({kind:'fulltime'});
   return beats;
@@ -646,7 +652,8 @@ function beatToLine(beat){
     case 'goal': return { html: `<span class="tag-goal">${fill(pick(c.goal), {shirt:beat.shirt, area:areaLabel})}</span>`, cls:'' };
     case 'save': return { html: `<span class="tag-save">${fill(pick(c.save), {shirt:beat.shirt, area:areaLabel})}</span>`, cls:'' };
     case 'fulltime': return { html: `<strong>${pick(c.fulltime)}</strong>`, cls:'' };
-    case 'tacticBonus': return { html: `<span class="tag-goal">${fill(t('tacticBonusGoal'), {tactic:beat.tactic})}</span>`, cls:'' };
+    case 'injuryTime': return { html: pick(c.injuryTime), cls:'tag-header' };
+    case 'tacticBonus': return { html: `<span class="tag-goal">${fill(pick(c.tacticBonusFlavor), {tactic:beat.tactic})}</span>`, cls:'' };
   }
   return { html:'', cls:'' };
 }
@@ -763,8 +770,7 @@ function solveMatch(){
   }
   if(tacticBonus > 0) res.TeamGoals += tacticBonus;
 
-  const beats = buildBeats(res);
-  if(tacticBonus > 0) beats.push({ kind:'tacticBonus', tactic: tactic.name[lang] || tactic.name.pt });
+  const beats = buildBeats(res, tacticBonus > 0 ? { tactic: tactic.name[lang] || tactic.name.pt } : null);
 
   const box = document.getElementById('match-result-box');
   box.style.display = 'block';
