@@ -148,6 +148,8 @@ select, input[type=number], input[type=text]{ width:100%; padding:11px 12px; fon
 .tactic-card{ background:var(--surface-2); border:1px dashed var(--border); border-radius:8px; padding:8px 10px; font-size:0.82em; color:var(--text-dim); }
 .tactic-card p{ margin:0 0 6px; }
 .opp-above-row{ display:flex; align-items:center; gap:6px; cursor:pointer; font-size:0.92em; color:var(--text); }
+.opponent-card-picker .formation-row select{ flex:1; }
+.opponent-card-hint{ margin:0; font-size:0.76em; color:var(--text-dim); }
 .player-entry select.p-zone{ font-size:0.9em; min-width:78px; }
 
 #match-result-box{ display:none; margin-top:16px; }
@@ -340,6 +342,16 @@ select, input[type=number], input[type=text]{ width:100%; padding:11px 12px; fon
 
     <div class="team-panel" id="panel-npc">
       <h3 data-i18n="opponent"></h3>
+
+      <div class="area-group opponent-card-picker">
+        <h4 data-i18n="lblOpponentCard"></h4>
+        <div class="formation-row">
+          <select id="npc-card-select"></select>
+          <button class="btn-auto-arrange" onclick="loadOpponentCard()" data-i18n="btnLoadCard"></button>
+        </div>
+        <p class="opponent-card-hint" data-i18n="opponentCardHint"></p>
+      </div>
+
       <div class="area-group">
         <h4 data-i18n="lblGK"></h4>
         <div class="gk-row">
@@ -379,6 +391,7 @@ select, input[type=number], input[type=text]{ width:100%; padding:11px 12px; fon
 <script src="js/eleven_solver.js"></script>
 <script src="js/eleven_tactics.js"></script>
 <script src="js/eleven_campaign.js"></script>
+<script src="js/eleven_opponents.js"></script>
 <script>
 document.addEventListener('touchstart', function(){}, {passive:true});
 
@@ -407,6 +420,9 @@ const I18N = {
     solverIntro:'Insira os jogadores do seu time e do adversário por área do campo para calcular o resultado do confronto.',
     yourTeam:'Seu Time', opponent:'Adversário',
     lblGK:'Goleiro', lblPower:'Força:', lblGloves:'Luvas:',
+    lblOpponentCard:'Carta de Adversário', btnLoadCard:'Carregar Carta',
+    opponentCardHint:'Escolha uma das 64 cartas de adversário oficiais (OP001–OP064) para montar o time automaticamente — depois ajuste livremente se quiser.',
+    lblCardPower:'Força total:',
     lblTactic:'Carta de Tática', optNoTactic:'Sem tática (montagem manual)',
     lblFormation:'Formação:', btnAutoArrange:'Montar automaticamente',
     chkOppAboveLeague:'Adversário está acima de você na tabela da Liga',
@@ -449,6 +465,9 @@ const I18N = {
     solverIntro:'Enter your team\'s and the opponent\'s players by field area to calculate the outcome of the match.',
     yourTeam:'Your Team', opponent:'Opponent',
     lblGK:'Goalkeeper', lblPower:'Power:', lblGloves:'Gloves:',
+    lblOpponentCard:'Opponent Card', btnLoadCard:'Load Card',
+    opponentCardHint:'Pick one of the 64 official opponent cards (OP001–OP064) to auto-build the team — then freely tweak it afterward if you like.',
+    lblCardPower:'Total power:',
     lblTactic:'Tactic Card', optNoTactic:'No tactic (manual setup)',
     lblFormation:'Formation:', btnAutoArrange:'Auto-arrange',
     chkOppAboveLeague:'Opponent is above you on the League table',
@@ -484,6 +503,7 @@ function applyI18n(){
   document.title = lang==='pt' ? 'Eleven — Gerador de Campanha & Resolvedor de Partidas (v1)' : 'Eleven — Campaign Generator & Match Solver (v1)';
   if (typeof populateTeamSelect === 'function') populateTeamSelect(true);
   if (typeof populateTacticSelect === 'function') populateTacticSelect();
+  if (typeof populateOpponentCardSelect === 'function') populateOpponentCardSelect();
 }
 function setLang(l){ lang=l; localStorage.setItem(LANG_KEY,l); applyI18n(); if (typeof onLanguageChanged === 'function') onLanguageChanged(l); }
 
@@ -559,6 +579,37 @@ function moveEntryToZone(entryEl, prefix, newArea){
 
 createAreaUI('pl-areas', 'pl');
 createAreaUI('npc-areas', 'npc');
+
+// ---- Opponent Card picker (OP001-OP064, ported from the official card data) ----
+function populateOpponentCardSelect(){
+  const sel = document.getElementById('npc-card-select');
+  const prev = sel.value;
+  sel.innerHTML = Object.keys(NPC_CARDS).map(id =>
+    `<option value="${id}">${id} (${t('lblCardPower')} ${NPC_CARDS[id].tp})</option>`
+  ).join('');
+  sel.value = (prev && NPC_CARDS[prev]) ? prev : Object.keys(NPC_CARDS)[0];
+}
+
+function loadOpponentCard(){
+  const card = NPC_CARDS[document.getElementById('npc-card-select').value];
+  if(!card) return;
+  document.getElementById('npc-gk-pow').value = card.gk.p;
+  document.getElementById('npc-gk-gloves').value = card.gk.g;
+  let shirt = 1;
+  areas.forEach(area=>{
+    const list = document.getElementById(`npc-${area}-list`);
+    list.innerHTML = '';
+    (card[area] || []).forEach(p=>{
+      addPlayer('npc', area, { isAttacker: p.a });
+      const entry = list.lastElementChild;
+      entry.querySelector('.p-pow').value = p.p;
+      entry.querySelector('.p-shirt').value = shirt++;
+    });
+  });
+}
+
+populateOpponentCardSelect();
+loadOpponentCard();
 
 // ---- Tactic card / Formation UI (player team only) ----
 function populateTacticSelect(){
