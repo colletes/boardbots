@@ -15,26 +15,6 @@ async function fetchTeamData(teamName) {
     }
 }
 
-// Same idea as fetchTeamData, but sources the summary from the LEAGUE's own
-// Wikipedia page instead of a club page. Used when the user plays with a
-// custom/fictional team name, so the campaign's "real facts" grounding falls
-// back to real news/history about the league itself.
-async function fetchLeagueData(league, division) {
-    const wiki = currentCampaignLang() === 'en' ? 'en' : 'pt';
-    const titles = (LEAGUE_PAGES[league] || {})[division];
-    if (!titles) return null;
-    const title = titles[wiki] || titles.en;
-    const url = `https://${wiki}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`;
-    try {
-        const response = await fetch(url);
-        const data = await response.json();
-        return data;
-    } catch (e) {
-        console.error("Wikipedia fetch error", e);
-        return null;
-    }
-}
-
 // Splits a Wikipedia extract into individual sentences, so each chapter of a
 // multi-chapter campaign can surface a DIFFERENT real fact about the team
 // instead of always repeating the same truncated opening blurb.
@@ -79,8 +59,8 @@ const CAMPAIGN_UI = {
 // team from a dropdown instead of typing a name (which risked typos that
 // would silently break the Wikipedia lookup). A "custom team" option is
 // always appended, which reveals a free-text input for fictional/renamed
-// clubs — those fall back to league-level Wikipedia grounding instead of a
-// club summary (see fetchLeagueData / generateCampaign).
+// clubs — those skip the Wikipedia lookup entirely and instead get generic,
+// division/difficulty-based scenarios (see GENERIC_DIVISION_FACTS / generateCampaign).
 const TEAM_DATA = {
     england: {
         1: ['Manchester City', 'Arsenal F.C.', 'Liverpool F.C.', 'Chelsea F.C.', 'Manchester United F.C.', 'Tottenham Hotspur F.C.', 'Newcastle United F.C.', 'Aston Villa F.C.', 'Brighton & Hove Albion F.C.', 'West Ham United F.C.', 'Everton F.C.', 'Wolverhampton Wanderers F.C.'],
@@ -101,31 +81,6 @@ const TEAM_DATA = {
         1: ['Flamengo', 'Palmeiras', 'Sport Club Corinthians Paulista', 'São Paulo FC', 'Grêmio', 'Internacional', 'Santos FC', 'Atlético Mineiro', 'Cruzeiro', 'Fluminense', 'Botafogo', 'Vasco da Gama'],
         2: ['Sport Club do Recife', 'Vila Nova FC', 'Ceará SC', 'Guarani FC', 'Coritiba FC', 'Ituano FC', 'Novorizontino', 'Avaí FC'],
         3: ['ABC FC', 'Confiança', 'Botafogo-PB', 'Ferroviária', 'São Bernardo FC', 'Volta Redonda FC']
-    }
-};
-
-// League-level Wikipedia page titles (per language) used as the fallback
-// "real facts" source when the user plays with a custom/fictional team.
-const LEAGUE_PAGES = {
-    england: {
-        1: { pt: 'Premier League', en: 'Premier League' },
-        2: { pt: 'EFL Championship', en: 'EFL Championship' },
-        3: { pt: 'EFL League One', en: 'EFL League One' }
-    },
-    spain: {
-        1: { pt: 'La Liga', en: 'La Liga' },
-        2: { pt: 'Segunda División', en: 'Segunda División' },
-        3: { pt: 'Primera Federación', en: 'Primera Federación' }
-    },
-    france: {
-        1: { pt: 'Ligue 1', en: 'Ligue 1' },
-        2: { pt: 'Ligue 2', en: 'Ligue 2' },
-        3: { pt: 'Championnat National', en: 'Championnat National' }
-    },
-    brazil: {
-        1: { pt: 'Campeonato Brasileiro de Futebol – Série A', en: 'Campeonato Brasileiro Série A' },
-        2: { pt: 'Campeonato Brasileiro de Futebol – Série B', en: 'Campeonato Brasileiro Série B' },
-        3: { pt: 'Campeonato Brasileiro de Futebol – Série C', en: 'Campeonato Brasileiro Série C' }
     }
 };
 
@@ -366,6 +321,93 @@ function pickStage(stages, i, total) {
     return stages[Math.max(0, Math.min(stages.length - 1, idx))];
 }
 
+// Generic, division/difficulty-aware flavor sentences used as the "real
+// facts" substitute for custom/fictional teams — no Wikipedia lookup, just
+// context about the level of competition the club plays at.
+const GENERIC_DIVISION_FACTS = {
+    pt: [
+        (div) => `A Divisão ${div} é conhecida por partidas equilibradas, onde qualquer detalhe pode decidir a temporada.`,
+        (div) => `Nesta divisão, encontrar Patrocinadores dispostos a investir costuma ser um desafio à parte.`,
+        (div) => `Clubes da Divisão ${div} normalmente dependem de boas contratações de Youngsters para se manter competitivos.`,
+        (div) => `A rivalidade entre os clubes da Divisão ${div} costuma deixar a Tabela da Liga imprevisível até a última rodada.`,
+        (div) => `Investir em Infraestrutura do Estádio é visto como prioridade para quem sonha em deixar a Divisão ${div}.`,
+        (div, diff) => diff === 'hard' ? `No nível de dificuldade escolhido, a concorrência pela Divisão ${div} está mais acirrada do que nunca.` : (diff === 'easy' ? `No nível de dificuldade escolhido, um planejamento cuidadoso já é suficiente para se destacar na Divisão ${div}.` : `No nível de dificuldade escolhido, times bem equilibrados costumam se dar bem na Divisão ${div}.`),
+        (div) => `A torcida local acompanha de perto cada resultado, ciente de como a Divisão ${div} pode ser exigente.`,
+        (div) => `Poucos detalhes separam o sucesso do fracasso entre os clubes da Divisão ${div} nesta temporada.`
+    ],
+    en: [
+        (div) => `Division ${div} is known for tight matches, where any small detail can decide the season.`,
+        (div) => `At this level, finding Sponsors willing to invest tends to be a challenge of its own.`,
+        (div) => `Clubs in Division ${div} usually rely on good Youngster signings to stay competitive.`,
+        (div) => `Rivalries between Division ${div} clubs tend to keep the League Table unpredictable until the last matchday.`,
+        (div) => `Investing in Stadium Infrastructure is seen as a priority for clubs dreaming of leaving Division ${div}.`,
+        (div, diff) => diff === 'hard' ? `At the chosen difficulty level, competition for Division ${div} is fiercer than ever.` : (diff === 'easy' ? `At the chosen difficulty level, careful planning alone is enough to stand out in Division ${div}.` : `At the chosen difficulty level, well-balanced sides tend to do well in Division ${div}.`),
+        (div) => `Local fans follow every result closely, well aware of how demanding Division ${div} can be.`,
+        (div) => `Very little separates success from failure among Division ${div} clubs this season.`
+    ]
+};
+
+function genericFactSentences(lang, division, diff) {
+    const pool = GENERIC_DIVISION_FACTS[lang] || GENERIC_DIVISION_FACTS.pt;
+    return pool.map(fn => fn(division, diff));
+}
+
+// Short, independent flavor beats layered on top of the chosen story arc —
+// picking one per chapter (avoiding recent repeats via pickAvoidingRecent)
+// gives each chapter its own procedural "sub-plot", so even campaigns that
+// reuse the same arc still read as fresh for a long time.
+const CHAPTER_TWISTS = {
+    pt: [
+        `Um clube rival acaba de contratar seu principal Olheiro (Scout).`,
+        `Um jovem talento da região está atraindo o interesse de clubes maiores, mas ficaria feliz com uma chance real no {team}.`,
+        `Comentaristas locais já especulam quem poderia assumir seu lugar caso os resultados não venham.`,
+        `A lesão de um Veterano importante força um replanejamento financeiro logo na janela de contratações.`,
+        `Uma proposta inesperada de parceria comercial surge, condicionada a bons resultados no início da temporada.`,
+        `Um ex-jogador do {team}, hoje comentarista, questiona publicamente seus métodos.`,
+        `A tabela de jogos apertada por conta do calendário força rotações difíceis logo de início.`,
+        `A renegociação de um contrato de transmissão libera uma verba extra em algum momento da temporada.`,
+        `Um Youngster da base chama atenção nos treinos e força decisões difíceis de escalação.`,
+        `Uma derrota em amistoso de pré-temporada já coloca a diretoria em alerta.`,
+        `Um patrocinador local ameaça deixar o clube caso o público no estádio não melhore.`,
+        `Rumores de mercado ligam um dos seus melhores Jogadores a uma saída na próxima janela.`,
+        `A nova política de preços dos ingressos gera debate entre a torcida logo no início da temporada.`,
+        `Um comentarista aposta no {team} como a "zebra" da temporada, elevando as expectativas da noite para o dia.`
+    ],
+    en: [
+        `A rival club has just poached your top Scout.`,
+        `A local youth talent is drawing interest from bigger clubs, but would be happy with a real chance at {team}.`,
+        `Local pundits are already speculating who could replace you if results don't come.`,
+        `An injury to a key Veteran forces a financial rethink right in the transfer window.`,
+        `An unexpected commercial partnership offer appears, conditioned on good early-season results.`,
+        `A former {team} player, now a pundit, publicly questions your methods.`,
+        `A congested fixture schedule forces tough rotations right from the start.`,
+        `A broadcast deal renegotiation frees up extra spending money at some point in the season.`,
+        `An academy Youngster is turning heads in training, forcing tough squad decisions.`,
+        `A pre-season friendly defeat already puts the board on alert.`,
+        `A local sponsor threatens to walk away unless attendance figures improve.`,
+        `Transfer rumors link one of your best Players with a move away next window.`,
+        `New ticket pricing sparks debate among fans right as the season begins.`,
+        `A pundit picks {team} as this season's "surprise package", raising expectations overnight.`
+    ]
+};
+
+// Picks a pool index while avoiding the most recently used ones (persisted in
+// localStorage), so repeated campaign generations don't immediately resurface
+// the same arc/twist — content stays fresh across many plays, not just one.
+function pickAvoidingRecent(poolLength, historyKey, historyLimit) {
+    let recent = [];
+    try { recent = JSON.parse(localStorage.getItem(historyKey) || '[]'); } catch (e) { recent = []; }
+    const candidates = [];
+    for (let idx = 0; idx < poolLength; idx++) {
+        if (!recent.includes(idx)) candidates.push(idx);
+    }
+    const pick = candidates.length ? candidates[Math.floor(Math.random() * candidates.length)] : Math.floor(Math.random() * poolLength);
+    recent.push(pick);
+    if (recent.length > historyLimit) recent = recent.slice(recent.length - historyLimit);
+    try { localStorage.setItem(historyKey, JSON.stringify(recent)); } catch (e) { /* ignore */ }
+    return pick;
+}
+
 // ---- Objective & setup pools ------------------------------------------
 // Phrased after the real terminology used in the rulebook (League Table,
 // Office track, Stadium Infrastructure, Fan Base, Youngsters, Sponsors) and
@@ -553,18 +595,23 @@ async function generateCampaign() {
     output.style.display = 'none';
     container.innerHTML = '';
 
-    // Fetch real-world grounding data — a club summary for a curated real
-    // team, or a league summary (real facts about the league itself) for a
-    // custom/fictional team name. Either way, every chapter's story text
-    // surfaces a DIFFERENT real fact, not just a single truncated blurb.
-    const factData = customTeam ? await fetchLeagueData(league, division) : await fetchTeamData(team);
-    const sentences = factData && factData.extract ? splitSentences(factData.extract) : [];
-    const bgImage = factData && factData.thumbnail ? factData.thumbnail.source : '';
+    // Real-world grounding only applies to curated real teams — a custom
+    // team skips Wikipedia entirely and uses generic, division/difficulty
+    // scenarios instead (no real facts to look up for a fictional club).
+    const factData = customTeam ? null : await fetchTeamData(team);
+    const sentences = customTeam
+        ? genericFactSentences(lang, division, diff)
+        : (factData && factData.extract ? splitSentences(factData.extract) : []);
+    const bgImage = (!customTeam && factData && factData.thumbnail) ? factData.thumbnail.source : '';
 
     // Pick exactly ONE story arc for the whole campaign so the narrative
     // stays coherent chapter to chapter (see STORY_ARCS comment above).
-    const arc = STORY_ARCS[Math.floor(Math.random() * STORY_ARCS.length)];
+    // Avoids recently-used arcs (persisted across generations) so the same
+    // storyline doesn't resurface for a long time.
+    const arcIdx = pickAvoidingRecent(STORY_ARCS.length, 'eleven_recent_arcs', Math.max(1, STORY_ARCS.length - 2));
+    const arc = STORY_ARCS[arcIdx];
     const arcText = arc[lang] || arc.pt;
+    const twistPool = CHAPTER_TWISTS[lang] || CHAPTER_TWISTS.pt;
 
     let html = '';
     let currentDiv = parseInt(division);
@@ -576,7 +623,12 @@ async function generateCampaign() {
         const stage = pickStage(arcText.stages, i, chapters);
 
         const fact = sentences.length ? sentences[(i - 1) % sentences.length] : '';
-        const introText = stage.text.replace('{team}', team).replace('{fact}', fact).replace(/\s{2,}/g, ' ').trim();
+        // A procedural per-chapter twist, independent of the arc, so the
+        // combined arc+stage+twist+objectives space stays fresh for a long
+        // time even across many separately-generated campaigns.
+        const twistIdx = pickAvoidingRecent(twistPool.length, 'eleven_recent_twists', Math.max(1, twistPool.length - 2));
+        const twist = twistPool[twistIdx].replace('{team}', team);
+        const introText = `${stage.text} ${twist}`.replace('{team}', team).replace('{fact}', fact).replace(/\s{2,}/g, ' ').trim();
 
         const mainPicks = pickUnique(MAIN_OBJECTIVES, 2, o => o.appliesDiv(currentDiv), usedMain);
         const secondaryPicks = pickUnique(SECONDARY_OBJECTIVES, 2, null, usedSecondary);
@@ -623,7 +675,7 @@ async function generateCampaign() {
 
                 <div class="pdf-result">
                     <span class="result-tab">${ui.resultTitle}</span>
-                    <p>${ui.resultComplete} ${canPromote && i < chapters ? ui.resultPromote + ' ' + (currentDiv - 1) + '.' : ''}</p>
+                    <p>${ui.resultComplete} ${canPromote && i < chapters && currentDiv > 1 ? ui.resultPromote + ' ' + (currentDiv - 1) + '.' : ''}</p>
                     <p>${ui.resultFail}</p>
                 </div>
 
