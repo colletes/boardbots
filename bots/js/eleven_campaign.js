@@ -762,31 +762,36 @@ function renderCampaign(lang) {
 
                 <div class="pdf-narrative">${introText}</div>
 
-                <div class="ribbon-row">
-                    <div class="ribbon-box goals">
-                        <div class="ribbon-title">${ui.goalsTitle}<span class="ribbon-stars">★ ★ ★</span></div>
-                        <div class="ribbon-body">
-                            <h4>${ui.directive}</h4>
-                            <ul>${goals.map(g => `<li>${g}</li>`).join('')}</ul>
-                            <h4>${ui.bonus}</h4>
-                            <ul>${extraGoals.map(g => `<li>${g}</li>`).join('')}</ul>
+                <div class="pdf-field">
+                    <div class="ribbon-row">
+                        <div class="ribbon-box goals">
+                            <div class="ribbon-title">${ui.goalsTitle}<span class="ribbon-stars">★ ★ ★</span></div>
+                            <div class="ribbon-body">
+                                <h4>${ui.directive}</h4>
+                                <ul>${goals.map(g => `<li>${g}</li>`).join('')}</ul>
+                                <h4>${ui.bonus}</h4>
+                                <ul>${extraGoals.map(g => `<li>${g}</li>`).join('')}</ul>
+                            </div>
+                        </div>
+                        <div class="ribbon-box setup">
+                            <div class="ribbon-title">${ui.setupTitle}<span class="ribbon-stars">★ ★ ★</span></div>
+                            <div class="ribbon-body">
+                                <ul>${setup.map(g => `<li>${g}</li>`).join('')}</ul>
+                            </div>
                         </div>
                     </div>
-                    <div class="ribbon-box setup">
-                        <div class="ribbon-title">${ui.setupTitle}<span class="ribbon-stars">★ ★ ★</span></div>
-                        <div class="ribbon-body">
-                            <ul>${setup.map(g => `<li>${g}</li>`).join('')}</ul>
-                        </div>
+
+                    <div class="pdf-result">
+                        <span class="result-tab">${ui.resultTitle}</span>
+                        <p>${ui.resultComplete} ${canPromote && i < chapters && currentDiv > 1 ? ui.resultPromote + ' ' + (currentDiv - 1) + '.' : ''}</p>
+                        <p>${isCritical ? ui.resultFail : ui.resultFailSoft}</p>
                     </div>
                 </div>
 
-                <div class="pdf-result">
-                    <span class="result-tab">${ui.resultTitle}</span>
-                    <p>${ui.resultComplete} ${canPromote && i < chapters && currentDiv > 1 ? ui.resultPromote + ' ' + (currentDiv - 1) + '.' : ''}</p>
-                    <p>${isCritical ? ui.resultFail : ui.resultFailSoft}</p>
+                <div class="pdf-continuity">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/></svg>
+                    <span>${ui.continuityNote}</span>
                 </div>
-
-                <div class="pdf-continuity">${ui.continuityNote}</div>
             </div>
         `;
         html += chapterHtml;
