@@ -40,7 +40,8 @@ const CAMPAIGN_UI = {
         resultFailSoft: 'Se falhou, você continua no cargo — mas a diretoria perdeu a paciência. O próximo capítulo será ainda mais exigente.',
         difficultyLabel: 'Dificuldade do Capítulo', criticalChapterNote: 'Capítulo decisivo: falhar aqui resulta em demissão.',
         continuityNote: 'Continuidade: se esta campanha não for jogada em sequência direta, anote o estado do seu clube (posição na liga, elenco, infraestrutura) ao final de cada capítulo para retomar depois.',
-        pdfFilename: 'Eleven_Campanha.pdf'
+        pdfFilename: 'Eleven_Campanha.pdf',
+        failPenaltyLabel: 'Penalidade se falhar'
     },
     en: {
         alertNoTeam: 'Please choose or enter a team name.',
@@ -54,7 +55,8 @@ const CAMPAIGN_UI = {
         resultFailSoft: 'If you failed, you keep your job — but the board\'s patience is wearing thin. The next chapter will demand even more.',
         difficultyLabel: 'Chapter Difficulty', criticalChapterNote: 'Decisive chapter: failing here results in getting fired.',
         continuityNote: 'Continuity: if this campaign isn\'t played back-to-back, jot down your club\'s state (league position, squad, infrastructure) at the end of each chapter so you can pick it back up later.',
-        pdfFilename: 'Eleven_Campaign.pdf'
+        pdfFilename: 'Eleven_Campaign.pdf',
+        failPenaltyLabel: 'Penalty if you fail'
     }
 };
 
@@ -598,6 +600,47 @@ const SETUP_CHANGES = [
     }
 ];
 
+// Concrete, printable consequences for failing a NON-decisive chapter —
+// applied by the player to the START of the NEXT chapter (this is a
+// print-and-play tool with no turn-by-turn state tracking, so the penalty
+// is picked once at generation time and printed as a plain setup
+// instruction, exactly like SETUP_CHANGES above, rather than something the
+// app tracks/enforces itself).
+const FAIL_PENALTIES = [
+    {
+        pt: d => `Comece o próximo capítulo com -${pickNum(d, 1, 2, 3)} de Dinheiro.`,
+        en: d => `Start the next chapter with -${pickNum(d, 1, 2, 3)} Money.`
+    },
+    {
+        pt: () => `Descarte 2 Jogadores titulares à sua escolha e substitua-os por 2 novos Youngsters comprados no início do próximo capítulo.`,
+        en: () => `Discard 2 starting Players of your choice and replace them with 2 new Youngsters drawn at the start of the next chapter.`
+    },
+    {
+        pt: d => `Reduza o marcador de Torcida (Fan Base) em ${pickNum(d, 1, 1, 2)} nível(is) (mínimo 0) no início do próximo capítulo.`,
+        en: d => `Reduce the Fan Base marker by ${pickNum(d, 1, 1, 2)} level(s) (minimum 0) at the start of the next chapter.`
+    },
+    {
+        pt: () => `Remova 1 peça de Infraestrutura do Estádio já construída, à sua escolha.`,
+        en: () => `Remove 1 already-built Stadium Infrastructure token of your choice.`
+    },
+    {
+        pt: () => `Cancele 1 contrato de Patrocinador ativo, à sua escolha.`,
+        en: () => `Cancel 1 active Sponsor contract of your choice.`
+    },
+    {
+        pt: d => `Comece o próximo capítulo com -${pickNum(d, 1, 1, 2)} posição(ões) na trilha do Escritório (Office).`,
+        en: d => `Start the next chapter with -${pickNum(d, 1, 1, 2)} space(s) on the Office track.`
+    },
+    {
+        pt: () => `Um Jogador titular à sua escolha se lesiona e fica indisponível durante toda a primeira Semana do próximo capítulo.`,
+        en: () => `One starting Player of your choice gets injured and is unavailable for the entire first Week of the next chapter.`
+    },
+    {
+        pt: () => `Descarte 1 carta de Staff contratada, à sua escolha.`,
+        en: () => `Discard 1 hired Staff card of your choice.`
+    }
+];
+
 // Draws `count` distinct (not-yet-`used`) items from `pool`, optionally
 // filtered by `filterFn`. Falls back to allowing repeats only if the pool
 // (after filtering) genuinely runs out — should not normally happen for the
@@ -668,6 +711,7 @@ async function generateCampaign() {
     const usedMain = new Set();
     const usedSecondary = new Set();
     const usedSetup = new Set();
+    const usedFailPenalty = new Set();
     let currentDiv = parseInt(division);
     const chapterPicks = [];
 
@@ -679,13 +723,17 @@ async function generateCampaign() {
         const mainPicks = pickUnique(MAIN_OBJECTIVES, 2, o => o.appliesDiv(currentDiv), usedMain);
         const secondaryPicks = pickUnique(SECONDARY_OBJECTIVES, 2, null, usedSecondary);
         const setupPicks = pickUnique(SETUP_CHANGES, 2, null, usedSetup);
-        chapterPicks.push({ twistIdx, mainPicks, secondaryPicks, setupPicks });
+        // Only chapters that AREN'T the last one need a printed fail-penalty
+        // (the last chapter's failure text is the fired/game-over one instead).
+        const failPenaltyPick = i < chapters ? pickUnique(FAIL_PENALTIES, 1, null, usedFailPenalty)[0] : null;
+        chapterPicks.push({ twistIdx, mainPicks, secondaryPicks, setupPicks, failPenaltyPick });
         if (canPromote && currentDiv > 1) currentDiv--;
     }
 
     campaignState = { team, league, division, diff, chapters, canPromote, customTeam, factByLang, arcIdx, chapterPicks };
     renderCampaign(lang);
 }
+
 
 // Rebuilds the campaign PDF preview from the cached `campaignState` in the
 // requested language — reuses every random pick made at generation time
@@ -740,8 +788,11 @@ function renderCampaign(lang) {
         // Failure isn't always a firing offense: only the campaign's finale
         // or a chapter carrying a `critical` objective (e.g. avoiding
         // relegation) results in getting fired. Any other failed chapter
-        // just means the board's patience wears thinner going forward.
+        // just means the board's patience wears thinner going forward —
+        // backed by a concrete, printed setup penalty for the next chapter
+        // (see FAIL_PENALTIES) instead of just flavor text.
         const isCritical = (i === chapters) || mainPicks.some(o => o.critical);
+        const failPenaltyText = (!isCritical && picks.failPenaltyPick) ? picks.failPenaltyPick[lang](diff) : '';
 
         let chapterHtml = `
             <div class="pdf-preview" id="chapter-${i}">
@@ -784,7 +835,7 @@ function renderCampaign(lang) {
                     <div class="pdf-result">
                         <span class="result-tab">${ui.resultTitle}</span>
                         <p>${ui.resultComplete} ${canPromote && i < chapters && currentDiv > 1 ? ui.resultPromote + ' ' + (currentDiv - 1) + '.' : ''}</p>
-                        <p>${isCritical ? ui.resultFail : ui.resultFailSoft}</p>
+                        <p>${isCritical ? ui.resultFail : ui.resultFailSoft}${failPenaltyText ? ` <strong>${ui.failPenaltyLabel}:</strong> ${failPenaltyText}` : ''}</p>
                     </div>
                 </div>
 
