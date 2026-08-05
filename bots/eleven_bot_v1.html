@@ -119,13 +119,25 @@ select, input[type=number], input[type=text]{ width:100%; padding:11px 12px; fon
 @media (max-width:560px){ .solver-grid{ grid-template-columns:1fr; } }
 .team-panel{ background:var(--surface-2); padding:14px; border-radius:12px; border:1px solid var(--border); }
 .team-panel h3{ margin-top:0; color:var(--accent); text-align:center; border-bottom:2px solid var(--accent-dim); padding-bottom:8px; }
-.area-group{ margin-bottom:12px; background:var(--surface); padding:10px; border-radius:10px; border:1px solid var(--border); }
-.area-group h4{ margin:0 0 8px; font-size:0.78em; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-dim); }
 .gk-row{ display:flex; flex-wrap:wrap; gap:8px 14px; align-items:center; font-size:0.85em; color:var(--text-dim); }
 .gk-row input{ width:64px; display:inline-block; padding:6px; }
-.player-entry{ display:flex; gap:6px; margin-bottom:6px; align-items:center; flex-wrap:wrap; font-size:0.82em; color:var(--text-dim); }
-.player-entry input[type=number]{ width:52px; padding:5px; }
-.player-entry select{ padding:5px; flex:1; min-width:90px; }
+
+.setup-pitch{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.6fr) minmax(0,1fr); grid-template-areas:"left attack right" "left mid right" "left defense right"; gap:8px; margin-bottom:12px; padding:10px; border:1px solid var(--border); border-radius:12px; background:repeating-linear-gradient(180deg, rgba(47,174,96,0.09) 0 34px, rgba(47,174,96,0.02) 34px 68px); }
+@media (max-width:360px){ .setup-pitch{ grid-template-columns:1fr; grid-template-areas:"attack" "left" "mid" "right" "defense"; } }
+.setup-zone{ background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:8px; display:flex; flex-direction:column; gap:6px; min-height:56px; transition:background 0.15s, border-color 0.15s; }
+.setup-zone.Left{ grid-area:left; } .setup-zone.Right{ grid-area:right; } .setup-zone.Attack{ grid-area:attack; } .setup-zone.Mid{ grid-area:mid; } .setup-zone.Defense{ grid-area:defense; }
+.setup-zone-label{ font-size:0.68em; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-dim); text-align:center; }
+.setup-zone.drag-over{ background:var(--blue-soft); border-color:var(--blue); box-shadow:0 0 0 2px var(--blue-glow) inset; }
+.setup-zone-list{ display:flex; flex-direction:column; gap:5px; min-height:6px; }
+
+.area-group{ margin-bottom:12px; background:var(--surface); padding:10px; border-radius:10px; border:1px solid var(--border); }
+.area-group h4{ margin:0 0 8px; font-size:0.78em; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-dim); }
+.player-entry{ display:flex; gap:6px; margin-bottom:0; align-items:center; flex-wrap:wrap; font-size:0.76em; color:var(--text-dim); background:var(--surface-2); border:1px solid var(--border); border-left:4px solid var(--blue); border-radius:8px; padding:5px 6px; cursor:grab; }
+.player-entry.type-att{ border-left-color:var(--gold); }
+.player-entry.dragging{ opacity:0.35; }
+.player-entry .drag-handle{ color:var(--text-dim); font-size:0.95em; user-select:none; cursor:grab; flex-shrink:0; }
+.player-entry input[type=number]{ width:44px; padding:5px; }
+.player-entry select{ padding:5px; flex:1; min-width:78px; }
 .player-entry button{ background:#c0392b; color:#fff; border:none; border-radius:6px; padding:5px 9px; cursor:pointer; min-height:30px; }
 .add-player-btn{ background:var(--accent); color:#fff; border:none; padding:6px 10px; border-radius:8px; cursor:pointer; font-size:0.78em; margin-top:2px; min-height:32px; }
 
@@ -488,12 +500,27 @@ const AREA_I18N_KEY = { Left:'areaLeft', Right:'areaRight', Attack:'areaAttack',
 
 function createAreaUI(containerId, prefix){
   const container = document.getElementById(containerId);
+  container.classList.add('setup-pitch');
   areas.forEach(area=>{
-    const group = document.createElement('div');
-    group.className = 'area-group';
-    group.innerHTML = `<h4 data-i18n="${AREA_I18N_KEY[area]}"></h4><div id="${prefix}-${area}-list"></div><button class="add-player-btn" data-i18n="addPlayerBtn" onclick="addPlayer('${prefix}', '${area}')"></button>`;
-    container.appendChild(group);
+    const zone = document.createElement('div');
+    zone.className = `setup-zone ${area}`;
+    zone.ondragover = (e)=>{ e.preventDefault(); zone.classList.add('drag-over'); };
+    zone.ondragleave = ()=> zone.classList.remove('drag-over');
+    zone.ondrop = (e)=>{ e.preventDefault(); zone.classList.remove('drag-over'); handleZoneDrop(prefix, area); };
+    zone.innerHTML = `<div class="setup-zone-label" data-i18n="${AREA_I18N_KEY[area]}"></div><div class="setup-zone-list" id="${prefix}-${area}-list"></div><button class="add-player-btn" data-i18n="addPlayerBtn" onclick="addPlayer('${prefix}', '${area}')"></button>`;
+    container.appendChild(zone);
   });
+}
+
+// Drag-and-drop state for moving a player entry between pitch zones — the
+// per-entry zone <select> (see addPlayer) remains as an accessible/mobile
+// fallback for the exact same move, both paths funnel through moveEntryToZone.
+let draggedPlayerEntry = null;
+
+function handleZoneDrop(prefix, area){
+  if(!draggedPlayerEntry || draggedPlayerEntry.prefix !== prefix) return;
+  moveEntryToZone(draggedPlayerEntry.el, prefix, area);
+  draggedPlayerEntry = null;
 }
 
 function addPlayer(prefix, area, opts){
@@ -501,7 +528,9 @@ function addPlayer(prefix, area, opts){
   const list = document.getElementById(`${prefix}-${area}-list`);
   const div = document.createElement('div');
   div.className = 'player-entry';
+  div.draggable = true;
   div.innerHTML = `
+    <span class="drag-handle">☷</span>
     <span data-i18n="lblPow"></span> <input type="number" value="1" min="0" class="p-pow">
     <span data-i18n="lblType"></span> <select class="p-type"><option value="att" data-i18n="optAttacker"></option><option value="def" data-i18n="optDefender"></option></select>
     <span data-i18n="lblShirt"></span> <input type="number" value="1" min="1" max="99" class="p-shirt">
@@ -511,12 +540,21 @@ function addPlayer(prefix, area, opts){
   list.appendChild(div);
   div.querySelector('.p-zone').value = area;
   div.querySelector('.p-zone').onchange = function(){ moveEntryToZone(div, prefix, this.value); };
-  if (opts.isAttacker === false) div.querySelector('.p-type').value = 'def';
+  div.querySelector('.p-type').onchange = function(){ div.classList.toggle('type-att', this.value === 'att'); };
+  div.ondragstart = ()=>{ draggedPlayerEntry = { el: div, prefix }; div.classList.add('dragging'); };
+  div.ondragend = ()=> div.classList.remove('dragging');
+  if (opts.isAttacker === false) {
+    div.querySelector('.p-type').value = 'def';
+  } else {
+    div.classList.add('type-att');
+  }
   applyI18n();
 }
 
 function moveEntryToZone(entryEl, prefix, newArea){
   document.getElementById(`${prefix}-${newArea}-list`).appendChild(entryEl);
+  const zoneSelect = entryEl.querySelector('.p-zone');
+  if(zoneSelect) zoneSelect.value = newArea;
 }
 
 createAreaUI('pl-areas', 'pl');
