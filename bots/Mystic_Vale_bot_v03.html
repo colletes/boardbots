@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Mystic Vale: Nemesis Bot</title>
+    <style>
+        :root {
+            --bg-color: #0b0e12;
+            --bg-color-2: #12161c;
+            --panel-bg: #181d25;
+            --panel-bg-2: #12161c;
+            --accent-green: #3f9d6e;
+            --accent-green-dark: #2c7350;
+            --accent-teal: #35d1c1;
+            --accent-purple: #8a6fb8;
+            --accent-gold: #e3c469;
+            --accent-red: #b0394a;
+            --text-main: #d9e8e2;
+            --text-dim: #9aa4b2;
+            --text-highlight: #6fe8cf;
+            --border-soft: #2b323d;
+            --blue: #4f8cff;
+            --blue-soft: #274168;
+            --blue-glow: rgba(79, 140, 255, 0.35);
+        }
+
+        * { box-sizing: border-box; }
+        html { -webkit-text-size-adjust: 100%; }
+
+        @keyframes fadeSlideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes popIn { 0% { transform: scale(0.85); opacity: 0; } 60% { transform: scale(1.04); } 100% { transform: scale(1); opacity: 1; } }
+
+        body {
+            background:
+                radial-gradient(ellipse at 20% -10%, rgba(53, 209, 193, 0.12), transparent 55%),
+                radial-gradient(ellipse at 90% 10%, rgba(138, 111, 184, 0.14), transparent 50%),
+                linear-gradient(180deg, var(--bg-color) 0%, var(--bg-color-2) 100%);
+            background-attachment: fixed;
+            color: var(--text-main);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            padding-left: max(20px, env(safe-area-inset-left));
+            padding-right: max(20px, env(safe-area-inset-right));
+            padding-bottom: max(20px, env(safe-area-inset-bottom));
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            -webkit-tap-highlight-color: transparent;
+        }
+        button, select, .close-btn { touch-action: manipulation; }
+
+        .container {
+            max-width: 500px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .content-row { display: flex; flex-direction: column; gap: 15px; width: 100%; }
+        .col-main, .col-side { display: flex; flex-direction: column; gap: 15px; min-width: 0; }
+
+        /* Widescreen: duas colunas lado a lado em vez de tudo empilhado na vertical */
+        @media (min-width: 900px) and (min-aspect-ratio: 1/1) {
+            .container { max-width: 1100px; }
+            .content-row { flex-direction: row; align-items: flex-start; }
+            .col-main { flex: 1.3; }
+            .col-side { flex: 1; }
+        }
+
+        .hero {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            height: 140px;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.5);
+            animation: fadeSlideUp 0.45s ease both;
+        }
+        .hero img {
+            width: 100%; height: 100%; object-fit: cover; display: block;
+        }
+        .hero::after {
+            content: "";
+            position: absolute; inset: 0;
+            background: linear-gradient(90deg, rgba(11,14,18,0.92) 0%, rgba(11,14,18,0.55) 55%, rgba(11,14,18,0.2) 100%);
+        }
+        .hero-content {
+            position: absolute; inset: 0;
+            display: flex; flex-direction: column; justify-content: center;
+            padding: 0 20px;
+        }
+
+        .header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 {
+            color: var(--text-highlight);
+            margin: 0;
+            font-size: 1.4em;
+            letter-spacing: 0.3px;
+            text-shadow: 0 0 12px rgba(111, 232, 207, 0.35);
+            position: relative;
+            z-index: 1;
+        }
+        h1 .subtitle {
+            display: block;
+            font-size: 0.5em;
+            color: var(--accent-purple);
+            font-weight: normal;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-top: 2px;
+        }
+
+        .lang-switch {
+            position: fixed;
+            top: 14px; right: 14px;
+            display: flex;
+            background: rgba(10,14,20,0.75);
+            border: 1px solid var(--border-soft);
+            border-radius: 20px;
+            padding: 3px;
+            gap: 3px;
+            z-index: 60;
+            backdrop-filter: blur(4px);
+        }
+        .lang-btn {
+            background: none; border: none; color: var(--text-dim);
+            padding: 6px 12px; border-radius: 16px; font-size: 0.8em; font-weight: bold;
+            cursor: pointer;
+        }
+        .lang-btn.active { background: var(--blue); color: #fff; }
+
+        .btn-help-float {
+            position: fixed;
+            bottom: 20px; right: 20px;
+            width: 48px; height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(160deg, var(--blue) 0%, var(--blue-soft) 100%);
+            color: #fff;
+            border: none;
+            font-size: 1.3em;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.5), 0 0 0 4px rgba(79,140,255,0.15);
+            z-index: 60;
+        }
+
+        .bmc-inline{ display:flex; justify-content:center; margin-top:14px; }
+        .bmc-inline a{ display:inline-flex; align-items:center; gap:8px; background:#FFDD00; color:#000; font-weight:700; font-size:0.85em; padding:9px 16px; border-radius:8px; text-decoration:none; box-shadow:0 4px 14px rgba(0,0,0,0.5); transition:transform 0.15s; }
+        .bmc-inline a:hover{ transform:scale(1.05); }
+        .bmc-inline svg{ width:18px; height:18px; flex-shrink:0; }
+        .btn-home{ display:inline-flex; align-items:center; gap:8px; background:linear-gradient(160deg, var(--accent-teal), var(--accent-green-dark)); border:none; color:#fff; border-radius:10px; padding:12px 26px; font-weight:700; font-size:16px; text-decoration:none; box-shadow:0 4px 14px rgba(0,0,0,0.5); transition:transform 0.15s; }
+        .btn-home:hover{ transform:translateY(-2px); }
+
+        .icon-btn {
+            background-color: rgba(255,255,255,0.04);
+            border: 1px solid var(--border-soft);
+            color: var(--text-main);
+            padding: 9px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            min-height: 40px;
+        }
+
+        .panel {
+            background: linear-gradient(160deg, var(--panel-bg) 0%, var(--panel-bg-2) 100%);
+            border: 1px solid var(--border-soft);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.03);
+            position: relative;
+            animation: fadeSlideUp 0.45s ease both;
+        }
+        .panel::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            border-radius: 10px 10px 0 0;
+            background: linear-gradient(90deg, var(--accent-teal), var(--accent-green), var(--accent-purple));
+            opacity: 0.8;
+        }
+
+        .field-label {
+            font-size: 0.75em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--accent-teal);
+            margin-bottom: 6px;
+            font-weight: bold;
+        }
+
+        select {
+            width: 100%;
+            padding: 10px;
+            background-color: #0a1420;
+            color: var(--text-highlight);
+            border: 1px solid var(--border-soft);
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 1em;
+        }
+        select:focus { outline: none; border-color: var(--accent-teal); }
+
+        .nemesis-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .nemesis-name { font-size: 1.25em; font-weight: bold; color: #fff; }
+
+        .nemesis-stats { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+
+        .nemesis-stats span {
+            background-color: var(--accent-red);
+            padding: 4px 9px;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 0.8em;
+        }
+        .nemesis-stats span.stat-power { background-color: var(--accent-purple); }
+        .nemesis-stats span.stat-spoil { background-color: #3a3350; color: #cfc4e8; }
+
+        .pip-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.8em;
+            color: var(--text-main);
+            margin-bottom: 15px;
+        }
+        .pip {
+            width: 10px; height: 10px; border-radius: 50%;
+            background: #22344a;
+            display: inline-block;
+        }
+        .pip.filled { background: var(--accent-gold); box-shadow: 0 0 6px rgba(227,196,105,0.6); }
+
+        /* Corruption Track progress */
+        .track-progress {
+            margin-bottom: 15px;
+        }
+        .track-progress-bar {
+            height: 10px;
+            border-radius: 5px;
+            background: #0a1420;
+            border: 1px solid var(--border-soft);
+            overflow: hidden;
+        }
+        .track-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-green), var(--accent-teal));
+            transition: width 0.4s ease;
+        }
+        .track-progress-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.72em;
+            color: #7a92a8;
+            margin-top: 4px;
+        }
+
+        .action-box {
+            background-color: #0a1420;
+            border-left: 4px solid var(--accent-teal);
+            border-radius: 0 6px 6px 0;
+            padding: 15px;
+            font-size: 1.05em;
+            margin-bottom: 15px;
+            min-height: 80px;
+        }
+
+        .action-box strong { color: var(--accent-teal); }
+        .action-box ul { margin: 0; padding-left: 20px; }
+        .action-box li { margin-bottom: 6px; }
+        .action-box li:last-child { margin-bottom: 0; }
+        .action-box li.li-vp strong { color: var(--accent-gold); }
+
+        .btn-row { display: flex; gap: 10px; }
+        .btn-row .main-btn { flex: 1; }
+
+        .abilities-box {
+            border: 1px solid var(--border-soft);
+            background-color: var(--panel-bg-2);
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .abilities-box h3 { margin-top: 0; color: var(--text-highlight); font-size: 1em; }
+
+        .ability-item {
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px dashed var(--border-soft);
+            font-size: 0.9em;
+        }
+        .ability-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+
+        button.main-btn {
+            background: linear-gradient(160deg, var(--accent-green) 0%, var(--accent-green-dark) 100%);
+            color: #fff;
+            border: none;
+            padding: 14px;
+            font-size: 1.05em;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            width: 100%;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        button.main-btn:active { transform: translateY(1px); }
+
+        button.secondary-btn {
+            background: transparent;
+            border: 1px solid var(--border-soft);
+            color: var(--text-main);
+        }
+
+        button.danger-btn {
+            background: linear-gradient(160deg, var(--accent-red) 0%, #7c2836 100%);
+        }
+
+        .alert-box {
+            display: none;
+            background: linear-gradient(160deg, var(--accent-red), #7c2836);
+            color: white;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-weight: bold;
+            text-align: center;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            animation: pulse 2s infinite;
+        }
+        .alert-box svg { width: 20px; height: 20px; flex-shrink: 0; }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(176, 57, 74, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(176, 57, 74, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(176, 57, 74, 0); }
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none; 
+            position: fixed; 
+            z-index: 10; 
+            left: 0; top: 0; width: 100%; height: 100%; 
+            background-color: rgba(0,0,0,0.8);
+        }
+        .modal-content {
+            background: linear-gradient(160deg, var(--panel-bg) 0%, var(--panel-bg-2) 100%);
+            margin: 5% auto; 
+            padding: 20px; 
+            border: 1px solid var(--border-soft);
+            width: 90%; max-width: 500px;
+            border-radius: 10px;
+            max-height: 80vh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .modal-content h3 {
+            color: var(--accent-teal);
+            border-bottom: 1px solid var(--border-soft);
+            padding-bottom: 6px;
+            margin-top: 22px;
+        }
+        .modal-content h3:first-of-type { margin-top: 4px; }
+        .close-btn { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; padding: 6px 10px; margin: -6px -10px 0 0; }
+        .help-note {
+            background: rgba(53, 209, 193, 0.08);
+            border: 1px solid var(--border-soft);
+            border-left: 3px solid var(--accent-teal);
+            border-radius: 0 6px 6px 0;
+            padding: 8px 12px;
+            font-size: 0.9em;
+            margin: 10px 0;
+        }
+
+        /* Hover-only styles gated so iOS touch doesn't require a first tap to "hover" before the second tap clicks */
+        @media (hover: hover) and (pointer: fine) {
+            .icon-btn:hover { background-color: rgba(111, 232, 207, 0.12); border-color: var(--accent-teal); }
+            button.main-btn:hover { filter: brightness(1.12); }
+            button.secondary-btn:hover { border-color: var(--accent-teal); color: var(--accent-teal); }
+            .close-btn:hover { color: var(--accent-teal); }
+            .lang-btn:hover { color: var(--text-main); }
+            .btn-help-float:hover { filter: brightness(1.15); }
+        }
+
+        /* Rodapé com Créditos (componente padrão da "casa") */
+        .credits {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            background: var(--panel-bg);
+            border: 1px solid var(--border-soft);
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin-top: 10px;
+            animation: fadeSlideUp 0.5s ease both;
+        }
+        .credits img {
+            width: 52px; height: 52px; object-fit: cover; border-radius: 8px;
+            border: 1px solid var(--border-soft); flex-shrink: 0;
+        }
+        .credits-text {
+            font-size: 0.8em;
+            color: var(--text-dim);
+            line-height: 1.5;
+        }
+        .credits-text strong { color: var(--text-main); }
+        .credits-text a { color: var(--blue); text-decoration: none; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<button class="btn-help-float" onclick="openHelp()" aria-label="Help">?</button>
+<div class="lang-switch">
+    <button class="lang-btn" id="langBtnPt" onclick="setLangDirect('pt')">PT</button>
+    <button class="lang-btn" id="langBtnEn" onclick="setLangDirect('en')">EN</button>
+</div>
+
+<div class="container">
+    <div class="hero">
+        <img src="../assets/art/mysticvale.webp" alt="Mystic Vale box art">
+        <div class="hero-content">
+            <div class="header-bar">
+                <h1 id="appTitle">Mystic Vale: Nêmesis<span class="subtitle">Nemesis Bot</span></h1>
+            </div>
+        </div>
+    </div>
+
+    <div class="content-row">
+    <div class="col-main">
+    <div class="panel">
+        <div class="field-label" id="bossSelectLabel">Nêmesis</div>
+        <select id="bossSelect" onchange="changeBoss()"></select>
+
+        <div class="nemesis-header">
+            <div class="nemesis-name" id="nemesisName">-</div>
+            <div class="nemesis-stats">
+                <span class="stat-power" id="nemesisPower">-</span>
+                <span class="stat-spoil" id="nemesisDecay">-</span>
+            </div>
+        </div>
+        <div class="pip-row" id="pipRow"></div>
+
+        <div id="alertBox" class="alert-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/></svg><span id="alertText"></span></div>
+
+        <div class="track-progress">
+            <div class="track-progress-bar"><div class="track-progress-fill" id="trackFill" style="width:0%"></div></div>
+            <div class="track-progress-label">
+                <span id="trackLabel">Trilha da Corrupção</span>
+                <span id="trackCount">0/20</span>
+            </div>
+        </div>
+
+        <div class="action-box">
+            <div style="color: #7a92a8; font-size: 0.8em; margin-bottom: 5px;" id="turnLabel">TURNO <span id="turnCounter">1</span></div>
+            <div id="currentAction"></div>
+        </div>
+
+        <div class="btn-row">
+            <button class="main-btn secondary-btn" id="btnUndo" onclick="undoTurn()" style="flex: 0 0 auto; width: auto; padding: 14px 18px;" title="Desfazer">↺</button>
+            <button class="main-btn" id="btnRun" onclick="runNemesisTurn()">Executar Turno</button>
+        </div>
+        <button class="main-btn danger-btn" style="margin-top: 10px;" onclick="finalizarPartida()" id="btnFinish">Finalizar Partida</button>
+    </div>
+    </div>
+
+    <div class="col-side">
+    <div class="panel abilities-box">
+        <h3 id="activeRulesTitle">Regras Ativas:</h3>
+        <div id="activeAbilities"></div>
+    </div>
+    <div id="resultadoFinal" class="panel" style="display:none; margin-top: 20px;">
+    <h2 style="color: var(--text-highlight);">Pontuação do Nêmesis</h2>
+    <div id="scoreDetails" style="margin-top:15px;"></div>
+</div>
+    </div>
+    </div>
+    <footer class="credits">
+        <img src="../assets/art/mysticvale.webp" alt="Mystic Vale">
+        <div class="credits-text" id="creditsText"></div>
+    </footer>
+
+    <a class="bmc-inline" href="https://www.buymeacoffee.com/colletes" target="_blank" rel="noopener" aria-label="Buy me a coffee"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h13a2 2 0 0 1 2 2v1a3 3 0 0 1-3 3h-1"/><path d="M4 8h13v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V8Z"/><path d="M8 3c-.6 1 .5 1.6 0 3M12 3c-.6 1 .5 1.6 0 3"/></svg><span id="bmcBtnText">Me pague um café</span></a>
+
+    <div style="text-align: center; margin: 20px auto 0 auto; width: 100%;">
+        <a href="../index.html" class="btn-home">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9 21v-6h6v6"/></svg>
+            ← Home
+        </a>
+    </div>
+</div>
+
+<!-- Help Modal -->
+<div id="helpModal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeHelp()">&times;</span>
+        <h2 id="helpTitle" style="color: var(--text-highlight); margin-top: 0;">Setup & Regras</h2>
+        <div id="helpBody" style="font-size: 0.95em; line-height: 1.5; color: var(--text-main);"></div>
+    </div>
+</div>
+
+<script>
+    // Forces iOS Safari to treat the first tap as a click instead of only "hovering" (WebKit quirk).
+    document.addEventListener('touchstart', function(){}, {passive: true});
+    let currentLang = localStorage.getItem('boardbots_lang') || 'pt';
+    let currentTurn = 0;
+    let activeAbilitiesList = [];
+    let totalVP = 0;
+    let historyStack = [];
+
+const POS = {
+    'L1': { pt: 'Avanço A1 (Esquerda)', en: 'Advancement A1 (Left)' },
+    'L2': { pt: 'Avanço A2 (Esquerda)', en: 'Advancement A2 (Left)' },
+    'L3': { pt: 'Avanço A3 (Esquerda)', en: 'Advancement A3 (Left)' },
+    'C1': { pt: 'Avanço A1 (Centro)', en: 'Advancement A1 (Center)' },
+    'C2': { pt: 'Avanço A2 (Centro)', en: 'Advancement A2 (Center)' },
+    'C3': { pt: 'Avanço A3 (Centro)', en: 'Advancement A3 (Center)' },
+    'R1': { pt: 'Avanço A1 (Direita)', en: 'Advancement A1 (Right)' },
+    'R2': { pt: 'Avanço A2 (Direita)', en: 'Advancement A2 (Right)' },
+    'R3': { pt: 'Avanço A3 (Direita)', en: 'Advancement A3 (Right)' },
+    'V1': { pt: 'Vale Nível 1, pos ', en: 'Level 1 Vale, pos ' },
+    'V2': { pt: 'Vale Nível 2, pos ', en: 'Level 2 Vale, pos ' }
+};
+
+    // Corruption Track (Standard side), transcribed from the official Nemesis
+    // rulebook's "Example Nemesis Setup" diagram (p.9). Positions/levels were
+    // cross-checked against the rulebook image space-by-space.
+    const track = [
+        { adv: { lvl: 1, pos: 'R1' }, vale: null, vp: 0 }, // 1
+        { adv: { lvl: 1, pos: 'C1' }, vale: null, vp: 0 }, // 2
+        { adv: { lvl: 2, pos: 'R2' }, vale: null, vp: 0 }, // 3
+        { adv: { lvl: 1, pos: 'L1' }, vale: null, vp: 0 }, // 4
+        { adv: { lvl: 2, pos: 'C2' }, vale: null, vp: 0 }, // 5
+        { adv: { lvl: 1, pos: 'C1' }, vale: null, vp: 0 }, // 6
+        { adv: null, vale: { lvl: 1, pos: '4' }, vp: 0 }, // 7
+        { adv: { lvl: 3, pos: 'R3' }, vale: null, vp: 0 }, // 8
+        { adv: { lvl: 2, pos: 'R2' }, vale: null, vp: 0 }, // 9
+        { adv: { lvl: 2, pos: 'L2' }, vale: null, vp: 0 }, // 10
+        { adv: null, vale: { lvl: 1, pos: '3' }, vp: 1 }, // 11
+        { adv: { lvl: 2, pos: 'C2' }, vale: null, vp: 1 }, // 12
+        { adv: { lvl: 3, pos: 'C3' }, vale: null, vp: 1 }, // 13
+        { adv: { lvl: 2, pos: 'L2' }, vale: { lvl: 1, pos: '2' }, vp: 1 }, // 14
+        { adv: { lvl: 3, pos: 'L3' }, vale: { lvl: 1, pos: '1' }, vp: 1 }, // 15
+        { adv: null, vale: { lvl: 2, pos: '4' }, vp: 1 }, // 16
+        { adv: [{ lvl: 1, pos: 'L1' }, { lvl: 1, pos: 'R1' }], vale: null, vp: 1 }, // 17
+        { adv: { lvl: 3, pos: 'R3' }, vale: { lvl: 2, pos: '3' }, vp: 1 }, // 18
+        { adv: { lvl: 3, pos: 'R3' }, vale: null, vp: 2 }, // 19 (fixed: was pos 'C2' with a fabricated vale card)
+        { adv: { lvl: 3, pos: 'L3' }, vale: null, vp: 4 }, // 20 (fixed: was pos 'C2' with a fabricated vale card)
+        {
+            adv: { lvl: 3, pos: 'R3' },
+            vale: { lvl: 2, pos: '4' },
+            vp: 4
+        } // REST OF THE GAME (repeats every turn after space 20; fixed from a fabricated double adv/vale)
+    ];
+
+const bosses = {
+        // --- NÊMESIS PERSONALIZADOS (homebrew, not part of the official rulebook) ---
+        beginner: {
+            id: 'beginner', vp: 1, spoil: 0, custom: true, pips: 1,
+            pt: { name: "O Aprendiz Sombrio", diff: "Iniciante", abilities: [ { turn: 10, text: "O Nêmesis ganha +1 símbolo de Decair (Spoil)." } ] },
+            en: { name: "The Dark Apprentice", diff: "Beginner", abilities: [ { turn: 10, text: "The Nemesis gains +1 Decay (Spoil) symbol." } ] }
+        },
+        easy: {
+            id: 'easy', vp: 2, spoil: 1, custom: true, pips: 1,
+            pt: { name: "O Lobo Corrompido", diff: "Fácil", abilities: [ { turn: 5, text: "Sempre que você empurrar (push) mais de duas vezes no mesmo turno, o Nêmesis ganha 1 VP." } ] },
+            en: { name: "The Corrupted Wolf", diff: "Easy", abilities: [ { turn: 5, text: "Whenever you push more than twice in the same turn, the Nemesis gains 1 VP." } ] }
+        },
+        carvalho: {
+            id: 'carvalho', vp: 4, spoil: 1, custom: true, pips: 2,
+            pt: { name: "O Carvalho Pútrido", diff: "Moderado", abilities: [ { turn: 4, text: "O Nêmesis ganha +1 símbolo de Decair (Spoil)." }, { turn: 7, text: "Raízes Parasitas: Sempre que você comprar uma carta de Vale, o Nêmesis ganha 1 VP." } ] },
+            en: { name: "The Rotting Oak", diff: "Moderate", abilities: [ { turn: 4, text: "The Nemesis gains +1 Decay (Spoil) symbol." }, { turn: 7, text: "Parasitic Roots: Whenever you buy a Vale card, the Nemesis gains 1 VP." } ] }
+        },
+        cinzas: {
+            id: 'cinzas', vp: 6, spoil: 1, custom: true, pips: 3,
+            pt: { name: "Espírito das Cinzas", diff: "Difícil", abilities: [ { turn: 4, text: "Fumaça: Se não empurrar (push) na Fase de Plantio, Nêmesis ganha 2 VPs." }, { turn: 8, text: "O Nêmesis ganha +1 símbolo de Decair (Spoil)." } ] },
+            en: { name: "Ash Spirit", diff: "Hard", abilities: [ { turn: 4, text: "Smoke: If you do not push during the Planting Phase, Nemesis gains 2 VPs." }, { turn: 8, text: "The Nemesis gains +1 Decay (Spoil) symbol." } ] }
+        },
+        // --- NÊMESIS OFICIAIS ---
+        // Note: individual boss abilities are printed on the physical Nemesis
+        // cards themselves (not in the rulebook text), so they could not be
+        // cross-checked against the PDF. Difficulty pips (1-4) follow the
+        // official chart on p.8: Easy●/Moderate●●/Difficult●●●/Very Difficult●●●●.
+        abomination: { id: 'abomination', vp: 5, spoil: 1, pips: 3, pt: { name: "Abomination", diff: "Difícil", abilities: [{ turn: 2, text: "Comprar 3 cartas e descartá-las." }] }, en: { name: "Abomination", diff: "Difficult", abilities: [{ turn: 2, text: "Draw 3 cards and immediately discard them." }] } },
+        blight_troll: { id: 'blight_troll', vp: 4, spoil: 1, pips: 3, pt: { name: "Blight Troll", diff: "Difícil", abilities: [{ turn: 3, text: "O Nêmesis reivindica o Avanço mais barato disponível no mercado." }] }, en: { name: "Blight Troll", diff: "Difficult", abilities: [{ turn: 3, text: "The Nemesis claims the cheapest available Advancement card." }] } },
+        blighted_dragon: { id: 'blighted_dragon', vp: 7, spoil: 1, pips: 4, pt: { name: "Blighted Dragon", diff: "Muito Difícil", abilities: [{ turn: 4, text: "Receba 2 tokens de Maldição." }] }, en: { name: "Blighted Dragon", diff: "Very Difficult", abilities: [{ turn: 4, text: "Take 2 Curse tokens." }] } },
+        brood_queen: { id: 'brood_queen', vp: 5, spoil: 1, pips: 3, pt: { name: "Brood Queen", diff: "Difícil", abilities: [{ turn: 3, text: "O Nêmesis ganha VPs igual ao valor da carta de Vale mais barata no mercado." }] }, en: { name: "Brood Queen", diff: "Difficult", abilities: [{ turn: 3, text: "The Nemesis gains victory points equal to the lowest-value Vale card." }] } },
+        corrupted_centaur: { id: 'corrupted_centaur', vp: 4, spoil: 1, pips: 3, pt: { name: "Corrupted Centaur", diff: "Difícil", abilities: [{ turn: 3, text: "Descarte sua mão e encerre a Fase de Plantio imediatamente." }] }, en: { name: "Corrupted Centaur", diff: "Difficult", abilities: [{ turn: 3, text: "Discard your hand and immediately end your Planting phase." }] } },
+        curseborn_dryad: { id: 'curseborn_dryad', vp: 5, spoil: 0, pips: 4, pt: { name: "Curseborn Dryad", diff: "Muito Difícil", abilities: [{ turn: 3, text: "Vire um de seus cards de Líder/Titã evoluídos para o lado não-evoluído." }] }, en: { name: "Curseborn Dryad", diff: "Very Difficult", abilities: [{ turn: 3, text: "Flip one of your upgraded Titan/Leader cards back to unupgraded." }] } },
+        fallen_druid: { id: 'fallen_druid', vp: 3, spoil: 1, pips: 2, pt: { name: "Fallen Druid", diff: "Moderado", abilities: [{ turn: 2, text: "O Nêmesis reivindica a carta de Vale mais barata disponível." }] }, en: { name: "Fallen Druid", diff: "Moderate", abilities: [{ turn: 2, text: "The Nemesis claims the cheapest available Vale card." }] } },
+        plague_scarabs: { id: 'plague_scarabs', vp: 2, spoil: 1, pips: 1, pt: { name: "Plague Scarabs", diff: "Fácil", abilities: [{ turn: 4, text: "Receba 1 token de Maldição." }] }, en: { name: "Plague Scarabs", diff: "Easy", abilities: [{ turn: 4, text: "Take 1 Curse token." }] } },
+        scourge_satyr: { id: 'scourge_satyr', vp: 3, spoil: 1, pips: 2, pt: { name: "Scourge Satyr", diff: "Moderado", abilities: [{ turn: 2, text: "Descarte 2 avanços aleatórios do seu campo." }] }, en: { name: "Scourge Satyr", diff: "Moderate", abilities: [{ turn: 2, text: "Discard 2 random advancement tokens/cards from your field." }] } },
+        soulbane: { id: 'soulbane', vp: 6, spoil: 1, pips: 4, pt: { name: "Soulbane", diff: "Muito Difícil", abilities: [{ turn: 4, text: "O Nêmesis reivindica o Avanço mais caro disponível no mercado." }] }, en: { name: "Soulbane", diff: "Very Difficult", abilities: [{ turn: 4, text: "The Nemesis claims the highest-cost Advancement card." }] } },
+        tormented_berserker: { id: 'tormented_berserker', vp: 6, spoil: 1, pips: 4, pt: { name: "Tormented Berserker", diff: "Muito Difícil", abilities: [{ turn: 3, text: "O Nêmesis reivindica 2 VPs da reserva." }] }, en: { name: "Tormented Berserker", diff: "Very Difficult", abilities: [{ turn: 3, text: "The Nemesis claims 2 VP from the pool." }] } },
+        watcher_in_the_wood: { id: 'watcher_in_the_wood', vp: 4, spoil: 1, pips: 3, pt: { name: "Watcher in the Wood", diff: "Difícil", abilities: [{ turn: 3, text: "Revele Avanços até um símbolo de Decair aparecer; o Nêmesis reivindica essa carta." }] }, en: { name: "Watcher in the Wood", diff: "Difficult", abilities: [{ turn: 3, text: "Reveal Advancement cards until a Decay symbol appears; Nemesis claims it." }] } },
+        wicker_construct: { id: 'wicker_construct', vp: 5, spoil: 1, pips: 4, pt: { name: "Wicker Construct", diff: "Muito Difícil", abilities: [{ turn: 4, text: "Receba 2 tokens de Maldição." }] }, en: { name: "Wicker Construct", diff: "Very Difficult", abilities: [{ turn: 4, text: "Take 2 Curse tokens." }] } }
+    };
+        
+    const strings = {
+        pt: {
+            title: "Mystic Vale: Nêmesis Bot",
+            turn: "TURNO",
+            power: "Poder",
+            spoil: "Spoil Base",
+            btnRun: "Executar Turno",
+            btnFinish: "Finalizar Partida",
+            bossSelectLabel: "Nêmesis",
+            groupCustom: "Nêmesis Personalizados",
+            groupOfficial: "Nêmesis Oficiais",
+            trackLabel: "Trilha da Corrupção",
+            startPrompt: "Clique no botão após a sua Fase de Preparação (Prep Phase).",
+            activeRulesTitle: "Regras Ativas no seu Tabuleiro:",
+            noRules: "Nenhuma habilidade temporizada ativa ainda.",
+            alert: "O Nêmesis ficou mais forte!",
+            actionAdv: "Descarte o <strong>Avanço Nível {lvl}</strong> da posição <strong>{pos}</strong>.",
+            actionVale: "Descarte a <strong>Carta de Vale Nível {lvl}</strong> da posição <strong>{pos}</strong>.",
+            actionVP: "O Nêmesis pega <strong>{vp} VP(s)</strong>.",
+            noAction: "Nenhuma carta ou VP consumido neste turno.",
+            restOfGame: "resto do jogo",
+            helpTitle: "Setup & Regras (Modo App)",
+            helpBody: `
+                <h3>0. Configuração Física (Jogo Base)</h3>
+                <p>Faça isso na sua mesa antes de usar o app: dê a cada jogador um painel de jogador e um marcador para a trilha de Magia. Separe as cartas de Avanço por nível (1, 2 e 3) e as cartas de Vale por nível (1 e 2) em pilhas separadas e embaralhe cada uma. Revele 3 Avanços de cada nível e 4 cartas de Vale de cada nível (1 e 2) para formar o mercado central.</p>
+                <p>Dê a cada jogador seu baralho inicial (2 cartas de <em>Fertile Field</em> e 2 de <em>Cursed Land</em>) e 4 luvas (sleeves) transparentes — encaixe cada carta em uma luva para formar seu baralho de 4 cartas. Embaralhe e coloque como compra ao lado do seu painel.</p>
+                <div class="help-note">Consulte o manual físico do jogo para a quantidade exata de tokens de VP/Corrupção e para determinar o primeiro jogador — este app cobre apenas os ajustes do modo Nêmesis descritos abaixo.</div>
+                <h3>1. Preparação</h3>
+                <p>Separe 12 Avanços de Nível 1 para o baralho (guarde o resto na caixa). Crie uma reserva com 23 tokens de VP. Revele 3 Avanços de cada nível (1, 2 e 3) e 4 cartas de Vale de cada nível (1 e 2), como no jogo normal.</p>
+                <h3>2. Marcando o Nêmesis</h3>
+                <p>Pegue 1 das suas cartas iniciais de <em>Cursed Land</em>. Coloque um token ou papel virado para baixo dentro do sleeve dela e embaralhe o baralho. Esta é a sua Carta do Nêmesis — ela nunca pode ser descartada, removida do jogo ou sleevada com Avanços.</p>
+                <h3>3. Aplicando o Spoil</h3>
+                <p>Sempre que essa carta for revelada (no seu Campo ou On-deck), ela aplica o <em>Spoil Base</em> indicado no app para o chefe escolhido, além de qualquer símbolo de Decair (Spoil) adicional já ativo por habilidades temporizadas.</p>
+                <div class="help-note">Os pips de dificuldade (●) seguem a tabela oficial: Fácil = 1, Moderado = 2, Difícil = 3, Muito Difícil = 4.</div>
+                <h3>4. Fase do Nêmesis (a cada turno)</h3>
+                <p>Após concluir sua Fase de Preparação, resolva a Fase do Nêmesis clicando em "Executar Turno": avance a trilha e mova o Avanço, a Carta de Vale e/ou os VPs indicados para a pilha de pontuação do bot. Reponha o mercado imediatamente. Isso deve ser feito <strong>todo turno</strong>, mesmo se você tiver Spoilado.</p>
+                <div class="help-note">A trilha é fixa e conhecida (não é sorteio) — o app segue o lado "Standard" da trilha física de corrupção. Se sua mesa estiver jogando no lado "Fácil", os valores exibidos aqui não se aplicam.</div>
+                <h3>5. Habilidades Temporizadas</h3>
+                <p>Cada chefe tem habilidades que só valem a partir de um certo turno (ampulheta). O app avisa e lista automaticamente as habilidades ativas assim que o turno indicado é alcançado; se mais de uma já estiver ativa, resolva todas.</p>
+                <h3>6. Fim de Jogo e Pontuação</h3>
+                <p>O jogo termina quando a reserva de 23 tokens de VP acabar (termine o turno atual, incluindo a Fase do Nêmesis). O bot pontua seu <em>Poder</em>, mais todos os VPs (tokens e VPs de fim-de-jogo impressos nas cartas) que consumiu em sua pilha. Você vence se tiver mais pontos totais que o bot.</p>
+                <div class="help-note">Habilidades de "Fim de Jogo" em cartas da pilha do Nêmesis sempre valem 4 pontos para ele, independente do texto da carta. VPs negativos (⛔) na pilha do Nêmesis não têm efeito algum.</div>
+                <h3>Dicas do App</h3>
+                <p>Use <strong>↺</strong> para desfazer o último turno executado por engano. A barra mostra seu progresso na trilha de 20 espaços fixos antes do "resto do jogo".</p>
+            `,
+            creditsHtml: `Feito por <strong>Thiago Colletes de Carvalho</strong> (<a href="mailto:colletes@gmail.com">colletes@gmail.com</a>) e Gemini — app baseado nas regras oficiais do modo "Nemesis" de Mystic Vale, criado por John D. Clair. Mystic Vale © Alderac Entertainment Group (AEG). Uso pessoal, sem fins comerciais.`,
+            bmcBtn: 'Me pague um café',
+        },
+        en: {
+            title: "Mystic Vale: Nemesis Bot",
+            turn: "TURN",
+            power: "Power",
+            spoil: "Base Spoil",
+            btnRun: "Run Turn",
+            btnFinish: "Finish Game",
+            bossSelectLabel: "Nemesis",
+            groupCustom: "Custom Nemeses",
+            groupOfficial: "Official Nemeses",
+            trackLabel: "Corruption Track",
+            startPrompt: "Click the button after your Prep Phase.",
+            activeRulesTitle: "Active Rules on your Board:",
+            noRules: "No timed abilities active yet.",
+            alert: "The Nemesis grew stronger!",
+            actionAdv: "Discard the <strong>Level {lvl} Advancement</strong> from <strong>{pos}</strong>.",
+            actionVale: "Discard the <strong>Level {lvl} Vale Card</strong> from <strong>{pos}</strong>.",
+            actionVP: "The Nemesis takes <strong>{vp} VP(s)</strong>.",
+            noAction: "No cards or VP consumed this turn.",
+            restOfGame: "rest of game",
+            helpTitle: "App Mode Setup & Rules",
+            helpBody: `
+                <h3>0. Physical Setup (Base Game)</h3>
+                <p>Do this at your table before using the app: give each player a player board and a marker for the Magic track. Sort the Advancement cards by level (1, 2, and 3) and the Vale cards by level (1 and 2) into separate stacks and shuffle each. Reveal 3 Advancements of each level and 4 Vale cards of each level (1 and 2) to form the central market.</p>
+                <p>Give each player their starting deck (2 <em>Fertile Field</em> cards and 2 <em>Cursed Land</em> cards) and 4 clear card sleeves — slide each card into a sleeve to form their 4-card starting deck. Shuffle and place it as their draw pile.</p>
+                <div class="help-note">Check your physical rulebook for the exact VP/Corruption token count and for determining the first player — this app only covers the Nemesis mode adjustments described below.</div>
+                <h3>1. Setup</h3>
+                <p>Count out 12 Level 1 Advancements for the deck (leave the rest in the box). Create a pool of 23 VP tokens. Reveal 3 Advancements of each level (1, 2, and 3) and 4 Vale cards of each level (1 and 2), as in the normal game.</p>
+                <h3>2. Marking the Nemesis</h3>
+                <p>Take 1 of your starting <em>Cursed Lands</em>. Put a token or paper slip face down inside its sleeve and shuffle your deck. This is your Nemesis Card — it can never be discarded, removed from the game, or sleeved with Advancements.</p>
+                <h3>3. Applying Spoil</h3>
+                <p>Whenever this marked card is revealed (in your Field or On-deck), it applies the <em>Base Spoil</em> shown in the app for the chosen boss, plus any additional Decay (Spoil) symbol already active from timed abilities.</p>
+                <div class="help-note">Difficulty pips (●) follow the official chart: Easy = 1, Moderate = 2, Difficult = 3, Very Difficult = 4.</div>
+                <h3>4. Nemesis Phase (every turn)</h3>
+                <p>After completing your Prep Phase, resolve the Nemesis Phase by clicking "Run Turn": advance the track and move the indicated Advancement, Vale card and/or VP tokens into the bot's score pile. Replenish the commons immediately. This must be done <strong>every turn</strong>, even if you Spoiled.</p>
+                <div class="help-note">The track is fixed and fully known (not random) — this app follows the "Standard" side of the physical Corruption Track. If your table is using the "Easy" side instead, the values shown here don't apply.</div>
+                <h3>5. Timed Abilities</h3>
+                <p>Each boss has abilities that only apply once a certain turn (hourglass) is reached. The app automatically flags and lists active abilities once that turn is hit; if more than one is active, resolve all of them.</p>
+                <h3>6. End of Game & Scoring</h3>
+                <p>The game ends when the pool of 23 VP tokens runs out (finish the current turn, including the Nemesis Phase). The bot scores its <em>Power</em> plus all VPs (tokens and end-of-game VPs printed on cards) it consumed into its pile. You win if you have more total points than the bot.</p>
+                <div class="help-note">"End of Game" abilities on cards in the Nemesis' pile are always worth 4 points for it, regardless of the card's text. Negative VP (⛔) in the Nemesis' pile has no effect at all.</div>
+                <h3>App Tips</h3>
+                <p>Use <strong>↺</strong> to undo the last turn if you clicked by mistake. The progress bar shows your position on the fixed 20-space track before the "rest of game" catch-all.</p>
+            `,
+            creditsHtml: `Made by <strong>Thiago Colletes de Carvalho</strong> (<a href="mailto:colletes@gmail.com">colletes@gmail.com</a>) and Gemini — app based on the official "Nemesis" mode rules for Mystic Vale, designed by John D. Clair. Mystic Vale © Alderac Entertainment Group (AEG). Personal, non-commercial use.`,
+            bmcBtn: 'Buy me a coffee',
+        }
+    };
+
+    function updateUI() {
+        const s = strings[currentLang];
+        const mainTitle = currentLang === 'pt' ? 'Mystic Vale: Nêmesis' : 'Mystic Vale: Nemesis';
+        const subTitle = currentLang === 'pt' ? 'Bot de Nêmesis' : 'Nemesis Bot';
+        document.getElementById('appTitle').innerHTML = `${mainTitle}<span class="subtitle">${subTitle}</span>`;
+        document.getElementById('turnLabel').innerHTML = `${s.turn} <span id="turnCounter">${currentTurn === 0 ? 1 : currentTurn}</span>`;
+        document.getElementById('btnRun').innerText = s.btnRun;
+        document.getElementById('btnFinish').innerText = s.btnFinish;
+        document.getElementById('bossSelectLabel').innerText = s.bossSelectLabel;
+        document.getElementById('trackLabel').innerText = s.trackLabel;
+        document.getElementById('activeRulesTitle').innerText = s.activeRulesTitle;
+        document.getElementById('helpTitle').innerText = s.helpTitle;
+        document.getElementById('helpBody').innerHTML = s.helpBody;
+        document.getElementById('alertText').innerText = s.alert;
+        document.getElementById('creditsText').innerHTML = s.creditsHtml;
+        document.getElementById('bmcBtnText').innerText = s.bmcBtn;
+        document.getElementById('langBtnPt').classList.toggle('active', currentLang === 'pt');
+        document.getElementById('langBtnEn').classList.toggle('active', currentLang === 'en');
+
+        if (currentTurn === 0) {
+            document.getElementById('currentAction').innerText = s.startPrompt;
+        } else {
+            renderAction(track[Math.min(currentTurn - 1, track.length - 1)]);
+        }
+
+        populateBossDropdown();
+        loadBossData();
+        renderAbilities();
+        updateTrackProgress();
+        document.getElementById('btnUndo').disabled = historyStack.length === 0;
+        document.getElementById('btnUndo').style.opacity = historyStack.length === 0 ? '0.4' : '1';
+    }
+
+    function populateBossDropdown() {
+        const select = document.getElementById('bossSelect');
+        const currentVal = select.value;
+        const s = strings[currentLang];
+        select.innerHTML = '';
+
+        const customGroup = document.createElement('optgroup');
+        customGroup.label = s.groupCustom;
+        const officialGroup = document.createElement('optgroup');
+        officialGroup.label = s.groupOfficial;
+
+        for (const key in bosses) {
+            let opt = document.createElement('option');
+            opt.value = key;
+            opt.innerText = `${bosses[key][currentLang].name} (${bosses[key][currentLang].diff})`;
+            (bosses[key].custom ? customGroup : officialGroup).appendChild(opt);
+        }
+        select.appendChild(customGroup);
+        select.appendChild(officialGroup);
+        if(currentVal) select.value = currentVal;
+    }
+
+    function changeBoss() {
+        currentTurn = 0;
+        activeAbilitiesList = [];
+        totalVP = 0;
+        historyStack = [];
+        updateUI();
+    }
+
+    function loadBossData() {
+        const bossId = document.getElementById('bossSelect').value || 'beginner';
+        const boss = bosses[bossId];
+        const langData = boss[currentLang];
+        const s = strings[currentLang];
+        
+        document.getElementById('nemesisName').innerText = langData.name;
+        document.getElementById('nemesisPower').innerText = `${s.power}: ${boss.vp}`;
+        document.getElementById('nemesisDecay').innerText = `${s.spoil}: ${boss.spoil}`;
+        renderPips(boss.pips || 1);
+    }
+
+    function renderPips(count) {
+        const row = document.getElementById('pipRow');
+        let html = '';
+        for (let i = 1; i <= 4; i++) {
+            html += `<span class="pip ${i <= count ? 'filled' : ''}"></span>`;
+        }
+        row.innerHTML = html;
+    }
+
+    function updateTrackProgress() {
+        const total = track.length - 1; // spaces before "rest of the game"
+        const pos = Math.min(currentTurn, total);
+        const pct = Math.round((pos / total) * 100);
+        document.getElementById('trackFill').style.width = pct + '%';
+        const s = strings[currentLang];
+        document.getElementById('trackCount').innerText = currentTurn > total
+            ? `${total}/${total} (${s.restOfGame})`
+            : `${pos}/${total}`;
+    }
+
+
+function runNemesisTurn() {
+    // Save a snapshot for undo before mutating state
+    historyStack.push({
+        currentTurn,
+        totalVP,
+        activeAbilitiesList: JSON.parse(JSON.stringify(activeAbilitiesList)),
+        actionHTML: document.getElementById('currentAction').innerHTML
+    });
+
+    // 1. Usa o turno atual (começando em 0) para buscar a ação
+    const idx = Math.min(currentTurn, track.length - 1);
+    const acao = track[idx];
+    
+    // 2. Processa a ação (consome cartas e soma VPs)
+    processarAcao(acao);
+    
+    // 3. Incrementa o turno para a próxima rodada
+    currentTurn++;
+    
+    // 4. Atualiza o contador na tela
+    const turnDisplay = document.getElementById('turnCounter');
+    if (turnDisplay) {
+        turnDisplay.innerText = currentTurn;
+    }
+    
+    // 5. Checa habilidades do chefe
+    checkAbilities();
+    updateTrackProgress();
+    document.getElementById('btnUndo').disabled = false;
+    document.getElementById('btnUndo').style.opacity = '1';
+}
+
+    function undoTurn() {
+        if (historyStack.length === 0) return;
+        const prev = historyStack.pop();
+        currentTurn = prev.currentTurn;
+        totalVP = prev.totalVP;
+        activeAbilitiesList = prev.activeAbilitiesList;
+
+        const turnDisplay = document.getElementById('turnCounter');
+        if (turnDisplay) turnDisplay.innerText = currentTurn === 0 ? 1 : currentTurn;
+        document.getElementById('currentAction').innerHTML = prev.actionHTML;
+
+        renderAbilities();
+        updateTrackProgress();
+        document.getElementById('btnUndo').disabled = historyStack.length === 0;
+        document.getElementById('btnUndo').style.opacity = historyStack.length === 0 ? '0.4' : '1';
+    }
+
+    // Builds the instruction list HTML for a track entry without mutating any
+    // game state (safe to call repeatedly, e.g. when just re-rendering).
+    function buildActionHTML(acao) {
+        const s = strings[currentLang];
+        let instrucoes = [];
+
+        if (acao.adv) {
+            const advs = Array.isArray(acao.adv) ? acao.adv : [acao.adv];
+            advs.forEach(a => {
+                const posLabel = POS[a.pos] ? POS[a.pos][currentLang] : `Posição ${a.pos}`;
+                instrucoes.push({ html: s.actionAdv.replace('{lvl}', a.lvl).replace('{pos}', posLabel), vp: false });
+            });
+        }
+
+        if (acao.vale) {
+            const vales = Array.isArray(acao.vale) ? acao.vale : [acao.vale];
+            vales.forEach(v => {
+                const tipo = (v.lvl === 1 ? POS.V1[currentLang] : POS.V2[currentLang]);
+                instrucoes.push({ html: s.actionVale.replace('{lvl}', v.lvl).replace('{pos}', `${tipo}${v.pos}`), vp: false });
+            });
+        }
+
+        if (acao.vp > 0) {
+            instrucoes.push({ html: s.actionVP.replace('{vp}', acao.vp), vp: true });
+        }
+
+        if (instrucoes.length === 0) {
+            instrucoes.push({ html: s.noAction, vp: false });
+        }
+
+        return "<ul>" + instrucoes.map(i => `<li class="${i.vp ? 'li-vp' : ''}">${i.html}</li>`).join('') + "</ul>";
+    }
+
+    // Re-renders a track entry's action list on screen without touching totalVP
+    // (used when just refreshing the display, e.g. after a language toggle).
+    function renderAction(acao) {
+        document.getElementById('currentAction').innerHTML = buildActionHTML(acao);
+    }
+
+    // Processes a track entry: renders it AND applies its VP to the running total.
+    // Call this only once per turn advance (from runNemesisTurn).
+    function processarAcao(acao) {
+        document.getElementById('currentAction').innerHTML = buildActionHTML(acao);
+        if (acao.vp > 0) {
+            totalVP += acao.vp;
+        }
+    }
+
+    function checkAbilities() {
+        const bossId = document.getElementById('bossSelect').value;
+        const boss = bosses[bossId];
+        let triggered = false;
+
+        boss[currentLang].abilities.forEach(ab => {
+            if (ab.turn === currentTurn && !activeAbilitiesList.some(a => a.turn === ab.turn)) {
+                activeAbilitiesList.push(ab);
+                triggered = true;
+            }
+        });
+
+        if (triggered) {
+            renderAbilities();
+            const alertBox = document.getElementById('alertBox');
+            alertBox.style.display = 'block';
+            setTimeout(() => { alertBox.style.display = 'none'; }, 4000);
+        }
+    }
+
+    function renderAbilities() {
+        const container = document.getElementById('activeAbilities');
+        if (activeAbilitiesList.length === 0) {
+            container.innerHTML = `<div style="color: #5b7186; font-style: italic;">${strings[currentLang].noRules}</div>`;
+            return;
+        }
+
+        let html = "";
+        activeAbilitiesList.forEach(ab => {
+            const bossId = document.getElementById('bossSelect').value;
+            const translatedAb = bosses[bossId][currentLang].abilities.find(a => a.turn === ab.turn);
+            html += `<div class="ability-item">${translatedAb.text} <br><small style="color:#5b7186;">(${strings[currentLang].turn} ${ab.turn})</small></div>`;
+        });
+        container.innerHTML = html;
+    }
+
+    function toggleLang() {
+        currentLang = currentLang === 'pt' ? 'en' : 'pt';
+        updateUI();
+    }
+
+    function setLangDirect(l) {
+        currentLang = l;
+        localStorage.setItem('boardbots_lang', l);
+        updateUI();
+    }
+    
+    function finalizarPartida() {
+        const s = strings[currentLang];
+        const boss = bosses[document.getElementById('bossSelect').value];
+        
+        // Cálculo atualizado: Apenas Poder Base + Tokens de VP coletados
+        let pontosPoder = boss.vp;
+        let pontosTokens = totalVP; // totalVP já acumula o que foi coletado na trilha durante o jogo
+        let totalGeral = pontosPoder + pontosTokens;
+
+        const details = document.getElementById('scoreDetails');
+        document.getElementById('resultadoFinal').style.display = "block";
+        
+        details.innerHTML = `
+            <p>${s.power}: ${pontosPoder}</p>
+            <p>Tokens VP Coletados: ${pontosTokens}</p>
+            <hr>
+            <strong>Total Geral: ${totalGeral}</strong>
+            <p style="font-size: 0.8em; color: #5b7186; margin-top:10px;">
+                *O bot pontua com seu Poder Base somado aos tokens de VP que ele reivindicou durante a partida.
+            </p>
+        `;
+    }
+
+    function openHelp() { document.getElementById('helpModal').style.display = "block"; document.body.style.overflow = "hidden"; }
+    function closeHelp() { document.getElementById('helpModal').style.display = "none"; document.body.style.overflow = ""; }
+    window.addEventListener('click', (e) => { if (e.target.id === 'helpModal') closeHelp(); });
+
+    // Init
+    populateBossDropdown();
+    updateUI();
+</script>
+
+<script type="module" src="../assets/analytics.js"></script>
+<script type="module" src="../assets/bot-view.js"></script>
+
+</body>
+</html>

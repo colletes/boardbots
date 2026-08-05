@@ -49,6 +49,8 @@ const SITE_I18N = {
     game_arknova_desc: 'Automa "ARNO" — oponente por dado com cartas de ação, criado por Andre K.',
     game_sanctuary_title: 'Sanctuary',
     game_sanctuary_desc: 'Automa solo com mecânicas adaptadas do ARNO de Ark Nova.',
+    game_eleven_title: 'Eleven',
+    game_eleven_desc: 'Gerador de campanhas procedurais e resolvedor de partidas para times de futebol de mesa.',
 
     credits_title: 'Créditos',
     back_link: 'Voltar aos bots',
@@ -68,6 +70,7 @@ const SITE_I18N = {
     credit_cafebaras: '<strong>Café Baras</strong> — árvore de decisão original do autor, inspirada no conceito comunitário do "Capybot" e no estilo de automas de David Turczi. Café Baras design de Roberta Taylor, © 2024 KTBG (Kids Table Board Gaming), versão brasileira Ludofun.',
     credit_arknova: '<strong>Ark Nova</strong> — baseado no automa "ARNO", criado por Andre K. Ark Nova © Feuerland Spiele / Capstone Games.',
     credit_sanctuary: '<strong>Sanctuary</strong> — automa adaptado a partir do "ARNO" de Ark Nova. Sanctuary © Capstone Games.',
+    credit_eleven: '<strong>Eleven</strong> — 100% conteúdo e app originais do autor. Eleven © Portal Games.',
   },
   en: {
     site_title: 'Board Bots',
@@ -116,6 +119,8 @@ const SITE_I18N = {
     game_arknova_desc: '"ARNO" Automa — a dice-driven opponent with action cards, created by Andre K.',
     game_sanctuary_title: 'Sanctuary',
     game_sanctuary_desc: 'Solo Automa with mechanics adapted from Ark Nova\'s ARNO.',
+    game_eleven_title: 'Eleven',
+    game_eleven_desc: 'Procedural campaign generator and match solver for tabletop football teams.',
 
     credits_title: 'Credits',
     back_link: 'Back to bots',
@@ -135,6 +140,7 @@ const SITE_I18N = {
     credit_cafebaras: '<strong>Café Baras</strong> — original decision tree by the author, inspired by the community\'s "Capybot" concept and David Turczi\'s automa design style. Café Baras designed by Roberta Taylor, © 2024 KTBG (Kids Table Board Gaming), Brazilian version by Ludofun.',
     credit_arknova: '<strong>Ark Nova</strong> — based on the "ARNO" automa, created by Andre K. Ark Nova © Feuerland Spiele / Capstone Games.',
     credit_sanctuary: '<strong>Sanctuary</strong> — automa adapted from Ark Nova\'s "ARNO". Sanctuary © Capstone Games.',
+    credit_eleven: '<strong>Eleven</strong> — 100% original content and app by the author. Eleven © Portal Games.',
   }
 };
 
