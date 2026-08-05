@@ -15,6 +15,26 @@ async function fetchTeamData(teamName) {
     }
 }
 
+// Same idea as fetchTeamData, but sources the summary from the LEAGUE's own
+// Wikipedia page instead of a club page. Used when the user plays with a
+// custom/fictional team name, so the campaign's "real facts" grounding falls
+// back to real news/history about the league itself.
+async function fetchLeagueData(league, division) {
+    const wiki = currentCampaignLang() === 'en' ? 'en' : 'pt';
+    const titles = (LEAGUE_PAGES[league] || {})[division];
+    if (!titles) return null;
+    const title = titles[wiki] || titles.en;
+    const url = `https://${wiki}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`;
+    try {
+        const response = await fetch(url);
+        const data = await response.json();
+        return data;
+    } catch (e) {
+        console.error("Wikipedia fetch error", e);
+        return null;
+    }
+}
+
 // Splits a Wikipedia extract into individual sentences, so each chapter of a
 // multi-chapter campaign can surface a DIFFERENT real fact about the team
 // instead of always repeating the same truncated opening blurb.
@@ -29,28 +49,143 @@ function splitSentences(text) {
 
 const CAMPAIGN_UI = {
     pt: {
-        alertNoTeam: 'Por favor, insira o nome de um time.',
-        chapter: 'CAPÍTULO', league: 'LIGA', division: 'DIVISÃO',
-        history: 'História:', goalsTitle: 'OBJETIVOS DA TEMPORADA',
+        alertNoTeam: 'Por favor, escolha ou informe o nome de um time.',
+        chapter: 'CAPÍTULO', league: 'Liga', division: 'Divisão',
+        goalsTitle: 'OBJETIVOS DA TEMPORADA',
         directive: 'A Diretoria exige que você:', bonus: 'Bônus se você:',
         setupTitle: 'MUDANÇAS DE SETUP', resultTitle: 'RESULTADO DO CENÁRIO',
         resultComplete: 'Se você completou os objetivos exigidos, avance para o próximo capítulo!',
         resultPromote: 'Se terminar em 1º ou 2º, você pode subir para a Divisão',
         resultFail: 'Se falhou, você foi demitido. Recomece o capítulo ou a campanha.',
+        continuityNote: 'Continuidade: se esta campanha não for jogada em sequência direta, anote o estado do seu clube (posição na liga, elenco, infraestrutura) ao final de cada capítulo para retomar depois.',
         pdfFilename: 'Eleven_Campanha.pdf'
     },
     en: {
-        alertNoTeam: 'Please enter a team name.',
-        chapter: 'CHAPTER', league: 'LEAGUE', division: 'DIVISION',
-        history: 'Story:', goalsTitle: 'SEASON OBJECTIVES',
+        alertNoTeam: 'Please choose or enter a team name.',
+        chapter: 'CHAPTER', league: 'League', division: 'Division',
+        goalsTitle: 'SEASON OBJECTIVES',
         directive: 'The Board demands that you:', bonus: 'Bonus if you:',
         setupTitle: 'SETUP CHANGES', resultTitle: 'SCENARIO OUTCOME',
         resultComplete: 'If you completed the required objectives, advance to the next chapter!',
         resultPromote: 'If you finish 1st or 2nd, you may move up to Division',
         resultFail: 'If you failed, you were fired. Restart the chapter or the campaign.',
+        continuityNote: 'Continuity: if this campaign isn\'t played back-to-back, jot down your club\'s state (league position, squad, infrastructure) at the end of each chapter so you can pick it back up later.',
         pdfFilename: 'Eleven_Campaign.pdf'
     }
 };
+
+// ---- Team selection ----------------------------------------------------
+// Curated real-club lists per league & division, so the user can pick a real
+// team from a dropdown instead of typing a name (which risked typos that
+// would silently break the Wikipedia lookup). A "custom team" option is
+// always appended, which reveals a free-text input for fictional/renamed
+// clubs — those fall back to league-level Wikipedia grounding instead of a
+// club summary (see fetchLeagueData / generateCampaign).
+const TEAM_DATA = {
+    england: {
+        1: ['Manchester City', 'Arsenal F.C.', 'Liverpool F.C.', 'Chelsea F.C.', 'Manchester United F.C.', 'Tottenham Hotspur F.C.', 'Newcastle United F.C.', 'Aston Villa F.C.', 'Brighton & Hove Albion F.C.', 'West Ham United F.C.', 'Everton F.C.', 'Wolverhampton Wanderers F.C.'],
+        2: ['Leeds United F.C.', 'Sunderland A.F.C.', 'Norwich City F.C.', 'West Bromwich Albion F.C.', 'Middlesbrough F.C.', 'Sheffield United F.C.', 'Watford F.C.', 'Coventry City F.C.', 'Preston North End F.C.', 'Hull City A.F.C.'],
+        3: ['Bolton Wanderers F.C.', 'Portsmouth F.C.', 'Barnsley F.C.', 'Peterborough United F.C.', 'Wycombe Wanderers F.C.', 'Blackpool F.C.', 'Charlton Athletic F.C.', 'Exeter City F.C.', 'Oxford United F.C.', 'Reading F.C.']
+    },
+    spain: {
+        1: ['Real Madrid CF', 'FC Barcelona', 'Atlético Madrid', 'Sevilla FC', 'Valencia CF', 'Real Sociedad', 'Athletic Bilbao', 'Villarreal CF', 'Real Betis', 'Girona FC'],
+        2: ['Racing de Santander', 'Real Sporting de Gijón', 'Real Zaragoza', 'SD Eibar', 'Levante UD', 'UD Almería', 'Málaga CF', 'Deportivo de La Coruña'],
+        3: ['CD Tenerife', 'Real Murcia', 'UD Ibiza', 'FC Barcelona Atlètic', 'Real Madrid Castilla', 'Sevilla Atlético']
+    },
+    france: {
+        1: ['Paris Saint-Germain F.C.', 'Olympique de Marseille', 'Olympique Lyonnais', 'AS Monaco FC', 'LOSC Lille', 'OGC Nice', 'Stade Rennais F.C.', 'RC Lens', 'Stade de Reims', 'RC Strasbourg Alsace'],
+        2: ['FC Girondins de Bordeaux', 'AS Saint-Étienne', 'Amiens SC', 'EA Guingamp', 'FC Metz', 'AC Ajaccio', 'Grenoble Foot 38', 'Rodez AF'],
+        3: ['Le Mans FC', 'US Boulogne', 'SC Bastia', 'FC Villefranche Beaujolais', 'FC Martigues']
+    },
+    brazil: {
+        1: ['Flamengo', 'Palmeiras', 'Sport Club Corinthians Paulista', 'São Paulo FC', 'Grêmio', 'Internacional', 'Santos FC', 'Atlético Mineiro', 'Cruzeiro', 'Fluminense', 'Botafogo', 'Vasco da Gama'],
+        2: ['Sport Club do Recife', 'Vila Nova FC', 'Ceará SC', 'Guarani FC', 'Coritiba FC', 'Ituano FC', 'Novorizontino', 'Avaí FC'],
+        3: ['ABC FC', 'Confiança', 'Botafogo-PB', 'Ferroviária', 'São Bernardo FC', 'Volta Redonda FC']
+    }
+};
+
+// League-level Wikipedia page titles (per language) used as the fallback
+// "real facts" source when the user plays with a custom/fictional team.
+const LEAGUE_PAGES = {
+    england: {
+        1: { pt: 'Premier League', en: 'Premier League' },
+        2: { pt: 'EFL Championship', en: 'EFL Championship' },
+        3: { pt: 'EFL League One', en: 'EFL League One' }
+    },
+    spain: {
+        1: { pt: 'La Liga', en: 'La Liga' },
+        2: { pt: 'Segunda División', en: 'Segunda División' },
+        3: { pt: 'Primera Federación', en: 'Primera Federación' }
+    },
+    france: {
+        1: { pt: 'Ligue 1', en: 'Ligue 1' },
+        2: { pt: 'Ligue 2', en: 'Ligue 2' },
+        3: { pt: 'Championnat National', en: 'Championnat National' }
+    },
+    brazil: {
+        1: { pt: 'Campeonato Brasileiro de Futebol – Série A', en: 'Campeonato Brasileiro Série A' },
+        2: { pt: 'Campeonato Brasileiro de Futebol – Série B', en: 'Campeonato Brasileiro Série B' },
+        3: { pt: 'Campeonato Brasileiro de Futebol – Série C', en: 'Campeonato Brasileiro Série C' }
+    }
+};
+
+const CUSTOM_TEAM_VALUE = '__custom__';
+
+// Rebuilds the #camp-team-select <option> list from TEAM_DATA for the
+// currently chosen league/division, appending the localized "Custom team..."
+// option. When `preserveSelection` is true (e.g. on a language switch), it
+// tries to keep whichever option was already selected.
+function populateTeamSelect(preserveSelection) {
+    const select = document.getElementById('camp-team-select');
+    if (!select) return;
+    const lang = currentCampaignLang();
+    const leagueEl = document.getElementById('camp-league');
+    const divisionEl = document.getElementById('camp-division');
+    const league = leagueEl ? leagueEl.value : 'england';
+    const division = divisionEl ? divisionEl.value : '1';
+    const previous = preserveSelection ? select.value : null;
+
+    const teams = (TEAM_DATA[league] || {})[division] || [];
+    const customLabel = (typeof I18N !== 'undefined' && I18N[lang] && I18N[lang].optCustomTeam)
+        ? I18N[lang].optCustomTeam
+        : (lang === 'en' ? 'Custom team...' : 'Time personalizado...');
+    select.innerHTML = teams.map(name => `<option value="${name}">${name}</option>`).join('')
+        + `<option value="${CUSTOM_TEAM_VALUE}">${customLabel}</option>`;
+
+    if (previous && (teams.includes(previous) || previous === CUSTOM_TEAM_VALUE)) {
+        select.value = previous;
+    } else {
+        select.value = teams[0] || CUSTOM_TEAM_VALUE;
+    }
+    onTeamSelectChange();
+}
+
+function onLeagueOrDivisionChange() {
+    populateTeamSelect(false);
+}
+
+function onTeamSelectChange() {
+    const select = document.getElementById('camp-team-select');
+    const customInput = document.getElementById('camp-team');
+    const hint = document.getElementById('camp-custom-hint');
+    if (!select || !customInput) return;
+    const isCustom = select.value === CUSTOM_TEAM_VALUE;
+    customInput.classList.toggle('hidden', !isCustom);
+    if (hint) hint.classList.toggle('hidden', !isCustom);
+    if (isCustom) customInput.focus();
+}
+
+function isCustomTeamSelected() {
+    const select = document.getElementById('camp-team-select');
+    return !select || select.value === CUSTOM_TEAM_VALUE;
+}
+
+function getSelectedTeamName() {
+    if (isCustomTeamSelected()) {
+        return document.getElementById('camp-team').value.trim();
+    }
+    return document.getElementById('camp-team-select').value;
+}
 
 // Picks a numeric threshold that scales with the chosen difficulty.
 function pickNum(difficulty, easy, medium, hard) {
@@ -58,53 +193,178 @@ function pickNum(difficulty, easy, medium, hard) {
 }
 
 // ---- Story Arcs ------------------------------------------------------
-// Each arc is a narrative "hook" for a chapter. {team} is substituted with
-// the real club name; {fact} is substituted with a real sentence pulled
-// from that club's Wikipedia summary (a different sentence per chapter,
-// when available) so every generated campaign is actually grounded in the
-// chosen team's real history, not just generic filler text.
+// Each arc is now a single continuous throughline (a `stages` array of 3
+// beginning/middle/end beats) told across the WHOLE campaign, instead of a
+// flat one-shot intro that got independently re-rolled every chapter. That
+// re-rolling was the root cause of narrative incoherence (e.g. chapter 1
+// implying the manager is about to retire, chapter 2 implying they've just
+// arrived) — now exactly ONE arc is chosen per campaign (see
+// generateCampaign), and each chapter narrates the next stage of that same
+// arc, so the story always progresses coherently from start to finish.
 const STORY_ARCS = [
     {
         id: 'homecoming',
-        pt: { title: 'Primeiro Amor', intro: 'Você voltou para casa. {team} é o clube da sua infância, e a torcida ainda lembra do seu nome. {fact} Agora é sua vez de devolver ao clube tudo o que ele um dia te deu.' },
-        en: { title: 'First Love', intro: 'You have come home. {team} is the club of your childhood, and the fans still remember your name. {fact} Now it is your turn to give back everything the club once gave you.' }
+        pt: {
+            title: 'Primeiro Amor',
+            stages: [
+                { label: 'A Volta', text: 'Você voltou para casa. {team} é o clube da sua infância, e a torcida ainda lembra do seu nome. {fact} Agora começa sua primeira temporada no comando — mostre que valeu a pena te trazer de volta.' },
+                { label: 'Ganhando Confiança', text: 'Uma temporada já se passou desde que você assumiu o {team}, e aos poucos a torcida começa a confiar no seu trabalho. {fact} É hora de consolidar as mudanças que você começou e provar que não foi sorte.' },
+                { label: 'Legado', text: 'Chegou a temporada decisiva da sua passagem pelo {team} nesta história. {fact} É hora de decidir que tipo de legado você deixará para o clube que te viu crescer.' }
+            ]
+        },
+        en: {
+            title: 'First Love',
+            stages: [
+                { label: 'The Return', text: 'You have come home. {team} is the club of your childhood, and the fans still remember your name. {fact} Now begins your first season in charge — show that bringing you back was worth it.' },
+                { label: 'Earning Trust', text: 'A season has passed since you took charge of {team}, and the fans are slowly starting to trust your work. {fact} It is time to consolidate the changes you started and prove it wasn\'t just luck.' },
+                { label: 'Legacy', text: 'This is the decisive season of your time at {team} in this story. {fact} It is time to decide what kind of legacy you will leave for the club that saw you grow up.' }
+            ]
+        }
     },
     {
         id: 'crisis',
-        pt: { title: 'Tempos de Crise', intro: '{team} perdeu seu principal patrocinador de forma repentina e as contas não fecham. {fact} A torcida está impaciente e você precisa reerguer o clube antes que seja tarde demais.' },
-        en: { title: 'Times of Crisis', intro: '{team} has just lost its main sponsor and the books no longer balance. {fact} The fans are growing impatient, and you must rebuild the club before it is too late.' }
+        pt: {
+            title: 'Tempos de Crise',
+            stages: [
+                { label: 'O Colapso', text: '{team} acaba de perder seu principal patrocinador, e as contas simplesmente não fecham. {fact} Você assume o comando em meio ao caos, com a missão de estancar a sangria financeira.' },
+                { label: 'Reconstrução', text: 'Depois de uma temporada de cortes e sacrifícios, o {team} começa a enxergar luz no fim do túnel. {fact} Mas a diretoria ainda cobra resultados rápidos para justificar a paciência que teve com você.' },
+                { label: 'Superação', text: 'É a temporada que vai definir se a crise no {team} ficou para trás de vez. {fact} Prove que o clube saiu mais forte da tempestade que você ajudou a atravessar.' }
+            ]
+        },
+        en: {
+            title: 'Times of Crisis',
+            stages: [
+                { label: 'The Collapse', text: '{team} has just lost its main sponsor, and the books simply don\'t balance. {fact} You take charge amid the chaos, tasked with stopping the financial bleeding.' },
+                { label: 'Rebuilding', text: 'After a season of cuts and sacrifices, {team} starts to see light at the end of the tunnel. {fact} But the board still demands quick results to justify the patience it has shown you.' },
+                { label: 'Turnaround', text: 'This is the season that will decide whether the crisis at {team} is truly behind it. {fact} Prove the club came out stronger from the storm you helped it weather.' }
+            ]
+        }
     },
     {
         id: 'glory',
-        pt: { title: 'A Caminho da Glória', intro: 'Os torcedores de {team} estão empolgados como há anos não se via. {fact} A diretoria liberou fundos para investir, mas exige resultados imediatos em troca.' },
-        en: { title: 'On the Road to Glory', intro: 'Fans of {team} haven\'t been this excited in years. {fact} The board has released funds to invest, but demands immediate results in return.' }
+        pt: {
+            title: 'A Caminho da Glória',
+            stages: [
+                { label: 'O Investimento', text: 'Os torcedores do {team} estão empolgados como há anos não se via, e a diretoria acabou de liberar fundos para investir pesado. {fact} Só que o dinheiro vem acompanhado de uma cobrança implacável por resultados imediatos.' },
+                { label: 'Subindo de Patamar', text: 'O projeto vencedor do {team} está em andamento, e as expectativas só aumentaram desde a temporada passada. {fact} Chegou a hora de transformar o investimento em títulos de verdade.' },
+                { label: 'O Ápice', text: 'Esta é a temporada que pode coroar todo o trabalho feito no {team} desde que o projeto começou. {fact} A torcida sonha com a glória máxima — não a decepcione agora.' }
+            ]
+        },
+        en: {
+            title: 'On the Road to Glory',
+            stages: [
+                { label: 'The Investment', text: 'Fans of {team} haven\'t been this excited in years, and the board has just released funds to invest heavily. {fact} But the money comes with a relentless demand for immediate results.' },
+                { label: 'Stepping Up', text: 'The winning project at {team} is underway, and expectations have only grown since last season. {fact} It\'s time to turn that investment into real silverware.' },
+                { label: 'The Peak', text: 'This is the season that can crown all the work done at {team} since the project began. {fact} The fans dream of ultimate glory — don\'t disappoint them now.' }
+            ]
+        }
     },
     {
         id: 'boardroom',
-        pt: { title: 'Novos Donos, Novas Regras', intro: 'Um novo grupo investidor assumiu o comando de {team}. {fact} Eles falam em "projeto vencedor" e "resultados imediatos" — e não têm paciência para desculpas.' },
-        en: { title: 'New Owners, New Rules', intro: 'A new ownership group has taken over {team}. {fact} They talk of a "winning project" and "immediate results" — and have no patience for excuses.' }
+        pt: {
+            title: 'Novos Donos, Novas Regras',
+            stages: [
+                { label: 'A Chegada', text: 'Um novo grupo investidor acabou de assumir o comando do {team}. {fact} Eles falam em "projeto vencedor" e não têm paciência para desculpas — e você é a primeira contratação dessa nova era.' },
+                { label: 'Sob Pressão', text: 'Os novos donos do {team} já perceberam que reconstruir um clube leva tempo, mas a paciência deles está se esgotando. {fact} Esta temporada precisa mostrar progresso real, ou seu contrato pode não ser renovado.' },
+                { label: 'Resultados ou Saída', text: 'Chegou a temporada da verdade para você e para os novos donos do {team}. {fact} Prove que a visão deles sobre o clube — e a confiança que depositaram em você — foi a escolha certa.' }
+            ]
+        },
+        en: {
+            title: 'New Owners, New Rules',
+            stages: [
+                { label: 'The Takeover', text: 'A new ownership group has just taken over {team}. {fact} They talk of a "winning project" and have no patience for excuses — and you are the first hire of this new era.' },
+                { label: 'Under Pressure', text: 'The new owners at {team} have already realized rebuilding a club takes time, but their patience is running out. {fact} This season needs to show real progress, or your contract may not be renewed.' },
+                { label: 'Results or the Door', text: 'The season of truth has arrived for you and {team}\'s new owners. {fact} Prove that their vision for the club — and the trust they placed in you — was the right choice.' }
+            ]
+        }
     },
     {
         id: 'academy',
-        pt: { title: 'A Base do Futuro', intro: 'A diretoria de {team} decidiu apostar nas categorias de base. {fact} Cabe a você transformar Youngsters promissores em peças de confiança do time principal.' },
-        en: { title: 'The Future Starts Here', intro: 'The board at {team} has decided to invest in the youth academy. {fact} It is up to you to turn promising Youngsters into trusted first-team players.' }
+        pt: {
+            title: 'A Base do Futuro',
+            stages: [
+                { label: 'Plantando Sementes', text: 'A diretoria do {team} decidiu apostar nas categorias de base para reduzir gastos e criar uma identidade própria. {fact} Cabe a você começar a transformar Youngsters promissores em peças do time principal.' },
+                { label: 'Colhendo Frutos', text: 'Os primeiros Youngsters promovidos no {team} já começam a mostrar serviço no time principal. {fact} É hora de aprofundar a aposta na base e provar que o projeto de formação é sustentável.' },
+                { label: 'A Nova Geração', text: 'Chegou a temporada em que a nova geração do {team}, formada nas categorias de base, precisa assumir de vez o protagonismo. {fact} Mostre que apostar nos próprios jogadores foi a decisão certa.' }
+            ]
+        },
+        en: {
+            title: 'The Future Starts Here',
+            stages: [
+                { label: 'Planting Seeds', text: 'The board at {team} has decided to invest in the youth academy to cut costs and build its own identity. {fact} It\'s up to you to start turning promising Youngsters into first-team players.' },
+                { label: 'Reaping Rewards', text: 'The first Youngsters promoted at {team} are already starting to show up in the first team. {fact} It\'s time to deepen the investment in the academy and prove the project is sustainable.' },
+                { label: 'The New Generation', text: 'This is the season when {team}\'s new generation, forged in the academy, must finally take center stage. {fact} Show that betting on your own players was the right call.' }
+            ]
+        }
     },
     {
         id: 'departure',
-        pt: { title: 'O Fim de uma Era', intro: 'O maior ídolo recente de {team} acabou de ser vendido para um clube maior, e o vestiário sente o baque. {fact} Reconstruir o time sem sua estrela será o maior desafio da temporada.' },
-        en: { title: 'End of an Era', intro: '{team}\'s biggest recent star has just been sold to a bigger club, and the dressing room feels the blow. {fact} Rebuilding the squad without your star man will be the season\'s biggest test.' }
+        pt: {
+            title: 'O Fim de uma Era',
+            stages: [
+                { label: 'O Vazio', text: 'O maior ídolo recente do {team} acabou de ser vendido para um clube maior, e o vestiário sente o baque. {fact} Reconstruir o time sem sua estrela será o desafio da sua primeira temporada no comando.' },
+                { label: 'Novos Líderes', text: 'Sem o antigo ídolo, o {team} começa a encontrar novas referências dentro de campo. {fact} É hora de consolidar esses novos líderes e provar que o time é maior do que qualquer jogador individual.' },
+                { label: 'Virando a Página', text: 'Chegou a temporada em que o {team} finalmente vira a página da antiga era. {fact} Mostre à torcida que o futuro do clube pode ser tão brilhante quanto o passado.' }
+            ]
+        },
+        en: {
+            title: 'End of an Era',
+            stages: [
+                { label: 'The Void', text: '{team}\'s biggest recent star has just been sold to a bigger club, and the dressing room feels the blow. {fact} Rebuilding the squad without your star man will be the challenge of your first season in charge.' },
+                { label: 'New Leaders', text: 'Without the old idol, {team} starts finding new leaders on the pitch. {fact} It\'s time to build up those new leaders and prove the team is bigger than any single player.' },
+                { label: 'Turning the Page', text: 'This is the season when {team} finally turns the page on its old era. {fact} Show the fans that the club\'s future can be just as bright as its past.' }
+            ]
+        }
     },
     {
         id: 'derby',
-        pt: { title: 'Rivalidade Local', intro: 'O clássico contra o maior rival está mais próximo do que nunca, e {team} não vence esse confronto há tempos. {fact} A cidade inteira espera um resultado digno de orgulho.' },
-        en: { title: 'Local Rivalry', intro: 'The derby against the biggest rival is closer than ever, and {team} hasn\'t won that fixture in a long while. {fact} The whole city is hoping for a result worth celebrating.' }
+        pt: {
+            title: 'Rivalidade Local',
+            stages: [
+                { label: 'A Provocação', text: 'O clássico contra o maior rival está mais próximo do que nunca, e o {team} não vence esse confronto há tempos. {fact} A cidade inteira espera um resultado digno de orgulho já na sua primeira temporada.' },
+                { label: 'Reviravolta', text: 'Depois de uma temporada de trabalho, o {team} finalmente sente que pode competir de igual para igual com o rival local. {fact} É hora de transformar essa confiança recém-conquistada em resultados dentro de campo.' },
+                { label: 'Supremacia Local', text: 'Chegou a temporada decisiva na briga do {team} pela supremacia da cidade. {fact} Vença o respeito do rival de uma vez por todas.' }
+            ]
+        },
+        en: {
+            title: 'Local Rivalry',
+            stages: [
+                { label: 'The Taunt', text: 'The derby against the biggest rival is closer than ever, and {team} hasn\'t won that fixture in a long while. {fact} The whole city is hoping for a result worth celebrating already in your first season.' },
+                { label: 'Turning the Tide', text: 'After a season of work, {team} finally feels it can compete on equal footing with the local rival. {fact} It\'s time to turn that newfound confidence into results on the pitch.' },
+                { label: 'Local Supremacy', text: 'This is the decisive season in {team}\'s fight for supremacy of the city. {fact} Earn the rival\'s respect once and for all.' }
+            ]
+        }
     },
     {
         id: 'lastdance',
-        pt: { title: 'Última Dança', intro: 'Esta é sua última temporada no comando de {team} antes da aposentadoria. {fact} Você quer ser lembrado não só pelas conquistas, mas por ter deixado o clube melhor do que o encontrou.' },
-        en: { title: 'One Last Dance', intro: 'This is your final season in charge of {team} before retirement. {fact} You want to be remembered not only for the trophies, but for leaving the club better than you found it.' }
+        pt: {
+            title: 'Última Dança',
+            stages: [
+                { label: 'A Despedida Anunciada', text: 'Esta é a primeira de suas últimas temporadas no comando do {team} antes da aposentadoria. {fact} Você quer ser lembrado não só pelas conquistas, mas por ter deixado o clube em boas mãos.' },
+                { label: 'Contando os Dias', text: 'O relógio da sua carreira no {team} continua correndo, e cada decisão pesa mais no legado que você vai deixar. {fact} Aproveite o tempo que resta para preparar o clube para o dia em que você não estiver mais lá.' },
+                { label: 'O Último Capítulo', text: 'Esta é, finalmente, sua última temporada no comando do {team}. {fact} Dê tudo de si nesta despedida — é sua última chance de escrever o final da sua própria história no clube.' }
+            ]
+        },
+        en: {
+            title: 'One Last Dance',
+            stages: [
+                { label: 'The Announced Farewell', text: 'This is the first of your final seasons in charge of {team} before retirement. {fact} You want to be remembered not only for the trophies, but for leaving the club in good hands.' },
+                { label: 'Counting Down', text: 'The clock on your career at {team} keeps ticking, and every decision weighs more heavily on the legacy you\'ll leave behind. {fact} Use the time you have left to prepare the club for the day you\'re no longer there.' },
+                { label: 'The Final Chapter', text: 'This is, at last, your final season in charge of {team}. {fact} Give it everything in this farewell — it\'s your last chance to write the ending of your own story at the club.' }
+            ]
+        }
     }
 ];
+
+// Maps chapter index `i` (1-indexed, out of `total` chapters) onto one of an
+// arc's `stages`, spreading them evenly across the campaign so a 1-, 2-, or
+// 3-chapter campaign all get a sensible beginning->middle->end progression
+// from the very same arc (never picking a fresh random arc per chapter).
+function pickStage(stages, i, total) {
+    if (total <= 1) return stages[0];
+    const idx = Math.round((i - 1) * (stages.length - 1) / (total - 1));
+    return stages[Math.max(0, Math.min(stages.length - 1, idx))];
+}
 
 // ---- Objective & setup pools ------------------------------------------
 // Phrased after the real terminology used in the rulebook (League Table,
@@ -272,12 +532,13 @@ function pickUnique(pool, count, filterFn, used) {
 async function generateCampaign() {
     const lang = currentCampaignLang();
     const ui = CAMPAIGN_UI[lang] || CAMPAIGN_UI.pt;
-    const team = document.getElementById('camp-team').value;
+    const team = getSelectedTeamName();
     const league = document.getElementById('camp-league').value;
     const division = document.getElementById('camp-division').value;
     const diff = document.getElementById('camp-difficulty').value;
     const chapters = parseInt(document.getElementById('camp-chapters').value);
     const canPromote = document.getElementById('camp-promotion').checked;
+    const customTeam = isCustomTeamSelected();
 
     const loader = document.getElementById('campaign-loader');
     const output = document.getElementById('campaign-output');
@@ -292,28 +553,30 @@ async function generateCampaign() {
     output.style.display = 'none';
     container.innerHTML = '';
 
-    // Fetch team info — real Wikipedia data feeds every chapter's story text,
-    // not just a single truncated blurb on chapter 1.
-    const teamData = await fetchTeamData(team);
-    const sentences = teamData && teamData.extract ? splitSentences(teamData.extract) : [];
-    const bgImage = teamData && teamData.thumbnail ? teamData.thumbnail.source : '';
+    // Fetch real-world grounding data — a club summary for a curated real
+    // team, or a league summary (real facts about the league itself) for a
+    // custom/fictional team name. Either way, every chapter's story text
+    // surfaces a DIFFERENT real fact, not just a single truncated blurb.
+    const factData = customTeam ? await fetchLeagueData(league, division) : await fetchTeamData(team);
+    const sentences = factData && factData.extract ? splitSentences(factData.extract) : [];
+    const bgImage = factData && factData.thumbnail ? factData.thumbnail.source : '';
+
+    // Pick exactly ONE story arc for the whole campaign so the narrative
+    // stays coherent chapter to chapter (see STORY_ARCS comment above).
+    const arc = STORY_ARCS[Math.floor(Math.random() * STORY_ARCS.length)];
+    const arcText = arc[lang] || arc.pt;
 
     let html = '';
     let currentDiv = parseInt(division);
-    const usedArcs = new Set();
     const usedMain = new Set();
     const usedSecondary = new Set();
     const usedSetup = new Set();
 
     for (let i = 1; i <= chapters; i++) {
-        const arcCandidates = STORY_ARCS.filter((_, idx) => !usedArcs.has(idx));
-        const arcPool = arcCandidates.length ? arcCandidates : STORY_ARCS;
-        const arc = arcPool[Math.floor(Math.random() * arcPool.length)];
-        usedArcs.add(STORY_ARCS.indexOf(arc));
-        const arcText = arc[lang] || arc.pt;
+        const stage = pickStage(arcText.stages, i, chapters);
 
         const fact = sentences.length ? sentences[(i - 1) % sentences.length] : '';
-        const introText = arcText.intro.replace('{team}', team).replace('{fact}', fact).replace(/\s{2,}/g, ' ').trim();
+        const introText = stage.text.replace('{team}', team).replace('{fact}', fact).replace(/\s{2,}/g, ' ').trim();
 
         const mainPicks = pickUnique(MAIN_OBJECTIVES, 2, o => o.appliesDiv(currentDiv), usedMain);
         const secondaryPicks = pickUnique(SECONDARY_OBJECTIVES, 2, null, usedSecondary);
@@ -325,38 +588,46 @@ async function generateCampaign() {
 
         let chapterHtml = `
             <div class="pdf-preview" id="chapter-${i}">
-                <div style="display:flex; justify-content:space-between;">
-                    <h1>${team.toUpperCase()}</h1>
-                    ${bgImage ? `<img src="${bgImage}" style="height:60px; object-fit:contain;">` : ''}
-                </div>
-                <div class="season-info">${ui.chapter} ${i}/${chapters} | ${ui.league}: ${league.toUpperCase()} | ${ui.division}: ${currentDiv}</div>
-                <div class="arc-title">${arcText.title}</div>
-
-                <div class="flavor-text">
-                    <strong>${ui.history}</strong><br>
-                    ${introText}
-                </div>
-
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
-                    <div class="pdf-box goals">
-                        <h3>${ui.goalsTitle}</h3>
-                        <p><strong>${ui.directive}</strong></p>
-                        <ul>${goals.map(g => `<li>${g}</li>`).join('')}</ul>
-                        <br>
-                        <p><strong>${ui.bonus}</strong></p>
-                        <ul>${extraGoals.map(g => `<li>${g}</li>`).join('')}</ul>
+                <div class="pdf-header">
+                    <div class="title-block">
+                        <h1>${team.toUpperCase()}</h1>
+                        <div class="subtitle-arc">${arcText.title} — ${stage.label}</div>
                     </div>
-                    <div class="pdf-box">
-                        <h3>${ui.setupTitle}</h3>
-                        <ul>${setup.map(g => `<li>${g}</li>`).join('')}</ul>
+                    <div class="meta-block">
+                        ${bgImage ? `<img src="${bgImage}" class="team-crest">` : ''}
+                        <div class="chapter-badge">${ui.chapter} ${i}/${chapters}</div>
+                        <div class="meta-line">${ui.league}: ${league.toUpperCase()}</div>
+                        <div class="meta-line">${ui.division}: ${currentDiv}</div>
                     </div>
                 </div>
 
-                <div class="pdf-box">
-                    <h3>${ui.resultTitle}</h3>
+                <div class="pdf-narrative">${introText}</div>
+
+                <div class="ribbon-row">
+                    <div class="ribbon-box goals">
+                        <div class="ribbon-title">${ui.goalsTitle}<span class="ribbon-stars">★ ★ ★</span></div>
+                        <div class="ribbon-body">
+                            <h4>${ui.directive}</h4>
+                            <ul>${goals.map(g => `<li>${g}</li>`).join('')}</ul>
+                            <h4>${ui.bonus}</h4>
+                            <ul>${extraGoals.map(g => `<li>${g}</li>`).join('')}</ul>
+                        </div>
+                    </div>
+                    <div class="ribbon-box setup">
+                        <div class="ribbon-title">${ui.setupTitle}<span class="ribbon-stars">★ ★ ★</span></div>
+                        <div class="ribbon-body">
+                            <ul>${setup.map(g => `<li>${g}</li>`).join('')}</ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pdf-result">
+                    <span class="result-tab">${ui.resultTitle}</span>
                     <p>${ui.resultComplete} ${canPromote && i < chapters ? ui.resultPromote + ' ' + (currentDiv - 1) + '.' : ''}</p>
                     <p>${ui.resultFail}</p>
                 </div>
+
+                <div class="pdf-continuity">${ui.continuityNote}</div>
             </div>
         `;
         html += chapterHtml;
@@ -383,3 +654,9 @@ function exportPDF() {
     };
     html2pdf().set(opt).from(element).save();
 }
+
+// Populate the team dropdown on initial load (applyI18n() in
+// eleven_bot_v1.html calls populateTeamSelect(true) again on every language
+// switch, to refresh translated labels while preserving the selection).
+document.addEventListener('DOMContentLoaded', () => populateTeamSelect(false));
+
