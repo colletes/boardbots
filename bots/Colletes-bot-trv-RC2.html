@@ -789,8 +789,14 @@
             initialPlacementTitle: "1st Round: Placement (Parking Lot)",
             initialPlacementSpace: (space) => `Space ${space}`,
             abilitiesSummary: (lvl) => `View Special Abilities (Protocol Lv.${lvl}/4)`,
-            priorityBadge: (p) => `Shoot/Coast: ${p}`,
-            sdbrPriorityBadge: (p) => `Priority: ${p}`,
+            priorityBadge: (p) => {
+                const map = {'↓ (Cima para Baixo)': '↓ (Top to Bottom)', '↑ (Baixo para Cima)': '↑ (Bottom to Top)', '↻ (Sentido Horário)': '↻ (Clockwise)', '↺ (Sentido Anti-Horário)': '↺ (Counter-Clockwise)'};
+                return `Shoot/Coast: ${map[p] || p}`;
+            },
+            sdbrPriorityBadge: (p) => {
+                const map = {'↓ (Cima para Baixo)': '↓ (Top to Bottom)', '↑ (Baixo para Cima)': '↑ (Bottom to Top)', '↻ (Sentido Horário)': '↻ (Clockwise)', '↺ (Sentido Anti-Horário)': '↺ (Counter-Clockwise)'};
+                return `Priority: ${map[p] || p}`;
+            },
             sdbrCardAction: "SDBR: MOVEMENT + COMMAND PER SECTION",
             sdbrBadgeName: "🚛 SDBR: AUTONOMOUS BIG RIG",
             sdbrDetailsSummary: "View Commands by Section",
@@ -830,14 +836,33 @@
             bmcBtn: 'Buy me a coffee'
         }
     };
-    let lang = localStorage.getItem('trv9000_lang') || 'pt';
+    let lang = localStorage.getItem('boardbots_lang') || 'pt';
     function t(key) { const v = (I18N[lang] || I18N.pt)[key]; return v !== undefined ? v : (I18N.pt[key] !== undefined ? I18N.pt[key] : key); }
     function tr(obj) { if (!obj) return ''; return (typeof obj === 'object') ? (obj[lang] !== undefined ? obj[lang] : obj.pt) : obj; }
 
-    function setLang(newLang) {
-        lang = newLang;
-        localStorage.setItem('trv9000_lang', newLang);
-        document.documentElement.lang = (newLang === 'pt') ? 'pt-br' : 'en';
+    function setLang(l) {
+        const priorityOpts = {
+            pt: {
+                '↓ (Cima para Baixo)': '↓ (Cima para Baixo)',
+                '↑ (Baixo para Cima)': '↑ (Baixo para Cima)',
+                '↻ (Sentido Horário)': '↻ (Sentido Horário)',
+                '↺ (Sentido Anti-Horário)': '↺ (Sentido Anti-Horário)'
+            },
+            en: {
+                '↓ (Cima para Baixo)': '↓ (Top to Bottom)',
+                '↑ (Baixo para Cima)': '↑ (Bottom to Top)',
+                '↻ (Sentido Horário)': '↻ (Clockwise)',
+                '↺ (Sentido Anti-Horário)': '↺ (Counter-Clockwise)'
+            }
+        };
+        document.querySelectorAll('select#edit-priority option, select#edit-sdbr-priority option').forEach(opt => {
+            if (priorityOpts[l] && priorityOpts[l][opt.value]) {
+                opt.textContent = priorityOpts[l][opt.value];
+            }
+        });
+        lang = l;
+        localStorage.setItem('boardbots_lang', l);
+        document.documentElement.lang = (l === 'pt') ? 'pt-br' : 'en';
         applyI18n();
     }
 
