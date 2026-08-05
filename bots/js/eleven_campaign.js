@@ -2,8 +2,8 @@ function currentCampaignLang() {
     return localStorage.getItem('boardbots_lang') || 'pt';
 }
 
-async function fetchTeamData(teamName) {
-    const wiki = currentCampaignLang() === 'en' ? 'en' : 'pt';
+async function fetchTeamData(teamName, lang) {
+    const wiki = (lang || currentCampaignLang()) === 'en' ? 'en' : 'pt';
     const url = `https://${wiki}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(teamName)}`;
     try {
         const response = await fetch(url);
@@ -82,9 +82,9 @@ const TEAM_DATA = {
         3: ['Le Mans FC', 'US Boulogne', 'SC Bastia', 'FC Villefranche Beaujolais', 'FC Martigues']
     },
     brazil: {
-        1: ['Flamengo', 'Palmeiras', 'Sport Club Corinthians Paulista', 'São Paulo FC', 'Grêmio', 'Internacional', 'Santos FC', 'Atlético Mineiro', 'Cruzeiro', 'Fluminense', 'Botafogo', 'Vasco da Gama'],
+        1: ['Clube de Regatas do Flamengo', 'Palmeiras', 'Sport Club Corinthians Paulista', 'São Paulo FC', 'Grêmio Foot-Ball Porto Alegrense', 'Sport Club Internacional', 'Santos FC', 'Atlético Mineiro', 'Cruzeiro Esporte Clube', 'Fluminense Football Club', 'Botafogo de Futebol e Regatas', 'Vasco da Gama'],
         2: ['Sport Club do Recife', 'Vila Nova FC', 'Ceará SC', 'Guarani FC', 'Coritiba FC', 'Ituano FC', 'Novorizontino', 'Avaí FC'],
-        3: ['ABC FC', 'Confiança', 'Botafogo-PB', 'Ferroviária', 'São Bernardo FC', 'Volta Redonda FC']
+        3: ['ABC FC', 'Associação Desportiva Confiança', 'Botafogo-PB', 'Associação Ferroviária de Esportes', 'São Bernardo FC', 'Volta Redonda FC']
     }
 };
 
@@ -569,8 +569,8 @@ const SETUP_CHANGES = [
         en: () => `Do not draw a Youngster card during general setup. Draw the first 5 cards from the regular Player deck, choose one and pay its cost normally, discarding the rest. Repeat the process once more.`
     },
     {
-        pt: () => `Depois de escolher suas 3 cartas de Manager e aplicar seus bônus, escolha uma delas novamente e aplique seus bônus mais uma vez.`,
-        en: () => `After selecting your 3 Manager cards and applying their bonuses, choose one of them again and apply its bonuses a second time.`
+        pt: () => `Depois de escolher suas 3 cartas de Diretor (Director) e aplicar seus bônus, escolha uma delas novamente e aplique seus bônus mais uma vez.`,
+        en: () => `After drafting your 3 Director cards and applying their bonuses, choose one of them again and apply its bonuses a second time.`
     },
     {
         pt: () => `Você começa com a 3ª Arquibancada já construída no seu estádio.`,
@@ -581,16 +581,16 @@ const SETUP_CHANGES = [
         en: () => `Your Veteran Players cost +1 during the first Week of the season.`
     },
     {
-        pt: () => `Escolha uma carta de Manager para manter, descarte as demais e receba um Head Coach normalmente.`,
-        en: () => `Choose one Manager card to keep, discard the rest, then receive a Head Coach card as usual.`
+        pt: () => `Ao invés de escolher 3 cartas de Diretor (Director) no draft, escolha e mantenha apenas 1, descartando as demais fases do draft. Coloque seu First Trainer normalmente.`,
+        en: () => `Instead of drafting 3 Director cards, choose and keep only 1, skipping the remaining draft rounds. Place your First Trainer card as usual.`
     },
     {
         pt: () => `O seu primeiro Jogador Veterano contratado na temporada custa -1.`,
         en: () => `Your first Veteran Player hired this season costs -1.`
     },
     {
-        pt: () => `Coloque um marcador de Camisa não utilizado no espaço 0 da trilha de Poupança.`,
-        en: () => `Place an unused Jersey marker on space 0 of the Savings track.`
+        pt: () => `Um dos seus 3 marcadores de Camisa não utilizados começa a temporada diretamente no campo (Pitch), em qualquer Zona vazia, ao invés de começar na Área de Banco.`,
+        en: () => `One of your 3 unused Jersey markers starts the season directly on the Pitch, in any empty Zone, instead of starting in the Bench Area.`
     },
     {
         pt: () => `Você não recebe nenhum Patrocinador no setup inicial da temporada.`,
@@ -616,6 +616,13 @@ function pickUnique(pool, count, filterFn, used) {
     }
     return picks;
 }
+
+// Caches every random decision from the last generated campaign (arc,
+// twists, objective picks, both-language team facts) so switching the UI
+// language afterward can fully re-render the SAME campaign in the new
+// language (see renderCampaign/onLanguageChanged) without re-rolling any
+// pick or doing another network fetch.
+let campaignState = null;
 
 async function generateCampaign() {
     const lang = currentCampaignLang();
@@ -644,36 +651,77 @@ async function generateCampaign() {
     // Real-world grounding only applies to curated real teams — a custom
     // team skips Wikipedia entirely and uses generic, division/difficulty
     // scenarios instead (no real facts to look up for a fictional club).
-    const factData = customTeam ? null : await fetchTeamData(team);
-    const sentences = customTeam
-        ? genericFactSentences(lang, division, diff)
-        : (factData && factData.extract ? splitSentences(factData.extract) : []);
-    const bgImage = (!customTeam && factData && factData.thumbnail) ? factData.thumbnail.source : '';
+    // Both language editions are fetched up front so a later language
+    // switch can re-translate the facts too, with no extra network call.
+    const factByLang = customTeam ? null : {
+        pt: await fetchTeamData(team, 'pt'),
+        en: await fetchTeamData(team, 'en')
+    };
 
     // Pick exactly ONE story arc for the whole campaign so the narrative
     // stays coherent chapter to chapter (see STORY_ARCS comment above).
     // Avoids recently-used arcs (persisted across generations) so the same
     // storyline doesn't resurface for a long time.
     const arcIdx = pickAvoidingRecent(STORY_ARCS.length, 'eleven_recent_arcs', Math.max(1, STORY_ARCS.length - 2));
+    const twistPool = CHAPTER_TWISTS.pt; // length is identical across languages
+
+    const usedMain = new Set();
+    const usedSecondary = new Set();
+    const usedSetup = new Set();
+    let currentDiv = parseInt(division);
+    const chapterPicks = [];
+
+    for (let i = 1; i <= chapters; i++) {
+        // A procedural per-chapter twist, independent of the arc, so the
+        // combined arc+stage+twist+objectives space stays fresh for a long
+        // time even across many separately-generated campaigns.
+        const twistIdx = pickAvoidingRecent(twistPool.length, 'eleven_recent_twists', Math.max(1, twistPool.length - 2));
+        const mainPicks = pickUnique(MAIN_OBJECTIVES, 2, o => o.appliesDiv(currentDiv), usedMain);
+        const secondaryPicks = pickUnique(SECONDARY_OBJECTIVES, 2, null, usedSecondary);
+        const setupPicks = pickUnique(SETUP_CHANGES, 2, null, usedSetup);
+        chapterPicks.push({ twistIdx, mainPicks, secondaryPicks, setupPicks });
+        if (canPromote && currentDiv > 1) currentDiv--;
+    }
+
+    campaignState = { team, league, division, diff, chapters, canPromote, customTeam, factByLang, arcIdx, chapterPicks };
+    renderCampaign(lang);
+}
+
+// Rebuilds the campaign PDF preview from the cached `campaignState` in the
+// requested language — reuses every random pick made at generation time
+// (arc, twists, objectives) so switching language never re-rolls the
+// campaign, it only re-translates it. Called both right after generation
+// and again from onLanguageChanged() whenever the UI language toggles.
+function renderCampaign(lang) {
+    const state = campaignState;
+    if (!state) return;
+    const ui = CAMPAIGN_UI[lang] || CAMPAIGN_UI.pt;
+    const { team, league, division, diff, chapters, canPromote, customTeam, factByLang, arcIdx, chapterPicks } = state;
+
+    const loader = document.getElementById('campaign-loader');
+    const output = document.getElementById('campaign-output');
+    const container = document.getElementById('pdf-container');
+
+    const factData = customTeam ? null : (factByLang[lang] || factByLang.pt || factByLang.en);
+    const sentences = customTeam
+        ? genericFactSentences(lang, division, diff)
+        : (factData && factData.extract ? splitSentences(factData.extract) : []);
+    const fallbackThumb = customTeam ? null : ((factByLang.pt && factByLang.pt.thumbnail) || (factByLang.en && factByLang.en.thumbnail));
+    const bgImage = (!customTeam && factData && factData.thumbnail) ? factData.thumbnail.source : (fallbackThumb ? fallbackThumb.source : '');
+
     const arc = STORY_ARCS[arcIdx];
     const arcText = arc[lang] || arc.pt;
     const twistPool = CHAPTER_TWISTS[lang] || CHAPTER_TWISTS.pt;
 
     let html = '';
     let currentDiv = parseInt(division);
-    const usedMain = new Set();
-    const usedSecondary = new Set();
-    const usedSetup = new Set();
 
     for (let i = 1; i <= chapters; i++) {
+        const picks = chapterPicks[i - 1];
         const stage = pickStage(arcText.stages, i, chapters);
 
         const fact = sentences.length ? sentences[(i - 1) % sentences.length] : '';
-        // A procedural per-chapter twist, independent of the arc, so the
-        // combined arc+stage+twist+objectives space stays fresh for a long
-        // time even across many separately-generated campaigns.
-        const twistIdx = pickAvoidingRecent(twistPool.length, 'eleven_recent_twists', Math.max(1, twistPool.length - 2));
-        const twist = twistPool[twistIdx].replace('{team}', team);
+        const twist = twistPool[picks.twistIdx].replace('{team}', team);
         const introText = `${stage.text} ${twist}`.replace('{team}', team).replace('{fact}', fact).replace(/\s{2,}/g, ' ').trim();
 
         // Each chapter after the first demands numerically tougher targets
@@ -684,13 +732,10 @@ async function generateCampaign() {
         const pipsFilled = chapters > 1 ? Math.round((i - 1) * pipCount / (chapters - 1)) : 0;
         const difficultyPips = '●'.repeat(pipsFilled) + '○'.repeat(pipCount - pipsFilled);
 
-        const mainPicks = pickUnique(MAIN_OBJECTIVES, 2, o => o.appliesDiv(currentDiv), usedMain);
-        const secondaryPicks = pickUnique(SECONDARY_OBJECTIVES, 2, null, usedSecondary);
-        const setupPicks = pickUnique(SETUP_CHANGES, 2, null, usedSetup);
-
+        const mainPicks = picks.mainPicks;
         const goals = mainPicks.map(o => o[lang](diff, chapterFactor));
-        const extraGoals = secondaryPicks.map(o => o[lang](diff, chapterFactor));
-        const setup = setupPicks.map(o => o[lang](diff));
+        const extraGoals = picks.secondaryPicks.map(o => o[lang](diff, chapterFactor));
+        const setup = picks.setupPicks.map(o => o[lang](diff));
 
         // Failure isn't always a firing offense: only the campaign's finale
         // or a chapter carrying a `critical` objective (e.g. avoiding
@@ -755,6 +800,18 @@ async function generateCampaign() {
     output.style.display = 'block';
     container.innerHTML = html;
 }
+
+// Called from setLang() in eleven_bot_v1.html whenever the UI language
+// toggles — re-renders an already-generated campaign in the new language
+// (cached picks + cached bilingual team facts, no re-roll, no refetch).
+function onLanguageChanged(lang) {
+    if (!campaignState) return;
+    const output = document.getElementById('campaign-output');
+    if (output && output.style.display === 'block') {
+        renderCampaign(lang);
+    }
+}
+
 
 function exportPDF() {
     const ui = CAMPAIGN_UI[currentCampaignLang()] || CAMPAIGN_UI.pt;
