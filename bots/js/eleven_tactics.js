@@ -11,12 +11,11 @@
  *   solving; this file's TACTICS effects operate on the already-pooled
  *   5-Section team object.
  * - A Formation (e.g. "4-3-3") only fixes the TOTAL number of Defenders,
- *   Midfielders and Forwards you must field — YOU choose which of the 9
- *   Zones they occupy (up to 3 per Wing Section, up to 3 per Central Zone).
- *   The exact per-formation zone split is therefore NOT a fixed rule —
- *   FORMATIONS below is only the classic football def/mid/fwd split, and
- *   suggestZoneLayout() below produces ONE reasonable default 9-Zone
- *   placement (always editable).
+ *   Midfielders and Forwards you must field — YOU may freely rearrange
+ *   which of the 9 Zones they occupy afterwards (up to 3 per Zone).
+ *   FORMATIONS below is the classic football def/mid/fwd split; each one's
+ *   suggested default 9-Zone placement is a fixed table, FORMATION_ZONE_LAYOUT,
+ *   applied by suggestZoneLayout() (always editable after auto-arranging).
  * - Basic Tactic cards offer a choice of 2 Formations and no Effect; every
  *   other Tactic card has exactly 1 Formation and 1 Effect (resolved during
  *   the "Resolve the Match" step). Ability text below is transcribed from
@@ -34,32 +33,36 @@ const FORMATIONS = {
     '3-5-2': { def: 3, mid: 5, fwd: 2 }
 };
 
-// One reasonable default Zone placement for a given Defender/Midfielder/
-// Forward split, across the 9 real physical Zones (matching the cards/
-// board layout): fills each row's Central Zone first (up to 3), then
-// spreads any overflow evenly across that row's Left/Right Zones (up to 3
-// each). Returns which "position type" (def/mid/fwd) ended up in each Zone,
+// Fixed default Zone split per Formation (user-specified, not algorithmic):
+// exact count of Defenders/Midfielders/Forwards per one of the 9 real
+// physical Zones. Each row's counts sum to that Formation's def/mid/fwd
+// total in FORMATIONS above.
+const FORMATION_ZONE_LAYOUT = {
+    '4-4-2': { dl: 1, dc: 2, dr: 1, ml: 1, mc: 2, mr: 1, al: 0, ac: 2, ar: 0 },
+    '4-2-4': { dl: 1, dc: 2, dr: 1, ml: 0, mc: 2, mr: 0, al: 1, ac: 2, ar: 1 },
+    '5-4-1': { dl: 1, dc: 3, dr: 1, ml: 1, mc: 2, mr: 1, al: 0, ac: 1, ar: 0 },
+    '5-3-2': { dl: 1, dc: 3, dr: 1, ml: 1, mc: 1, mr: 1, al: 0, ac: 2, ar: 0 },
+    '3-5-2': { dl: 1, dc: 1, dr: 1, ml: 1, mc: 3, mr: 1, al: 0, ac: 2, ar: 0 },
+    '3-4-3': { dl: 1, dc: 1, dr: 1, ml: 1, mc: 2, mr: 1, al: 1, ac: 1, ar: 1 },
+    '4-3-3': { dl: 1, dc: 2, dr: 1, ml: 1, mc: 1, mr: 1, al: 1, ac: 1, ar: 1 },
+    '4-5-1': { dl: 1, dc: 2, dr: 1, ml: 1, mc: 3, mr: 1, al: 0, ac: 1, ar: 0 }
+};
+
+const ZONE_POS_TYPE = { al: 'fwd', ac: 'fwd', ar: 'fwd', ml: 'mid', mc: 'mid', mr: 'mid', dl: 'def', dc: 'def', dr: 'def' };
+
+// Default Zone placement for a given Formation key, across the 9 real
+// physical Zones (matching the cards/board layout), per FORMATION_ZONE_LAYOUT
+// above. Returns which "position type" (def/mid/fwd) ended up in each Zone,
 // used only to guess a sensible default Attacker/Defender icon per slot —
 // freely editable after. Resolution-time pooling into the 5 Sections
 // happens later, in eleven_bot_v1.html's buildTeamObj().
-function suggestZoneLayout(def, mid, fwd) {
+function suggestZoneLayout(formationKey) {
     const zones = { al: [], ac: [], ar: [], ml: [], mc: [], mr: [], dl: [], dc: [], dr: [] };
-    function place(posType, count, centerZone, leftZone, rightZone) {
-        let remaining = count;
-        const centerRoom = 3 - zones[centerZone].length;
-        const toCenter = Math.min(centerRoom, remaining);
-        for (let i = 0; i < toCenter; i++) zones[centerZone].push(posType);
-        remaining -= toCenter;
-        while (remaining > 0 && (zones[leftZone].length < 3 || zones[rightZone].length < 3)) {
-            const side = zones[leftZone].length <= zones[rightZone].length ? leftZone : rightZone;
-            if (zones[side].length >= 3) break;
-            zones[side].push(posType);
-            remaining--;
-        }
-    }
-    place('def', def, 'dc', 'dl', 'dr');
-    place('mid', mid, 'mc', 'ml', 'mr');
-    place('fwd', fwd, 'ac', 'al', 'ar');
+    const spec = FORMATION_ZONE_LAYOUT[formationKey];
+    if (!spec) return zones;
+    Object.keys(zones).forEach(zone => {
+        for (let i = 0; i < (spec[zone] || 0); i++) zones[zone].push(ZONE_POS_TYPE[zone]);
+    });
     return zones;
 }
 
@@ -219,5 +222,5 @@ function getTactic(id) {
 }
 
 if (typeof module !== 'undefined') {
-    module.exports = { FORMATIONS, TACTICS, suggestZoneLayout, defaultIsAttacker, getTactic };
+    module.exports = { FORMATIONS, FORMATION_ZONE_LAYOUT, TACTICS, suggestZoneLayout, defaultIsAttacker, getTactic };
 }
