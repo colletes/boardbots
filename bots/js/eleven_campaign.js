@@ -667,6 +667,20 @@ function pickUnique(pool, count, filterFn, used) {
 // pick or doing another network fetch.
 let campaignState = null;
 
+// Every chapter before the campaign's last one offers a "may move up" promotion
+// chance (see the fixed-currentDiv comment above), and each is an independent
+// unknown outcome — so by chapter i, the user could realistically still be in
+// the starting division, or as low as one division per prior promotion chance
+// taken. Returns the full list of divisions they could be in for that chapter,
+// e.g. starting Division 3 with promotion enabled: ch.1=[3], ch.2=[3,2], ch.3=[3,2,1].
+function possibleDivisionsForChapter(currentDiv, chapterNum, canPromote) {
+    if (!canPromote) return [currentDiv];
+    const maxDrops = Math.min(chapterNum - 1, currentDiv - 1);
+    const divs = [];
+    for (let d = currentDiv; d >= currentDiv - maxDrops; d--) divs.push(d);
+    return divs;
+}
+
 async function generateCampaign() {
     const lang = currentCampaignLang();
     const ui = CAMPAIGN_UI[lang] || CAMPAIGN_UI.pt;
@@ -810,7 +824,7 @@ function renderCampaign(lang) {
                         ${bgImage ? `<img src="${bgImage}" class="team-crest">` : ''}
                         <div class="chapter-badge">${ui.chapter} ${i}/${chapters}</div>
                         <div class="meta-line">${ui.league}: ${league.toUpperCase()}</div>
-                        <div class="meta-line">${ui.division}: ${currentDiv}</div>
+                        <div class="meta-line">${ui.division}: ${possibleDivisionsForChapter(currentDiv, i, canPromote).join('/')}</div>
                         <div class="meta-line">${ui.difficultyLabel}: ${difficultyPips}</div>
                         ${isCritical ? `<div class="meta-line critical-flag">⚠ ${ui.criticalChapterNote}</div>` : ''}
                     </div>
