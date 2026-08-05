@@ -712,7 +712,12 @@ async function generateCampaign() {
     const usedSecondary = new Set();
     const usedSetup = new Set();
     const usedFailPenalty = new Set();
-    let currentDiv = parseInt(division);
+    // Division stays fixed for the whole printed campaign: this is a one-shot
+    // PNP document, so it can never know whether a real playthrough actually
+    // earned a promotion each chapter. Auto-decrementing here used to silently
+    // assume every promotion succeeded, contradicting the "if you finish 1st
+    // or 2nd, you MAY move up" wording shown in the result box.
+    const currentDiv = parseInt(division);
     const chapterPicks = [];
 
     for (let i = 1; i <= chapters; i++) {
@@ -727,7 +732,6 @@ async function generateCampaign() {
         // (the last chapter's failure text is the fired/game-over one instead).
         const failPenaltyPick = i < chapters ? pickUnique(FAIL_PENALTIES, 1, null, usedFailPenalty)[0] : null;
         chapterPicks.push({ twistIdx, mainPicks, secondaryPicks, setupPicks, failPenaltyPick });
-        if (canPromote && currentDiv > 1) currentDiv--;
     }
 
     campaignState = { team, league, division, diff, chapters, canPromote, customTeam, factByLang, arcIdx, chapterPicks };
@@ -762,7 +766,8 @@ function renderCampaign(lang) {
     const twistPool = CHAPTER_TWISTS[lang] || CHAPTER_TWISTS.pt;
 
     let html = '';
-    let currentDiv = parseInt(division);
+    // Fixed for the whole campaign — see the matching comment in generateCampaign().
+    const currentDiv = parseInt(division);
 
     for (let i = 1; i <= chapters; i++) {
         const picks = chapterPicks[i - 1];
@@ -846,10 +851,6 @@ function renderCampaign(lang) {
             </div>
         `;
         html += chapterHtml;
-
-        if (canPromote && currentDiv > 1) {
-            currentDiv--;
-        }
     }
 
     loader.style.display = 'none';
