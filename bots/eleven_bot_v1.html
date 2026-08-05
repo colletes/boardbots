@@ -425,9 +425,11 @@ const I18N = {
     lblTactic:'Carta de Tática', optNoTactic:'Sem tática (montagem manual)',
     lblFormation:'Formação:', btnAutoArrange:'Montar automaticamente',
     chkOppAboveLeague:'Adversário está acima de você na tabela da Liga',
-    areaLeft:'Ponta Esquerda', areaRight:'Ponta Direita', areaAttack:'Ataque Central', areaMid:'Meio Central', areaDefense:'Defesa Central',
+    areaLeft:'Ala Esquerda', areaRight:'Ala Direita', areaAttack:'Ataque Central', areaMid:'Meio Central', areaDefense:'Defesa Central',
     addPlayerBtn:'+ Adicionar Jogador',
     lblPow:'F:', lblType:'T:', optAttacker:'Atacante', optDefender:'Defensor', lblShirt:'Nº:', lblZone:'Área:',
+    lblSubpos:'Pos:', subposDef:'Zagueiro Esq.', subposMid:'Meio Esq.', subposAtk:'Ponta Esq.',
+    subposDefR:'Zagueiro Dir.', subposMidR:'Meio Dir.', subposAtkR:'Ponta Dir.',
     btnSolve:'Calcular Resultado',
     resultYourTeam:'Seu Time', resultOpponent:'Adversário',
     resultScorers:'Gols Marcados pelos Jogadores (Camisas):', resultNone:'Nenhum',
@@ -473,6 +475,8 @@ const I18N = {
     areaLeft:'Left Wing', areaRight:'Right Wing', areaAttack:'Central Attack', areaMid:'Central Midfield', areaDefense:'Central Defense',
     addPlayerBtn:'+ Add Player',
     lblPow:'Pw:', lblType:'Ty:', optAttacker:'Attacker', optDefender:'Defender', lblShirt:'No.:', lblZone:'Zone:',
+    lblSubpos:'Pos:', subposDef:'Left Back', subposMid:'Left Mid', subposAtk:'Left Wing Fwd',
+    subposDefR:'Right Back', subposMidR:'Right Mid', subposAtkR:'Right Wing Fwd',
     btnSolve:'Calculate Result',
     resultYourTeam:'Your Team', resultOpponent:'Opponent',
     resultScorers:'Goals Scored by Players (shirt numbers):', resultNone:'None',
@@ -542,6 +546,15 @@ function handleZoneDrop(prefix, area){
   draggedPlayerEntry = null;
 }
 
+// Left/Right Wing Sections hold 3 real Zones each (Zagueiro/Meio/Ponta —
+// Defense/Mid/Attack row); this "subpos" tag is purely informational (helps
+// cross-check data against a physical card) and never affects solving, since
+// the solver still reads the whole merged Left/Right array either way.
+const SUBPOS_I18N_KEY = {
+  Left: { def:'subposDef', mid:'subposMid', atk:'subposAtk' },
+  Right: { def:'subposDefR', mid:'subposMidR', atk:'subposAtkR' }
+};
+
 function addPlayer(prefix, area, opts){
   opts = opts || {};
   const list = document.getElementById(`${prefix}-${area}-list`);
@@ -554,6 +567,7 @@ function addPlayer(prefix, area, opts){
     <span data-i18n="lblType"></span> <select class="p-type"><option value="att" data-i18n="optAttacker"></option><option value="def" data-i18n="optDefender"></option></select>
     <span data-i18n="lblShirt"></span> <input type="number" value="1" min="1" max="99" class="p-shirt">
     <span data-i18n="lblZone"></span> <select class="p-zone">${areas.map(a=>`<option value="${a}" data-i18n="${AREA_I18N_KEY[a]}"></option>`).join('')}</select>
+    <span class="p-subpos-wrap"><span data-i18n="lblSubpos"></span> <select class="p-subpos"><option value="def"></option><option value="mid"></option><option value="atk"></option></select></span>
     <button onclick="this.parentElement.remove()">✕</button>
   `;
   list.appendChild(div);
@@ -567,13 +581,31 @@ function addPlayer(prefix, area, opts){
   } else {
     div.classList.add('type-att');
   }
+  updateSubposUI(div, area);
+  div.querySelector('.p-subpos').value = opts.subpos || 'mid';
   applyI18n();
+}
+
+// Shows/relabels the Zagueiro/Meio/Ponta sub-position select only while the
+// entry sits in a Wing (Left/Right) zone — central zones are already a single
+// unambiguous position, so the sub-select is hidden there.
+function updateSubposUI(div, area){
+  const wrap = div.querySelector('.p-subpos-wrap');
+  const key = SUBPOS_I18N_KEY[area];
+  wrap.style.display = key ? '' : 'none';
+  if(key){
+    div.querySelector('.p-subpos option[value="def"]').dataset.i18n = key.def;
+    div.querySelector('.p-subpos option[value="mid"]').dataset.i18n = key.mid;
+    div.querySelector('.p-subpos option[value="atk"]').dataset.i18n = key.atk;
+  }
 }
 
 function moveEntryToZone(entryEl, prefix, newArea){
   document.getElementById(`${prefix}-${newArea}-list`).appendChild(entryEl);
   const zoneSelect = entryEl.querySelector('.p-zone');
   if(zoneSelect) zoneSelect.value = newArea;
+  updateSubposUI(entryEl, newArea);
+  applyI18n();
 }
 
 createAreaUI('pl-areas', 'pl');
@@ -599,7 +631,7 @@ function loadOpponentCard(){
     const list = document.getElementById(`npc-${area}-list`);
     list.innerHTML = '';
     (card[area] || []).forEach(p=>{
-      addPlayer('npc', area, { isAttacker: p.a });
+      addPlayer('npc', area, { isAttacker: p.a, subpos: p.z });
       const entry = list.lastElementChild;
       entry.querySelector('.p-pow').value = p.p;
       entry.querySelector('.p-shirt').value = shirt++;
