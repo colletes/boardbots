@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Eleven — Gerador de Campanha &amp; Resolvedor de Partidas (v1)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rye&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg-0:#0b0e12; --bg-1:#12161c;
+  --surface:#181d25; --surface-2:#20262f;
+  --border:#2b323d; --text:#eef1f5; --text-dim:#9aa4b2;
+  --blue:#4f8cff; --blue-soft:#274168; --blue-glow:rgba(79,140,255,0.35);
+  --accent:#2fae60; --accent-dim:#1f7a44; --gold:#f1c40f;
+  --font-display:'Rye','Segoe UI',serif;
+  --font-body:'Inter','Segoe UI',Tahoma,Geneva,Verdana,sans-serif;
+  --radius:14px;
+}
+*{box-sizing:border-box;}
+html{-webkit-text-size-adjust:100%;}
+body{
+  font-family:var(--font-body);
+  background:radial-gradient(circle at 15% 0%, rgba(47,174,96,0.10), transparent 55%),
+             radial-gradient(circle at 85% 100%, rgba(79,140,255,0.08), transparent 50%),
+             linear-gradient(180deg, var(--bg-0), var(--bg-1));
+  background-attachment:fixed;
+  color:var(--text);
+  max-width:820px; margin:0 auto; padding:18px;
+  padding-left:max(18px, env(safe-area-inset-left));
+  padding-right:max(18px, env(safe-area-inset-right));
+  padding-bottom:max(18px, env(safe-area-inset-bottom));
+  -webkit-tap-highlight-color:transparent;
+}
+button, select, input{ touch-action:manipulation; font-family:inherit; }
+.hidden{ display:none !important; }
+@keyframes fadeSlideUp{ from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);} }
+@keyframes popIn{ 0%{transform:scale(0.85); opacity:0;} 60%{transform:scale(1.04);} 100%{transform:scale(1); opacity:1;} }
+@keyframes spin{ to{ transform:rotate(360deg); } }
+
+.hero{ position:relative; border-radius:var(--radius); overflow:hidden; margin-bottom:18px; border:1px solid var(--border); animation:fadeSlideUp 0.5s ease both; }
+.hero img{ width:100%; height:170px; object-fit:cover; object-position:top; display:block; filter:saturate(0.9) brightness(0.65); }
+.hero::after{ content:''; position:absolute; inset:0; background:linear-gradient(180deg, rgba(11,14,18,0.35) 0%, rgba(11,14,18,0.65) 50%, rgba(11,14,18,0.97) 100%); }
+.hero-content{ position:absolute; inset:0; display:flex; flex-direction:column; justify-content:flex-end; padding:14px 18px; }
+h1{ font-family:var(--font-display); font-weight:normal; letter-spacing:1px; margin:0; font-size:2em; color:#fff; text-shadow:0 2px 10px rgba(0,0,0,0.6); }
+.subtitle{ color:var(--accent); font-size:0.9em; letter-spacing:0.5px; margin-top:2px; font-weight:600; text-shadow:0 2px 8px rgba(0,0,0,0.9), 0 0 3px rgba(0,0,0,0.9); }
+h2{ font-family:var(--font-display); font-weight:normal; letter-spacing:0.5px; color:var(--accent); margin:0 0 10px; font-size:1.3em; }
+h3{ color:var(--text); font-size:1em; margin:14px 0 8px; }
+p.intro{ color:var(--text-dim); font-size:0.92em; margin:0 0 16px; }
+.card{ background:var(--surface); padding:18px; border-radius:var(--radius); border:1px solid var(--border); box-shadow:0 6px 18px rgba(0,0,0,0.35); margin-bottom:16px; animation:fadeSlideUp 0.45s ease both; }
+label{ display:block; margin:10px 0 6px; font-size:0.9em; color:var(--text-dim); }
+select, input[type=number], input[type=text]{ width:100%; padding:11px 12px; font-size:16px; background:var(--surface-2); color:var(--text); border:1px solid var(--border); border-radius:10px; }
+.checkbox-group{ display:flex; align-items:center; gap:10px; margin-top:14px; }
+.checkbox-group label{ margin:0; color:var(--text); }
+.btn{ display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:12px 18px; border-radius:10px; border:1px solid var(--border); background:var(--surface-2); color:var(--text); font-weight:600; font-size:0.95em; cursor:pointer; min-height:44px; }
+.btn:active{ transform:scale(0.97); }
+@media (hover:hover) and (pointer:fine){ .btn:hover{ border-color:var(--blue); } .btn-primary:hover{ filter:brightness(1.1); } }
+.btn-primary{ background:linear-gradient(145deg, var(--accent), var(--accent-dim)); border-color:var(--accent-dim); color:#fff; width:100%; margin-top:14px; }
+.btn-block{ width:100%; margin-top:8px; }
+
+.tabs{ display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+.tab-btn{ flex:1; min-width:140px; }
+.tab-btn.active{ background:linear-gradient(145deg, var(--accent), var(--accent-dim)); border-color:var(--accent-dim); color:#fff; }
+.tab-content{ display:none; }
+.tab-content.active{ display:block; }
+
+.loader-box{ text-align:center; margin-top:16px; color:var(--text-dim); font-size:0.9em; }
+.loader-spin{ width:34px; height:34px; margin:0 auto 10px; border-radius:50%; border:3px solid var(--border); border-top-color:var(--accent); animation:spin 0.9s linear infinite; }
+
+#campaign-output{ display:none; margin-top:20px; border-top:1px solid var(--border); padding-top:18px; }
+.pdf-preview{ background:#fff; padding:30px; box-shadow:0 4px 16px rgba(0,0,0,0.35); font-family:'Inter',sans-serif; color:#333; margin-bottom:20px; border-radius:10px; }
+.pdf-preview h1{ color:#c0392b; font-size:34px; margin:0 0 5px; text-transform:uppercase; text-shadow:none; font-family:'Inter',sans-serif; font-weight:800; }
+.pdf-preview .season-info{ font-size:16px; font-weight:bold; color:#333; margin-bottom:18px; }
+.pdf-preview .flavor-text{ background:#8e44ad; color:#fff; padding:14px; font-size:14px; margin-bottom:18px; border-radius:6px; }
+.pdf-box{ border:2px solid #2980b9; border-radius:8px; padding:14px; margin-bottom:16px; background:#ebf5fb; }
+.pdf-box.goals{ border-color:#27ae60; background:#e8f8f5; }
+.pdf-box h3{ background:#2980b9; color:#fff; margin:-14px -14px 14px -14px; padding:9px; text-align:center; border-radius:5px 5px 0 0; font-family:'Inter',sans-serif; }
+.pdf-box.goals h3{ background:#27ae60; }
+
+.solver-grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+@media (max-width:560px){ .solver-grid{ grid-template-columns:1fr; } }
+.team-panel{ background:var(--surface-2); padding:14px; border-radius:12px; border:1px solid var(--border); }
+.team-panel h3{ margin-top:0; color:var(--accent); text-align:center; border-bottom:2px solid var(--accent-dim); padding-bottom:8px; }
+.area-group{ margin-bottom:12px; background:var(--surface); padding:10px; border-radius:10px; border:1px solid var(--border); }
+.area-group h4{ margin:0 0 8px; font-size:0.78em; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-dim); }
+.gk-row{ display:flex; flex-wrap:wrap; gap:8px 14px; align-items:center; font-size:0.85em; color:var(--text-dim); }
+.gk-row input{ width:64px; display:inline-block; padding:6px; }
+.player-entry{ display:flex; gap:6px; margin-bottom:6px; align-items:center; flex-wrap:wrap; font-size:0.82em; color:var(--text-dim); }
+.player-entry input[type=number]{ width:52px; padding:5px; }
+.player-entry select{ padding:5px; flex:1; min-width:90px; }
+.player-entry button{ background:#c0392b; color:#fff; border:none; border-radius:6px; padding:5px 9px; cursor:pointer; min-height:30px; }
+.add-player-btn{ background:var(--accent); color:#fff; border:none; padding:6px 10px; border-radius:8px; cursor:pointer; font-size:0.78em; margin-top:2px; min-height:32px; }
+
+#match-result-box{ display:none; margin-top:16px; padding:18px; background:var(--surface-2); border:1px solid var(--border); border-radius:12px; text-align:center; }
+.result-score{ font-size:1.6em; font-weight:800; margin-bottom:6px; }
+.result-score .you{ color:var(--accent); }
+.result-score .opp{ color:#e74c3c; }
+.result-scorers{ font-size:0.85em; color:var(--text-dim); font-weight:normal; }
+.btn-solve{ background:linear-gradient(145deg, var(--gold), #c9980c); color:#221a02; border:none; padding:14px 20px; font-size:1.05em; font-weight:800; border-radius:10px; cursor:pointer; width:100%; margin-top:16px; min-height:48px; }
+
+.credits{ display:flex; align-items:center; gap:12px; }
+.credits img{ width:52px; height:52px; border-radius:10px; object-fit:cover; }
+.credits a{ color:var(--blue); text-decoration:none; }
+@media (hover:hover) and (pointer:fine){ .credits a:hover{ text-decoration:underline; } }
+
+.bmc-inline{ display:flex; justify-content:center; align-items:center; gap:8px; margin:14px auto; background:#FFDD00; color:#000; font-weight:700; font-size:0.85em; padding:9px 16px; border-radius:8px; text-decoration:none; box-shadow:0 4px 14px rgba(0,0,0,0.35); transition:transform 0.15s; width:max-content; }
+.bmc-inline:hover{ transform:scale(1.05); }
+.bmc-inline svg{ width:18px; height:18px; flex-shrink:0; }
+
+.btn-help-float{ position:fixed; bottom:20px; right:20px; width:50px; height:50px; border-radius:50%; background:var(--accent); color:#fff; border:none; font-size:1.3em; font-weight:800; box-shadow:0 4px 14px rgba(0,0,0,0.4); z-index:50; }
+.modal-overlay{ position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:100; display:flex; align-items:center; justify-content:center; padding:18px; }
+.modal{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); max-width:640px; width:100%; max-height:85vh; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:20px; }
+.modal h3{ color:var(--accent); }
+.modal-close{ float:right; }
+.lang-switch{ position:fixed; top:14px; right:14px; z-index:60; display:flex; gap:4px; background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:4px; }
+.lang-switch button{ border:none; background:transparent; color:var(--text-dim); padding:5px 10px; border-radius:16px; font-size:0.8em; font-weight:700; min-height:30px; }
+.lang-switch button.active{ background:var(--accent); color:#fff; }
+@media (min-width:600px){ .hero img{ height:210px; } h1{ font-size:2.4em; } }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+<body>
+
+<div class="lang-switch">
+  <button id="btnPt" onclick="setLang('pt')">PT</button>
+  <button id="btnEn" onclick="setLang('en')">EN</button>
+</div>
+
+<div class="hero">
+  <img src="../assets/art/eleven.webp" alt="Eleven">
+  <div class="hero-content">
+    <h1>ELEVEN</h1>
+    <div class="subtitle" data-i18n="subtitle"></div>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="btn tab-btn active" id="tabBtnCampaign" onclick="switchTab('campaign')" data-i18n="tabCampaign"></button>
+  <button class="btn tab-btn" id="tabBtnSolver" onclick="switchTab('solver')" data-i18n="tabSolver"></button>
+</div>
+
+<!-- CAMPAIGN TAB -->
+<div id="campaign" class="tab-content active card">
+  <h2 data-i18n="campTitle"></h2>
+  <p class="intro" data-i18n="campIntro"></p>
+
+  <label data-i18n="lblLeague"></label>
+  <select id="camp-league">
+    <option value="england" data-i18n="optEngland"></option>
+    <option value="spain" data-i18n="optSpain"></option>
+    <option value="france" data-i18n="optFrance"></option>
+    <option value="brazil" data-i18n="optBrazil"></option>
+  </select>
+
+  <label data-i18n="lblTeam"></label>
+  <input type="text" id="camp-team" data-i18n-placeholder="placeholderTeam">
+
+  <label data-i18n="lblDivision"></label>
+  <select id="camp-division">
+    <option value="3" data-i18n="opt3rd"></option>
+    <option value="2" data-i18n="opt2nd"></option>
+    <option value="1" data-i18n="opt1st"></option>
+  </select>
+
+  <label data-i18n="lblDifficulty"></label>
+  <select id="camp-difficulty">
+    <option value="easy" data-i18n="optEasy"></option>
+    <option value="medium" selected data-i18n="optMedium"></option>
+    <option value="hard" data-i18n="optHard"></option>
+  </select>
+
+  <label data-i18n="lblChapters"></label>
+  <select id="camp-chapters">
+    <option value="1" data-i18n="opt1ch"></option>
+    <option value="2" data-i18n="opt2ch"></option>
+    <option value="3" selected data-i18n="opt3ch"></option>
+  </select>
+
+  <div class="checkbox-group">
+    <input type="checkbox" id="camp-promotion" checked>
+    <label for="camp-promotion" data-i18n="chkPromotion"></label>
+  </div>
+
+  <button class="btn btn-primary" onclick="generateCampaign()" data-i18n="btnGenerate"></button>
+
+  <div id="campaign-loader" class="loader-box hidden">
+    <div class="loader-spin"></div>
+    <p data-i18n="loaderText"></p>
+  </div>
+
+  <div id="campaign-output">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px;">
+      <h3 data-i18n="campaignPreviewTitle" style="margin:0;"></h3>
+      <button class="btn" onclick="exportPDF()" data-i18n="btnExportPdf"></button>
+    </div>
+    <div id="pdf-container"></div>
+  </div>
+</div>
+
+<!-- SOLVER TAB -->
+<div id="solver" class="tab-content card">
+  <h2 data-i18n="solverTitle"></h2>
+  <p class="intro" data-i18n="solverIntro"></p>
+
+  <div class="solver-grid">
+    <div class="team-panel" id="panel-player">
+      <h3 data-i18n="yourTeam"></h3>
+      <div class="area-group">
+        <h4 data-i18n="lblGK"></h4>
+        <div class="gk-row">
+          <span data-i18n="lblPower"></span> <input type="number" id="pl-gk-pow" value="1" min="0">
+          <span data-i18n="lblGloves"></span> <input type="number" id="pl-gk-gloves" value="1" min="0">
+        </div>
+      </div>
+      <div id="pl-areas"></div>
+    </div>
+
+    <div class="team-panel" id="panel-npc">
+      <h3 data-i18n="opponent"></h3>
+      <div class="area-group">
+        <h4 data-i18n="lblGK"></h4>
+        <div class="gk-row">
+          <span data-i18n="lblPower"></span> <input type="number" id="npc-gk-pow" value="1" min="0">
+          <span data-i18n="lblGloves"></span> <input type="number" id="npc-gk-gloves" value="0" min="0">
+        </div>
+      </div>
+      <div id="npc-areas"></div>
+    </div>
+  </div>
+
+  <button class="btn btn-solve" onclick="solveMatch()" data-i18n="btnSolve"></button>
+
+  <div id="match-result-box"></div>
+</div>
+
+<div class="card credits">
+  <img src="../assets/art/eleven.webp" alt="">
+  <div>
+    <div data-i18n="creditsLine1"></div>
+    <div data-i18n="creditsLine2"></div>
+    <div><a href="mailto:colletes@gmail.com">colletes@gmail.com</a></div>
+  </div>
+</div>
+
+<a class="bmc-inline" href="https://www.buymeacoffee.com/colletes" target="_blank" rel="noopener" aria-label="Buy me a coffee"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h13a2 2 0 0 1 2 2v1a3 3 0 0 1-3 3h-1"/><path d="M4 8h13v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V8Z"/><path d="M8 3c-.6 1 .5 1.6 0 3M12 3c-.6 1 .5 1.6 0 3"/></svg><span data-i18n="bmcBtn">Me pague um café</span></a>
+
+<button class="btn-help-float" onclick="document.getElementById('helpModal').classList.remove('hidden')">?</button>
+<div id="helpModal" class="modal-overlay hidden">
+  <div class="modal">
+    <button class="btn modal-close" onclick="document.getElementById('helpModal').classList.add('hidden')" data-i18n="btnClose"></button>
+    <h3 data-i18n="helpTitle"></h3>
+    <div data-i18n-html="helpBody"></div>
+  </div>
+</div>
+
+<script src="js/eleven_solver.js"></script>
+<script src="js/eleven_campaign.js"></script>
+<script>
+document.addEventListener('touchstart', function(){}, {passive:true});
+
+const LANG_KEY = 'boardbots_lang';
+
+const I18N = {
+  pt:{
+    subtitle:'Gerador de Campanha Procedural & Resolvedor de Partidas — ferramenta em fase alpha',
+    tabCampaign:'Gerador de Campanhas', tabSolver:'Resolvedor de Partidas',
+    campTitle:'Criar Nova Campanha',
+    campIntro:'Gere uma campanha solo com história procedural baseada em dados reais de um time à sua escolha.',
+    lblLeague:'Liga',
+    optEngland:'Inglaterra (Premier League/EFL)', optSpain:'Espanha (La Liga)', optFrance:'França (Ligue 1)', optBrazil:'Brasil (Brasileirão)',
+    lblTeam:'Time', placeholderTeam:'Ex: Santos, Everton, Saint-Étienne...',
+    lblDivision:'Divisão Atual do Time', opt3rd:'3ª Divisão', opt2nd:'2ª Divisão', opt1st:'1ª Divisão',
+    lblDifficulty:'Nível de Dificuldade', optEasy:'Fácil', optMedium:'Médio', optHard:'Difícil',
+    lblChapters:'Capítulos da Campanha', opt1ch:'1 Capítulo (Curta)', opt2ch:'2 Capítulos (Média)', opt3ch:'3 Capítulos (Longa)',
+    chkPromotion:'Permitir subida de divisão entre capítulos?',
+    btnGenerate:'Gerar Campanha',
+    loaderText:'Buscando dados na Wikipedia e gerando história...',
+    campaignPreviewTitle:'Visualização da Campanha', btnExportPdf:'Salvar como PDF',
+    solverTitle:'Resolvedor de Partidas',
+    solverIntro:'Insira os jogadores do seu time e do adversário por área do campo para calcular o resultado do confronto.',
+    yourTeam:'Seu Time', opponent:'Adversário',
+    lblGK:'Goleiro', lblPower:'Força:', lblGloves:'Luvas:',
+    areaLeft:'Ponta Esquerda', areaRight:'Ponta Direita', areaAttack:'Ataque Central', areaMid:'Meio Central', areaDefense:'Defesa Central',
+    addPlayerBtn:'+ Adicionar Jogador',
+    lblPow:'F:', lblType:'T:', optAttacker:'Atacante', optDefender:'Defensor', lblShirt:'Nº:',
+    btnSolve:'Calcular Resultado',
+    resultYourTeam:'Seu Time', resultOpponent:'Adversário',
+    resultScorers:'Gols Marcados pelos Jogadores (Camisas):', resultNone:'Nenhum',
+    creditsLine1:'Bot criado para uso pessoal — Colletes bots.',
+    creditsLine2:'Eleven é um jogo de tabuleiro © Portal Games. Ferramenta de apoio não-oficial, sem fins comerciais.',
+    bmcBtn:'Me pague um café',
+    btnClose:'Fechar',
+    helpTitle:'Como Usar',
+    helpBody:`<p>Este é um app de apoio <strong>não-oficial</strong> ainda em fase alpha para o jogo de tabuleiro <strong>Eleven</strong>, com duas ferramentas independentes:</p>
+      <p><strong>Gerador de Campanhas:</strong> escolha uma liga, um time real e algumas opções, e o app monta uma mini-campanha solo com capítulos, objetivos da temporada e mudanças de setup — usando um resumo real do time (via Wikipedia) e histórias geradas proceduralmente. Você pode exportar a visualização como PDF para imprimir ou consultar durante a partida.</p>
+      <p><strong>Resolvedor de Partidas:</strong> monte seu time e o time adversário informando o goleiro (força e luvas) e os jogadores de cada área do campo (Ponta Esquerda, Ponta Direita, Ataque Central, Meio Central, Defesa Central), marcando cada um como Atacante ou Defensor e sua força. O app aplica as regras oficiais de confronto de Eleven (cada área ataca a área espelhada do adversário, e os defensores mais fracos o suficiente para bloquear cada atacante são escalados de forma otimizada) e mostra o placar e os artilheiros.</p>
+      <p style="color:var(--text-dim); font-size:0.85em;">Como esta é uma ferramenta em fase inicial, alguns detalhes visuais e de conveniência ainda podem mudar.</p>`,
+  },
+  en:{
+    subtitle:'Procedural Campaign Generator & Match Solver — alpha-stage tool',
+    tabCampaign:'Campaign Generator', tabSolver:'Match Solver',
+    campTitle:'Create New Campaign',
+    campIntro:'Generate a solo campaign with a procedural story based on real data for a team of your choice.',
+    lblLeague:'League',
+    optEngland:'England (Premier League/EFL)', optSpain:'Spain (La Liga)', optFrance:'France (Ligue 1)', optBrazil:'Brazil (Brasileirão)',
+    lblTeam:'Team', placeholderTeam:'E.g.: Santos, Everton, Saint-Étienne...',
+    lblDivision:'Team\'s Current Division', opt3rd:'3rd Division', opt2nd:'2nd Division', opt1st:'1st Division',
+    lblDifficulty:'Difficulty Level', optEasy:'Easy', optMedium:'Medium', optHard:'Hard',
+    lblChapters:'Campaign Chapters', opt1ch:'1 Chapter (Short)', opt2ch:'2 Chapters (Medium)', opt3ch:'3 Chapters (Long)',
+    chkPromotion:'Allow moving up a division between chapters?',
+    btnGenerate:'Generate Campaign',
+    loaderText:'Fetching Wikipedia data and generating the story...',
+    campaignPreviewTitle:'Campaign Preview', btnExportPdf:'Save as PDF',
+    solverTitle:'Match Solver',
+    solverIntro:'Enter your team\'s and the opponent\'s players by field area to calculate the outcome of the match.',
+    yourTeam:'Your Team', opponent:'Opponent',
+    lblGK:'Goalkeeper', lblPower:'Power:', lblGloves:'Gloves:',
+    areaLeft:'Left Wing', areaRight:'Right Wing', areaAttack:'Central Attack', areaMid:'Central Midfield', areaDefense:'Central Defense',
+    addPlayerBtn:'+ Add Player',
+    lblPow:'Pw:', lblType:'Ty:', optAttacker:'Attacker', optDefender:'Defender', lblShirt:'No.:',
+    btnSolve:'Calculate Result',
+    resultYourTeam:'Your Team', resultOpponent:'Opponent',
+    resultScorers:'Goals Scored by Players (shirt numbers):', resultNone:'None',
+    creditsLine1:'Bot built for personal use — Colletes bots.',
+    creditsLine2:'Eleven is a board game © Portal Games. Unofficial support tool, not for commercial use.',
+    bmcBtn:'Buy me a coffee',
+    btnClose:'Close',
+    helpTitle:'How to Use',
+    helpBody:`<p>This is an <strong>unofficial</strong> support app, still in alpha stage, for the board game <strong>Eleven</strong>, with two independent tools:</p>
+      <p><strong>Campaign Generator:</strong> pick a league, a real team, and a few options, and the app builds a mini solo campaign with chapters, season objectives, and setup changes — using a real summary of the team (via Wikipedia) and procedurally generated stories. You can export the preview as a PDF to print or consult during play.</p>
+      <p><strong>Match Solver:</strong> build your team and the opposing team by entering the goalkeeper (power and gloves) and the players in each field area (Left Wing, Right Wing, Central Attack, Central Midfield, Central Defense), marking each as Attacker or Defender along with their power. The app applies Eleven's official match resolution rules (each area attacks the opponent's mirrored area, and the weakest defenders strong enough to block each attacker are assigned optimally) and shows the score and the scorers.</p>
+      <p style="color:var(--text-dim); font-size:0.85em;">Since this is an early-stage tool, some visual and convenience details may still change.</p>`,
+  }
+};
+
+let lang = localStorage.getItem(LANG_KEY) || 'pt';
+function t(k){ return I18N[lang][k] || k; }
+function applyI18n(){
+  document.querySelectorAll('[data-i18n]').forEach(el=>{ el.textContent = t(el.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-html]').forEach(el=>{ el.innerHTML = t(el.dataset.i18nHtml); });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el=>{ el.placeholder = t(el.dataset.i18nPlaceholder); });
+  document.getElementById('btnPt').classList.toggle('active', lang==='pt');
+  document.getElementById('btnEn').classList.toggle('active', lang==='en');
+  document.documentElement.lang = lang==='en' ? 'en' : 'pt-BR';
+  document.title = lang==='pt' ? 'Eleven — Gerador de Campanha & Resolvedor de Partidas (v1)' : 'Eleven — Campaign Generator & Match Solver (v1)';
+}
+function setLang(l){ lang=l; localStorage.setItem(LANG_KEY,l); applyI18n(); }
+
+function switchTab(tabId){
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(tabId).classList.add('active');
+  document.getElementById(tabId==='campaign' ? 'tabBtnCampaign' : 'tabBtnSolver').classList.add('active');
+}
+
+// ---- Solver UI ----
+const areas = ['Left', 'Right', 'Attack', 'Mid', 'Defense'];
+const AREA_I18N_KEY = { Left:'areaLeft', Right:'areaRight', Attack:'areaAttack', Mid:'areaMid', Defense:'areaDefense' };
+
+function createAreaUI(containerId, prefix){
+  const container = document.getElementById(containerId);
+  areas.forEach(area=>{
+    const group = document.createElement('div');
+    group.className = 'area-group';
+    group.innerHTML = `<h4 data-i18n="${AREA_I18N_KEY[area]}"></h4><div id="${prefix}-${area}-list"></div><button class="add-player-btn" data-i18n="addPlayerBtn" onclick="addPlayer('${prefix}', '${area}')"></button>`;
+    container.appendChild(group);
+  });
+}
+
+function addPlayer(prefix, area){
+  const list = document.getElementById(`${prefix}-${area}-list`);
+  const div = document.createElement('div');
+  div.className = 'player-entry';
+  div.innerHTML = `
+    <span data-i18n="lblPow"></span> <input type="number" value="1" min="0" class="p-pow">
+    <span data-i18n="lblType"></span> <select class="p-type"><option value="att" data-i18n="optAttacker"></option><option value="def" data-i18n="optDefender"></option></select>
+    <span data-i18n="lblShirt"></span> <input type="number" value="1" min="1" max="99" class="p-shirt">
+    <button onclick="this.parentElement.remove()">✕</button>
+  `;
+  list.appendChild(div);
+  applyI18n();
+}
+
+createAreaUI('pl-areas', 'pl');
+createAreaUI('npc-areas', 'npc');
+
+function buildTeamObj(prefix){
+  let team = {
+    GK: { power: parseInt(document.getElementById(`${prefix}-gk-pow`).value) || 0, gloves: parseInt(document.getElementById(`${prefix}-gk-gloves`).value) || 0 }
+  };
+  areas.forEach(area=>{
+    team[area] = [];
+    document.querySelectorAll(`#${prefix}-${area}-list .player-entry`).forEach(el=>{
+      team[area].push({
+        power: parseInt(el.querySelector('.p-pow').value) || 0,
+        isAttacker: el.querySelector('.p-type').value === 'att',
+        shirt: parseInt(el.querySelector('.p-shirt').value) || 0
+      });
+    });
+  });
+  return team;
+}
+
+function solveMatch(){
+  const playerTeam = buildTeamObj('pl');
+  const npcTeam = buildTeamObj('npc');
+  const res = ElevenSolver.checkMatch(playerTeam, npcTeam);
+
+  const box = document.getElementById('match-result-box');
+  box.style.display = 'block';
+  box.innerHTML = `
+    <div class="result-score">${t('resultYourTeam')} <span class="you">${res.TeamGoals}</span> x <span class="opp">${res.NPCGoals}</span> ${t('resultOpponent')}</div>
+    <div class="result-scorers">${t('resultScorers')} ${res.TeamScorers.join(', ') || t('resultNone')}</div>
+  `;
+}
+
+applyI18n();
+</script>
+
+<script type="module" src="../assets/analytics.js"></script>
+<script type="module" src="../assets/bot-view.js"></script>
+
+<!-- Botão Voltar para a Home -->
+<div style="text-align: center; margin: 40px auto 20px auto; width: 100%;">
+    <a href="../index.html" style="display: inline-block; padding: 12px 24px; font-family: 'Poppins', sans-serif; font-size: 16px; font-weight: bold; text-decoration: none; border-radius: 8px; border: 2px solid rgba(150,150,150,0.3); color: inherit; background-color: rgba(255,255,255,0.9); box-shadow: 0 4px 6px rgba(0,0,0,0.1); backdrop-filter: blur(4px);">
+        ← Home
+    </a>
+</div>
+
+</body>
+</html>

@@ -12,7 +12,9 @@ const FILE_TO_BOT = {
   'Colletes-bot-trv-RC2.html': 'trv',
   'utek_bot_v2.html': 'utek',
   'cafe_baras_bot_v1.html': 'cafebaras',
-  'arknova_arno_bot_v1.html': 'arknova'
+  'arknova_arno_bot_v1.html': 'arknova',
+  'sanctuary_bot_v2.html': 'sanctuary',
+  'eleven_bot_v1.html': 'eleven'
 };
 
 if (CONFIGURED) {
