@@ -2,15 +2,21 @@
  * Eleven — Formations & Tactic Cards
  *
  * Rulebook facts used here (p.19-20 of the official rulebook):
- * - The Pitch has 9 Zones among 5 Sections: Left Wing (3 Zones), Right Wing
- *   (3 Zones), Central Attack, Central Midfield, Central Defense (1 Zone
- *   each, holding up to 3 Jersey markers).
+ * - The Pitch has 9 physical Zones printed on the cards/board, in a 3x3
+ *   grid (Attack/Mid/Defense rows x Left/Center/Right columns). For Match
+ *   RESOLUTION, though, these 9 Zones pool into only 5 Sections: Left Wing
+ *   (al+ml+dl), Right Wing (ar+mr+dr), Central Attack (ac), Central
+ *   Midfield (mc), Central Defense (dc) — see eleven_solver.js AREAS. The
+ *   pooling happens in eleven_bot_v1.html's buildTeamObj() right before
+ *   solving; this file's TACTICS effects operate on the already-pooled
+ *   5-Section team object.
  * - A Formation (e.g. "4-3-3") only fixes the TOTAL number of Defenders,
- *   Midfielders and Forwards you must field — YOU choose which Zones they
- *   occupy (up to 3 per Wing Section, up to 3 per Central Zone). The exact
- *   per-formation zone split is therefore NOT a fixed rule — FORMATIONS below
- *   is only the classic football def/mid/fwd split, and suggestZoneLayout()
- *   below produces ONE reasonable default Zone placement (always editable).
+ *   Midfielders and Forwards you must field — YOU choose which of the 9
+ *   Zones they occupy (up to 3 per Wing Section, up to 3 per Central Zone).
+ *   The exact per-formation zone split is therefore NOT a fixed rule —
+ *   FORMATIONS below is only the classic football def/mid/fwd split, and
+ *   suggestZoneLayout() below produces ONE reasonable default 9-Zone
+ *   placement (always editable).
  * - Basic Tactic cards offer a choice of 2 Formations and no Effect; every
  *   other Tactic card has exactly 1 Formation and 1 Effect (resolved during
  *   the "Resolve the Match" step). Ability text below is transcribed from
@@ -29,28 +35,31 @@ const FORMATIONS = {
 };
 
 // One reasonable default Zone placement for a given Defender/Midfielder/
-// Forward split: fills each matching Central Zone first (up to 3), then
-// spreads any overflow evenly across the Wings (up to 3 each). Returns which
-// "position type" (def/mid/fwd) ended up in each Zone, used only to guess a
-// sensible default Attacker/Defender icon per slot — freely editable after.
+// Forward split, across the 9 real physical Zones (matching the cards/
+// board layout): fills each row's Central Zone first (up to 3), then
+// spreads any overflow evenly across that row's Left/Right Zones (up to 3
+// each). Returns which "position type" (def/mid/fwd) ended up in each Zone,
+// used only to guess a sensible default Attacker/Defender icon per slot —
+// freely editable after. Resolution-time pooling into the 5 Sections
+// happens later, in eleven_bot_v1.html's buildTeamObj().
 function suggestZoneLayout(def, mid, fwd) {
-    const zones = { Left: [], Right: [], Attack: [], Mid: [], Defense: [] };
-    function place(posType, count, centralZone) {
+    const zones = { al: [], ac: [], ar: [], ml: [], mc: [], mr: [], dl: [], dc: [], dr: [] };
+    function place(posType, count, centerZone, leftZone, rightZone) {
         let remaining = count;
-        const centralRoom = 3 - zones[centralZone].length;
-        const toCentral = Math.min(centralRoom, remaining);
-        for (let i = 0; i < toCentral; i++) zones[centralZone].push(posType);
-        remaining -= toCentral;
-        while (remaining > 0 && (zones.Left.length < 3 || zones.Right.length < 3)) {
-            const side = zones.Left.length <= zones.Right.length ? 'Left' : 'Right';
+        const centerRoom = 3 - zones[centerZone].length;
+        const toCenter = Math.min(centerRoom, remaining);
+        for (let i = 0; i < toCenter; i++) zones[centerZone].push(posType);
+        remaining -= toCenter;
+        while (remaining > 0 && (zones[leftZone].length < 3 || zones[rightZone].length < 3)) {
+            const side = zones[leftZone].length <= zones[rightZone].length ? leftZone : rightZone;
             if (zones[side].length >= 3) break;
             zones[side].push(posType);
             remaining--;
         }
     }
-    place('def', def, 'Defense');
-    place('mid', mid, 'Mid');
-    place('fwd', fwd, 'Attack');
+    place('def', def, 'dc', 'dl', 'dr');
+    place('mid', mid, 'mc', 'ml', 'mr');
+    place('fwd', fwd, 'ac', 'al', 'ar');
     return zones;
 }
 

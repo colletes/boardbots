@@ -121,10 +121,12 @@ select, input[type=number], input[type=text]{ width:100%; padding:11px 12px; fon
 .gk-row{ display:flex; flex-wrap:wrap; gap:8px 14px; align-items:center; font-size:0.85em; color:var(--text-dim); }
 .gk-row input{ width:64px; display:inline-block; padding:6px; }
 
-.setup-pitch{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.6fr) minmax(0,1fr); grid-template-areas:"left attack right" "left mid right" "left defense right"; gap:8px; margin-bottom:12px; padding:10px; border:1px solid var(--border); border-radius:12px; background:repeating-linear-gradient(180deg, rgba(47,174,96,0.09) 0 34px, rgba(47,174,96,0.02) 34px 68px); }
-@media (max-width:360px){ .setup-pitch{ grid-template-columns:1fr; grid-template-areas:"attack" "left" "mid" "right" "defense"; } }
+.setup-pitch{ display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); grid-template-areas:"al ac ar" "ml mc mr" "dl dc dr"; gap:8px; margin-bottom:12px; padding:10px; border:1px solid var(--border); border-radius:12px; background:repeating-linear-gradient(180deg, rgba(47,174,96,0.09) 0 34px, rgba(47,174,96,0.02) 34px 68px); }
+@media (max-width:360px){ .setup-pitch{ grid-template-columns:1fr; grid-template-areas:"al" "ac" "ar" "ml" "mc" "mr" "dl" "dc" "dr"; } }
 .setup-zone{ background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:8px; display:flex; flex-direction:column; gap:6px; min-height:56px; transition:background 0.15s, border-color 0.15s; }
-.setup-zone.Left{ grid-area:left; } .setup-zone.Right{ grid-area:right; } .setup-zone.Attack{ grid-area:attack; } .setup-zone.Mid{ grid-area:mid; } .setup-zone.Defense{ grid-area:defense; }
+.setup-zone.al{ grid-area:al; } .setup-zone.ac{ grid-area:ac; } .setup-zone.ar{ grid-area:ar; }
+.setup-zone.ml{ grid-area:ml; } .setup-zone.mc{ grid-area:mc; } .setup-zone.mr{ grid-area:mr; }
+.setup-zone.dl{ grid-area:dl; } .setup-zone.dc{ grid-area:dc; } .setup-zone.dr{ grid-area:dr; }
 .setup-zone-label{ font-size:0.68em; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-dim); text-align:center; }
 .setup-zone.drag-over{ background:var(--blue-soft); border-color:var(--blue); box-shadow:0 0 0 2px var(--blue-glow) inset; }
 .setup-zone-list{ display:flex; flex-direction:column; gap:5px; min-height:6px; }
@@ -425,11 +427,12 @@ const I18N = {
     lblTactic:'Carta de Tática', optNoTactic:'Sem tática (montagem manual)',
     lblFormation:'Formação:', btnAutoArrange:'Montar automaticamente',
     chkOppAboveLeague:'Adversário está acima de você na tabela da Liga',
+    zoneAl:'Ponta Esquerda', zoneAc:'Centroavante', zoneAr:'Ponta Direita',
+    zoneMl:'Meio Esquerdo', zoneMc:'Meio Central', zoneMr:'Meio Direito',
+    zoneDl:'Zagueiro Esquerdo', zoneDc:'Zagueiro Central', zoneDr:'Zagueiro Direito',
     areaLeft:'Ala Esquerda', areaRight:'Ala Direita', areaAttack:'Ataque Central', areaMid:'Meio Central', areaDefense:'Defesa Central',
     addPlayerBtn:'+ Adicionar Jogador',
-    lblPow:'F:', lblType:'T:', optAttacker:'Atacante', optDefender:'Defensor', lblShirt:'Nº:', lblZone:'Área:',
-    lblSubpos:'Pos:', subposDef:'Zagueiro Esq.', subposMid:'Meio Esq.', subposAtk:'Ponta Esq.',
-    subposDefR:'Zagueiro Dir.', subposMidR:'Meio Dir.', subposAtkR:'Ponta Dir.',
+    lblPow:'F:', lblType:'T:', optAttacker:'Atacante', optDefender:'Defensor', lblShirt:'Nº:', lblZone:'Zona:',
     btnSolve:'Calcular Resultado',
     resultYourTeam:'Seu Time', resultOpponent:'Adversário',
     resultScorers:'Gols Marcados pelos Jogadores (Camisas):', resultNone:'Nenhum',
@@ -441,7 +444,7 @@ const I18N = {
     helpTitle:'Como Usar',
     helpBody:`<p>Este é um app de apoio <strong>não-oficial</strong> ainda em fase alpha para o jogo de tabuleiro <strong>Eleven</strong>, com duas ferramentas independentes:</p>
       <p><strong>Gerador de Campanhas:</strong> escolha uma liga, um time real e algumas opções, e o app monta uma mini-campanha solo com capítulos, objetivos da temporada e mudanças de setup — usando um resumo real do time (via Wikipedia) e histórias geradas proceduralmente. Você pode exportar a visualização como PDF para imprimir ou consultar durante a partida.</p>
-      <p><strong>Resolvedor de Partidas:</strong> monte seu time e o time adversário informando o goleiro (força e luvas) e os jogadores de cada área do campo (Ponta Esquerda, Ponta Direita, Ataque Central, Meio Central, Defesa Central), marcando cada um como Atacante ou Defensor e sua força. O app aplica as regras oficiais de confronto de Eleven (cada área ataca a área espelhada do adversário, e os defensores mais fracos o suficiente para bloquear cada atacante são escalados de forma otimizada) e mostra o placar e os artilheiros. Você também pode escolher uma Carta de Tática para o seu time: ela sugere uma Formação (você pode montar automaticamente uma sugestão de escalação por área, e depois mover qualquer jogador para outra área livremente) e, para as táticas com efeito automático, aplica o bônus da carta ao resultado.</p>
+      <p><strong>Resolvedor de Partidas:</strong> monte seu time e o time adversário informando o goleiro (força e luvas) e os jogadores de cada uma das 9 Zonas físicas do campo, exatamente como aparecem nas cartas e no tabuleiro (grade 3x3: Ataque/Meio/Defesa × Esquerda/Centro/Direita), marcando cada um como Atacante ou Defensor e sua força. Para a resolução da partida, as 3 Zonas de cada lado (Ponta, Meio e Zagueiro Esquerdo ou Direito) formam juntas uma única Ala, que enfrenta a Ala espelhada do adversário; já as 3 Zonas centrais (Ataque, Meio e Defesa Central) resolvem cada uma sozinha contra a Zona central espelhada do adversário — e os defensores mais fracos o suficiente para bloquear cada atacante são escalados de forma otimizada. O app mostra o placar e os artilheiros. Você também pode escolher uma Carta de Tática para o seu time: ela sugere uma Formação (você pode montar automaticamente uma sugestão de escalação por Zona, e depois mover qualquer jogador para outra Zona livremente) e, para as táticas com efeito automático, aplica o bônus da carta ao resultado.</p>
       <p style="color:var(--text-dim); font-size:0.85em;">Como esta é uma ferramenta em fase inicial, alguns detalhes visuais e de conveniência ainda podem mudar.</p>`,
   },
   en:{
@@ -472,11 +475,12 @@ const I18N = {
     lblTactic:'Tactic Card', optNoTactic:'No tactic (manual setup)',
     lblFormation:'Formation:', btnAutoArrange:'Auto-arrange',
     chkOppAboveLeague:'Opponent is above you on the League table',
+    zoneAl:'Left Forward', zoneAc:'Center Forward', zoneAr:'Right Forward',
+    zoneMl:'Left Midfielder', zoneMc:'Central Midfielder', zoneMr:'Right Midfielder',
+    zoneDl:'Left Defender', zoneDc:'Central Defender', zoneDr:'Right Defender',
     areaLeft:'Left Wing', areaRight:'Right Wing', areaAttack:'Central Attack', areaMid:'Central Midfield', areaDefense:'Central Defense',
     addPlayerBtn:'+ Add Player',
     lblPow:'Pw:', lblType:'Ty:', optAttacker:'Attacker', optDefender:'Defender', lblShirt:'No.:', lblZone:'Zone:',
-    lblSubpos:'Pos:', subposDef:'Left Back', subposMid:'Left Mid', subposAtk:'Left Wing Fwd',
-    subposDefR:'Right Back', subposMidR:'Right Mid', subposAtkR:'Right Wing Fwd',
     btnSolve:'Calculate Result',
     resultYourTeam:'Your Team', resultOpponent:'Opponent',
     resultScorers:'Goals Scored by Players (shirt numbers):', resultNone:'None',
@@ -488,7 +492,7 @@ const I18N = {
     helpTitle:'How to Use',
     helpBody:`<p>This is an <strong>unofficial</strong> support app, still in alpha stage, for the board game <strong>Eleven</strong>, with two independent tools:</p>
       <p><strong>Campaign Generator:</strong> pick a league, a real team, and a few options, and the app builds a mini solo campaign with chapters, season objectives, and setup changes — using a real summary of the team (via Wikipedia) and procedurally generated stories. You can export the preview as a PDF to print or consult during play.</p>
-      <p><strong>Match Solver:</strong> build your team and the opposing team by entering the goalkeeper (power and gloves) and the players in each field area (Left Wing, Right Wing, Central Attack, Central Midfield, Central Defense), marking each as Attacker or Defender along with their power. The app applies Eleven's official match resolution rules (each area attacks the opponent's mirrored area, and the weakest defenders strong enough to block each attacker are assigned optimally) and shows the score and the scorers. You can also pick a Tactic card for your team: it suggests a Formation (auto-arrange a suggested lineup by area, then freely move any player to another area) and, for tactics with an automatic effect, applies the card's bonus to the result.</p>
+      <p><strong>Match Solver:</strong> build your team and the opposing team by entering the goalkeeper (power and gloves) and the players in each of the 9 physical field Zones, exactly as printed on the cards and board (a 3x3 grid: Attack/Mid/Defense × Left/Center/Right), marking each as Attacker or Defender along with their power. For match resolution, the 3 Zones on each side (Forward, Midfielder and Left/Right Defender) combine into a single Wing, which faces the opponent's mirrored Wing; the 3 central Zones (Central Attack, Central Midfield, Central Defense) each resolve on their own against the opponent's mirrored central Zone — and the weakest defenders strong enough to block each attacker are assigned optimally. The app shows the score and the scorers. You can also pick a Tactic card for your team: it suggests a Formation (auto-arrange a suggested lineup by Zone, then freely move any player to another Zone) and, for tactics with an automatic effect, applies the card's bonus to the result.</p>
       <p style="color:var(--text-dim); font-size:0.85em;">Since this is an early-stage tool, some visual and convenience details may still change.</p>`,
   }
 };
@@ -518,8 +522,11 @@ function switchTab(tabId){
 }
 
 // ---- Solver UI ----
-const areas = ['Left', 'Right', 'Attack', 'Mid', 'Defense'];
-const AREA_I18N_KEY = { Left:'areaLeft', Right:'areaRight', Attack:'areaAttack', Mid:'areaMid', Defense:'areaDefense' };
+// The Pitch is a 3x3 grid of 9 independent Zones (see eleven_solver.js
+// header): Attack row (al/ac/ar), Mid row (ml/mc/mr), Defense row (dl/dc/dr).
+// Each Zone is resolved on its own against its diagonally mirrored Zone.
+const areas = ['al', 'ac', 'ar', 'ml', 'mc', 'mr', 'dl', 'dc', 'dr'];
+const AREA_I18N_KEY = { al:'zoneAl', ac:'zoneAc', ar:'zoneAr', ml:'zoneMl', mc:'zoneMc', mr:'zoneMr', dl:'zoneDl', dc:'zoneDc', dr:'zoneDr' };
 
 function createAreaUI(containerId, prefix){
   const container = document.getElementById(containerId);
@@ -546,15 +553,6 @@ function handleZoneDrop(prefix, area){
   draggedPlayerEntry = null;
 }
 
-// Left/Right Wing Sections hold 3 real Zones each (Zagueiro/Meio/Ponta —
-// Defense/Mid/Attack row); this "subpos" tag is purely informational (helps
-// cross-check data against a physical card) and never affects solving, since
-// the solver still reads the whole merged Left/Right array either way.
-const SUBPOS_I18N_KEY = {
-  Left: { def:'subposDef', mid:'subposMid', atk:'subposAtk' },
-  Right: { def:'subposDefR', mid:'subposMidR', atk:'subposAtkR' }
-};
-
 function addPlayer(prefix, area, opts){
   opts = opts || {};
   const list = document.getElementById(`${prefix}-${area}-list`);
@@ -567,7 +565,6 @@ function addPlayer(prefix, area, opts){
     <span data-i18n="lblType"></span> <select class="p-type"><option value="att" data-i18n="optAttacker"></option><option value="def" data-i18n="optDefender"></option></select>
     <span data-i18n="lblShirt"></span> <input type="number" value="1" min="1" max="99" class="p-shirt">
     <span data-i18n="lblZone"></span> <select class="p-zone">${areas.map(a=>`<option value="${a}" data-i18n="${AREA_I18N_KEY[a]}"></option>`).join('')}</select>
-    <span class="p-subpos-wrap"><span data-i18n="lblSubpos"></span> <select class="p-subpos"><option value="def"></option><option value="mid"></option><option value="atk"></option></select></span>
     <button onclick="this.parentElement.remove()">✕</button>
   `;
   list.appendChild(div);
@@ -581,30 +578,13 @@ function addPlayer(prefix, area, opts){
   } else {
     div.classList.add('type-att');
   }
-  updateSubposUI(div, area);
-  div.querySelector('.p-subpos').value = opts.subpos || 'mid';
   applyI18n();
-}
-
-// Shows/relabels the Zagueiro/Meio/Ponta sub-position select only while the
-// entry sits in a Wing (Left/Right) zone — central zones are already a single
-// unambiguous position, so the sub-select is hidden there.
-function updateSubposUI(div, area){
-  const wrap = div.querySelector('.p-subpos-wrap');
-  const key = SUBPOS_I18N_KEY[area];
-  wrap.style.display = key ? '' : 'none';
-  if(key){
-    div.querySelector('.p-subpos option[value="def"]').dataset.i18n = key.def;
-    div.querySelector('.p-subpos option[value="mid"]').dataset.i18n = key.mid;
-    div.querySelector('.p-subpos option[value="atk"]').dataset.i18n = key.atk;
-  }
 }
 
 function moveEntryToZone(entryEl, prefix, newArea){
   document.getElementById(`${prefix}-${newArea}-list`).appendChild(entryEl);
   const zoneSelect = entryEl.querySelector('.p-zone');
   if(zoneSelect) zoneSelect.value = newArea;
-  updateSubposUI(entryEl, newArea);
   applyI18n();
 }
 
@@ -631,7 +611,7 @@ function loadOpponentCard(){
     const list = document.getElementById(`npc-${area}-list`);
     list.innerHTML = '';
     (card[area] || []).forEach(p=>{
-      addPlayer('npc', area, { isAttacker: p.a, subpos: p.z });
+      addPlayer('npc', area, { isAttacker: p.a });
       const entry = list.lastElementChild;
       entry.querySelector('.p-pow').value = p.p;
       entry.querySelector('.p-shirt').value = shirt++;
@@ -688,20 +668,31 @@ function autoArrangeFormation(){
 
 populateTacticSelect();
 
+// Match resolution only cares about 5 Sections (see eleven_solver.js) —
+// the 3 Zones on each side pool into one Wing, central Zones stay solo.
+const RESULT_AREAS = ['Left', 'Right', 'Attack', 'Mid', 'Defense'];
+const RESULT_AREA_I18N_KEY = { Left:'areaLeft', Right:'areaRight', Attack:'areaAttack', Mid:'areaMid', Defense:'areaDefense' };
+
 function buildTeamObj(prefix){
   let team = {
     GK: { power: parseInt(document.getElementById(`${prefix}-gk-pow`).value) || 0, gloves: parseInt(document.getElementById(`${prefix}-gk-gloves`).value) || 0 }
   };
+  const raw = {};
   areas.forEach(area=>{
-    team[area] = [];
+    raw[area] = [];
     document.querySelectorAll(`#${prefix}-${area}-list .player-entry`).forEach(el=>{
-      team[area].push({
+      raw[area].push({
         power: parseInt(el.querySelector('.p-pow').value) || 0,
         isAttacker: el.querySelector('.p-type').value === 'att',
         shirt: parseInt(el.querySelector('.p-shirt').value) || 0
       });
     });
   });
+  team.Left = [...raw.al, ...raw.ml, ...raw.dl];
+  team.Right = [...raw.ar, ...raw.mr, ...raw.dr];
+  team.Attack = raw.ac;
+  team.Mid = raw.mc;
+  team.Defense = raw.dc;
   return team;
 }
 
@@ -763,7 +754,7 @@ function buildBeats(res, tacticBonusInfo){
 
 function beatToLine(beat){
   const c = COMMENTARY[lang] || COMMENTARY.pt;
-  const areaLabel = beat.area ? t(AREA_I18N_KEY[beat.area]) : '';
+  const areaLabel = beat.area ? t(RESULT_AREA_I18N_KEY[beat.area]) : '';
   switch(beat.kind){
     case 'kickoff': return { html: pick(c.kickoff), cls:'' };
     case 'zone': return { html: fill(pick(c.zone), {area:areaLabel}), cls:'tag-header' };
@@ -779,10 +770,10 @@ function beatToLine(beat){
 }
 
 function renderPitchShell(){
-  return `<div class="pitch">${areas.map(a=>`
+  return `<div class="pitch">${RESULT_AREAS.map(a=>`
     <div class="pitch-zone" id="zone-${a}">
       <div class="zone-side left" id="zone-${a}-player"></div>
-      <div class="zone-label">${t(AREA_I18N_KEY[a])}</div>
+      <div class="zone-label">${t(RESULT_AREA_I18N_KEY[a])}</div>
       <div class="zone-side right" id="zone-${a}-npc"></div>
     </div>`).join('')}</div>`;
 }
@@ -839,7 +830,7 @@ function skipBroadcast(beats, res){
   clearTimeout(broadcastTimer);
   const feed = document.getElementById('commentary-feed');
   feed.innerHTML = '';
-  areas.forEach(a=>{
+  RESULT_AREAS.forEach(a=>{
     document.getElementById(`zone-${a}-player`).innerHTML = '';
     document.getElementById(`zone-${a}-npc`).innerHTML = '';
   });

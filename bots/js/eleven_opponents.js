@@ -6,91 +6,92 @@
  *   https://github.com/HazimeKondo/eleven-match-solver
  * (Assets/Data/NPCTeams/OP0xx.asset — MonoBehaviour TeamData fields.)
  *
- * Each card's 9 physical Zones (al/ac/ar, ml/mc/mr, dl/dc/dr) are remapped
- * here into this app's 5 Sections (see eleven_tactics.js header): Left =
- * al+ml+dl, Right = ar+mr+dr, Attack = ac, Mid = mc, Defense = dc. Left/Right
- * entries carry a "z" tag ('atk'/'mid'/'def') recording which of the 3
- * Wing sub-zones they came from, so the UI can show Zagueiro/Meio/Ponta
- * Esquerdo(a)/Direito(a) — purely informational, the solver still reads the
- * whole merged Left/Right array. "tp" = total power (GK + all outfield
+ * Each card lists its 9 physical Zones directly, exactly as printed on the
+ * card (3x3 grid: al/ac/ar = Attack row Left/Center/Right, ml/mc/mr = Mid
+ * row, dl/dc/dr = Defense row). "tp" = total power (GK + all outfield
  * players), a rough difficulty indicator shown in the opponent picker.
  * "a" = isAttacker (true/false), "p" = power. Jersey/shirt numbers aren't
  * part of the source data (always 0) — assigned sequentially at load time.
+ * Match-resolution pooling of these 9 Zones into the 5 resolution Sections
+ * (Left/Right Wing + 3 Central zones) happens at solve time — see
+ * eleven_bot_v1.html buildTeamObj() and eleven_tactics.js header comment.
  *
  * CORRECTED 2026-08-05: the source .asset data for OP001-OP032 stores the
  * Attack-row and Defense-row fields (al/ac/ar vs dl/dc/dr) swapped, and for
  * OP033-OP064 stores the Left and Right columns (al/ml/dl vs ar/mr/dr)
  * swapped, relative to the physical printed cards — confirmed against 3 real
  * physical cards (OP027, OP028, OP035) supplied by the user. Both are fixed
- * here at generation time (see /tmp/eleven_opponents fix script in session
- * history); the two are independent bugs affecting two disjoint card sets.
+ * here at generation time; the two are independent bugs affecting two
+ * disjoint card sets.
  */
 
 const NPC_CARDS = {
-  OP001: { tp:16, gk:{p:2,g:1}, Left:[{p:2,a:false,z:'def'},{p:2,a:true,z:'mid'}], Right:[{p:1,a:false,z:'def'},{p:2,a:true,z:'mid'}], Attack:[{p:1,a:false},{p:1,a:true}], Mid:[{p:2,a:false},{p:1,a:false}], Defense:[{p:1,a:false},{p:1,a:true}] },
-  OP002: { tp:16, gk:{p:2,g:1}, Left:[{p:1,a:true,z:'def'},{p:2,a:false,z:'mid'}], Right:[{p:1,a:false,z:'def'},{p:2,a:true,z:'mid'},{p:1,a:true,z:'atk'}], Attack:[{p:1,a:false}], Mid:[{p:1,a:false},{p:2,a:true}], Defense:[{p:1,a:false},{p:2,a:false}] },
-  OP003: { tp:16, gk:{p:2,g:1}, Left:[{p:1,a:false,z:'mid'},{p:1,a:true,z:'atk'}], Right:[{p:1,a:false,z:'def'},{p:2,a:false,z:'mid'}], Attack:[{p:1,a:false}], Mid:[{p:2,a:true},{p:2,a:true}], Defense:[{p:2,a:false},{p:1,a:true},{p:1,a:false}] },
-  OP004: { tp:16, gk:{p:2,g:1}, Left:[{p:2,a:false,z:'def'},{p:2,a:true,z:'mid'}], Right:[{p:1,a:false,z:'def'},{p:1,a:false,z:'atk'}], Attack:[{p:1,a:true}], Mid:[{p:1,a:false},{p:2,a:true},{p:2,a:false}], Defense:[{p:1,a:false},{p:1,a:true}] },
-  OP005: { tp:16, gk:{p:1,g:2}, Left:[{p:1,a:false,z:'def'},{p:1,a:false,z:'mid'},{p:1,a:true,z:'atk'}], Right:[{p:1,a:false,z:'def'},{p:3,a:false,z:'mid'},{p:1,a:true,z:'atk'}], Attack:[{p:2,a:true}], Mid:[{p:1,a:true},{p:3,a:true}], Defense:[{p:1,a:false}] },
-  OP006: { tp:16, gk:{p:1,g:2}, Left:[{p:1,a:false,z:'def'},{p:3,a:false,z:'mid'}], Right:[{p:3,a:true,z:'mid'},{p:2,a:true,z:'atk'}], Attack:[{p:1,a:true},{p:1,a:true}], Mid:[{p:1,a:false},{p:1,a:true}], Defense:[{p:1,a:false},{p:1,a:false}] },
-  OP007: { tp:16, gk:{p:1,g:2}, Left:[{p:3,a:true,z:'mid'}], Right:[{p:1,a:false,z:'mid'}], Attack:[{p:1,a:true},{p:1,a:true},{p:2,a:true}], Mid:[{p:3,a:false},{p:1,a:true}], Defense:[{p:1,a:false},{p:1,a:false},{p:1,a:false}] },
-  OP008: { tp:16, gk:{p:1,g:2}, Left:[{p:1,a:false,z:'mid'},{p:1,a:true,z:'atk'}], Right:[{p:1,a:false,z:'def'},{p:1,a:true,z:'mid'}], Attack:[{p:1,a:true},{p:2,a:true}], Mid:[{p:3,a:false},{p:3,a:true}], Defense:[{p:1,a:false},{p:1,a:false}] },
-  OP009: { tp:18, gk:{p:2,g:1}, Left:[{p:2,a:false,z:'def'},{p:2,a:false,z:'mid'},{p:1,a:false,z:'atk'}], Right:[{p:1,a:true,z:'def'}], Attack:[{p:1,a:true},{p:3,a:true}], Mid:[{p:2,a:true},{p:1,a:true}], Defense:[{p:2,a:false},{p:1,a:false}] },
-  OP010: { tp:18, gk:{p:2,g:1}, Left:[{p:2,a:false,z:'def'},{p:2,a:false,z:'mid'},{p:1,a:false,z:'atk'}], Right:[{p:2,a:false,z:'def'},{p:2,a:true,z:'mid'},{p:3,a:true,z:'atk'}], Attack:[{p:1,a:true}], Mid:[{p:1,a:true}], Defense:[{p:1,a:true},{p:1,a:false}] },
-  OP011: { tp:18, gk:{p:2,g:1}, Left:[{p:2,a:false,z:'mid'},{p:1,a:false,z:'atk'}], Right:[{p:1,a:false,z:'def'},{p:1,a:true,z:'mid'},{p:3,a:true,z:'atk'}], Attack:[{p:1,a:true}], Mid:[{p:2,a:true}], Defense:[{p:2,a:false},{p:1,a:true},{p:2,a:false}] },
-  OP012: { tp:18, gk:{p:2,g:1}, Left:[{p:1,a:false,z:'def'},{p:2,a:false,z:'mid'},{p:1,a:false,z:'atk'}], Right:[{p:2,a:false,z:'def'},{p:1,a:true,z:'mid'},{p:1,a:true,z:'atk'}], Attack:[{p:3,a:true}], Mid:[{p:2,a:true}], Defense:[{p:2,a:false},{p:1,a:true}] },
-  OP013: { tp:18, gk:{p:1,g:2}, Left:[{p:3,a:false,z:'def'},{p:1,a:true,z:'mid'}], Right:[{p:3,a:false,z:'def'},{p:1,a:true,z:'mid'},{p:1,a:true,z:'atk'}], Attack:[{p:1,a:true}], Mid:[{p:1,a:false},{p:2,a:false}], Defense:[{p:3,a:false},{p:1,a:true}] },
-  OP014: { tp:18, gk:{p:1,g:2}, Left:[{p:1,a:true,z:'def'},{p:1,a:false,z:'mid'}], Right:[{p:3,a:false,z:'def'},{p:2,a:false,z:'mid'}], Attack:[{p:1,a:true},{p:1,a:true}], Mid:[{p:1,a:true},{p:1,a:true}], Defense:[{p:3,a:false},{p:3,a:false}] },
-  OP015: { tp:18, gk:{p:1,g:2}, Left:[{p:1,a:true,z:'def'},{p:1,a:false,z:'mid'}], Right:[{p:1,a:true,z:'mid'},{p:1,a:true,z:'atk'}], Attack:[{p:1,a:true}], Mid:[{p:2,a:false},{p:1,a:true}], Defense:[{p:3,a:false},{p:3,a:false},{p:3,a:false}] },
-  OP016: { tp:18, gk:{p:1,g:2}, Left:[{p:3,a:false,z:'def'},{p:1,a:true,z:'atk'}], Right:[{p:2,a:false,z:'mid'}], Attack:[{p:1,a:true}], Mid:[{p:1,a:false},{p:1,a:true},{p:1,a:true}], Defense:[{p:3,a:false},{p:1,a:true},{p:3,a:false}] },
-  OP017: { tp:20, gk:{p:2,g:1}, Left:[{p:1,a:false,z:'def'},{p:2,a:false,z:'mid'},{p:1,a:false,z:'atk'}], Right:[{p:1,a:false,z:'def'},{p:2,a:true,z:'mid'}], Attack:[{p:4,a:true}], Mid:[{p:1,a:true}], Defense:[{p:2,a:false},{p:3,a:true},{p:1,a:false}] },
-  OP018: { tp:20, gk:{p:2,g:1}, Left:[{p:3,a:true,z:'def'},{p:1,a:true,z:'mid'},{p:4,a:true,z:'atk'}], Right:[{p:1,a:true,z:'def'}], Attack:[{p:1,a:false}], Mid:[{p:2,a:false},{p:2,a:true}], Defense:[{p:1,a:false},{p:2,a:false},{p:1,a:false}] },
-  OP019: { tp:20, gk:{p:2,g:1}, Left:[{p:1,a:false,z:'def'},{p:1,a:true,z:'mid'}], Right:[{p:1,a:false,z:'def'},{p:2,a:true,z:'mid'},{p:1,a:false,z:'atk'}], Attack:[{p:4,a:true}], Mid:[{p:2,a:false}], Defense:[{p:2,a:false},{p:1,a:true},{p:3,a:true}] },
-  OP020: { tp:20, gk:{p:2,g:1}, Left:[{p:3,a:true,z:'def'}], Right:[{p:2,a:false,z:'def'},{p:2,a:false,z:'mid'},{p:4,a:true,z:'atk'}], Attack:[{p:1,a:false}], Mid:[{p:1,a:true},{p:2,a:true}], Defense:[{p:1,a:false},{p:1,a:true},{p:1,a:false}] },
-  OP021: { tp:20, gk:{p:1,g:2}, Left:[{p:2,a:false,z:'def'},{p:3,a:true,z:'atk'}], Right:[{p:1,a:true,z:'def'},{p:1,a:true,z:'atk'}], Attack:[{p:2,a:false}], Mid:[{p:2,a:true},{p:1,a:false},{p:2,a:true}], Defense:[{p:2,a:false},{p:3,a:false}] },
-  OP022: { tp:20, gk:{p:1,g:2}, Left:[{p:3,a:false,z:'def'},{p:1,a:true,z:'atk'}], Right:[{p:1,a:true,z:'def'},{p:2,a:true,z:'mid'},{p:3,a:true,z:'atk'}], Attack:[{p:2,a:false}], Mid:[{p:1,a:true},{p:2,a:false}], Defense:[{p:2,a:false},{p:2,a:false}] },
-  OP023: { tp:20, gk:{p:1,g:2}, Left:[{p:1,a:true,z:'def'},{p:1,a:true,z:'atk'}], Right:[{p:3,a:false,z:'def'},{p:2,a:true,z:'mid'},{p:2,a:false,z:'atk'}], Attack:[{p:3,a:true}], Mid:[{p:2,a:false},{p:1,a:true}], Defense:[{p:2,a:false},{p:2,a:false}] },
-  OP024: { tp:20, gk:{p:1,g:2}, Left:[{p:2,a:false,z:'def'},{p:2,a:false,z:'atk'}], Right:[{p:3,a:false,z:'def'},{p:2,a:true,z:'mid'},{p:3,a:true,z:'atk'}], Attack:[{p:1,a:true}], Mid:[{p:2,a:false},{p:1,a:true}], Defense:[{p:2,a:false},{p:1,a:true}] },
-  OP025: { tp:22, gk:{p:2,g:1}, Left:[{p:1,a:false,z:'def'},{p:1,a:true,z:'mid'}], Right:[{p:3,a:true,z:'def'},{p:1,a:true,z:'mid'}], Attack:[{p:3,a:false},{p:1,a:false}], Mid:[{p:2,a:true},{p:3,a:false},{p:2,a:true}], Defense:[{p:3,a:false}] },
-  OP026: { tp:20, gk:{p:2,g:1}, Left:[{p:2,a:true,z:'mid'}], Right:[{p:1,a:false,z:'def'},{p:2,a:true,z:'mid'},{p:1,a:false,z:'atk'}], Attack:[{p:3,a:false}], Mid:[{p:1,a:false},{p:1,a:true},{p:1,a:false}], Defense:[{p:3,a:false},{p:3,a:true}] },
-  OP027: { tp:22, gk:{p:2,g:1}, Left:[{p:3,a:false,z:'def'},{p:3,a:false,z:'mid'}], Right:[{p:1,a:false,z:'def'},{p:2,a:true,z:'mid'},{p:3,a:false,z:'atk'}], Attack:[{p:1,a:false}], Mid:[{p:1,a:true},{p:1,a:false},{p:2,a:true}], Defense:[{p:3,a:true}] },
-  OP028: { tp:22, gk:{p:2,g:1}, Left:[{p:1,a:false,z:'mid'},{p:3,a:false,z:'atk'}], Right:[{p:3,a:false,z:'mid'}], Attack:[{p:1,a:false}], Mid:[{p:2,a:true},{p:1,a:true},{p:2,a:true}], Defense:[{p:1,a:false},{p:3,a:true},{p:3,a:false}] },
-  OP029: { tp:22, gk:{p:1,g:2}, Left:[{p:2,a:false,z:'def'},{p:1,a:true,z:'mid'},{p:1,a:true,z:'atk'}], Right:[{p:2,a:false,z:'def'},{p:1,a:false,z:'mid'}], Attack:[{p:4,a:true},{p:3,a:true}], Mid:[{p:3,a:false},{p:2,a:true}], Defense:[{p:2,a:false}] },
-  OP030: { tp:22, gk:{p:1,g:2}, Left:[{p:3,a:false,z:'mid'},{p:4,a:true,z:'atk'}], Right:[{p:2,a:false,z:'def'},{p:2,a:true,z:'mid'},{p:3,a:true,z:'atk'}], Attack:[{p:1,a:true}], Mid:[{p:1,a:false},{p:1,a:true}], Defense:[{p:2,a:false},{p:2,a:false}] },
-  OP031: { tp:22, gk:{p:1,g:2}, Left:[{p:3,a:false,z:'mid'},{p:3,a:true,z:'atk'}], Right:[{p:1,a:true,z:'mid'}], Attack:[{p:4,a:true},{p:1,a:true}], Mid:[{p:2,a:true},{p:1,a:false}], Defense:[{p:2,a:false},{p:2,a:false},{p:2,a:false}] },
-  OP032: { tp:22, gk:{p:1,g:2}, Left:[{p:2,a:false,z:'def'},{p:2,a:true,z:'mid'}], Right:[{p:1,a:false,z:'mid'},{p:4,a:true,z:'atk'}], Attack:[{p:3,a:true},{p:1,a:true}], Mid:[{p:3,a:false},{p:1,a:true}], Defense:[{p:2,a:false},{p:2,a:false}] },
-  OP033: { tp:24, gk:{p:2,g:2}, Left:[{p:2,a:false,z:'def'},{p:3,a:true,z:'mid'},{p:1,a:false,z:'atk'}], Right:[{p:2,a:false,z:'def'},{p:3,a:true,z:'mid'},{p:2,a:true,z:'atk'}], Attack:[{p:3,a:true}], Mid:[{p:2,a:false},{p:1,a:false}], Defense:[{p:3,a:false}] },
-  OP034: { tp:24, gk:{p:2,g:2}, Left:[{p:3,a:true,z:'mid'}], Right:[{p:2,a:false,z:'def'},{p:2,a:false,z:'mid'}], Attack:[{p:3,a:true},{p:2,a:true},{p:1,a:false}], Mid:[{p:3,a:true},{p:1,a:false}], Defense:[{p:3,a:false},{p:2,a:false}] },
-  OP035: { tp:24, gk:{p:2,g:2}, Left:[{p:3,a:false,z:'def'},{p:3,a:true,z:'mid'}], Right:[{p:1,a:false,z:'mid'},{p:3,a:true,z:'atk'}], Attack:[{p:2,a:true},{p:1,a:false}], Mid:[{p:3,a:true},{p:2,a:false}], Defense:[{p:2,a:false},{p:2,a:false}] },
-  OP036: { tp:24, gk:{p:2,g:2}, Left:[{p:2,a:false,z:'def'},{p:3,a:true,z:'atk'}], Right:[{p:3,a:false,z:'def'},{p:3,a:true,z:'mid'},{p:1,a:false,z:'atk'}], Attack:[{p:2,a:true}], Mid:[{p:3,a:true},{p:2,a:false},{p:1,a:false}], Defense:[{p:2,a:false}] },
-  OP037: { tp:26, gk:{p:3,g:1}, Left:[{p:3,a:true,z:'def'},{p:2,a:true,z:'atk'}], Right:[{p:3,a:false,z:'def'},{p:1,a:false,z:'atk'}], Attack:[{p:2,a:true},{p:3,a:true}], Mid:[{p:2,a:false},{p:4,a:true}], Defense:[{p:1,a:false},{p:2,a:false}] },
-  OP038: { tp:26, gk:{p:3,g:1}, Left:[{p:3,a:true,z:'atk'}], Right:[{p:2,a:false,z:'def'},{p:1,a:false,z:'atk'}], Attack:[{p:2,a:true},{p:2,a:true}], Mid:[{p:2,a:false},{p:4,a:true}], Defense:[{p:1,a:false},{p:3,a:true},{p:3,a:false}] },
-  OP039: { tp:26, gk:{p:3,g:1}, Left:[{p:2,a:false,z:'def'},{p:2,a:true,z:'atk'}], Right:[{p:1,a:false,z:'def'},{p:2,a:true,z:'atk'}], Attack:[{p:1,a:false},{p:3,a:true}], Mid:[{p:2,a:false},{p:4,a:true}], Defense:[{p:3,a:true},{p:3,a:false}] },
-  OP040: { tp:26, gk:{p:3,g:1}, Left:[{p:1,a:false,z:'def'}], Right:[{p:3,a:true,z:'def'},{p:1,a:false,z:'atk'}], Attack:[{p:2,a:true},{p:3,a:true},{p:2,a:true}], Mid:[{p:2,a:false},{p:4,a:true}], Defense:[{p:2,a:false},{p:3,a:false}] },
-  OP041: { tp:26, gk:{p:2,g:2}, Left:[{p:4,a:true,z:'def'}], Right:[{p:3,a:false,z:'def'}], Attack:[{p:2,a:true},{p:1,a:true},{p:2,a:true}], Mid:[{p:2,a:false},{p:4,a:true},{p:1,a:false}], Defense:[{p:2,a:false},{p:3,a:false}] },
-  OP042: { tp:26, gk:{p:2,g:2}, Left:[{p:2,a:false,z:'def'},{p:1,a:false,z:'mid'},{p:2,a:true,z:'atk'}], Right:[{p:2,a:false,z:'mid'},{p:2,a:true,z:'atk'}], Attack:[{p:1,a:true}], Mid:[{p:4,a:true}], Defense:[{p:4,a:false},{p:3,a:true},{p:3,a:false}] },
-  OP043: { tp:26, gk:{p:2,g:2}, Left:[{p:2,a:false,z:'def'},{p:2,a:false,z:'mid'}], Right:[{p:4,a:true,z:'def'},{p:4,a:true,z:'mid'},{p:2,a:true,z:'atk'}], Attack:[{p:2,a:true},{p:1,a:true}], Mid:[{p:1,a:false}], Defense:[{p:3,a:false},{p:3,a:false}] },
-  OP044: { tp:26, gk:{p:2,g:2}, Left:[{p:3,a:false,z:'def'},{p:4,a:true,z:'mid'},{p:1,a:true,z:'atk'}], Right:[{p:3,a:false,z:'def'},{p:1,a:false,z:'mid'}], Attack:[{p:2,a:true},{p:2,a:true}], Mid:[{p:2,a:false}], Defense:[{p:4,a:true},{p:2,a:false}] },
-  OP045: { tp:28, gk:{p:3,g:1}, Left:[{p:1,a:true,z:'def'},{p:5,a:true,z:'atk'}], Right:[{p:3,a:false,z:'def'},{p:3,a:false,z:'atk'}], Attack:[{p:1,a:true},{p:3,a:true}], Mid:[{p:2,a:false},{p:1,a:true}], Defense:[{p:2,a:false},{p:4,a:false}] },
-  OP046: { tp:28, gk:{p:3,g:1}, Left:[{p:2,a:false,z:'mid'},{p:5,a:true,z:'atk'}], Right:[{p:4,a:false,z:'def'},{p:1,a:true,z:'atk'}], Attack:[{p:3,a:true},{p:3,a:false}], Mid:[{p:1,a:true}], Defense:[{p:2,a:false},{p:1,a:true},{p:3,a:false}] },
-  OP047: { tp:28, gk:{p:3,g:1}, Left:[{p:5,a:true,z:'atk'}], Right:[{p:1,a:true,z:'def'},{p:2,a:false,z:'mid'}], Attack:[{p:1,a:true},{p:3,a:false},{p:3,a:true}], Mid:[{p:1,a:true}], Defense:[{p:2,a:false},{p:4,a:false},{p:3,a:false}] },
-  OP048: { tp:28, gk:{p:3,g:1}, Left:[{p:1,a:true,z:'mid'},{p:5,a:true,z:'atk'}], Right:[{p:1,a:true,z:'def'},{p:3,a:false,z:'atk'}], Attack:[{p:3,a:true},{p:1,a:true}], Mid:[{p:2,a:false}], Defense:[{p:2,a:false},{p:4,a:false},{p:3,a:false}] },
-  OP049: { tp:29, gk:{p:3,g:2}, Left:[{p:4,a:true,z:'def'},{p:1,a:false,z:'mid'},{p:2,a:true,z:'atk'}], Right:[{p:2,a:false,z:'def'},{p:4,a:false,z:'mid'}], Attack:[{p:4,a:true}], Mid:[{p:3,a:true},{p:1,a:false}], Defense:[{p:3,a:false},{p:2,a:false}] },
-  OP050: { tp:29, gk:{p:3,g:2}, Left:[{p:4,a:true,z:'def'},{p:4,a:false,z:'mid'}], Right:[{p:2,a:false,z:'def'}], Attack:[{p:4,a:true},{p:2,a:true}], Mid:[{p:1,a:false},{p:3,a:true},{p:1,a:false}], Defense:[{p:3,a:false},{p:2,a:false}] },
-  OP051: { tp:29, gk:{p:3,g:2}, Left:[{p:4,a:true,z:'def'},{p:1,a:false,z:'mid'},{p:4,a:true,z:'atk'}], Right:[{p:3,a:false,z:'def'},{p:3,a:true,z:'mid'}], Attack:[{p:2,a:true}], Mid:[{p:1,a:false},{p:4,a:false}], Defense:[{p:2,a:false},{p:2,a:false}] },
-  OP052: { tp:29, gk:{p:3,g:2}, Left:[{p:4,a:true,z:'def'},{p:3,a:true,z:'mid'}], Right:[{p:2,a:false,z:'def'},{p:4,a:false,z:'mid'},{p:2,a:true,z:'atk'}], Attack:[{p:4,a:true}], Mid:[{p:1,a:false},{p:1,a:false}], Defense:[{p:2,a:false},{p:3,a:false}] },
-  OP053: { tp:30, gk:{p:3,g:1}, Left:[{p:4,a:false,z:'def'},{p:2,a:true,z:'mid'}], Right:[{p:2,a:false,z:'def'},{p:2,a:true,z:'mid'}], Attack:[{p:4,a:true},{p:3,a:false}], Mid:[{p:3,a:false},{p:2,a:false}], Defense:[{p:2,a:true},{p:3,a:false}] },
-  OP054: { tp:30, gk:{p:3,g:1}, Left:[{p:2,a:true,z:'mid'}], Right:[{p:4,a:false,z:'def'},{p:3,a:false,z:'mid'},{p:4,a:true,z:'atk'}], Attack:[{p:3,a:false}], Mid:[{p:2,a:false},{p:2,a:true}], Defense:[{p:2,a:false},{p:2,a:true},{p:3,a:false}] },
-  OP055: { tp:31, gk:{p:3,g:1}, Left:[{p:2,a:false,z:'def'},{p:2,a:true,z:'mid'}], Right:[{p:4,a:false,z:'def'},{p:3,a:false,z:'mid'},{p:4,a:true,z:'atk'}], Attack:[{p:3,a:false}], Mid:[{p:2,a:false},{p:2,a:true}], Defense:[{p:4,a:false},{p:2,a:true}] },
-  OP056: { tp:30, gk:{p:3,g:1}, Left:[{p:2,a:true,z:'def'},{p:3,a:false,z:'mid'},{p:4,a:true,z:'atk'}], Right:[{p:3,a:false,z:'def'}], Attack:[{p:3,a:false}], Mid:[{p:2,a:true},{p:2,a:false},{p:2,a:true}], Defense:[{p:2,a:false},{p:4,a:false}] },
-  OP057: { tp:31, gk:{p:3,g:2}, Left:[{p:3,a:true,z:'def'},{p:2,a:false,z:'mid'},{p:4,a:true,z:'atk'}], Right:[{p:3,a:true,z:'def'},{p:4,a:true,z:'atk'}], Attack:[{p:1,a:true}], Mid:[{p:4,a:false},{p:1,a:false}], Defense:[{p:3,a:false},{p:3,a:false}] },
-  OP058: { tp:31, gk:{p:3,g:2}, Left:[{p:3,a:false,z:'def'},{p:2,a:false,z:'mid'},{p:1,a:true,z:'atk'}], Right:[{p:3,a:false,z:'def'},{p:4,a:false,z:'mid'},{p:4,a:true,z:'atk'}], Attack:[{p:4,a:true}], Mid:[{p:1,a:false}], Defense:[{p:3,a:true},{p:3,a:true}] },
-  OP059: { tp:31, gk:{p:3,g:2}, Left:[{p:3,a:true,z:'def'},{p:2,a:false,z:'mid'},{p:1,a:true,z:'atk'}], Right:[{p:1,a:false,z:'mid'},{p:4,a:true,z:'atk'}], Attack:[{p:4,a:true}], Mid:[{p:4,a:false}], Defense:[{p:3,a:false},{p:3,a:true},{p:3,a:false}] },
-  OP060: { tp:31, gk:{p:3,g:2}, Left:[{p:4,a:false,z:'mid'},{p:4,a:true,z:'atk'}], Right:[{p:3,a:false,z:'def'},{p:2,a:false,z:'mid'},{p:1,a:true,z:'atk'}], Attack:[{p:4,a:true}], Mid:[{p:1,a:false}], Defense:[{p:3,a:true},{p:3,a:false},{p:3,a:true}] },
-  OP061: { tp:35, gk:{p:6,g:1}, Left:[{p:4,a:false,z:'def'},{p:1,a:true,z:'mid'}], Right:[{p:4,a:false,z:'def'},{p:3,a:false,z:'mid'}], Attack:[{p:3,a:false},{p:5,a:true}], Mid:[{p:4,a:false},{p:1,a:true}], Defense:[{p:3,a:false},{p:1,a:true}] },
-  OP062: { tp:35, gk:{p:6,g:1}, Left:[{p:4,a:false,z:'mid'}], Right:[{p:3,a:false,z:'def'},{p:3,a:false,z:'mid'},{p:3,a:false,z:'atk'}], Attack:[{p:5,a:true}], Mid:[{p:1,a:true},{p:1,a:true}], Defense:[{p:4,a:false},{p:1,a:true},{p:4,a:false}] },
-  OP063: { tp:35, gk:{p:6,g:1}, Left:[{p:4,a:false,z:'def'},{p:1,a:true,z:'mid'},{p:5,a:true,z:'atk'}], Right:[{p:4,a:false,z:'def'},{p:1,a:true,z:'mid'}], Attack:[{p:3,a:false}], Mid:[{p:4,a:false},{p:3,a:false}], Defense:[{p:3,a:false},{p:1,a:true}] },
-  OP064: { tp:35, gk:{p:6,g:1}, Left:[{p:1,a:true,z:'def'},{p:3,a:false,z:'mid'}], Right:[{p:3,a:false,z:'def'},{p:5,a:true,z:'atk'}], Attack:[{p:3,a:false}], Mid:[{p:1,a:true},{p:4,a:false},{p:1,a:true}], Defense:[{p:4,a:false},{p:4,a:false}] },
+  OP001: { tp:16, gk:{p:2,g:1}, al:[], ac:[{p:1,a:false},{p:1,a:true}], ar:[], ml:[{p:2,a:true}], mc:[{p:2,a:false},{p:1,a:false}], mr:[{p:2,a:true}], dl:[{p:2,a:false}], dc:[{p:1,a:false},{p:1,a:true}], dr:[{p:1,a:false}] },
+  OP002: { tp:16, gk:{p:2,g:1}, al:[], ac:[{p:1,a:false}], ar:[{p:1,a:true}], ml:[{p:2,a:false}], mc:[{p:1,a:false},{p:2,a:true}], mr:[{p:2,a:true}], dl:[{p:1,a:true}], dc:[{p:1,a:false},{p:2,a:false}], dr:[{p:1,a:false}] },
+  OP003: { tp:16, gk:{p:2,g:1}, al:[{p:1,a:true}], ac:[{p:1,a:false}], ar:[], ml:[{p:1,a:false}], mc:[{p:2,a:true},{p:2,a:true}], mr:[{p:2,a:false}], dl:[], dc:[{p:2,a:false},{p:1,a:true},{p:1,a:false}], dr:[{p:1,a:false}] },
+  OP004: { tp:16, gk:{p:2,g:1}, al:[], ac:[{p:1,a:true}], ar:[{p:1,a:false}], ml:[{p:2,a:true}], mc:[{p:1,a:false},{p:2,a:true},{p:2,a:false}], mr:[], dl:[{p:2,a:false}], dc:[{p:1,a:false},{p:1,a:true}], dr:[{p:1,a:false}] },
+  OP005: { tp:16, gk:{p:1,g:2}, al:[{p:1,a:true}], ac:[{p:2,a:true}], ar:[{p:1,a:true}], ml:[{p:1,a:false}], mc:[{p:1,a:true},{p:3,a:true}], mr:[{p:3,a:false}], dl:[{p:1,a:false}], dc:[{p:1,a:false}], dr:[{p:1,a:false}] },
+  OP006: { tp:16, gk:{p:1,g:2}, al:[], ac:[{p:1,a:true},{p:1,a:true}], ar:[{p:2,a:true}], ml:[{p:3,a:false}], mc:[{p:1,a:false},{p:1,a:true}], mr:[{p:3,a:true}], dl:[{p:1,a:false}], dc:[{p:1,a:false},{p:1,a:false}], dr:[] },
+  OP007: { tp:16, gk:{p:1,g:2}, al:[], ac:[{p:1,a:true},{p:1,a:true},{p:2,a:true}], ar:[], ml:[{p:3,a:true}], mc:[{p:3,a:false},{p:1,a:true}], mr:[{p:1,a:false}], dl:[], dc:[{p:1,a:false},{p:1,a:false},{p:1,a:false}], dr:[] },
+  OP008: { tp:16, gk:{p:1,g:2}, al:[{p:1,a:true}], ac:[{p:1,a:true},{p:2,a:true}], ar:[], ml:[{p:1,a:false}], mc:[{p:3,a:false},{p:3,a:true}], mr:[{p:1,a:true}], dl:[], dc:[{p:1,a:false},{p:1,a:false}], dr:[{p:1,a:false}] },
+  OP009: { tp:18, gk:{p:2,g:1}, al:[{p:1,a:false}], ac:[{p:1,a:true},{p:3,a:true}], ar:[], ml:[{p:2,a:false}], mc:[{p:2,a:true},{p:1,a:true}], mr:[], dl:[{p:2,a:false}], dc:[{p:2,a:false},{p:1,a:false}], dr:[{p:1,a:true}] },
+  OP010: { tp:18, gk:{p:2,g:1}, al:[{p:1,a:false}], ac:[{p:1,a:true}], ar:[{p:3,a:true}], ml:[{p:2,a:false}], mc:[{p:1,a:true}], mr:[{p:2,a:true}], dl:[{p:2,a:false}], dc:[{p:1,a:true},{p:1,a:false}], dr:[{p:2,a:false}] },
+  OP011: { tp:18, gk:{p:2,g:1}, al:[{p:1,a:false}], ac:[{p:1,a:true}], ar:[{p:3,a:true}], ml:[{p:2,a:false}], mc:[{p:2,a:true}], mr:[{p:1,a:true}], dl:[], dc:[{p:2,a:false},{p:1,a:true},{p:2,a:false}], dr:[{p:1,a:false}] },
+  OP012: { tp:18, gk:{p:2,g:1}, al:[{p:1,a:false}], ac:[{p:3,a:true}], ar:[{p:1,a:true}], ml:[{p:2,a:false}], mc:[{p:2,a:true}], mr:[{p:1,a:true}], dl:[{p:1,a:false}], dc:[{p:2,a:false},{p:1,a:true}], dr:[{p:2,a:false}] },
+  OP013: { tp:18, gk:{p:1,g:2}, al:[], ac:[{p:1,a:true}], ar:[{p:1,a:true}], ml:[{p:1,a:true}], mc:[{p:1,a:false},{p:2,a:false}], mr:[{p:1,a:true}], dl:[{p:3,a:false}], dc:[{p:3,a:false},{p:1,a:true}], dr:[{p:3,a:false}] },
+  OP014: { tp:18, gk:{p:1,g:2}, al:[], ac:[{p:1,a:true},{p:1,a:true}], ar:[], ml:[{p:1,a:false}], mc:[{p:1,a:true},{p:1,a:true}], mr:[{p:2,a:false}], dl:[{p:1,a:true}], dc:[{p:3,a:false},{p:3,a:false}], dr:[{p:3,a:false}] },
+  OP015: { tp:18, gk:{p:1,g:2}, al:[], ac:[{p:1,a:true}], ar:[{p:1,a:true}], ml:[{p:1,a:false}], mc:[{p:2,a:false},{p:1,a:true}], mr:[{p:1,a:true}], dl:[{p:1,a:true}], dc:[{p:3,a:false},{p:3,a:false},{p:3,a:false}], dr:[] },
+  OP016: { tp:18, gk:{p:1,g:2}, al:[{p:1,a:true}], ac:[{p:1,a:true}], ar:[], ml:[], mc:[{p:1,a:false},{p:1,a:true},{p:1,a:true}], mr:[{p:2,a:false}], dl:[{p:3,a:false}], dc:[{p:3,a:false},{p:1,a:true},{p:3,a:false}], dr:[] },
+  OP017: { tp:20, gk:{p:2,g:1}, al:[{p:1,a:false}], ac:[{p:4,a:true}], ar:[], ml:[{p:2,a:false}], mc:[{p:1,a:true}], mr:[{p:2,a:true}], dl:[{p:1,a:false}], dc:[{p:2,a:false},{p:3,a:true},{p:1,a:false}], dr:[{p:1,a:false}] },
+  OP018: { tp:20, gk:{p:2,g:1}, al:[{p:4,a:true}], ac:[{p:1,a:false}], ar:[], ml:[{p:1,a:true}], mc:[{p:2,a:false},{p:2,a:true}], mr:[], dl:[{p:3,a:true}], dc:[{p:1,a:false},{p:2,a:false},{p:1,a:false}], dr:[{p:1,a:true}] },
+  OP019: { tp:20, gk:{p:2,g:1}, al:[], ac:[{p:4,a:true}], ar:[{p:1,a:false}], ml:[{p:1,a:true}], mc:[{p:2,a:false}], mr:[{p:2,a:true}], dl:[{p:1,a:false}], dc:[{p:2,a:false},{p:1,a:true},{p:3,a:true}], dr:[{p:1,a:false}] },
+  OP020: { tp:20, gk:{p:2,g:1}, al:[], ac:[{p:1,a:false}], ar:[{p:4,a:true}], ml:[], mc:[{p:1,a:true},{p:2,a:true}], mr:[{p:2,a:false}], dl:[{p:3,a:true}], dc:[{p:1,a:false},{p:1,a:true},{p:1,a:false}], dr:[{p:2,a:false}] },
+  OP021: { tp:20, gk:{p:1,g:2}, al:[{p:3,a:true}], ac:[{p:2,a:false}], ar:[{p:1,a:true}], ml:[], mc:[{p:2,a:true},{p:1,a:false},{p:2,a:true}], mr:[], dl:[{p:2,a:false}], dc:[{p:2,a:false},{p:3,a:false}], dr:[{p:1,a:true}] },
+  OP022: { tp:20, gk:{p:1,g:2}, al:[{p:1,a:true}], ac:[{p:2,a:false}], ar:[{p:3,a:true}], ml:[], mc:[{p:1,a:true},{p:2,a:false}], mr:[{p:2,a:true}], dl:[{p:3,a:false}], dc:[{p:2,a:false},{p:2,a:false}], dr:[{p:1,a:true}] },
+  OP023: { tp:20, gk:{p:1,g:2}, al:[{p:1,a:true}], ac:[{p:3,a:true}], ar:[{p:2,a:false}], ml:[], mc:[{p:2,a:false},{p:1,a:true}], mr:[{p:2,a:true}], dl:[{p:1,a:true}], dc:[{p:2,a:false},{p:2,a:false}], dr:[{p:3,a:false}] },
+  OP024: { tp:20, gk:{p:1,g:2}, al:[{p:2,a:false}], ac:[{p:1,a:true}], ar:[{p:3,a:true}], ml:[], mc:[{p:2,a:false},{p:1,a:true}], mr:[{p:2,a:true}], dl:[{p:2,a:false}], dc:[{p:2,a:false},{p:1,a:true}], dr:[{p:3,a:false}] },
+  OP025: { tp:22, gk:{p:2,g:1}, al:[], ac:[{p:3,a:false},{p:1,a:false}], ar:[], ml:[{p:1,a:true}], mc:[{p:2,a:true},{p:3,a:false},{p:2,a:true}], mr:[{p:1,a:true}], dl:[{p:1,a:false}], dc:[{p:3,a:false}], dr:[{p:3,a:true}] },
+  OP026: { tp:20, gk:{p:2,g:1}, al:[], ac:[{p:3,a:false}], ar:[{p:1,a:false}], ml:[{p:2,a:true}], mc:[{p:1,a:false},{p:1,a:true},{p:1,a:false}], mr:[{p:2,a:true}], dl:[], dc:[{p:3,a:false},{p:3,a:true}], dr:[{p:1,a:false}] },
+  OP027: { tp:22, gk:{p:2,g:1}, al:[], ac:[{p:1,a:false}], ar:[{p:3,a:false}], ml:[{p:3,a:false}], mc:[{p:1,a:true},{p:1,a:false},{p:2,a:true}], mr:[{p:2,a:true}], dl:[{p:3,a:false}], dc:[{p:3,a:true}], dr:[{p:1,a:false}] },
+  OP028: { tp:22, gk:{p:2,g:1}, al:[{p:3,a:false}], ac:[{p:1,a:false}], ar:[], ml:[{p:1,a:false}], mc:[{p:2,a:true},{p:1,a:true},{p:2,a:true}], mr:[{p:3,a:false}], dl:[], dc:[{p:1,a:false},{p:3,a:true},{p:3,a:false}], dr:[] },
+  OP029: { tp:22, gk:{p:1,g:2}, al:[{p:1,a:true}], ac:[{p:4,a:true},{p:3,a:true}], ar:[], ml:[{p:1,a:true}], mc:[{p:3,a:false},{p:2,a:true}], mr:[{p:1,a:false}], dl:[{p:2,a:false}], dc:[{p:2,a:false}], dr:[{p:2,a:false}] },
+  OP030: { tp:22, gk:{p:1,g:2}, al:[{p:4,a:true}], ac:[{p:1,a:true}], ar:[{p:3,a:true}], ml:[{p:3,a:false}], mc:[{p:1,a:false},{p:1,a:true}], mr:[{p:2,a:true}], dl:[], dc:[{p:2,a:false},{p:2,a:false}], dr:[{p:2,a:false}] },
+  OP031: { tp:22, gk:{p:1,g:2}, al:[{p:3,a:true}], ac:[{p:4,a:true},{p:1,a:true}], ar:[], ml:[{p:3,a:false}], mc:[{p:2,a:true},{p:1,a:false}], mr:[{p:1,a:true}], dl:[], dc:[{p:2,a:false},{p:2,a:false},{p:2,a:false}], dr:[] },
+  OP032: { tp:22, gk:{p:1,g:2}, al:[], ac:[{p:3,a:true},{p:1,a:true}], ar:[{p:4,a:true}], ml:[{p:2,a:true}], mc:[{p:3,a:false},{p:1,a:true}], mr:[{p:1,a:false}], dl:[{p:2,a:false}], dc:[{p:2,a:false},{p:2,a:false}], dr:[] },
+  OP033: { tp:24, gk:{p:2,g:2}, al:[{p:1,a:false}], ac:[{p:3,a:true}], ar:[{p:2,a:true}], ml:[{p:3,a:true}], mc:[{p:2,a:false},{p:1,a:false}], mr:[{p:3,a:true}], dl:[{p:2,a:false}], dc:[{p:3,a:false}], dr:[{p:2,a:false}] },
+  OP034: { tp:24, gk:{p:2,g:2}, al:[], ac:[{p:3,a:true},{p:2,a:true},{p:1,a:false}], ar:[], ml:[{p:3,a:true}], mc:[{p:3,a:true},{p:1,a:false}], mr:[{p:2,a:false}], dl:[], dc:[{p:3,a:false},{p:2,a:false}], dr:[{p:2,a:false}] },
+  OP035: { tp:24, gk:{p:2,g:2}, al:[], ac:[{p:2,a:true},{p:1,a:false}], ar:[{p:3,a:true}], ml:[{p:3,a:true}], mc:[{p:3,a:true},{p:2,a:false}], mr:[{p:1,a:false}], dl:[{p:3,a:false}], dc:[{p:2,a:false},{p:2,a:false}], dr:[] },
+  OP036: { tp:24, gk:{p:2,g:2}, al:[{p:3,a:true}], ac:[{p:2,a:true}], ar:[{p:1,a:false}], ml:[], mc:[{p:3,a:true},{p:2,a:false},{p:1,a:false}], mr:[{p:3,a:true}], dl:[{p:2,a:false}], dc:[{p:2,a:false}], dr:[{p:3,a:false}] },
+  OP037: { tp:26, gk:{p:3,g:1}, al:[{p:2,a:true}], ac:[{p:2,a:true},{p:3,a:true}], ar:[{p:1,a:false}], ml:[], mc:[{p:2,a:false},{p:4,a:true}], mr:[], dl:[{p:3,a:true}], dc:[{p:1,a:false},{p:2,a:false}], dr:[{p:3,a:false}] },
+  OP038: { tp:26, gk:{p:3,g:1}, al:[{p:3,a:true}], ac:[{p:2,a:true},{p:2,a:true}], ar:[{p:1,a:false}], ml:[], mc:[{p:2,a:false},{p:4,a:true}], mr:[], dl:[], dc:[{p:1,a:false},{p:3,a:true},{p:3,a:false}], dr:[{p:2,a:false}] },
+  OP039: { tp:26, gk:{p:3,g:1}, al:[{p:2,a:true}], ac:[{p:1,a:false},{p:3,a:true}], ar:[{p:2,a:true}], ml:[], mc:[{p:2,a:false},{p:4,a:true}], mr:[], dl:[{p:2,a:false}], dc:[{p:3,a:true},{p:3,a:false}], dr:[{p:1,a:false}] },
+  OP040: { tp:26, gk:{p:3,g:1}, al:[], ac:[{p:2,a:true},{p:3,a:true},{p:2,a:true}], ar:[{p:1,a:false}], ml:[], mc:[{p:2,a:false},{p:4,a:true}], mr:[], dl:[{p:1,a:false}], dc:[{p:2,a:false},{p:3,a:false}], dr:[{p:3,a:true}] },
+  OP041: { tp:26, gk:{p:2,g:2}, al:[], ac:[{p:2,a:true},{p:1,a:true},{p:2,a:true}], ar:[], ml:[], mc:[{p:2,a:false},{p:4,a:true},{p:1,a:false}], mr:[], dl:[{p:4,a:true}], dc:[{p:2,a:false},{p:3,a:false}], dr:[{p:3,a:false}] },
+  OP042: { tp:26, gk:{p:2,g:2}, al:[{p:2,a:true}], ac:[{p:1,a:true}], ar:[{p:2,a:true}], ml:[{p:1,a:false}], mc:[{p:4,a:true}], mr:[{p:2,a:false}], dl:[{p:2,a:false}], dc:[{p:4,a:false},{p:3,a:true},{p:3,a:false}], dr:[] },
+  OP043: { tp:26, gk:{p:2,g:2}, al:[], ac:[{p:2,a:true},{p:1,a:true}], ar:[{p:2,a:true}], ml:[{p:2,a:false}], mc:[{p:1,a:false}], mr:[{p:4,a:true}], dl:[{p:2,a:false}], dc:[{p:3,a:false},{p:3,a:false}], dr:[{p:4,a:true}] },
+  OP044: { tp:26, gk:{p:2,g:2}, al:[{p:1,a:true}], ac:[{p:2,a:true},{p:2,a:true}], ar:[], ml:[{p:4,a:true}], mc:[{p:2,a:false}], mr:[{p:1,a:false}], dl:[{p:3,a:false}], dc:[{p:4,a:true},{p:2,a:false}], dr:[{p:3,a:false}] },
+  OP045: { tp:28, gk:{p:3,g:1}, al:[{p:5,a:true}], ac:[{p:1,a:true},{p:3,a:true}], ar:[{p:3,a:false}], ml:[], mc:[{p:2,a:false},{p:1,a:true}], mr:[], dl:[{p:1,a:true}], dc:[{p:2,a:false},{p:4,a:false}], dr:[{p:3,a:false}] },
+  OP046: { tp:28, gk:{p:3,g:1}, al:[{p:5,a:true}], ac:[{p:3,a:true},{p:3,a:false}], ar:[{p:1,a:true}], ml:[{p:2,a:false}], mc:[{p:1,a:true}], mr:[], dl:[], dc:[{p:2,a:false},{p:1,a:true},{p:3,a:false}], dr:[{p:4,a:false}] },
+  OP047: { tp:28, gk:{p:3,g:1}, al:[{p:5,a:true}], ac:[{p:1,a:true},{p:3,a:false},{p:3,a:true}], ar:[], ml:[], mc:[{p:1,a:true}], mr:[{p:2,a:false}], dl:[], dc:[{p:2,a:false},{p:4,a:false},{p:3,a:false}], dr:[{p:1,a:true}] },
+  OP048: { tp:28, gk:{p:3,g:1}, al:[{p:5,a:true}], ac:[{p:3,a:true},{p:1,a:true}], ar:[{p:3,a:false}], ml:[{p:1,a:true}], mc:[{p:2,a:false}], mr:[], dl:[], dc:[{p:2,a:false},{p:4,a:false},{p:3,a:false}], dr:[{p:1,a:true}] },
+  OP049: { tp:29, gk:{p:3,g:2}, al:[{p:2,a:true}], ac:[{p:4,a:true}], ar:[], ml:[{p:1,a:false}], mc:[{p:3,a:true},{p:1,a:false}], mr:[{p:4,a:false}], dl:[{p:4,a:true}], dc:[{p:3,a:false},{p:2,a:false}], dr:[{p:2,a:false}] },
+  OP050: { tp:29, gk:{p:3,g:2}, al:[], ac:[{p:4,a:true},{p:2,a:true}], ar:[], ml:[{p:4,a:false}], mc:[{p:1,a:false},{p:3,a:true},{p:1,a:false}], mr:[], dl:[{p:4,a:true}], dc:[{p:3,a:false},{p:2,a:false}], dr:[{p:2,a:false}] },
+  OP051: { tp:29, gk:{p:3,g:2}, al:[{p:4,a:true}], ac:[{p:2,a:true}], ar:[], ml:[{p:1,a:false}], mc:[{p:1,a:false},{p:4,a:false}], mr:[{p:3,a:true}], dl:[{p:4,a:true}], dc:[{p:2,a:false},{p:2,a:false}], dr:[{p:3,a:false}] },
+  OP052: { tp:29, gk:{p:3,g:2}, al:[], ac:[{p:4,a:true}], ar:[{p:2,a:true}], ml:[{p:3,a:true}], mc:[{p:1,a:false},{p:1,a:false}], mr:[{p:4,a:false}], dl:[{p:4,a:true}], dc:[{p:2,a:false},{p:3,a:false}], dr:[{p:2,a:false}] },
+  OP053: { tp:30, gk:{p:3,g:1}, al:[], ac:[{p:4,a:true},{p:3,a:false}], ar:[], ml:[{p:2,a:true}], mc:[{p:3,a:false},{p:2,a:false}], mr:[{p:2,a:true}], dl:[{p:4,a:false}], dc:[{p:2,a:true},{p:3,a:false}], dr:[{p:2,a:false}] },
+  OP054: { tp:30, gk:{p:3,g:1}, al:[], ac:[{p:3,a:false}], ar:[{p:4,a:true}], ml:[{p:2,a:true}], mc:[{p:2,a:false},{p:2,a:true}], mr:[{p:3,a:false}], dl:[], dc:[{p:2,a:false},{p:2,a:true},{p:3,a:false}], dr:[{p:4,a:false}] },
+  OP055: { tp:31, gk:{p:3,g:1}, al:[], ac:[{p:3,a:false}], ar:[{p:4,a:true}], ml:[{p:2,a:true}], mc:[{p:2,a:false},{p:2,a:true}], mr:[{p:3,a:false}], dl:[{p:2,a:false}], dc:[{p:4,a:false},{p:2,a:true}], dr:[{p:4,a:false}] },
+  OP056: { tp:30, gk:{p:3,g:1}, al:[{p:4,a:true}], ac:[{p:3,a:false}], ar:[], ml:[{p:3,a:false}], mc:[{p:2,a:true},{p:2,a:false},{p:2,a:true}], mr:[], dl:[{p:2,a:true}], dc:[{p:2,a:false},{p:4,a:false}], dr:[{p:3,a:false}] },
+  OP057: { tp:31, gk:{p:3,g:2}, al:[{p:4,a:true}], ac:[{p:1,a:true}], ar:[{p:4,a:true}], ml:[{p:2,a:false}], mc:[{p:4,a:false},{p:1,a:false}], mr:[], dl:[{p:3,a:true}], dc:[{p:3,a:false},{p:3,a:false}], dr:[{p:3,a:true}] },
+  OP058: { tp:31, gk:{p:3,g:2}, al:[{p:1,a:true}], ac:[{p:4,a:true}], ar:[{p:4,a:true}], ml:[{p:2,a:false}], mc:[{p:1,a:false}], mr:[{p:4,a:false}], dl:[{p:3,a:false}], dc:[{p:3,a:true},{p:3,a:true}], dr:[{p:3,a:false}] },
+  OP059: { tp:31, gk:{p:3,g:2}, al:[{p:1,a:true}], ac:[{p:4,a:true}], ar:[{p:4,a:true}], ml:[{p:2,a:false}], mc:[{p:4,a:false}], mr:[{p:1,a:false}], dl:[{p:3,a:true}], dc:[{p:3,a:false},{p:3,a:true},{p:3,a:false}], dr:[] },
+  OP060: { tp:31, gk:{p:3,g:2}, al:[{p:4,a:true}], ac:[{p:4,a:true}], ar:[{p:1,a:true}], ml:[{p:4,a:false}], mc:[{p:1,a:false}], mr:[{p:2,a:false}], dl:[], dc:[{p:3,a:true},{p:3,a:false},{p:3,a:true}], dr:[{p:3,a:false}] },
+  OP061: { tp:35, gk:{p:6,g:1}, al:[], ac:[{p:3,a:false},{p:5,a:true}], ar:[], ml:[{p:1,a:true}], mc:[{p:4,a:false},{p:1,a:true}], mr:[{p:3,a:false}], dl:[{p:4,a:false}], dc:[{p:3,a:false},{p:1,a:true}], dr:[{p:4,a:false}] },
+  OP062: { tp:35, gk:{p:6,g:1}, al:[], ac:[{p:5,a:true}], ar:[{p:3,a:false}], ml:[{p:4,a:false}], mc:[{p:1,a:true},{p:1,a:true}], mr:[{p:3,a:false}], dl:[], dc:[{p:4,a:false},{p:1,a:true},{p:4,a:false}], dr:[{p:3,a:false}] },
+  OP063: { tp:35, gk:{p:6,g:1}, al:[{p:5,a:true}], ac:[{p:3,a:false}], ar:[], ml:[{p:1,a:true}], mc:[{p:4,a:false},{p:3,a:false}], mr:[{p:1,a:true}], dl:[{p:4,a:false}], dc:[{p:3,a:false},{p:1,a:true}], dr:[{p:4,a:false}] },
+  OP064: { tp:35, gk:{p:6,g:1}, al:[], ac:[{p:3,a:false}], ar:[{p:5,a:true}], ml:[{p:3,a:false}], mc:[{p:1,a:true},{p:4,a:false},{p:1,a:true}], mr:[], dl:[{p:1,a:true}], dc:[{p:4,a:false},{p:4,a:false}], dr:[{p:3,a:false}] },
 };
 
-if (typeof module !== 'undefined' && module.exports) module.exports = { NPC_CARDS };
+if (typeof module !== 'undefined') {
+    module.exports = { NPC_CARDS };
+}
