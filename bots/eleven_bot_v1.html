@@ -528,6 +528,18 @@ function switchTab(tabId){
 const areas = ['al', 'ac', 'ar', 'ml', 'mc', 'mr', 'dl', 'dc', 'dr'];
 const AREA_I18N_KEY = { al:'zoneAl', ac:'zoneAc', ar:'zoneAr', ml:'zoneMl', mc:'zoneMc', mr:'zoneMr', dl:'zoneDl', dc:'zoneDc', dr:'zoneDr' };
 
+// Historical squad numbering: shirt 1 is reserved for the Goalkeeper (not
+// shown as a shirt input, GK has no Zone), outfield shirts are ascending
+// Defense -> Mid -> Attack, left to right within each row, starting at 2.
+const SHIRT_NUMBERING_ORDER = ['dl', 'dc', 'dr', 'ml', 'mc', 'mr', 'al', 'ac', 'ar'];
+
+function renumberShirts(prefix){
+  let shirt = 2;
+  SHIRT_NUMBERING_ORDER.forEach(area=>{
+    document.querySelectorAll(`#${prefix}-${area}-list .player-entry .p-shirt`).forEach(input=>{ input.value = shirt++; });
+  });
+}
+
 function createAreaUI(containerId, prefix){
   const container = document.getElementById(containerId);
   container.classList.add('setup-pitch');
@@ -565,7 +577,7 @@ function addPlayer(prefix, area, opts){
     <span data-i18n="lblType"></span> <select class="p-type"><option value="att" data-i18n="optAttacker"></option><option value="def" data-i18n="optDefender"></option></select>
     <span data-i18n="lblShirt"></span> <input type="number" value="1" min="1" max="99" class="p-shirt">
     <span data-i18n="lblZone"></span> <select class="p-zone">${areas.map(a=>`<option value="${a}" data-i18n="${AREA_I18N_KEY[a]}"></option>`).join('')}</select>
-    <button onclick="this.parentElement.remove()">✕</button>
+    <button onclick="removePlayerEntry(this, '${prefix}')">✕</button>
   `;
   list.appendChild(div);
   div.querySelector('.p-zone').value = area;
@@ -579,6 +591,12 @@ function addPlayer(prefix, area, opts){
     div.classList.add('type-att');
   }
   applyI18n();
+  renumberShirts(prefix);
+}
+
+function removePlayerEntry(btn, prefix){
+  btn.parentElement.remove();
+  renumberShirts(prefix);
 }
 
 function moveEntryToZone(entryEl, prefix, newArea){
@@ -586,6 +604,7 @@ function moveEntryToZone(entryEl, prefix, newArea){
   const zoneSelect = entryEl.querySelector('.p-zone');
   if(zoneSelect) zoneSelect.value = newArea;
   applyI18n();
+  renumberShirts(prefix);
 }
 
 createAreaUI('pl-areas', 'pl');
@@ -606,7 +625,6 @@ function loadOpponentCard(){
   if(!card) return;
   document.getElementById('npc-gk-pow').value = card.gk.p;
   document.getElementById('npc-gk-gloves').value = card.gk.g;
-  let shirt = 1;
   areas.forEach(area=>{
     const list = document.getElementById(`npc-${area}-list`);
     list.innerHTML = '';
@@ -614,7 +632,6 @@ function loadOpponentCard(){
       addPlayer('npc', area, { isAttacker: p.a });
       const entry = list.lastElementChild;
       entry.querySelector('.p-pow').value = p.p;
-      entry.querySelector('.p-shirt').value = shirt++;
     });
   });
 }
