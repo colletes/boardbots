@@ -16,27 +16,33 @@ const ElevenSolver = {
     
     AREAS: ['Left', 'Right', 'Attack', 'Mid', 'Defense'],
 
-    calculatePossible: function(attackingTeam, defendingTeam, area) {
-        // attacking: array of players in that area that are attackers
-        // defending: array of players in that area that are defenders
-        const attacking = (attackingTeam[area] || []).filter(p => p.isAttacker);
-        const defending = (defendingTeam[area] || []).filter(p => !p.isAttacker);
+    // Per the rulebook, Sections face their mirrored counterpart (Opponent card
+    // is placed upside down): your Left Wing faces their Right Wing, your Central
+    // Forwards face their Central Defenders, and so on. Central Midfield mirrors itself.
+    OPPOSING_AREA: { Left: 'Right', Right: 'Left', Attack: 'Defense', Defense: 'Attack', Mid: 'Mid' },
+
+    calculatePossible: function(attackingTeam, defendingTeam, attackArea) {
+        const defenseArea = this.OPPOSING_AREA[attackArea];
+        // attacking: players in the attacking Team's Section that are attackers
+        // defending: players in the defending Team's MIRRORED Section that are defenders
+        const attacking = (attackingTeam[attackArea] || []).filter(p => p.isAttacker);
+        const defending = (defendingTeam[defenseArea] || []).filter(p => !p.isAttacker);
 
         if (attacking.length === 0) return [];
         if (defending.length === 0) return attacking;
 
-        let defPowers = defending.map(p => p.power);
-        
-        // Stack of attackers
-        let attStack = [...attacking];
+        // Sort both ascending and greedily give each attacker (weakest first) the
+        // smallest defender that can still block them. This is the optimal
+        // assignment (fewest goals possible, per the rules) and, unlike a plain
+        // first-fit scan, doesn't depend on the order Players were entered in.
+        let defPowers = defending.map(p => p.power).sort((a, b) => a - b);
+        let attackers = [...attacking].sort((a, b) => a.power - b.power);
         let goalkickers = [];
 
-        while (attStack.length > 0) {
-            let attacker = attStack.pop();
-            let defId = 0;
+        for (let attacker of attackers) {
             let goalkick = true;
 
-            for (; defId < defPowers.length; defId++) {
+            for (let defId = 0; defId < defPowers.length; defId++) {
                 if (defPowers[defId] >= attacker.power) {
                     defPowers.splice(defId, 1);
                     goalkick = false;
