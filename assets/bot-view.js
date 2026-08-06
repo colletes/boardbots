@@ -5,7 +5,7 @@ import { app, CONFIGURED } from './firebase-init.js';
 
 const FILE_TO_BOT = {
   'stone_age_bot_v2.html': 'stoneage',
-  'Colletes-hoth_bot_RC3.html': 'hoth',
+  'Colletes-hoth_bot_RC6.html': 'hoth',
   'Heroscape_bot_v2.html': 'heroscape',
   'Mystic_Vale_bot_v02.html': 'mysticvale',
   'mick_bot_RC2.html': 'mick',
@@ -14,7 +14,8 @@ const FILE_TO_BOT = {
   'cafe_baras_bot_v1.html': 'cafebaras',
   'arknova_arno_bot_v1.html': 'arknova',
   'sanctuary_bot_v2.html': 'sanctuary',
-  'eleven_bot_v1.html': 'eleven'
+  'eleven_bot_v1.html': 'eleven',
+  'memoir44_bot_v3.html': 'memoir44'
 };
 
 if (CONFIGURED) {
