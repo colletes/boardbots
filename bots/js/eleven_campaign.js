@@ -270,8 +270,8 @@ const STORY_ARCS = [
             title: 'A Base do Futuro',
             stages: [
                 { label: 'Plantando Sementes', text: 'A diretoria do {team} decidiu apostar nas categorias de base para reduzir gastos e criar uma identidade própria. {fact} Cabe a você começar a transformar Novatos promissores em peças do time principal.' },
-                { label: 'Crescendo Dentro de Campo', text: 'Os primeiros Novatos promovidos no {team} ainda cometem erros de inexperiência, mas mostram lampejos de talento. {fact} É hora de ter paciência com o processo que você mesmo escolheu seguir.' },
-                { label: 'Colhendo Frutos', text: 'Os primeiros Novatos promovidos no {team} já começam a mostrar serviço no time principal. {fact} É hora de aprofundar a aposta na base e provar que o projeto de formação é sustentável.' },
+                { label: 'Crescendo Dentro de Campo', text: 'Os primeiros Novatos treinados no {team} ainda cometem erros de inexperiência, mas mostram lampejos de talento. {fact} É hora de ter paciência com o processo que você mesmo escolheu seguir.' },
+                { label: 'Colhendo Frutos', text: 'Os primeiros Novatos treinados no {team} já começam a mostrar serviço no time principal. {fact} É hora de aprofundar a aposta na base e provar que o projeto de formação é sustentável.' },
                 { label: 'Consolidando o Projeto', text: 'O projeto de base do {team} começa a se consolidar como a verdadeira identidade do clube. {fact} Falta pouco para a nova geração assumir de vez o protagonismo.' },
                 { label: 'A Nova Geração', text: 'Chegou a temporada em que a nova geração do {team}, formada nas categorias de base, precisa assumir de vez o protagonismo. {fact} Mostre que apostar nos próprios jogadores foi a decisão certa.' }
             ]
@@ -494,7 +494,7 @@ const MAIN_OBJECTIVES = [
     },
     {
         appliesDiv: () => true,
-        pt: (d, esc) => `Promova pelo menos ${pickNum(d, 2, 3, 4, esc)} Novatos ao time principal durante a temporada.`,
+        pt: (d, esc) => `Passe pelo menos ${pickNum(d, 2, 3, 4, esc)} Novatos para o Time Principal durante a temporada.`,
         en: (d, esc) => `Promote at least ${pickNum(d, 2, 3, 4, esc)} Youngsters to the first team during the season.`
     },
     {
@@ -528,7 +528,7 @@ const SECONDARY_OBJECTIVES = [
         en: (d, esc) => `Sign at least ${pickNum(d, 1, 2, 3, esc)} Sponsors during the season.`
     },
     {
-        pt: (d, esc) => `Contrate pelo menos ${pickNum(d, 2, 3, 4, esc)} Novatos, promovidos ou não.`,
+        pt: (d, esc) => `Contrate pelo menos ${pickNum(d, 2, 3, 4, esc)} Novatos, treinados ou não.`,
         en: (d, esc) => `Sign at least ${pickNum(d, 2, 3, 4, esc)} Youngsters, promoted or not.`
     },
     {
