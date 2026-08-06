@@ -5,7 +5,7 @@ import { app, CONFIGURED } from './firebase-init.js';
 
 const FILE_TO_BOT = {
   'stone_age_bot_v2.html': 'stoneage',
-  'Colletes-hoth_bot_RC6.html': 'hoth',
+  'Colletes-hoth_bot_RC8.html': 'hoth',
   'Heroscape_bot_v2.html': 'heroscape',
   'Mystic_Vale_bot_v02.html': 'mysticvale',
   'mick_bot_RC2.html': 'mick',
