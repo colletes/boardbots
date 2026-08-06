@@ -1,0 +1,1435 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Command HQ - Memoir '44 Bot</title>
+    <style>
+        :root {
+            --allied-color: #7fd858; --axis-color: #8fb0c4; --glow: #7fd858;
+            --bg: #070907; --card-w: 270px; --card-h: 420px;
+        }
+        html { -webkit-text-size-adjust: 100%; }
+        body {
+            background: var(--bg); color: var(--glow); font-family: 'Courier New', monospace;
+            margin: 0; overflow: hidden; display: flex; flex-direction: column; height: 100vh; height: 100dvh;
+            -webkit-tap-highlight-color: transparent;
+            padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right);
+        }
+        button, select, .clickable-name { touch-action: manipulation; }
+
+        .stars { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; background: radial-gradient(circle at center, #10140d 0%, #070907 100%); z-index: -2; }
+        #starfield-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: -1; opacity: 0.9; }
+
+        /* Introducao estilo boletim de guerra / newsreel */
+        .crawl-overlay {
+            position: fixed; inset: 0; background: #000; z-index: 1000;
+            overflow: hidden; display: flex; justify-content: center;
+        }
+        .crawl-logo {
+            position: absolute; top: 8%; color: #ffcf6b; font-size: 2.2em; letter-spacing: 6px;
+            text-shadow: 0 0 20px #ffcf6b; opacity: 0; animation: crawlLogoFade 4s ease-in-out forwards;
+        }
+        .crawl-viewport { perspective: 350px; width: 90%; max-width: 800px; height: 100%; overflow: hidden; position: relative; }
+        .crawl-text {
+            position: absolute; top: 100%; left: 0; width: 100%; color: #e9e4d3; text-align: center;
+            font-size: 1.7em; line-height: 1.7; transform-origin: 50% 100%; transform: rotateX(28deg);
+            animation: crawlMove 32s linear 3.5s forwards;
+        }
+        .crawl-text h2 { letter-spacing: 3px; margin-bottom: 30px; }
+        @keyframes crawlMove { 0% { top: 100%; } 100% { top: -650%; } }
+        @keyframes crawlLogoFade { 0% { opacity: 0; } 15% { opacity: 1; } 70% { opacity: 1; } 100% { opacity: 0; } }
+        .skip-crawl {
+            position: absolute; bottom: max(30px, env(safe-area-inset-bottom)); right: max(30px, env(safe-area-inset-right)); border-color: #666; color: #999; z-index: 1001;
+        }
+
+        /* Icones de faccao (arte vetorial original: estrela de invasao aliada / cruz do Eixo) */
+        .faction-btn { display: flex; flex-direction: column; align-items: center; gap: 8px; background: transparent; }
+        .faction-icon { width: 46px; height: 46px; }
+        .btn-axis .faction-icon { fill: none; stroke: var(--axis-color); }
+        .btn-allied .faction-icon { fill: none; stroke: var(--allied-color); }
+
+        .faction-col { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+        .setup-options { display: flex; flex-wrap: wrap; justify-content: center; gap: 18px; margin: 16px 0; }
+        .setup-option { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 0.8em; letter-spacing: 0.5px; }
+        .setup-option select { min-width: 200px; }
+
+        .physical-setup { margin: 20px auto 6px; max-width: 700px; border: 1px solid var(--glow); border-radius: 6px; background: rgba(0,0,0,0.5); padding: 4px 16px; }
+        .physical-setup summary { cursor: pointer; padding: 12px 0; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; font-size: 0.85em; }
+        .physical-setup .physical-setup-body { padding-bottom: 16px; font-size: 0.85em; color: #b9c9b0; line-height: 1.5; }
+        .physical-setup .physical-setup-body ol { padding-left: 22px; }
+        .physical-setup .physical-setup-body li { margin-bottom: 8px; }
+
+        .top-controls {
+            position: absolute; top: max(18px, env(safe-area-inset-top)); right: max(18px, env(safe-area-inset-right)); display: flex; gap: 10px; z-index: 5;
+        }
+        .top-controls button { padding: 10px 16px; font-size: 0.8em; letter-spacing: 1px; min-height: 40px; }
+
+        .rules-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.88); z-index: 1002;
+            display: flex; align-items: center; justify-content: center; padding: 20px;
+        }
+        .rules-panel {
+            background: rgba(10, 18, 8, 0.98); border: 1px solid var(--glow); border-radius: 6px;
+            max-width: 900px; max-height: 85vh; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 30px; position: relative;
+            box-shadow: 0 0 40px rgba(127,216,88,0.2);
+        }
+        .rules-close { position: absolute; top: 14px; right: 14px; padding: 10px 16px; min-height: 40px; }
+        .rules-panel h2 { color: #fff; letter-spacing: 2px; margin-top: 0; text-align: center; }
+        .rules-panel h3 { color: var(--glow); margin-bottom: 4px; font-size: 1em; text-transform: uppercase; letter-spacing: 1px; }
+        .rules-panel h4 { color: #ffcf6b; margin: 22px 0 10px; letter-spacing: 2px; border-bottom: 1px dashed rgba(255,255,255,0.2); padding-bottom: 6px; }
+        .rules-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+        .rules-grid p { color: #b9c9b0; font-size: 0.9em; line-height: 1.4; margin: 0; }
+        body::before {
+            content: " "; position: fixed; top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            background-size: 100% 3px, 2px 100%; pointer-events: none; z-index: 10;
+        }
+
+        .main-interface { display: flex; flex-direction: column; align-items: center; padding: 20px; flex: 1; justify-content: center; }
+        #view-setup { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 4px 6px; }
+
+        .screen-panel {
+            border: 2px solid var(--glow); background: rgba(6, 12, 4, 0.85);
+            width: 98%; max-width: 1400px; padding: 25px 25px max(25px, env(safe-area-inset-bottom)) 25px; box-shadow: 0 0 40px rgba(127,216,88,0.15), inset 0 0 20px rgba(127,216,88,0.1);
+            position: relative; border-radius: 4px; display: flex; flex-direction: column; height: 88vh;
+        }
+
+        .hand-container {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px; margin-top: 10px; flex-grow: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 20px 10px;
+            align-content: center; justify-items: center; transition: 0.3s;
+        }
+
+        .hand-container.deciding .card { opacity: 0.3; filter: grayscale(60%); transform: scale(0.95); }
+        .hand-container.deciding .card.active {
+            opacity: 1; filter: none; transform: scale(1.05);
+            border-color: #fff; box-shadow: 0 0 40px var(--glow); z-index: 100;
+            background: rgba(14, 26, 10, 1);
+        }
+
+        .card {
+            width: 100%; max-width: var(--card-w); height: var(--card-h);
+            background: rgba(10, 18, 8, 0.95); border: 1px solid var(--glow); border-radius: 6px;
+            position: relative; transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); padding: 18px; font-size: 0.8em;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.8); display: flex; flex-direction: column;
+        }
+
+        .card-header { font-weight: bold; border-bottom: 2px solid var(--glow); padding-bottom: 8px; margin-bottom: 12px; height: 45px; text-transform: uppercase; color: #fff; font-size: 1.1em; line-height: 1.1; }
+        .card-priority { color: var(--glow); font-weight: bold; margin-bottom: 12px; border: 1px solid var(--glow); display: inline-block; padding: 4px 10px; font-size: 0.85em; background: rgba(127, 216, 88, 0.1); border-radius: 3px; }
+        .card-body { color: #b9c9b0; line-height: 1.4; font-style: italic; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px dashed rgba(255,255,255,0.2); }
+
+        .card-tactics { display: flex; flex-direction: column; gap: 6px; font-size: 0.95em; color: #fff; margin-top: auto; }
+        .tree-line { background: rgba(0, 0, 0, 0.4); padding: 7px 10px; border-left: 3px solid var(--glow); border-radius: 0 4px 4px 0; line-height: 1.35; display: flex; gap: 8px; align-items: baseline; }
+        .tree-num { color: var(--glow); font-weight: 700; font-size: 0.82em; min-width: 1.6em; flex-shrink: 0; opacity: 0.9; }
+        .tree-body { flex: 1; }
+        .tree-cond { color: var(--glow); font-weight: 700; }
+        .tree-tie { display: block; margin-top: 3px; font-size: 0.8em; font-style: italic; opacity: 0.72; }
+        .tree-note { font-size: 0.8em; font-style: italic; opacity: 0.7; padding: 0 2px; }
+
+        .scenario-intel {
+            margin: 12px 0 4px; padding: 12px 16px; background: rgba(0,0,0,0.5);
+            border: 1px solid var(--glow); border-radius: 6px; font-size: 0.82em; line-height: 1.45;
+        }
+        .scenario-intel.hidden { display: none; }
+        .scenario-intel-group { margin-bottom: 10px; }
+        .scenario-intel-group:last-child { margin-bottom: 0; }
+        .scenario-intel-title {
+            color: #ffcf6b; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;
+            font-size: 0.85em; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;
+        }
+        .scenario-intel-title svg { width: 15px; height: 15px; flex-shrink: 0; }
+        .scenario-intel-item {
+            color: #dceedc; margin-bottom: 6px; padding-left: 8px; border-left: 2px solid var(--glow);
+        }
+        .scenario-intel-item:last-child { margin-bottom: 0; }
+        .scenario-intel-group.group-watch .scenario-intel-item { border-left-color: #ff8c00; }
+
+        .dynamic-control-panel {
+            margin-top: 15px; padding: 20px; background: rgba(0,0,0,0.6);
+            border: 1px solid var(--glow); border-radius: 6px;
+            display: flex; align-items: center; justify-content: center; gap: 20px;
+            min-height: 50px;
+        }
+
+        .control-message { font-size: 1.2em; color: #fff; letter-spacing: 1px; }
+
+        .section-choice-wrap { display: flex; flex-direction: column; align-items: center; gap: 14px; width: 100%; }
+        .section-rate-hint { font-size: 0.85em; color: #b9c9b0; text-align: center; max-width: 520px; line-height: 1.4; }
+        .section-rate-grid { display: flex; gap: 18px; flex-wrap: wrap; justify-content: center; }
+        .section-rate-col { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+        .section-rate-col label { font-size: 0.8em; text-transform: uppercase; letter-spacing: 1px; color: var(--glow); }
+        .section-rate-col input { width: 64px; text-align: center; background: rgba(0,0,0,0.5); border: 1px solid var(--glow); color: #fff; padding: 10px 4px; font-size: 1.1em; border-radius: 4px; font-family: inherit; }
+        .section-result-highlight { font-size: 1.15em; color: #ffcf6b; font-weight: bold; text-align: center; }
+
+        button { background: transparent; color: var(--glow); border: 1px solid var(--glow); padding: 12px 35px; cursor: pointer; text-transform: uppercase; font-weight: bold; transition: 0.2s; letter-spacing: 2px; font-family: inherit; min-height: 44px; }
+        .btn-confirm { background: rgba(127, 216, 88, 0.15); }
+
+        .axis-mode { --glow: var(--axis-color); }
+        .axis-mode .btn-confirm { background: rgba(143, 176, 196, 0.15); }
+
+        .hidden { display: none !important; }
+        @media (hover: hover) and (pointer: fine) {
+            button:hover { background: var(--glow); color: #000; box-shadow: 0 0 20px var(--glow); }
+            .btn-confirm:hover { background: var(--glow); }
+            .axis-mode .btn-confirm:hover { background: var(--axis-color); }
+            .clickable-name:hover { color: #ffcf6b; text-shadow: 0 0 10px #ffcf6b; }
+        }
+
+        .lang-switch { position: absolute; top: max(18px, env(safe-area-inset-top)); left: max(18px, env(safe-area-inset-left)); display: flex; gap: 6px; z-index: 5; }
+        .lang-switch button { padding: 8px 14px; font-size: 0.75em; min-height: 36px; }
+        .lang-switch button.active { background: var(--glow); color: #000; }
+
+        .btn-help-float {
+            position: fixed; bottom: max(18px, env(safe-area-inset-bottom)); right: max(18px, env(safe-area-inset-right)); z-index: 60;
+            width: 48px; height: 48px; border-radius: 50%;
+            background: rgba(127, 216, 88, 0.15); color: var(--glow); border: 1px solid var(--glow); font-weight: 800; font-size: 1.3em;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.6); cursor: pointer;
+        }
+        .axis-mode .btn-help-float { background: rgba(143, 176, 196, 0.15); }
+
+        .bmc-inline{ display:flex; justify-content:center; margin-top:14px; }
+        .bmc-inline a{ display:inline-flex; align-items:center; gap:8px; background:#FFDD00; color:#000; font-weight:700; font-size:0.85em; padding:9px 16px; border-radius:8px; text-decoration:none; box-shadow:0 4px 14px rgba(0,0,0,0.6); transition:transform 0.15s; }
+        .bmc-inline a:hover{ transform:scale(1.05); }
+        .bmc-inline svg{ width:18px; height:18px; flex-shrink:0; }
+
+        @media (max-width: 700px) {
+            .lang-switch { position: static; margin: 10px 0 0 10px; }
+            .top-controls { position: static; margin: 14px auto 0; flex-wrap: wrap; justify-content: center; }
+            .title-row { margin-top: 16px; flex-wrap: wrap; }
+            .title-row h1 { letter-spacing: 3px !important; font-size: 1.25em !important; }
+        }
+
+        .modal-tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 18px; }
+        .modal-tabs button { padding: 10px 20px; font-size: 0.8em; }
+        .modal-tabs button.active { background: var(--glow); color: #000; }
+        .modal-tab-panel.hidden { display: none; }
+
+        #log { font-size: 0.85em; height: 40px; overflow-y: auto; -webkit-overflow-scrolling: touch; border-top: 1px dashed rgba(255,255,255,0.1); margin-top: 15px; padding-top: 10px; color: #8caa88; text-align: center; font-style: italic;}
+        select { background: #000; color: var(--glow); border: 1px solid var(--glow); padding: 12px; width: 100%; margin-bottom: 20px; font-family: inherit; font-size: 16px; }
+
+        .clickable-name { cursor: pointer; text-decoration: underline; transition: 0.3s; }
+
+        @keyframes fadeSlideUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .card { animation: fadeSlideUp 0.35s ease both; }
+        .rules-panel { animation: fadeSlideUp 0.25s ease both; }
+        .icon-inline { width: 1.3em; height: 1.3em; vertical-align: -0.28em; margin-right: 5px; flex-shrink: 0; }
+        .title-row { display: flex; align-items: center; justify-content: center; gap: 14px; margin: 0 0 10px 0; }
+        .m44-logo-thumb { width: 44px; height: 44px; object-fit: cover; border-radius: 8px; border: 1px solid var(--glow); box-shadow: 0 0 12px rgba(127,216,88,0.3); flex-shrink: 0; }
+        .axis-mode .m44-logo-thumb { box-shadow: 0 0 12px rgba(143,176,196,0.3); }
+        .credits-row { position: relative; flex-shrink: 0; margin-top: 10px; padding-top: 8px; border-top: 1px dashed rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: flex-end; gap: 8px; font-size: 0.62em; opacity: 0.8; letter-spacing: 0.3px; }
+        .credits-row * { pointer-events: auto; }
+        .credits-row .credits-thumb { width: 26px; height: 26px; object-fit: cover; border-radius: 5px; border: 1px solid var(--glow); flex-shrink: 0; }
+        .credits-row .credits-text { text-align: right; line-height: 1.3; }
+        .credits-row .credits-text a { color: var(--glow); text-decoration: none; }
+        .credits-row .credits-text a:hover { text-decoration: underline; }
+        #btn-ambient .icon-inline.hidden { display: none; }
+    </style>
+</head>
+<body id="app-body">
+    <div id="crawl-overlay" class="crawl-overlay">
+        <div class="crawl-logo">COMMAND HQ</div>
+        <div class="crawl-viewport">
+            <div class="crawl-text">
+                <h2 data-i18n="crawlEpisode">BOLETIM DE GUERRA</h2>
+                <p data-i18n="crawlP1">Uma nova ofensiva começa. Dos campos da Normandia às Ardenas, forças do Eixo e Aliadas se enfrentam numa guerra que decidirá o destino de nações.</p>
+                <p data-i18n="crawlP2">O COMMAND HQ foi ativado para dirigir as táticas de qualquer um dos lados, avaliando cada carta de comando com precisão militar.</p>
+                <p data-i18n="crawlP3">Comandante, o resultado desta batalha está em suas mãos. Emita suas ordens...</p>
+            </div>
+        </div>
+        <button class="skip-crawl" onclick="skipCrawl()" data-i18n="skipCrawlBtn">PULAR INTRODUÇÃO</button>
+    </div>
+    <div class="stars"></div>
+    <canvas id="starfield-canvas"></canvas>
+    <div class="lang-switch">
+        <button id="langBtnPt" onclick="setLang('pt')">PT</button>
+        <button id="langBtnEn" onclick="setLang('en')">EN</button>
+    </div>
+    <button class="btn-help-float" onclick="toggleRules('help')" aria-label="Help">?</button>
+    <div id="rules-reference" class="rules-overlay hidden">
+        <div class="rules-panel">
+            <button class="rules-close" onclick="toggleRules()" data-i18n="rulesClose">✕ FECHAR</button>
+            <h2 data-i18n="modalTitle">📖 COMMAND HQ — AJUDA E REFERÊNCIA</h2>
+            <div class="modal-tabs">
+                <button class="modal-tab" id="tabBtnHelp" onclick="switchModalTab('help')" data-i18n="tabHelp">Como Usar o App</button>
+                <button class="modal-tab" id="tabBtnRules" onclick="switchModalTab('rules')" data-i18n="tabRules">Regras Rápidas</button>
+            </div>
+
+            <div id="tabPanelHelp" class="modal-tab-panel">
+                <div data-i18n-html="helpBody"></div>
+            </div>
+
+            <div id="tabPanelRules" class="modal-tab-panel hidden">
+                <h4 data-i18n="terrainHeading">Terreno</h4>
+                <div class="rules-grid">
+                    <div><h3 data-i18n="terrainForestTitle">Florestas &amp; Cercas-vivas</h3><p data-i18n="terrainForestDesc">Quem entra deve parar e não pode atacar naquele turno. Defesa: infantaria -1 dado, blindados -2 dados; artilharia não é afetada. Bloqueia LDV. Cercas-vivas só podem ser adentradas/deixadas a partir de um hexágono adjacente.</p></div>
+                    <div><h3 data-i18n="terrainHillTitle">Colinas</h3><p data-i18n="terrainHillDesc">Sem restrição de movimento/ataque. Defesa: -1 dado (exceto artilharia) se o atacante estiver em altura menor. Bloqueia LDV, exceto entre unidades a partir da altura 1. Colinas íngremes: subir custa 2 hexágonos de movimento.</p></div>
+                    <div><h3 data-i18n="terrainCityTitle">Cidades, Vilas &amp; Igrejas</h3><p data-i18n="terrainCityDesc">Quem entra deve parar e não pode atacar naquele turno. Blindados atacando de dentro: -2 dados. Defesa: infantaria -1, blindados -2; artilharia não é afetada. Bloqueia LDV. Igrejas seguem a mesma regra, mas a unidade também ignora 1 bandeira.</p></div>
+                    <div><h3 data-i18n="terrainRiverTitle">Rios, Lagos &amp; Pontes</h3><p data-i18n="terrainRiverDesc">Rios e lagos são intransponíveis, salvo regra especial do cenário; não bloqueiam LDV (lagos bloqueiam a partir de 2 hexágonos adjacentes). Pontes permitem atravessar como terreno aberto, mas só podem ser adentradas/deixadas a partir de um hexágono de terra.</p></div>
+                    <div><h3 data-i18n="terrainBeachTitle">Praias, Oceano &amp; Falésias</h3><p data-i18n="terrainBeachDesc">Entrar numa praia limita o movimento total a 2 hexágonos naquele turno. Oceano: quem entra para e não ataca; não pode se retirar para lá (sofre baixa). Falésias/penhascos: só infantaria sobe/desce (2 hexágonos), demais unidades não passam; fora isso, tratam como colina comum.</p></div>
+                    <div><h3 data-i18n="terrainBunkerTitle">Casamatas</h3><p data-i18n="terrainBunkerDesc">Intransponíveis para blindados e artilharia (que não podem sair se começarem lá dentro). Defesa: infantaria -1, blindados -2; artilharia não é afetada; a unidade ignora 1 bandeira. Bloqueia LDV. Alguns cenários restringem seu uso a um lado.</p></div>
+                    <div><h3 data-i18n="terrainWireTitle">Cavalos-de-Frisa &amp; Arame Farpado</h3><p data-i18n="terrainWireDesc">Cavalos-de-frisa: sem restrição para infantaria, intransponível para as demais unidades; infantaria defensora ignora 1 bandeira. Arame farpado: quem entra para; infantaria atacante -1 dado (ou pode remover o arame em vez de atacar); blindados devem remover o arame ao entrar, mas ainda atacam. Nenhum bloqueia LDV.</p></div>
+                    <div><h3 data-i18n="terrainSandbagTitle">Sacos de Areia &amp; Quebra-mares</h3><p data-i18n="terrainSandbagDesc">Defesa: infantaria e blindados -1 dado; a unidade ignora 1 bandeira a cada ataque sofrido (não cumulativo com o terreno). Não bloqueia LDV. Quebra-mares são permanentes; sacos de areia comuns são removidos quando o ocupante os utiliza para ignorar uma bandeira.</p></div>
+                </div>
+                <h4 data-i18n="forcesHeading">Forças Especiais</h4>
+                <div class="rules-grid">
+                    <div id="ref-unit-eliteInfantry"><h3><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l2.5 5.5L20 9l-4 4 1 6-5-3-5 3 1-6-4-4 5.5-.5L12 3Z"/></svg><span data-i18n="forceEliteInfantryTitle">Infantaria de Elite</span></h3><p data-i18n="forceEliteInfantryDesc">Movem 2 hexágonos e ainda atacam (infantaria comum move 1 e ataca, ou move 2 sem atacar). Continuam sujeitas às restrições de terreno normalmente (ex.: param e não atacam se entrarem numa floresta).</p></div>
+                    <div id="ref-unit-frenchResistance"><h3><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20l7-7M20 4l-7 7M4 4l16 16"/></svg><span data-i18n="forceFrenchTitle">Resistência Francesa</span></h3><p data-i18n="forceFrenchDesc">Sempre podem atacar mesmo após entrar em terreno restritivo (floresta, vila, cerca-viva); ao se retirar, recuam de 1 a 3 hexágonos por bandeira (não apenas 1); começam com 3 miniaturas (não 4). Mas, se optarem por mover 2 hexágonos, não podem atacar naquele turno.</p></div>
+                    <div id="ref-unit-eliteArmor"><h3><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 15h18M5 15l1-4h12l1 4M9 11V8h6v3"/><circle cx="7" cy="18" r="1.5"/><circle cx="17" cy="18" r="1.5"/></svg><span data-i18n="forceEliteArmorTitle">Blindados de Elite</span></h3><p data-i18n="forceEliteArmorDesc">Começam com 4 miniaturas de tanque em vez das 3 padrão — absorvem 1 baixa extra antes de perder força de combate.</p></div>
+                </div>
+                <h4 data-i18n="objectivesHeading">Tipos de Objetivo</h4>
+                <div class="rules-grid">
+                    <div><h3 data-i18n="objTempTitle">Medalha Temporária</h3><p data-i18n="objTempDesc">Capturada ao entrar no hexágono-objetivo; mantida só enquanto uma unidade do lado certo o ocupar. Se a unidade sair por qualquer motivo, a medalha volta imediatamente ao jogo.</p></div>
+                    <div><h3 data-i18n="objPermTitle">Medalha Permanente</h3><p data-i18n="objPermDesc">Ganha para sempre assim que uma unidade do lado certo entra no hexágono — não é devolvida mesmo que a unidade saia depois.</p></div>
+                    <div><h3 data-i18n="objMajorityTitle">Maioria de Medalhas Temporárias</h3><p data-i18n="objMajorityDesc">Vai para o lado que controla mais hexágonos do grupo-objetivo do que o adversário; é perdida imediatamente assim que esse lado deixa de ter a maioria.</p></div>
+                    <div><h3 data-i18n="objSuddenTitle">Morte Súbita</h3><p data-i18n="objSuddenDesc">Assim que o lado designado cumprir a condição especial indicada, a partida termina imediatamente e esse lado vence, não importa a contagem normal de medalhas.</p></div>
+                </div>
+                <h4 data-i18n="tieBreakHeading">Critérios de Desempate</h4>
+                <div class="rules-grid">
+                    <div><h3><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/></svg><span data-i18n="tieBreakTargetTitle">Escolha de Alvo</span></h3><p data-i18n="tieBreakTargetDesc">Se vários alvos são igualmente válidos, decida nesta ordem: (1) Unidade mais valiosa/perigosa (Blindados, Artilharia, Forças Especiais); (2) Menor proteção de terreno (mais fácil de acertar); (3) Mais próxima; (4) Se ainda empatado, sorteie (dado/moeda).</p></div>
+                    <div><h3><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12h14M13 6l6 6-6 6"/></svg><span data-i18n="tieBreakMoveTitle">Escolha de Movimento</span></h3><p data-i18n="tieBreakMoveDesc">Se vários destinos são igualmente válidos, prefira nesta ordem: (1) Objetivo ameaçado/não controlado de maior valor; (2) Melhor cobertura; (3) Mais distante do inimigo (defensivo) ou mais próxima (ofensivo), conforme a tática da carta; (4) Sorteie se ainda empatado.</p></div>
+                    <div><h3><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6l12 12M18 6L6 18"/></svg><span data-i18n="tieBreakNoEffectTitle">Ação Sem Efeito</span></h3><p data-i18n="tieBreakNoEffectDesc">Se a ação de uma tática não mudaria nada (já controla o objetivo, nenhum alvo ao alcance, mover não melhora a posição), trate essa tática como não aplicável e siga para a próxima carta por prioridade.</p></div>
+                    <div><h3><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="7" r="3"/><path d="M2 21v-2a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v2"/><path d="M17 8l2 2 4-4"/></svg><span data-i18n="tieBreakUnitTitle">Escolha de Unidade</span></h3><p data-i18n="tieBreakUnitDesc">Se a carta NÃO menciona Esquerda/Centro/Direita, ela é flexível: escolha livremente quaisquer unidades elegíveis em qualquer parte do tabuleiro. Priorize nesta ordem: (1) Unidades que já atacam um alvo exposto de alto valor; (2) Unidades que mais se beneficiam do bônus da carta; (3) Unidades com força total, salvo se a tática favorecer recuar/reforçar unidades desgastadas; (4) Sorteie se ainda empatado.</p></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="main-interface">
+        <div class="screen-panel">
+            <div class="top-controls">
+                <button onclick="toggleRules('rules')" id="btn-rules"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5c3 0 6 1 8 3v11c-2-2-5-3-8-3V5Z"/><path d="M20 5c-3 0-6 1-8 3v11c2-2 5-3 8-3V5Z"/></svg><span data-i18n="btnRules">REGRAS RÁPIDAS</span></button>
+                <button onclick="toggleAmbient()" id="btn-ambient">
+                    <svg id="icon-ambient-off" class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 9v6h4l5 4V5L8 9H4Z"/><path d="M17 9a5 5 0 0 1 0 6"/></svg>
+                    <svg id="icon-ambient-on" class="icon-inline hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 9v6h4l5 4V5L8 9H4Z"/><path d="M15 9a5 5 0 0 1 0 6"/><path d="M18 6a9 9 0 0 1 0 12"/></svg>
+                    <span id="ambient-label" data-i18n="btnAmbient">SOM AMBIENTE</span>
+                </button>
+            </div>
+            <div class="title-row">
+                <img src="../assets/art/memoir44.webp" alt="Memoir '44" class="m44-logo-thumb">
+                <h1 style="text-align: center; margin: 0; letter-spacing: 8px; font-size: 1.6em;">★ COMMAND HQ ★</h1>
+            </div>
+
+            <!-- VIEW DE SETUP -->
+            <div id="view-setup">
+                <p style="text-align: center; opacity: 0.7;" data-i18n="calibrating">[CALIBRANDO PARÂMETROS DA MISSÃO]</p>
+                <select id="sel-scenario"></select>
+
+                <div class="setup-options">
+                    <label class="setup-option">
+                        <span data-i18n="difficultyLabel">DIFICULDADE</span>
+                        <select id="sel-difficulty">
+                            <option value="easy" data-i18n="difficultyEasy">Fácil (-1 carta na mão)</option>
+                            <option value="normal" selected data-i18n="difficultyNormal">Normal</option>
+                            <option value="hard" data-i18n="difficultyHard">Difícil (+1 carta na mão)</option>
+                        </select>
+                    </label>
+                </div>
+
+                <div style="display: flex; justify-content: center; gap: 30px; flex-wrap: wrap;">
+                    <div class="faction-col">
+                        <button class="faction-btn btn-axis" onclick="playGunfire(); initGame('axis')">
+                            <svg class="faction-icon" viewBox="0 0 100 100" stroke-width="4"><circle cx="50" cy="50" r="42"/><path d="M38 14h24v24h24v24H62v24H38V62H14V38h24Z"/></svg>
+                            <span data-i18n="btnAxis">COMANDAR O EIXO</span>
+                        </button>
+                    </div>
+                    <div class="faction-col">
+                        <button class="faction-btn btn-allied" onclick="playGunfire(); initGame('allies')">
+                            <svg class="faction-icon" viewBox="0 0 100 100" stroke-width="4"><circle cx="50" cy="50" r="42"/><path d="M50 14 L59 40 L86 40 L64 56 L73 82 L50 66 L27 82 L36 56 L14 40 L41 40 Z"/></svg>
+                            <span data-i18n="btnAllies">COMANDAR OS ALIADOS</span>
+                        </button>
+                    </div>
+                </div>
+
+                <details class="physical-setup">
+                    <summary data-i18n="physicalSetupTitle">Configuração Física do Jogo</summary>
+                    <div class="physical-setup-body" data-i18n-html="physicalSetupBodyHtml"></div>
+                </details>
+            </div>
+
+            <!-- VIEW DO JOGO -->
+            <div id="view-game" class="hidden" style="display: flex; flex-direction: column; height: 100%;">
+                <div style="display: flex; justify-content: space-between; font-size: 0.85em; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
+                    <span id="txt-scenario"></span>
+                    <span id="txt-deck-status"></span>
+                </div>
+
+                <div class="scenario-intel hidden" id="scenario-intel"></div>
+
+                <div class="hand-container" id="bot-hand"></div>
+
+                <div class="dynamic-control-panel" id="control-panel"></div>
+
+                <div id="log" data-i18n="logWaitingOrders">Aguardando ordens táticas...</div>
+            </div>
+
+            <div class="credits-row">
+                <img src="../assets/art/memoir44.webp" alt="Memoir '44" class="credits-thumb">
+                <div class="credits-text" data-i18n-html="creditsHtml"></div>
+            </div>
+
+            <a class="bmc-inline" href="https://www.buymeacoffee.com/colletes" target="_blank" rel="noopener" aria-label="Buy me a coffee"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h13a2 2 0 0 1 2 2v1a3 3 0 0 1-3 3h-1"/><path d="M4 8h13v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V8Z"/><path d="M8 3c-.6 1 .5 1.6 0 3M12 3c-.6 1 .5 1.6 0 3"/></svg><span data-i18n="bmcBtn">Me pague um café</span></a>
+        </div>
+    </div>
+
+<script>
+    document.addEventListener('touchstart', function(){}, {passive: true});
+
+    const LANG_KEY = 'boardbots_lang';
+    let lang = localStorage.getItem(LANG_KEY) || 'pt';
+
+    const I18N = {
+        pt: {
+            crawlEpisode: "BOLETIM DE GUERRA",
+            crawlP1: "Uma nova ofensiva começa. Dos campos da Normandia às Ardenas, forças do Eixo e Aliadas se enfrentam numa guerra que decidirá o destino de nações.",
+            crawlP2: "O COMMAND HQ foi ativado para dirigir as táticas de qualquer um dos lados, avaliando cada carta de comando com precisão militar.",
+            crawlP3: "Comandante, o resultado desta batalha está em suas mãos. Emita suas ordens...",
+            skipCrawlBtn: "PULAR INTRODUÇÃO",
+            btnRules: "REGRAS RÁPIDAS",
+            btnAmbient: "SOM AMBIENTE",
+            btnAmbientOn: "SOM AMBIENTE (ATIVO)",
+            calibrating: "[CALIBRANDO PARÂMETROS DA MISSÃO]",
+            difficultyLabel: "DIFICULDADE",
+            difficultyEasy: "Fácil (-1 carta na mão)",
+            difficultyNormal: "Normal",
+            difficultyHard: "Difícil (+1 carta na mão)",
+            physicalSetupTitle: "Configuração Física do Jogo",
+            physicalSetupBodyHtml: `<ol>
+                <li>Escolha uma batalha em um dos livros de cenários (as 17 batalhas já cadastradas neste app estão listadas no menu acima).</li>
+                <li>Posicione o tabuleiro modular no centro da mesa, seguindo o mapa de terreno do cenário escolhido.</li>
+                <li>Posicione os hexágonos de terreno especiais indicados pelo cenário (colinas, cidades, rios, praias etc.).</li>
+                <li>Posicione as miniaturas de cada lado conforme o diagrama de posicionamento do cenário.</li>
+                <li>Adicione quaisquer obstáculos (casamatas, pontes, cavalos-de-frisa, arame farpado, sacos de areia) indicados pelo cenário.</li>
+                <li>Adicione insígnias de forças especiais e marcadores de medalha de vitória aos hexágonos-objetivo, conforme as regras especiais do cenário.</li>
+                <li>Embaralhe TODO o baralho de cartas de comando (um único baralho, compartilhado pelos dois lados) e distribua a cada jogador a quantidade de cartas indicada nas notas do cenário (mão dos Aliados / mão do Eixo), mantendo-as em segredo do adversário.</li>
+                <li>Coloque o restante do baralho virado para baixo perto do tabuleiro, ao alcance de ambos os jogadores, para compras futuras.</li>
+                <li>Determine quem joga primeiro, conforme indicado pelo cenário.</li>
+                <li>O primeiro jogador joga sua primeira carta de comando e inicia o turno.</li>
+            </ol>
+            <p style="opacity:0.7; font-style:italic;">A partir daqui, este app ajuda a avaliar as cartas de comando do lado controlado pelo bot.</p>`,
+            btnAxis: "COMANDAR O EIXO",
+            btnAllies: "COMANDAR OS ALIADOS",
+            scenarioPrefix: "CENÁRIO: ",
+            firstMoveAxis: " — Eixo joga primeiro",
+            firstMoveAllies: " — Aliados jogam primeiro",
+            medalsToWin: (n) => ` — ${n} medalhas para vencer`,
+            scenarioIntelFocusTitle: "Prioridades desta Missão",
+            scenarioIntelSharedTitle: "Objetivo Disputado (ambos os lados)",
+            scenarioIntelWatchTitle: "Fique Atento — Condição do Adversário",
+            handStatus: (h, m, d) => `MÃO: ${h}/${m} | DECK: ${d}`,
+            logWaitingOrders: "Aguardando ordens táticas...",
+            idleLog: "Aguardando início do turno...",
+            btnAnalyze: "ANALISAR DECISÃO DO BOT",
+            btnEndMission: "ENCERRAR MISSÃO",
+            questionCanPlay: (name) => `É possível jogar <b>${name}</b> no tabuleiro?`,
+            btnYesPlay: "SIM (JOGAR)",
+            btnNoNext: "NÃO (PRÓXIMA)",
+            evaluatingLog: "Verifique as Táticas na carta em destaque. Condições permitem a ordem?",
+            actionDoneHtml: (name) => `Ação Concluída: <b>${name}</b>`,
+            btnNewTurn: "NOVO TURNO",
+            noValidPlaysMsg: "O Bot não possui jogadas válidas.",
+            btnDiscardPass: "DESCARTAR E PASSAR TURNO",
+            noActionLog: "Sem opções táticas. A mão inteira será descartada.",
+            priorityLabel: "PRIORIDADE ",
+            sectionChooseTitle: (name) => `Qual seção ativar com <b>${name}</b>?`,
+            sectionPickHint: (n) => `Escolha ${n} seção(ões). Dê uma nota de 0 a 5 para cada seção com base no valor/oportunidade dos alvos, depois calcule.`,
+            sectionLeftLabel: "Esquerda",
+            sectionCenterLabel: "Centro",
+            sectionRightLabel: "Direita",
+            btnCalcSections: "CALCULAR PRIORIDADE",
+            sectionRecommendedLabel: "Recomendado: ",
+            btnConfirmSections: "CONFIRMAR E EXECUTAR",
+            btnBackToCard: "◀ VOLTAR",
+            sectionChooseLog: "Avalie cada seção do tabuleiro e calcule qual priorizar.",
+            creditsHtml: `Feito por <span class="clickable-name" onclick="playArtilleryBoom()">Thiago Colletes de Carvalho</span> (<a href="mailto:colletes@gmail.com">colletes@gmail.com</a>) e Gemini — 100% conteúdo, táticas e app originais do autor, para <em>Memoir '44</em>. Memoir '44 criado por Richard Borg, © Days of Wonder (edição em português por Galápagos Jogos). Conteúdo de cenários também consultou o compêndio não-oficial "Western Front Scenario Compilation" de Derek "Whaleyland" Whaley. Uso pessoal, sem fins comerciais.`,
+            bmcBtn: 'Me pague um café',
+            rulesClose: "✕ FECHAR",
+            modalTitle: "📖 COMMAND HQ — AJUDA E REFERÊNCIA",
+            tabHelp: "Como Usar o App",
+            tabRules: "Regras Rápidas",
+            helpBody: `<p>O <strong>Command HQ</strong> é um assistente de decisão para jogar contra um "bot" em <em>Memoir '44</em> (Days of Wonder / Richard Borg). Ele assume que você já conhece as regras básicas do jogo físico — o app só decide o que o bot faz.</p>
+                <h4>Como jogar</h4>
+                <ol>
+                    <li>Na tela inicial, escolha o cenário (entre as 17 batalhas cadastradas) e a facção que o bot vai comandar (Aliados ou Eixo). Opcionalmente ajuste a <b>Dificuldade</b> (Fácil = bot joga com 1 carta a menos na mão; Difícil = 1 a mais).</li>
+                    <li>O bot recebe uma mão de cartas de comando, cada uma com um número de <b>Prioridade</b>. <strong>Quanto MENOR o número, mais urgente a carta</strong> — uma carta de PRIORIDADE 1 é sempre avaliada antes de uma de PRIORIDADE 4.</li>
+                    <li>A cada turno, toque em <b>ANALISAR DECISÃO DO BOT</b>: o app destaca a carta mais urgente ainda não descartada na mão.</li>
+                    <li>Leia o texto e as Táticas da carta destacada e decida, com base no tabuleiro físico, se a condição é satisfeita.</li>
+                    <li>Se sim, toque em <b>SIM (JOGAR)</b> e execute a ação indicada no tabuleiro. Se não, toque em <b>NÃO (PRÓXIMA)</b> para avaliar a próxima carta por prioridade.</li>
+                    <li>Algumas cartas (Reconhecimento, Sondagem, Ataque, Assalto) já trazem impressa uma seção fixa (Esquerda, Centro ou Direita) — não há escolha a fazer, apenas confira se aquela seção específica tem um alvo elegível.</li>
+                    <li>Só a carta "Assalto de Infantaria" permite escolher QUAL seção ativar — o app pede uma nota de 0 a 5 para cada seção com base nos alvos visíveis no tabuleiro físico e recomenda a melhor.</li>
+                    <li>Cartas que não mencionam Esquerda/Centro/Direita (ex.: "Diretamente do QG") são flexíveis — escolha livremente quaisquer unidades elegíveis em qualquer parte do tabuleiro. Consulte <b>Escolha de Unidade</b> na aba Regras Rápidas.</li>
+                    <li>Duas cartas são reativas: <b>Contra-Ataque</b> só faz sentido logo após seu oponente jogar uma carta (espelhando a mesma ordem), e <b>Emboscada</b> só pode ser jogada no instante em que o oponente declarar um Assalto Corpo a Corpo, antes de rolar os dados dele.</li>
+                    <li>Se duas ou mais opções parecerem igualmente válidas, consulte <b>Critérios de Desempate</b> na aba Regras Rápidas.</li>
+                    <li>Se nenhuma carta puder ser jogada, o app avisa e permite descartar a mão inteira e passar o turno.</li>
+                </ol>
+                <p>Use a aba <b>Regras Rápidas</b> a qualquer momento para consultar terreno, forças especiais, tipos de objetivo e critérios de desempate.</p>`,
+            terrainHeading: "Terreno",
+            terrainForestTitle: "Florestas & Cercas-vivas",
+            terrainForestDesc: "Quem entra deve parar e não pode atacar naquele turno. Defesa: infantaria -1 dado, blindados -2 dados; artilharia não é afetada. Bloqueia LDV. Cercas-vivas só podem ser adentradas/deixadas a partir de um hexágono adjacente.",
+            terrainHillTitle: "Colinas",
+            terrainHillDesc: "Sem restrição de movimento/ataque. Defesa: -1 dado (exceto artilharia) se o atacante estiver em altura menor. Bloqueia LDV, exceto entre unidades a partir da altura 1. Colinas íngremes: subir custa 2 hexágonos de movimento.",
+            terrainCityTitle: "Cidades, Vilas & Igrejas",
+            terrainCityDesc: "Quem entra deve parar e não pode atacar naquele turno. Blindados atacando de dentro: -2 dados. Defesa: infantaria -1, blindados -2; artilharia não é afetada. Bloqueia LDV. Igrejas seguem a mesma regra, mas a unidade também ignora 1 bandeira.",
+            terrainRiverTitle: "Rios, Lagos & Pontes",
+            terrainRiverDesc: "Rios e lagos são intransponíveis, salvo regra especial do cenário; não bloqueiam LDV (lagos bloqueiam a partir de 2 hexágonos adjacentes). Pontes permitem atravessar como terreno aberto, mas só podem ser adentradas/deixadas a partir de um hexágono de terra.",
+            terrainBeachTitle: "Praias, Oceano & Falésias",
+            terrainBeachDesc: "Entrar numa praia limita o movimento total a 2 hexágonos naquele turno. Oceano: quem entra para e não ataca; não pode se retirar para lá (sofre baixa). Falésias/penhascos: só infantaria sobe/desce (2 hexágonos), demais unidades não passam; fora isso, tratam como colina comum.",
+            terrainBunkerTitle: "Casamatas",
+            terrainBunkerDesc: "Intransponíveis para blindados e artilharia (que não podem sair se começarem lá dentro). Defesa: infantaria -1, blindados -2; artilharia não é afetada; a unidade ignora 1 bandeira. Bloqueia LDV. Alguns cenários restringem seu uso a um lado.",
+            terrainWireTitle: "Cavalos-de-Frisa & Arame Farpado",
+            terrainWireDesc: "Cavalos-de-frisa: sem restrição para infantaria, intransponível para as demais unidades; infantaria defensora ignora 1 bandeira. Arame farpado: quem entra para; infantaria atacante -1 dado (ou pode remover o arame em vez de atacar); blindados devem remover o arame ao entrar, mas ainda atacam. Nenhum bloqueia LDV.",
+            terrainSandbagTitle: "Sacos de Areia & Quebra-mares",
+            terrainSandbagDesc: "Defesa: infantaria e blindados -1 dado; a unidade ignora 1 bandeira a cada ataque sofrido (não cumulativo com o terreno). Não bloqueia LDV. Quebra-mares são permanentes; sacos de areia comuns são removidos quando o ocupante os utiliza para ignorar uma bandeira.",
+            forcesHeading: "Forças Especiais",
+            forceEliteInfantryTitle: "Infantaria de Elite",
+            forceEliteInfantryDesc: "Movem 2 hexágonos e ainda atacam (infantaria comum move 1 e ataca, ou move 2 sem atacar). Continuam sujeitas às restrições de terreno normalmente (ex.: param e não atacam se entrarem numa floresta).",
+            forceFrenchTitle: "Resistência Francesa",
+            forceFrenchDesc: "Sempre podem atacar mesmo após entrar em terreno restritivo (floresta, vila, cerca-viva); ao se retirar, recuam de 1 a 3 hexágonos por bandeira (não apenas 1); começam com 3 miniaturas (não 4). Mas, se optarem por mover 2 hexágonos, não podem atacar naquele turno.",
+            forceEliteArmorTitle: "Blindados de Elite",
+            forceEliteArmorDesc: "Começam com 4 miniaturas de tanque em vez das 3 padrão — absorvem 1 baixa extra antes de perder força de combate.",
+            objectivesHeading: "Tipos de Objetivo",
+            objTempTitle: "Medalha Temporária",
+            objTempDesc: "Capturada ao entrar no hexágono-objetivo; mantida só enquanto uma unidade do lado certo o ocupar. Se a unidade sair por qualquer motivo, a medalha volta imediatamente ao jogo.",
+            objPermTitle: "Medalha Permanente",
+            objPermDesc: "Ganha para sempre assim que uma unidade do lado certo entra no hexágono — não é devolvida mesmo que a unidade saia depois.",
+            objMajorityTitle: "Maioria de Medalhas Temporárias",
+            objMajorityDesc: "Vai para o lado que controla mais hexágonos do grupo-objetivo do que o adversário; é perdida imediatamente assim que esse lado deixa de ter a maioria.",
+            objSuddenTitle: "Morte Súbita",
+            objSuddenDesc: "Assim que o lado designado cumprir a condição especial indicada, a partida termina imediatamente e esse lado vence, não importa a contagem normal de medalhas.",
+            tieBreakHeading: "Critérios de Desempate",
+            tieBreakTargetTitle: "Escolha de Alvo",
+            tieBreakTargetDesc: "Se vários alvos são igualmente válidos, decida nesta ordem: (1) Unidade mais valiosa/perigosa (Blindados, Artilharia, Forças Especiais); (2) Menor proteção de terreno (mais fácil de acertar); (3) Mais próxima; (4) Se ainda empatado, sorteie (dado/moeda).",
+            tieBreakMoveTitle: "Escolha de Movimento",
+            tieBreakMoveDesc: "Se vários destinos são igualmente válidos, prefira nesta ordem: (1) Objetivo ameaçado/não controlado de maior valor; (2) Melhor cobertura; (3) Mais distante do inimigo (defensivo) ou mais próxima (ofensivo), conforme a tática da carta; (4) Sorteie se ainda empatado.",
+            tieBreakNoEffectTitle: "Ação Sem Efeito",
+            tieBreakNoEffectDesc: "Se a ação de uma tática não mudaria nada (já controla o objetivo, nenhum alvo ao alcance, mover não melhora a posição), trate essa tática como não aplicável e siga para a próxima carta por prioridade.",
+            tieBreakUnitTitle: "Escolha de Unidade",
+            tieBreakUnitDesc: "Se a carta NÃO menciona Esquerda/Centro/Direita, ela é flexível: escolha livremente quaisquer unidades elegíveis em qualquer parte do tabuleiro. Priorize nesta ordem: (1) Unidades que já atacam um alvo exposto de alto valor; (2) Unidades que mais se beneficiam do bônus da carta; (3) Unidades com força total, salvo se a tática favorecer recuar/reforçar unidades desgastadas; (4) Sorteie se ainda empatado."
+        },
+        en: {
+            crawlEpisode: "WAR BULLETIN",
+            crawlP1: "A new offensive begins. From the fields of Normandy to the Ardennes, Axis and Allied forces clash in a war that will decide the fate of nations.",
+            crawlP2: "COMMAND HQ has been activated to direct the tactics of either side, evaluating every command card with military precision.",
+            crawlP3: "Commander, the outcome of this battle rests in your hands. Issue your orders...",
+            skipCrawlBtn: "SKIP INTRODUCTION",
+            btnRules: "QUICK RULES",
+            btnAmbient: "AMBIENT SOUND",
+            btnAmbientOn: "AMBIENT SOUND (ON)",
+            calibrating: "[CALIBRATING MISSION PARAMETERS]",
+            difficultyLabel: "DIFFICULTY",
+            difficultyEasy: "Easy (-1 card in hand)",
+            difficultyNormal: "Normal",
+            difficultyHard: "Hard (+1 card in hand)",
+            physicalSetupTitle: "Physical Game Setup",
+            physicalSetupBodyHtml: `<ol>
+                <li>Select a battle from one of the scenario books (the 17 battles already loaded in this app are listed in the menu above).</li>
+                <li>Place the modular board in the center of the table, matching the chosen scenario's terrain map.</li>
+                <li>Place the special terrain hexes indicated by the scenario (hills, cities, rivers, beaches, etc.).</li>
+                <li>Place each side's miniatures according to the scenario's setup diagram.</li>
+                <li>Add any obstacles (bunkers, bridges, Czech hedgehogs, barbed wire, sandbags) indicated by the scenario.</li>
+                <li>Add special forces badges and victory medal markers to the objective hexes, per the scenario's special rules.</li>
+                <li>Shuffle the ENTIRE command card deck (a single deck, shared by both sides) and deal each player the number of cards indicated in the scenario notes (Allied hand / Axis hand), keeping them secret from the opponent.</li>
+                <li>Place the remaining deck face down near the board, within reach of both players, for future draws.</li>
+                <li>Determine who moves first, as indicated by the scenario.</li>
+                <li>The first player plays their first command card and begins the turn.</li>
+            </ol>
+            <p style="opacity:0.7; font-style:italic;">From here on, this app helps evaluate the command cards for the side the bot is controlling.</p>`,
+            btnAxis: "COMMAND THE AXIS",
+            btnAllies: "COMMAND THE ALLIES",
+            scenarioPrefix: "SCENARIO: ",
+            firstMoveAxis: " — Axis moves first",
+            firstMoveAllies: " — Allies move first",
+            medalsToWin: (n) => ` — ${n} medals to win`,
+            scenarioIntelFocusTitle: "Priorities for This Mission",
+            scenarioIntelSharedTitle: "Contested Objective (both sides)",
+            scenarioIntelWatchTitle: "Watch Out — Enemy's Condition",
+            handStatus: (h, m, d) => `HAND: ${h}/${m} | DECK: ${d}`,
+            logWaitingOrders: "Awaiting tactical orders...",
+            idleLog: "Awaiting start of turn...",
+            btnAnalyze: "ANALYZE BOT DECISION",
+            btnEndMission: "END MISSION",
+            questionCanPlay: (name) => `Can <b>${name}</b> be played on the board?`,
+            btnYesPlay: "YES (PLAY)",
+            btnNoNext: "NO (NEXT)",
+            evaluatingLog: "Check the Tactics on the highlighted card. Do conditions allow the order?",
+            actionDoneHtml: (name) => `Action Completed: <b>${name}</b>`,
+            btnNewTurn: "NEW TURN",
+            noValidPlaysMsg: "The Bot has no valid plays.",
+            btnDiscardPass: "DISCARD AND PASS TURN",
+            noActionLog: "No tactical options. The entire hand will be discarded.",
+            priorityLabel: "PRIORITY ",
+            sectionChooseTitle: (name) => `Which section should <b>${name}</b> activate?`,
+            sectionPickHint: (n) => `Choose ${n} section(s). Rate each section 0–5 based on target value/opportunity, then calculate.`,
+            sectionLeftLabel: "Left",
+            sectionCenterLabel: "Center",
+            sectionRightLabel: "Right",
+            btnCalcSections: "CALCULATE PRIORITY",
+            sectionRecommendedLabel: "Recommended: ",
+            btnConfirmSections: "CONFIRM & EXECUTE",
+            btnBackToCard: "◀ BACK",
+            sectionChooseLog: "Rate each board section and calculate which to prioritize.",
+            creditsHtml: `Made by <span class="clickable-name" onclick="playArtilleryBoom()">Thiago Colletes de Carvalho</span> (<a href="mailto:colletes@gmail.com">colletes@gmail.com</a>) and Gemini — 100% original content, tactics and app by the author, for <em>Memoir '44</em>. Memoir '44 designed by Richard Borg, © Days of Wonder (Portuguese edition by Galápagos Jogos). Scenario content also referenced the unofficial "Western Front Scenario Compilation" by Derek "Whaleyland" Whaley. Personal, non-commercial use.`,
+            bmcBtn: 'Buy me a coffee',
+            rulesClose: "✕ CLOSE",
+            modalTitle: "📖 COMMAND HQ — HELP & REFERENCE",
+            tabHelp: "How to Use the App",
+            tabRules: "Quick Rules",
+            helpBody: `<p><strong>Command HQ</strong> is a decision-assistant for playing against a "bot" in <em>Memoir '44</em> (Days of Wonder / Richard Borg). It assumes you already know the physical game's base rules — the app only decides what the bot does.</p>
+                <h4>How to play</h4>
+                <ol>
+                    <li>On the start screen, choose the scenario (among the 17 loaded battles) and the faction the bot will command (Allies or Axis). Optionally adjust the <b>Difficulty</b> (Easy = bot plays with 1 fewer card in hand; Hard = 1 more).</li>
+                    <li>The bot receives a hand of command cards, each with a <b>Priority</b> number. <strong>The LOWER the number, the more urgent the card</strong> — a PRIORITY 1 card is always evaluated before a PRIORITY 4 one.</li>
+                    <li>Each turn, tap <b>ANALYZE BOT DECISION</b>: the app highlights the most urgent not-yet-discarded card in hand.</li>
+                    <li>Read the text and Tactics on the highlighted card and decide, based on the physical board, whether the condition is met.</li>
+                    <li>If yes, tap <b>YES (PLAY)</b> and carry out the indicated action on the board. If not, tap <b>NO (NEXT)</b> to evaluate the next card by priority.</li>
+                    <li>Some cards (Recon, Probe, Attack, Assault) already print a fixed section (Left, Center or Right) on the card itself — there's no choice to make, just check whether that specific section has an eligible target.</li>
+                    <li>Only the "Infantry Assault" card lets you choose WHICH section to activate — the app asks you to rate each section 0–5 based on the targets visible on the physical board and recommends the best one.</li>
+                    <li>Cards that don't mention Left/Center/Right (e.g. "Direct from HQ") are flexible — freely pick any eligible units anywhere on the board. Check <b>Unit Selection</b> in the Quick Rules tab.</li>
+                    <li>Two cards are reactive: <b>Counter-Attack</b> only makes sense right after your opponent plays a card (mirroring that same order), and <b>Ambush</b> can only be played the instant your opponent declares a Close Assault, before they roll their dice.</li>
+                    <li>If two or more options seem equally valid, check <b>Tie-Break Priorities</b> in the Quick Rules tab.</li>
+                    <li>If no card can be played, the app will let you know and lets you discard the whole hand and pass the turn.</li>
+                </ol>
+                <p>Use the <b>Quick Rules</b> tab at any time to check terrain, special forces, objective types, and tie-break rules.</p>`,
+            terrainHeading: "Terrain",
+            terrainForestTitle: "Forests & Hedgerows",
+            terrainForestDesc: "Whoever enters must stop and cannot attack that turn. Defense: infantry -1 die, armor -2 dice; artillery unaffected. Blocks LOS. Hedgerows can only be entered/exited from an adjacent hex.",
+            terrainHillTitle: "Hills",
+            terrainHillDesc: "No movement/attack restriction. Defense: -1 die (except artillery) if the attacker is at a lower height. Blocks LOS, except between units at height 1+. Steep hills: climbing costs 2 movement hexes.",
+            terrainCityTitle: "Cities, Villages & Churches",
+            terrainCityDesc: "Whoever enters must stop and cannot attack that turn. Armor attacking from inside: -2 dice. Defense: infantry -1, armor -2; artillery unaffected. Blocks LOS. Churches follow the same rule but the unit also ignores 1 flag.",
+            terrainRiverTitle: "Rivers, Lakes & Bridges",
+            terrainRiverDesc: "Rivers and lakes are impassable unless a scenario special rule says otherwise; they don't block LOS (lakes block from 2 adjacent hexes onward). Bridges allow crossing as open ground, but may only be entered/exited from a land hex.",
+            terrainBeachTitle: "Beaches, Ocean & Sea Bluffs",
+            terrainBeachDesc: "Moving into a beach hex limits total movement to 2 hexes that turn. Ocean: whoever enters stops and cannot attack; units cannot retreat into it (they take a loss instead). Sea bluffs/cliffs: only infantry can climb/descend (2 hexes), other units cannot pass; otherwise treated as a regular hill.",
+            terrainBunkerTitle: "Bunkers",
+            terrainBunkerDesc: "Impassable to armor and artillery (which cannot leave if they start inside one). Defense: infantry -1, armor -2; artillery unaffected; the unit ignores 1 flag. Blocks LOS. Some scenarios restrict use to one side.",
+            terrainWireTitle: "Czech Hedgehogs & Barbed Wire",
+            terrainWireDesc: "Czech hedgehogs: no restriction for infantry, impassable for all other units; defending infantry ignores 1 flag. Barbed wire: whoever enters must stop; attacking infantry -1 die (or may remove the wire instead of attacking); armor must remove the wire on entry but can still attack. Neither blocks LOS.",
+            terrainSandbagTitle: "Sandbags & Breakwaters",
+            terrainSandbagDesc: "Defense: infantry and armor -1 die; the unit ignores 1 flag per attack suffered (not cumulative with terrain). Doesn't block LOS. Breakwaters are permanent; regular sandbags are removed once the occupant uses them to ignore a flag.",
+            forcesHeading: "Special Forces",
+            forceEliteInfantryTitle: "Elite Infantry",
+            forceEliteInfantryDesc: "Move 2 hexes and still attack (regular infantry moves 1 and attacks, or moves 2 without attacking). Still subject to terrain restrictions normally (e.g. stop and can't attack if entering a forest).",
+            forceFrenchTitle: "French Resistance",
+            forceFrenchDesc: "Can always attack even after entering restrictive terrain (forest, village, hedgerow); when retreating, fall back 1 to 3 hexes per flag (not just 1); start with 3 figures (not 4). But if they choose to move 2 hexes, they cannot attack that turn.",
+            forceEliteArmorTitle: "Elite Armor",
+            forceEliteArmorDesc: "Start with 4 tank miniatures instead of the standard 3 — absorb 1 extra hit before losing combat effectiveness.",
+            objectivesHeading: "Objective Types",
+            objTempTitle: "Temporary Medal",
+            objTempDesc: "Captured by entering the objective hex; held only while a unit of the right side occupies it. If the unit leaves for any reason, the medal immediately returns to play.",
+            objPermTitle: "Permanent Medal",
+            objPermDesc: "Won forever the moment a unit of the right side enters the hex — not returned even if the unit leaves afterward.",
+            objMajorityTitle: "Majority of Temporary Medals",
+            objMajorityDesc: "Goes to the side controlling more hexes of the objective group than the opponent; immediately lost as soon as that side no longer holds the majority.",
+            objSuddenTitle: "Sudden Death",
+            objSuddenDesc: "As soon as the designated side meets the special condition indicated, the game ends immediately and that side wins, regardless of the normal medal count.",
+            tieBreakHeading: "Tie-Break Priorities",
+            tieBreakTargetTitle: "Target Selection",
+            tieBreakTargetDesc: "If several targets are equally valid, decide in this order: (1) Most valuable/dangerous unit (Armor, Artillery, Special Forces); (2) Lowest terrain cover (easiest to hit); (3) Closest; (4) If still tied, randomize (die/coin flip).",
+            tieBreakMoveTitle: "Movement Selection",
+            tieBreakMoveDesc: "If several destination hexes are equally valid, prefer in this order: (1) Highest-value threatened/uncontrolled objective; (2) Best cover; (3) Farthest from the enemy (defensive) or closest (offensive), depending on the card's tactic; (4) Randomize if still tied.",
+            tieBreakNoEffectTitle: "No-Effect Action",
+            tieBreakNoEffectDesc: "If a tactic's action would change nothing (already controls the objective, no target in range, moving doesn't improve position), treat that tactic as not applicable and move to the next card by priority.",
+            tieBreakUnitTitle: "Unit Selection",
+            tieBreakUnitDesc: "If the card does NOT mention Left/Center/Right, it's flexible: freely pick any eligible units anywhere on the board. Prioritize in this order: (1) Units that can already attack a high-value exposed target; (2) Units that benefit most from the card's bonus; (3) Full-strength units, unless the tactic favors retreating/reinforcing depleted ones; (4) If still tied, randomize."
+        }
+    };
+
+    function S() { return I18N[lang]; }
+    function tr(obj) { return (obj && (obj[lang] || obj.pt)) ?? ''; }
+
+    function applyI18n() {
+        document.documentElement.lang = lang === 'pt' ? 'pt-br' : 'en';
+        document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = S()[el.dataset.i18n]; });
+        document.querySelectorAll('[data-i18n-html]').forEach(el => { el.innerHTML = S()[el.dataset.i18nHtml]; });
+        document.getElementById('langBtnPt').classList.toggle('active', lang === 'pt');
+        document.getElementById('langBtnEn').classList.toggle('active', lang === 'en');
+        if (ambientNode) document.getElementById('ambient-label').innerText = S().btnAmbientOn;
+    }
+
+    function setLang(l) {
+        lang = l;
+        localStorage.setItem(LANG_KEY, l);
+        applyI18n();
+        rebuildScenarioSelect();
+        if (currentFaction) {
+            document.getElementById('txt-scenario').innerText = scenarioStatusLine(scenarios.find(s => s.id === currentScenarioId));
+            renderScenarioIntel(currentScenarioId, currentFaction);
+            updateUI();
+            if (currentControlState === 'evaluating') {
+                evaluateCurrentCard();
+            } else if (currentControlState) {
+                setControlState(currentControlState, currentControlParam);
+            }
+        }
+    }
+
+    const quotes = {
+        axis: {
+            pt: ["Vorwärts, Kameraden!", "Halten Sie die Stellung a qualquer custo.", "A vitória será nossa."],
+            en: ["Forward, comrades!", "Hold the position at all costs.", "Victory will be ours."]
+        },
+        allies: {
+            pt: ["Segurem a linha, homens.", "Avancem e assegurem o objetivo.", "Pela liberdade!"],
+            en: ["Hold the line, men.", "Advance and secure the objective.", "For freedom!"]
+        }
+    };
+
+    // --- INTRODUÇÃO ESTILO BOLETIM DE GUERRA ---
+    function skipCrawl() {
+        const overlay = document.getElementById('crawl-overlay');
+        if (!overlay) return;
+        overlay.style.transition = 'opacity 0.6s';
+        overlay.style.opacity = '0';
+        setTimeout(() => overlay.remove(), 650);
+    }
+    setTimeout(skipCrawl, 36000);
+
+    // --- FUMAÇA/BRASAS FLUTUANTES DE FUNDO ---
+    function initStarfield() {
+        const canvas = document.getElementById('starfield-canvas');
+        const ctx = canvas.getContext('2d');
+        function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+        resize(); window.addEventListener('resize', resize);
+        const embers = Array.from({ length: 90 }, () => ({
+            x: Math.random() * canvas.width, y: canvas.height + Math.random() * canvas.height,
+            r: Math.random() * 1.6 + 0.4, speed: Math.random() * 0.3 + 0.05, drift: (Math.random() - 0.5) * 0.3, alpha: Math.random()
+        }));
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            embers.forEach(s => {
+                s.alpha += (Math.random() - 0.5) * 0.04;
+                s.alpha = Math.max(0.15, Math.min(0.85, s.alpha));
+                ctx.globalAlpha = s.alpha;
+                ctx.fillStyle = '#ffb347';
+                ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2); ctx.fill();
+                s.y -= s.speed; s.x += s.drift;
+                if (s.y < 0) { s.y = canvas.height; s.x = Math.random() * canvas.width; }
+            });
+            ctx.globalAlpha = 1;
+            requestAnimationFrame(draw);
+        }
+        draw();
+    }
+    initStarfield();
+
+    // --- EFEITOS SONOROS (Web Audio, sem arquivos externos) ---
+    let audioCtxShared, ambientNode = null;
+    function getAudioCtx() {
+        if (!audioCtxShared) audioCtxShared = new (window.AudioContext || window.webkitAudioContext)();
+        return audioCtxShared;
+    }
+
+    function playGunfire() {
+        const ctx = getAudioCtx();
+        const t = ctx.currentTime;
+        const master = ctx.createGain(); master.gain.value = 0.32; master.connect(ctx.destination);
+
+        const burstCount = 2 + Math.floor(Math.random() * 3);
+        let cursor = 0;
+        for (let i = 0; i < burstCount; i++) {
+            const t0 = t + cursor;
+            const dur = 0.05 + Math.random() * 0.03;
+            const buffer = ctx.createBuffer(1, ctx.sampleRate * dur, ctx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let j = 0; j < buffer.length; j++) data[j] = (Math.random() * 2 - 1) * (1 - j / buffer.length);
+            const noise = ctx.createBufferSource(); noise.buffer = buffer;
+            const filt = ctx.createBiquadFilter(); filt.type = 'bandpass'; filt.frequency.value = 1400 + Math.random() * 800; filt.Q.value = 1.2;
+            const g = ctx.createGain(); g.gain.setValueAtTime(0.5, t0); g.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+            const thump = ctx.createOscillator(); thump.type = 'sine'; thump.frequency.setValueAtTime(90, t0); thump.frequency.exponentialRampToValueAtTime(45, t0 + dur);
+            const thumpGain = ctx.createGain(); thumpGain.gain.setValueAtTime(0.4, t0); thumpGain.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+            noise.connect(filt); filt.connect(g); g.connect(master);
+            thump.connect(thumpGain); thumpGain.connect(master);
+            noise.start(t0); noise.stop(t0 + dur + 0.01);
+            thump.start(t0); thump.stop(t0 + dur + 0.01);
+            cursor += dur + 0.03 + Math.random() * 0.05;
+        }
+    }
+
+    function playArtilleryBoom() {
+        const ctx = getAudioCtx();
+        function boom(delaySec) {
+            const t0 = ctx.currentTime + delaySec;
+            const duration = 1.3;
+            const buffer = ctx.createBuffer(1, ctx.sampleRate * duration, ctx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < buffer.length; i++) data[i] = Math.random() * 2 - 1;
+            const noise = ctx.createBufferSource(); noise.buffer = buffer;
+            const filter = ctx.createBiquadFilter(); filter.type = 'lowpass'; filter.frequency.setValueAtTime(400, t0); filter.frequency.exponentialRampToValueAtTime(60, t0 + duration);
+            const rumble = ctx.createOscillator(); rumble.type = 'sine'; rumble.frequency.setValueAtTime(55, t0);
+            const g = ctx.createGain();
+            g.gain.setValueAtTime(0, t0);
+            g.gain.linearRampToValueAtTime(0.5, t0 + 0.04);
+            g.gain.exponentialRampToValueAtTime(0.01, t0 + duration);
+            const rg = ctx.createGain();
+            rg.gain.setValueAtTime(0, t0); rg.gain.linearRampToValueAtTime(0.3, t0 + 0.05); rg.gain.exponentialRampToValueAtTime(0.01, t0 + duration);
+            noise.connect(filter); filter.connect(g); g.connect(ctx.destination);
+            rumble.connect(rg); rg.connect(ctx.destination);
+            noise.start(t0); rumble.start(t0);
+            noise.stop(t0 + duration); rumble.stop(t0 + duration);
+        }
+        boom(0); boom(0.55); boom(1.0);
+    }
+
+    function playRadioStatic() {
+        const ctx = getAudioCtx();
+        const t0 = ctx.currentTime;
+        const duration = 0.5;
+        const master = ctx.createGain(); master.gain.value = 0.22; master.connect(ctx.destination);
+        const buffer = ctx.createBuffer(1, ctx.sampleRate * duration, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < buffer.length; i++) data[i] = Math.random() * 2 - 1;
+        const noise = ctx.createBufferSource(); noise.buffer = buffer;
+        const filter = ctx.createBiquadFilter(); filter.type = 'bandpass'; filter.frequency.setValueAtTime(1800, t0); filter.Q.value = 0.7;
+        const g = ctx.createGain();
+        g.gain.setValueAtTime(0, t0);
+        for (let i = 0; i < 6; i++) {
+            const tt = t0 + (duration * i / 6);
+            g.gain.linearRampToValueAtTime(Math.random() * 0.4, tt);
+        }
+        g.gain.linearRampToValueAtTime(0, t0 + duration);
+        noise.connect(filter); filter.connect(g); g.connect(master);
+        noise.start(t0); noise.stop(t0 + duration);
+    }
+
+    function switchModalTab(tab) {
+        document.getElementById('tabBtnHelp').classList.toggle('active', tab === 'help');
+        document.getElementById('tabBtnRules').classList.toggle('active', tab === 'rules');
+        document.getElementById('tabPanelHelp').classList.toggle('hidden', tab !== 'help');
+        document.getElementById('tabPanelRules').classList.toggle('hidden', tab !== 'rules');
+    }
+
+    function toggleRules(tab) {
+        const overlay = document.getElementById('rules-reference');
+        if (overlay.classList.contains('hidden')) {
+            switchModalTab(tab || 'help');
+            overlay.classList.remove('hidden');
+        } else {
+            overlay.classList.add('hidden');
+        }
+    }
+
+    function toggleAmbient() {
+        const ctx = getAudioCtx();
+        if (ambientNode) {
+            ambientNode.osc1.stop(); ambientNode.osc2.stop();
+            ambientNode = null;
+            document.getElementById('ambient-label').innerText = S().btnAmbient;
+            document.getElementById('icon-ambient-off').classList.remove('hidden');
+            document.getElementById('icon-ambient-on').classList.add('hidden');
+            return;
+        }
+        const osc1 = ctx.createOscillator(), osc2 = ctx.createOscillator();
+        const g = ctx.createGain();
+        osc1.type = 'sine'; osc1.frequency.setValueAtTime(52, ctx.currentTime);
+        osc2.type = 'sine'; osc2.frequency.setValueAtTime(56, ctx.currentTime);
+        g.gain.setValueAtTime(0, ctx.currentTime);
+        g.gain.linearRampToValueAtTime(0.05, ctx.currentTime + 1.5);
+        osc1.connect(g); osc2.connect(g); g.connect(ctx.destination);
+        osc1.start(); osc2.start();
+        ambientNode = { osc1, osc2 };
+        document.getElementById('ambient-label').innerText = S().btnAmbientOn;
+        document.getElementById('icon-ambient-off').classList.add('hidden');
+        document.getElementById('icon-ambient-on').classList.remove('hidden');
+    }
+
+    // 17 batalhas do livro de cenários oficial (compêndio de cenários + o cenário bônus "Praia de
+    // Omaha - Overlord"). axis/allies = tamanho de mão inicial de cada lado; firstMove = quem joga
+    // primeiro; medals = medalhas de vitória necessárias; units = forças especiais fisicamente
+    // presentes no cenário (usado para filtrar a referência de Forças Especiais).
+    const scenarios = [
+        { id: 1, name: { pt: "1. Ponte Pegasus", en: "1. Pegasus Bridge" }, axis: 2, allies: 6, firstMove: 'allies', medals: 4, units: [] },
+        { id: 2, name: { pt: "2. Sainte-Mère-Église", en: "2. Sainte-Mère-Église" }, axis: 4, allies: 5, firstMove: 'allies', medals: 4, units: [] },
+        { id: 3, name: { pt: "3. Praia de Omaha", en: "3. Omaha Beach" }, axis: 5, allies: 4, firstMove: 'axis', medals: 6, units: ['eliteInfantry'] },
+        { id: 4, name: { pt: "4. Pointe-du-Hoc", en: "4. Pointe-du-Hoc" }, axis: 4, allies: 6, firstMove: 'allies', medals: 4, units: ['eliteInfantry'] },
+        { id: 5, name: { pt: "5. Praia de Sword", en: "5. Sword Beach" }, axis: 4, allies: 5, firstMove: 'allies', medals: 5, units: ['eliteInfantry'] },
+        { id: 6, name: { pt: "6. Monte Mouchet", en: "6. Mont Mouchet" }, axis: 4, allies: 5, firstMove: 'allies', medals: 4, units: ['eliteArmor', 'frenchResistance'] },
+        { id: 7, name: { pt: "7. Vassieux, Vercors", en: "7. Vassieux, Vercors" }, axis: 4, allies: 4, firstMove: 'axis', medals: 4, units: ['frenchResistance'] },
+        { id: 8, name: { pt: "8. Operação Cobra", en: "8. Operation Cobra" }, axis: 4, allies: 5, firstMove: 'allies', medals: 5, units: ['eliteArmor'] },
+        { id: 9, name: { pt: "9. Operação Lüttich", en: "9. Operation Lüttich" }, axis: 5, allies: 6, firstMove: 'axis', medals: 4, units: ['eliteInfantry', 'eliteArmor'] },
+        { id: 10, name: { pt: "10. Toulon", en: "10. Toulon" }, axis: 4, allies: 6, firstMove: 'allies', medals: 6, units: ['eliteInfantry'] },
+        { id: 11, name: { pt: "11. Libertação de Paris", en: "11. Liberation of Paris" }, axis: 4, allies: 5, firstMove: 'allies', medals: 5, units: [] },
+        { id: 12, name: { pt: "12. Montélimar", en: "12. Montélimar" }, axis: 5, allies: 5, firstMove: 'axis', medals: 6, units: ['eliteInfantry'] },
+        { id: 13, name: { pt: "13. Ponte de Arnhem", en: "13. Arnhem Bridge" }, axis: 6, allies: 6, firstMove: 'axis', medals: 5, units: ['eliteInfantry', 'eliteArmor'] },
+        { id: 14, name: { pt: "14. Arracourt", en: "14. Arracourt" }, axis: 4, allies: 6, firstMove: 'axis', medals: 6, units: [] },
+        { id: 15, name: { pt: "15. St-Vith, Ardenas", en: "15. St-Vith, Ardennes" }, axis: 5, allies: 4, firstMove: 'axis', medals: 6, units: ['eliteArmor'] },
+        { id: 16, name: { pt: "16. Saverne Gap, Vosges", en: "16. Saverne Gap, Vosges" }, axis: 4, allies: 6, firstMove: 'allies', medals: 5, units: [] },
+        { id: 17, name: { pt: "17. Praia de Omaha — Overlord", en: "17. Omaha Beach — Overlord" }, axis: 8, allies: 8, firstMove: 'axis', medals: 8, units: [] }
+    ];
+
+    // Ajustes de valor específicos de cada cenário (objetivos, bônus de medalha, condições de Morte
+    // Súbita), extraídos do livro de cenários oficial. 'allies'/'axis' = prioridade do próprio lado do
+    // bot; 'shared' = objetivo disputado por ambos; a nota do lado ADVERSÁRIO aparece automaticamente
+    // como aviso "Fique Atento" para o bot se defender dela (ver renderScenarioIntel).
+    const scenarioIntel = {
+        1: { shared: [
+            { pt: "Os hexágonos de ponte marcados concedem medalhas temporárias a quem os controlar — esse é todo o objetivo da missão. Priorize capturar/manter as pontes acima de qualquer troca de tiro isolada.", en: "The marked bridge hexes grant temporary medals to whichever side holds them — this is the entire point of the mission. Prioritize capturing/holding the bridges over any isolated firefight." }
+        ] },
+        2: { shared: [
+            { pt: "Os hexágonos da vila concedem medalhas temporárias a quem os controlar — capturar e manter esses pontos é o caminho principal para vencer.", en: "The town hexes grant temporary medals to whichever side holds them — capturing and holding them is the main path to victory." }
+        ] },
+        3: {
+            allies: [
+                { pt: "Toda a sua força de assalto é Infantaria de Elite (move 2 hexágonos e ainda ataca) — avance com agressividade em vez de parar para atirar à distância, já que suas unidades mantêm poder de ataque total em movimento.", en: "Your entire assault force is Elite Infantry (moves 2 hexes and still attacks) — press forward aggressively rather than pausing to fire at range, since your units keep full attack power on the move." }
+            ],
+            axis: [
+                { pt: "Você começa entrincheirado em Casamatas dominando a praia — segure essa posição defensiva e deixe os Aliados virem até você, em vez de sair da cobertura.", en: "You start dug into Bunkers overlooking the beach — hold this defensive position and let the Allies come to you, rather than leaving your cover." }
+            ],
+            shared: [
+                { pt: "Os hexágonos de vila concedem medalhas temporárias a quem os controlar (6 necessárias para vencer).", en: "The town hexes grant temporary medals to whichever side holds them (6 needed to win)." }
+            ]
+        },
+        4: {
+            allies: [
+                { pt: "Todas as suas unidades são Infantaria de Elite (movem 2 hexágonos e ainda atacam) — essa é sua maior vantagem tática; sempre prefira mover+atacar a ficar parado atirando.", en: "All of your units are Elite Infantry (move 2 hexes and still attack) — this is your single biggest tactical edge; always favor moving+attacking over standing still to fire." }
+            ],
+            axis: [
+                { pt: "Você domina o topo do penhasco com Casamatas — use a proteção delas e deixe a Infantaria de Elite Aliada vir até você em vez de se expor avançando.", en: "You hold the clifftop with Bunkers — use their cover and let the Allied Elite Infantry come to you rather than exposing yourself by advancing." }
+            ]
+        },
+        5: {
+            allies: [
+                { pt: "Suas Forças Especiais são Infantaria de Elite (movem 2 hexágonos e ainda atacam) — use-as para avançar sobre os hexágonos de vila em vez de trocar tiros à distância.", en: "Your Special Forces are Elite Infantry (move 2 hexes and still attack) — use them to push into the town hexes rather than trading fire at range." }
+            ],
+            axis: [
+                { pt: "Você segura Casamatas cobrindo a aproximação pela praia — ancore sua defesa ali e force os Aliados a pagar caro por cada hexágono de vila (5 necessários para vencer).", en: "You hold Bunkers covering the beach approach — anchor your defense there and make the Allies pay for every town hex (5 needed to win)." }
+            ],
+            shared: [
+                { pt: "Os hexágonos de vila concedem medalhas temporárias a quem os controlar.", en: "The town hexes grant temporary medals to whichever side holds them." }
+            ]
+        },
+        6: {
+            axis: [
+                { pt: "Sua unidade blindada de Forças Especiais tem 4 miniaturas em vez de 3 — absorve 1 baixa extra antes de perder força, tornando-a uma peça de bloqueio/contra-ataque mais resistente.", en: "Your Special Forces tank unit has 4 figures instead of 3 — it absorbs 1 extra hit before losing combat strength, making it a tougher blocking/counter-attack piece." }
+            ],
+            allies: [
+                { pt: "TODAS as suas unidades são Resistência Francesa: 3 miniaturas por unidade, recuam de 1 a 3 hexágonos por bandeira (mais difícil de eliminar), mas, se moverem 2 hexágonos, perdem o ataque naquele turno — trate movimentos de 2 hexágonos como reposicionamento puro, não ofensiva.", en: "ALL your units are French Resistance: 3 figures per unit, retreat 1-3 hexes per flag (harder to pin down), but moving 2 hexes forfeits their attack that turn — treat 2-hex moves as pure repositioning, not offense." },
+                { pt: "Eliminar uma unidade blindada do Eixo concede 2 medalhas em vez de 1 nesta missão — caçar os blindados do Eixo vale mais a pena do que abates de infantaria mais fáceis.", en: "Eliminating an Axis tank unit grants 2 medals instead of 1 in this mission — hunting Axis armor is worth prioritizing over easier infantry kills." }
+            ]
+        },
+        7: { allies: [
+            { pt: "TODAS as suas unidades são Resistência Francesa (3 miniaturas, recuam de 1 a 3 hexágonos por bandeira, mas perdem o ataque se moverem 2 hexágonos).", en: "ALL your units are French Resistance (3 figures, retreat 1-3 hexes per flag, but forfeit their attack if they move 2 hexes)." },
+            { pt: "Se o baralho de comando acabar antes de você atingir as 4 medalhas, o Eixo vence automaticamente — jogue com urgência, não segure cartas esperando uma mão melhor, pois isso só encurta seu próprio baralho.", en: "If the Command deck runs out before you reach 4 medals, the Axis wins automatically — play with urgency, don't stall for a better hand, since delaying only shortens your own deck." }
+        ] },
+        8: { allies: [
+            { pt: "Capturar St. Gilles ou Marigny concede 1 medalha temporária cada (5 necessárias no total) — divida sua atenção entre esses dois objetivos de vila em vez de fixar em apenas um.", en: "Capturing St. Gilles or Marigny each grants 1 temporary medal (5 needed total) — split your attention between both town objectives rather than fixating on just one." }
+        ] },
+        9: {
+            axis: [
+                { pt: "Suas Forças Especiais são Infantaria de Elite (movem 2 e ainda atacam) e um blindado de Elite com 4 miniaturas — use ambos para pressionar agressivamente rumo a St. Hilaire.", en: "Your Special Forces are Elite Infantry (move 2 and still attack) plus an Elite tank with 4 figures — use both to push aggressively toward St. Hilaire." },
+                { pt: "Capturar St. Hilaire concede 1 medalha temporária (4 necessárias para vencer) — faça disso seu objetivo primário.", en: "Capturing St. Hilaire grants 1 temporary medal (4 needed to win) — make it your primary objective." }
+            ],
+            shared: [
+                { pt: "Subir para uma colina custa 2 hexágonos de movimento (de colina para colina ou descendo custa só 1) — leve isso em conta ao planejar qual unidade consegue alcançar um objetivo no topo de uma colina neste turno.", en: "Moving onto a hill costs 2 movement hexes (hill-to-hill or downhill costs only 1) — factor this into which units can realistically reach a hilltop objective this turn." }
+            ]
+        },
+        10: { allies: [
+            { pt: "Suas Forças Especiais são Infantaria de Elite (movem 2 e ainda atacam) — use-as para avançar sobre os hexágonos de vila de Toulon em vez de trocar tiros à distância.", en: "Your Special Forces are Elite Infantry (move 2 and still attack) — use them to push into Toulon's town hexes rather than trading fire at range." },
+            { pt: "Se você ocupar 3 hexágonos de vila em Toulon ao final do seu turno, vence a partida imediatamente (Morte Súbita) — isso pode ser mais rápido do que acumular as 6 medalhas normais, então priorize concentrar forças em 3 hexágonos de vila.", en: "If you occupy 3 town hexes in Toulon at the end of your turn, you win immediately (Sudden Death) — this can be faster than grinding out all 6 medals normally, so prioritize massing on 3 town hexes." }
+        ] },
+        11: { allies: [
+            { pt: "Cada hexágono capturado nos arredores de Paris concede 1 medalha permanente — uma vez capturada, a medalha fica valendo mesmo que você perca o hexágono depois, então um avanço rápido é suficiente; não é preciso defendê-lo para sempre.", en: "Each captured hex in the Paris Outskirts grants 1 permanent medal — once captured, the medal is locked in even if you later lose the hex, so a quick smash-and-hold is enough; you don't need to defend it forever." }
+        ] },
+        12: {
+            axis: [
+                { pt: "Suas Forças Especiais são Infantaria de Elite (movem 2 e ainda atacam); suas demais unidades de infantaria têm só 3 miniaturas em vez de 4 — trate-as como mais frágeis que o normal.", en: "Your Special Forces are Elite Infantry (move 2 and still attack); your other infantry units have only 3 figures instead of 4 — treat them as more fragile than usual." },
+                { pt: "Capturar Bonlieu ou Grane concede 1 medalha temporária cada — divida a atenção entre os dois em vez de fixar em um só.", en: "Capturing Bonlieu or Grane each grants 1 temporary medal — split attention between both rather than fixating on one." }
+            ],
+            allies: [
+                { pt: "Capturar qualquer hexágono adjacente ao rio Ródano concede 1 medalha temporária, mas só uma vez (ocupar vários não acumula) — garanta um deles com segurança em vez de se espalhar demais.", en: "Capturing any hex adjacent to the Rhône grants 1 temporary medal, but only once (holding multiple doesn't stack) — secure just one solidly rather than overextending for more." }
+            ],
+            shared: [
+                { pt: "As colinas ao norte do desfiladeiro de Condillac, no flanco direito Aliado, são intransponíveis para os dois lados — não planeje nenhum movimento por ali.", en: "The hills north of the Condillac pass on the Allied right flank are impassable to both sides — don't plan any movement through them." }
+            ]
+        },
+        13: {
+            allies: [
+                { pt: "TODAS as suas unidades são Infantaria de Elite (movem 2 e ainda atacam) — sempre prefira mover+atacar a ficar parado atirando.", en: "ALL your units are Elite Infantry (move 2 and still attack) — always favor moving+attacking over standing still to fire." }
+            ],
+            axis: [
+                { pt: "Sua unidade blindada de Forças Especiais tem 4 miniaturas, e sua infantaria de Forças Especiais é de Elite (move 2 e ainda ataca) — use ambas para avanços agressivos.", en: "Your Special Forces tank unit has 4 figures, and your Special Forces infantry is Elite (moves 2 and still attacks) — use both for aggressive pushes." }
+            ],
+            shared: [
+                { pt: "Unidades só podem entrar ou sair da Ponte de Arnhem pelos hexágonos marcados, e a infantaria não pode atirar através da parte mais larga do Reno — leve esse gargalo em conta ao planejar atravessar ou defender a ponte.", en: "Units may only enter or exit Arnhem Bridge from its marked hexes, and infantry cannot fire across the wide section of the Rhine — factor this chokepoint into any plan to cross or defend the bridge." }
+            ]
+        },
+        15: {
+            axis: [
+                { pt: "Sua unidade blindada de Forças Especiais tem 4 miniaturas — uma peça de bloqueio/contra-ataque mais resistente que seus blindados comuns.", en: "Your Special Forces tank unit has 4 figures — a tougher blocking/counter-attack piece than your regular armor." }
+            ],
+            shared: [
+                { pt: "A encosta da colina em direção a St-Vith é intransponível — planeje aproximações contornando-a, não atravessando-a.", en: "The hill slope toward St-Vith is impassable — plan approaches around it, not through it." }
+            ]
+        },
+        16: {
+            allies: [
+                { pt: "Se você ocupar 2 hexágonos de vila em Saverne ao final do seu turno, vence a partida imediatamente (Morte Súbita) — isso costuma ser mais rápido do que acumular as 5 medalhas normais, então priorize concentrar forças nesses 2 hexágonos.", en: "If you occupy 2 town hexes in Saverne at the end of your turn, you win immediately (Sudden Death) — this is often faster than grinding to 5 medals, so prioritize massing on those 2 hexes." }
+            ],
+            shared: [
+                { pt: "As colinas são intransponíveis, e a artilharia não pode atirar por cima delas — não conte com posições no topo de colinas nem com tiros de artilharia por cima delas neste cenário.", en: "Hills are impassable, and artillery may not fire over them — don't rely on hilltop positions or over-hill artillery shots in this scenario." }
+            ]
+        },
+        17: {
+            allies: [
+                { pt: "Os hexágonos de vila valem medalhas PERMANENTES aqui — uma vez capturados, continuam seus mesmo que você perca o hexágono depois, então não é preciso defendê-lo para sempre. Unidades que saem do tabuleiro pelo lado do Eixo também concedem 1 medalha cada (e são removidas do jogo) — uma fuga bem-sucedida é uma via de pontuação tão válida quanto lutar até o fim pelas vilas.", en: "Town hexes count as PERMANENT medals here — once captured they stay yours even if you later lose the hex, so you don't need to defend it forever. Units that exit the board past the Axis side also grant 1 medal each (and are removed from play) — a clean breakthrough exit is just as valid a scoring path as fighting through town hexes." }
+            ],
+            axis: [
+                { pt: "Você segura Casamatas, e os Aliados precisam escalar uma falésia de praia de 2 hexágonos (blindados não sobem) — ancore sua defesa na linha de falésia/casamatas e faça os Aliados pagarem por cada hexágono.", en: "You hold Bunkers and the Allies must climb a 2-hex sea bluff from the beach (armor can't ascend it) — anchor your defense on the bluff/bunker line and make the Allies pay per hex." }
+            ],
+            shared: [
+                { pt: "São necessárias 8 medalhas para vencer — este é o maior e mais longo cenário do conjunto; administre o uso das suas cartas de comando em vez de esperar um desfecho rápido.", en: "8 medals are needed to win — this is the biggest, longest scenario in the set; pace your Command Card usage rather than expecting a quick finish." }
+            ]
+        }
+    };
+
+    function scenarioStatusLine(s) {
+        if (!s) return '';
+        const firstMoveKey = s.firstMove === 'axis' ? 'firstMoveAxis' : 'firstMoveAllies';
+        return S().scenarioPrefix + tr(s.name) + S()[firstMoveKey] + S().medalsToWin(s.medals);
+    }
+
+    function renderScenarioIntel(scenarioId, faction) {
+        const box = document.getElementById('scenario-intel');
+        const entry = scenarioIntel[scenarioId];
+        const enemy = faction === 'axis' ? 'allies' : 'axis';
+        const focusNotes = entry ? (entry[faction] || []) : [];
+        const sharedNotes = entry ? (entry.shared || []) : [];
+        const watchNotes = entry ? (entry[enemy] || []) : [];
+
+        if (!focusNotes.length && !sharedNotes.length && !watchNotes.length) {
+            box.classList.add('hidden');
+            box.innerHTML = '';
+            return;
+        }
+
+        const iconTarget = ICONS.target;
+        const iconShared = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l7 3v6c0 5-3.5 8-7 9-3.5-1-7-4-7-9V6l7-3Z"/><path d="M9 12l2 2 4-4"/></svg>';
+        const iconWatch = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2 L22 20 L2 20 Z"/><path d="M12 9v5M12 17.2v.1"/></svg>';
+
+        const group = (title, icon, notes, extraClass) => {
+            if (!notes.length) return '';
+            const items = notes.map(n => `<div class="scenario-intel-item">${tr(n)}</div>`).join('');
+            return `<div class="scenario-intel-group ${extraClass || ''}">
+                <div class="scenario-intel-title">${icon}<span>${title}</span></div>
+                ${items}
+            </div>`;
+        };
+
+        box.innerHTML =
+            group(S().scenarioIntelFocusTitle, iconTarget, focusNotes) +
+            group(S().scenarioIntelSharedTitle, iconShared, sharedNotes) +
+            group(S().scenarioIntelWatchTitle, iconWatch, watchNotes, 'group-watch');
+        box.classList.remove('hidden');
+    }
+
+    function updateForcesReferenceFilter(scenario) {
+        const present = scenario && scenario.units ? scenario.units : null;
+        const map = { eliteInfantry: 'ref-unit-eliteInfantry', frenchResistance: 'ref-unit-frenchResistance', eliteArmor: 'ref-unit-eliteArmor' };
+        Object.keys(map).forEach(key => {
+            const el = document.getElementById(map[key]);
+            if (!el) return;
+            if (present === null) { el.classList.remove('hidden'); return; }
+            el.classList.toggle('hidden', !present.includes(key));
+        });
+    }
+
+    const ICONS = {
+        target: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="0.6" fill="currentColor"/></svg>'
+    };
+
+    // Renderiza a árvore de decisão de uma carta: linhas numeradas em algarismo romano,
+    // condição -> ação, com o critério de desempate (se houver) embutido em colchetes.
+    function toRoman(n) {
+        return ['I', 'II', 'III', 'IV', 'V', 'VI'][n] || String(n + 1);
+    }
+    function renderTreeHTML(card) {
+        const lines = card.tree.map((line, i) => {
+            const cond = line.cond ? `<span class="tree-cond">${tr(line.cond)}:</span> ` : '';
+            const tie = line.tie ? `<span class="tree-tie">[${tr(line.tie)}]</span>` : '';
+            return `<div class="tree-line"><span class="tree-num">${toRoman(i)}</span><span class="tree-body">${cond}${tr(line.action)}${tie}</span></div>`;
+        }).join('');
+        const note = card.note ? `<div class="tree-note">${tr(card.note)}</div>` : '';
+        return lines + note;
+    }
+
+    // Baralho oficial de cartas de comando (16 padrão/lado, idêntico para os dois lados no
+    // jogo físico — Memoir '44 usa o mesmo conjunto de comandos para Eixo e Aliados, diferindo
+    // apenas na arte/nação impressa na carta). Cada carta traz uma árvore de decisão (linhas
+    // I/II/III, condição -> ação, critério de desempate [entre colchetes]) no estilo das
+    // cartas solo oficiais de David Turczi. A primeira linha cuja condição for verdadeira
+    // (ou sem condição) é a que se aplica. Cartas fixas de seção (Reconhecimento, Sondagem,
+    // Ataque, Assalto) já têm a seção impressa na própria carta — não há escolha a fazer.
+    // Só "Assalto de Infantaria" permite escolher a seção (sectionPick:1).
+    const cardPoolShared = [
+        { name: { pt: "Avanço Geral", en: "General Advance" }, priority: 4, copies: 1, text: { pt: "Ordene 2 unidades em cada seção (Esquerda, Centro e Direita) — 6 unidades no total.", en: "Issue an order to 2 units in each section (Left, Center and Right) — 6 units total." }, tree: [
+            { cond: null, action: { pt: "Ative 2 unidades em cada uma das 3 seções contra seus alvos elegíveis", en: "Activate 2 units in each of the 3 sections against their eligible targets" }, tie: { pt: "Valor > Cobertura > Distância", en: "Value > Cover > Distance" } }
+        ] },
+        { name: { pt: "Reconhecimento em Força", en: "Recon in Force" }, priority: 4, copies: 2, text: { pt: "Ordene 1 unidade em cada seção (Esquerda, Centro e Direita) — 3 unidades no total.", en: "Issue an order to 1 unit in each section (Left, Center and Right) — 3 units total." }, tree: [
+            { cond: null, action: { pt: "Ative 1 unidade em cada uma das 3 seções (a com o melhor alvo, se houver mais de uma candidata)", en: "Activate 1 unit in each of the 3 sections (the one with the best target, if more than one qualifies)" }, tie: { pt: "Valor > Cobertura > Distância", en: "Value > Cover > Distance" } }
+        ] },
+
+        { name: { pt: "Reconhecimento — Esquerda", en: "Recon — Left" }, priority: 5, copies: 2, text: { pt: "Ordene 1 unidade na Flanco Esquerdo. Ao comprar sua próxima carta, compre duas, escolha uma e descarte a outra.", en: "Issue an order to 1 unit on the Left Flank. When drawing your next Command card, draw two, choose one and discard the other." }, tree: [
+            { cond: { pt: "Uma unidade no Flanco Esquerdo tem um alvo elegível", en: "A unit on the Left Flank has an eligible target" }, action: { pt: "Ative essa unidade contra o melhor alvo", en: "Activate that unit against its best target" }, tie: { pt: "Valor > Cobertura > Distância", en: "Value > Cover > Distance" } },
+            { cond: null, action: { pt: "Sem efeito — nenhuma unidade elegível no Flanco Esquerdo; não jogue agora", en: "No effect — no eligible unit on the Left Flank; don't play this now" }, tie: null }
+        ], note: { pt: "Lembre-se do bônus 'compre duas, escolha uma' mesmo se não jogar a ordem.", en: "Remember the 'draw two, choose one' bonus even if you skip the order." } },
+        { name: { pt: "Reconhecimento — Centro", en: "Recon — Center" }, priority: 5, copies: 2, text: { pt: "Ordene 1 unidade no Centro. Ao comprar sua próxima carta, compre duas, escolha uma e descarte a outra.", en: "Issue an order to 1 unit in the Center. When drawing your next Command card, draw two, choose one and discard the other." }, tree: [
+            { cond: { pt: "Uma unidade no Centro tem um alvo elegível", en: "A unit in the Center has an eligible target" }, action: { pt: "Ative essa unidade contra o melhor alvo", en: "Activate that unit against its best target" }, tie: { pt: "Valor > Cobertura > Distância", en: "Value > Cover > Distance" } },
+            { cond: null, action: { pt: "Sem efeito — nenhuma unidade elegível no Centro; não jogue agora", en: "No effect — no eligible unit in the Center; don't play this now" }, tie: null }
+        ], note: { pt: "Lembre-se do bônus 'compre duas, escolha uma' mesmo se não jogar a ordem.", en: "Remember the 'draw two, choose one' bonus even if you skip the order." } },
+        { name: { pt: "Reconhecimento — Direita", en: "Recon — Right" }, priority: 5, copies: 2, text: { pt: "Ordene 1 unidade no Flanco Direito. Ao comprar sua próxima carta, compre duas, escolha uma e descarte a outra.", en: "Issue an order to 1 unit on the Right Flank. When drawing your next Command card, draw two, choose one and discard the other." }, tree: [
+            { cond: { pt: "Uma unidade no Flanco Direito tem um alvo elegível", en: "A unit on the Right Flank has an eligible target" }, action: { pt: "Ative essa unidade contra o melhor alvo", en: "Activate that unit against its best target" }, tie: { pt: "Valor > Cobertura > Distância", en: "Value > Cover > Distance" } },
+            { cond: null, action: { pt: "Sem efeito — nenhuma unidade elegível no Flanco Direito; não jogue agora", en: "No effect — no eligible unit on the Right Flank; don't play this now" }, tie: null }
+        ], note: { pt: "Lembre-se do bônus 'compre duas, escolha uma' mesmo se não jogar a ordem.", en: "Remember the 'draw two, choose one' bonus even if you skip the order." } },
+
+        { name: { pt: "Sondagem — Esquerda", en: "Probe — Left" }, priority: 5, copies: 2, text: { pt: "Ordene 2 unidades no Flanco Esquerdo.", en: "Issue an order to 2 units on the Left Flank." }, tree: [
+            { cond: { pt: "2 ou mais unidades no Flanco Esquerdo têm um alvo elegível", en: "2 or more units on the Left Flank have an eligible target" }, action: { pt: "Ative as 2 com os alvos mais valiosos", en: "Activate the 2 with the most valuable targets" }, tie: { pt: "Valor > Cobertura > Distância", en: "Value > Cover > Distance" } },
+            { cond: null, action: { pt: "Ative quantas unidades elegíveis houver no Flanco Esquerdo (até 2)", en: "Activate as many eligible Left Flank units as you have (up to 2)" }, tie: null }
+        ] },
+        { name: { pt: "Sondagem — Centro", en: "Probe — Center" }, priority: 5, copies: 2, text: { pt: "Ordene 2 unidades no Centro.", en: "Issue an order to 2 units in the Center." }, tree: [
+            { cond: { pt: "2 ou mais unidades no Centro têm um alvo elegível", en: "2 or more units in the Center have an eligible target" }, action: { pt: "Ative as 2 com os alvos mais valiosos", en: "Activate the 2 with the most valuable targets" }, tie: { pt: "Valor > Cobertura > Distância", en: "Value > Cover > Distance" } },
+            { cond: null, action: { pt: "Ative quantas unidades elegíveis houver no Centro (até 2)", en: "Activate as many eligible Center units as you have (up to 2)" }, tie: null }
+        ] },
+        { name: { pt: "Sondagem — Direita", en: "Probe — Right" }, priority: 5, copies: 2, text: { pt: "Ordene 2 unidades no Flanco Direito.", en: "Issue an order to 2 units on the Right Flank." }, tree: [
+            { cond: { pt: "2 ou mais unidades no Flanco Direito têm um alvo elegível", en: "2 or more units on the Right Flank have an eligible target" }, action: { pt: "Ative as 2 com os alvos mais valiosos", en: "Activate the 2 with the most valuable targets" }, tie: { pt: "Valor > Cobertura > Distância", en: "Value > Cover > Distance" } },
+            { cond: null, action: { pt: "Ative quantas unidades elegíveis houver no Flanco Direito (até 2)", en: "Activate as many eligible Right Flank units as you have (up to 2)" }, tie: null }
+        ] },
+
+        { name: { pt: "Ataque — Esquerda", en: "Attack — Left" }, priority: 4, copies: 2, text: { pt: "Ordene 3 unidades no Flanco Esquerdo.", en: "Issue an order to 3 units on the Left Flank." }, tree: [
+            { cond: { pt: "3 ou mais unidades no Flanco Esquerdo têm um alvo elegível", en: "3 or more units on the Left Flank have an eligible target" }, action: { pt: "Ative as 3 com os alvos mais valiosos", en: "Activate the 3 with the most valuable targets" }, tie: { pt: "Valor > Cobertura > Distância", en: "Value > Cover > Distance" } },
+            { cond: null, action: { pt: "Ative quantas unidades elegíveis houver no Flanco Esquerdo (até 3)", en: "Activate as many eligible Left Flank units as you have (up to 3)" }, tie: null }
+        ] },
+        { name: { pt: "Ataque — Centro", en: "Attack — Center" }, priority: 4, copies: 2, text: { pt: "Ordene 3 unidades no Centro.", en: "Issue an order to 3 units in the Center." }, tree: [
+            { cond: { pt: "3 ou mais unidades no Centro têm um alvo elegível", en: "3 or more units in the Center have an eligible target" }, action: { pt: "Ative as 3 com os alvos mais valiosos", en: "Activate the 3 with the most valuable targets" }, tie: { pt: "Valor > Cobertura > Distância", en: "Value > Cover > Distance" } },
+            { cond: null, action: { pt: "Ative quantas unidades elegíveis houver no Centro (até 3)", en: "Activate as many eligible Center units as you have (up to 3)" }, tie: null }
+        ] },
+        { name: { pt: "Ataque — Direita", en: "Attack — Right" }, priority: 4, copies: 2, text: { pt: "Ordene 3 unidades no Flanco Direito.", en: "Issue an order to 3 units on the Right Flank." }, tree: [
+            { cond: { pt: "3 ou mais unidades no Flanco Direito têm um alvo elegível", en: "3 or more units on the Right Flank have an eligible target" }, action: { pt: "Ative as 3 com os alvos mais valiosos", en: "Activate the 3 with the most valuable targets" }, tie: { pt: "Valor > Cobertura > Distância", en: "Value > Cover > Distance" } },
+            { cond: null, action: { pt: "Ative quantas unidades elegíveis houver no Flanco Direito (até 3)", en: "Activate as many eligible Right Flank units as you have (up to 3)" }, tie: null }
+        ] },
+
+        { name: { pt: "Assalto — Esquerda", en: "Assault — Left" }, priority: 3, copies: 1, text: { pt: "Ordene todas as unidades no Flanco Esquerdo.", en: "Issue an order to all units on the Left Flank." }, tree: [
+            { cond: null, action: { pt: "Ative toda unidade no Flanco Esquerdo contra seu melhor alvo elegível", en: "Activate every unit on the Left Flank against its best eligible target" }, tie: { pt: "Valor > Cobertura > Distância", en: "Value > Cover > Distance" } }
+        ] },
+        { name: { pt: "Assalto — Centro", en: "Assault — Center" }, priority: 3, copies: 1, text: { pt: "Ordene todas as unidades no Centro.", en: "Issue an order to all units in the Center." }, tree: [
+            { cond: null, action: { pt: "Ative toda unidade no Centro contra seu melhor alvo elegível", en: "Activate every unit in the Center against its best eligible target" }, tie: { pt: "Valor > Cobertura > Distância", en: "Value > Cover > Distance" } }
+        ] },
+        { name: { pt: "Assalto — Direita", en: "Assault — Right" }, priority: 3, copies: 1, text: { pt: "Ordene todas as unidades no Flanco Direito.", en: "Issue an order to all units on the Right Flank." }, tree: [
+            { cond: null, action: { pt: "Ative toda unidade no Flanco Direito contra seu melhor alvo elegível", en: "Activate every unit on the Right Flank against its best eligible target" }, tie: { pt: "Valor > Cobertura > Distância", en: "Value > Cover > Distance" } }
+        ] },
+
+        { name: { pt: "Assalto Blindado", en: "Armor Assault" }, priority: 3, copies: 2, text: { pt: "Ordene 4 unidades BLINDADAS. Unidades em Assalto Corpo a Corpo rolam 1 dado adicional. As restrições de movimento e ataque de terreno continuam valendo. Se você não comandar nenhuma unidade blindada, ordene 1 unidade à sua escolha.", en: "Issue an order to 4 ARMOR units. Units in Close Assault roll 1 additional die. Terrain movement and battle restrictions still apply. If you do not command any armor units, issue an order to 1 unit of your choice." }, tree: [
+            { cond: { pt: "4 ou mais unidades blindadas já podem atacar agora", en: "4 or more Armor units can already attack now" }, action: { pt: "Ative as 4 com os alvos mais valiosos (lembre-se do dado extra em Assalto Corpo a Corpo)", en: "Activate the 4 with the most valuable targets (remember the extra Close Assault die)" }, tie: { pt: "Pode atacar agora > Valor > Cobertura > Distância", en: "Can attack now > Value > Cover > Distance" } },
+            { cond: { pt: "Você tem de 1 a 3 unidades blindadas no total", en: "You have 1-3 Armor units total" }, action: { pt: "Ative todas as suas unidades blindadas contra seus melhores alvos", en: "Activate all your Armor units against their best targets" }, tie: null },
+            { cond: null, action: { pt: "Sem unidades blindadas — ative 1 unidade à sua escolha", en: "No Armor units — activate 1 unit of your choice instead" }, tie: { pt: "Valor > Cobertura > Distância", en: "Value > Cover > Distance" } }
+        ] },
+
+        { name: { pt: "Contra-Ataque", en: "Counter-Attack" }, priority: 2, copies: 2, text: { pt: "Ordene a mesma ordem que seu oponente acabou de jogar. Uma carta de seção direita se torna a carta de seção esquerda equivalente, e vice-versa. Ao contra-atacar um Assalto de Infantaria, o contra-ataque deve ocorrer na mesma seção usada pelo oponente.", en: "Issue the same order your opponent just played. A right section card becomes the equivalent left section card and vice-versa. When countering an Infantry Assault card, the counter-attack must occur in the same section as your opponent." }, tree: [
+            { cond: { pt: "A última carta do seu oponente também seria excelente para você agora (mesma lógica de seção/tipo de unidade, usando suas próprias unidades elegíveis)", en: "Your opponent's last card would also be excellent for you right now (same section/unit-type logic, using your own eligible units)" }, action: { pt: "Espelhe a ordem exatamente (troque Esquerda⇄Direita se era uma carta de flanco específico)", en: "Mirror their order exactly (swap Left⇄Right if it was a flank-specific card)" }, tie: { pt: "Valor > Cobertura > Distância", en: "Value > Cover > Distance" } },
+            { cond: null, action: { pt: "Sem efeito — espelhar a última ordem do oponente não ajudaria; não jogue agora", en: "No effect — mirroring your opponent's last order wouldn't help; don't play this now" }, tie: null }
+        ], note: { pt: "Só faz sentido logo após seu oponente jogar uma carta — confira a carta no topo da pilha de descarte dele antes de decidir.", en: "Only makes sense right after your opponent plays a card — check the top of their discard pile before deciding." } },
+
+        { name: { pt: "Diretamente do QG", en: "Direct from HQ" }, priority: 3, copies: 2, text: { pt: "Ordene 4 unidades à sua escolha.", en: "Issue an order to 4 units of your choice." }, tree: [
+            { cond: { pt: "4 ou mais unidades já podem atacar agora", en: "4 or more units can already attack right now" }, action: { pt: "Escolha as 4 com os alvos mais valiosos", en: "Pick the 4 with the most valuable targets" }, tie: { pt: "Pode atacar agora > Valor > Cobertura > Distância", en: "Can attack now > Value > Cover > Distance" } },
+            { cond: null, action: { pt: "Escolha as 4 unidades que mais se beneficiam do reposicionamento", en: "Pick the 4 units that benefit most from repositioning" }, tie: { pt: "Mais perto do objetivo > Cobertura", en: "Closest to objective > Cover" } }
+        ] },
+
+        { name: { pt: "Assalto de Infantaria", en: "Infantry Assault" }, priority: 3, copies: 2, sectionPick: 1, text: { pt: "Ordene toda a INFANTARIA em 1 seção. As unidades podem mover até 2 hexágonos e ainda batalhar, ou mover 3 hexágonos sem batalhar. As restrições de terreno continuam valendo. Se você não comandar nenhuma infantaria, ordene 1 unidade à sua escolha.", en: "Issue an order to all INFANTRY units in 1 section. Units may move up to 2 hexes and still battle, or move 3 hexes but not battle. Terrain movement and battle restrictions still apply. If you do not command any infantry units, issue an order to 1 unit of your choice." }, tree: [
+            { cond: null, action: { pt: "Ative toda a infantaria na seção escolhida contra seus melhores alvos", en: "Activate all infantry in the chosen section against their best targets" }, tie: { pt: "Valor > Cobertura > Distância", en: "Value > Cover > Distance" } }
+        ], note: { pt: "Se você não comandar nenhuma infantaria, ative 1 unidade à sua escolha em vez disso.", en: "If you command no infantry at all, activate 1 unit of your choice instead." } },
+
+        { name: { pt: "Avançar!", en: "Move Out!" }, priority: 3, copies: 2, text: { pt: "Ordene 4 unidades de INFANTARIA. As restrições de movimento e ataque de terreno continuam valendo. Se você não comandar nenhuma infantaria, ordene 1 unidade à sua escolha.", en: "Issue an order to 4 INFANTRY units. Terrain movement and battle restrictions still apply. If you do not command any infantry units, issue an order to 1 unit of your choice." }, tree: [
+            { cond: { pt: "4 ou mais unidades de infantaria já podem atacar agora", en: "4 or more Infantry units can already attack now" }, action: { pt: "Escolha as 4 com os alvos mais valiosos", en: "Pick the 4 with the most valuable targets" }, tie: { pt: "Pode atacar agora > Valor > Cobertura > Distância", en: "Can attack now > Value > Cover > Distance" } },
+            { cond: { pt: "Você tem de 1 a 3 unidades de infantaria no total", en: "You have 1-3 Infantry units total" }, action: { pt: "Ative toda a sua infantaria contra seus melhores alvos", en: "Activate all your Infantry against their best targets" }, tie: null },
+            { cond: null, action: { pt: "Sem unidades de infantaria — ative 1 unidade à sua escolha", en: "No Infantry units — activate 1 unit of your choice instead" }, tie: null }
+        ] },
+
+        { name: { pt: "Emboscada", en: "Ambush" }, priority: 1, copies: 1, text: { pt: "Depois que seu oponente declarar um Assalto Corpo a Corpo contra uma de suas unidades, mas antes de rolar os dados, jogue esta carta. Você rola seus dados de batalha primeiro.", en: "After your opponent declares a Close Assault against one of your units, but before they roll dice, play this card. You roll your battle dice first." }, tree: [
+            { cond: { pt: "Seu oponente acabou de declarar Assalto Corpo a Corpo contra uma de suas unidades, e ela pode causar um dano relevante antes da rolagem dele", en: "Your opponent just declared a Close Assault against one of your units, and it can deal a meaningful hit back before their dice roll" }, action: { pt: "Jogue esta carta imediatamente e role seus dados de batalha primeiro", en: "Play this immediately and roll your battle dice first" }, tie: null },
+            { cond: null, action: { pt: "Sem efeito agora — só pode ser jogada no instante em que o oponente declarar Assalto Corpo a Corpo; guarde até então", en: "No effect right now — this can only be played the instant your opponent declares Close Assault; hold it until then" }, tie: null }
+        ] },
+
+        { name: { pt: "Bombardeio de Artilharia", en: "Artillery Bombard" }, priority: 3, copies: 1, text: { pt: "Ordene toda a ARTILHARIA. As unidades podem mover até 3 hexágonos ou batalhar duas vezes. Se você não comandar nenhuma artilharia, ordene 1 unidade à sua escolha.", en: "Issue an order to all ARTILLERY units. Units may move up to 3 hexes or battle twice. If you do not command any artillery units, issue an order to 1 unit of your choice." }, tree: [
+            { cond: { pt: "Você comanda 1 ou mais unidades de artilharia", en: "You command 1+ Artillery units" }, action: { pt: "Ative toda sua artilharia — batalhe duas vezes contra alvos fortes ou mova até 3 hexágonos para reposicionar", en: "Activate all your Artillery — either battle twice against strong targets, or move up to 3 hexes to reposition" }, tie: { pt: "Valor > Cobertura > Distância", en: "Value > Cover > Distance" } },
+            { cond: null, action: { pt: "Sem unidades de artilharia — ative 1 unidade à sua escolha", en: "No Artillery units — activate 1 unit of your choice instead" }, tie: null }
+        ] },
+
+        { name: { pt: "Atrás das Linhas Inimigas", en: "Behind Enemy Lines" }, priority: 2, copies: 1, text: { pt: "Ordene 1 unidade de INFANTARIA. Ela pode mover até 3 hexágonos ignorando restrições de terreno, batalhar com 1 dado adicional, depois mover novamente até 3 hexágonos (restrições de terreno para ataque continuam valendo). Se você não comandar nenhuma infantaria, ordene 1 unidade à sua escolha.", en: "Issue an order to 1 INFANTRY unit. It may move up to 3 hexes ignoring terrain movement restrictions, battle with 1 additional die, then move again up to 3 hexes (terrain battle restrictions still apply). If you do not command any infantry units, issue an order to 1 unit of your choice." }, tree: [
+            { cond: { pt: "Uma infantaria pode alcançar um alvo exposto de alto valor usando o movimento extra", en: "An infantry unit can reach an exposed high-value target using the extra movement" }, action: { pt: "Ative-a: mova até o alvo, batalhe com o dado extra, depois reposicione-a em segurança com o segundo movimento", en: "Activate it: move in, battle with the extra die, then reposition to safety with the second move" }, tie: { pt: "Valor > Cobertura > Distância", en: "Value > Cover > Distance" } },
+            { cond: null, action: { pt: "Nenhuma boa jogada de infantaria — ative 1 unidade à sua escolha", en: "No good infantry play — activate 1 unit of your choice instead" }, tie: null }
+        ] },
+
+        { name: { pt: "Barragem", en: "Barrage" }, priority: 1, copies: 1, text: { pt: "Mire em 1 unidade inimiga à sua escolha. Role 4 dados de batalha, ignorando qualquer redução de dados por terreno. Para cada bandeira, a unidade recua 1 hexágono (bandeiras não podem ser ignoradas).", en: "Target any 1 enemy unit. Roll 4 battle dice, ignoring any terrain battle die reduction. For each flag, the unit retreats 1 hex (flags may not be ignored)." }, tree: [
+            { cond: null, action: { pt: "Mire na unidade inimiga de maior valor ao alcance, especialmente uma escondida atrás de forte proteção de terreno (esta carta a ignora)", en: "Target the highest-value enemy unit in range, especially one hiding behind heavy terrain protection (this card ignores it)" }, tie: { pt: "Valor > Distância", en: "Value > Distance" } }
+        ] },
+
+        { name: { pt: "Assalto Corpo a Corpo", en: "Close Assault" }, priority: 1, copies: 1, text: { pt: "Ordene toda unidade de INFANTARIA e/ou BLINDADA adjacente a unidades inimigas. As unidades ordenadas batalham com 1 dado adicional. Não podem se mover antes de batalhar, mas, após um Assalto Corpo a Corpo bem-sucedido, podem Avançar (e blindados podem fazer um Atropelamento).", en: "Issue an order to all INFANTRY and/or ARMOR units adjacent to enemy units. Units ordered battle with 1 additional die. Units may not move before they battle, but, after a successful Close Assault, they may Take Ground and Armor units may make an Armor Overrun." }, tree: [
+            { cond: { pt: "Você tem unidades já adjacentes a unidades inimigas", en: "You have units already adjacent to enemy units" }, action: { pt: "Ative toda unidade adjacente com o dado extra, depois Avance/Atropele onde possível", en: "Activate every adjacent unit with the extra die, then Take Ground / Overrun where possible" }, tie: { pt: "Valor > Cobertura > Distância", en: "Value > Cover > Distance" } },
+            { cond: null, action: { pt: "Sem efeito — nenhuma unidade sua está adjacente a um inimigo agora; não jogue esta carta", en: "No effect — no units are currently adjacent to an enemy; don't play this now" }, tie: null }
+        ] },
+
+        { name: { pt: "Entrincheirar", en: "Dig-In" }, priority: 2, copies: 1, text: { pt: "Ordene 4 unidades de INFANTARIA. Elas melhoram sua posição colocando um saco de areia disponível no seu hexágono. Se você não comandar nenhuma infantaria, ordene 1 unidade à sua escolha.", en: "Issue an order to 4 INFANTRY units. They improve their position by placing an available sandbag on their hex. If you do not command any infantry units, issue an order to 1 unit of your choice." }, tree: [
+            { cond: { pt: "4 ou mais das suas infantarias ocupam uma posição avançada exposta", en: "4 or more of your infantry are holding an exposed forward position" }, action: { pt: "Ative-as para colocar sacos de areia e se entrincherarem", en: "Activate them to place sandbags and dig in" }, tie: { pt: "Exposição > Valor", en: "Exposure > Value" } },
+            { cond: null, action: { pt: "Ative a infantaria que você tiver (ou 1 unidade à sua escolha, se não tiver nenhuma)", en: "Activate whichever infantry you have (or 1 unit of your choice if none)" }, tie: null }
+        ] },
+
+        { name: { pt: "Tiroteio", en: "Firefight" }, priority: 2, copies: 1, text: { pt: "Ordene 4 unidades para abrir fogo. As unidades não podem estar adjacentes a uma unidade inimiga, e não podem se mover. As unidades em tiroteio batalham com 1 dado adicional.", en: "Issue an order to 4 units to open fire. Units in a firefight may not be adjacent to an enemy unit, and may not move. Firefighting units roll 1 additional die." }, tree: [
+            { cond: { pt: "4 ou mais unidades não adjacentes têm um alvo elegível à distância", en: "4 or more non-adjacent units have an eligible ranged target" }, action: { pt: "Ative as 4 com os alvos mais valiosos", en: "Activate the 4 with the most valuable targets" }, tie: { pt: "Valor > Cobertura > Distância", en: "Value > Cover > Distance" } },
+            { cond: null, action: { pt: "Sem efeito — não há unidades não adjacentes suficientes com um alvo; não jogue agora", en: "No effect — not enough eligible non-adjacent units with a target; don't play this now" }, tie: null }
+        ] },
+
+        { name: { pt: "Médicos e Mecânicos", en: "Medics & Mechanics" }, priority: 2, copies: 1, text: { pt: "Ordene 1 unidade que sofreu baixas. Role 1 dado de batalha para cada carta de comando na sua mão (incluindo esta). Para cada símbolo/estrela que corresponder, 1 miniatura perdida retorna. Se recuperar ao menos 1 figura, a unidade também pode ser ordenada.", en: "Issue an order to 1 unit that has suffered casualties. Roll 1 battle die for each Command card in your hand (including this one). For each symbol/star matching the unit, 1 lost figure returns. If it recovers at least 1 figure, it may also be issued an order." }, tree: [
+            { cond: { pt: "Uma unidade valiosa e desgastada precisa recuperar miniaturas", en: "A valuable depleted unit needs figures back" }, action: { pt: "Mire nessa unidade com a rolagem de recuperação, depois ordene-a se recuperar ao menos 1 figura", en: "Target that unit with the recovery roll, then order it if it regains a figure" }, tie: { pt: "Valor da unidade > Quão desgastada está", en: "Value of unit > How depleted it is" } },
+            { cond: null, action: { pt: "Sem efeito — nenhuma unidade desgastada que valha a pena recuperar agora", en: "No effect — no depleted unit worth recovering right now" }, tie: null }
+        ] },
+
+        { name: { pt: "Nossa Melhor Hora", en: "Their Finest Hour" }, priority: 1, copies: 1, text: { pt: "Role 1 dado de batalha para cada carta de comando na sua mão (incluindo esta). Cada símbolo de unidade ordena 1 unidade daquele tipo; cada estrela ordena 1 unidade à sua escolha. As unidades ordenadas batalham com 1 dado adicional. Embaralhe a pilha de descarte de volta ao seu baralho.", en: "Roll 1 battle die for each Command card in your hand (including this one). Each unit symbol orders 1 unit of that type; each star orders 1 unit of your choice. Ordered units battle with 1 additional die. Reshuffle the discard pile back into your deck." }, tree: [
+            { cond: null, action: { pt: "Role os dados, depois ordene cada unidade indicada contra seu melhor alvo com o dado extra", en: "Roll the dice, then order every unit indicated against its best target with the extra die" }, tie: { pt: "Valor > Cobertura > Distância", en: "Value > Cover > Distance" } }
+        ], note: { pt: "Também embaralha sua pilha de descarte de volta ao baralho — bom momento para jogar se seu baralho estiver acabando.", en: "Also reshuffles your discard pile back into your deck — a good moment to play this if your deck is running low." } },
+
+        { name: { pt: "Poder Aéreo", en: "Air Power" }, priority: 1, copies: 1, text: { pt: "Mire em um grupo de até 4 unidades inimigas adjacentes entre si. Role 2 dados de batalha por hexágono se você for os Aliados, ou 1 por hexágono se você for o Eixo, ignorando qualquer redução de dados por terreno. Para cada bandeira, a unidade recua 1 hexágono (bandeiras não podem ser ignoradas).", en: "Target a group of 4 or fewer adjacent enemy units. Roll 2 battle dice per hex if you are the Allies, or 1 per hex if you are the Axis, ignoring terrain battle die reduction. For each flag, the unit retreats 1 hex (flags may not be ignored)." }, tree: [
+            { cond: null, action: { pt: "Mire no grupo inimigo de maior valor total, especialmente um que dependa de forte proteção de terreno (esta carta a ignora)", en: "Target the enemy group with the highest total value, especially one relying on heavy terrain protection (this card ignores it)" }, tie: { pt: "Valor total do grupo > Distância", en: "Total group value > Distance" } }
+        ] }
+    ];
+    const cardPool = { axis: cardPoolShared, allies: cardPoolShared };
+
+    let deck = [], hand = [], discard = [], currentFaction = '', maxHand = 0;
+    let currentScenarioId = null;
+    let currentControlState = null, currentControlParam = null;
+
+    let activeSortedList = [];
+    let currentEvalIndex = 0;
+    let nextCardUid = 1;
+
+    const sel = document.getElementById('sel-scenario');
+    function rebuildScenarioSelect() {
+        const prevValue = sel.value;
+        sel.innerHTML = '';
+        scenarios.forEach(s => { let o = document.createElement('option'); o.value = s.id; o.text = tr(s.name); sel.add(o); });
+        if (prevValue) sel.value = prevValue;
+    }
+
+    function initGame(side) {
+        currentFaction = side;
+        const s = scenarios.find(sc => sc.id == sel.value);
+        currentScenarioId = s.id;
+        const diffDelta = { easy: -1, normal: 0, hard: 1 }[document.getElementById('sel-difficulty').value] || 0;
+        maxHand = Math.max(3, ((side === 'axis') ? s.axis : s.allies) + diffDelta);
+        if (side === 'axis') document.getElementById('app-body').classList.add('axis-mode');
+
+        deck = [];
+        cardPool[side].forEach(card => {
+            for (let i = 0; i < card.copies; i++) deck.push({ ...card, uid: nextCardUid++ });
+        });
+        shuffle(deck); hand = []; drawToLimit();
+
+        document.getElementById('view-setup').classList.add('hidden');
+        document.getElementById('view-game').classList.remove('hidden');
+        document.getElementById('txt-scenario').innerText = scenarioStatusLine(s);
+        updateForcesReferenceFilter(s);
+        renderScenarioIntel(s.id, side);
+
+        updateUI();
+        setControlState('idle');
+    }
+
+    function shuffle(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+    }
+
+    function drawToLimit() {
+        while (hand.length < maxHand && (deck.length > 0 || discard.length > 0)) {
+            if (deck.length === 0) { deck = [...discard]; discard = []; shuffle(deck); }
+            hand.push(deck.pop());
+        }
+    }
+
+    function updateUI() {
+        const container = document.getElementById('bot-hand');
+        container.innerHTML = '';
+        container.className = 'hand-container';
+
+        hand.forEach((c) => {
+            const div = document.createElement('div');
+            div.className = 'card';
+            div.dataset.cardname = c.name.pt;
+            div.dataset.uid = c.uid;
+
+            let tacticsHTML = renderTreeHTML(c);
+
+            div.innerHTML = `
+                <div class="card-header">${tr(c.name)}</div>
+                <div class="card-priority">${S().priorityLabel}${c.priority}</div>
+                <div class="card-body">${tr(c.text)}</div>
+                <div class="card-tactics">${tacticsHTML}</div>
+            `;
+            container.appendChild(div);
+        });
+        document.getElementById('txt-deck-status').innerText = S().handStatus(hand.length, maxHand, deck.length);
+    }
+
+    function setControlState(state, param = null) {
+        currentControlState = state;
+        currentControlParam = param;
+        const panel = document.getElementById('control-panel');
+        const log = document.getElementById('log');
+        const container = document.getElementById('bot-hand');
+
+        if (state === 'idle') {
+            container.classList.remove('deciding');
+            panel.innerHTML = `
+                <button onclick="startBotDecision()">${S().btnAnalyze}</button>
+                <button onclick="location.reload()" style="border-color: #555; color: #555;">${S().btnEndMission}</button>
+            `;
+            log.innerText = S().idleLog;
+        }
+        else if (state === 'evaluating') {
+            container.classList.add('deciding');
+            panel.innerHTML = `
+                <div class="control-message">${S().questionCanPlay(tr(param.name))}</div>
+                <button class="btn-confirm" onclick="handleDecision(true)">${S().btnYesPlay}</button>
+                <button onclick="handleDecision(false)">${S().btnNoNext}</button>
+            `;
+            log.innerText = S().evaluatingLog;
+        }
+        else if (state === 'section_choice') {
+            container.classList.add('deciding');
+            panel.innerHTML = `
+                <div class="section-choice-wrap">
+                    <div class="control-message">${S().sectionChooseTitle(tr(param.name))}</div>
+                    <div class="section-rate-hint">${S().sectionPickHint(param.sectionPick)}</div>
+                    <div class="section-rate-grid">
+                        <div class="section-rate-col"><label>${S().sectionLeftLabel}</label><input type="number" min="0" max="5" value="0" id="sec-rate-left"></div>
+                        <div class="section-rate-col"><label>${S().sectionCenterLabel}</label><input type="number" min="0" max="5" value="0" id="sec-rate-center"></div>
+                        <div class="section-rate-col"><label>${S().sectionRightLabel}</label><input type="number" min="0" max="5" value="0" id="sec-rate-right"></div>
+                    </div>
+                    <button onclick="calcSectionPriority()">${S().btnCalcSections}</button>
+                    <div id="section-result"></div>
+                    <button onclick="setControlState('evaluating', currentControlParam)" style="border-color: #555; color: #555;">${S().btnBackToCard}</button>
+                </div>
+            `;
+            log.innerText = S().sectionChooseLog;
+        }
+        else if (state === 'executed') {
+            container.classList.remove('deciding');
+            panel.innerHTML = `
+                <div class="control-message" style="color: #ffcf6b;">${S().actionDoneHtml(tr(param.name))}</div>
+                <button onclick="endTurn()">${S().btnNewTurn}</button>
+            `;
+            const list = quotes[currentFaction][lang];
+            const q = list[Math.floor(Math.random() * list.length)];
+            log.innerText = `"${q}"`;
+        }
+        else if (state === 'no_action') {
+            container.classList.remove('deciding');
+            panel.innerHTML = `
+                <div class="control-message" style="color: #ffaa00;">${S().noValidPlaysMsg}</div>
+                <button onclick="discardAndPass()">${S().btnDiscardPass}</button>
+            `;
+            log.innerText = S().noActionLog;
+            playRadioStatic();
+        }
+    }
+
+    function startBotDecision() {
+        playRadioStatic();
+        activeSortedList = [...hand].sort((a, b) => a.priority - b.priority);
+        currentEvalIndex = 0;
+        evaluateCurrentCard();
+    }
+
+    function evaluateCurrentCard() {
+        if (currentEvalIndex >= activeSortedList.length) {
+            setControlState('no_action');
+            return;
+        }
+
+        const card = activeSortedList[currentEvalIndex];
+
+        document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
+        const activeNode = document.querySelector(`.card[data-uid="${card.uid}"]`);
+        if (activeNode) activeNode.classList.add('active');
+
+        setControlState('evaluating', card);
+    }
+
+    function handleDecision(isYes) {
+        if (isYes) {
+            const card = activeSortedList[currentEvalIndex];
+            if (card.sectionPick && card.sectionPick < 3) {
+                setControlState('section_choice', card);
+            } else {
+                executeCard(card);
+            }
+        } else {
+            currentEvalIndex++;
+            evaluateCurrentCard();
+        }
+    }
+
+    function calcSectionPriority() {
+        const card = currentControlParam;
+        const vals = {
+            left: parseInt(document.getElementById('sec-rate-left').value, 10) || 0,
+            center: parseInt(document.getElementById('sec-rate-center').value, 10) || 0,
+            right: parseInt(document.getElementById('sec-rate-right').value, 10) || 0
+        };
+        const labelKeys = { left: 'sectionLeftLabel', center: 'sectionCenterLabel', right: 'sectionRightLabel' };
+        const ranked = Object.entries(vals).sort((a, b) => b[1] - a[1]);
+        const chosen = ranked.slice(0, card.sectionPick).map(([key]) => S()[labelKeys[key]]);
+
+        document.getElementById('section-result').innerHTML = `
+            <div class="section-result-highlight">${S().sectionRecommendedLabel}${chosen.join(', ')}</div>
+            <button class="btn-confirm" onclick="confirmSectionAndExecute()">${S().btnConfirmSections}</button>
+        `;
+    }
+
+    function confirmSectionAndExecute() {
+        executeCard(currentControlParam);
+    }
+
+    function executeCard(card) {
+        playGunfire();
+        hand = hand.filter(c => c !== card);
+        discard.push(card);
+        drawToLimit();
+        updateUI();
+        setControlState('executed', card);
+    }
+
+    function discardAndPass() {
+        discard.push(...hand);
+        hand = [];
+        drawToLimit();
+        updateUI();
+        setControlState('idle');
+    }
+
+    function endTurn() {
+        updateUI();
+        setControlState('idle');
+    }
+
+    (function init() {
+        applyI18n();
+        rebuildScenarioSelect();
+    })();
+</script>
+<script type="module" src="../assets/analytics.js"></script>
+<script type="module" src="../assets/bot-view.js"></script>
+
+<style>
+.btn-home{ display:inline-flex; align-items:center; gap:8px; background:transparent; color:var(--glow); border:1px solid var(--glow); text-transform:uppercase; font-weight:bold; letter-spacing:2px; font-family:inherit; border-radius:2px; padding:12px 32px; font-size:15px; text-decoration:none; transition:0.2s; }
+.btn-home:hover{ background:var(--glow); color:#070907; box-shadow:0 0 15px var(--glow); }
+</style>
+<div style="text-align: center; margin: 40px auto 20px auto; width: 100%;">
+    <a href="../index.html" class="btn-home">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9 21v-6h6v6"/></svg>
+        ← Home
+    </a>
+</div>
+
+</body>
+</html>
