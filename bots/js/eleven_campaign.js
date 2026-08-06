@@ -269,9 +269,9 @@ const STORY_ARCS = [
         pt: {
             title: 'A Base do Futuro',
             stages: [
-                { label: 'Plantando Sementes', text: 'A diretoria do {team} decidiu apostar nas categorias de base para reduzir gastos e criar uma identidade própria. {fact} Cabe a você começar a transformar Youngsters promissores em peças do time principal.' },
-                { label: 'Crescendo Dentro de Campo', text: 'Os primeiros Youngsters promovidos no {team} ainda cometem erros de inexperiência, mas mostram lampejos de talento. {fact} É hora de ter paciência com o processo que você mesmo escolheu seguir.' },
-                { label: 'Colhendo Frutos', text: 'Os primeiros Youngsters promovidos no {team} já começam a mostrar serviço no time principal. {fact} É hora de aprofundar a aposta na base e provar que o projeto de formação é sustentável.' },
+                { label: 'Plantando Sementes', text: 'A diretoria do {team} decidiu apostar nas categorias de base para reduzir gastos e criar uma identidade própria. {fact} Cabe a você começar a transformar Novatos promissores em peças do time principal.' },
+                { label: 'Crescendo Dentro de Campo', text: 'Os primeiros Novatos promovidos no {team} ainda cometem erros de inexperiência, mas mostram lampejos de talento. {fact} É hora de ter paciência com o processo que você mesmo escolheu seguir.' },
+                { label: 'Colhendo Frutos', text: 'Os primeiros Novatos promovidos no {team} já começam a mostrar serviço no time principal. {fact} É hora de aprofundar a aposta na base e provar que o projeto de formação é sustentável.' },
                 { label: 'Consolidando o Projeto', text: 'O projeto de base do {team} começa a se consolidar como a verdadeira identidade do clube. {fact} Falta pouco para a nova geração assumir de vez o protagonismo.' },
                 { label: 'A Nova Geração', text: 'Chegou a temporada em que a nova geração do {team}, formada nas categorias de base, precisa assumir de vez o protagonismo. {fact} Mostre que apostar nos próprios jogadores foi a decisão certa.' }
             ]
@@ -375,7 +375,7 @@ const GENERIC_DIVISION_FACTS = {
     pt: [
         (div) => `A Divisão ${div} é conhecida por partidas equilibradas, onde qualquer detalhe pode decidir a temporada.`,
         (div) => `Nesta divisão, encontrar Patrocinadores dispostos a investir costuma ser um desafio à parte.`,
-        (div) => `Clubes da Divisão ${div} normalmente dependem de boas contratações de Youngsters para se manter competitivos.`,
+        (div) => `Clubes da Divisão ${div} normalmente dependem de boas contratações de Novatos para se manter competitivos.`,
         (div) => `A rivalidade entre os clubes da Divisão ${div} costuma deixar a Tabela da Liga imprevisível até a última rodada.`,
         (div) => `Investir em Infraestrutura do Estádio é visto como prioridade para quem sonha em deixar a Divisão ${div}.`,
         (div, diff) => diff === 'hard' ? `No nível de dificuldade escolhido, a concorrência pela Divisão ${div} está mais acirrada do que nunca.` : (diff === 'easy' ? `No nível de dificuldade escolhido, um planejamento cuidadoso já é suficiente para se destacar na Divisão ${div}.` : `No nível de dificuldade escolhido, times bem equilibrados costumam se dar bem na Divisão ${div}.`),
@@ -413,7 +413,7 @@ const CHAPTER_TWISTS = {
         `Um ex-jogador do {team}, hoje comentarista, questiona publicamente seus métodos.`,
         `A tabela de jogos apertada por conta do calendário força rotações difíceis logo de início.`,
         `A renegociação de um contrato de transmissão libera uma verba extra em algum momento da temporada.`,
-        `Um Youngster da base chama atenção nos treinos e força decisões difíceis de escalação.`,
+        `Um Novato da base chama atenção nos treinos e força decisões difíceis de escalação.`,
         `Uma derrota em amistoso de pré-temporada já coloca a diretoria em alerta.`,
         `Um patrocinador local ameaça deixar o clube caso o público no estádio não melhore.`,
         `Rumores de mercado ligam um dos seus melhores Jogadores a uma saída na próxima janela.`,
@@ -489,12 +489,12 @@ const MAIN_OBJECTIVES = [
     },
     {
         appliesDiv: () => true,
-        pt: (d, esc) => `Construa pelo menos ${pickNum(d, 2, 3, 4, esc)} peças de Infraestrutura do Estádio (Arquibancadas, Escritório, Placas, Iluminação, Loja ou Centro de Treinamento).`,
+        pt: (d, esc) => `Construa pelo menos ${pickNum(d, 2, 3, 4, esc)} peças de Infraestrutura do Estádio (Arquibancadas, Escritório, Outdoor, Iluminação, Loja ou Concentração).`,
         en: (d, esc) => `Build at least ${pickNum(d, 2, 3, 4, esc)} Stadium Infrastructure tokens (Stands, Office, Adboard, Lighting, Merchandise Store, or Training Ground).`
     },
     {
         appliesDiv: () => true,
-        pt: (d, esc) => `Promova pelo menos ${pickNum(d, 2, 3, 4, esc)} Youngsters ao time principal durante a temporada.`,
+        pt: (d, esc) => `Promova pelo menos ${pickNum(d, 2, 3, 4, esc)} Novatos ao time principal durante a temporada.`,
         en: (d, esc) => `Promote at least ${pickNum(d, 2, 3, 4, esc)} Youngsters to the first team during the season.`
     },
     {
@@ -528,7 +528,7 @@ const SECONDARY_OBJECTIVES = [
         en: (d, esc) => `Sign at least ${pickNum(d, 1, 2, 3, esc)} Sponsors during the season.`
     },
     {
-        pt: (d, esc) => `Contrate pelo menos ${pickNum(d, 2, 3, 4, esc)} Youngsters, promovidos ou não.`,
+        pt: (d, esc) => `Contrate pelo menos ${pickNum(d, 2, 3, 4, esc)} Novatos, promovidos ou não.`,
         en: (d, esc) => `Sign at least ${pickNum(d, 2, 3, 4, esc)} Youngsters, promoted or not.`
     },
     {
@@ -567,7 +567,7 @@ const SETUP_CHANGES = [
         en: d => `Start the season with -${pickNum(d, 1, 2, 3)} Money.`
     },
     {
-        pt: () => `Não sorteie uma carta de Youngster no setup geral. Compre as 5 primeiras cartas do baralho de Jogadores, escolha uma e pague seu custo normalmente, descartando as demais. Repita o processo mais uma vez.`,
+        pt: () => `Não sorteie uma carta de Novato no setup geral. Compre as 5 primeiras cartas do baralho de Jogadores, escolha uma e pague seu custo normalmente, descartando as demais. Repita o processo mais uma vez.`,
         en: () => `Do not draw a Youngster card during general setup. Draw the first 5 cards from the regular Player deck, choose one and pay its cost normally, discarding the rest. Repeat the process once more.`
     },
     {
@@ -583,7 +583,7 @@ const SETUP_CHANGES = [
         en: () => `Your Veteran Players cost +1 during the first Week of the season.`
     },
     {
-        pt: () => `Ao invés de escolher 3 cartas de Diretor (Director) no draft, escolha e mantenha apenas 1, descartando as demais fases do draft. Coloque seu First Trainer normalmente.`,
+        pt: () => `Ao invés de escolher 3 cartas de Diretor (Director) no draft, escolha e mantenha apenas 1, descartando as demais fases do draft. Coloque seu Treinador Principal (First Trainer) normalmente.`,
         en: () => `Instead of drafting 3 Director cards, choose and keep only 1, skipping the remaining draft rounds. Place your First Trainer card as usual.`
     },
     {
@@ -612,7 +612,7 @@ const FAIL_PENALTIES = [
         en: d => `Start the next chapter with -${pickNum(d, 1, 2, 3)} Money.`
     },
     {
-        pt: () => `Descarte 2 Jogadores titulares à sua escolha e substitua-os por 2 novos Youngsters comprados no início do próximo capítulo.`,
+        pt: () => `Descarte 2 Jogadores titulares à sua escolha e substitua-os por 2 novos Novatos comprados no início do próximo capítulo.`,
         en: () => `Discard 2 starting Players of your choice and replace them with 2 new Youngsters drawn at the start of the next chapter.`
     },
     {
