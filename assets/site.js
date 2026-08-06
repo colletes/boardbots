@@ -51,6 +51,8 @@ const SITE_I18N = {
     game_sanctuary_desc: 'Automa solo com mecânicas adaptadas do ARNO de Ark Nova.',
     game_eleven_title: 'Eleven',
     game_eleven_desc: 'Gerador de campanhas procedurais e resolvedor de partidas para times de futebol de mesa.',
+    game_memoir44_title: "Memoir '44",
+    game_memoir44_desc: '"Command HQ" — assistente de decisão tática para os 17 cenários da 2ª Guerra, incluindo o Dia D e a Batalha das Ardenas.',
 
     credits_title: 'Créditos',
     back_link: 'Voltar aos bots',
@@ -71,6 +73,7 @@ const SITE_I18N = {
     credit_arknova: '<strong>Ark Nova</strong> — baseado no automa "ARNO", criado por Andre K. Ark Nova © Feuerland Spiele / Capstone Games.',
     credit_sanctuary: '<strong>Sanctuary</strong> — automa adaptado a partir do "ARNO" de Ark Nova. Sanctuary © Capstone Games.',
     credit_eleven: '<strong>Eleven</strong> — 100% conteúdo e app originais do autor. Eleven © Portal Games.',
+    credit_memoir44: '<strong>Memoir \'44</strong> — 100% conteúdo, táticas e app originais do autor. Conteúdo de cenários também consultou o compêndio não-oficial "Western Front Scenario Compilation" de Derek "Whaleyland" Whaley. Memoir \'44 criado por Richard Borg, © Days of Wonder (edição em português por Galápagos Jogos).',
   },
   en: {
     site_title: 'Board Bots',
@@ -121,6 +124,8 @@ const SITE_I18N = {
     game_sanctuary_desc: 'Solo Automa with mechanics adapted from Ark Nova\'s ARNO.',
     game_eleven_title: 'Eleven',
     game_eleven_desc: 'Procedural campaign generator and match solver for tabletop football teams.',
+    game_memoir44_title: "Memoir '44",
+    game_memoir44_desc: '"Command HQ" — tactical decision assistant for the 17 WWII scenarios, including D-Day and the Battle of the Bulge.',
 
     credits_title: 'Credits',
     back_link: 'Back to bots',
@@ -141,6 +146,7 @@ const SITE_I18N = {
     credit_arknova: '<strong>Ark Nova</strong> — based on the "ARNO" automa, created by Andre K. Ark Nova © Feuerland Spiele / Capstone Games.',
     credit_sanctuary: '<strong>Sanctuary</strong> — automa adapted from Ark Nova\'s "ARNO". Sanctuary © Capstone Games.',
     credit_eleven: '<strong>Eleven</strong> — 100% original content and app by the author. Eleven © Portal Games.',
+    credit_memoir44: '<strong>Memoir \'44</strong> — 100% original content, tactics and app by the author. Scenario content also referenced the unofficial "Western Front Scenario Compilation" by Derek "Whaleyland" Whaley. Memoir \'44 designed by Richard Borg, © Days of Wonder.',
   }
 };
 
