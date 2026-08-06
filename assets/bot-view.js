@@ -15,7 +15,9 @@ const FILE_TO_BOT = {
   'arknova_arno_bot_v1.html': 'arknova',
   'sanctuary_bot_v2.html': 'sanctuary',
   'eleven_bot_v1.html': 'eleven',
-  'memoir44_bot_v3.html': 'memoir44'
+  'memoir44_bot_v3.html': 'memoir44',
+  'dice_roller_v1.html': 'tool-dice',
+  'point_counter_v1.html': 'tool-pointcounter'
 };
 
 if (CONFIGURED) {

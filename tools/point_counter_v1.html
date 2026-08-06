@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Contador de Pontos — Board Bots Tools</title>
+<meta name="description" content="Contador de pontos genérico para jogos de tabuleiro: jogadores, critérios de pontuação, cronômetro de partida e sorteio do primeiro jogador.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg-color:#0b0e12;
+  --bg-color-2:#12161c;
+  --panel-bg:#181d25;
+  --panel-bg-2:#12161c;
+  --text-main:#eef1f5;
+  --text-dim:#9aa4b2;
+  --border:#2b323d;
+  --blue:#4f8cff;
+  --blue-dark:#173a75;
+  --blue-soft:#274168;
+  --blue-glow:rgba(79,140,255,0.35);
+  --amber:#e3a83f;
+  --amber-dark:#a3741f;
+  --red:#d64545;
+  --font-display:'Poppins','Segoe UI',sans-serif;
+  --font-body:'Inter','Segoe UI',Tahoma,Geneva,Verdana,sans-serif;
+}
+*{box-sizing:border-box;}
+html{-webkit-text-size-adjust:100%;}
+body{
+  margin:0;
+  font-family:var(--font-body);
+  color:var(--text-main);
+  background-color:var(--bg-color);
+  background-image:
+    radial-gradient(circle at 15% 0%, rgba(227,168,63,0.08), transparent 55%),
+    radial-gradient(circle at 85% 100%, rgba(79,140,255,0.08), transparent 50%),
+    linear-gradient(180deg, var(--bg-color) 0%, var(--bg-color-2) 100%);
+  background-attachment:fixed;
+  padding:20px;
+  padding-left:max(20px, env(safe-area-inset-left));
+  padding-right:max(20px, env(safe-area-inset-right));
+  padding-bottom:max(20px, env(safe-area-inset-bottom));
+  -webkit-tap-highlight-color:transparent;
+}
+button, input, .lang-btn{ touch-action:manipulation; }
+.container{ max-width:720px; margin:0 auto; }
+
+@keyframes fadeSlideUp{ from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);} }
+@keyframes popIn{ 0%{transform:scale(0.85); opacity:0;} 60%{transform:scale(1.06);} 100%{transform:scale(1); opacity:1;} }
+
+.hero{
+  position:relative; border-radius:12px; overflow:hidden; margin-bottom:20px;
+  padding:26px 20px; border:1px solid var(--border);
+  background:linear-gradient(135deg, var(--amber-dark), var(--amber) 70%, #f3cf85);
+  animation:fadeSlideUp 0.5s ease both;
+  text-align:center;
+}
+.hero h1{ font-family:var(--font-display); font-weight:800; color:#251705; margin:0; font-size:1.6em; display:flex; align-items:center; justify-content:center; gap:10px; }
+.hero h1 svg{ width:0.9em; height:0.9em; flex-shrink:0; }
+.hero .subtitle{ color:#4a3210; margin-top:6px; font-weight:600; font-size:0.88em; }
+.game-name-input{ background:transparent; border:none; border-bottom:1px dashed rgba(37,23,5,0.45); color:#251705; text-align:center; font-size:1em; font-weight:700; padding:8px 4px 5px; margin-top:10px; width:85%; max-width:340px; font-family:var(--font-body); }
+.game-name-input::placeholder{ color:rgba(37,23,5,0.55); }
+.game-name-input:focus{ outline:none; border-bottom-color:#251705; }
+
+.lang-switch{ position:fixed; top:14px; right:14px; z-index:60; display:flex; gap:4px; background:var(--panel-bg); border:1px solid var(--border); border-radius:999px; padding:4px; box-shadow:0 4px 14px rgba(0,0,0,0.4); }
+.lang-btn{ border:none; background:transparent; color:var(--text-dim); font-weight:700; font-size:0.78em; padding:6px 12px; border-radius:999px; cursor:pointer; font-family:var(--font-body); }
+.lang-btn.active{ background:var(--blue); color:#fff; }
+
+.btn-help-float{ position:fixed; bottom:18px; right:18px; z-index:60; width:48px; height:48px; border-radius:50%; background:linear-gradient(180deg, var(--blue), var(--blue-dark)); color:#fff; border:1px solid #3f6fd6; font-weight:800; font-size:1.25em; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 14px rgba(0,0,0,0.45); cursor:pointer; margin:0; padding:0; }
+
+.panel{ background:linear-gradient(160deg, var(--panel-bg) 0%, var(--panel-bg-2) 100%); border:1px solid var(--border); border-radius:10px; padding:18px 20px; margin-bottom:18px; box-shadow:0 4px 18px rgba(0,0,0,0.4); animation:fadeSlideUp 0.4s ease both; }
+.panel h2{ font-family:var(--font-display); font-size:1.05em; color:var(--text-main); margin:0 0 14px; display:flex; align-items:center; gap:8px; }
+.panel h2 svg{ width:20px; height:20px; color:var(--blue); flex-shrink:0; }
+
+.timer-display{ font-family:var(--font-display); font-size:2.3em; font-weight:800; text-align:center; letter-spacing:2px; margin:2px 0 16px; color:#fff; text-shadow:0 2px 10px rgba(0,0,0,0.4); }
+.btn-row{ display:flex; gap:10px; flex-wrap:wrap; }
+.btn-row > *{ flex:1; }
+.main-btn{ background:linear-gradient(160deg, var(--blue) 0%, var(--blue-dark) 100%); color:#fff; border:none; padding:13px; font-size:1em; border-radius:8px; cursor:pointer; font-weight:700; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 3px 10px rgba(0,0,0,0.4); }
+.main-btn svg{ width:20px; height:20px; flex-shrink:0; }
+.main-btn.pause-btn{ background:linear-gradient(160deg, #e3a83f, #a3741f); }
+.secondary-btn{ background:transparent; border:1px solid var(--border); color:var(--text-dim); padding:13px; border-radius:8px; cursor:pointer; font-weight:700; font-family:var(--font-body); font-size:0.95em; }
+.danger-btn{ background:transparent; border:1px solid var(--red); color:var(--red); padding:12px; border-radius:8px; cursor:pointer; font-weight:700; width:100%; font-family:var(--font-body); }
+
+.players-row{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px; min-height:38px; }
+.player-chip{ display:flex; align-items:center; gap:6px; background:rgba(255,255,255,0.04); border:1px solid var(--border); border-radius:999px; padding:7px 8px 7px 14px; font-weight:600; font-size:0.9em; transition:background 0.15s ease, border-color 0.15s ease, transform 0.15s ease; }
+.player-chip.picking{ border-color:var(--blue); background:var(--blue-soft); transform:scale(1.08); }
+.player-chip.first-player{ border-color:var(--amber); box-shadow:0 0 0 2px rgba(227,168,63,0.3); }
+.player-chip .star-icon{ width:13px; height:13px; color:var(--amber); flex-shrink:0; }
+.chip-remove{ background:transparent; border:none; color:var(--text-dim); font-size:1.15em; cursor:pointer; padding:0 2px; line-height:1; }
+.empty-players-hint{ color:var(--text-dim); font-size:0.88em; }
+
+.add-row{ display:flex; gap:8px; }
+.add-row input{ flex:1; background:#0e1218; border:1px solid var(--border); border-radius:8px; padding:10px 12px; color:var(--text-main); font-size:0.95em; font-family:var(--font-body); min-width:0; }
+.add-row input:focus{ outline:none; border-color:var(--blue); }
+.add-btn{ white-space:nowrap; background:var(--blue-soft); border:1px solid var(--blue); color:#fff; border-radius:8px; padding:0 14px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:4px; font-family:var(--font-body); }
+
+.first-player-badge{ display:flex; align-items:center; justify-content:center; gap:8px; margin-top:14px; font-weight:700; color:var(--amber); font-size:0.95em; }
+.first-player-badge svg{ width:18px; height:18px; }
+
+.table-scroll{ overflow-x:auto; -webkit-overflow-scrolling:touch; margin:0 -4px; padding:0 4px; }
+table.score-table{ width:100%; border-collapse:collapse; min-width:360px; }
+table.score-table th, table.score-table td{ padding:9px 10px; text-align:center; border-bottom:1px solid var(--border); font-size:0.9em; white-space:nowrap; }
+table.score-table th{ color:var(--text-dim); font-weight:700; }
+table.score-table td:first-child, table.score-table th:first-child{ text-align:left; white-space:normal; }
+th.leader-head{ color:var(--amber); }
+.leader-crown{ width:14px; height:14px; color:var(--amber); vertical-align:-2px; margin-right:3px; }
+.crit-name-cell{ display:flex; align-items:center; gap:6px; }
+.crit-name-input{ background:transparent; border:none; border-bottom:1px dashed transparent; color:var(--text-main); font-weight:600; font-size:0.95em; width:100%; min-width:80px; font-family:var(--font-body); padding:2px 0; }
+.crit-name-input:focus{ outline:none; border-bottom-color:var(--blue); }
+.score-input{ width:64px; max-width:100%; text-align:center; background:#0e1218; border:1px solid var(--border); border-radius:6px; color:var(--text-main); padding:7px 4px; font-size:0.95em; font-family:var(--font-body); }
+.score-input:focus{ outline:none; border-color:var(--blue); }
+tr.total-row td, tr.total-row th{ background:linear-gradient(160deg, var(--amber), var(--amber-dark)); color:#251705; font-weight:800; }
+tr.total-row td:first-child{ border-radius:0 0 0 8px; }
+.remove-crit-btn{ background:transparent; border:none; color:var(--text-dim); cursor:pointer; font-size:1.1em; padding:2px 4px; flex-shrink:0; }
+.remove-crit-btn:disabled{ opacity:0.25; cursor:default; }
+
+.hidden{ display:none !important; }
+
+.modal{ display:none; position:fixed; z-index:1000; left:0; top:0; width:100%; height:100%; background-color:rgba(0,0,0,0.8); overflow:auto; -webkit-overflow-scrolling:touch; }
+.modal-content{ background:linear-gradient(160deg, var(--panel-bg) 0%, var(--panel-bg-2) 100%); margin:8% auto; padding:22px 24px; border:1px solid var(--border); width:88%; max-width:520px; border-radius:10px; max-height:80vh; overflow-y:auto; -webkit-overflow-scrolling:touch; position:relative; }
+.modal-content h2{ font-family:var(--font-display); color:var(--text-main); margin-top:0; }
+.modal-content h3{ color:var(--blue); border-bottom:1px solid var(--border); padding-bottom:6px; margin-top:20px; }
+.modal-content h3:first-of-type{ margin-top:4px; }
+.modal-content p, .modal-content li{ line-height:1.55; color:var(--text-main); }
+.close-btn{ position:absolute; top:10px; right:14px; color:var(--text-dim); font-size:1.6em; font-weight:700; cursor:pointer; }
+
+.credits{ display:flex; align-items:center; gap:14px; background:var(--panel-bg); border:1px solid var(--border); border-radius:12px; padding:14px 16px; margin-top:6px; animation:fadeSlideUp 0.5s ease both; }
+.credits .credits-icon{ width:44px; height:44px; border-radius:8px; border:1px solid var(--border); flex-shrink:0; background:linear-gradient(160deg, var(--amber), var(--amber-dark)); display:flex; align-items:center; justify-content:center; }
+.credits .credits-icon svg{ width:24px; height:24px; color:#251705; }
+.credits-text{ font-size:0.8em; color:var(--text-dim); line-height:1.5; }
+.credits-text strong{ color:var(--text-main); }
+.credits-text a{ color:var(--blue); text-decoration:none; font-weight:bold; }
+
+.bmc-inline{ display:flex; justify-content:center; margin-top:14px; }
+.bmc-inline a{ display:inline-flex; align-items:center; gap:8px; background:#FFDD00; color:#000; font-weight:700; font-size:0.85em; padding:9px 16px; border-radius:8px; text-decoration:none; box-shadow:0 4px 14px rgba(0,0,0,0.4); transition:transform 0.15s; }
+.bmc-inline a:hover{ transform:scale(1.05); }
+.bmc-inline svg{ width:18px; height:18px; flex-shrink:0; }
+.btn-home{ display:inline-flex; align-items:center; gap:8px; background:linear-gradient(160deg, var(--blue), var(--blue-dark)); border:none; color:#fff; border-radius:10px; padding:12px 26px; font-weight:700; font-size:16px; text-decoration:none; box-shadow:0 4px 14px rgba(0,0,0,0.4); }
+
+@media (hover:hover) and (pointer:fine){
+  .main-btn:hover{ filter:brightness(1.1); }
+  .secondary-btn:hover{ border-color:var(--blue); color:var(--blue); }
+  .danger-btn:hover{ background:rgba(214,69,69,0.12); }
+  .add-btn:hover{ filter:brightness(1.1); }
+  .chip-remove:hover{ color:var(--red); }
+  .remove-crit-btn:not(:disabled):hover{ color:var(--red); }
+  .btn-home:hover{ filter:brightness(1.1); }
+  .close-btn:hover{ color:var(--blue); }
+}
+
+@media (max-width:420px){
+  .hero h1{ font-size:1.35em; }
+  .timer-display{ font-size:1.9em; }
+}
+</style>
+</head>
+<body>
+
+<div class="lang-switch">
+  <button class="lang-btn" id="langBtnPt" onclick="setLangDirect('pt')">PT</button>
+  <button class="lang-btn" id="langBtnEn" onclick="setLangDirect('en')">EN</button>
+</div>
+<button class="btn-help-float" onclick="openHelp()" aria-label="Help">?</button>
+
+<div class="container">
+  <div class="hero">
+    <h1><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 0 1-10 0V4Z"/><path d="M7 5H4a1 1 0 0 0-1 1v1a4 4 0 0 0 4 4M17 5h3a1 1 0 0 1 1 1v1a4 4 0 0 1-4 4"/></svg><span id="titleText">Contador de Pontos</span></h1>
+    <p class="subtitle" id="subtitleText">Ferramenta Board Bots</p>
+    <input class="game-name-input" id="gameNameInput" type="text" maxlength="60" oninput="onGameNameInput(this.value)">
+  </div>
+
+  <div class="panel">
+    <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg><span id="timerTitle">Tempo de jogo</span></h2>
+    <div class="timer-display" id="timerDisplay">00:00:00</div>
+    <div class="btn-row">
+      <button class="main-btn" id="btnTimerToggle" onclick="toggleTimer()"></button>
+      <button class="secondary-btn" id="btnTimerReset" onclick="resetTimer()">Zerar</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg><span id="playersTitle">Jogadores</span></h2>
+    <div class="players-row" id="playersRow"></div>
+    <div class="add-row">
+      <input id="newPlayerName" type="text" placeholder="Nome do jogador" onkeydown="if(event.key==='Enter')addPlayerFromInput()">
+      <button class="add-btn" onclick="addPlayerFromInput()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+        <span id="addPlayerText">Adicionar</span>
+      </button>
+    </div>
+    <button class="main-btn" style="margin-top:14px; width:100%;" onclick="pickFirstPlayer()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8" cy="8" r="1.4" fill="currentColor" stroke="none"/><circle cx="16" cy="8" r="1.4" fill="currentColor" stroke="none"/><circle cx="8" cy="16" r="1.4" fill="currentColor" stroke="none"/><circle cx="16" cy="16" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/></svg>
+      <span id="pickFirstText">Sortear primeiro jogador</span>
+    </button>
+    <div class="first-player-badge hidden" id="firstPlayerBadge"></div>
+  </div>
+
+  <div class="panel">
+    <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6"/><rect x="12" y="8" width="3" height="10"/><rect x="17" y="5" width="3" height="13"/></svg><span id="scoreTitle">Pontuação</span></h2>
+    <div class="table-scroll">
+      <table class="score-table" id="scoreTable"></table>
+    </div>
+    <div class="add-row" style="margin-top:12px;">
+      <input id="newCriterionName" type="text" placeholder="Nome do critério (ex: Cartas)" onkeydown="if(event.key==='Enter')addCriterionFromInput()">
+      <button class="add-btn" onclick="addCriterionFromInput()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+        <span id="addCriterionText">Critério</span>
+      </button>
+    </div>
+  </div>
+
+  <button class="danger-btn" onclick="newGame()">
+    <span id="newGameText">↺ Nova Partida</span>
+  </button>
+
+  <footer class="credits">
+    <div class="credits-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 0 1-10 0V4Z"/></svg></div>
+    <div class="credits-text" id="creditsText"></div>
+  </footer>
+
+  <a class="bmc-inline" href="https://www.buymeacoffee.com/colletes" target="_blank" rel="noopener" aria-label="Buy me a coffee"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h13a2 2 0 0 1 2 2v1a3 3 0 0 1-3 3h-1"/><path d="M4 8h13v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V8Z"/><path d="M8 3c-.6 1 .5 1.6 0 3M12 3c-.6 1 .5 1.6 0 3"/></svg><span id="bmcBtnText">Me pague um café</span></a>
+
+  <div style="text-align:center; margin:20px auto 0 auto; width:100%;">
+    <a href="../index.html" class="btn-home">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9 21v-6h6v6"/></svg>
+      <span id="homeBtnText">← Home</span>
+    </a>
+  </div>
+</div>
+
+<div id="helpModal" class="modal">
+  <div class="modal-content">
+    <span class="close-btn" onclick="closeHelp()">&times;</span>
+    <h2 id="helpTitle">Como usar</h2>
+    <div id="helpBody"></div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('touchstart', function(){}, {passive:true});
+
+const LANG_KEY = 'boardbots_lang';
+const STORAGE_KEY = 'boardbots_pointcounter_v1';
+
+let currentLang = localStorage.getItem(LANG_KEY) || 'pt';
+let timerInterval = null;
+
+function uid(prefix){ return prefix + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+
+function defaultCriterionName(){ return currentLang === 'pt' ? 'Pontuação' : 'Score'; }
+
+function defaultState(){
+  return {
+    gameName: '',
+    players: [],
+    criteria: [{ id: uid('c'), name: defaultCriterionName() }],
+    scores: {},
+    timer: { running: false, startedAt: null, accumulatedMs: 0 },
+    firstPlayerId: null
+  };
+}
+
+let state = loadState();
+function loadState(){
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return Object.assign(defaultState(), parsed, {
+        players: parsed.players || [],
+        criteria: (parsed.criteria && parsed.criteria.length) ? parsed.criteria : [{ id: uid('c'), name: defaultCriterionName() }],
+        scores: parsed.scores || {},
+        timer: parsed.timer || { running: false, startedAt: null, accumulatedMs: 0 }
+      });
+    }
+  } catch(e) {}
+  return defaultState();
+}
+function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+
+const strings = {
+  pt: {
+    title: 'Contador de Pontos',
+    subtitle: 'Ferramenta Board Bots',
+    gameNamePlaceholder: 'Nome da partida (opcional)',
+    timerTitle: 'Tempo de jogo',
+    timerStart: 'Iniciar',
+    timerPause: 'Pausar',
+    timerReset: 'Zerar',
+    playersTitle: 'Jogadores',
+    playerNamePlaceholder: 'Nome do jogador',
+    addPlayerBtn: 'Adicionar',
+    pickFirstBtn: 'Sortear primeiro jogador',
+    firstPlayerBadge: (name) => `Começa: ${name}`,
+    needPlayersAlert: 'Adicione ao menos um jogador antes de sortear.',
+    emptyPlayersHint: 'Nenhum jogador ainda — adicione abaixo.',
+    scoreTitle: 'Pontuação',
+    criterionPlaceholder: 'Nome do critério (ex: Cartas)',
+    addCriterionBtn: 'Critério',
+    totalLabel: 'Total',
+    criterionColLabel: 'Critério',
+    newGameBtn: '↺ Nova Partida',
+    confirmRemovePlayer: 'Remover este jogador e sua pontuação?',
+    confirmRemoveCriterion: 'Remover este critério de todos os jogadores?',
+    confirmNewGame: 'Isso vai apagar jogadores, critérios, pontuação e o cronômetro. Continuar?',
+    bmcBtn: 'Me pague um café',
+    helpTitle: 'Como usar',
+    helpBody: `
+      <h3>1. Jogadores</h3>
+      <p>Adicione o nome de cada jogador na seção "Jogadores". Use o × em cada balão para remover um jogador (isso também apaga a pontuação dele).</p>
+      <h3>2. Sorteio do primeiro jogador</h3>
+      <p>Toque em "Sortear primeiro jogador" para uma animação rápida que escolhe aleatoriamente quem começa a partida.</p>
+      <h3>3. Cronômetro</h3>
+      <p>Use "Iniciar"/"Pausar" para controlar o tempo de jogo e "Zerar" para reiniciar o cronômetro do zero. O tempo continua contando mesmo se você recarregar a página.</p>
+      <h3>4. Pontuação</h3>
+      <p>A tabela tem uma linha de critério padrão ("Pontuação"), que funciona como um placar simples. Se o seu jogo tiver categorias diferentes (ex: moedas, cartas, bônus), adicione quantos critérios quiser — o Total de cada jogador é somado automaticamente. O jogador com mais pontos é destacado com um troféu.</p>
+      <h3>5. Nova Partida</h3>
+      <p>O botão "Nova Partida" apaga tudo (jogadores, critérios, pontuação e cronômetro) para começar do zero.</p>
+    `,
+    creditsHtml: 'Feito por <strong>Thiago Colletes de Carvalho</strong> (<a href="mailto:colletes@gmail.com">colletes@gmail.com</a>) e IA (Gemini / GitHub Copilot) — ferramenta genérica de apoio para qualquer jogo de tabuleiro, sem afiliação a nenhum jogo ou editora específica. Uso pessoal, sem fins comerciais.',
+  },
+  en: {
+    title: 'Point Counter',
+    subtitle: 'Board Bots Tool',
+    gameNamePlaceholder: 'Game name (optional)',
+    timerTitle: 'Play time',
+    timerStart: 'Start',
+    timerPause: 'Pause',
+    timerReset: 'Reset',
+    playersTitle: 'Players',
+    playerNamePlaceholder: 'Player name',
+    addPlayerBtn: 'Add',
+    pickFirstBtn: 'Pick first player',
+    firstPlayerBadge: (name) => `Starts: ${name}`,
+    needPlayersAlert: 'Add at least one player before picking.',
+    emptyPlayersHint: 'No players yet — add one below.',
+    scoreTitle: 'Score',
+    criterionPlaceholder: 'Criterion name (e.g. Cards)',
+    addCriterionBtn: 'Criterion',
+    totalLabel: 'Total',
+    criterionColLabel: 'Criterion',
+    newGameBtn: '↺ New Game',
+    confirmRemovePlayer: 'Remove this player and their score?',
+    confirmRemoveCriterion: 'Remove this criterion from every player?',
+    confirmNewGame: 'This will erase players, criteria, scores and the timer. Continue?',
+    bmcBtn: 'Buy me a coffee',
+    helpTitle: 'How to use',
+    helpBody: `
+      <h3>1. Players</h3>
+      <p>Add each player's name in the "Players" section. Use the × on each chip to remove a player (this also erases their score).</p>
+      <h3>2. First player pick</h3>
+      <p>Tap "Pick first player" for a quick animation that randomly picks who starts the game.</p>
+      <h3>3. Timer</h3>
+      <p>Use "Start"/"Pause" to control the play time and "Reset" to zero the timer out. The clock keeps counting even if you reload the page.</p>
+      <h3>4. Score</h3>
+      <p>The table starts with one default criterion ("Score"), which works as a simple point tally. If your game has separate categories (e.g. coins, cards, bonus), add as many criteria as you want — each player's Total is summed automatically. The player in the lead is highlighted with a trophy.</p>
+      <h3>5. New Game</h3>
+      <p>The "New Game" button wipes everything (players, criteria, scores and timer) to start fresh.</p>
+    `,
+    creditsHtml: 'Made by <strong>Thiago Colletes de Carvalho</strong> (<a href="mailto:colletes@gmail.com">colletes@gmail.com</a>) and AI (Gemini / GitHub Copilot) — a generic companion tool for any board game, not affiliated with any specific game or publisher. Personal, non-commercial use.',
+  }
+};
+
+function s(){ return strings[currentLang]; }
+
+function updateUI(){
+  document.documentElement.lang = currentLang === 'pt' ? 'pt-BR' : 'en';
+  document.getElementById('titleText').textContent = s().title;
+  document.getElementById('subtitleText').textContent = s().subtitle;
+  document.getElementById('gameNameInput').placeholder = s().gameNamePlaceholder;
+  document.getElementById('gameNameInput').value = state.gameName || '';
+  document.getElementById('timerTitle').textContent = s().timerTitle;
+  document.getElementById('btnTimerReset').textContent = s().timerReset;
+  document.getElementById('playersTitle').textContent = s().playersTitle;
+  document.getElementById('newPlayerName').placeholder = s().playerNamePlaceholder;
+  document.getElementById('addPlayerText').textContent = s().addPlayerBtn;
+  document.getElementById('pickFirstText').textContent = s().pickFirstBtn;
+  document.getElementById('scoreTitle').textContent = s().scoreTitle;
+  document.getElementById('newCriterionName').placeholder = s().criterionPlaceholder;
+  document.getElementById('addCriterionText').textContent = s().addCriterionBtn;
+  document.getElementById('newGameText').textContent = s().newGameBtn;
+  document.getElementById('bmcBtnText').textContent = s().bmcBtn;
+  document.getElementById('homeBtnText').textContent = currentLang === 'pt' ? '← Início' : '← Home';
+  document.getElementById('helpTitle').textContent = s().helpTitle;
+  document.getElementById('helpBody').innerHTML = s().helpBody;
+  document.getElementById('creditsText').innerHTML = s().creditsHtml;
+  document.getElementById('langBtnPt').classList.toggle('active', currentLang === 'pt');
+  document.getElementById('langBtnEn').classList.toggle('active', currentLang === 'en');
+  renderTimerButton();
+  renderTimer();
+  renderPlayers();
+  renderFirstPlayerBadge();
+  renderScoreTable();
+}
+
+function setLangDirect(l){
+  currentLang = l;
+  localStorage.setItem(LANG_KEY, l);
+  updateUI();
+}
+
+function onGameNameInput(value){
+  state.gameName = value;
+  saveState();
+}
+
+/* ---------- Timer ---------- */
+function elapsedMs(){
+  return state.timer.accumulatedMs + (state.timer.running ? Date.now() - state.timer.startedAt : 0);
+}
+function formatTime(ms){
+  const totalSec = Math.floor(ms / 1000);
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const sec = totalSec % 60;
+  return [h, m, sec].map(v => String(v).padStart(2, '0')).join(':');
+}
+function renderTimer(){
+  document.getElementById('timerDisplay').textContent = formatTime(elapsedMs());
+}
+function renderTimerButton(){
+  const btn = document.getElementById('btnTimerToggle');
+  btn.className = state.timer.running ? 'main-btn pause-btn' : 'main-btn';
+  btn.innerHTML = state.timer.running
+    ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg><span>${s().timerPause}</span>`
+    : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4l14 8-14 8V4Z"/></svg><span>${s().timerStart}</span>`;
+}
+function toggleTimer(){
+  if (state.timer.running) {
+    state.timer.accumulatedMs += Date.now() - state.timer.startedAt;
+    state.timer.running = false;
+    state.timer.startedAt = null;
+    clearInterval(timerInterval);
+  } else {
+    state.timer.running = true;
+    state.timer.startedAt = Date.now();
+    timerInterval = setInterval(renderTimer, 1000);
+  }
+  saveState();
+  renderTimer();
+  renderTimerButton();
+}
+function resetTimer(){
+  clearInterval(timerInterval);
+  state.timer = { running: false, startedAt: null, accumulatedMs: 0 };
+  saveState();
+  renderTimer();
+  renderTimerButton();
+}
+
+/* ---------- Players ---------- */
+function renderPlayers(){
+  const row = document.getElementById('playersRow');
+  if (state.players.length === 0) {
+    row.innerHTML = `<span class="empty-players-hint">${s().emptyPlayersHint}</span>`;
+    return;
+  }
+  row.innerHTML = state.players.map(p => `
+    <div class="player-chip ${p.id === state.firstPlayerId ? 'first-player' : ''}" id="chip-${p.id}">
+      ${p.id === state.firstPlayerId ? '<svg class="star-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.26L21.8 9l-5 4.87L18.2 21 12 17.27 5.8 21l1.4-7.13-5-4.87 6.9-.74L12 2z"/></svg>' : ''}
+      <span>${escapeHtml(p.name)}</span>
+      <button class="chip-remove" onclick="removePlayer('${p.id}')" aria-label="remove">×</button>
+    </div>
+  `).join('');
+}
+
+function addPlayerFromInput(){
+  const input = document.getElementById('newPlayerName');
+  const name = input.value.trim();
+  if (!name) return;
+  const id = uid('p');
+  state.players.push({ id, name });
+  state.scores[id] = {};
+  saveState();
+  input.value = '';
+  input.focus();
+  renderPlayers();
+  renderScoreTable();
+}
+
+function removePlayer(id){
+  if (!confirm(s().confirmRemovePlayer)) return;
+  state.players = state.players.filter(p => p.id !== id);
+  delete state.scores[id];
+  if (state.firstPlayerId === id) state.firstPlayerId = null;
+  saveState();
+  renderPlayers();
+  renderFirstPlayerBadge();
+  renderScoreTable();
+}
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+/* ---------- First player picker ---------- */
+function pickFirstPlayer(){
+  const players = state.players;
+  if (players.length === 0) {
+    alert(s().needPlayersAlert);
+    return;
+  }
+  if (players.length === 1) {
+    state.firstPlayerId = players[0].id;
+    saveState();
+    renderPlayers();
+    renderFirstPlayerBadge();
+    return;
+  }
+  const winnerIndex = Math.floor(Math.random() * players.length);
+  const totalSteps = players.length * 3 + winnerIndex;
+  let step = 0;
+  let delay = 70;
+  function tick(){
+    const chips = players.map(p => document.getElementById(`chip-${p.id}`));
+    chips.forEach(c => c && c.classList.remove('picking'));
+    const cur = step % players.length;
+    if (chips[cur]) chips[cur].classList.add('picking');
+    step++;
+    if (step <= totalSteps) {
+      delay = delay * 1.06;
+      setTimeout(tick, delay);
+    } else {
+      chips.forEach(c => c && c.classList.remove('picking'));
+      state.firstPlayerId = players[winnerIndex].id;
+      saveState();
+      renderPlayers();
+      renderFirstPlayerBadge();
+    }
+  }
+  tick();
+}
+
+function renderFirstPlayerBadge(){
+  const badge = document.getElementById('firstPlayerBadge');
+  const player = state.players.find(p => p.id === state.firstPlayerId);
+  if (!player) {
+    badge.classList.add('hidden');
+    badge.innerHTML = '';
+    return;
+  }
+  badge.classList.remove('hidden');
+  badge.innerHTML = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.26L21.8 9l-5 4.87L18.2 21 12 17.27 5.8 21l1.4-7.13-5-4.87 6.9-.74L12 2z"/></svg><span>${s().firstPlayerBadge(escapeHtml(player.name))}</span>`;
+}
+
+/* ---------- Score table ---------- */
+function computeTotal(playerId){
+  return state.criteria.reduce((sum, c) => sum + ((state.scores[playerId] && state.scores[playerId][c.id]) || 0), 0);
+}
+
+function renderScoreTable(){
+  const table = document.getElementById('scoreTable');
+  const players = state.players;
+  const maxTotal = players.length > 1 ? Math.max(...players.map(p => computeTotal(p.id))) : null;
+
+  let thead = `<thead><tr><th>${s().criterionColLabel}</th>`;
+  players.forEach(p => {
+    const isLeader = maxTotal !== null && computeTotal(p.id) === maxTotal;
+    thead += `<th id="head-${p.id}" class="${isLeader ? 'leader-head' : ''}">${isLeader ? '<svg class="leader-crown" viewBox="0 0 24 24" fill="currentColor"><path d="M2 7l4 3 6-6 6 6 4-3-2 12H4L2 7z"/></svg>' : ''}${escapeHtml(p.name)}</th>`;
+  });
+  thead += '</tr></thead>';
+
+  let tbody = '<tbody>';
+  state.criteria.forEach(crit => {
+    tbody += `<tr><td><div class="crit-name-cell"><input class="crit-name-input" value="${escapeHtml(crit.name)}" onchange="renameCriterion('${crit.id}', this.value)"><button class="remove-crit-btn" ${state.criteria.length <= 1 ? 'disabled' : ''} onclick="removeCriterion('${crit.id}')" aria-label="remove">×</button></div></td>`;
+    players.forEach(p => {
+      const val = (state.scores[p.id] && state.scores[p.id][crit.id]) || 0;
+      tbody += `<td><input class="score-input" type="number" value="${val}" oninput="onScoreInput('${crit.id}','${p.id}', this.value)"></td>`;
+    });
+    tbody += '</tr>';
+  });
+  tbody += '</tbody>';
+
+  let tfoot = `<tfoot><tr class="total-row"><td>${s().totalLabel}</td>`;
+  players.forEach(p => {
+    tfoot += `<td id="total-${p.id}">${computeTotal(p.id)}</td>`;
+  });
+  tfoot += '</tr></tfoot>';
+
+  table.innerHTML = thead + tbody + tfoot;
+}
+
+function onScoreInput(critId, playerId, value){
+  const num = value === '' ? 0 : parseInt(value, 10);
+  if (!state.scores[playerId]) state.scores[playerId] = {};
+  state.scores[playerId][critId] = isNaN(num) ? 0 : num;
+  saveState();
+  const cell = document.getElementById(`total-${playerId}`);
+  if (cell) cell.textContent = computeTotal(playerId);
+  refreshLeaderHighlight();
+}
+
+function refreshLeaderHighlight(){
+  const players = state.players;
+  if (players.length < 2) return;
+  const maxTotal = Math.max(...players.map(p => computeTotal(p.id)));
+  players.forEach(p => {
+    const th = document.getElementById(`head-${p.id}`);
+    if (!th) return;
+    const isLeader = computeTotal(p.id) === maxTotal;
+    th.classList.toggle('leader-head', isLeader);
+    const hasCrown = th.querySelector('.leader-crown');
+    if (isLeader && !hasCrown) {
+      th.innerHTML = '<svg class="leader-crown" viewBox="0 0 24 24" fill="currentColor"><path d="M2 7l4 3 6-6 6 6 4-3-2 12H4L2 7z"/></svg>' + th.textContent;
+    } else if (!isLeader && hasCrown) {
+      th.textContent = th.textContent;
+    }
+  });
+}
+
+function renameCriterion(id, value){
+  const crit = state.criteria.find(c => c.id === id);
+  if (!crit) return;
+  crit.name = value.trim() || crit.name;
+  saveState();
+}
+
+function addCriterionFromInput(){
+  const input = document.getElementById('newCriterionName');
+  const name = input.value.trim();
+  if (!name) return;
+  state.criteria.push({ id: uid('c'), name });
+  saveState();
+  input.value = '';
+  input.focus();
+  renderScoreTable();
+}
+
+function removeCriterion(id){
+  if (state.criteria.length <= 1) return;
+  if (!confirm(s().confirmRemoveCriterion)) return;
+  state.criteria = state.criteria.filter(c => c.id !== id);
+  Object.keys(state.scores).forEach(pid => { delete state.scores[pid][id]; });
+  saveState();
+  renderScoreTable();
+}
+
+/* ---------- New game ---------- */
+function newGame(){
+  if (!confirm(s().confirmNewGame)) return;
+  clearInterval(timerInterval);
+  state = defaultState();
+  saveState();
+  updateUI();
+}
+
+/* ---------- Help modal ---------- */
+function openHelp(){ document.getElementById('helpModal').style.display = 'block'; document.body.style.overflow = 'hidden'; }
+function closeHelp(){ document.getElementById('helpModal').style.display = 'none'; document.body.style.overflow = ''; }
+window.addEventListener('click', (e) => { if (e.target.id === 'helpModal') closeHelp(); });
+
+updateUI();
+if (state.timer.running) {
+  timerInterval = setInterval(renderTimer, 1000);
+}
+</script>
+
+<script type="module" src="../assets/analytics.js"></script>
+<script type="module" src="../assets/bot-view.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Rolador de Dados — Board Bots Tools</title>
+<meta name="description" content="Rolador de dados virtual skeuomórfico: d4, d6, d8, d10, d12, d20, d30 e d100, com animação de rolagem.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg-color:#0b0e12;
+  --bg-color-2:#12161c;
+  --panel-bg:#181d25;
+  --panel-bg-2:#12161c;
+  --text-main:#eef1f5;
+  --text-dim:#9aa4b2;
+  --border:#2b323d;
+  --blue:#4f8cff;
+  --blue-dark:#173a75;
+  --blue-soft:#274168;
+  --blue-glow:rgba(79,140,255,0.35);
+  --red:#d64545;
+  --font-display:'Poppins','Segoe UI',sans-serif;
+  --font-body:'Inter','Segoe UI',Tahoma,Geneva,Verdana,sans-serif;
+}
+*{box-sizing:border-box;}
+html{-webkit-text-size-adjust:100%;}
+body{
+  margin:0;
+  font-family:var(--font-body);
+  color:var(--text-main);
+  background-color:var(--bg-color);
+  background-image:
+    radial-gradient(circle at 15% 0%, rgba(79,140,255,0.10), transparent 55%),
+    radial-gradient(circle at 85% 100%, rgba(79,140,255,0.06), transparent 50%),
+    linear-gradient(180deg, var(--bg-color) 0%, var(--bg-color-2) 100%);
+  background-attachment:fixed;
+  padding:20px;
+  padding-left:max(20px, env(safe-area-inset-left));
+  padding-right:max(20px, env(safe-area-inset-right));
+  padding-bottom:max(20px, env(safe-area-inset-bottom));
+  -webkit-tap-highlight-color:transparent;
+}
+button, .stepper-btn, .lang-btn{ touch-action:manipulation; }
+.container{ max-width:640px; margin:0 auto; }
+
+@keyframes fadeSlideUp{ from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);} }
+@keyframes popIn{ 0%{transform:scale(0.85); opacity:0;} 60%{transform:scale(1.12);} 100%{transform:scale(1); opacity:1;} }
+@keyframes diceShake{ 0%{transform:rotate(0deg) scale(1);} 25%{transform:rotate(-18deg) scale(1.08);} 50%{transform:rotate(14deg) scale(0.94);} 75%{transform:rotate(-10deg) scale(1.06);} 100%{transform:rotate(0deg) scale(1);} }
+
+.hero{
+  position:relative; border-radius:12px; overflow:hidden; margin-bottom:20px;
+  padding:26px 20px; border:1px solid var(--border);
+  background:linear-gradient(135deg, var(--blue-dark), var(--blue) 70%, #7db0ff);
+  animation:fadeSlideUp 0.5s ease both;
+  text-align:center;
+}
+.hero h1{ font-family:var(--font-display); font-weight:800; color:#fff; margin:0; font-size:1.7em; display:flex; align-items:center; justify-content:center; gap:10px; text-shadow:0 2px 10px rgba(0,0,0,0.3); }
+.hero h1 svg{ width:0.95em; height:0.95em; flex-shrink:0; }
+.hero .subtitle{ color:#dce8ff; margin-top:6px; font-weight:600; font-size:0.9em; }
+
+.lang-switch{ position:fixed; top:14px; right:14px; z-index:60; display:flex; gap:4px; background:var(--panel-bg); border:1px solid var(--border); border-radius:999px; padding:4px; box-shadow:0 4px 14px rgba(0,0,0,0.4); }
+.lang-btn{ border:none; background:transparent; color:var(--text-dim); font-weight:700; font-size:0.78em; padding:6px 12px; border-radius:999px; cursor:pointer; font-family:var(--font-body); }
+.lang-btn.active{ background:var(--blue); color:#fff; }
+
+.btn-help-float{ position:fixed; bottom:18px; right:18px; z-index:60; width:48px; height:48px; border-radius:50%; background:linear-gradient(180deg, var(--blue), var(--blue-dark)); color:#fff; border:1px solid #3f6fd6; font-weight:800; font-size:1.25em; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 14px rgba(0,0,0,0.45); cursor:pointer; margin:0; padding:0; }
+.btn-mute{ position:fixed; bottom:18px; left:18px; z-index:60; width:48px; height:48px; border-radius:50%; background:var(--panel-bg); border:1px solid var(--border); color:var(--text-main); display:flex; align-items:center; justify-content:center; box-shadow:0 4px 14px rgba(0,0,0,0.4); cursor:pointer; padding:0; }
+.btn-mute svg{ width:22px; height:22px; }
+
+.panel{ background:linear-gradient(160deg, var(--panel-bg) 0%, var(--panel-bg-2) 100%); border:1px solid var(--border); border-radius:10px; padding:18px 20px; margin-bottom:18px; box-shadow:0 4px 18px rgba(0,0,0,0.4); animation:fadeSlideUp 0.4s ease both; }
+.panel h2{ font-family:var(--font-display); font-size:1.05em; color:var(--text-main); margin:0 0 14px; display:flex; align-items:center; gap:8px; justify-content:space-between; }
+.panel h2 .h2-left{ display:flex; align-items:center; gap:8px; }
+.panel h2 svg{ width:20px; height:20px; color:var(--blue); flex-shrink:0; }
+
+.dice-config-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(96px, 1fr)); gap:12px; }
+.die-config-card{ display:flex; flex-direction:column; align-items:center; gap:8px; padding:10px 6px; border-radius:8px; background:rgba(255,255,255,0.02); border:1px solid var(--border); }
+.die-config-card.active{ border-color:var(--blue); box-shadow:0 0 0 2px var(--blue-glow); }
+
+.die-shape{ width:52px; height:52px; display:flex; align-items:center; justify-content:center; filter:drop-shadow(0 5px 8px rgba(0,0,0,0.5)); position:relative; }
+.die-shape .die-value{ color:#fff; font-weight:800; font-size:0.85em; text-shadow:0 2px 3px rgba(0,0,0,0.6); }
+.die-d4{ clip-path:polygon(50% 6%, 6% 94%, 94% 94%); border-radius:6px; }
+.die-d6{ border-radius:14px; }
+.die-d8{ clip-path:polygon(50% 2%, 98% 50%, 50% 98%, 2% 50%); }
+.die-d10{ clip-path:polygon(50% 0%, 100% 35%, 82% 100%, 18% 100%, 0% 35%); }
+.die-d12{ clip-path:polygon(25% 3%, 75% 3%, 100% 50%, 75% 97%, 25% 97%, 0% 50%); }
+.die-d20{ clip-path:polygon(30% 2%, 70% 2%, 100% 30%, 100% 70%, 70% 98%, 30% 98%, 0% 70%, 0% 30%); }
+.die-d30{ clip-path:polygon(50% 0%, 79% 9%, 98% 32%, 98% 68%, 79% 91%, 50% 100%, 21% 91%, 2% 68%, 2% 32%, 21% 9%); }
+.die-d100{ border-radius:50%; }
+.die-shape{ background:radial-gradient(circle at 32% 26%, rgba(255,255,255,0.55), transparent 45%), linear-gradient(160deg, var(--c1), var(--c2)); }
+.die-shape.rolling{ animation:diceShake 0.5s ease-in-out infinite; }
+.die-shape.settled{ animation:popIn 0.3s ease both; }
+
+.stepper{ display:flex; align-items:center; gap:8px; }
+.stepper-btn{ width:28px; height:28px; border-radius:50%; border:1px solid var(--border); background:rgba(255,255,255,0.04); color:var(--text-main); font-size:1em; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0; }
+.stepper-count{ min-width:20px; text-align:center; font-weight:700; }
+
+.btn-row{ display:flex; gap:10px; margin-top:16px; flex-wrap:wrap; }
+.btn-row > *{ flex:1; }
+.main-btn{ background:linear-gradient(160deg, var(--blue) 0%, var(--blue-dark) 100%); color:#fff; border:none; padding:13px; font-size:1em; border-radius:8px; cursor:pointer; font-weight:700; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 3px 10px rgba(0,0,0,0.4); }
+.main-btn svg{ width:20px; height:20px; }
+.secondary-btn{ background:transparent; border:1px solid var(--border); color:var(--text-dim); padding:13px; border-radius:8px; cursor:pointer; font-weight:700; font-family:var(--font-body); font-size:0.95em; }
+
+.total-badge{ background:var(--blue); color:#fff; font-weight:800; padding:3px 12px; border-radius:999px; font-size:0.9em; }
+
+.dice-tray{ display:flex; flex-wrap:wrap; gap:16px 14px; justify-content:center; min-height:66px; }
+.die-wrap{ display:flex; flex-direction:column; align-items:center; gap:6px; }
+.die-wrap .die-shape{ width:60px; height:60px; }
+.die-wrap .die-shape .die-value{ font-size:1.25em; }
+.type-label{ font-size:0.68em; color:var(--text-dim); font-weight:700; }
+
+.empty-hint{ text-align:center; color:var(--text-dim); font-size:0.9em; padding:10px 0; }
+
+.breakdown{ margin-top:16px; display:flex; flex-direction:column; gap:6px; }
+.breakdown-row{ display:flex; justify-content:space-between; font-size:0.9em; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:6px; padding:8px 12px; }
+.breakdown-row .b-values{ color:var(--text-dim); }
+.breakdown-row .b-sub{ font-weight:800; color:var(--blue); }
+
+.section-header{ display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+.icon-btn{ background:transparent; border:1px solid var(--border); color:var(--text-dim); border-radius:6px; padding:6px 10px; cursor:pointer; display:flex; align-items:center; gap:4px; font-size:0.85em; }
+.icon-btn svg{ width:16px; height:16px; }
+
+.history-item{ display:flex; justify-content:space-between; align-items:center; gap:10px; padding:9px 0; border-bottom:1px dashed var(--border); font-size:0.85em; }
+.history-item:last-child{ border-bottom:none; }
+.history-time{ color:var(--text-dim); font-size:0.85em; min-width:64px; }
+.history-total{ font-weight:800; color:var(--blue); }
+
+.hidden{ display:none !important; }
+
+.modal{ display:none; position:fixed; z-index:1000; left:0; top:0; width:100%; height:100%; background-color:rgba(0,0,0,0.8); overflow:auto; -webkit-overflow-scrolling:touch; }
+.modal-content{ background:linear-gradient(160deg, var(--panel-bg) 0%, var(--panel-bg-2) 100%); margin:8% auto; padding:22px 24px; border:1px solid var(--border); width:88%; max-width:520px; border-radius:10px; max-height:80vh; overflow-y:auto; -webkit-overflow-scrolling:touch; position:relative; }
+.modal-content h2{ font-family:var(--font-display); color:var(--text-main); margin-top:0; }
+.modal-content h3{ color:var(--blue); border-bottom:1px solid var(--border); padding-bottom:6px; margin-top:20px; }
+.modal-content h3:first-of-type{ margin-top:4px; }
+.modal-content p, .modal-content li{ line-height:1.55; color:var(--text-main); }
+.close-btn{ position:absolute; top:10px; right:14px; color:var(--text-dim); font-size:1.6em; font-weight:700; cursor:pointer; }
+
+.credits{ display:flex; align-items:center; gap:14px; background:var(--panel-bg); border:1px solid var(--border); border-radius:12px; padding:14px 16px; margin-top:6px; animation:fadeSlideUp 0.5s ease both; }
+.credits .credits-icon{ width:44px; height:44px; border-radius:8px; border:1px solid var(--border); flex-shrink:0; background:linear-gradient(160deg, var(--blue), var(--blue-dark)); display:flex; align-items:center; justify-content:center; }
+.credits .credits-icon svg{ width:24px; height:24px; color:#fff; }
+.credits-text{ font-size:0.8em; color:var(--text-dim); line-height:1.5; }
+.credits-text strong{ color:var(--text-main); }
+.credits-text a{ color:var(--blue); text-decoration:none; font-weight:bold; }
+
+.bmc-inline{ display:flex; justify-content:center; margin-top:14px; }
+.bmc-inline a{ display:inline-flex; align-items:center; gap:8px; background:#FFDD00; color:#000; font-weight:700; font-size:0.85em; padding:9px 16px; border-radius:8px; text-decoration:none; box-shadow:0 4px 14px rgba(0,0,0,0.4); transition:transform 0.15s; }
+.bmc-inline a:hover{ transform:scale(1.05); }
+.bmc-inline svg{ width:18px; height:18px; flex-shrink:0; }
+.btn-home{ display:inline-flex; align-items:center; gap:8px; background:linear-gradient(160deg, var(--blue), var(--blue-dark)); border:none; color:#fff; border-radius:10px; padding:12px 26px; font-weight:700; font-size:16px; text-decoration:none; box-shadow:0 4px 14px rgba(0,0,0,0.4); }
+
+@media (hover:hover) and (pointer:fine){
+  .stepper-btn:hover{ border-color:var(--blue); color:var(--blue); }
+  .main-btn:hover{ filter:brightness(1.1); }
+  .secondary-btn:hover{ border-color:var(--blue); color:var(--blue); }
+  .icon-btn:hover{ border-color:var(--blue); color:var(--blue); }
+  .btn-home:hover{ filter:brightness(1.1); }
+  .close-btn:hover{ color:var(--blue); }
+}
+</style>
+</head>
+<body>
+
+<button class="btn-mute" id="btnMute" onclick="toggleMute()" aria-label="Som"></button>
+<div class="lang-switch">
+  <button class="lang-btn" id="langBtnPt" onclick="setLangDirect('pt')">PT</button>
+  <button class="lang-btn" id="langBtnEn" onclick="setLangDirect('en')">EN</button>
+</div>
+<button class="btn-help-float" onclick="openHelp()" aria-label="Help">?</button>
+
+<div class="container">
+  <div class="hero">
+    <h1><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8" cy="8" r="1.4" fill="currentColor" stroke="none"/><circle cx="16" cy="8" r="1.4" fill="currentColor" stroke="none"/><circle cx="8" cy="16" r="1.4" fill="currentColor" stroke="none"/><circle cx="16" cy="16" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/></svg><span id="titleText">Rolador de Dados</span></h1>
+    <p class="subtitle" id="subtitleText">Ferramenta Board Bots</p>
+  </div>
+
+  <div class="panel">
+    <h2><span class="h2-left"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v7"/><path d="M4 14V7a2 2 0 0 1 2-2h2M18 14V7a2 2 0 0 0-2-2h-2"/><path d="M9 5V3M15 5V3"/></svg><span id="configTitle">Configurar Dados</span></span></h2>
+    <div class="dice-config-grid" id="diceConfigGrid"></div>
+    <div class="btn-row">
+      <button class="secondary-btn" id="btnClearCounts" onclick="clearCounts()">Limpar seleção</button>
+      <button class="main-btn" id="btnRoll" onclick="rollAll()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg>
+        <span id="rollBtnText">Rolar</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2><span class="h2-left"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-4 4"/></svg><span id="resultsTitle">Resultado</span></span><span class="total-badge" id="totalBadge">0</span></h2>
+    <div class="dice-tray" id="diceTray"><div class="empty-hint" id="emptyHint">Escolha ao menos um dado acima e clique em Rolar.</div></div>
+    <div class="breakdown" id="breakdown"></div>
+  </div>
+
+  <div class="panel">
+    <div class="section-header">
+      <h2 style="margin:0;"><span id="historyTitle">Histórico</span></h2>
+      <button class="icon-btn" onclick="clearHistory()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+        <span id="clearHistoryText">Limpar</span>
+      </button>
+    </div>
+    <div id="historyList"><p class="empty-hint" id="noHistoryText">Nenhuma rolagem ainda.</p></div>
+  </div>
+
+  <footer class="credits">
+    <div class="credits-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8" cy="8" r="1.2" fill="currentColor" stroke="none"/><circle cx="16" cy="16" r="1.2" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/></svg></div>
+    <div class="credits-text" id="creditsText"></div>
+  </footer>
+
+  <a class="bmc-inline" href="https://www.buymeacoffee.com/colletes" target="_blank" rel="noopener" aria-label="Buy me a coffee"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h13a2 2 0 0 1 2 2v1a3 3 0 0 1-3 3h-1"/><path d="M4 8h13v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V8Z"/><path d="M8 3c-.6 1 .5 1.6 0 3M12 3c-.6 1 .5 1.6 0 3"/></svg><span id="bmcBtnText">Me pague um café</span></a>
+
+  <div style="text-align:center; margin:20px auto 0 auto; width:100%;">
+    <a href="../index.html" class="btn-home">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9 21v-6h6v6"/></svg>
+      <span id="homeBtnText">← Home</span>
+    </a>
+  </div>
+</div>
+
+<div id="helpModal" class="modal">
+  <div class="modal-content">
+    <span class="close-btn" onclick="closeHelp()">&times;</span>
+    <h2 id="helpTitle">Como usar</h2>
+    <div id="helpBody"></div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('touchstart', function(){}, {passive:true});
+
+const LANG_KEY = 'boardbots_lang';
+const STORAGE_KEY = 'boardbots_dice_v1';
+const MUTE_KEY = 'boardbots_dice_muted';
+const DICE_TYPES = [4,6,8,10,12,20,30,100];
+const DIE_COLORS = {
+  4:  ['#f0b94a', '#a5701c'],
+  6:  ['#6fa4ff', '#2f63c9'],
+  8:  ['#4fd9c9', '#1f8a7c'],
+  10: ['#a98be0', '#5f3f96'],
+  12: ['#f06fa0', '#a63464'],
+  20: ['#6bce8a', '#2f7a4d'],
+  30: ['#f0955e', '#a34e1f'],
+  100:['#e3c469', '#a3841f']
+};
+const MAX_PER_TYPE = 20;
+
+let currentLang = localStorage.getItem(LANG_KEY) || 'pt';
+let muted = localStorage.getItem(MUTE_KEY) === '1';
+
+let state = loadState();
+function loadState(){
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return { counts: parsed.counts || {}, history: parsed.history || [] };
+    }
+  } catch(e){}
+  return { counts: {}, history: [] };
+}
+function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+
+const strings = {
+  pt: {
+    title: 'Rolador de Dados',
+    subtitle: 'Ferramenta Board Bots',
+    configTitle: 'Configurar Dados',
+    clearCountsBtn: 'Limpar seleção',
+    rollBtn: 'Rolar',
+    resultsTitle: 'Resultado',
+    emptyHint: 'Escolha ao menos um dado acima e clique em Rolar.',
+    emptyAlert: 'Selecione ao menos um dado antes de rolar.',
+    historyTitle: 'Histórico',
+    clearHistoryText: 'Limpar',
+    noHistory: 'Nenhuma rolagem ainda.',
+    homeBtn: '← Início',
+    bmcBtn: 'Me pague um café',
+    helpTitle: 'Como usar',
+    helpBody: `
+      <h3>1. Escolha os dados</h3>
+      <p>Use os botões − e + em cada tipo de dado (d4 a d100) para definir quantos dados desse tipo você quer rolar.</p>
+      <h3>2. Role</h3>
+      <p>Toque em "Rolar" para lançar todos os dados selecionados de uma vez. Cada dado mostra uma pequena animação antes de revelar o resultado final.</p>
+      <h3>3. Resultado</h3>
+      <p>O total somado de todos os dados aparece no topo do painel de resultado, com o detalhamento por tipo de dado logo abaixo.</p>
+      <h3>4. Histórico</h3>
+      <p>As últimas rolagens ficam salvas na seção de histórico, junto com o total de cada uma. Use "Limpar" para apagar o histórico.</p>
+      <div class="help-note">O botão no canto inferior esquerdo liga/desliga o som de "chacoalhar" dos dados.</div>
+    `,
+    creditsHtml: 'Feito por <strong>Thiago Colletes de Carvalho</strong> (<a href="mailto:colletes@gmail.com">colletes@gmail.com</a>) e IA (Gemini / GitHub Copilot) — ferramenta genérica de apoio para qualquer jogo de tabuleiro, sem afiliação a nenhum jogo ou editora específica. Uso pessoal, sem fins comerciais.',
+    breakdownOf: (n, type) => `${n}× d${type}`,
+    historyOf: (n) => `${n} dado${n===1?'':'s'}`,
+  },
+  en: {
+    title: 'Dice Roller',
+    subtitle: 'Board Bots Tool',
+    configTitle: 'Configure Dice',
+    clearCountsBtn: 'Clear selection',
+    rollBtn: 'Roll',
+    resultsTitle: 'Result',
+    emptyHint: 'Pick at least one die above and tap Roll.',
+    emptyAlert: 'Select at least one die before rolling.',
+    historyTitle: 'History',
+    clearHistoryText: 'Clear',
+    noHistory: 'No rolls yet.',
+    homeBtn: '← Home',
+    bmcBtn: 'Buy me a coffee',
+    helpTitle: 'How to use',
+    helpBody: `
+      <h3>1. Pick your dice</h3>
+      <p>Use the − and + buttons on each die type (d4 to d100) to set how many of that die you want to roll.</p>
+      <h3>2. Roll</h3>
+      <p>Tap "Roll" to throw every selected die at once. Each die shows a short rolling animation before revealing its final result.</p>
+      <h3>3. Result</h3>
+      <p>The combined total of all dice appears at the top of the result panel, with a per-type breakdown right below.</p>
+      <h3>4. History</h3>
+      <p>Recent rolls are kept in the history section, along with each roll's total. Use "Clear" to wipe the history.</p>
+      <div class="help-note">The button in the bottom-left corner toggles the dice "rattle" sound on/off.</div>
+    `,
+    creditsHtml: 'Made by <strong>Thiago Colletes de Carvalho</strong> (<a href="mailto:colletes@gmail.com">colletes@gmail.com</a>) and AI (Gemini / GitHub Copilot) — a generic companion tool for any board game, not affiliated with any specific game or publisher. Personal, non-commercial use.',
+    breakdownOf: (n, type) => `${n}× d${type}`,
+    historyOf: (n) => `${n} ${n===1?'die':'dice'}`,
+  }
+};
+
+function s(){ return strings[currentLang]; }
+
+function updateUI(){
+  document.documentElement.lang = currentLang === 'pt' ? 'pt-BR' : 'en';
+  document.getElementById('titleText').textContent = s().title;
+  document.getElementById('subtitleText').textContent = s().subtitle;
+  document.getElementById('configTitle').textContent = s().configTitle;
+  document.getElementById('btnClearCounts').textContent = s().clearCountsBtn;
+  document.getElementById('rollBtnText').textContent = s().rollBtn;
+  document.getElementById('resultsTitle').textContent = s().resultsTitle;
+  const emptyHintEl = document.getElementById('emptyHint');
+  if (emptyHintEl) emptyHintEl.textContent = s().emptyHint;
+  document.getElementById('historyTitle').textContent = s().historyTitle;
+  document.getElementById('clearHistoryText').textContent = s().clearHistoryText;
+  document.getElementById('homeBtnText').textContent = s().homeBtn;
+  document.getElementById('bmcBtnText').textContent = s().bmcBtn;
+  document.getElementById('helpTitle').textContent = s().helpTitle;
+  document.getElementById('helpBody').innerHTML = s().helpBody;
+  document.getElementById('creditsText').innerHTML = s().creditsHtml;
+  document.getElementById('langBtnPt').classList.toggle('active', currentLang === 'pt');
+  document.getElementById('langBtnEn').classList.toggle('active', currentLang === 'en');
+  renderMuteBtn();
+  renderConfig();
+  renderHistory();
+}
+
+function setLangDirect(l){
+  currentLang = l;
+  localStorage.setItem(LANG_KEY, l);
+  updateUI();
+}
+
+function renderMuteBtn(){
+  const btn = document.getElementById('btnMute');
+  btn.innerHTML = muted
+    ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5Z"/><path d="M23 9l-6 6M17 9l6 6"/></svg>'
+    : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5Z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>';
+}
+
+function toggleMute(){
+  muted = !muted;
+  localStorage.setItem(MUTE_KEY, muted ? '1' : '0');
+  renderMuteBtn();
+}
+
+function renderConfig(){
+  const grid = document.getElementById('diceConfigGrid');
+  grid.innerHTML = DICE_TYPES.map(type => {
+    const count = state.counts[type] || 0;
+    return `
+      <div class="die-config-card ${count > 0 ? 'active' : ''}" id="card-${type}">
+        <div class="die-shape die-d${type}" style="--c1:${DIE_COLORS[type][0]};--c2:${DIE_COLORS[type][1]}">
+          <span class="die-value">d${type}</span>
+        </div>
+        <div class="stepper">
+          <button class="stepper-btn" onclick="incDie(${type},-1)" aria-label="-">−</button>
+          <span class="stepper-count" id="count-${type}">${count}</span>
+          <button class="stepper-btn" onclick="incDie(${type},1)" aria-label="+">+</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function incDie(type, delta){
+  const current = state.counts[type] || 0;
+  const next = Math.max(0, Math.min(MAX_PER_TYPE, current + delta));
+  state.counts[type] = next;
+  saveState();
+  document.getElementById(`count-${type}`).textContent = next;
+  document.getElementById(`card-${type}`).classList.toggle('active', next > 0);
+}
+
+function clearCounts(){
+  DICE_TYPES.forEach(type => { state.counts[type] = 0; });
+  saveState();
+  renderConfig();
+}
+
+let audioCtx = null;
+function ensureAudio(){
+  if (!audioCtx) {
+    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {}
+  }
+  return audioCtx;
+}
+function playRattle(){
+  if (muted) return;
+  const ctx = ensureAudio();
+  if (!ctx) return;
+  const duration = 0.35;
+  const bufferSize = Math.floor(ctx.sampleRate * duration);
+  const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < bufferSize; i++) {
+    const t = i / bufferSize;
+    const envelope = Math.pow(1 - t, 2) * (0.6 + 0.4 * Math.sin(i * 0.9));
+    data[i] = (Math.random() * 2 - 1) * envelope;
+  }
+  const noise = ctx.createBufferSource();
+  noise.buffer = buffer;
+  const filter = ctx.createBiquadFilter();
+  filter.type = 'bandpass';
+  filter.frequency.value = 1100;
+  filter.Q.value = 0.6;
+  const gain = ctx.createGain();
+  gain.gain.value = 0.55;
+  noise.connect(filter).connect(gain).connect(ctx.destination);
+  noise.start();
+}
+
+function rollAll(){
+  const entries = [];
+  DICE_TYPES.forEach(type => {
+    const n = state.counts[type] || 0;
+    for (let i = 0; i < n; i++) entries.push({ type });
+  });
+  if (entries.length === 0) {
+    alert(s().emptyAlert);
+    return;
+  }
+  playRattle();
+  const tray = document.getElementById('diceTray');
+  tray.innerHTML = '';
+  const finals = [];
+  entries.forEach((entry, idx) => {
+    const finalVal = 1 + Math.floor(Math.random() * entry.type);
+    finals.push({ type: entry.type, value: finalVal });
+    const wrap = document.createElement('div');
+    wrap.className = 'die-wrap';
+    wrap.innerHTML = `<div class="die-shape die-d${entry.type} rolling" style="--c1:${DIE_COLORS[entry.type][0]};--c2:${DIE_COLORS[entry.type][1]}"><span class="die-value">?</span></div><span class="type-label">d${entry.type}</span>`;
+    tray.appendChild(wrap);
+    const valueEl = wrap.querySelector('.die-value');
+    const shapeEl = wrap.querySelector('.die-shape');
+    const cycle = setInterval(() => {
+      valueEl.textContent = 1 + Math.floor(Math.random() * entry.type);
+    }, 45);
+    const duration = 550 + idx * 70;
+    setTimeout(() => {
+      clearInterval(cycle);
+      valueEl.textContent = finalVal;
+      shapeEl.classList.remove('rolling');
+      shapeEl.classList.add('settled');
+    }, duration);
+  });
+
+  const total = finals.reduce((sum, f) => sum + f.value, 0);
+  const maxDuration = 550 + (entries.length - 1) * 70 + 80;
+  setTimeout(() => {
+    document.getElementById('totalBadge').textContent = total;
+    renderBreakdown(finals);
+    pushHistory(finals, total);
+  }, maxDuration);
+}
+
+function renderBreakdown(finals){
+  const groups = {};
+  finals.forEach(f => {
+    if (!groups[f.type]) groups[f.type] = [];
+    groups[f.type].push(f.value);
+  });
+  const box = document.getElementById('breakdown');
+  box.innerHTML = Object.keys(groups).map(type => {
+    const values = groups[type];
+    const sub = values.reduce((a, b) => a + b, 0);
+    return `
+      <div class="breakdown-row">
+        <span>${s().breakdownOf(values.length, type)}</span>
+        <span class="b-values">${values.join(', ')}</span>
+        <span class="b-sub">${sub}</span>
+      </div>
+    `;
+  }).join('');
+}
+
+function pushHistory(finals, total){
+  const groups = {};
+  finals.forEach(f => {
+    if (!groups[f.type]) groups[f.type] = [];
+    groups[f.type].push(f.value);
+  });
+  state.history.unshift({
+    time: new Date().toLocaleTimeString(currentLang === 'pt' ? 'pt-BR' : 'en-US', { hour: '2-digit', minute: '2-digit' }),
+    count: finals.length,
+    groups,
+    total
+  });
+  state.history = state.history.slice(0, 15);
+  saveState();
+  renderHistory();
+}
+
+function renderHistory(){
+  const list = document.getElementById('historyList');
+  if (state.history.length === 0) {
+    list.innerHTML = `<p class="empty-hint" id="noHistoryText">${s().noHistory}</p>`;
+    return;
+  }
+  list.innerHTML = state.history.map(entry => {
+    const detail = Object.keys(entry.groups).map(type => `d${type}(${entry.groups[type].join(',')})`).join(' + ');
+    return `
+      <div class="history-item">
+        <span class="history-time">${entry.time}</span>
+        <span style="flex:1; color:var(--text-dim);">${detail}</span>
+        <span class="history-total">${entry.total}</span>
+      </div>
+    `;
+  }).join('');
+}
+
+function clearHistory(){
+  state.history = [];
+  saveState();
+  renderHistory();
+}
+
+function openHelp(){ document.getElementById('helpModal').style.display = 'block'; document.body.style.overflow = 'hidden'; }
+function closeHelp(){ document.getElementById('helpModal').style.display = 'none'; document.body.style.overflow = ''; }
+window.addEventListener('click', (e) => { if (e.target.id === 'helpModal') closeHelp(); });
+
+updateUI();
+</script>
+
+<script type="module" src="../assets/analytics.js"></script>
+<script type="module" src="../assets/bot-view.js"></script>
+
+</body>
+</html>

@@ -74,6 +74,13 @@ const SITE_I18N = {
     credit_sanctuary: '<strong>Sanctuary</strong> — automa adaptado a partir do "ARNO" de Ark Nova. Sanctuary © Capstone Games.',
     credit_eleven: '<strong>Eleven</strong> — 100% conteúdo e app originais do autor. Eleven © Portal Games.',
     credit_memoir44: '<strong>Memoir \'44</strong> — 100% conteúdo, táticas e app originais do autor. Conteúdo de cenários também consultou o compêndio não-oficial "Western Front Scenario Compilation" de Derek "Whaleyland" Whaley. Memoir \'44 criado por Richard Borg, © Days of Wonder (edição em português por Galápagos Jogos).',
+
+    tools_title: 'Ferramentas',
+    tools_desc: 'Utilitários genéricos para qualquer jogo de tabuleiro, sem regras específicas.',
+    tool_dice_title: 'Rolador de Dados',
+    tool_dice_desc: 'Role múltiplos dados (d4 a d100) de uma vez, com animação skeuomórfica.',
+    tool_pointcounter_title: 'Contador de Pontos',
+    tool_pointcounter_desc: 'Jogadores, critérios de pontuação, cronômetro de partida e sorteio do primeiro jogador.',
   },
   en: {
     site_title: 'Board Bots',
@@ -147,6 +154,13 @@ const SITE_I18N = {
     credit_sanctuary: '<strong>Sanctuary</strong> — automa adapted from Ark Nova\'s "ARNO". Sanctuary © Capstone Games.',
     credit_eleven: '<strong>Eleven</strong> — 100% original content and app by the author. Eleven © Portal Games.',
     credit_memoir44: '<strong>Memoir \'44</strong> — 100% original content, tactics and app by the author. Scenario content also referenced the unofficial "Western Front Scenario Compilation" by Derek "Whaleyland" Whaley. Memoir \'44 designed by Richard Borg, © Days of Wonder.',
+
+    tools_title: 'Tools',
+    tools_desc: 'Generic utilities for any board game, with no game-specific rules.',
+    tool_dice_title: 'Dice Roller',
+    tool_dice_desc: 'Roll multiple dice (d4 to d100) at once, with a skeuomorphic animation.',
+    tool_pointcounter_title: 'Point Counter',
+    tool_pointcounter_desc: 'Players, scoring criteria, a play timer and a first-player picker.',
   }
 };
 
