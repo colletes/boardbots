@@ -78,7 +78,7 @@ const SITE_I18N = {
     tools_title: 'Ferramentas',
     tools_desc: 'Utilitários genéricos para qualquer jogo de tabuleiro, sem regras específicas.',
     tool_dice_title: 'Rolador de Dados',
-    tool_dice_desc: 'Role múltiplos dados (d4 a d100) de uma vez, com animação skeuomórfica.',
+    tool_dice_desc: 'Role múltiplos dados (d4 a d100) de uma vez.',
     tool_pointcounter_title: 'Contador de Pontos',
     tool_pointcounter_desc: 'Jogadores, critérios de pontuação, cronômetro de partida e sorteio do primeiro jogador.',
   },
@@ -158,7 +158,7 @@ const SITE_I18N = {
     tools_title: 'Tools',
     tools_desc: 'Generic utilities for any board game, with no game-specific rules.',
     tool_dice_title: 'Dice Roller',
-    tool_dice_desc: 'Roll multiple dice (d4 to d100) at once, with a skeuomorphic animation.',
+    tool_dice_desc: 'Roll multiple dice (d4 to d100) at once.',
     tool_pointcounter_title: 'Point Counter',
     tool_pointcounter_desc: 'Players, scoring criteria, a play timer and a first-player picker.',
   }
