@@ -18,6 +18,7 @@ const SITE_I18N = {
     feedback_desc: 'Encontrou um bug, um dado errado, ou tem uma ideia para um novo bot? Adoraria ouvir.',
     feedback_btn: 'Mandar e-mail',
     bmc_btn: 'Me pague um café',
+    search_placeholder: 'Buscar jogo...',
     supporters_title: 'Últimos apoiadores',
     supporters_empty: 'Seja o primeiro a apoiar este projeto!',
     supporter_coffee_one: '{name} pagou um café ☕',
@@ -98,6 +99,7 @@ const SITE_I18N = {
     feedback_desc: 'Found a bug, a wrong stat, or have an idea for a new bot? I\'d love to hear it.',
     feedback_btn: 'Send an e-mail',
     bmc_btn: 'Buy me a coffee',
+    search_placeholder: 'Search game...',
     supporters_title: 'Latest supporters',
     supporters_empty: 'Be the first to support this project!',
     supporter_coffee_one: '{name} bought a coffee ☕',
@@ -180,6 +182,10 @@ function applySiteI18n(){
   document.querySelectorAll('[data-i18n-aria]').forEach(el => {
     const key = el.getAttribute('data-i18n-aria');
     if (S()[key] !== undefined) el.setAttribute('aria-label', S()[key]);
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const key = el.getAttribute('data-i18n-placeholder');
+    if (S()[key] !== undefined) el.setAttribute('placeholder', S()[key]);
   });
   document.querySelectorAll('.lang-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.lang === lang);
