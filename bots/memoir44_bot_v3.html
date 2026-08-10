@@ -1428,8 +1428,29 @@
         }
         else if (state === 'executed') {
             container.classList.remove('deciding');
+            
+            let tacticsHTML = renderTreeHTML(param);
+            const sectionLabelKeys = { left: 'sectionLeftLabel', center: 'sectionCenterLabel', right: 'sectionRightLabel' };
+            let sectionBadge = param.section ? `<div class="card-section-badge">${S().cardSectionBadgePrefix}${S()[sectionLabelKeys[param.section]]}</div>` : '';
+            
+            let chosenSectionHTML = '';
+            if (param.chosenSections && param.chosenSections.length > 0) {
+                chosenSectionHTML = `<div class="card-section-badge" style="display:block; text-align:center; margin: 10px auto 0;">${S().sectionRecommendedLabel} ${param.chosenSections.join(', ')}</div>`;
+            }
+
+            const cardHTML = `
+                <div class="card active" style="margin: 0 auto 15px;">
+                    <div class="card-header">${tr(param.name)}</div>
+                    <div class="card-priority">${S().priorityLabel}${param.priority}</div>${sectionBadge}
+                    <div class="card-body">${tr(param.text)}</div>
+                    <div class="card-tactics">${tacticsHTML}</div>
+                    ${chosenSectionHTML}
+                </div>
+            `;
+
             panel.innerHTML = `
-                <div class="control-message" style="color: #ffcf6b;">${S().actionDoneHtml(tr(param.name))}</div>
+                <div class="control-message" style="color: #ffcf6b; margin-bottom: 15px;">${S().actionDoneHtml(tr(param.name))}</div>
+                ${cardHTML}
                 <button onclick="endTurn()">${S().btnNewTurn}</button>
             `;
             const list = quotes[currentFaction][lang];
@@ -1493,6 +1514,7 @@
         const labelKeys = { left: 'sectionLeftLabel', center: 'sectionCenterLabel', right: 'sectionRightLabel' };
         const ranked = Object.entries(vals).sort((a, b) => b[1] - a[1]);
         const chosen = ranked.slice(0, card.sectionPick).map(([key]) => S()[labelKeys[key]]);
+        card.chosenSections = chosen;
 
         document.getElementById('section-result').innerHTML = `
             <div class="section-result-highlight">${S().sectionRecommendedLabel}${chosen.join(', ')}</div>
