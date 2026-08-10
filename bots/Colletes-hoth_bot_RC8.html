@@ -1625,7 +1625,30 @@
             center: parseInt(document.getElementById('turn-sec-rate-center').value, 10) || 0,
             right: parseInt(document.getElementById('turn-sec-rate-right').value, 10) || 0
         };
-        activeSortedList = [...hand].sort((a, b) => a.priority - b.priority);
+        
+        const maxSectionRating = Math.max(sectionRatings.left, sectionRatings.center, sectionRatings.right);
+
+        activeSortedList = [...hand].map(card => {
+            const cps = 5 - (card.priority || 4);
+            let uss = (card.section && sectionRatings[card.section] !== undefined) ? sectionRatings[card.section] : maxSectionRating;
+            const finalScore = (cps * 0.4) + (uss * 0.6);
+            return { card, finalScore };
+        }).sort((a, b) => b.finalScore - a.finalScore).map(item => item.card);
+
+        if (activeSortedList.length > 1) {
+            const rnd = Math.random();
+            let chosenIndex = 0;
+            if (rnd < 0.05 && activeSortedList.length > 2) {
+                chosenIndex = 2;
+            } else if (rnd < 0.20) {
+                chosenIndex = 1;
+            }
+            if (chosenIndex > 0) {
+                const surpriseCard = activeSortedList.splice(chosenIndex, 1)[0];
+                activeSortedList.unshift(surpriseCard);
+            }
+        }
+
         currentEvalIndex = 0;
         evaluateCurrentCard();
     }
