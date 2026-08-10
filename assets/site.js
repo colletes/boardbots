@@ -17,6 +17,7 @@ const SITE_I18N = {
     feedback_title: 'Problema? Sugestão? Fale comigo!',
     feedback_desc: 'Encontrou um bug, um dado errado, ou tem uma ideia para um novo bot? Adoraria ouvir.',
     feedback_btn: 'Mandar e-mail',
+    feedback_mailto: 'mailto:colletes@gmail.com?subject=[Boardbots]%20%20Feedback,%20sugestão,%20crítica',
     bmc_btn: 'Me pague um café',
     search_placeholder: 'Buscar jogo...',
     supporters_title: 'Últimos apoiadores',
@@ -98,6 +99,7 @@ const SITE_I18N = {
     feedback_title: 'Trouble? Feedback? Get in touch!',
     feedback_desc: 'Found a bug, a wrong stat, or have an idea for a new bot? I\'d love to hear it.',
     feedback_btn: 'Send an e-mail',
+    feedback_mailto: 'mailto:colletes@gmail.com?subject=[Boardbots]%20%20Feedback,%20suggestion,%20bug',
     bmc_btn: 'Buy me a coffee',
     search_placeholder: 'Search game...',
     supporters_title: 'Latest supporters',
@@ -186,6 +188,10 @@ function applySiteI18n(){
   document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
     const key = el.getAttribute('data-i18n-placeholder');
     if (S()[key] !== undefined) el.setAttribute('placeholder', S()[key]);
+  });
+  document.querySelectorAll('[data-i18n-href]').forEach(el => {
+    const key = el.getAttribute('data-i18n-href');
+    if (S()[key] !== undefined) el.setAttribute('href', S()[key]);
   });
   document.querySelectorAll('.lang-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.lang === lang);
