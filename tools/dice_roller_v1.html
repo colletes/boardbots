@@ -37,8 +37,12 @@ body {
 }
 
 #dice-box {
-  position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0; width: 100vw; height: 100vh;
   z-index: 10;
+}
+#dice-box canvas {
+  width: 100% !important; height: 100% !important;
+  display: block;
 }
 
 #vfx-canvas {
@@ -107,13 +111,13 @@ body {
 .btn-secondary:hover { color: var(--text-main); border-color: var(--text-main); }
 
 #result-panel {
-  position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.9);
-  background: var(--panel-bg); border: 1px solid var(--blue);
-  box-shadow: 0 0 50px rgba(79,140,255,0.2);
-  border-radius: 16px; padding: 30px; width: 90%; max-width: 600px;
+  position: fixed; bottom: 30px; top: auto; left: 50%; transform: translate(-50%, 20px) scale(0.9);
+  background: rgba(24, 29, 37, 0.85); border: 1px solid var(--blue);
+  box-shadow: 0 10px 40px rgba(79,140,255,0.2); backdrop-filter: blur(8px);
+  border-radius: 16px; padding: 20px; width: 90%; max-width: 500px;
   z-index: 40; display: none; opacity: 0; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
-#result-panel.show { display: block; opacity: 1; transform: translate(-50%, -50%) scale(1); }
+#result-panel.show { display: block; opacity: 1; transform: translate(-50%, 0) scale(1); }
 .result-total {
   font-family: var(--number-font); font-size: 4em; font-weight: 800; color: var(--number-color);
   text-align: center; line-height: 1; margin-bottom: 20px;
@@ -641,6 +645,7 @@ body {
     });
 
     await diceBox.init();
+    setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
     
     diceBox.onDieComplete = (dieResult) => {
       if (state.vfx !== 'none') {
@@ -708,6 +713,9 @@ body {
   }
 
   function getScreenCoords(dieResult) {
+    if (dieResult && dieResult.screenPosition) {
+      return { x: dieResult.screenPosition.x, y: dieResult.screenPosition.y };
+    }
     const cx = window.innerWidth / 2;
     const cy = window.innerHeight / 2;
     const rx = (Math.random() - 0.5) * (window.innerWidth * 0.6);
@@ -784,13 +792,13 @@ body {
       </div>
     `).join('');
 
-    diceBox.clear(); 
     document.getElementById('result-panel').classList.add('show');
   }
 
   window.closeResults = function() {
     document.getElementById('result-panel').classList.remove('show');
     document.getElementById('sidebar').classList.remove('hidden-ui');
+    if (diceBox) diceBox.clear();
   }
   
   function spawnVFX(type, dieResult) {
