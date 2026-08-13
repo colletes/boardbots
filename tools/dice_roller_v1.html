@@ -7,7 +7,7 @@
 <meta name="description" content="Rolador de dados virtual 3D com física real e efeitos visuais personalizados.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@700;800&family=Inter:wght@400;500;600;700&family=Orbitron:wght@700;800&family=Bangers&display=swap" rel="stylesheet">
 
 <style>
 :root {
@@ -21,6 +21,8 @@
   --red: #d64545;
   --font-display: 'Poppins', 'Segoe UI', sans-serif;
   --font-body: 'Inter', 'Segoe UI', sans-serif;
+  --number-color: #ffffff;
+  --number-font: 'Poppins', 'Segoe UI', sans-serif;
 }
 
 * { box-sizing: border-box; }
@@ -113,9 +115,9 @@ body {
 }
 #result-panel.show { display: block; opacity: 1; transform: translate(-50%, -50%) scale(1); }
 .result-total {
-  font-family: var(--font-display); font-size: 4em; font-weight: 800; color: var(--blue);
+  font-family: var(--number-font); font-size: 4em; font-weight: 800; color: var(--number-color);
   text-align: center; line-height: 1; margin-bottom: 20px;
-  text-shadow: 0 4px 20px rgba(79,140,255,0.4);
+  text-shadow: 0 4px 20px color-mix(in srgb, var(--number-color) 45%, transparent);
 }
 .result-grid {
   display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; max-height: 40vh; overflow-y: auto; padding: 10px;
@@ -125,7 +127,7 @@ body {
   width: 60px; height: 60px; background: rgba(255,255,255,0.05); border: 1px solid var(--border);
   border-radius: 12px; position: relative;
 }
-.result-die-val { font-size: 1.5em; font-weight: 800; color: #fff; }
+.result-die-val { font-size: 1.5em; font-weight: 800; color: var(--number-color); font-family: var(--number-font); }
 .result-die-type { font-size: 0.65em; color: var(--text-dim); text-transform: uppercase; font-weight: 700; }
 .close-result-btn {
   margin-top: 24px; width: 100%; padding: 14px; background: transparent; border: 1px solid var(--border);
@@ -141,11 +143,23 @@ body {
 }
 .btn-home:hover { color: #fff; border-color: #fff; }
 
+.lang-switch {
+  position: fixed; bottom: 20px; right: 20px; z-index: 50;
+  display: flex; gap: 4px; background: var(--panel-bg); border: 1px solid var(--border);
+  border-radius: 8px; padding: 4px; backdrop-filter: blur(10px);
+}
+.lang-btn {
+  background: transparent; border: none; color: var(--text-dim); padding: 6px 10px;
+  border-radius: 6px; cursor: pointer; font-weight: 700; font-size: 0.8em; font-family: var(--font-body);
+}
+.lang-btn.active { background: var(--blue); color: #fff; }
+
 @media (max-width: 600px) {
   .sidebar { width: calc(100% - 40px); top: auto; left: 20px; bottom: 20px; height: 75vh; }
   .sidebar.hidden-ui { transform: translateY(120%); }
   #result-panel { width: 95%; padding: 20px; }
   .result-total { font-size: 3em; }
+  .lang-switch { bottom: auto; top: 12px; right: 90px; }
 }
 </style>
 </head>
@@ -153,66 +167,101 @@ body {
 
 <a href="../index.html" class="btn-home">
   <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9 21v-6h6v6"/></svg>
-  Voltar
+  <span data-i18n="backBtn">Voltar</span>
 </a>
+
+<div class="lang-switch">
+  <button class="lang-btn" id="lang-pt" onclick="setLang('pt')">PT-BR</button>
+  <button class="lang-btn" id="lang-en" onclick="setLang('en')">EN</button>
+</div>
 
 <div id="dice-box"></div>
 <canvas id="vfx-canvas"></canvas>
 
 <div class="sidebar" id="sidebar">
   <div class="sidebar-header">
-    <h1>Rolador 3D</h1>
-    <p>Configure sua mesa</p>
+    <h1 data-i18n="title">Rolador 3D</h1>
+    <p data-i18n="subtitle">Configure sua mesa</p>
   </div>
 
-  <div class="section-title">Presets</div>
+  <div class="section-title" data-i18n="presetsTitle">Presets</div>
   <div class="preset-row">
     <select class="form-control" id="preset-selector" onchange="loadPreset(this.value)">
-      <option value="">-- Escolha um Preset --</option>
+      <option value="" data-i18n="presetPlaceholder">-- Escolha um Preset --</option>
     </select>
-    <button class="btn-icon" onclick="savePreset()" title="Salvar Preset Atual">
+    <button class="btn-icon" onclick="savePreset()" data-i18n-title="savePresetTitle" title="Salvar Preset Atual">
       <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
     </button>
-    <button class="btn-icon" onclick="deletePreset()" title="Excluir Preset" style="color: var(--red);">
+    <button class="btn-icon" onclick="deletePreset()" data-i18n-title="deletePresetTitle" title="Excluir Preset" style="color: var(--red);">
       <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
     </button>
   </div>
 
-  <div class="section-title">Estilo Global</div>
+  <div class="section-title" data-i18n="styleSectionTitle">Estilo Global</div>
   <div class="form-group">
-    <label>Material / Tema</label>
+    <label data-i18n="materialLabel">Material / Tema</label>
     <select class="form-control" id="global-theme" onchange="updateGlobalConfig()">
-      <option value="default">Plástico (Padrão)</option>
-      <option value="rust">Enferrujado</option>
-      <option value="wood">Madeira</option>
+      <option value="default" data-i18n="themeDefault">🎲 Plástico (Padrão)</option>
+      <option value="blueGreenMetal" data-i18n="themeMetal">⚙️ Metálico</option>
+      <option value="rust" data-i18n="themeRust">🔩 Aço Escovado / Enferrujado</option>
+      <option value="gemstone" data-i18n="themeGlass">💎 Vidro (Gema)</option>
+      <option value="gemstoneMarble" data-i18n="themeMarble">🌈 Translúcido (Mármore)</option>
+      <option value="smooth" data-i18n="themeMatte">◻️ Fosco (Matte)</option>
+      <option value="wooden" data-i18n="themeWood">🪵 Madeira</option>
     </select>
   </div>
   <div class="form-group">
-    <label>Cor Principal</label>
+    <label data-i18n="colorLabel">Cor Principal</label>
     <div class="color-picker-wrap">
       <input type="color" id="global-color" class="color-picker" onchange="updateGlobalConfig()">
       <span id="global-color-hex" style="font-size: 0.85em; color: var(--text-dim);">#ffffff</span>
     </div>
+    <small id="color-note" data-i18n="colorNote" style="display:none; margin-top:6px; color: var(--text-dim); font-size: 0.75em;">Esta textura já tem cor/padrão próprio — a cor escolhida não se aplica.</small>
   </div>
   <div class="form-group">
-    <label>Efeito Visual (Impacto)</label>
+    <label data-i18n="numberColorLabel">Cor dos Números</label>
+    <div class="color-picker-wrap">
+      <input type="color" id="global-number-color" class="color-picker" onchange="updateGlobalConfig()">
+      <span id="global-number-color-hex" style="font-size: 0.85em; color: var(--text-dim);">#ffffff</span>
+    </div>
+  </div>
+  <div class="form-group">
+    <label data-i18n="numberFontLabel">Fonte dos Números</label>
+    <select class="form-control" id="global-number-font" onchange="updateGlobalConfig()">
+      <option value="'Poppins', 'Segoe UI', sans-serif" data-i18n="fontDefault">Poppins (Padrão)</option>
+      <option value="'Inter', 'Segoe UI', sans-serif" data-i18n="fontInter">Inter</option>
+      <option value="'Orbitron', sans-serif" data-i18n="fontOrbitron">Orbitron (Futurista)</option>
+      <option value="'Bangers', cursive" data-i18n="fontBangers">Bangers (Cômico)</option>
+      <option value="'Courier New', monospace" data-i18n="fontMono">Courier (Retrô)</option>
+    </select>
+  </div>
+  <div class="form-group">
+    <label data-i18n="vfxLabel">Efeito Visual (Impacto)</label>
     <select class="form-control" id="global-vfx" onchange="updateGlobalConfig()">
-      <option value="none">Nenhum</option>
-      <option value="fire">🔥 Explosão de Fogo</option>
-      <option value="star">✨ Impacto Estelar</option>
-      <option value="blood">🩸 Poça de Sangue (Terror)</option>
-      <option value="saber">⚔️ Sabre de Luz (Glow)</option>
+      <option value="none" data-i18n="vfxNone">Nenhum</option>
+      <option value="fire" data-i18n="vfxFire">🔥 Explosão de Fogo</option>
+      <option value="star" data-i18n="vfxStar">✨ Impacto Estelar</option>
+      <option value="blood" data-i18n="vfxBlood">🩸 Respingo de Sangue (Terror)</option>
+      <option value="saber" data-i18n="vfxSaber">⚔️ Sabre de Luz (Glow)</option>
+      <option value="trail" data-i18n="vfxTrail">💫 Trilha Cometa</option>
+    </select>
+  </div>
+  <div class="form-group">
+    <label data-i18n="sfxLabel">Efeito Sonoro</label>
+    <select class="form-control" id="global-sfx" onchange="updateGlobalConfig()">
+      <option value="none" data-i18n="vfxNone">Nenhum</option>
+      <option value="robot" data-i18n="sfxRobot">🤖 Robótico</option>
     </select>
   </div>
 
-  <div class="section-title">Dados</div>
+  <div class="section-title" data-i18n="diceSectionTitle">Dados</div>
   <div id="dice-list"></div>
   
   <div class="actions-row">
-    <button class="btn-secondary" onclick="clearCounts()">Limpar</button>
+    <button class="btn-secondary" onclick="clearCounts()" data-i18n="clearBtn">Limpar</button>
     <button class="btn-main" onclick="rollDice()">
       <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg>
-      Rolar
+      <span data-i18n="rollBtn">Rolar</span>
     </button>
   </div>
 </div>
@@ -220,7 +269,7 @@ body {
 <div id="result-panel">
   <div class="result-total" id="result-total">0</div>
   <div class="result-grid" id="result-grid"></div>
-  <button class="close-result-btn" onclick="closeResults()">Continuar</button>
+  <button class="close-result-btn" onclick="closeResults()" data-i18n="continueBtn">Continuar</button>
 </div>
 
 <script type="module">
@@ -234,8 +283,151 @@ body {
     counts: { 4:0, 6:0, 8:0, 10:0, 12:0, 20:0, 100:0 },
     theme: 'default',
     color: '#4f8cff',
-    vfx: 'none'
+    vfx: 'none',
+    sfx: 'none',
+    numberColor: '#ffffff',
+    numberFont: "'Poppins', 'Segoe UI', sans-serif"
   };
+
+  // Real theme asset folders published in the @3d-dice/dice-themes CDN package.
+  // dice-box's own CDN bundle only ships the "default" theme, so every other
+  // material must be loaded from this external package via externalThemes.
+  const DICE_THEMES_CDN = 'https://unpkg.com/@3d-dice/dice-themes@0.2.1/themes';
+  const EXTERNAL_THEMES = {
+    blueGreenMetal: `${DICE_THEMES_CDN}/blueGreenMetal`,
+    rust: `${DICE_THEMES_CDN}/rust`,
+    gemstone: `${DICE_THEMES_CDN}/gemstone`,
+    gemstoneMarble: `${DICE_THEMES_CDN}/gemstoneMarble`,
+    smooth: `${DICE_THEMES_CDN}/smooth`,
+    wooden: `${DICE_THEMES_CDN}/wooden`
+  };
+  // Themes whose material is a fixed texture ("standard" type) ignore themeColor.
+  const NON_RECOLORABLE_THEMES = ['blueGreenMetal', 'gemstoneMarble', 'wooden'];
+  // Legacy theme values saved before this update no longer point anywhere valid.
+  const THEME_MIGRATION = { wood: 'wooden' };
+
+  const LANG_KEY = 'boardbots_dice_lang';
+  const I18N = {
+    pt: {
+      pageTitle: 'Rolador de Dados 3D — Board Bots Tools',
+      metaDescription: 'Rolador de dados virtual 3D com física real e efeitos visuais personalizados.',
+      backBtn: 'Voltar',
+      title: 'Rolador 3D',
+      subtitle: 'Configure sua mesa',
+      presetsTitle: 'Presets',
+      presetPlaceholder: '-- Escolha um Preset --',
+      savePresetTitle: 'Salvar Preset Atual',
+      deletePresetTitle: 'Excluir Preset',
+      styleSectionTitle: 'Estilo Global',
+      materialLabel: 'Material / Tema',
+      themeDefault: '🎲 Plástico (Padrão)',
+      themeMetal: '⚙️ Metálico',
+      themeRust: '🔩 Aço Escovado / Enferrujado',
+      themeGlass: '💎 Vidro (Gema)',
+      themeMarble: '🌈 Translúcido (Mármore)',
+      themeMatte: '◻️ Fosco (Matte)',
+      themeWood: '🪵 Madeira',
+      colorLabel: 'Cor Principal',
+      colorNote: 'Esta textura já tem cor/padrão próprio — a cor escolhida não se aplica.',
+      numberColorLabel: 'Cor dos Números',
+      numberFontLabel: 'Fonte dos Números',
+      fontDefault: 'Poppins (Padrão)',
+      fontInter: 'Inter',
+      fontOrbitron: 'Orbitron (Futurista)',
+      fontBangers: 'Bangers (Cômico)',
+      fontMono: 'Courier (Retrô)',
+      vfxLabel: 'Efeito Visual (Impacto)',
+      vfxNone: 'Nenhum',
+      vfxFire: '🔥 Explosão de Fogo',
+      vfxStar: '✨ Impacto Estelar',
+      vfxBlood: '🩸 Respingo de Sangue (Terror)',
+      vfxSaber: '⚔️ Sabre de Luz (Glow)',
+      vfxTrail: '💫 Trilha Cometa',
+      sfxLabel: 'Efeito Sonoro',
+      sfxRobot: '🤖 Robótico',
+      diceSectionTitle: 'Dados',
+      clearBtn: 'Limpar',
+      rollBtn: 'Rolar',
+      continueBtn: 'Continuar',
+      promptPresetName: 'Nome do preset:',
+      confirmDeletePreset: (name) => `Excluir o preset "${name}"?`,
+      alertNoDice: 'Selecione ao menos um dado!'
+    },
+    en: {
+      pageTitle: '3D Dice Roller — Board Bots Tools',
+      metaDescription: 'Virtual 3D dice roller with real physics and custom visual effects.',
+      backBtn: 'Back',
+      title: '3D Roller',
+      subtitle: 'Set up your table',
+      presetsTitle: 'Presets',
+      presetPlaceholder: '-- Choose a Preset --',
+      savePresetTitle: 'Save Current Preset',
+      deletePresetTitle: 'Delete Preset',
+      styleSectionTitle: 'Global Style',
+      materialLabel: 'Material / Theme',
+      themeDefault: '🎲 Plastic (Default)',
+      themeMetal: '⚙️ Metallic',
+      themeRust: '🔩 Brushed Steel / Rusted',
+      themeGlass: '💎 Glass (Gem)',
+      themeMarble: '🌈 Translucent (Marble)',
+      themeMatte: '◻️ Matte',
+      themeWood: '🪵 Wood',
+      colorLabel: 'Main Color',
+      colorNote: "This texture already has its own color/pattern — the chosen color won't apply.",
+      numberColorLabel: 'Number Color',
+      numberFontLabel: 'Number Font',
+      fontDefault: 'Poppins (Default)',
+      fontInter: 'Inter',
+      fontOrbitron: 'Orbitron (Futuristic)',
+      fontBangers: 'Bangers (Comic)',
+      fontMono: 'Courier (Retro)',
+      vfxLabel: 'Visual Effect (Impact)',
+      vfxNone: 'None',
+      vfxFire: '🔥 Fire Explosion',
+      vfxStar: '✨ Star Impact',
+      vfxBlood: '🩸 Blood Splatter (Horror)',
+      vfxSaber: '⚔️ Lightsaber (Glow)',
+      vfxTrail: '💫 Comet Trail',
+      sfxLabel: 'Sound Effect',
+      sfxRobot: '🤖 Robotic',
+      diceSectionTitle: 'Dice',
+      clearBtn: 'Clear',
+      rollBtn: 'Roll',
+      continueBtn: 'Continue',
+      promptPresetName: 'Preset name:',
+      confirmDeletePreset: (name) => `Delete preset "${name}"?`,
+      alertNoDice: 'Select at least one die!'
+    }
+  };
+  let currentLang = localStorage.getItem(LANG_KEY) || 'pt';
+  function S() { return I18N[currentLang]; }
+
+  function applyI18n() {
+    document.documentElement.lang = currentLang === 'pt' ? 'pt-BR' : 'en';
+    document.title = S().pageTitle;
+    const metaDesc = document.querySelector('meta[name="description"]');
+    if (metaDesc) metaDesc.content = S().metaDescription;
+
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.dataset.i18n;
+      if (S()[key] !== undefined) el.textContent = S()[key];
+    });
+    document.querySelectorAll('[data-i18n-title]').forEach(el => {
+      const key = el.dataset.i18nTitle;
+      if (S()[key] !== undefined) el.title = S()[key];
+    });
+
+    document.getElementById('lang-pt').classList.toggle('active', currentLang === 'pt');
+    document.getElementById('lang-en').classList.toggle('active', currentLang === 'en');
+  }
+
+  window.setLang = function(lang) {
+    currentLang = lang;
+    localStorage.setItem(LANG_KEY, lang);
+    applyI18n();
+    renderPresets();
+    renderDiceList();
+  }
 
   let state = loadState();
   let presets = loadPresets();
@@ -251,13 +443,46 @@ body {
     vfxCanvas.width = window.innerWidth;
     vfxCanvas.height = window.innerHeight;
   }
-  window.addEventListener('resize', resizeCanvas);
+
+  // Dice-box sizes its dice as a fixed multiple of the container regardless of
+  // viewport size, so on large/wide screens dice can look tiny relative to the
+  // available table area. Scale up with viewport size and shrink a bit as more
+  // dice are added so a big roll still fits comfortably on screen.
+  function totalDiceCount() {
+    return DICE_TYPES.reduce((sum, type) => sum + (state.counts[type] || 0), 0);
+  }
+
+  function computeAdaptiveScale() {
+    const minDim = Math.min(window.innerWidth, window.innerHeight);
+    let scale = 7 * (minDim / 900);
+    const count = Math.max(1, totalDiceCount());
+    if (count > 4) scale *= Math.pow(4 / count, 0.25);
+    return Math.min(11, Math.max(3, scale));
+  }
+
+  let resizeDebounceTimer = null;
+  window.addEventListener('resize', () => {
+    resizeCanvas();
+    clearTimeout(resizeDebounceTimer);
+    resizeDebounceTimer = setTimeout(() => {
+      if (diceBox && !isRolling) {
+        diceBox.updateConfig({ scale: computeAdaptiveScale() });
+      }
+    }, 200);
+  });
   resizeCanvas();
 
   function loadState() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) return JSON.parse(raw);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (THEME_MIGRATION[parsed.theme]) parsed.theme = THEME_MIGRATION[parsed.theme];
+        if (!parsed.sfx) parsed.sfx = 'none';
+        if (!parsed.numberColor) parsed.numberColor = DEFAULT_STATE.numberColor;
+        if (!parsed.numberFont) parsed.numberFont = DEFAULT_STATE.numberFont;
+        return parsed;
+      }
     } catch(e) {}
     return JSON.parse(JSON.stringify(DEFAULT_STATE));
   }
@@ -280,14 +505,14 @@ body {
 
   function renderPresets() {
     const sel = document.getElementById('preset-selector');
-    sel.innerHTML = '<option value="">-- Escolha um Preset --</option>';
+    sel.innerHTML = `<option value="">${S().presetPlaceholder}</option>`;
     for (const name in presets) {
       sel.innerHTML += `<option value="${name}">${name}</option>`;
     }
   }
 
   window.savePreset = function() {
-    const name = prompt("Nome do preset:");
+    const name = prompt(S().promptPresetName);
     if (!name || name.trim() === '') return;
     presets[name.trim()] = JSON.parse(JSON.stringify(state));
     savePresets();
@@ -298,6 +523,9 @@ body {
   window.loadPreset = function(name) {
     if (!name || !presets[name]) return;
     state = JSON.parse(JSON.stringify(presets[name]));
+    if (!state.sfx) state.sfx = 'none';
+    if (!state.numberColor) state.numberColor = DEFAULT_STATE.numberColor;
+    if (!state.numberFont) state.numberFont = DEFAULT_STATE.numberFont;
     saveState();
     syncUIWithState();
     if (diceBox) {
@@ -309,7 +537,7 @@ body {
     const sel = document.getElementById('preset-selector');
     const name = sel.value;
     if (!name || !presets[name]) return;
-    if (confirm(`Excluir o preset "${name}"?`)) {
+    if (confirm(S().confirmDeletePreset(name))) {
       delete presets[name];
       savePresets();
       renderPresets();
@@ -317,11 +545,31 @@ body {
     }
   }
 
+  function updateColorPickerAvailability() {
+    const disabled = NON_RECOLORABLE_THEMES.includes(state.theme);
+    const colorInput = document.getElementById('global-color');
+    colorInput.disabled = disabled;
+    colorInput.parentElement.style.opacity = disabled ? '0.4' : '1';
+    document.getElementById('color-note').style.display = disabled ? 'block' : 'none';
+  }
+
+  function applyNumberStyle() {
+    document.documentElement.style.setProperty('--number-color', state.numberColor);
+    document.documentElement.style.setProperty('--number-font', state.numberFont);
+  }
+
   function syncUIWithState() {
     document.getElementById('global-theme').value = state.theme;
     document.getElementById('global-color').value = state.color;
     document.getElementById('global-color-hex').textContent = state.color;
+    document.getElementById('global-number-color').value = state.numberColor;
+    document.getElementById('global-number-color-hex').textContent = state.numberColor;
+    document.getElementById('global-number-font').value = state.numberFont;
     document.getElementById('global-vfx').value = state.vfx;
+    document.getElementById('global-sfx').value = state.sfx || 'none';
+    updateColorPickerAvailability();
+    applyNumberStyle();
+    applyI18n();
     renderDiceList();
   }
 
@@ -329,8 +577,14 @@ body {
     state.theme = document.getElementById('global-theme').value;
     state.color = document.getElementById('global-color').value;
     document.getElementById('global-color-hex').textContent = state.color;
+    state.numberColor = document.getElementById('global-number-color').value;
+    document.getElementById('global-number-color-hex').textContent = state.numberColor;
+    state.numberFont = document.getElementById('global-number-font').value;
     state.vfx = document.getElementById('global-vfx').value;
+    state.sfx = document.getElementById('global-sfx').value;
     saveState();
+    updateColorPickerAvailability();
+    applyNumberStyle();
 
     if (diceBox) {
       diceBox.updateConfig({
@@ -373,10 +627,12 @@ body {
   async function initDiceBox() {
     diceBox = new DiceBox({
       container: "#dice-box",
-      assetPath: 'https://unpkg.com/@3d-dice/dice-box@1.1.3/dist/assets/',
+      assetPath: 'assets/',
+      origin: 'https://unpkg.com/@3d-dice/dice-box@1.1.3/dist/',
+      externalThemes: EXTERNAL_THEMES,
       theme: state.theme,
       themeColor: state.color,
-      scale: 7, 
+      scale: computeAdaptiveScale(), 
       gravity: 2.5,
       friction: 0.8,
       restitution: 0.5,
@@ -390,12 +646,65 @@ body {
       if (state.vfx !== 'none') {
         spawnVFX(state.vfx, dieResult);
       }
+      if (state.sfx === 'robot') {
+        playRobotBlip();
+      }
     };
 
     diceBox.onRollComplete = (results) => {
       isRolling = false;
       setTimeout(() => showResultsModal(results), 800);
     };
+  }
+
+  let audioCtx = null;
+  function getAudioCtx() {
+    if (!audioCtx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      audioCtx = new AC();
+    }
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    return audioCtx;
+  }
+
+  // Procedurally synthesized "robot" sounds via Web Audio API oscillators
+  // (no external audio files needed, keeps this a single self-contained file).
+  function playRobotBlip() {
+    const ctx = getAudioCtx();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'square';
+    const startFreq = 260 + Math.random() * 520;
+    osc.frequency.setValueAtTime(startFreq, now);
+    osc.frequency.exponentialRampToValueAtTime(startFreq * (Math.random() > 0.5 ? 2.4 : 0.42), now + 0.09);
+    gain.gain.setValueAtTime(0.001, now);
+    gain.gain.exponentialRampToValueAtTime(0.16, now + 0.008);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.13);
+  }
+
+  function playRobotActivate() {
+    const ctx = getAudioCtx();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    for (let i = 0; i < 3; i++) {
+      const t0 = now + i * 0.07;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(140 + i * 240, t0);
+      gain.gain.setValueAtTime(0.001, t0);
+      gain.gain.exponentialRampToValueAtTime(0.14, t0 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.1);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(t0);
+      osc.stop(t0 + 0.11);
+    }
   }
 
   function getScreenCoords(dieResult) {
@@ -418,7 +727,7 @@ body {
     });
 
     if (rollNotation.length === 0) {
-      alert("Selecione ao menos um dado!");
+      alert(S().alertNoDice);
       return;
     }
 
@@ -429,7 +738,12 @@ body {
     bloodPuddles = [];
     ctx.clearRect(0, 0, vfxCanvas.width, vfxCanvas.height);
 
+    if (state.sfx === 'robot') {
+      playRobotActivate();
+    }
+
     isRolling = true;
+    diceBox.updateConfig({ scale: computeAdaptiveScale() });
     diceBox.clear();
     diceBox.roll(rollNotation).catch(e => {
         console.error("Erro no roll:", e);
@@ -485,8 +799,35 @@ body {
     if (type === 'blood') {
       bloodPuddles.push({
         x: coords.x, y: coords.y,
-        radius: 0, maxRadius: 30 + Math.random() * 20,
-        alpha: 0.8
+        radius: 0, maxRadius: 34 + Math.random() * 22,
+        alpha: 0.82
+      });
+      // Radial spatter droplets around the main puddle for a deluxe "splatter" look.
+      const dropCount = 6 + Math.floor(Math.random() * 5);
+      for (let i = 0; i < dropCount; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const dist = 14 + Math.random() * 70;
+        bloodPuddles.push({
+          x: coords.x + Math.cos(angle) * dist,
+          y: coords.y + Math.sin(angle) * dist * 0.6,
+          radius: 0, maxRadius: 3 + Math.random() * 9,
+          alpha: 0.5 + Math.random() * 0.3
+        });
+      }
+    } else if (type === 'trail') {
+      const angle = Math.random() * Math.PI * 2;
+      const dist = 260 + Math.random() * 220;
+      const startX = coords.x + Math.cos(angle) * dist;
+      const startY = coords.y + Math.sin(angle) * dist;
+      const travelFrames = 50; // matches the 0.02/frame life decay below (~0.8s)
+      particles.push({
+        x: startX, y: startY,
+        vx: (coords.x - startX) / travelFrames,
+        vy: (coords.y - startY) / travelFrames,
+        life: 1.0, color: state.color,
+        size: 6 + Math.random() * 3,
+        isTrail: true,
+        trail: []
       });
     } else if (type === 'fire') {
       for(let i=0; i<30; i++) {
@@ -548,6 +889,25 @@ body {
         ctx.fillStyle = gradient;
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.size * (2 - p.life), 0, Math.PI*2);
+        ctx.fill();
+      } else if (p.isTrail) {
+        p.trail.push({ x: p.x, y: p.y });
+        if (p.trail.length > 14) p.trail.shift();
+        for (let t = 0; t < p.trail.length; t++) {
+          const seg = p.trail[t];
+          const segFrac = t / p.trail.length;
+          ctx.globalAlpha = segFrac * p.life;
+          ctx.fillStyle = p.color;
+          ctx.beginPath();
+          ctx.arc(seg.x, seg.y, p.size * segFrac, 0, Math.PI*2);
+          ctx.fill();
+        }
+        ctx.globalAlpha = p.life;
+        ctx.shadowBlur = 14;
+        ctx.shadowColor = p.color;
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
         ctx.fill();
       } else if (p.isStar) {
         ctx.fillStyle = p.color;
