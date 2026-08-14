@@ -45,10 +45,6 @@ body {
   display: block;
 }
 
-#vfx-canvas {
-  position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-  pointer-events: none; z-index: 20;
-}
 
 .sidebar {
   position: fixed; top: 20px; left: 20px; bottom: 20px; width: 340px;
@@ -180,7 +176,6 @@ body {
 </div>
 
 <div id="dice-box"></div>
-<canvas id="vfx-canvas"></canvas>
 
 <div class="sidebar" id="sidebar">
   <div class="sidebar-header">
@@ -244,21 +239,11 @@ body {
     <small style="display:block; margin-top:6px; color: var(--text-dim); font-size: 0.75em;" data-i18n="fontNote">A cor e a fonte nos dados 3D vêm embutidas na textura e não podem ser alteradas. Essas opções mudam apenas a interface de resultados.</small>
   </div>
   <div class="form-group">
-    <label data-i18n="vfxLabel">Efeito Visual (Impacto)</label>
-    <select class="form-control" id="global-vfx" onchange="updateGlobalConfig()">
-      <option value="none" data-i18n="vfxNone">Nenhum</option>
-      <option value="fire" data-i18n="vfxFire">🔥 Explosão de Fogo</option>
-      <option value="star" data-i18n="vfxStar">✨ Impacto Estelar</option>
-      <option value="blood" data-i18n="vfxBlood">🩸 Respingo de Sangue (Terror)</option>
-      <option value="saber" data-i18n="vfxSaber">⚔️ Sabre de Luz (Glow)</option>
-      <option value="trail" data-i18n="vfxTrail">💫 Trilha Cometa</option>
-    </select>
-  </div>
-  <div class="form-group">
-    <label data-i18n="sfxLabel">Efeito Sonoro</label>
+    <label data-i18n="sfxLabel">Som ao Rolar</label>
     <select class="form-control" id="global-sfx" onchange="updateGlobalConfig()">
-      <option value="none" data-i18n="vfxNone">Nenhum</option>
-      <option value="robot" data-i18n="sfxRobot">🤖 Robótico</option>
+      <option value="none" data-i18n="sfxNone">Nenhum</option>
+      <option value="realistic" data-i18n="sfxRealistic">🎲 Realista (Mesa)</option>
+      <option value="robot" data-i18n="sfxRobot">🤖 Robótico (Retrô)</option>
     </select>
   </div>
 
@@ -291,8 +276,7 @@ body {
     counts: { 4:0, 6:0, 8:0, 10:0, 12:0, 20:0, 100:0 },
     theme: 'default',
     color: '#4f8cff',
-    vfx: 'none',
-    sfx: 'none',
+    sfx: 'realistic',
     numberColor: '#ffffff',
     numberFont: "'Poppins', 'Segoe UI', sans-serif"
   };
@@ -351,15 +335,10 @@ body {
       fontOrbitron: 'Orbitron (Futurista)',
       fontBangers: 'Bangers (Cômico)',
       fontMono: 'Courier (Retrô)',
-      vfxLabel: 'Efeito Visual (Impacto)',
-      vfxNone: 'Nenhum',
-      vfxFire: '🔥 Explosão de Fogo',
-      vfxStar: '✨ Impacto Estelar',
-      vfxBlood: '🩸 Respingo de Sangue (Terror)',
-      vfxSaber: '⚔️ Sabre de Luz (Glow)',
-      vfxTrail: '💫 Trilha Cometa',
-      sfxLabel: 'Efeito Sonoro',
-      sfxRobot: '🤖 Robótico',
+      sfxLabel: 'Som ao Rolar',
+      sfxNone: 'Nenhum',
+      sfxRealistic: '🎲 Realista (Mesa)',
+      sfxRobot: '🤖 Robótico (Retrô)',
       diceSectionTitle: 'Dados',
       clearBtn: 'Limpar',
       rollBtn: 'Rolar',
@@ -400,15 +379,10 @@ body {
       fontOrbitron: 'Orbitron (Futuristic)',
       fontBangers: 'Bangers (Comic)',
       fontMono: 'Courier (Retro)',
-      vfxLabel: 'Visual Effect (Impact)',
-      vfxNone: 'None',
-      vfxFire: '🔥 Fire Explosion',
-      vfxStar: '✨ Star Impact',
-      vfxBlood: '🩸 Blood Splatter (Horror)',
-      vfxSaber: '⚔️ Lightsaber (Glow)',
-      vfxTrail: '💫 Comet Trail',
-      sfxLabel: 'Sound Effect',
-      sfxRobot: '🤖 Robotic',
+      sfxLabel: 'Roll Sound',
+      sfxNone: 'None',
+      sfxRealistic: '🎲 Realistic (Table)',
+      sfxRobot: '🤖 Robotic (Retro)',
       diceSectionTitle: 'Dice',
       clearBtn: 'Clear',
       rollBtn: 'Roll',
@@ -452,16 +426,6 @@ body {
   let presets = loadPresets();
   let diceBox = null;
   let isRolling = false;
-  
-  const vfxCanvas = document.getElementById('vfx-canvas');
-  const ctx = vfxCanvas.getContext('2d');
-  let particles = [];
-  let bloodPuddles = [];
-
-  function resizeCanvas() {
-    vfxCanvas.width = window.innerWidth;
-    vfxCanvas.height = window.innerHeight;
-  }
 
   // Dice-box sizes its dice as a fixed multiple of the container regardless of
   // viewport size, so on large/wide screens dice can look tiny relative to the
@@ -481,7 +445,6 @@ body {
 
   let resizeDebounceTimer = null;
   window.addEventListener('resize', () => {
-    resizeCanvas();
     clearTimeout(resizeDebounceTimer);
     resizeDebounceTimer = setTimeout(() => {
       if (diceBox && !isRolling) {
@@ -489,7 +452,6 @@ body {
       }
     }, 200);
   });
-  resizeCanvas();
 
   function loadState() {
     try {
@@ -584,8 +546,7 @@ body {
     document.getElementById('global-number-color').value = state.numberColor;
     document.getElementById('global-number-color-hex').textContent = state.numberColor;
     document.getElementById('global-number-font').value = state.numberFont;
-    document.getElementById('global-vfx').value = state.vfx;
-    document.getElementById('global-sfx').value = state.sfx || 'none';
+    document.getElementById('global-sfx').value = state.sfx || 'realistic';
     updateColorPickerAvailability();
     applyNumberStyle();
     applyI18n();
@@ -599,7 +560,6 @@ body {
     state.numberColor = document.getElementById('global-number-color').value;
     document.getElementById('global-number-color-hex').textContent = state.numberColor;
     state.numberFont = document.getElementById('global-number-font').value;
-    state.vfx = document.getElementById('global-vfx').value;
     state.sfx = document.getElementById('global-sfx').value;
     saveState();
     updateColorPickerAvailability();
@@ -662,15 +622,6 @@ body {
     await diceBox.init();
     setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
     
-    diceBox.onDieComplete = (dieResult) => {
-      if (state.vfx !== 'none') {
-        spawnVFX(state.vfx, dieResult);
-      }
-      if (state.sfx === 'robot') {
-        playRobotBlip();
-      }
-    };
-
     diceBox.onRollComplete = (results) => {
       isRolling = false;
       setTimeout(() => showResultsModal(results), 800);
@@ -727,24 +678,72 @@ body {
     }
   }
 
-  function getScreenCoords(dieResult) {
-    // The Web Worker physics engine doesn't export 3D/2D coordinates for the dice result.
-    // We will spawn VFX near the center of the screen with a slight variation.
-    const cx = window.innerWidth / 2;
-    const cy = window.innerHeight / 2;
-    const rx = (Math.random() - 0.5) * 80;
-    const ry = (Math.random() - 0.5) * 80;
-    return { x: cx + rx, y: cy + ry }; 
+  let noiseBuffer = null;
+  function createNoiseBuffer(ctx) {
+    const bufferSize = ctx.sampleRate * 0.1;
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = Math.random() * 2 - 1;
+    }
+    return buffer;
+  }
+
+  function playRealDiceSound(count) {
+    const ctx = getAudioCtx();
+    if (!ctx) return;
+    if (!noiseBuffer) noiseBuffer = createNoiseBuffer(ctx);
+    
+    const now = ctx.currentTime;
+    const clacks = Math.min(count * 2 + 1, 10); 
+    
+    for (let i = 0; i < clacks; i++) {
+      const time = now + (Math.random() * 0.5);
+      
+      const noiseSrc = ctx.createBufferSource();
+      noiseSrc.buffer = noiseBuffer;
+      const noiseFilter = ctx.createBiquadFilter();
+      noiseFilter.type = 'bandpass';
+      noiseFilter.frequency.value = 3000 + Math.random() * 2000;
+      
+      const noiseGain = ctx.createGain();
+      noiseGain.gain.setValueAtTime(0, time);
+      noiseGain.gain.linearRampToValueAtTime(0.5 + Math.random()*0.5, time + 0.002);
+      noiseGain.gain.exponentialRampToValueAtTime(0.01, time + 0.05);
+      
+      noiseSrc.connect(noiseFilter).connect(noiseGain).connect(ctx.destination);
+      noiseSrc.start(time);
+      
+      const osc = ctx.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(150 + Math.random()*50, time);
+      osc.frequency.exponentialRampToValueAtTime(40, time + 0.04);
+      
+      const oscGain = ctx.createGain();
+      oscGain.gain.setValueAtTime(0, time);
+      oscGain.gain.linearRampToValueAtTime(0.3, time + 0.005);
+      oscGain.gain.exponentialRampToValueAtTime(0.01, time + 0.05);
+      
+      osc.connect(oscGain).connect(ctx.destination);
+      osc.start(time);
+      osc.stop(time + 0.06);
+    }
   }
 
   window.rollDice = function() {
     if (isRolling || !diceBox) return;
     
     let rollNotation = [];
+    let totalDice = 0;
     DICE_TYPES.forEach(type => {
       const count = state.counts[type] || 0;
       if (count > 0) {
-        rollNotation.push(`${count}d${type}`);
+        totalDice += count;
+        if (state.theme === 'smoothPip' && type === 6) {
+          rollNotation.push(`${count}dpip`);
+        } else {
+          rollNotation.push(`${count}d${type}`);
+        }
       }
     });
 
@@ -756,12 +755,10 @@ body {
     document.getElementById('sidebar').classList.add('hidden-ui');
     document.getElementById('result-panel').classList.remove('show');
     
-    particles = [];
-    bloodPuddles = [];
-    ctx.clearRect(0, 0, vfxCanvas.width, vfxCanvas.height);
-
     if (state.sfx === 'robot') {
       playRobotActivate();
+    } else if (state.sfx === 'realistic') {
+      playRealDiceSound(totalDice);
     }
 
     isRolling = true;
@@ -783,11 +780,13 @@ body {
       if (group.rolls) {
         group.rolls.forEach(r => {
           total += r.value;
-          flatResults.push({ type: group.sides || group.dieType, val: r.value });
+          const type = (group.sides === 'pip' || group.dieType === 'pip') ? 6 : (group.sides || group.dieType);
+          flatResults.push({ type: type, val: r.value });
         });
       } else if (group.value) {
           total += group.value;
-          flatResults.push({ type: group.sides, val: group.value });
+          const type = (group.sides === 'pip' || group.dieType === 'pip') ? 6 : (group.sides || group.dieType);
+          flatResults.push({ type: type, val: group.value });
       }
     });
 
@@ -814,145 +813,9 @@ body {
     document.getElementById('sidebar').classList.remove('hidden-ui');
     if (diceBox) diceBox.clear();
   }
-  
-  function spawnVFX(type, dieResult) {
-    const coords = getScreenCoords(dieResult);
-    
-    if (type === 'blood') {
-      bloodPuddles.push({
-        x: coords.x, y: coords.y,
-        radius: 0, maxRadius: 34 + Math.random() * 22,
-        alpha: 0.82
-      });
-      // Radial spatter droplets around the main puddle for a deluxe "splatter" look.
-      const dropCount = 6 + Math.floor(Math.random() * 5);
-      for (let i = 0; i < dropCount; i++) {
-        const angle = Math.random() * Math.PI * 2;
-        const dist = 14 + Math.random() * 70;
-        bloodPuddles.push({
-          x: coords.x + Math.cos(angle) * dist,
-          y: coords.y + Math.sin(angle) * dist * 0.6,
-          radius: 0, maxRadius: 3 + Math.random() * 9,
-          alpha: 0.5 + Math.random() * 0.3
-        });
-      }
-    } else if (type === 'trail') {
-      const angle = Math.random() * Math.PI * 2;
-      const dist = 260 + Math.random() * 220;
-      const startX = coords.x + Math.cos(angle) * dist;
-      const startY = coords.y + Math.sin(angle) * dist;
-      const travelFrames = 50; // matches the 0.02/frame life decay below (~0.8s)
-      particles.push({
-        x: startX, y: startY,
-        vx: (coords.x - startX) / travelFrames,
-        vy: (coords.y - startY) / travelFrames,
-        life: 1.0, color: state.color,
-        size: 6 + Math.random() * 3,
-        isTrail: true,
-        trail: []
-      });
-    } else if (type === 'fire') {
-      for(let i=0; i<60; i++) {
-        particles.push({
-          x: coords.x, y: coords.y,
-          vx: (Math.random()-0.5)*15, vy: (Math.random()-0.5)*15 - 7,
-          life: 1.0 + Math.random()*0.5, color: `rgba(255, ${Math.random()*200}, 0, 1)`,
-          size: Math.random() * 15 + 5
-        });
-      }
-    } else if (type === 'star') {
-      for(let i=0; i<80; i++) {
-        particles.push({
-          x: coords.x, y: coords.y,
-          vx: (Math.random()-0.5)*25, vy: (Math.random()-0.5)*25,
-          life: 1.0 + Math.random(), color: `rgba(255, 255, 255, 1)`,
-          size: Math.random() * 5 + 2,
-          isStar: true
-        });
-      }
-    } else if (type === 'saber') {
-      particles.push({
-        x: coords.x, y: coords.y, vx: 0, vy: 0,
-        life: 1.5, color: state.color,
-        size: 300, isGlow: true
-      });
-    }
-  }
-
-  function renderVFX() {
-    ctx.clearRect(0, 0, vfxCanvas.width, vfxCanvas.height);
-
-    bloodPuddles.forEach(b => {
-      if (b.radius < b.maxRadius) b.radius += 1.5;
-      ctx.beginPath();
-      ctx.arc(b.x, b.y, b.radius, 0, Math.PI*2);
-      ctx.fillStyle = `rgba(138, 3, 3, ${b.alpha})`;
-      ctx.fill();
-    });
-
-    for (let i = particles.length - 1; i >= 0; i--) {
-      let p = particles[i];
-      p.x += p.vx;
-      p.y += p.vy;
-      p.life -= 0.02;
-
-      if (p.life <= 0) {
-        particles.splice(i, 1);
-        continue;
-      }
-
-      ctx.save();
-      ctx.globalAlpha = p.life;
-      
-      if (p.isGlow) {
-        let gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * (2 - p.life));
-        gradient.addColorStop(0, p.color);
-        gradient.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.fillStyle = gradient;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size * (2 - p.life), 0, Math.PI*2);
-        ctx.fill();
-      } else if (p.isTrail) {
-        p.trail.push({ x: p.x, y: p.y });
-        if (p.trail.length > 14) p.trail.shift();
-        for (let t = 0; t < p.trail.length; t++) {
-          const seg = p.trail[t];
-          const segFrac = t / p.trail.length;
-          ctx.globalAlpha = segFrac * p.life;
-          ctx.fillStyle = p.color;
-          ctx.beginPath();
-          ctx.arc(seg.x, seg.y, p.size * segFrac, 0, Math.PI*2);
-          ctx.fill();
-        }
-        ctx.globalAlpha = p.life;
-        ctx.shadowBlur = 14;
-        ctx.shadowColor = p.color;
-        ctx.fillStyle = '#fff';
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
-        ctx.fill();
-      } else if (p.isStar) {
-        ctx.fillStyle = p.color;
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = '#fff';
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
-        ctx.fill();
-      } else {
-        ctx.fillStyle = p.color;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI*2);
-        ctx.fill();
-      }
-      ctx.restore();
-    }
-    requestAnimationFrame(renderVFX);
-  }
-
   syncUIWithState();
   renderPresets();
   initDiceBox();
-  renderVFX();
 
 </script>
 </body>
