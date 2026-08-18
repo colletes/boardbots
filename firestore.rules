@@ -9,9 +9,11 @@ service cloud.firestore {
   match /databases/{database}/documents {
     match /counters/{counterId} {
       allow read: if true;
-      allow create: if request.resource.data.count == 1;
-      allow update: if request.resource.data.count == resource.data.count + 1
-                    || request.resource.data.count == resource.data.count - 1;
+      allow create: if request.resource.data.count == 1
+                    && request.resource.data.keys().hasOnly(['count']);
+      allow update: if (request.resource.data.count == resource.data.count + 1
+                        || request.resource.data.count == resource.data.count - 1)
+                    && request.resource.data.keys().hasOnly(['count']);
       allow delete: if false;
     }
     match /{document=**} {
