@@ -51,6 +51,39 @@
     #dice-box canvas { width: 100% !important; height: 100% !important; display: block; }
     .manual-dice-area { display: none; background: rgba(197, 160, 89, 0.08); border: 1px solid rgba(197, 160, 89, 0.4); border-radius: 8px; padding: 16px; margin-bottom: 16px; }
     .manual-dice-area.active { display: block; }
+    
+    .dice-buttons {
+        display: flex;
+        gap: 6px;
+        margin-top: 8px;
+        margin-bottom: 15px;
+    }
+    .die-btn {
+        flex: 1;
+        padding: 8px 0;
+        font-family: var(--font-display);
+        font-size: 1.2em;
+        font-weight: 700;
+        border-radius: 6px;
+        cursor: pointer;
+        border: 2px solid transparent;
+        transition: all 0.15s;
+        background: rgba(0,0,0,0.05);
+        color: var(--burgundy-text);
+    }
+    .die-btn:hover { background: rgba(0,0,0,0.1); }
+    .die-btn.active-bot {
+        border-color: var(--bot-color, #d64545);
+        background: var(--bot-color, #d64545);
+        color: white;
+    }
+    .die-btn.active-white {
+        border-color: #666;
+        background: white;
+        color: var(--burgundy-dark);
+        box-shadow: inset 0 0 0 1px #ccc;
+    }
+
     .dice-stepper { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
     .dice-stepper label { min-width: 120px; font-weight: 600; color: var(--burgundy-dark); }
     .stepper-btn { width: 32px; height: 32px; border: 1px solid var(--burgundy-gold); border-radius: 50%; background: white; font-size: 1.2em; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--burgundy-dark); transition: background 0.15s; }
@@ -177,65 +210,38 @@
 
         <div id="dice-box"></div>
 
-        <div class="manual-dice-area active" id="manualDiceArea">
+                <div class="manual-dice-area active" id="manualDiceArea">
             <div class="dice-stepper">
                 <label id="manualColorLabel">Dado Vermelho:</label>
                 <button class="stepper-btn" onclick="stepDie('bot',-1)">&#8722;</button>
                 <span class="stepper-val" id="botManualVal">1</span>
                 <button class="stepper-btn" onclick="stepDie('bot',1)">+</button>
             </div>
-            <div class="dice-stepper">
+            <div class="dice-buttons" id="botDiceButtons">
+                <button class="die-btn active-bot" onclick="setManualDie('bot',1)">1</button>
+                <button class="die-btn" onclick="setManualDie('bot',2)">2</button>
+                <button class="die-btn" onclick="setManualDie('bot',3)">3</button>
+                <button class="die-btn" onclick="setManualDie('bot',4)">4</button>
+                <button class="die-btn" onclick="setManualDie('bot',5)">5</button>
+                <button class="die-btn" onclick="setManualDie('bot',6)">6</button>
+            </div>
+
+            <div class="dice-stepper" style="margin-top: 20px;">
                 <label>Dado Branco:</label>
                 <button class="stepper-btn" onclick="stepDie('white',-1)">&#8722;</button>
                 <span class="stepper-val" id="whiteManualVal">1</span>
                 <button class="stepper-btn" onclick="stepDie('white',1)">+</button>
             </div>
-        </div>
-
-        <button class="action-btn" id="rollBtn" onclick="handleRollOrConfirm()">Confirmar Resultado</button>
-
-        <div class="dice-result" id="diceResult">Aguardando rolagem...</div>
-        <div class="turn-summary" id="turnSummary"></div>
-        <button class="copy-btn" id="copyBtn" onclick="copySummary()">&#128203; Copiar Instru&#231;&#245;es</button>
-
-        <div class="completed-cards-list" id="completedCardsSection" style="display:none;">
-            <strong style="color:var(--burgundy-dark);">Cartas Completadas:</strong>
-            <ul id="completedCardsList"></ul>
-        </div>
-
-        <button class="btn-endgame" id="endGameBtn" onclick="openScoringModal()">&#127937; Encerrar Partida</button>
-    </div>
-
-    <div class="panel" style="display:flex;flex-direction:column;">
-        <h2>&#193;rea de Jogo (Cartas e Ducado)</h2>
-        <p id="boardTip" style="margin-top:0;margin-bottom:20px;font-size:0.95em;"><strong>Dica:</strong> Clique em qualquer imagem abaixo para adicionar/remover marcadores virtuais nos hex&#225;gonos!</p>
-
-        <div class="cards-grid">
-            <div class="card-slot">
-                <h3>Carta de Vila (Branco 1&#8211;4)</h3>
-                <div class="image-container" id="slotLeft">
-                    <img id="imgLeft" src="" alt="Card 1-4" loading="lazy">
-                </div>
-                <button class="btn-secondary" id="btnCompleteLeft" onclick="completeCard('left')" disabled>Completar Carta</button>
-            </div>
-            <div class="card-slot">
-                <h3>Carta de Vila (Branco 5&#8211;6)</h3>
-                <div class="image-container" id="slotRight">
-                    <img id="imgRight" src="" alt="Card 5-6" loading="lazy">
-                </div>
-                <button class="btn-secondary" id="btnCompleteRight" onclick="completeCard('right')" disabled>Completar Carta</button>
+            <div class="dice-buttons" id="whiteDiceButtons">
+                <button class="die-btn active-white" onclick="setManualDie('white',1)">1</button>
+                <button class="die-btn" onclick="setManualDie('white',2)">2</button>
+                <button class="die-btn" onclick="setManualDie('white',3)">3</button>
+                <button class="die-btn" onclick="setManualDie('white',4)">4</button>
+                <button class="die-btn" onclick="setManualDie('white',5)">5</button>
+                <button class="die-btn" onclick="setManualDie('white',6)">6</button>
             </div>
         </div>
-
-        <div class="deck-status" id="deckStatus"></div>
-
-        <div class="board-section" style="margin-top:auto;">
-            <h3 style="font-family:var(--font-display);color:var(--burgundy-dark);border-top:1px solid rgba(197,160,89,0.3);padding-top:20px;margin-bottom:10px;">Tabuleiro AutoDuque (Reserva)</h3>
-            <div class="image-container" style="max-width:400px;margin:0 auto;" id="slotBoard">
-                <img src="../assets/art/burgundy_cards/board_front.jpg" alt="AutoDuque Board" loading="lazy">
-            </div>
-        </div>
-    </div>
+</div>
 </div>
 
 <!-- Setup overlay -->
@@ -472,12 +478,36 @@
     function updateManualColorLabel(){
         const hex=document.getElementById('botColor').value;
         document.getElementById('manualColorLabel').textContent=`Dado ${COLOR_NAMES[hex]??'Cor'}:`;
+        document.documentElement.style.setProperty('--bot-color', hex);
+        if(typeof updateManualUI === 'function') updateManualUI();
     }
 
     window.stepDie=function(which,delta){
-        if(which==='bot'){manualBot=Math.min(6,Math.max(1,manualBot+delta));document.getElementById('botManualVal').textContent=manualBot;}
-        else{manualWhite=Math.min(6,Math.max(1,manualWhite+delta));document.getElementById('whiteManualVal').textContent=manualWhite;}
+        if(which==='bot'){manualBot=Math.min(6,Math.max(1,manualBot+delta));}
+        else{manualWhite=Math.min(6,Math.max(1,manualWhite+delta));}
+        updateManualUI();
     };
+
+    
+    window.setManualDie=function(which,val){
+        if(which==='bot'){manualBot=val;}
+        else{manualWhite=val;}
+        updateManualUI();
+    };
+
+    function updateManualUI(){
+        document.getElementById('botManualVal').textContent=manualBot;
+        document.getElementById('whiteManualVal').textContent=manualWhite;
+        
+        const botColor=document.getElementById('botColor').value;
+        document.documentElement.style.setProperty('--bot-color', botColor);
+
+        const botBtns=document.getElementById('botDiceButtons').children;
+        for(let i=0;i<6;i++){ botBtns[i].className='die-btn' + (manualBot===i+1?' active-bot':''); }
+        
+        const whiteBtns=document.getElementById('whiteDiceButtons').children;
+        for(let i=0;i<6;i++){ whiteBtns[i].className='die-btn' + (manualWhite===i+1?' active-white':''); }
+    }
 
     window.setBoardMode=function(mode){
         boardMode=mode;saveState();
