@@ -515,10 +515,17 @@
     // --- Logic ---
     function updateSetupUI() {
         gameMode = document.getElementById('gameMode').value;
+        const titleEl = document.querySelector('[data-i18n="physSetupTitle"]');
+        const descEl = document.querySelector('[data-i18n="physSetupDesc"]');
+        
         if(gameMode === 'joanna') {
             document.getElementById('joannaDiffRow').style.display = 'block';
+            titleEl.innerHTML = currentLang === 'en' ? 'Physical Setup (Joanna):' : 'Setup Físico (Joanna):';
+            descEl.innerHTML = currentLang === 'en' ? 'Place Joanna\'s 3 cubes on 0 (VP, Coins, and Income). Draw one random Level 1 starting card for her. She does not get sector starting cards. Players start with their normal boards (cubes on 5, 0, 0) and 1 starting ship.' : 'Coloque os 3 cubos da Joanna no 0 (VP, Moeda e Renda). Compre uma carta inicial Nível 1 aleatória para ela. Ela não recebe cartas iniciais de setor. Os jogadores começam com seus tabuleiros normais (cubos no 5, 0, 0) e 1 nave inicial.';
         } else {
             document.getElementById('joannaDiffRow').style.display = 'none';
+            titleEl.innerHTML = currentLang === 'en' ? 'Physical Setup (Base Attack):' : 'Setup Físico (Ataque à Base):';
+            descEl.innerHTML = currentLang === 'en' ? 'There is no Automa board. Set up your normal player board (cubes on 5, 0, 0) and 1 starting ship. Every time you buy/deploy a card, click the corresponding button on the bot.' : 'Não há tabuleiro de Automa. Prepare seu tabuleiro normal de jogador (cubos no 5, 0, 0) e 1 nave inicial. Sempre que você comprar/implantar uma carta, clique no botão correspondente no bot.';
         }
     }
 
@@ -529,11 +536,11 @@
     async function initDiceBox() {
         if(diceBox) return;
         try {
-            const { default: DiceBox } = await import('https://unpkg.com/@3d-dice/dice-box@1.1.3/dist/dice-box.es.min.js');
+            const { default: DiceBox } = await import('../assets/dice-box/dice-box.es.min.js');
             diceBox = new DiceBox({
                 container: '#dice-box',
                 assetPath: '../assets/dice-box/',
-                origin: 'https://unpkg.com/@3d-dice/dice-box@1.1.3/dist/',
+                
                 theme: 'default',
                 themeColor: '#1e293b',
                 scale: 6,
@@ -637,7 +644,7 @@
 
     // --- Joanna Logic ---
     window.nextJoannaTurn = function(skipRoll = false) {
-        if (automaDeck.length === 1) {
+        if (automaDeck.length <= 1) {
             // "Whenever Joanna has one card left... shuffle all back... skip one card"
             automaDeck = [0, 1, 2, 3, 4, 5];
             shuffleArray(automaDeck);
@@ -780,6 +787,15 @@
 
     // Init i18n on load
     applyI18n();
+    const saved = localStorage.getItem(LS_KEY);
+    if (saved) {
+        document.getElementById("setupOverlay").style.display = "none";
+        document.getElementById("mainContainer").style.display = "grid";
+        loadState();
+        if (diceMode === "virtual") { document.getElementById("dice-box").style.display = "block"; initDiceBox(); }
+        if (diceMode === "physical") { document.getElementById("manualDiceArea").style.display = "block"; }
+    }
+
 </script>
 </body>
 </html>
