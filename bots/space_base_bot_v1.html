@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title data-i18n="pageTitle">Space Base Bot</title>
+<link rel="icon" href="../assets/mascot-trimmed.png" type="image/png">
+<meta name="description" content="Automa and SoloPlay opponent for Space Base.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/site.css?v=7">
+<style>
+    :root {
+        --sb-bg: #0f172a;
+        --sb-card: #1e293b;
+        --sb-primary: #3b82f6;
+        --sb-accent: #f59e0b;
+        --sb-text: #f8fafc;
+        --sb-border: #334155;
+        --font-display: 'Orbitron', sans-serif;
+    }
+    body {
+        background-color: var(--sb-bg);
+        background-image: radial-gradient(circle at 50% 50%, #1e293b 0%, #0f172a 100%);
+        color: var(--sb-text);
+        padding-bottom: 50px;
+    }
+    .bot-header {
+        background: linear-gradient(135deg, #0f172a, #1e293b);
+        color: var(--sb-text);
+        padding: 40px 20px 30px;
+        text-align: center;
+        border-bottom: 4px solid var(--sb-primary);
+        border-radius: 0 0 16px 16px;
+        margin-bottom: 30px;
+        position: relative;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+    .bot-header h1 { font-family: var(--font-display); font-weight: 700; font-size: 2.2em; margin: 0 0 10px; letter-spacing: 1px; color: #fff; }
+    .bot-header p { color: #cbd5e1; font-size: 1.1em; margin: 0; }
+    .lang-toggle { position: absolute; top: 15px; right: 15px; background: rgba(255,255,255,0.1); padding: 5px 10px; border-radius: 6px; color: #fff; cursor: pointer; border: 1px solid var(--sb-border); font-weight: bold; }
+    .lang-toggle:hover { background: rgba(255,255,255,0.2); }
+    
+    .board-container { max-width: 1000px; margin: 0 auto; padding: 0 20px; display: grid; grid-template-columns: 1fr; gap: 20px; }
+    @media (min-width: 992px) { .board-container { grid-template-columns: 350px 1fr; } }
+    
+    .panel { background: var(--sb-card); border: 1px solid var(--sb-border); border-radius: 12px; padding: 24px; box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+    .panel h2 { font-family: var(--font-display); color: var(--sb-primary); margin: 0 0 20px; font-size: 1.3em; border-bottom: 2px solid var(--sb-border); padding-bottom: 10px; }
+    
+    .action-btn { background: var(--sb-primary); color: #fff; border: none; padding: 16px 24px; border-radius: 8px; font-family: var(--font-display); font-size: 1.1em; font-weight: 700; cursor: pointer; width: 100%; transition: all 0.2s; text-transform: uppercase; letter-spacing: 1px; }
+    .action-btn:hover { background: #2563eb; transform: translateY(-2px); }
+    .action-btn.secondary { background: transparent; border: 2px solid var(--sb-border); color: var(--sb-text); }
+    .action-btn.secondary:hover { background: rgba(255,255,255,0.05); }
+
+    .setup-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); z-index: 1000; display: flex; justify-content: center; align-items: center; padding: 20px; }
+    .setup-modal { background: var(--sb-card); border: 2px solid var(--sb-primary); border-radius: 12px; padding: 30px; max-width: 600px; width: 100%; text-align: center; }
+    .setup-modal h2 { font-family: var(--font-display); color: #fff; margin-top: 0; }
+    .setup-row { margin-bottom: 20px; text-align: left; }
+    .setup-row label { display: block; font-weight: bold; margin-bottom: 8px; color: var(--sb-accent); }
+    .setup-row select, .setup-row input { width: 100%; padding: 10px; background: #0f172a; color: #fff; border: 1px solid var(--sb-border); border-radius: 6px; }
+
+    /* Dice Box */
+    #dice-box { width: 100%; height: 200px; background: rgba(0,0,0,0.2); border: 2px inset var(--sb-border); border-radius: 8px; position: relative; overflow: hidden; margin-bottom: 16px; display: none; }
+    #dice-box canvas { width: 100% !important; height: 100% !important; display: block; }
+
+    /* Automa Card Styling */
+    .automa-card { width: 100%; max-width: 380px; background: #fff; color: #000; border-radius: 12px; padding: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.4); margin: 0 auto; display: none; }
+    .card-row { display: flex; align-items: center; margin-bottom: 10px; padding: 10px; background: #f1f5f9; border-radius: 8px; position: relative; }
+    .row-icon { width: 40px; height: 40px; border-radius: 50%; background: #ccc; display: flex; justify-content: center; align-items: center; font-weight: bold; margin-right: 10px; font-size:1.2em; }
+    .row-1-icon { background: #ffd700; color: #000; }
+    .row-2-icon { background: #87ceeb; color: #000; }
+    .row-3-icon { background: #fff; border: 2px solid #ccc; color: #000; font-size: 0.9em; }
+    .ships-container { flex: 1; display: flex; gap: 4px; }
+    .ship-slot { flex: 1; height: 35px; background: #94a3b8; border-radius: 4px; position: relative; }
+    .ship-crossed::after { content: 'X'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #dc2626; font-size: 28px; font-weight: bold; font-family: sans-serif; }
+    .rocket-vp { width: 35px; height: 45px; background: #3b82f6; clip-path: polygon(50% 0%, 100% 25%, 100% 100%, 0% 100%, 0% 25%); color: #fff; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 6px; font-weight: bold; margin-left: 10px; font-size: 1.1em; }
+
+    /* Base Attack Log */
+    .attack-log { list-style: none; padding: 0; margin: 0; max-height: 400px; overflow-y: auto; display: none; }
+    .attack-item { background: rgba(220, 38, 38, 0.1); border-left: 4px solid #dc2626; padding: 16px; margin-bottom: 12px; border-radius: 4px; }
+    .attack-cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(50px, 1fr)); gap: 8px; margin-top: 10px; }
+    .attack-card { background: #334155; padding: 12px 0; text-align: center; border-radius: 6px; font-weight: bold; font-size: 1.4em; border: 1px solid #475569; color:#fff; }
+
+    /* Deck Status */
+    .status-text { font-size: 0.9em; color: #94a3b8; text-align: center; margin-top: 10px; }
+    
+    .help-btn { position: fixed; bottom: 24px; right: 24px; width: 50px; height: 50px; background: var(--sb-primary); color: #fff; border: 2px solid #60a5fa; border-radius: 50%; font-family: var(--font-display); font-size: 1.4em; font-weight: 700; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.5); z-index: 500; display: flex; align-items: center; justify-content: center; transition: transform 0.2s; }
+    .help-btn:hover { transform: scale(1.1); }
+
+    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 2000; justify-content: center; align-items: flex-start; padding: 20px; overflow-y: auto; display: none; }
+    .modal-box { background: var(--sb-bg); border: 2px solid var(--sb-primary); border-radius: 12px; padding: 28px; max-width: 640px; width: 100%; margin: auto; position: relative; }
+    .modal-close { position: absolute; top: 14px; right: 14px; background: none; border: none; font-size: 1.4em; cursor: pointer; color: #fff; }
+
+    .dice-result-text { font-family: var(--font-display); font-size: 1.4em; color: #fff; text-align: center; margin-top: 10px; margin-bottom: 20px; display: none; }
+
+    footer.credits { text-align: center; margin-top: 40px; padding: 20px; font-size: 0.9em; color: #94a3b8; border-top: 1px solid var(--sb-border); }
+    footer.credits img { max-width: 120px; border-radius: 8px; margin-bottom: 10px; }
+    footer.credits a { color: var(--sb-primary); text-decoration: none; font-weight: bold; }
+</style>
+</head>
+<body>
+
+<div class="bot-header">
+    <button class="lang-toggle" onclick="toggleLanguage()">EN / PT</button>
+    <h1 data-i18n="title">Space Base Bot</h1>
+    <p data-i18n="subtitle">Automa e Ataque à Base (SoloPlay)</p>
+</div>
+
+<!-- Setup Modal -->
+<div class="setup-overlay" id="setupOverlay">
+    <div class="setup-modal">
+        <h2 data-i18n="setupTitle">Configuração do Jogo</h2>
+        
+        <div class="setup-row">
+            <label data-i18n="gameMode">Modo de Jogo</label>
+            <select id="gameMode" onchange="updateSetupUI()">
+                <option value="joanna" data-i18n="modeJoanna">Automa Oficial (Joanna/Devin/Clarie)</option>
+                <option value="base_attack" data-i18n="modeBaseAttack">Ataque à Base (SoloPlay)</option>
+            </select>
+        </div>
+
+        <div class="setup-row" id="joannaDiffRow">
+            <label data-i18n="difficulty">Dificuldade (Automa)</label>
+            <select id="difficulty">
+                <option value="easy" data-i18n="diffEasy">Joanna (Fácil)</option>
+                <option value="medium" data-i18n="diffMedium">Devin (Médio)</option>
+                <option value="hard" data-i18n="diffHard">Clarie (Difícil)</option>
+            </select>
+        </div>
+
+        <div class="setup-row">
+            <label data-i18n="diceMode">Rolagem de Dados</label>
+            <select id="diceMode">
+                <option value="virtual" data-i18n="diceVirtual">Dados Virtuais 3D</option>
+                <option value="physical" data-i18n="dicePhysical">Dados Físicos (Manual)</option>
+            </select>
+        </div>
+
+        <button class="action-btn" onclick="startGame()" data-i18n="startBtn">Iniciar Partida</button>
+    </div>
+</div>
+
+<div class="board-container" id="mainContainer" style="display:none;">
+    <!-- Controls Panel -->
+    <div class="panel">
+        <h2 data-i18n="turnControl">Controle do Turno</h2>
+        
+        <!-- Virtual Dice Box -->
+        <div id="dice-box"></div>
+        
+        <!-- Virtual Dice Results -->
+        <div id="diceResultText" class="dice-result-text">🎲 -- | --</div>
+
+        <!-- Manual Dice Input (shown when diceMode=physical) -->
+        <div id="manualDiceArea" style="display:none; background:rgba(255,255,255,0.05); border:1px solid var(--sb-border); border-radius:8px; padding:14px; margin-bottom:16px;">
+            <p style="font-size:0.85em; color:#94a3b8; margin:0 0 10px;" data-i18n="manualDicePrompt">Dados físicos: informe o resultado dos dois dados:</p>
+            <div style="display:flex; gap:12px; align-items:center; justify-content:center;">
+                <div style="text-align:center;">
+                    <label style="font-size:0.75em; color:#94a3b8; display:block; margin-bottom:4px;" data-i18n="die1Label">Dado 1</label>
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        <button onclick="adjustManualDie(1,-1)" style="width:28px;height:28px;border:1px solid var(--sb-border);border-radius:50%;background:transparent;color:#fff;font-size:1.1em;cursor:pointer;">−</button>
+                        <span id="manualDie1" style="font-family:var(--font-display);font-size:1.4em;font-weight:bold;min-width:24px;text-align:center;">1</span>
+                        <button onclick="adjustManualDie(1,1)" style="width:28px;height:28px;border:1px solid var(--sb-border);border-radius:50%;background:transparent;color:#fff;font-size:1.1em;cursor:pointer;">+</button>
+                    </div>
+                </div>
+                <div style="font-size:1.5em; color:#94a3b8;">+</div>
+                <div style="text-align:center;">
+                    <label style="font-size:0.75em; color:#94a3b8; display:block; margin-bottom:4px;" data-i18n="die2Label">Dado 2</label>
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        <button onclick="adjustManualDie(2,-1)" style="width:28px;height:28px;border:1px solid var(--sb-border);border-radius:50%;background:transparent;color:#fff;font-size:1.1em;cursor:pointer;">−</button>
+                        <span id="manualDie2" style="font-family:var(--font-display);font-size:1.4em;font-weight:bold;min-width:24px;text-align:center;">1</span>
+                        <button onclick="adjustManualDie(2,1)" style="width:28px;height:28px;border:1px solid var(--sb-border);border-radius:50%;background:transparent;color:#fff;font-size:1.1em;cursor:pointer;">+</button>
+                    </div>
+                </div>
+                <div style="text-align:center;">
+                    <label style="font-size:0.75em; color:#94a3b8; display:block; margin-bottom:4px;" data-i18n="sumLabel">Soma</label>
+                    <span id="manualDiceSum" style="font-family:var(--font-display);font-size:1.4em;font-weight:bold;color:var(--sb-accent);">2</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Joanna Controls -->
+        <div id="joannaControls">
+            <button class="action-btn" onclick="nextJoannaTurn()" id="btnNextTurn" data-i18n="nextTurn">Próximo Turno (Revelar Carta)</button>
+            <div class="status-text" id="joannaDeckStatus">Cartas no Deck: 6 | Descarte: 0</div>
+            
+            <div style="margin-top: 30px; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px;">
+                <h3 style="font-size:1em; margin-top:0; color:var(--sb-accent);" data-i18n="vpTracker">Rastreador de VP (Opcional)</h3>
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <button class="action-btn secondary" style="width:40px; padding:10px;" onclick="changeVP(-1)">-</button>
+                    <input type="number" id="vpCounter" value="0" style="flex:1; text-align:center; font-size:1.4em; padding:10px; background:transparent; border:1px solid var(--sb-border); color:#fff; border-radius:6px;">
+                    <button class="action-btn secondary" style="width:40px; padding:10px;" onclick="changeVP(1)">+</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Base Attack Controls -->
+        <div id="baseAttackControls" style="display:none;">
+            <p style="font-size: 0.95em; margin-bottom: 15px; color:#cbd5e1;" data-i18n="baseAttackPrompt">O que você comprou no seu turno?</p>
+            <button class="action-btn secondary" style="margin-bottom:10px;" onclick="baseAttackTurn(0)" data-i18n="baColony">Comprei Colony Ship (Ataque: 0)</button>
+            <button class="action-btn secondary" style="margin-bottom:10px;" onclick="baseAttackTurn(2)" data-i18n="baShip">Comprei Ship (Ataque: 2)</button>
+            
+            <p style="font-size: 0.85em; margin-bottom: 8px; margin-top:15px; color:#94a3b8;" data-i18n="baDidNotBuy">Não comprei nada (Ataque baseado na sua renda):</p>
+            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                <button class="action-btn secondary" style="padding:12px; font-size:0.9em; flex:1;" onclick="baseAttackTurn(1)">≤10¢</button>
+                <button class="action-btn secondary" style="padding:12px; font-size:0.9em; flex:1;" onclick="baseAttackTurn(2)">11-20¢</button>
+                <button class="action-btn secondary" style="padding:12px; font-size:0.9em; flex:1;" onclick="baseAttackTurn(3)">21-30¢</button>
+                <button class="action-btn secondary" style="padding:12px; font-size:0.9em; flex:1;" onclick="baseAttackTurn(4)">31-40¢</button>
+                <button class="action-btn secondary" style="padding:12px; font-size:0.9em; flex:1;" onclick="baseAttackTurn(5)">41+¢</button>
+            </div>
+            
+            <div class="status-text" id="baDeckStatus" style="margin-top:25px;">Baralho de Ataque: 48/48</div>
+            <button class="action-btn secondary" style="margin-top:15px; border-color:#dc2626; color:#dc2626;" onclick="shuffleAttackDeck()" data-i18n="shuffleDeckBtn">Embaralhar Descarte no Deck</button>
+        </div>
+        
+        <button class="action-btn secondary" style="margin-top:30px;" onclick="localStorage.removeItem('space_base_bot_v1'); location.reload();" data-i18n="endGame">Encerrar Partida</button>
+    </div>
+
+    <!-- Main Display Panel -->
+    <div class="panel">
+        <h2 id="mainDisplayTitle" data-i18n="botArea">Área do Bot</h2>
+        
+        <!-- Joanna Card Display -->
+        <div class="automa-card" id="joannaCardDisplay">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #ccc; padding-bottom:10px; margin-bottom:15px;">
+                <strong id="cardDiffName" style="font-size:1.3em; font-family:var(--font-display); text-transform:uppercase;">JOANNA</strong>
+                <span id="vpThresholds" style="font-size:0.85em; color:#666; font-weight:bold;">25🪙 | 15🌍 | 4.0VP</span>
+            </div>
+            
+            <div class="card-row">
+                <div class="row-icon row-1-icon">🪙</div>
+                <div class="ships-container" id="row1Ships">
+                    <div class="ship-slot"></div><div class="ship-slot"></div><div class="ship-slot"></div><div class="ship-slot ship-crossed"></div><div class="ship-slot"></div><div class="ship-slot"></div>
+                </div>
+                <div class="rocket-vp" id="row1VP">1</div>
+            </div>
+            
+            <div class="card-row">
+                <div class="row-icon row-2-icon">🌍</div>
+                <div class="ships-container" id="row2Ships">
+                    <div class="ship-slot"></div><div class="ship-slot"></div><div class="ship-slot ship-crossed"></div><div class="ship-slot"></div><div class="ship-slot"></div><div class="ship-slot"></div>
+                </div>
+                <div class="rocket-vp" id="row2VP">1</div>
+            </div>
+            
+            <div class="card-row">
+                <div class="row-icon row-3-icon">VP</div>
+                <div class="ships-container" id="row3Ships">
+                    <div class="ship-slot ship-crossed"></div><div class="ship-slot"></div><div class="ship-slot"></div><div class="ship-slot"></div><div class="ship-slot"></div><div class="ship-slot"></div>
+                </div>
+                <div class="rocket-vp" id="row3VP">1</div>
+            </div>
+            <div style="font-size:0.85em; color:#444; margin-top:15px; text-align:center; font-weight:500;" data-i18n="cardInstruction">
+                Mova o cubo do automa na sua base e escolha a linha correspondente à trilha onde o cubo está.
+            </div>
+        </div>
+
+        <!-- Base Attack Log Display -->
+        <div id="attackLogContainer" style="display:none;">
+            <div id="emptyLogState" style="text-align:center; color:#64748b; padding:40px 0;" data-i18n="emptyLog">
+                Aguardando a resolução do seu turno...
+            </div>
+            <ul class="attack-log" id="attackLogDisplay">
+                <!-- Attack items will be appended here -->
+            </ul>
+        </div>
+    </div>
+</div>
+
+<footer class="credits">
+    <div style="margin-bottom: 10px;">
+        <img src="../assets/art/spacebase.webp" alt="Space Base Box Art">
+    </div>
+    <div style="margin-bottom: 15px;">
+        <p data-i18n="creditsText">Space Base Bot desenvolvido com ❤️ por Thiago Colletes.</p>
+    </div>
+    <div style="margin-bottom: 15px;">
+        <a class="bmc-inline" href="https://www.buymeacoffee.com/colletes" target="_blank" style="background-color: var(--sb-accent); padding: 10px 15px; border-radius: 8px; color: white; text-decoration: none; font-weight: bold;">☕ Buy me a coffee</a>
+    </div>
+    <div>
+        <a href="../index.html" style="display: inline-flex; align-items: center; gap: 5px; color: var(--sb-text);" data-i18n="backHome">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9 21v-6h6v6"/></svg>
+            Voltar para Home
+        </a>
+    </div>
+</footer>
+
+<button class="help-btn" onclick="document.getElementById('rulesModal').style.display='flex'">?</button>
+
+<div class="modal-overlay" id="rulesModal" onclick="if(event.target===this)this.style.display='none'">
+    <div class="modal-box">
+        <button class="modal-close" onclick="document.getElementById('rulesModal').style.display='none'">✕</button>
+        <h2 data-i18n="rulesTitle">Regras & Ajuda</h2>
+        <div style="font-size:0.95em; line-height:1.6; color:#cbd5e1;">
+            <h3 style="color:var(--sb-accent);">Modo Automa (Joanna, Devin, Clarie)</h3>
+            <p>1. O Automa ganha Pontos de Vitória (VP) passivamente durante o jogo sempre que as cartas de outros jogadores mandarem (recompensas vermelhas).</p>
+            <p>2. No turno do Automa, clique em "Próximo Turno". O bot rolará os dados automaticamente (se configurado) e revelará a carta da rodada.</p>
+            <p>3. Observe a posição do cubo do Automa nas trilhas do seu tabuleiro (se passou do limite de VP, vai pra trilha de Renda; se passou de Renda, vai pra Moedas). Os limites estão marcados no topo da carta.</p>
+            <p>4. <strong>Resolva a linha correspondente:</strong> Remova do mercado a nave que está na posição com o 'X', e dê ao Automa os pontos de vitória (VP) indicados dentro do foguete daquela linha.</p>
+            <p>5. O deck do automa tem 6 cartas. Quando houver apenas 1 sobrando, o deck é embaralhado e a carta que sobrou é descartada no novo ciclo.</p>
+            
+            <h3 style="color:var(--sb-accent); margin-top:25px;">Modo SoloPlay (Ataque à Base)</h3>
+            <p>1. Neste modo o jogo é contra "Rivais" que enviam naves para atacar sua base dependendo das suas ações.</p>
+            <p>2. Clique nos botões na lateral esquerda indicando o que você fez no seu turno. O bot sacará o número correspondente de cartas do baralho de ataque (composto por 48 naves iniciais, valores de 1 a 12).</p>
+            <p>3. Coloque as cartas sacadas sob o seu tabuleiro na posição do número indicado pelo bot. Elas ativam habilidades vermelhas suas!</p>
+            <p>4. Se um espaço tomar 4 danos (4 cartas), a posição é destruída permanentemente! Remova as cartas acima dela e vire as cartas de dano para cima para indicar a destruição.</p>
+            <p>5. Se sofrer 5 espaços destruídos, você perde imediatamente.</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- Translations ---
+    const I18N = {
+        pt: {
+            pageTitle: "Space Base Bot",
+            title: "Space Base Bot",
+            subtitle: "Automa e Ataque à Base (SoloPlay)",
+            setupTitle: "Configuração do Jogo",
+            gameMode: "Modo de Jogo",
+            modeJoanna: "Automa Oficial (Joanna/Devin/Clarie)",
+            modeBaseAttack: "Ataque à Base (SoloPlay)",
+            difficulty: "Dificuldade (Automa)",
+            diffEasy: "Joanna (Fácil)",
+            diffMedium: "Devin (Médio)",
+            diffHard: "Clarie (Difícil)",
+            diceMode: "Rolagem de Dados",
+            diceVirtual: "Dados Virtuais 3D",
+            dicePhysical: "Dados Físicos (Manual)",
+            startBtn: "Iniciar Partida",
+            turnControl: "Controle do Turno",
+            nextTurn: "Próximo Turno (Revelar Carta)",
+            vpTracker: "Rastreador de VP (Opcional)",
+            baseAttackPrompt: "O que você comprou no seu turno?",
+            baColony: "Comprei Colony Ship (Ataque: 0)",
+            baShip: "Comprei Ship (Ataque: 2)",
+            baDidNotBuy: "Não comprei nada (Ataque baseado na sua renda):",
+            shuffleDeckBtn: "Embaralhar Descarte no Deck",
+            botArea: "Área do Bot",
+            cardInstruction: "Mova o cubo do automa na sua base e escolha a linha correspondente à trilha onde o cubo está.",
+            emptyLog: "Aguardando a resolução do seu turno...",
+            rulesTitle: "Regras & Ajuda",
+            endGame: "Encerrar Partida",
+            attackMessage: "Oponentes atacam com {n} nave(s) nos setores:",
+            shuffledLog: '🔄 Deck de Ataque Embaralhado',
+            creditsText: 'Space Base Bot desenvolvido com ❤️ por Thiago Colletes.',
+            backHome: 'Voltar para Home',
+            manualDicePrompt: 'Dados físicos: informe o resultado dos dois dados:',
+            die1Label: 'Dado 1',
+            die2Label: 'Dado 2',
+            sumLabel: 'Soma'
+        },
+        en: {
+            pageTitle: "Space Base Bot",
+            title: "Space Base Bot",
+            subtitle: "Automa and Base Attack (SoloPlay)",
+            setupTitle: "Game Setup",
+            gameMode: "Game Mode",
+            modeJoanna: "Official Automa (Joanna/Devin/Clarie)",
+            modeBaseAttack: "Base Attack (SoloPlay)",
+            difficulty: "Difficulty (Automa)",
+            diffEasy: "Joanna (Easy)",
+            diffMedium: "Devin (Medium)",
+            diffHard: "Clarie (Hard)",
+            diceMode: "Dice Rolling",
+            diceVirtual: "3D Virtual Dice",
+            dicePhysical: "Physical Dice (Manual)",
+            startBtn: "Start Game",
+            turnControl: "Turn Control",
+            nextTurn: "Next Turn (Reveal Card)",
+            vpTracker: "VP Tracker (Optional)",
+            baseAttackPrompt: "What did you buy on your turn?",
+            baColony: "Bought Colony Ship (Attack: 0)",
+            baShip: "Bought Ship (Attack: 2)",
+            baDidNotBuy: "Did not buy (Attack based on income):",
+            shuffleDeckBtn: "Shuffle Discard into Deck",
+            botArea: "Bot Area",
+            cardInstruction: "Move the automa's cube on your board and choose the row matching the track the cube is on.",
+            emptyLog: "Waiting for your turn resolution...",
+            rulesTitle: "Rules & Help",
+            endGame: "End Game",
+            attackMessage: "Opponents attack with {n} ship(s) in sectors:",
+            shuffledLog: '🔄 Attack Deck Shuffled',
+            creditsText: 'Space Base Bot developed with ❤️ by Thiago Colletes.',
+            backHome: 'Back to Home',
+            manualDicePrompt: 'Physical dice: enter the result of both dice:',
+            die1Label: 'Die 1',
+            die2Label: 'Die 2',
+            sumLabel: 'Sum'
+        }
+    };
+
+    let currentLang = localStorage.getItem('boardbots_lang') || 'pt';
+
+    function t(key, vars = {}) {
+        let str = I18N[currentLang][key] || I18N['pt'][key] || key;
+        for (let k in vars) {
+            str = str.replace(new RegExp(`{${k}}`, 'g'), vars[k]);
+        }
+        return str;
+    }
+
+    function applyI18n() {
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            el.innerHTML = t(el.getAttribute('data-i18n'));
+        });
+        document.documentElement.lang = currentLang;
+    }
+
+    window.toggleLanguage = function() {
+        currentLang = currentLang === 'pt' ? 'en' : 'pt';
+        localStorage.setItem('boardbots_lang', currentLang);
+        applyI18n();
+        updateDeckStatusText();
+    };
+
+    // --- State Variables ---
+    let gameMode = 'joanna';
+    let diceMode = 'virtual';
+    let difficulty = 'easy'; // easy, medium, hard
+    
+    // Joanna State
+    let automaDeck = [0, 1, 2, 3, 4, 5];
+    let automaDiscard = [];
+    
+    // Base Attack State
+    let attackDeck = [];
+    let attackDiscard = [];
+
+    const LS_KEY = 'space_base_bot_v1';
+
+    function saveState() {
+        try {
+            localStorage.setItem(LS_KEY, JSON.stringify({
+                gameMode, diceMode, difficulty,
+                automaDeck, automaDiscard,
+                attackDeck, attackDiscard,
+                vpCounter: parseInt(document.getElementById('vpCounter')?.value || 0)
+            }));
+        } catch(e) {}
+    }
+
+    function loadState() {
+        try {
+            const raw = localStorage.getItem(LS_KEY);
+            if (!raw) return false;
+            const s = JSON.parse(raw);
+            gameMode = s.gameMode ?? 'joanna';
+            diceMode = s.diceMode ?? 'virtual';
+            difficulty = s.difficulty ?? 'easy';
+            automaDeck = s.automaDeck ?? [0,1,2,3,4,5];
+            automaDiscard = s.automaDiscard ?? [];
+            attackDeck = s.attackDeck ?? [];
+            attackDiscard = s.attackDiscard ?? [];
+            return { vpCounter: s.vpCounter ?? 0 };
+        } catch(e) { return false; }
+    }
+
+    // --- Joanna Card Data ---
+    // Approximated 6-card distribution for the automa
+    const automaCardsData = [
+        { r1: {x:4, vp:1}, r2: {x:3, vp:1}, r3: {x:1, vp:1} },
+        { r1: {x:5, vp:1}, r2: {x:4, vp:1}, r3: {x:2, vp:1} },
+        { r1: {x:2, vp:2}, r2: {x:5, vp:2}, r3: {x:3, vp:2} },
+        { r1: {x:3, vp:2}, r2: {x:6, vp:2}, r3: {x:4, vp:2} },
+        { r1: {x:4, vp:3}, r2: {x:2, vp:3}, r3: {x:5, vp:3} },
+        { r1: {x:6, vp:3}, r2: {x:1, vp:3}, r3: {x:6, vp:3} }
+    ];
+
+    const diffConfigs = {
+        easy:   { name: 'Joanna', t_coins: 25, t_income: 15, vp_mod: 0 },
+        medium: { name: 'Devin',  t_coins: 28, t_income: 12, vp_mod: 1 },
+        hard:   { name: 'Clarie', t_coins: 26, t_income: 14, vp_mod: 2 }
+    };
+
+    // --- Logic ---
+    function updateSetupUI() {
+        gameMode = document.getElementById('gameMode').value;
+        if(gameMode === 'joanna') {
+            document.getElementById('joannaDiffRow').style.display = 'block';
+        } else {
+            document.getElementById('joannaDiffRow').style.display = 'none';
+        }
+    }
+
+    // --- Dice Animation using @3d-dice/dice-box ---
+    let diceBox = null;
+    let diceBoxReady = false;
+
+    async function initDiceBox() {
+        if(diceBox) return;
+        try {
+            const { default: DiceBox } = await import('https://unpkg.com/@3d-dice/dice-box@1.1.3/dist/dice-box.es.min.js');
+            diceBox = new DiceBox({
+                container: '#dice-box',
+                assetPath: 'https://unpkg.com/@3d-dice/dice-box@1.1.3/dist/assets/',
+                origin: 'https://unpkg.com/@3d-dice/dice-box@1.1.3/dist/',
+                theme: 'default',
+                themeColor: '#1e293b',
+                scale: 6,
+                gravity: 2.5,
+                friction: 0.8,
+                restitution: 0.5
+            });
+            await diceBox.init();
+            diceBoxReady = true;
+            
+            diceBox.onRollComplete = (results) => {
+                const d1 = results[0]?.value ?? 1;
+                const d2 = results[1]?.value ?? 1;
+                const txt = document.getElementById('diceResultText');
+                txt.style.display = 'block';
+                txt.innerText = `🎲 ${d1} | ${d2}  (Soma: ${d1+d2})`;
+            };
+        } catch(err) {
+            console.error("Failed to load dice-box", err);
+            diceBoxReady = false;
+        }
+    }
+
+    function rollVirtualDice() {
+        if(diceMode !== 'virtual') return;
+        if(!diceBoxReady) {
+            // fallback
+            const d1 = Math.floor(Math.random() * 6) + 1;
+            const d2 = Math.floor(Math.random() * 6) + 1;
+            const txt = document.getElementById('diceResultText');
+            txt.style.display = 'block';
+            txt.innerText = `🎲 ${d1} | ${d2}  (Soma: ${d1+d2})`;
+            return;
+        }
+        
+        document.getElementById('diceResultText').style.display = 'none';
+        diceBox.roll('2d6');
+    }
+
+
+    let manualDie1Val = 1, manualDie2Val = 1;
+
+    window.adjustManualDie = function(die, delta) {
+        if (die === 1) { manualDie1Val = Math.min(6, Math.max(1, manualDie1Val + delta)); document.getElementById('manualDie1').textContent = manualDie1Val; }
+        else { manualDie2Val = Math.min(6, Math.max(1, manualDie2Val + delta)); document.getElementById('manualDie2').textContent = manualDie2Val; }
+        document.getElementById('manualDiceSum').textContent = manualDie1Val + manualDie2Val;
+    };
+
+    window.startGame = async function() {
+        gameMode = document.getElementById('gameMode').value;
+        diceMode = document.getElementById('diceMode').value;
+        difficulty = document.getElementById('difficulty').value;
+        
+        document.getElementById('setupOverlay').style.display = 'none';
+        document.getElementById('mainContainer').style.display = 'grid';
+        
+        if (diceMode === 'virtual') {
+            document.getElementById('dice-box').style.display = 'block';
+            await initDiceBox();
+        }
+
+        if (diceMode === 'physical') {
+            document.getElementById('manualDiceArea').style.display = 'block';
+        }
+
+        if (gameMode === 'joanna') {
+            document.getElementById('joannaControls').style.display = 'block';
+            document.getElementById('baseAttackControls').style.display = 'none';
+            document.getElementById('joannaCardDisplay').style.display = 'block';
+            document.getElementById('attackLogContainer').style.display = 'none';
+            
+            const conf = diffConfigs[difficulty];
+            document.getElementById('cardDiffName').innerText = conf.name;
+            document.getElementById('vpThresholds').innerText = `${conf.t_coins}🪙 | ${conf.t_income}🌍 | 4.0VP`;
+            
+            shuffleArray(automaDeck);
+            updateDeckStatusText();
+        } else {
+            document.getElementById('joannaControls').style.display = 'none';
+            document.getElementById('baseAttackControls').style.display = 'block';
+            document.getElementById('joannaCardDisplay').style.display = 'none';
+            document.getElementById('attackLogContainer').style.display = 'block';
+            
+            initAttackDeck();
+        }
+        saveState();
+    }
+
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+    }
+
+    // --- Joanna Logic ---
+    window.nextJoannaTurn = function() {
+        if (automaDeck.length === 1) {
+            // "Whenever Joanna has one card left... shuffle all back... skip one card"
+            automaDeck = [0, 1, 2, 3, 4, 5];
+            shuffleArray(automaDeck);
+            // Skip one
+            const skipped = automaDeck.pop();
+            automaDiscard = [skipped];
+        }
+        
+        const cardIndex = automaDeck.pop();
+        automaDiscard.push(cardIndex);
+        
+        renderJoannaCard(cardIndex);
+        updateDeckStatusText();
+        rollVirtualDice();
+        saveState();
+    }
+
+    function renderJoannaCard(index) {
+        const data = automaCardsData[index];
+        const conf = diffConfigs[difficulty];
+        
+        function renderRow(rowId, rowData) {
+            const container = document.getElementById(`row${rowId}Ships`);
+            container.innerHTML = '';
+            for(let i=1; i<=6; i++) {
+                if(i === rowData.x) {
+                    container.innerHTML += `<div class="ship-slot ship-crossed"></div>`;
+                } else {
+                    container.innerHTML += `<div class="ship-slot"></div>`;
+                }
+            }
+            // Add VP mod for devin/clarie for higher VP values (e.g. if base vp >= 2, add mod)
+            let finalVP = rowData.vp;
+            if (finalVP >= 2 && conf.vp_mod > 0) {
+                finalVP += conf.vp_mod;
+            }
+            document.getElementById(`row${rowId}VP`).innerText = finalVP;
+        }
+
+        renderRow(1, data.r1);
+        renderRow(2, data.r2);
+        renderRow(3, data.r3);
+    }
+
+    window.changeVP = function(amount) {
+        const input = document.getElementById('vpCounter');
+        let val = parseInt(input.value) || 0;
+        val += amount;
+        if(val < 0) val = 0;
+        input.value = val;
+        saveState();
+    }
+
+    // --- Base Attack Logic ---
+    function initAttackDeck() {
+        attackDeck = [];
+        for(let i=1; i<=12; i++) {
+            attackDeck.push(i, i, i, i); // 4 of each
+        }
+        shuffleArray(attackDeck);
+        attackDiscard = [];
+        updateDeckStatusText();
+    }
+
+    window.baseAttackTurn = function(cardsToDraw) {
+        if(cardsToDraw === 0) {
+            rollVirtualDice();
+            return; // no attack
+        }
+        
+        document.getElementById('emptyLogState').style.display = 'none';
+        
+        let drawn = [];
+        for(let i=0; i<cardsToDraw; i++) {
+            if(attackDeck.length === 0) {
+                // Should not happen often, but if it does, shuffle discard
+                attackDeck = [...attackDiscard];
+                attackDiscard = [];
+                shuffleArray(attackDeck);
+            }
+            if(attackDeck.length > 0) {
+                const c = attackDeck.pop();
+                drawn.push(c);
+                attackDiscard.push(c);
+            }
+        }
+        
+        drawn.sort((a,b) => a-b);
+        
+        const log = document.getElementById('attackLogDisplay');
+        log.style.display = 'block';
+        
+        let cardsHTML = '';
+        drawn.forEach(num => {
+            cardsHTML += `<div class="attack-card">${num}</div>`;
+        });
+        
+        const msg = t('attackMessage').replace('{n}', drawn.length);
+        
+        const li = document.createElement('li');
+        li.className = 'attack-item';
+        li.innerHTML = `
+            <div style="font-size:0.9em; color:#cbd5e1; margin-bottom:5px;">${msg}</div>
+            <div class="attack-cards-grid">${cardsHTML}</div>
+        `;
+        log.prepend(li);
+        
+        updateDeckStatusText();
+        rollVirtualDice();
+        saveState();
+    }
+
+    window.shuffleAttackDeck = function() {
+        attackDeck = attackDeck.concat(attackDiscard);
+        attackDiscard = [];
+        shuffleArray(attackDeck);
+        updateDeckStatusText();
+        
+        // Add log entry
+        const log = document.getElementById('attackLogDisplay');
+        log.style.display = 'block';
+        const li = document.createElement('li');
+        li.className = 'attack-item';
+        li.style.borderColor = '#3b82f6';
+        li.style.background = 'rgba(59, 130, 246, 0.1)';
+        li.innerHTML = `<div style="color:#3b82f6; font-weight:bold; text-align:center;">${t('shuffledLog')}</div>`;
+        log.prepend(li);
+        saveState();
+    }
+
+    function updateDeckStatusText() {
+        if(gameMode === 'joanna') {
+            let txt = currentLang === 'en' ? `Cards in Deck: ${automaDeck.length} | Discard: ${automaDiscard.length}` : `Cartas no Deck: ${automaDeck.length} | Descarte: ${automaDiscard.length}`;
+            document.getElementById('joannaDeckStatus').innerText = txt;
+        } else {
+            let txt = currentLang === 'en' ? `Attack Deck: ${attackDeck.length}/48` : `Baralho de Ataque: ${attackDeck.length}/48`;
+            document.getElementById('baDeckStatus').innerText = txt;
+        }
+    }
+
+    // Init i18n on load
+    applyI18n();
+</script>
+</body>
+</html>
