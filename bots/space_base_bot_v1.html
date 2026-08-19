@@ -112,6 +112,11 @@
     <div class="setup-modal">
         <h2 data-i18n="setupTitle">Configuração do Jogo</h2>
         
+        <div style="background:rgba(59,130,246,0.1); padding:12px; border-radius:6px; border-left:3px solid #3b82f6; margin-bottom:15px; font-size:0.85em; text-align:left; color:#94a3b8;">
+            <strong data-i18n="physSetupTitle" style="color:#e2e8f0; display:block; margin-bottom:5px;">Setup Físico (Joanna):</strong>
+            <span data-i18n="physSetupDesc">Coloque os 3 cubos da Joanna no 0 (VP, Moeda e Renda). Compre uma carta inicial Nível 1 aleatória para ela. Ela não recebe cartas iniciais de setor.</span>
+        </div>
+        
         <div class="setup-row">
             <label data-i18n="gameMode">Modo de Jogo</label>
             <select id="gameMode" onchange="updateSetupUI()">
@@ -214,7 +219,7 @@
             <button class="action-btn secondary" style="margin-top:15px; border-color:#dc2626; color:#dc2626;" onclick="shuffleAttackDeck()" data-i18n="shuffleDeckBtn">Embaralhar Descarte no Deck</button>
         </div>
         
-        <button class="action-btn secondary" style="margin-top:30px;" onclick="localStorage.removeItem('space_base_bot_v1'); location.reload();" data-i18n="endGame">Encerrar Partida</button>
+        <button class="action-btn secondary" style="margin-top:30px;" onclick="localStorage.removeItem('space_base_bot_v1'); location.reload();" data-i18n="newGame">🔄 Nova Partida</button>
     </div>
 
     <!-- Main Display Panel -->
@@ -326,7 +331,7 @@
             pageTitle: "Space Base Bot",
             title: "Space Base Bot",
             subtitle: "Automa e Ataque à Base (SoloPlay)",
-            setupTitle: "Configuração do Jogo",
+            setupTitle: "Configuração do Jogo", physSetupTitle: "Setup Físico (Joanna):", physSetupDesc: "Coloque os 3 cubos da Joanna no 0 (VP, Moeda e Renda). Compre uma carta inicial Nível 1 aleatória para ela. Ela não recebe cartas iniciais de setor.",
             gameMode: "Modo de Jogo",
             modeJoanna: "Automa Oficial (Joanna/Devin/Clarie)",
             modeBaseAttack: "Ataque à Base (SoloPlay)",
@@ -350,7 +355,7 @@
             cardInstruction: "Mova o cubo do automa na sua base e escolha a linha correspondente à trilha onde o cubo está.",
             emptyLog: "Aguardando a resolução do seu turno...",
             rulesTitle: "Regras & Ajuda",
-            endGame: "Encerrar Partida",
+            newGame: "🔄 Nova Partida",
             attackMessage: "Oponentes atacam com {n} nave(s) nos setores:",
             rulesTitle: 'Regras & Ajuda',
             ruleAutomaTitle: 'Modo Automa (Joanna, Devin, Clarie)',
@@ -376,7 +381,7 @@
             pageTitle: "Space Base Bot",
             title: "Space Base Bot",
             subtitle: "Automa and Base Attack (SoloPlay)",
-            setupTitle: "Game Setup",
+            setupTitle: "Game Setup", physSetupTitle: "Physical Setup (Joanna):", physSetupDesc: "Place Joanna\'s 3 cubes on 0 (VP, Coins, and Income). Draw one random Level 1 starting card for her. She does not get sector starting cards.",
             gameMode: "Game Mode",
             modeJoanna: "Official Automa (Joanna/Devin/Clarie)",
             modeBaseAttack: "Base Attack (SoloPlay)",
@@ -400,7 +405,7 @@
             cardInstruction: "Move the automa's cube on your board and choose the row matching the track the cube is on.",
             emptyLog: "Waiting for your turn resolution...",
             rulesTitle: "Rules & Help",
-            endGame: "End Game",
+            newGame: "🔄 New Game",
             attackMessage: "Opponents attack with {n} ship(s) in sectors:",
             rulesTitle: 'Rules & Help',
             ruleAutomaTitle: 'Automa Mode (Joanna, Devin, Clarie)',
@@ -527,7 +532,7 @@
             const { default: DiceBox } = await import('https://unpkg.com/@3d-dice/dice-box@1.1.3/dist/dice-box.es.min.js');
             diceBox = new DiceBox({
                 container: '#dice-box',
-                assetPath: 'https://unpkg.com/@3d-dice/dice-box@1.1.3/dist/assets/',
+                assetPath: '../assets/dice-box/',
                 origin: 'https://unpkg.com/@3d-dice/dice-box@1.1.3/dist/',
                 theme: 'default',
                 themeColor: '#1e293b',
@@ -608,7 +613,8 @@
             document.getElementById('vpThresholds').innerText = `${conf.t_coins}🪙 | ${conf.t_income}🌍 | 4.0VP`;
             
             shuffleArray(automaDeck);
-            updateDeckStatusText();
+            // Mostrar a primeira carta e rolar dados imediatamente:
+            nextJoannaTurn(false);
         } else {
             document.getElementById('joannaControls').style.display = 'none';
             document.getElementById('baseAttackControls').style.display = 'block';
@@ -616,6 +622,8 @@
             document.getElementById('attackLogContainer').style.display = 'block';
             
             initAttackDeck();
+            // Rolar os dados iniciais para o jogador no modo Base Attack
+            rollVirtualDice();
         }
         saveState();
     }
@@ -628,7 +636,7 @@
     }
 
     // --- Joanna Logic ---
-    window.nextJoannaTurn = function() {
+    window.nextJoannaTurn = function(skipRoll = false) {
         if (automaDeck.length === 1) {
             // "Whenever Joanna has one card left... shuffle all back... skip one card"
             automaDeck = [0, 1, 2, 3, 4, 5];
@@ -643,7 +651,7 @@
         
         renderJoannaCard(cardIndex);
         updateDeckStatusText();
-        rollVirtualDice();
+        if (!skipRoll) rollVirtualDice();
         saveState();
     }
 
