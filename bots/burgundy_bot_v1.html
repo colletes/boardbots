@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Castles of Burgundy &#8212; AutoDuque Bot</title>
+<title data-i18n="pageTitle">Castles of Burgundy — AutoDuque Bot</title>
 <link rel="icon" href="../assets/mascot-trimmed.png" type="image/png">
 <meta name="description" content="AutoDuque Automa for Castles of Burgundy.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -36,9 +36,12 @@
         box-shadow: 0 4px 15px rgba(99, 15, 37, 0.3);
         border-radius: 0 0 16px 16px;
         margin-bottom: 30px;
+        position: relative;
     }
     .bot-header h1 { font-family: var(--font-display); font-weight: 700; font-size: 2.2em; margin: 0 0 10px; letter-spacing: 1px; text-shadow: 1px 2px 4px rgba(0,0,0,0.5); }
     .bot-header p { color: #fff; opacity: 0.9; font-size: 1.1em; margin: 0; }
+    .lang-toggle { position: absolute; top: 15px; right: 15px; background: rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 6px; color: #fff; cursor: pointer; border: 1px solid var(--burgundy-gold); font-weight: bold; }
+    .lang-toggle:hover { background: rgba(255,255,255,0.3); }
     .board-container { max-width: 1200px; margin: 0 auto; padding: 0 20px; display: grid; grid-template-columns: 1fr; gap: 20px; }
     @media (min-width: 992px) { .board-container { grid-template-columns: 380px 1fr; } }
     .panel { background: var(--panel-bg); border: 1px solid rgba(197, 160, 89, 0.4); border-radius: 12px; padding: 24px; box-shadow: 0 8px 24px rgba(0,0,0,0.06); }
@@ -154,66 +157,85 @@
     .rules-highlight { background: rgba(197,160,89,0.12); border-left: 3px solid var(--burgundy-gold); padding: 8px 12px; border-radius: 4px; font-size: 0.88em; line-height: 1.6; margin-bottom: 10px; }
     .help-btn { position: fixed; bottom: 24px; right: 24px; width: 50px; height: 50px; background: linear-gradient(135deg, var(--burgundy-dark), var(--burgundy-red)); color: var(--burgundy-gold-light); border: 2px solid var(--burgundy-gold); border-radius: 50%; font-family: var(--font-display); font-size: 1.4em; font-weight: 700; cursor: pointer; box-shadow: 0 4px 12px rgba(99,15,37,0.4); z-index: 500; display: flex; align-items: center; justify-content: center; transition: transform 0.2s; }
     .help-btn:hover { transform: scale(1.1); }
+    footer.credits { text-align: center; margin-top: 40px; padding: 20px; font-size: 0.9em; color: #666; border-top: 1px solid #ddd; }
+    footer.credits img { max-width: 150px; border-radius: 8px; margin-bottom: 10px; }
+    footer.credits a { color: var(--burgundy-dark); text-decoration: none; font-weight: bold; }
 </style>
 </head>
 <body>
 
-<a href="../index.html" style="position:absolute; top:15px; left:15px; background:rgba(255,255,255,0.9); padding:8px 12px; border-radius:8px; text-decoration:none; color:var(--burgundy-dark); font-weight:600; border:1px solid var(--burgundy-gold); z-index:100; box-shadow:0 2px 5px rgba(0,0,0,0.1);">
-    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px; margin-right:4px;"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9 21v-6h6v6"/></svg>
-    Voltar
-</a>
-
 <div class="bot-header">
-    <h1>AutoDuque</h1>
-    <p>Oponente Automa para Castles of Burgundy</p>
+    <button class="lang-toggle" onclick="toggleLanguage()">EN / PT</button>
+    <h1 data-i18n="title">AutoDuque</h1>
+    <p data-i18n="subtitle">Oponente Automa para Castles of Burgundy</p>
 </div>
 
-<div class="board-container">
-    <div class="panel">
-        <h2>Controle do Turno</h2>
-
-        <div class="settings-row">
+<!-- Setup overlay -->
+<div class="setup-overlay" id="setupOverlay">
+    <div class="setup-modal" id="setupSettings" style="display: block;">
+        <h2 data-i18n="setupTitle">Configuração do AutoDuque</h2>
+        
+        <div class="settings-row" style="margin-top: 20px; text-align: left;">
             <div>
-                <label>Cor do AutoDuque</label>
+                <label data-i18n="botColor">Cor do AutoDuque</label>
                 <select id="botColor">
-                    <option value="#d64545">Vermelho</option>
-                    <option value="#4f8cff">Azul</option>
-                    <option value="#3cb371">Verde</option>
-                    <option value="#333333">Preto</option>
+                    <option value="#d64545" data-i18n="red">Vermelho</option>
+                    <option value="#4f8cff" data-i18n="blue">Azul</option>
+                    <option value="#3cb371" data-i18n="green">Verde</option>
+                    <option value="#333333" data-i18n="black">Preto</option>
                 </select>
             </div>
             <div>
-                <label>Dificuldade</label>
+                <label data-i18n="difficulty">Dificuldade</label>
                 <select id="difficulty">
-                    <option value="0">F&#225;cil</option>
-                    <option value="1">M&#233;dio</option>
-                    <option value="2">Dif&#237;cil</option>
+                    <option value="0" data-i18n="easy">Fácil</option>
+                    <option value="1" data-i18n="medium">Médio</option>
+                    <option value="2" data-i18n="hard">Difícil</option>
                 </select>
             </div>
         </div>
 
-        <div>
-            <label style="font-size:0.8em;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--burgundy-dark);display:block;margin-bottom:5px;">Modo dos Dados</label>
+        <div style="text-align: left; margin-bottom: 15px;">
+            <label style="font-size:0.8em;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--burgundy-dark);display:block;margin-bottom:5px;" data-i18n="diceMode">Modo dos Dados</label>
             <div class="toggle-group">
-                <button class="toggle-btn" id="btnDice3D" onclick="setDiceMode('3d')">&#127922; Dados 3D</button>
-                <button class="toggle-btn active" id="btnDiceManual" onclick="setDiceMode('manual')">&#9999;&#65039; Entrada Manual</button>
+                <button class="toggle-btn" id="btnDice3D" onclick="setDiceMode('3d')" data-i18n="dice3d">🎲 Dados 3D</button>
+                <button class="toggle-btn active" id="btnDiceManual" onclick="setDiceMode('manual')" data-i18n="diceManual">✏️ Entrada Manual</button>
             </div>
         </div>
 
-        <div>
-            <label style="font-size:0.8em;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--burgundy-dark);display:block;margin-bottom:5px;">Modo do Tabuleiro</label>
+        <div style="text-align: left; margin-bottom: 25px;">
+            <label style="font-size:0.8em;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--burgundy-dark);display:block;margin-bottom:5px;" data-i18n="boardMode">Modo do Tabuleiro</label>
             <div class="toggle-group">
-                <button class="toggle-btn active" id="btnBoardVirtual" onclick="setBoardMode('virtual')">&#128421;&#65039; Virtual</button>
-                <button class="toggle-btn" id="btnBoardPhysical" onclick="setBoardMode('physical')">&#128196; Tabuleiro F&#237;sico</button>
+                <button class="toggle-btn active" id="btnBoardVirtual" onclick="setBoardMode('virtual')" data-i18n="boardVirtual">🖥️ Virtual</button>
+                <button class="toggle-btn" id="btnBoardPhysical" onclick="setBoardMode('physical')" data-i18n="boardPhysical">📄 Tabuleiro Físico</button>
             </div>
         </div>
+        
+        <button class="action-btn" onclick="startCardSetup()" data-i18n="startGame">Iniciar Jogo</button>
+    </div>
+
+    <div class="setup-modal" id="setupCardPhase" style="display: none;">
+        <h2 data-i18n="setupCardTitle">Setup Inicial da Carta</h2>
+        <p data-i18n="setupCardText1">A regra do AutoDuque exige que a primeira carta (Slot 1–4) tenha pelo menos um <strong>Hexágono de Castelo (Borgonha)</strong>.</p>
+        <p data-i18n="setupCardText2">Estou revelando as cartas do baralho embaralhado. Esta carta tem um hexágono de castelo cinza?</p>
+        <img id="setupPreview" class="setup-card-preview" src="" alt="Preview da carta">
+        <div style="display:flex;gap:15px;justify-content:center;margin-top:20px;">
+            <button class="action-btn" style="width:auto;padding:12px 30px;" onclick="setupFoundCastle()" data-i18n="setupCardYes">✅ Sim, tem Castelo!</button>
+            <button class="btn-secondary" style="width:auto;padding:12px 30px;margin-top:0;" onclick="setupNextCard()" data-i18n="setupCardNo">❌ Não tem, puxar outra</button>
+        </div>
+    </div>
+</div>
+
+<div class="board-container" id="mainGameContainer" style="display: none;">
+    <div class="panel">
+        <h2 data-i18n="turnControl">Controle do Turno</h2>
 
         <div id="dice-box"></div>
 
-                <div class="manual-dice-area active" id="manualDiceArea">
+        <div class="manual-dice-area active" id="manualDiceArea">
             <div class="dice-stepper">
-                <label id="manualColorLabel">Dado Vermelho:</label>
-                <button class="stepper-btn" onclick="stepDie('bot',-1)">&#8722;</button>
+                <label id="manualColorLabel" data-i18n="redDie">Dado Vermelho:</label>
+                <button class="stepper-btn" onclick="stepDie('bot',-1)">−</button>
                 <span class="stepper-val" id="botManualVal">1</span>
                 <button class="stepper-btn" onclick="stepDie('bot',1)">+</button>
             </div>
@@ -227,8 +249,8 @@
             </div>
 
             <div class="dice-stepper" style="margin-top: 20px;">
-                <label>Dado Branco:</label>
-                <button class="stepper-btn" onclick="stepDie('white',-1)">&#8722;</button>
+                <label data-i18n="whiteDie">Dado Branco:</label>
+                <button class="stepper-btn" onclick="stepDie('white',-1)">−</button>
                 <span class="stepper-val" id="whiteManualVal">1</span>
                 <button class="stepper-btn" onclick="stepDie('white',1)">+</button>
             </div>
@@ -241,183 +263,341 @@
                 <button class="die-btn" onclick="setManualDie('white',6)">6</button>
             </div>
         </div>
-</div>
-</div>
 
-<!-- Setup overlay -->
-<div class="setup-overlay" id="setupOverlay">
-    <div class="setup-modal">
-        <h2>Setup Inicial</h2>
-        <p>A regra do AutoDuque exige que a primeira carta (Slot 1&#8211;4) tenha pelo menos um <strong>Hex&#225;gono de Castelo (Borgonha)</strong>.</p>
-        <p>Estou revelando as cartas do baralho embaralhado. Esta carta tem um hex&#225;gono de castelo cinza?</p>
-        <img id="setupPreview" class="setup-card-preview" src="" alt="Preview da carta">
-        <div style="display:flex;gap:15px;justify-content:center;margin-top:20px;">
-            <button class="action-btn" style="width:auto;padding:12px 30px;" onclick="setupFoundCastle()">&#9989; Sim, tem Castelo!</button>
-            <button class="btn-secondary" style="width:auto;padding:12px 30px;margin-top:0;" onclick="setupNextCard()">&#10060; N&#227;o tem, puxar outra</button>
+        <button class="action-btn" id="rollBtn" onclick="handleRollOrConfirm()" disabled data-i18n="confirmRoll">Confirmar Resultado</button>
+        <div class="dice-result" id="diceResult" data-i18n="waitingRoll">Aguardando rolagem...</div>
+        
+        <div class="turn-summary" id="turnSummary"></div>
+        <button class="copy-btn" id="copyBtn" onclick="copySummary()" data-i18n="copyInstructions">📋 Copiar Instruções</button>
+    </div>
+    
+    <div>
+        <div class="cards-grid">
+            <div class="card-slot" id="slotLeft">
+                <h3 data-i18n="leftCard">Carta de Vila Esquerda (1-4)</h3>
+                <div class="image-container">
+                    <img id="imgLeft" src="" alt="Left Card">
+                </div>
+                <button class="btn-secondary" id="btnCompleteLeft" onclick="completeCard('left')" disabled data-i18n="completeCard">Completar Carta</button>
+            </div>
+            <div class="card-slot" id="slotRight">
+                <h3 data-i18n="rightCard">Carta de Vila Direita (5-6)</h3>
+                <div class="image-container">
+                    <img id="imgRight" src="" alt="Right Card">
+                </div>
+                <button class="btn-secondary" id="btnCompleteRight" onclick="completeCard('right')" disabled data-i18n="completeCard">Completar Carta</button>
+            </div>
         </div>
+        
+        <div class="panel board-section">
+            <h2 data-i18n="botReserve">Reserva do AutoDuque</h2>
+            <p id="boardTip" style="font-size:0.85em;color:#666;margin-top:0;" data-i18n="boardTip">Clique na imagem para adicionar tokens onde as peças já foram colocadas.</p>
+            <div class="image-container" id="slotBoard">
+                <img src="../assets/art/burgundy_board.jpg" alt="Bot Board">
+            </div>
+        </div>
+
+        <div class="deck-status" id="deckStatus"></div>
+        
+        <div class="panel" id="completedCardsSection" style="display:none; margin-top:20px;">
+            <h2 style="font-size:1.2em; margin-bottom:10px;" data-i18n="completedCards">Cartas Completadas</h2>
+            <div class="completed-cards-list" id="completedCardsList"></div>
+        </div>
+        
+        <button class="btn-endgame" id="endGameBtn" onclick="openScoringModal()" data-i18n="endGame">🏁 Encerrar Partida e Pontuar</button>
     </div>
 </div>
 
 <!-- Rules modal -->
 <div class="modal-overlay" id="rulesModal" style="display:none;" onclick="if(event.target===this)closeModal('rulesModal')">
     <div class="modal-box">
-        <button class="modal-close" onclick="closeModal('rulesModal')">&#x2715;</button>
-        <h2>&#128220; Regras &#8212; AutoDuque</h2>
+        <button class="modal-close" onclick="closeModal('rulesModal')">✕</button>
+        <h2 data-i18n="rulesTitle">📜 Regras — AutoDuque</h2>
         <div class="rules-section">
-            <h3>1. Turno do AutoDuque</h3>
+            <h3 data-i18n="rulesS1Title">1. Turno do AutoDuque</h3>
             <ol>
-                <li>O <strong>dado branco</strong> (rolado pelo 1&#186; jogador humano) indica a carta de vila escolhida: <strong>1&#8211;4 = Carta Esquerda</strong>, <strong>5&#8211;6 = Carta Direita</strong>.</li>
-                <li>Role o <strong>dado colorido</strong> do AutoDuque &#8212; esse &#233; o dep&#243;sito inicial de busca.</li>
-                <li>Busque uma pe&#231;a para preencher a carta de vila escolhida (sempre de cima para baixo, e da esquerda para a direita).</li>
-                        </ol>
-            <div style="background: rgba(197,160,89,0.08); padding: 15px; border-radius: 8px; border: 1px dashed var(--burgundy-gold); text-align: center; margin: 15px 0;">
-                <p style="font-size: 0.9em; margin: 0 0 10px; color: var(--burgundy-dark);"><strong>Exemplo de Prioridade na Carta</strong><br><span style="font-size: 0.9em; font-weight: normal;">(Cima para Baixo, Esq &#8594; Dir)</span></p>
-                <div style="position: relative; width: 140px; height: 160px; margin: 0 auto;">
-                    <!-- Hex grid mockup -->
-                    <div style="position: absolute; top: 0; left: 45px; width: 50px; height: 50px; background: rgba(99,15,37,0.1); border: 2px solid var(--burgundy-gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 1.2em; color: var(--burgundy-dark);">1</div>
-                    <div style="position: absolute; top: 45px; left: 15px; width: 50px; height: 50px; background: rgba(99,15,37,0.1); border: 2px solid var(--burgundy-gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 1.2em; color: var(--burgundy-dark);">2</div>
-                    <div style="position: absolute; top: 45px; left: 75px; width: 50px; height: 50px; background: rgba(99,15,37,0.1); border: 2px solid var(--burgundy-gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 1.2em; color: var(--burgundy-dark);">3</div>
-                    <div style="position: absolute; top: 90px; left: 45px; width: 50px; height: 50px; background: rgba(99,15,37,0.1); border: 2px solid var(--burgundy-gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 1.2em; color: var(--burgundy-dark);">4</div>
-                </div>
-                <p style="font-size: 0.85em; color: #555; margin: 10px 0 0; line-height: 1.5; text-align: left;">O AutoDuque verifica primeiro o espa&#231;o <strong>1</strong>. Se j&#225; estiver preenchido, ele procura a pe&#231;a correspondente ao espa&#231;o <strong>2</strong>. Se tamb&#233;m j&#225; estiver preenchido, vai para o <strong>3</strong>, e assim por diante.</p>
+                <li data-i18n="rulesS1L1">O <strong>dado branco</strong> (rolado pelo 1º jogador humano) indica a carta de vila escolhida: <strong>1–4 = Carta Esquerda</strong>, <strong>5–6 = Carta Direita</strong>.</li>
+                <li data-i18n="rulesS1L2">Role o <strong>dado colorido</strong> do AutoDuque — esse é o depósito inicial de busca.</li>
+                <li data-i18n="rulesS1L3">Busque uma peça para preencher a carta de vila escolhida (sempre de cima para baixo, e da esquerda para a direita).</li>
+            </ol>
+            <div class="rules-highlight" style="margin-top: 10px;" data-i18n="rulesS1Extra1">
+                <strong>Ordem de busca da peça:</strong><br>
+                1. No depósito indicado pelo dado colorido.<br>
+                2. Nos próximos depósitos do tabuleiro, em sentido horário.<br>
+                3. Na <strong>área de reserva</strong> (os 7 espaços no tabuleiro do AutoDuque).<br>
+                4. No <strong>espaço curinga</strong> (hexágono preto na reserva).<br>
+                5. Se o espaço curinga estiver vazio, pegue uma peça aleatória do <strong>Depósito Paralelo</strong> (mercado negro) e coloque virada para baixo no curinga.<br>
+                6. Se nada disso for possível, o AutoDuque ganha <strong>+2 peças de prata</strong>.
+            </div>
+            <div class="rules-highlight" data-i18n="rulesS1Extra2">
+                <strong>⚡ Fim do turno (Compra Automática):</strong> Se o AutoDuque terminar o turno com 2 ou mais peças de prata, ele gasta 2 peças para comprar 1 peça do Depósito Paralelo (sempre priorizando a cor que ele ainda não tem na reserva).
             </div>
         </div>
-        <div class="rules-highlight">
-            <strong>Ordem de busca da pe&#231;a:</strong><br>
-            1. No dep&#243;sito indicado pelo dado colorido.<br>
-            2. Nos pr&#243;ximos dep&#243;sitos do tabuleiro, em sentido hor&#225;rio.<br>
-            3. Na <strong>&#225;rea de reserva</strong> (os 7 espa&#231;os no tabuleiro do AutoDuque).<br>
-            4. No <strong>espa&#231;o curinga</strong> (hex&#225;gono preto na reserva).<br>
-            5. Se o espa&#231;o curinga estiver vazio, pegue uma pe&#231;a aleat&#243;ria do <strong>Dep&#243;sito Paralelo</strong> (mercado negro) e coloque virada para baixo no curinga.<br>
-            6. Se nada disso for poss&#237;vel, o AutoDuque ganha <strong>+2 pe&#231;as de prata</strong>.
-        </div>
-        <div class="rules-highlight">
-            <strong>&#9889; Fim do turno (Compra Autom&#225;tica):</strong> Se o AutoDuque terminar o turno com 2 ou mais pe&#231;as de prata, ele gasta 2 pe&#231;as para comprar 1 pe&#231;a do Dep&#243;sito Paralelo (sempre priorizando a cor que ele ainda n&#227;o tem na reserva).
-        </div>
         <div class="rules-section">
-            <h3>2. Efeitos das Pe&#231;as</h3>
-            <p style="font-size: 0.9em; margin-top:0;"><em>Quando o AutoDuque pega uma pe&#231;a para sua carta, ele executa o efeito abaixo (se aplic&#225;vel):</em></p>
-            <ul>
-                <li><strong>Castelo (Verde/Vermelho):</strong> Busca imediatamente uma pe&#231;a extra (use o valor do <em>dado branco</em> como dep&#243;sito inicial de busca).</li>
-                <li><strong>Navio (Azul):</strong> Avan&#231;a no indicador de ordem de turno; recolhe as mercadorias do dep&#243;sito que tiver a maior quantidade (desempate: menor n&#186; de dep&#243;sito).</li>
-                <li><strong>Mina (Cinza):</strong> Rende +1 pe&#231;a de prata no fim de cada fase.</li>
-                <li><strong>Monast&#233;rio (Amarelo):</strong> +4 PV no final do jogo.</li>
-                <li><strong>Banco (Bege):</strong> +2 pe&#231;as de prata.</li>
-                <li><strong>Alojamento (Bege):</strong> +2 PV imediatos.</li>
-                <li><strong>Torre de Vigia (Bege):</strong> +4 PV imediatos.</li>
-                <li><strong>Loja (Bege):</strong> Vende o tipo de mercadoria que ele mais possui (ganha PV = n&#186; de jogadores, e +1 pe&#231;a de prata).</li>
-                <li><strong>Carpintaria (Bege):</strong> Pega uma pe&#231;a de constru&#231;&#227;o do tabuleiro central e guarda na reserva.</li>
-                <li><strong>Igreja (Bege):</strong> Pega um castelo. Se n&#227;o houver, pega uma mina. Se n&#227;o houver, pega um monast&#233;rio. Guarda na reserva.</li>
-                <li><strong>Mercado (Bege):</strong> Pega um navio. Se n&#227;o houver, pega uma fazenda (animais). Guarda na reserva.</li>
-                <li><strong>Prefeitura (Bege):</strong> Move imediatamente uma pe&#231;a da reserva do AutoDuque (da cor mais numerosa) para a carta de vila escolhida.</li>
+            <h3 data-i18n="rulesS2Title">2. Efeitos das Peças</h3>
+            <ul id="tileEffectsList">
+                <li><strong>Castelo (Verde/Vermelho):</strong> Busca imediatamente uma peça extra.</li>
+                <li><strong>Navio (Azul):</strong> Avança no indicador de ordem de turno; recolhe as mercadorias.</li>
             </ul>
         </div>
-        <div class="rules-section">
-            <h3>3. Conclus&#227;o de Carta</h3>
-            <ul>
-                <li>Assim que a carta de vila for totalmente preenchida, o AutoDuque ganha os PVs indicados (F&#225;cil | M&#233;dio | Dif&#237;cil).</li>
-                <li>Todas as pe&#231;as daquela carta s&#227;o movidas viradas para cima para o Ducado dele (a posi&#231;&#227;o n&#227;o importa).</li>
-                <li>A carta vazia &#233; descartada. A carta restante desliza para o espa&#231;o esquerdo. Uma nova carta &#233; comprada para o espa&#231;o direito.</li>
-            </ul>
-        </div>
-        <div class="rules-section">
-            <h3>4. Pontua&#231;&#227;o Final</h3>
-            <ul>
-                <li><strong>+1 PV</strong> por cada pe&#231;a sobrando na reserva.</li>
-                <li><strong>+2 PV</strong> por cada pe&#231;a colocada em cartas de vila incompletas.</li>
-                <li><strong>+4 PV</strong> por cada monast&#233;rio no ducado (exceto os que est&#227;o na reserva).</li>
-                <li><strong>+1 PV</strong> por cada pe&#231;a de prata n&#227;o gasta.</li>
-                <li><strong>+1 PV</strong> por cada mercadoria n&#227;o vendida.</li>
-            </ul>
-        </div>
-        <button class="action-btn" style="margin-top:10px;" onclick="closeModal('rulesModal')">Fechar</button>
+        <button class="action-btn" style="margin-top:10px;" onclick="closeModal('rulesModal')" data-i18n="close">Fechar</button>
     </div>
 </div>
 
 <!-- Scoring modal -->
 <div class="modal-overlay" id="scoringModal" style="display:none;" onclick="if(event.target===this)closeModal('scoringModal')">
     <div class="modal-box">
-        <button class="modal-close" onclick="closeModal('scoringModal')">&#x2715;</button>
-        <h2>&#127937; Pontua&#231;&#227;o Final</h2>
+        <button class="modal-close" onclick="closeModal('scoringModal')">✕</button>
+        <h2 data-i18n="scoreTitle">🏁 Pontuação Final</h2>
         <div id="scoringCardsSummary" style="margin-bottom:16px;"></div>
-        <p style="font-size:0.9em;color:#666;margin:0 0 12px;">Como prefere calcular os pontos adicionais do tabuleiro?</p>
-        <div class="scoring-mode-tabs">
-            <button class="scoring-tab active" id="tabA" onclick="switchScoringTab('A')">A &#8212; Estimativa<br>Autom&#225;tica</button>
-            <button class="scoring-tab" id="tabB" onclick="switchScoringTab('B')">B &#8212; C&#225;lculo<br>Guiado</button>
-            <button class="scoring-tab" id="tabC" onclick="switchScoringTab('C')">C &#8212; Regras<br>Apenas</button>
-        </div>
-        <div class="scoring-panel active" id="panelA">
-            <p style="font-size:0.88em;color:#555;">O bot assume valores m&#233;dios baseados em partidas t&#237;picas:</p>
-            <table class="score-table">
-                <thead><tr><th>Componente</th><th>Estimativa</th><th>PV</th></tr></thead>
-                <tbody>
-                    <tr><td>Pe&#231;as na reserva</td><td>~3 tiles &#215; 1</td><td>3</td></tr>
-                    <tr><td>Pe&#231;as em cartas incompletas</td><td>~2 tiles &#215; 2</td><td>4</td></tr>
-                    <tr><td>Monast&#233;rios no ducado</td><td>~1 &#215; 4</td><td>4</td></tr>
-                    <tr><td>Peças de prata</td><td>~3 &#215; 1</td><td>3</td></tr>
-                    <tr><td>Mercadorias n&#227;o vendidos</td><td>~1 &#215; 1</td><td>1</td></tr>
-                    <tr><td><strong>Subtotal estimado</strong></td><td></td><td><strong>&#8776;15</strong></td></tr>
-                </tbody>
-            </table>
-            <div class="score-total" id="totalA">&#8212; PV</div>
-            <p style="font-size:0.8em;color:#888;text-align:center;margin:0;">*(estimativa &#8212; pode variar conforme a partida)*</p>
-        </div>
-        <div class="scoring-panel" id="panelB">
-            <p style="font-size:0.88em;color:#555;">Consulte o tabuleiro f&#237;sico e preencha os campos:</p>
+        
+        <div class="scoring-panel active" id="panelB">
+            <p style="font-size:0.88em;color:#555;" data-i18n="scoreInstruction">Consulte o tabuleiro físico e preencha os campos:</p>
             <div class="score-field-row">
-                <label>Pe&#231;as na reserva</label>
+                <label data-i18n="scoreReserve">Peças na reserva</label>
                 <input type="number" id="bReserva" value="0" min="0" max="8" oninput="calcB()">
-                <span class="vp-result" id="bReservaVP">&#215;1 = 0 PV</span>
+                <span class="vp-result" id="bReservaVP">×1 = 0 PV</span>
             </div>
             <div class="score-field-row">
-                <label>Pe&#231;as em cartas incompletas</label>
+                <label data-i18n="scoreIncomplete">Peças em cartas incompletas</label>
                 <input type="number" id="bIncomplete" value="0" min="0" max="12" oninput="calcB()">
-                <span class="vp-result" id="bIncompleteVP">&#215;2 = 0 PV</span>
+                <span class="vp-result" id="bIncompleteVP">×2 = 0 PV</span>
             </div>
             <div class="score-field-row">
-                <label>Monast&#233;rios no ducado (fora da reserva)</label>
+                <label data-i18n="scoreMonastery">Monastérios no ducado (fora da reserva)</label>
                 <input type="number" id="bMonastery" value="0" min="0" max="9" oninput="calcB()">
-                <span class="vp-result" id="bMonasteryVP">&#215;4 = 0 PV</span>
+                <span class="vp-result" id="bMonasteryVP">×4 = 0 PV</span>
             </div>
             <div class="score-field-row">
-                <label>Peças de prata</label>
+                <label data-i18n="scoreCoins">Peças de prata</label>
                 <input type="number" id="bCoins" value="0" min="0" max="30" oninput="calcB()">
-                <span class="vp-result" id="bCoinsVP">&#215;1 = 0 PV</span>
+                <span class="vp-result" id="bCoinsVP">×1 = 0 PV</span>
             </div>
             <div class="score-field-row">
-                <label>Mercadorias n&#227;o vendidos</label>
+                <label data-i18n="scoreGoods">Mercadorias não vendidos</label>
                 <input type="number" id="bMercadorias" value="0" min="0" max="10" oninput="calcB()">
-                <span class="vp-result" id="bMercadoriasVP">&#215;1 = 0 PV</span>
+                <span class="vp-result" id="bMercadoriasVP">×1 = 0 PV</span>
             </div>
-            <div class="score-total" id="totalB">&#8212; PV</div>
-        </div>
-        <div class="scoring-panel" id="panelC">
-            <div class="rules-highlight">
-                <strong>Cartas completadas:</strong> anote o PV de cada carta<br>
-                (col. esq. = Fácil &#124; centro = Médio &#124; dir. = Heavy)
-            </div>
-            <div class="rules-highlight">
-                <strong>Componentes adicionais:</strong><br>
-                +1 PV por tile na reserva (7 espa&#231;os + curinga)<br>
-                +2 PV por tile em cartas incompletas<br>
-                +4 PV por most&#233;iro no ducado (fora da reserva)<br>
-                +1 PV por moeda de prata<br>
-                +1 PV por good n&#227;o vendido
-            </div>
-            <div class="score-total" id="scoringCardsOnlyTotal">Cartas: &#8212; PV</div>
+            <div class="score-total" id="totalB">— PV</div>
         </div>
         <div style="display:flex;gap:10px;margin-top:16px;">
-            <button class="btn-secondary" style="margin-top:0;" onclick="newGame()">&#128260; Nova Partida</button>
-            <button class="action-btn" style="font-size:1em;padding:12px;" onclick="closeModal('scoringModal')">Fechar</button>
+            <button class="btn-secondary" style="margin-top:0;" onclick="newGame()" data-i18n="newGame">🔄 Nova Partida</button>
+            <button class="action-btn" style="font-size:1em;padding:12px;" onclick="closeModal('scoringModal')" data-i18n="close">Fechar</button>
         </div>
     </div>
 </div>
 
 <button class="help-btn" onclick="openModal('rulesModal')" title="Regras do AutoDuque">?</button>
 
+<footer class="credits">
+    <div style="margin-bottom: 10px;">
+        <img src="../assets/art/burgundy.webp" alt="Castles of Burgundy Box Art">
+    </div>
+    <div style="margin-bottom: 15px;">
+        <p data-i18n="creditsText">AutoDuque desenvolvido com ❤️ por LENS e Thiago Colletes.</p>
+    </div>
+    <div style="margin-bottom: 15px;">
+        <a class="bmc-inline" href="https://www.buymeacoffee.com/colletes" target="_blank" style="background-color: var(--burgundy-gold); padding: 10px 15px; border-radius: 8px; color: white; text-decoration: none; font-weight: bold;">☕ Buy me a coffee</a>
+    </div>
+    <div>
+        <a href="../index.html" style="display: inline-flex; align-items: center; gap: 5px;" data-i18n="backHome">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9 21v-6h6v6"/></svg>
+            Voltar para Home
+        </a>
+    </div>
+</footer>
+
 <script type="module">
+    const I18N = {
+        pt: {
+            pageTitle: "Castles of Burgundy — AutoDuque Bot",
+            title: "AutoDuque",
+            subtitle: "Oponente Automa para Castles of Burgundy",
+            setupTitle: "Configuração do AutoDuque",
+            botColor: "Cor do AutoDuque",
+            red: "Vermelho",
+            blue: "Azul",
+            green: "Verde",
+            black: "Preto",
+            difficulty: "Dificuldade",
+            easy: "Fácil",
+            medium: "Médio",
+            hard: "Difícil",
+            diceMode: "Modo dos Dados",
+            dice3d: "🎲 Dados 3D",
+            diceManual: "✏️ Entrada Manual",
+            boardMode: "Modo do Tabuleiro",
+            boardVirtual: "🖥️ Virtual",
+            boardPhysical: "📄 Tabuleiro Físico",
+            startGame: "Iniciar Jogo",
+            setupCardTitle: "Setup Inicial da Carta",
+            setupCardText1: "A regra do AutoDuque exige que a primeira carta (Slot 1–4) tenha pelo menos um <strong>Hexágono de Castelo (Borgonha)</strong>.",
+            setupCardText2: "Estou revelando as cartas do baralho embaralhado. Esta carta tem um hexágono de castelo cinza?",
+            setupCardYes: "✅ Sim, tem Castelo!",
+            setupCardNo: "❌ Não tem, puxar outra",
+            turnControl: "Controle do Turno",
+            redDie: "Dado Vermelho:",
+            whiteDie: "Dado Branco:",
+            confirmRoll: "Confirmar Resultado",
+            rollDice: "Rolar Dados do AutoDuque",
+            waitingRoll: "Aguardando rolagem...",
+            rolling: "Rolando...",
+            copyInstructions: "📋 Copiar Instruções",
+            leftCard: "Carta de Vila Esquerda (1-4)",
+            rightCard: "Carta de Vila Direita (5-6)",
+            completeCard: "Completar Carta",
+            botReserve: "Reserva do AutoDuque",
+            boardTip: "Clique na imagem para adicionar tokens onde as peças já foram colocadas.",
+            completedCards: "Cartas Completadas",
+            endGame: "🏁 Encerrar Partida e Pontuar",
+            rulesTitle: "📜 Regras — AutoDuque",
+            rulesS1Title: "1. Turno do AutoDuque",
+            rulesS1L1: "O <strong>dado branco</strong> (rolado pelo 1º jogador humano) indica a carta de vila escolhida: <strong>1–4 = Carta Esquerda</strong>, <strong>5–6 = Carta Direita</strong>.",
+            rulesS1L2: "Role o <strong>dado colorido</strong> do AutoDuque — esse é o depósito inicial de busca.",
+            rulesS1L3: "Busque uma peça para preencher a carta de vila escolhida (sempre de cima para baixo, e da esquerda para a direita).",
+            rulesS1Extra1: "<strong>Ordem de busca da peça:</strong><br>1. No depósito indicado pelo dado colorido.<br>2. Nos próximos depósitos do tabuleiro, em sentido horário.<br>3. Na <strong>área de reserva</strong> (os 7 espaços no tabuleiro do AutoDuque).<br>4. No <strong>espaço curinga</strong> (hexágono preto na reserva).<br>5. Se o espaço curinga estiver vazio, pegue uma peça aleatória do <strong>Depósito Paralelo</strong> (mercado negro) e coloque virada para baixo no curinga.<br>6. Se nada disso for possível, o AutoDuque ganha <strong>+2 peças de prata</strong>.",
+            rulesS1Extra2: "<strong>⚡ Fim do turno (Compra Automática):</strong> Se o AutoDuque terminar o turno com 2 ou mais peças de prata, ele gasta 2 peças para comprar 1 peça do Depósito Paralelo (sempre priorizando a cor que ele ainda não tem na reserva).",
+            rulesS2Title: "2. Efeitos das Peças",
+            close: "Fechar",
+            scoreTitle: "🏁 Pontuação Final",
+            scoreInstruction: "Consulte o tabuleiro físico e preencha os campos:",
+            scoreReserve: "Peças na reserva",
+            scoreIncomplete: "Peças em cartas incompletas",
+            scoreMonastery: "Monastérios no ducado (fora da reserva)",
+            scoreCoins: "Peças de prata",
+            scoreGoods: "Mercadorias não vendidos",
+            newGame: "🔄 Nova Partida",
+            creditsText: "AutoDuque desenvolvido com ❤️ por LENS e Thiago Colletes.",
+            backHome: "Voltar para Home",
+            alertCompleted: "Todas as cartas foram completadas!",
+            confirmComplete: "Completou a carta {id}? Ela vale {vp} PV ({diff}).",
+            confirmNew: "Iniciar nova partida? O progresso será apagado.",
+            copied: "✅ Copiado!",
+            colorPrefix: "Dado {color}:",
+            deckStats: "Cartas no baralho: {deck} | Descarte: {discard}",
+            summaryStep1: "Dado branco = <strong>{whiteVal}</strong> → carta de vila escolhida: <strong>{cardStr}</strong> (destacada).",
+            summaryStep2: "Começando no depósito <strong>{botVal}</strong> (dado colorido), busque a peça que a carta precisa (de cima para baixo, e da esq. → dir.).",
+            summaryStep3: "Se não achar, tente o depósito <strong>{next}</strong> e os seguintes no sentido horário.",
+            summaryStep4: "Se não achar em nenhum depósito, verifique a <strong>área de reserva</strong> (os 7 espaços no tabuleiro do AutoDuque).",
+            summaryStep5: "Se ainda não achar, use a <strong>peça curinga</strong> (hexágono preto) da reserva.",
+            summaryStep6: "Se o espaço curinga estiver vazio: pegue uma peça aleatória do <strong>Depósito Paralelo</strong> e coloque-a <em>virada para baixo</em> no espaço curinga.",
+            summaryStep7: "Se nada disso for possível, o AutoDuque ganha <strong>+2 peças de prata</strong>.",
+            summaryEnd: "<strong>⚡ Ao final do turno:</strong> Se o AutoDuque terminar com 2 ou mais peças de prata, ele gasta 2 para comprar 1 peça do Depósito Paralelo (priorize a cor que falta na reserva).",
+            botDecision: "<strong>Decisão do AutoDuque:</strong><br><br>",
+            leftCardName: "CARTA DE VILA ESQUERDA (1–4)",
+            rightCardName: "CARTA DE VILA DIREITA (5–6)"
+        },
+        en: {
+            pageTitle: "Castles of Burgundy — AutoDuque Bot",
+            title: "AutoDuque",
+            subtitle: "Automa Opponent for Castles of Burgundy",
+            setupTitle: "AutoDuque Setup",
+            botColor: "AutoDuque Color",
+            red: "Red",
+            blue: "Blue",
+            green: "Green",
+            black: "Black",
+            difficulty: "Difficulty",
+            easy: "Easy",
+            medium: "Medium",
+            hard: "Hard",
+            diceMode: "Dice Mode",
+            dice3d: "🎲 3D Dice",
+            diceManual: "✏️ Manual Input",
+            boardMode: "Board Mode",
+            boardVirtual: "🖥️ Virtual",
+            boardPhysical: "📄 Physical Board",
+            startGame: "Start Game",
+            setupCardTitle: "Initial Card Setup",
+            setupCardText1: "AutoDuque rules require the first card (Slot 1–4) to have at least one <strong>Castle Hex (Burgundy)</strong>.",
+            setupCardText2: "Revealing cards from the shuffled deck. Does this card have a light green castle hex?",
+            setupCardYes: "✅ Yes, it has a Castle!",
+            setupCardNo: "❌ No, draw another",
+            turnControl: "Turn Control",
+            redDie: "Red Die:",
+            whiteDie: "White Die:",
+            confirmRoll: "Confirm Result",
+            rollDice: "Roll AutoDuque Dice",
+            waitingRoll: "Waiting for roll...",
+            rolling: "Rolling...",
+            copyInstructions: "📋 Copy Instructions",
+            leftCard: "Left Estate Card (1-4)",
+            rightCard: "Right Estate Card (5-6)",
+            completeCard: "Complete Card",
+            botReserve: "AutoDuque Reserve",
+            boardTip: "Click on the image to add tokens where tiles have already been placed.",
+            completedCards: "Completed Cards",
+            endGame: "🏁 End Game and Score",
+            rulesTitle: "📜 Rules — AutoDuque",
+            rulesS1Title: "1. AutoDuque Turn",
+            rulesS1L1: "The <strong>white die</strong> (rolled by the 1st human player) indicates the chosen estate card: <strong>1–4 = Left Card</strong>, <strong>5–6 = Right Card</strong>.",
+            rulesS1L2: "Roll the AutoDuque's <strong>colored die</strong> — this is the initial search depot.",
+            rulesS1L3: "Search for a tile to fill the chosen estate card (always top to bottom, and left to right).",
+            rulesS1Extra1: "<strong>Tile Search Order:</strong><br>1. In the depot indicated by the colored die.<br>2. In the next depots on the board, clockwise.<br>3. In the <strong>reserve area</strong> (the 7 spaces on the AutoDuque board).<br>4. In the <strong>wildcard space</strong> (black hex in the reserve).<br>5. If the wildcard space is empty, take a random tile from the <strong>Black Market</strong> and place it face down on the wildcard space.<br>6. If none of this is possible, AutoDuque gains <strong>+2 silverlings</strong>.",
+            rulesS1Extra2: "<strong>⚡ End of Turn (Auto Buy):</strong> If AutoDuque ends its turn with 2 or more silverlings, it spends 2 to buy 1 tile from the Black Market (always prioritizing a color it doesn't have in reserve).",
+            rulesS2Title: "2. Tile Effects",
+            close: "Close",
+            scoreTitle: "🏁 Final Scoring",
+            scoreInstruction: "Consult the physical board and fill in the fields:",
+            scoreReserve: "Tiles in reserve",
+            scoreIncomplete: "Tiles on incomplete cards",
+            scoreMonastery: "Monasteries in duchy (outside reserve)",
+            scoreCoins: "Silverlings",
+            scoreGoods: "Unsold Goods",
+            newGame: "🔄 New Game",
+            creditsText: "AutoDuque developed with ❤️ by LENS and Thiago Colletes.",
+            backHome: "Back to Home",
+            alertCompleted: "All cards have been completed!",
+            confirmComplete: "Did you complete card {id}? It is worth {vp} VP ({diff}).",
+            confirmNew: "Start new game? Progress will be lost.",
+            copied: "✅ Copied!",
+            colorPrefix: "{color} Die:",
+            deckStats: "Cards in deck: {deck} | Discard: {discard}",
+            summaryStep1: "White die = <strong>{whiteVal}</strong> → chosen estate card: <strong>{cardStr}</strong> (highlighted).",
+            summaryStep2: "Starting at depot <strong>{botVal}</strong> (colored die), search for the tile the card needs (top to bottom, left → right).",
+            summaryStep3: "If not found, try depot <strong>{next}</strong> and the following clockwise.",
+            summaryStep4: "If not found in any depot, check the <strong>reserve area</strong> (the 7 spaces on the AutoDuque board).",
+            summaryStep5: "If still not found, use the <strong>wildcard tile</strong> (black hex) from the reserve.",
+            summaryStep6: "If the wildcard space is empty: take a random tile from the <strong>Black Market</strong> and place it <em>face down</em> on the wildcard space.",
+            summaryStep7: "If none of this is possible, AutoDuque gains <strong>+2 silverlings</strong>.",
+            summaryEnd: "<strong>⚡ At the end of turn:</strong> If AutoDuque ends with 2 or more silverlings, it spends 2 to buy 1 tile from the Black Market (prioritize missing color in reserve).",
+            botDecision: "<strong>AutoDuque Decision:</strong><br><br>",
+            leftCardName: "LEFT ESTATE CARD (1–4)",
+            rightCardName: "RIGHT ESTATE CARD (5–6)"
+        }
+    };
+
+    let currentLang = localStorage.getItem('boardbots_lang') || 'pt';
+
+    function t(key, vars = {}) {
+        let str = I18N[currentLang][key] || I18N['pt'][key] || key;
+        for (let k in vars) {
+            str = str.replace(new RegExp(`{${k}}`, 'g'), vars[k]);
+        }
+        return str;
+    }
+
+    function applyI18n() {
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const key = el.getAttribute('data-i18n');
+            if (el.tagName === 'INPUT' && el.type === 'placeholder') {
+                el.placeholder = t(key);
+            } else {
+                el.innerHTML = t(key);
+            }
+        });
+        document.documentElement.lang = currentLang;
+    }
+
+    window.toggleLanguage = function() {
+        currentLang = currentLang === 'pt' ? 'en' : 'pt';
+        localStorage.setItem('boardbots_lang', currentLang);
+        applyI18n();
+        updateUI(); 
+        updateManualColorLabel();
+    };
+
     const CARD_VP={1:[8,12,16],2:[14,18,22],3:[14,18,22],4:[17,21,25],5:[14,18,22],6:[14,18,22],7:[17,21,25],8:[14,18,22],9:[14,18,22]};
-    const COLOR_NAMES={'#d64545':'Vermelho','#4f8cff':'Azul','#3cb371':'Verde','#333333':'Preto'};
     const LS_KEY='burgundy_bot_v2';
 
     let diceBox=null,diceBoxReady=false,isRolling=false;
@@ -451,12 +631,25 @@
                 isRolling=false;
                 const botVal=results[0]?.value??1,whiteVal=results[1]?.value??1;
                 const hex=document.getElementById('botColor').value;
-                document.getElementById('diceResult').innerHTML=`<span style="color:${hex}">${COLOR_NAMES[hex]??'Cor'}: ${botVal}</span>&nbsp;|&nbsp;<span style="color:#666">Branco: ${whiteVal}</span>`;
+                const cName = t(Object.keys(I18N.pt).find(k=>I18N.pt[k]===getColorName(hex)));
+                document.getElementById('diceResult').innerHTML=`<span style="color:${hex}">${cName}: ${botVal}</span>&nbsp;|&nbsp;<span style="color:#666">${t('whiteDie').replace(':','')} ${whiteVal}</span>`;
                 showSummary(botVal,whiteVal);
                 document.getElementById('rollBtn').disabled=false;
             };
         }catch(err){diceBoxReady=false;}
     }
+
+    function getColorName(hex) {
+        return {'#d64545':'Vermelho','#4f8cff':'Azul','#3cb371':'Verde','#333333':'Preto'}[hex] || 'Cor';
+    }
+
+    window.startCardSetup = function() {
+        document.getElementById('setupSettings').style.display = 'none';
+        document.getElementById('setupCardPhase').style.display = 'block';
+        difficulty = parseInt(document.getElementById('difficulty').value);
+        saveState();
+        applySettings();
+    };
 
     window.setDiceMode=function(mode){
         diceMode=mode;saveState();
@@ -465,19 +658,20 @@
         if(mode==='3d'){
             document.getElementById('dice-box').style.display='block';
             document.getElementById('manualDiceArea').classList.remove('active');
-            document.getElementById('rollBtn').textContent='Rolar Dados do AutoDuque';
+            document.getElementById('rollBtn').textContent=t('rollDice');
             initDiceBox();
         }else{
             document.getElementById('dice-box').style.display='none';
             document.getElementById('manualDiceArea').classList.add('active');
-            document.getElementById('rollBtn').textContent='Confirmar Resultado';
+            document.getElementById('rollBtn').textContent=t('confirmRoll');
             updateManualColorLabel();
         }
     };
 
     function updateManualColorLabel(){
         const hex=document.getElementById('botColor').value;
-        document.getElementById('manualColorLabel').textContent=`Dado ${COLOR_NAMES[hex]??'Cor'}:`;
+        const colorKey = Object.keys(I18N.pt).find(k=>I18N.pt[k]===getColorName(hex)) || getColorName(hex);
+        document.getElementById('manualColorLabel').textContent = t('colorPrefix', {color: t(colorKey)});
         document.documentElement.style.setProperty('--bot-color', hex);
         if(typeof updateManualUI === 'function') updateManualUI();
     }
@@ -488,7 +682,6 @@
         updateManualUI();
     };
 
-    
     window.setManualDie=function(which,val){
         if(which==='bot'){manualBot=val;}
         else{manualWhite=val;}
@@ -529,13 +722,14 @@
         if(!setupComplete)return;
         if(diceMode==='manual'){
             const hex=document.getElementById('botColor').value;
-            document.getElementById('diceResult').innerHTML=`<span style="color:${hex}">${COLOR_NAMES[hex]??'Cor'}: ${manualBot}</span>&nbsp;|&nbsp;<span style="color:#666">Branco: ${manualWhite}</span>`;
+            const colorKey = Object.keys(I18N.pt).find(k=>I18N.pt[k]===getColorName(hex)) || getColorName(hex);
+            document.getElementById('diceResult').innerHTML=`<span style="color:${hex}">${t(colorKey)}: ${manualBot}</span>&nbsp;|&nbsp;<span style="color:#666">${t('whiteDie').replace(':','')} ${manualWhite}</span>`;
             showSummary(manualBot,manualWhite);return;
         }
         if(isRolling||!diceBoxReady)return;
         isRolling=true;
         document.getElementById('rollBtn').disabled=true;
-        document.getElementById('diceResult').innerHTML='Rolando...';
+        document.getElementById('diceResult').innerHTML=t('rolling');
         document.getElementById('turnSummary').classList.remove('active');
         clearHighlights();
         const botColor=document.getElementById('botColor').value;
@@ -544,24 +738,25 @@
 
     function showSummary(botVal,whiteVal){
         const isLeft=whiteVal<=4;
-        const cardStr=isLeft?'CARTA DE VILA ESQUERDA (1&#8211;4)':'CARTA DE VILA DIREITA (5&#8211;6)';
+        const cardStr=isLeft?t('leftCardName'):t('rightCardName');
         const targetId=isLeft?'slotLeft':'slotRight';
         clearHighlights();
         document.getElementById(targetId).style.boxShadow='0 0 0 6px var(--burgundy-gold)';
         const next=botVal===6?1:botVal+1;
         const summary=document.getElementById('turnSummary');
-                summary.innerHTML=`<strong>Decis&#227;o do AutoDuque:</strong><br><br>
+        
+        summary.innerHTML= t('botDecision') + `
             <ol style="margin-top:0;padding-left:20px;line-height:1.8;">
-                <li>Dado branco = <strong>${whiteVal}</strong> &#8594; carta de vila escolhida: <strong>${cardStr}</strong> (destacada).</li>
-                <li>Come&#231;ando no dep&#243;sito <strong>${botVal}</strong> (dado colorido), busque a pe&#231;a que a carta precisa (de cima para baixo, e da esq. &#8594; dir.).</li>
-                <li>Se n&#227;o achar, tente o dep&#243;sito <strong>${next}</strong> e os seguintes no sentido hor&#225;rio.</li>
-                <li>Se n&#227;o achar em nenhum dep&#243;sito, verifique a <strong>&#225;rea de reserva</strong> (os 7 espa&#231;os no tabuleiro do AutoDuque).</li>
-                <li>Se ainda n&#227;o achar, use a <strong>pe&#231;a curinga</strong> (hex&#225;gono preto) da reserva.</li>
-                <li>Se o espa&#231;o curinga estiver vazio: pegue uma pe&#231;a aleat&#243;ria do <strong>Dep&#243;sito Paralelo</strong> e coloque-a <em>virada para baixo</em> no espa&#231;o curinga.</li>
-                <li>Se nada disso for poss&#237;vel, o AutoDuque ganha <strong>+2 pe&#231;as de prata</strong>.</li>
+                <li>${t('summaryStep1', {whiteVal, cardStr})}</li>
+                <li>${t('summaryStep2', {botVal})}</li>
+                <li>${t('summaryStep3', {next})}</li>
+                <li>${t('summaryStep4')}</li>
+                <li>${t('summaryStep5')}</li>
+                <li>${t('summaryStep6')}</li>
+                <li>${t('summaryStep7')}</li>
             </ol>
             <hr style="border:none;border-top:1px solid rgba(197,160,89,0.4);margin:10px 0;">
-            <span style="color:var(--burgundy-dark);">&#9889; Ao final do turno:</span> Se o AutoDuque terminar com 2 ou mais pe&#231;as de prata, ele gasta 2 para comprar 1 pe&#231;a do Dep&#243;sito Paralelo (priorize a cor que falta na reserva).`;
+            <span style="color:var(--burgundy-dark);">${t('summaryEnd')}</span>`;
         summary.classList.add('active');
     }
 
@@ -585,6 +780,7 @@
     window.setupFoundCastle=function(){
         leftCard=deck.shift();shuffle(deck);rightCard=deck.shift();setupComplete=true;
         document.getElementById('setupOverlay').style.display='none';
+        document.getElementById('mainGameContainer').style.display='grid';
         document.getElementById('btnCompleteLeft').disabled=false;
         document.getElementById('btnCompleteRight').disabled=false;
         document.getElementById('endGameBtn').style.display='block';
@@ -596,13 +792,16 @@
         const cardId=side==='left'?leftCard:rightCard;
         const diff=parseInt(document.getElementById('difficulty').value);
         const vp=CARD_VP[cardId]?.[diff]??0;
-        if(!confirm(`Completou a carta ${cardId}? Ela vale ${vp} PV (${['F\u00e1cil','M\u00e9dio','Dif\u00edcil'][diff]}).`))return;
+        const diffName = [t('easy'), t('medium'), t('hard')][diff];
+        
+        if(!confirm(t('confirmComplete', {id: cardId, vp: vp, diff: diffName})))return;
+        
         completedCards.push({cardId,vp});updateCompletedList();
         if(side==='left'){discard.push(leftCard);leftCard=rightCard;}
         else{discard.push(rightCard);}
         if(deck.length>0){rightCard=deck.shift();}
         else if(discard.length>0){deck=[...discard];discard=[];shuffle(deck);rightCard=deck.shift();}
-        else{rightCard=null;alert('Todas as cartas foram completadas!');}
+        else{rightCard=null;alert(t('alertCompleted'));}
         document.querySelectorAll('#slotLeft .hex-token,#slotRight .hex-token').forEach(t=>t.remove());
         saveState();updateUI();
     };
@@ -611,11 +810,14 @@
         document.getElementById('imgLeft').src=leftCard?`../assets/art/burgundy_cards/card_${leftCard}.jpg`:'';
         document.getElementById('imgRight').src=rightCard?`../assets/art/burgundy_cards/card_${rightCard}.jpg`:'';
         const deckEl=document.getElementById('deckStatus');
-        if(setupComplete){deckEl.style.display='block';deckEl.textContent=`Cartas no baralho: ${deck.length} | Descarte: ${discard.length}`;}
+        if(setupComplete){
+            deckEl.style.display='block';
+            deckEl.textContent=t('deckStats', {deck: deck.length, discard: discard.length});
+        }
         else{deckEl.style.display='none';}
         clearHighlights();
         document.getElementById('turnSummary').classList.remove('active');
-        document.getElementById('diceResult').innerHTML='Aguardando rolagem...';
+        document.getElementById('diceResult').innerHTML=t('waitingRoll');
     }
 
     function clearHighlights(){
@@ -635,8 +837,8 @@
         const text=(document.getElementById('turnSummary').innerText||'');
         navigator.clipboard.writeText(text).then(()=>{
             const btn=document.getElementById('copyBtn');
-            btn.textContent='&#9989; Copiado!';
-            setTimeout(()=>btn.textContent='&#128203; Copiar Instru&#231;&#245;es',2000);
+            btn.innerHTML = t('copied');
+            setTimeout(()=>btn.innerHTML = t('copyInstructions'),2000);
         });
     };
 
@@ -645,21 +847,18 @@
 
     window.openScoringModal=function(){
         const diff=parseInt(document.getElementById('difficulty').value);
-        const diffName=['F\u00e1cil','M\u00e9dio','Dif\u00edcil'][diff];
         const totalCards=completedCards.reduce((s,c)=>s+c.vp,0);
-        const rows=completedCards.map(c=>`<tr><td>Carta ${c.cardId}</td><td>${c.vp} PV</td></tr>`).join('')||'<tr><td colspan="2" style="color:#999;">Nenhuma carta completada.</td></tr>';
-        document.getElementById('scoringCardsSummary').innerHTML=`<table class="score-table"><thead><tr><th>Carta completada</th><th>${diffName} PV</th></tr></thead><tbody>${rows}</tbody><tfoot><tr><td><strong>Subtotal &#8212; Cartas</strong></td><td><strong>${totalCards} PV</strong></td></tr></tfoot></table>`;
-        document.getElementById('totalA').textContent=`Total estimado: ${totalCards+15} PV (estimativa)`;
+        const rows=completedCards.map(c=>`<tr><td>Carta ${c.cardId}</td><td>${c.vp} PV</td></tr>`).join('')||'<tr><td colspan="2">-</td></tr>';
+        document.getElementById('scoringCardsSummary').innerHTML=`
+            <table class="score-table">
+                <thead><tr><th>Cartas Completadas</th><th>PV</th></tr></thead>
+                <tbody>
+                    ${rows}
+                    <tr><td><strong>Total das Cartas</strong></td><td><strong>${totalCards} PV</strong></td></tr>
+                </tbody>
+            </table>`;
         calcB();
-        document.getElementById('scoringCardsOnlyTotal').textContent=`Cartas: ${totalCards} PV`;
         openModal('scoringModal');
-    };
-
-    window.switchScoringTab=function(tab){
-        ['A','B','C'].forEach(t=>{
-            document.getElementById('tab'+t).classList.toggle('active',t===tab);
-            document.getElementById('panel'+t).classList.toggle('active',t===tab);
-        });
     };
 
     window.calcB=function(){
@@ -669,16 +868,16 @@
         const mon=parseInt(document.getElementById('bMonastery').value)||0;
         const coins=parseInt(document.getElementById('bCoins').value)||0;
         const mercadorias=parseInt(document.getElementById('bMercadorias').value)||0;
-        document.getElementById('bReservaVP').textContent=`&#215;1 = ${r} PV`;
-        document.getElementById('bIncompleteVP').textContent=`&#215;2 = ${inc*2} PV`;
-        document.getElementById('bMonasteryVP').textContent=`&#215;4 = ${mon*4} PV`;
-        document.getElementById('bCoinsVP').textContent=`&#215;1 = ${coins} PV`;
-        document.getElementById('bMercadoriasVP').textContent=`&#215;1 = ${mercadorias} PV`;
+        document.getElementById('bReservaVP').textContent=`×1 = ${r} PV`;
+        document.getElementById('bIncompleteVP').textContent=`×2 = ${inc*2} PV`;
+        document.getElementById('bMonasteryVP').textContent=`×4 = ${mon*4} PV`;
+        document.getElementById('bCoinsVP').textContent=`×1 = ${coins} PV`;
+        document.getElementById('bMercadoriasVP').textContent=`×1 = ${mercadorias} PV`;
         document.getElementById('totalB').textContent=`Total: ${totalCards+r+(inc*2)+(mon*4)+coins+mercadorias} PV`;
     };
 
     window.newGame=function(){
-        if(!confirm('Iniciar nova partida? O progresso ser&#225; apagado.'))return;
+        if(!confirm(t('confirmNew')))return;
         try{localStorage.removeItem(LS_KEY);}catch(e){}
         location.reload();
     };
@@ -693,17 +892,18 @@
 
     function applySettings(){
         document.getElementById('difficulty').value=difficulty;
+        document.getElementById('botColor').value=document.getElementById('botColor').value;
         document.getElementById('btnDice3D').classList.toggle('active',diceMode==='3d');
         document.getElementById('btnDiceManual').classList.toggle('active',diceMode==='manual');
         if(diceMode==='3d'){
             document.getElementById('dice-box').style.display='block';
             document.getElementById('manualDiceArea').classList.remove('active');
-            document.getElementById('rollBtn').textContent='Rolar Dados do AutoDuque';
+            document.getElementById('rollBtn').textContent=t('rollDice');
             initDiceBox();
         }else{
             document.getElementById('dice-box').style.display='none';
             document.getElementById('manualDiceArea').classList.add('active');
-            document.getElementById('rollBtn').textContent='Confirmar Resultado';
+            document.getElementById('rollBtn').textContent=t('confirmRoll');
         }
         updateManualColorLabel();
         document.getElementById('btnBoardVirtual').classList.toggle('active',boardMode==='virtual');
@@ -712,14 +912,19 @@
     }
 
     function init(){
+        applyI18n();
         const restored=loadState();
         if(restored&&setupComplete){
             document.getElementById('setupOverlay').style.display='none';
+            document.getElementById('mainGameContainer').style.display='grid';
             document.getElementById('btnCompleteLeft').disabled=false;
             document.getElementById('btnCompleteRight').disabled=false;
             document.getElementById('endGameBtn').style.display='block';
             updateUI();updateCompletedList();
-        }else{shuffle(deck);showSetupPreview();}
+        }else{
+            document.getElementById('mainGameContainer').style.display='none';
+            shuffle(deck);showSetupPreview();
+        }
         applySettings();
         attachTokenListeners();
         document.getElementById('botColor').addEventListener('change',()=>{updateManualColorLabel();saveState();});
