@@ -1,34 +1,15 @@
 const fs = require('fs');
-let html = fs.readFileSync('bots/space_base_bot_v1.html', 'utf8');
+let js = fs.readFileSync('assets/site.js', 'utf8');
 
-const oldLogic = `        if (automaDeck.length <= 1) {
-            // "Whenever Joanna has one card left... shuffle all back... skip one card"
-            automaDeck = [0, 1, 2, 3, 4, 5];
-            shuffleArray(automaDeck);
-            // Skip one
-            const skipped = automaDeck.pop();
-            automaDiscard = [skipped];
-        }
-        
-        const cardIndex = automaDeck.pop();
-        automaDiscard.push(cardIndex);`;
+js = js.replace(
+    'credit_burgundy: \'<strong>Castles of Burgundy</strong> — variante solo "AutoDuque" criada por um fã (LENS). Castles of Burgundy © Ravensburger.\',',
+    'credit_burgundy: \'<strong>Castles of Burgundy</strong> — variante solo "AutoDuque" criada por um fã (LENS). Castles of Burgundy © Ravensburger.\',\n    credit_spacebase: \'<strong>Space Base</strong> — Automa "Joanna" é uma variante solo não-oficial de fã do BGG. Assistente de Ataque à Base inspirado nas regras solo. Space Base © AEG.\','
+);
 
-const newLogic = `        if (automaDeck.length <= 1) {
-            // "Whenever Joanna has one card left... shuffle all back... skip one card"
-            automaDeck = [0, 1, 2, 3, 4, 5];
-            shuffleArray(automaDeck);
-            // Skip one card (remove it completely for this cycle)
-            automaDeck.pop();
-            automaDiscard = [];
-        }
-        
-        const cardIndex = automaDeck.pop();
-        automaDiscard.push(cardIndex);`;
+js = js.replace(
+    'credit_burgundy: \'<strong>Castles of Burgundy</strong> — "AutoDuque" fan solo variant by LENS. Castles of Burgundy © Ravensburger.\',',
+    'credit_burgundy: \'<strong>Castles of Burgundy</strong> — "AutoDuque" fan solo variant by LENS. Castles of Burgundy © Ravensburger.\',\n    credit_spacebase: \'<strong>Space Base</strong> — "Joanna" Automa is an unofficial fan solo variant from BGG. Base Attack assistant inspired by solo rules. Space Base © AEG.\','
+);
 
-if(html.includes(oldLogic)) {
-    html = html.replace(oldLogic, newLogic);
-    fs.writeFileSync('bots/space_base_bot_v1.html', html);
-    console.log('Fixed Joanna cycle logic');
-} else {
-    console.log('Not found');
-}
+fs.writeFileSync('assets/site.js', js);
+console.log('Fixed credits');
