@@ -7,7 +7,7 @@
             subtitle: "Automa e Ataque à Base (SoloPlay)",
             setupTitle: "Configuração do Jogo", physSetupTitle: "Setup Físico (Joanna):", physSetupDesc: "Coloque os 3 cubos da Joanna no 0 (VP, Moeda e Renda). Compre uma carta inicial Nível 1 aleatória para ela. Ela não recebe cartas iniciais de setor.",
             gameMode: "Modo de Jogo",
-            modeJoanna: "Automa Oficial (Joanna/Devin/Clarie)",
+            modeJoanna: "Automa (Joanna/Devin/Clarie)",
             modeBaseAttack: "Ataque à Base (SoloPlay)",
             difficulty: "Dificuldade (Automa)",
             diffEasy: "Joanna (Fácil)",
@@ -213,7 +213,7 @@
             const { default: DiceBox } = await import('../assets/dice-box/dice-box.es.min.js');
             diceBox = new DiceBox({
                 container: '#dice-box',
-                assetPath: '../assets/dice-box/',
+                assetPath: '../assets/dice-box/', origin: '',
                 
                 theme: 'default',
                 themeColor: '#1e293b',
@@ -258,13 +258,20 @@
     }
 
 
-    let manualDie1Val = 1, manualDie2Val = 1;
+    let manualD1 = 1;
+    let manualD2 = 1;
 
-    window.adjustManualDie = function(die, delta) {
-        if (die === 1) { manualDie1Val = Math.min(6, Math.max(1, manualDie1Val + delta)); document.getElementById('manualDie1').textContent = manualDie1Val; }
-        else { manualDie2Val = Math.min(6, Math.max(1, manualDie2Val + delta)); document.getElementById('manualDie2').textContent = manualDie2Val; }
-        document.getElementById('manualDiceSum').textContent = manualDie1Val + manualDie2Val;
+    window.setManualDie = function(die, value) {
+        if (die === 1) {
+            manualD1 = value;
+            document.querySelectorAll('#die1Buttons .sb-die-btn').forEach((b, i) => b.classList.toggle('active-die1', i + 1 === value));
+        } else {
+            manualD2 = value;
+            document.querySelectorAll('#die2Buttons .sb-die-btn').forEach((b, i) => b.classList.toggle('active-die2', i + 1 === value));
+        }
+        document.getElementById('manualDiceSum').textContent = manualD1 + manualD2;
     };
+
 
     window.startGame = async function() {
         gameMode = document.getElementById('gameMode').value;
@@ -322,9 +329,9 @@
             // "Whenever Joanna has one card left... shuffle all back... skip one card"
             automaDeck = [0, 1, 2, 3, 4, 5];
             shuffleArray(automaDeck);
-            // Skip one
-            const skipped = automaDeck.pop();
-            automaDiscard = [skipped];
+            // Skip one card (remove it completely for this cycle)
+            automaDeck.pop();
+            automaDiscard = [];
         }
         
         const cardIndex = automaDeck.pop();

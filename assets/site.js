@@ -80,6 +80,7 @@ const SITE_I18N = {
     credit_memoir44: '<strong>Memoir \'44</strong> — 100% conteúdo, táticas e app originais do autor. Conteúdo de cenários também consultou o compêndio não-oficial "Western Front Scenario Compilation" de Derek "Whaleyland" Whaley. Memoir \'44 criado por Richard Borg, © Days of Wonder (edição em português por Galápagos Jogos).',
     credit_burgundy: '<strong>Castles of Burgundy</strong> — variante solo "AutoDuque" criada por um fã (LENS). Castles of Burgundy © Ravensburger.',
     credit_spacebase: '<strong>Space Base</strong> — Automa "Joanna" é uma variante solo não-oficial de fã do BGG. Assistente de Ataque à Base inspirado nas regras solo. Space Base © AEG.',
+    credit_spacebase: '<strong>Space Base</strong> — Automa "Joanna" é uma variante solo não-oficial de fã do BGG. Assistente de Ataque à Base inspirado nas regras solo. Space Base © AEG.',
 
     tools_title: 'Ferramentas',
     tools_desc: 'Utilitários genéricos para qualquer jogo de tabuleiro, sem regras específicas.',
@@ -165,6 +166,7 @@ const SITE_I18N = {
     credit_eleven: '<strong>Eleven</strong> — 100% original content and app by the author. Eleven © Portal Games.',
     credit_memoir44: '<strong>Memoir \'44</strong> — 100% original content, tactics and app by the author. Scenario content also referenced the unofficial "Western Front Scenario Compilation" by Derek "Whaleyland" Whaley. Memoir \'44 designed by Richard Borg, © Days of Wonder.',
     credit_burgundy: '<strong>Castles of Burgundy</strong> — "AutoDuque" fan solo variant by LENS. Castles of Burgundy © Ravensburger.',
+    credit_spacebase: '<strong>Space Base</strong> — "Joanna" Automa is an unofficial fan solo variant from BGG. Base Attack assistant inspired by solo rules. Space Base © AEG.',
     credit_spacebase: '<strong>Space Base</strong> — "Joanna" Automa is an unofficial fan solo variant from BGG. Base Attack assistant inspired by solo rules. Space Base © AEG.',
 
     tools_title: 'Tools',
