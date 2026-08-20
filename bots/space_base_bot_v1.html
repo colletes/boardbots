@@ -573,7 +573,7 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
             logEvent('Starting diceBox.init() race...');
             await Promise.race([
                 diceBox.init().then(() => logEvent('diceBox.init() RESOLVED')),
-                new Promise((_, reject) => setTimeout(() => { logEvent('diceBox.init() TIMEOUT reached'); reject(new Error('Timeout')); }, 5000))
+                new Promise((_, reject) => setTimeout(() => { logEvent('diceBox.init() TIMEOUT reached'); reject(new Error('Timeout')); }, 10000))
             ]);
             logEvent('Race finished successfully');
     
@@ -837,14 +837,42 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
 
     // Init i18n on load
     applyI18n();
+    
     const saved = localStorage.getItem(LS_KEY);
     if (saved) {
         document.getElementById("setupOverlay").style.display = "none";
         document.getElementById("mainContainer").style.display = "grid";
-        loadState();
+        const loadedState = loadState();
+        
+        if (gameMode === 'joanna') {
+            document.getElementById('joannaControls').style.display = 'block';
+            document.getElementById('baseAttackControls').style.display = 'none';
+            document.getElementById('joannaCardDisplay').style.display = 'block';
+            document.getElementById('attackLogContainer').style.display = 'none';
+            
+            const conf = diffConfigs[difficulty];
+            document.getElementById('cardDiffName').textContent = conf.name;
+            
+            if (automaDiscard.length > 0) {
+                renderJoannaCard(automaDiscard[automaDiscard.length - 1]);
+            }
+            updateDeckStatusText();
+            if (loadedState && loadedState.vpCounter !== undefined) {
+                document.getElementById('vpCounter').value = loadedState.vpCounter;
+            }
+        } else {
+            document.getElementById('joannaControls').style.display = 'none';
+            document.getElementById('baseAttackControls').style.display = 'block';
+            document.getElementById('joannaCardDisplay').style.display = 'none';
+            document.getElementById('attackLogContainer').style.display = 'block';
+            updateDeckStatusText();
+            renderAttackLog();
+        }
+
         if (diceMode === "virtual") { document.getElementById("dice-box").style.display = "block"; initDiceBox(); }
         if (diceMode === "physical") { document.getElementById("manualDiceArea").style.display = "block"; }
     }
+
 
 </script>
 </body>
