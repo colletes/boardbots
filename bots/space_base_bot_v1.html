@@ -92,11 +92,13 @@
     .modal-box { background: var(--sb-bg); border: 2px solid var(--sb-primary); border-radius: 12px; padding: 28px; max-width: 640px; width: 100%; margin: auto; position: relative; }
     .modal-close { position: absolute; top: 14px; right: 14px; background: none; border: none; font-size: 1.4em; cursor: pointer; color: #fff; }
 
-    .dice-result-text { font-family: var(--font-display); font-size: 1.4em; color: #fff; text-align: center; margin-top: 10px; margin-bottom: 20px; display: none; }
+    
 
     footer.credits { text-align: center; margin-top: 40px; padding: 20px; font-size: 0.9em; color: #94a3b8; border-top: 1px solid var(--sb-border); }
     footer.credits img { max-width: 120px; border-radius: 8px; margin-bottom: 10px; }
     footer.credits a { color: var(--sb-primary); text-decoration: none; font-weight: bold; }
+.dice-result-text { font-size: 1.5em; text-align: center; color: #e2e8f0; font-family: var(--font-display); margin: 20px 0; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; border: 1px dashed var(--sb-border); font-weight: bold; word-break: break-word; }
+        .sb-select { width: 100%; max-width: 100%; padding: 10px; border-radius: 6px; background: #1e293b; color: #fff; border: 1px solid var(--sb-border); font-size: 1em; margin-bottom: 20px; box-sizing: border-box; }
 </style>
 </head>
 <body>
@@ -560,7 +562,12 @@
                 friction: 0.8,
                 restitution: 0.5
             });
-            await diceBox.init();
+            
+            await Promise.race([
+                diceBox.init(),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000))
+            ]);
+    
             diceBoxReady = true;
             
             diceBox.onRollComplete = (results) => {
@@ -588,8 +595,18 @@
             return;
         }
         
-        document.getElementById('diceResultText').style.display = 'none';
-        diceBox.roll('2d6');
+        
+        try {
+            document.getElementById('diceResultText').style.display = 'none';
+            diceBox.roll('2d6').catch(err => {
+                console.error(err);
+                diceBoxReady = false;
+                rollVirtualDice(); // triggers fallback
+            });
+        } catch(err) {
+            diceBoxReady = false;
+            rollVirtualDice();
+        }
     }
 
 
@@ -618,7 +635,7 @@
         
         if (diceMode === 'virtual') {
             document.getElementById('dice-box').style.display = 'block';
-            await initDiceBox();
+            initDiceBox();
         }
 
         if (diceMode === 'physical') {

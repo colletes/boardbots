@@ -1,79 +1,69 @@
 const fs = require('fs');
 
-function revertDiceBox(file) {
+function nonBlockingStart(file) {
     let html = fs.readFileSync(file, 'utf8');
+
+    // Remove `await` from `await initDiceBox()`
+    html = html.replace(/await initDiceBox\(\);/g, 'initDiceBox();');
+
+    // Add a 3-second timeout back to initDiceBox to fail gracefully, but don't block
+    const timeoutCode = `
+            await Promise.race([
+                diceBox.init(),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000))
+            ]);
+    `;
     
-    const initRegex = /async function initDiceBox\(\) \{[\s\S]*?\}\s*catch\(err\) \{[^}]*\}\s*\}/;
-    
-    // For space base
-    const spaceBaseInit = `    async function initDiceBox() {
-        if(diceBox) return;
+    // In space base
+    if(file.includes('space_base')) {
+        const initRegex = /await diceBox\.init\(\);/;
+        html = html.replace(initRegex, timeoutCode);
+        
+        // CSS tweaks for mobile
+        const cssTweak = `.dice-result-text { font-size: 1.5em; text-align: center; color: #e2e8f0; font-family: var(--font-display); margin: 20px 0; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; border: 1px dashed var(--sb-border); font-weight: bold; word-break: break-word; }
+        .sb-select { width: 100%; max-width: 100%; padding: 10px; border-radius: 6px; background: #1e293b; color: #fff; border: 1px solid var(--sb-border); font-size: 1em; margin-bottom: 20px; box-sizing: border-box; }`;
+        
+        html = html.replace(/\.dice-result-text \{[^\}]+\}/, '')
+                   .replace(/\.sb-select \{[^\}]+\}/, '')
+                   .replace('</style>', cssTweak + '\n</style>');
+                   
+        // Add a safety try-catch to diceBox.roll
+        const rollTweak = `
         try {
-            const { default: DiceBox } = await import('https://unpkg.com/@3d-dice/dice-box@1.1.3/dist/dice-box.es.min.js');
-            diceBox = new DiceBox({
-                container: '#dice-box',
-                assetPath: 'https://unpkg.com/@3d-dice/dice-box@1.1.3/dist/assets/',
-                origin: 'https://unpkg.com/@3d-dice/dice-box@1.1.3/dist/',
-                theme: 'default',
-                themeColor: '#1e293b',
-                scale: 6,
-                gravity: 2.5,
-                friction: 0.8,
-                restitution: 0.5
+            document.getElementById('diceResultText').style.display = 'none';
+            diceBox.roll('2d6').catch(err => {
+                console.error(err);
+                diceBoxReady = false;
+                rollVirtualDice(); // triggers fallback
             });
-            await diceBox.init();
-            diceBoxReady = true;
-            
-            diceBox.onRollComplete = (results) => {
-                const d1 = results[0]?.value ?? 1;
-                const d2 = results[1]?.value ?? 1;
-                const txt = document.getElementById('diceResultText');
-                txt.style.display = 'block';
-                txt.innerText = \`🎲 \${d1} | \${d2}  (Soma: \${d1+d2})\`;
-            };
         } catch(err) {
-            console.error("Failed to load dice-box", err);
             diceBoxReady = false;
-        }
-    }`;
-
-    // For burgundy
-    const burgundyInit = `    async function initDiceBox() {
-        if(diceBox)return;
-        try{
-            const{default:DiceBox}=await import('https://unpkg.com/@3d-dice/dice-box@1.1.3/dist/dice-box.es.min.js');
-            diceBox=new DiceBox({container:'#dice-box',assetPath:'https://unpkg.com/@3d-dice/dice-box@1.1.3/dist/assets/',origin:'https://unpkg.com/@3d-dice/dice-box@1.1.3/dist/',theme:'default',scale:6,gravity:2.5,friction:0.8,restitution:0.5});
-            await diceBox.init();
-            diceBoxReady=true;
-            diceBox.onRollComplete=(results)=>{
-                isRolling=false;
-                const botVal=results[0]?.value??1,whiteVal=results[1]?.value??1;
-                const hex=document.getElementById('botColor').value;
-                const cName = t(Object.keys(I18N.pt).find(k=>I18N.pt[k]===getColorName(hex)));
-                document.getElementById('diceResult').innerHTML=\`<span style="color:\${hex}">\${cName}: \${botVal}</span>&nbsp;|&nbsp;<span style="color:#666">\${t('whiteDie').replace(':','')} \${whiteVal}</span>\`;
-                showSummary(botVal,whiteVal);
-                document.getElementById('rollBtn').disabled=false;
-            };
-        }catch(err){diceBoxReady=false;}
-    }`;
-
-    if (file.includes('space_base')) {
-        let match = html.match(initRegex);
-        if(match) {
-            html = html.replace(match[0], spaceBaseInit);
-            fs.writeFileSync(file, html);
-            console.log('Fixed space base');
-        } else { console.log('Match failed SB'); }
-    } else {
-        const bRegex = /async function initDiceBox\(\)\{[\s\S]*?\}\s*catch\(err\)\{diceBoxReady=false;\}\s*\}/;
-        let match = html.match(bRegex);
-        if (match) {
-            html = html.replace(match[0], burgundyInit);
-            fs.writeFileSync(file, html);
-            console.log('Fixed burgundy');
-        } else { console.log('Match failed B'); }
+            rollVirtualDice();
+        }`;
+        
+        const oldRoll = /document\.getElementById\('diceResultText'\)\.style\.display = 'none';\s*diceBox\.roll\('2d6'\);/;
+        html = html.replace(oldRoll, rollTweak);
+    } 
+    // In burgundy
+    else {
+        const initRegex = /await diceBox\.init\(\);/;
+        html = html.replace(initRegex, timeoutCode);
+        
+        // Safety in Burgundy roll
+        const oldRollBurgundy = /document\.getElementById\('turnSummary'\)\.classList\.remove\('active'\);\s*diceBox\.roll\(\['1d6-d64545','1d6-ffffff'\]\);/g;
+        const newRollBurgundy = `document.getElementById('turnSummary').classList.remove('active');
+        try {
+            diceBox.roll(['1d6-d64545','1d6-ffffff']).catch(err => {
+                diceBoxReady = false;
+                rollVirtualDice();
+            });
+        } catch(e) { diceBoxReady = false; rollVirtualDice(); }`;
+        html = html.replace(oldRollBurgundy, newRollBurgundy);
     }
+
+    fs.writeFileSync(file, html);
+    console.log('Fixed ' + file);
 }
 
-revertDiceBox('bots/space_base_bot_v1.html');
-revertDiceBox('bots/burgundy_bot_v1.html');
+nonBlockingStart('bots/space_base_bot_v1.html');
+nonBlockingStart('bots/burgundy_bot_v1.html');
