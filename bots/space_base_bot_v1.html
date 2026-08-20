@@ -534,7 +534,7 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
     };
 
     // --- Logic ---
-    function updateSetupUI() {
+    function updateSetupUI() { logEvent("updateSetupUI called. Mode=" + document.getElementById("gameMode").value);
         gameMode = document.getElementById('gameMode').value;
         const titleEl = document.querySelector('[data-i18n="physSetupTitle"]');
         const descEl = document.querySelector('[data-i18n="physSetupDesc"]');
@@ -580,8 +580,16 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
             diceBoxReady = true; logEvent("diceBoxReady set to TRUE");
             
             diceBox.onRollComplete = (results) => {
-                const d1 = results[0]?.value ?? 1;
-                const d2 = results[1]?.value ?? 1;
+                logEvent("onRollComplete triggered");
+                let d1 = 1, d2 = 1;
+                if (results[0] && results[0].rolls && results[0].rolls.length >= 2) {
+                    d1 = results[0].rolls[0].value;
+                    d2 = results[0].rolls[1].value;
+                } else if (results.length >= 2) {
+                    d1 = results[0].value;
+                    d2 = results[1].value;
+                }
+                logEvent("Dice values parsed: " + d1 + " and " + d2);
                 const txt = document.getElementById('diceResultText');
                 txt.style.display = 'block';
                 txt.innerText = `🎲 ${d1} | ${d2}  (Soma: ${d1+d2})`;
@@ -685,7 +693,7 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
     }
 
     // --- Joanna Logic ---
-    window.nextJoannaTurn = function(skipRoll = false) {
+    window.nextJoannaTurn = function(skipRoll = false) { logEvent("nextJoannaTurn called. skipRoll=" + skipRoll + " Deck:" + automaDeck.length + " Discard:" + automaDiscard.length);
         if (automaDeck.length <= 1) {
             // "Whenever Joanna has one card left... shuffle all back... skip one card"
             automaDeck = [0, 1, 2, 3, 4, 5];
@@ -695,7 +703,7 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
             automaDiscard = [];
         }
         
-        const cardIndex = automaDeck.pop();
+        const cardIndex = automaDeck.pop(); logEvent("Drew Joanna card index " + cardIndex);
         automaDiscard.push(cardIndex);
         
         renderJoannaCard(cardIndex);
