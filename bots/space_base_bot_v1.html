@@ -11,6 +11,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/site.css?v=7">
 <style>
+html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
     :root {
         --sb-bg: #0f172a;
         --sb-card: #1e293b;
@@ -97,10 +98,32 @@
     footer.credits { text-align: center; margin-top: 40px; padding: 20px; font-size: 0.9em; color: #94a3b8; border-top: 1px solid var(--sb-border); }
     footer.credits img { max-width: 120px; border-radius: 8px; margin-bottom: 10px; }
     footer.credits a { color: var(--sb-primary); text-decoration: none; font-weight: bold; }
+
+        
 .dice-result-text { font-size: 1.5em; text-align: center; color: #e2e8f0; font-family: var(--font-display); margin: 20px 0; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; border: 1px dashed var(--sb-border); font-weight: bold; word-break: break-word; }
         .sb-select { width: 100%; max-width: 100%; padding: 10px; border-radius: 6px; background: #1e293b; color: #fff; border: 1px solid var(--sb-border); font-size: 1em; margin-bottom: 20px; box-sizing: border-box; }
 </style>
 </head>
+
+    <!-- DEBUG LOGGER -->
+    <script>
+        window.appLogs = [];
+        window.logEvent = function(msg) {
+            const time = new Date().toISOString().split('T')[1].slice(0, -1);
+            appLogs.push('[' + time + '] ' + msg);
+            console.log('[DEBUG]', msg);
+        };
+        window.onerror = function(msg, url, line) { logEvent('ERROR: ' + msg + ' @ ' + line); };
+        window.onunhandledrejection = function(e) { logEvent('PROMISE REJECT: ' + (e.reason && e.reason.message ? e.reason.message : e.reason)); };
+        
+        function showLogs() {
+            const str = appLogs.join('\n');
+            alert("App Logs:\n\n" + str);
+            console.log(str);
+        }
+    </script>
+    <button onclick="showLogs()" style="position:fixed; top:10px; left:10px; z-index:9999; background:red; color:white; border:none; padding:5px 10px; border-radius:4px; font-weight:bold;">🐛 LOGS</button>
+    
 <body>
 
 <div class="bot-header">
@@ -547,13 +570,13 @@
     let diceBox = null;
     let diceBoxReady = false;
 
-        async function initDiceBox() {
+        async function initDiceBox() { logEvent("initDiceBox() called. diceBoxReady=" + diceBoxReady);
         if(diceBox) return;
         try {
-            const { default: DiceBox } = await import('https://unpkg.com/@3d-dice/dice-box@1.1.3/dist/dice-box.es.min.js');
-            diceBox = new DiceBox({
+            logEvent("Fetching dice-box import..."); const { default: DiceBox } = await import('https://unpkg.com/@3d-dice/dice-box@1.1.3/dist/dice-box.es.min.js');
+            logEvent('DiceBox class imported successfully'); diceBox = new DiceBox({
                 container: '#dice-box',
-                assetPath: 'https://unpkg.com/@3d-dice/dice-box@1.1.3/dist/assets/',
+                assetPath: 'assets/',
                 origin: 'https://unpkg.com/@3d-dice/dice-box@1.1.3/dist/',
                 theme: 'default',
                 themeColor: '#1e293b',
@@ -563,12 +586,14 @@
                 restitution: 0.5
             });
             
+            logEvent('Starting diceBox.init() race...');
             await Promise.race([
-                diceBox.init(),
-                new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000))
+                diceBox.init().then(() => logEvent('diceBox.init() RESOLVED')),
+                new Promise((_, reject) => setTimeout(() => { logEvent('diceBox.init() TIMEOUT reached'); reject(new Error('Timeout')); }, 5000))
             ]);
+            logEvent('Race finished successfully');
     
-            diceBoxReady = true;
+            diceBoxReady = true; logEvent("diceBoxReady set to TRUE");
             
             diceBox.onRollComplete = (results) => {
                 const d1 = results[0]?.value ?? 1;
@@ -577,13 +602,13 @@
                 txt.style.display = 'block';
                 txt.innerText = `🎲 ${d1} | ${d2}  (Soma: ${d1+d2})`;
             };
-        } catch(err) {
+        } catch(err) { logEvent("initDiceBox catch block: " + err.message); 
             console.error("Failed to load dice-box", err);
             diceBoxReady = false;
-        }
+         }
     }
 
-    function rollVirtualDice() {
+    function rollVirtualDice() { logEvent("rollVirtualDice() called. diceBoxReady=" + diceBoxReady);
         if(diceMode !== 'virtual') return;
         if(!diceBoxReady) {
             // fallback
@@ -598,7 +623,7 @@
         
         try {
             document.getElementById('diceResultText').style.display = 'none';
-            diceBox.roll('2d6').catch(err => {
+            logEvent("Calling diceBox.roll('2d6')"); diceBox.roll('2d6').then(r => logEvent("diceBox.roll resolved")).catch(err => { logEvent("diceBox.roll catch: " + err.message);
                 console.error(err);
                 diceBoxReady = false;
                 rollVirtualDice(); // triggers fallback
@@ -625,7 +650,7 @@
     };
 
 
-    window.startGame = async function() {
+    window.startGame = async function() { logEvent("startGame() - Mode:" + document.getElementById("gameMode").value + " Dice:" + document.getElementById("diceMode").value);
         gameMode = document.getElementById('gameMode').value;
         diceMode = document.getElementById('diceMode').value;
         difficulty = document.getElementById('difficulty').value;
