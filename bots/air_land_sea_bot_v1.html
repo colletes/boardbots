@@ -248,9 +248,14 @@ h2{ font-family:var(--font-serif); color:var(--ink); margin:0 0 14px; border-bot
         <button class="btn btn-primary" onclick="drawBotCard(false)" id="btnDraw" style="font-size:1.1em; padding:16px 14px;">
             Deploy AI Card
         </button>
-        <button class="btn" onclick="drawBotCard(true)" id="btnDrawFacedown" style="font-size:0.9em; padding:16px 14px; border:2px dashed var(--glow-dim);">
-            Deploy FD
-        </button>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+            <button class="btn" onclick="drawBotCard(true)" id="btnDrawFacedown" style="font-size:0.8em; padding:8px; border:2px dashed var(--glow-dim);">
+                Deploy FD
+            </button>
+            <button class="btn" onclick="drawEnhancement()" id="btnDrawExtra" style="font-size:0.8em; padding:8px; border-color:var(--seal); color:var(--seal);">
+                Draw Extra
+            </button>
+        </div>
     </div>
   </div>
   
@@ -332,8 +337,8 @@ h2{ font-family:var(--font-serif); color:var(--ink); margin:0 0 14px; border-bot
 .mini-card .header { background:var(--bg); color:#fff; font-weight:900; font-size:1.1em; padding:2px 4px; display:flex; align-items:center; justify-content:center; border-bottom:2px solid #000; }
 .mini-card .name { font-size:0.6em; text-align:center; padding:4px 2px; font-weight:bold; color:#fff; text-transform:uppercase; line-height:1.1; }
 .mini-card.facedown { background:repeating-linear-gradient(45deg, #2b2b2b, #2b2b2b 5px, #444 5px, #444 10px); border-color:#222; }
-.mini-card.facedown * { display:none; }
-.mini-card.facedown::after { content:'2'; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#fff; font-size:2em; font-weight:900; text-shadow:0 2px 4px rgba(0,0,0,0.8); }
+.mini-card.facedown .content-wrap { opacity:0; pointer-events:none; }
+.mini-card.facedown::before { content:'2'; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#fff; font-size:2em; font-weight:900; text-shadow:0 2px 4px rgba(0,0,0,0.8); z-index:1; }
 </style>
 
 <script>
@@ -742,12 +747,16 @@ function updateTableauUI() {
             el.style.borderColor = 'var(--th-' + item.card.th + ')';
             
             el.innerHTML = `
-                <div class="header" style="background:var(--th-${item.card.th})">${item.card.v}</div>
-                <div class="name">${item.card.name}</div>
-                <div class="card-controls" style="display:flex; justify-content:space-between; background:#111; padding:2px 4px; margin-top:auto; font-size:14px; border-top:1px solid #000;">
-                    <span onclick="moveCard(event, ${i}, ${idx}, -1)" style="color:#fff; cursor:pointer; opacity:${i===0 ? 0.2 : 1}; pointer-events:${i===0 ? 'none' : 'auto'}; padding:0 4px;">◀</span>
-                    <span onclick="flipCard(event, ${i}, ${idx})" style="color:#fff; cursor:pointer; padding:0 4px;">↺</span>
-                    <span onclick="moveCard(event, ${i}, ${idx}, 1)" style="color:#fff; cursor:pointer; opacity:${i===2 ? 0.2 : 1}; pointer-events:${i===2 ? 'none' : 'auto'}; padding:0 4px;">▶</span>
+                <div class="content-wrap" style="flex:1; display:flex; flex-direction:column; transition:opacity 0.2s;">
+                    <div class="header" style="background:var(--th-${item.card.th})">${item.card.v}</div>
+                    <div class="name">${item.card.name}</div>
+                </div>
+                <div class="card-controls" style="display:flex; justify-content:space-between; background:#111; padding:4px 2px; margin-top:auto; font-size:12px; border-top:1px solid #000; position:relative; z-index:2;">
+                    <span onclick="moveCard(event, ${i}, ${idx}, -1)" style="color:#fff; cursor:pointer; opacity:${i===0 ? 0.2 : 1}; pointer-events:${i===0 ? 'none' : 'auto'}; padding:0 2px;" title="Move Left">◀</span>
+                    <span onclick="flipCard(event, ${i}, ${idx})" style="color:#fff; cursor:pointer; padding:0 2px;" title="Flip">↺</span>
+                    <span onclick="moveCard(event, ${i}, ${idx}, 1)" style="color:#fff; cursor:pointer; opacity:${i===2 ? 0.2 : 1}; pointer-events:${i===2 ? 'none' : 'auto'}; padding:0 2px;" title="Move Right">▶</span>
+                    <span onclick="returnToHand(event, ${i}, ${idx})" style="color:#6cf; cursor:pointer; padding:0 2px;" title="Return to Hand">↑</span>
+                    <span onclick="discardCard(event, ${i}, ${idx})" style="color:#f66; cursor:pointer; padding:0 2px;" title="Discard">✖</span>
                 </div>
             `;
             
@@ -776,6 +785,21 @@ function moveCard(e, colIndex, cardIndex, dir) {
 function flipCard(e, colIndex, cardIndex) {
     e.stopPropagation();
     tableau[colIndex][cardIndex].facedown = !tableau[colIndex][cardIndex].facedown;
+    updateTableauUI();
+}
+
+function returnToHand(e, colIndex, cardIndex) {
+    e.stopPropagation();
+    const item = tableau[colIndex].splice(cardIndex, 1)[0];
+    botDeck.splice(botCardsPlayed, 0, item.card);
+    botCardsPlayed--;
+    renderBotHand();
+    updateTableauUI();
+}
+
+function discardCard(e, colIndex, cardIndex) {
+    e.stopPropagation();
+    tableau[colIndex].splice(cardIndex, 1);
     updateTableauUI();
 }
 
