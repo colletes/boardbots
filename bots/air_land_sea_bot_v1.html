@@ -181,13 +181,21 @@ h2{ font-family:var(--font-serif); color:var(--ink); margin:0 0 14px; border-bot
 </div>
 
 <!-- SETUP SCREEN -->
+
+<!-- SCORE HEADER -->
+<div id="score-header" class="hidden" style="display:flex; justify-content:space-between; background:#222; padding:10px 18px; border:2px solid var(--seal); border-radius:4px; margin-bottom:18px; font-family:sans-serif; font-weight:bold; font-size:1.2em;">
+    <div style="color:var(--paper)">YOU: <span id="scorePlayer">0</span></div>
+    <div style="color:var(--seal)">AI: <span id="scoreAI">0</span></div>
+</div>
+
+<!-- SETUP SCREEN -->
 <div id="setup-screen">
   <div class="card" id="physical-setup-card">
     <h2 data-i18n="setupPhysicalTitle">Physical Setup</h2>
     <ul style="font-family:sans-serif; font-size:0.9em; line-height:1.5; color:var(--ink); padding-left:20px; margin-top:0;">
-      <li data-i18n="setupPhys1">Place the 3 Theater cards in the center of the table.</li>
-      <li data-i18n="setupPhys2">Shuffle the remaining cards (Base + chosen Expansions) into a deck of 15 cards.</li>
-      <li data-i18n="setupPhys3">Deal 6 cards to yourself to form your starting hand.</li>
+      <li data-i18n="setupPhys1">Place the Theater cards in the center of the table.</li>
+      <li data-i18n="setupPhys2">Shuffle the remaining cards (Base + chosen Expansions) into a deck.</li>
+      <li data-i18n="setupPhys3">Deal cards to yourself to form your starting hand.</li>
       <li data-i18n="setupPhys4">The app will automatically manage the enemy's hand and deck. No physical cards are needed for the AI!</li>
       <li data-i18n="setupPhys5">Determine who goes first (you or the AI) based on standard game rules.</li>
     </ul>
@@ -195,8 +203,25 @@ h2{ font-family:var(--font-serif); color:var(--ink); margin:0 0 14px; border-bot
 
   <div class="card">
     <div class="stamp-secret" data-i18n="stampSetup">Top Secret</div>
-    <h2 data-i18n="setupTitle1">1. Theater Order (Left to Right)</h2>
-    <p class="text-dim" style="font-size:0.85em; margin-top:0;" data-i18n="setupThDesc">Select the 3 theaters in order from Left to Right as placed on your table.</p>
+    
+    <h2 style="margin-top:0;">0. Game Format</h2>
+    <div class="row" style="margin-bottom:10px;">
+      <button class="btn active" id="btnFormatStd" onclick="setFormat('standard')">Standard (3 Theaters)</button>
+      <button class="btn" id="btnFormatEpic" onclick="setFormat('epic')">Epic (5 Theaters)</button>
+    </div>
+
+    <h2 data-i18n="setupTitle1" style="margin-top:20px;">1. Theater Order (Left to Right)</h2>
+    <p class="text-dim" style="font-size:0.85em; margin-top:0;" data-i18n="setupThDesc">Select the theaters in order from Left to Right as placed on your table.</p>
+    
+    <div style="background:rgba(0,0,0,0.05); border:1px solid rgba(0,0,0,0.1); padding:10px; border-radius:4px; margin-bottom:14px;">
+        <div style="font-weight:bold; font-size:0.85em; text-transform:uppercase; margin-bottom:6px;">Randomizer</div>
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+            <label style="font-size:0.85em;"><input type="checkbox" id="chkBase" checked> Base Game</label>
+            <label style="font-size:0.85em;"><input type="checkbox" id="chkExp" checked> Spies, Lies & Supplies</label>
+            <button class="btn" style="padding:6px 12px; font-size:0.8em;" onclick="randomizeTheaters()">Randomize</button>
+        </div>
+    </div>
+
     <div class="theater-grid" id="thGrid">
       <div class="th-btn" data-id="air" onclick="toggleTh('air')"><span data-i18n="th_air">Air</span><span class="order-badge"></span></div>
       <div class="th-btn" data-id="land" onclick="toggleTh('land')"><span data-i18n="th_land">Land</span><span class="order-badge"></span></div>
@@ -208,9 +233,9 @@ h2{ font-family:var(--font-serif); color:var(--ink); margin:0 0 14px; border-bot
     <button class="btn" onclick="clearTheaters()" style="font-size:0.8em; padding:8px;" data-i18n="btnClearTh">Reset Order</button>
     
     <h2 data-i18n="setupTitle2" style="margin-top:30px;">2. Your Starting Hand</h2>
-    <p class="text-dim" style="font-size:0.85em;" data-i18n="setupHandDesc">Select the 6 cards you drew. The simulator will compile the remaining cards for the enemy AI.</p>
+    <p class="text-dim" style="font-size:0.85em;" data-i18n="setupHandDesc">Select the cards you drew. The simulator will compile the remaining cards for the enemy AI.</p>
     <div id="handSelectArea"></div>
-    <div style="text-align:right; margin-top:8px; font-size:0.9em; font-weight:bold; font-family:sans-serif;"><span id="handCount">0</span>/6 <span data-i18n="selected">Selected</span></div>
+    <div style="text-align:right; margin-top:8px; font-size:0.9em; font-weight:bold; font-family:sans-serif;"><span id="handCount">0</span>/<span id="handTarget">6</span> <span data-i18n="selected">Selected</span></div>
     
     <h2 data-i18n="lblMode" style="margin-top:30px;">3. AI Protocol</h2>
     <div class="row">
@@ -225,17 +250,14 @@ h2{ font-family:var(--font-serif); color:var(--ink); margin:0 0 14px; border-bot
 <!-- GAME SCREEN -->
 <div id="game-area" class="hidden">
   
-  <!-- Active Play Area (Modal style for current drawn card) -->
+  <!-- Active Play Area Modal -->
   <div id="activePlayArea" class="hidden" style="background:rgba(0,0,0,0.9); position:fixed; inset:0; z-index:100; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:18px; overflow-y:auto;">
       <h2 style="color:var(--paper); margin-bottom:10px;">Resolving Card</h2>
       <div id="playArea" class="play-area" style="margin:0 0 10px 0; transform:scale(0.85); transform-origin:top center;"></div>
       <div id="priorityBox" class="priority-box" style="background:#111; width:100%; max-width:400px; padding:14px; border:2px solid var(--seal);"></div>
       
       <p style="color:#fff; margin-top:20px; font-weight:bold;">Where was this card placed?</p>
-      <div style="display:flex; gap:10px; width:100%; max-width:400px; margin-bottom:20px;">
-          <button class="btn" style="flex:1; padding:16px 8px; font-size:0.8em;" onclick="placeCard(0)" id="btnPlace0"></button>
-          <button class="btn" style="flex:1; padding:16px 8px; font-size:0.8em;" onclick="placeCard(1)" id="btnPlace1"></button>
-          <button class="btn" style="flex:1; padding:16px 8px; font-size:0.8em;" onclick="placeCard(2)" id="btnPlace2"></button>
+      <div id="placeButtonsArea" style="display:flex; gap:10px; width:100%; max-width:500px; margin-bottom:20px; flex-wrap:wrap;">
       </div>
   </div>
 
@@ -259,23 +281,11 @@ h2{ font-family:var(--font-serif); color:var(--ink); margin:0 0 14px; border-bot
     </div>
   </div>
   
-  <div class="card" style="padding:20px 10px;">
+  <div class="card" style="padding:20px 5px;">
       <h2 style="text-align:center; font-size:1.1em; margin-top:0;">Enemy Tableau</h2>
       <p style="text-align:center; font-size:0.8em; margin-top:0; margin-bottom:14px;" class="text-dim">Tap a card to flip it face up/down.</p>
       
-      <div style="display:flex; gap:6px; min-height:200px;">
-          <div style="flex:1; border:1px dashed var(--ink-soft); border-radius:4px; display:flex; flex-direction:column; align-items:center; padding:8px 4px;" id="col-0">
-              <div style="font-weight:bold; font-size:0.8em; margin-bottom:10px; text-transform:uppercase; border-bottom:1px solid var(--ink); padding-bottom:4px; width:100%; text-align:center;" id="colName-0"></div>
-              <div id="colCards-0" style="display:flex; flex-direction:column; gap:10px; width:100%;"></div>
-          </div>
-          <div style="flex:1; border:1px dashed var(--ink-soft); border-radius:4px; display:flex; flex-direction:column; align-items:center; padding:8px 4px;" id="col-1">
-              <div style="font-weight:bold; font-size:0.8em; margin-bottom:10px; text-transform:uppercase; border-bottom:1px solid var(--ink); padding-bottom:4px; width:100%; text-align:center;" id="colName-1"></div>
-              <div id="colCards-1" style="display:flex; flex-direction:column; gap:10px; width:100%;"></div>
-          </div>
-          <div style="flex:1; border:1px dashed var(--ink-soft); border-radius:4px; display:flex; flex-direction:column; align-items:center; padding:8px 4px;" id="col-2">
-              <div style="font-weight:bold; font-size:0.8em; margin-bottom:10px; text-transform:uppercase; border-bottom:1px solid var(--ink); padding-bottom:4px; width:100%; text-align:center;" id="colName-2"></div>
-              <div id="colCards-2" style="display:flex; flex-direction:column; gap:10px; width:100%;"></div>
-          </div>
+      <div id="tableauCols" style="display:flex; gap:4px; min-height:200px; overflow-x:auto;">
       </div>
   </div>
 
@@ -291,10 +301,6 @@ h2{ font-family:var(--font-serif); color:var(--ink); margin:0 0 14px; border-bot
         </div>
     </div>
     <div id="enhancementBox" class="priority-box hidden" style="border-left-color:var(--seal); background:rgba(138,31,31,0.05); margin-top:10px;"></div>
-    
-    <button class="btn btn-block" onclick="drawEnhancement()" id="btnEnhance" style="margin-top:10px; border-color:var(--seal); color:var(--seal); display:none;">
-        <span data-i18n="btnEnhanceDraw">Deploy Bonus Card</span>
-    </button>
   </div>
 
   <div style="display:flex; gap:10px; margin-bottom:20px;">
@@ -316,11 +322,20 @@ h2{ font-family:var(--font-serif); color:var(--ink); margin:0 0 14px; border-bot
         
         <div id="scoringStep2" class="hidden">
             <p style="font-weight:bold; margin-bottom:20px;">How did it end?</p>
-            <button class="btn btn-block" onclick="addScore(6)">Normal End (Battle Resolved)</button>
-            <button class="btn btn-block" onclick="addScore(2)">Withdrawn with 4+ cards left</button>
-            <button class="btn btn-block" onclick="addScore(3)">Withdrawn with 2-3 cards left</button>
-            <button class="btn btn-block" onclick="addScore(4)">Withdrawn with 1 card left</button>
-            <button class="btn btn-block" onclick="addScore(6)">Withdrawn with 0 cards left</button>
+            <div id="scoreBtnsStd" class="hidden">
+                <button class="btn btn-block" onclick="addScore(6)">Normal End (Battle Resolved) - 6 VP</button>
+                <button class="btn btn-block" onclick="addScore(2)">Withdrawn with 4+ cards left - 2 VP</button>
+                <button class="btn btn-block" onclick="addScore(3)">Withdrawn with 2-3 cards left - 3 VP</button>
+                <button class="btn btn-block" onclick="addScore(4)">Withdrawn with 1 card left - 4 VP</button>
+                <button class="btn btn-block" onclick="addScore(6)">Withdrawn with 0 cards left - 6 VP</button>
+            </div>
+            <div id="scoreBtnsEpic" class="hidden">
+                <button class="btn btn-block" onclick="addScore(6)">Normal End (Battle Resolved) - 6 VP</button>
+                <button class="btn btn-block" onclick="addScore(2)">Withdrawn with 7+ cards left - 2 VP</button>
+                <button class="btn btn-block" onclick="addScore(3)">Withdrawn with 4-6 cards left - 3 VP</button>
+                <button class="btn btn-block" onclick="addScore(4)">Withdrawn with 2-3 cards left - 4 VP</button>
+                <button class="btn btn-block" onclick="addScore(6)">Withdrawn with 0-1 cards left - 6 VP</button>
+            </div>
             
             <button class="btn btn-block" onclick="document.getElementById('scoringStep2').classList.add('hidden'); document.getElementById('scoringStep1').classList.remove('hidden');" style="margin-top:20px; border:none; background:transparent;">Back</button>
         </div>
@@ -388,10 +403,10 @@ const DICT = {
     stampActive: "Em Campo",
     setupPhysicalTitle: "Configuração Física",
     setupTitle1: "1. Ordem dos Teatros (Esq. para Dir.)",
-    setupThDesc: "Selecione os 3 teatros na ordem em que estão posicionados na sua mesa, da Esquerda para a Direita.",
+    setupThDesc: "Selecione os teatros na ordem em que estão posicionados na sua mesa, da Esquerda para a Direita.",
     btnClearTh: "Limpar Ordem",
     setupTitle2: "2. Sua Mão Inicial",
-    setupHandDesc: "Selecione as 6 cartas que você comprou. O simulador processará as cartas restantes para a IA inimiga.",
+    setupHandDesc: "Selecione as cartas que você comprou. O simulador processará as cartas restantes para a IA inimiga.",
     selected: "Selecionadas",
     lblMode: "3. Protocolo da IA",
     btnModeAuto: "Autônomo",
@@ -404,17 +419,17 @@ const DICT = {
     statLostTheatres: "Teatros Perdidos",
     btnNewGame: "Abortar Missão",
     btnEnhanceDraw: "Posicionar Carta Bônus",
-    setupPhys1: "Coloque as 3 cartas de Teatro no centro da mesa.",
-    setupPhys2: "Embaralhe as cartas restantes (Base + Expansões escolhidas) em um baralho de 15 cartas.",
-    setupPhys3: "Compre 6 cartas para formar sua mão inicial.",
-    setupPhys4: "O app gerenciará automaticamente a mão e o baralho do inimigo. Nenhuma carta física é necessária para a IA!",
-    setupPhys5: "Determine quem joga primeiro (você ou a IA) de acordo com as regras normais.",
+    setupPhys1: "Coloque as cartas de Teatro no centro da mesa.",
+    setupPhys2: "Embaralhe as cartas restantes (Base + Expansões escolhidas) em um baralho.",
+    setupPhys3: "Compre as cartas para formar sua mão inicial.",
+    setupPhys4: "O app gerenciará automaticamente a mão e o baralho do inimigo.",
+    setupPhys5: "Determine quem joga primeiro (você ou a IA).",
     th_air: "Ar", th_land: "Terra", th_sea: "Mar", th_econ: "Econ", th_diplo: "Diplo", th_intel: "Intel",
     pri_auto_title: "Ordens da IA (Autônomo)",
     pri_semi_title: "Ordens da IA (Semiautônomo)",
     pri_play: "<b>1. Posicionamento:</b> Tente colocar esta carta no teatro {th}.",
     pri_withdraw: "<b>2. Recuar:</b> Se esta for a 4ª carta da IA no teatro {th}, ela <b>RECUA</b> a não ser que esta habilidade evite.",
-    pri_choice: "<b>Alvo:</b> 1º Adj. à Direita, 2º Adj. à Esquerda, 3º Mesmo teatro, 4º Não adjacente.",
+    pri_choice: "<b>Alvo:</b> {targets}",
     pri_flip: "<b>Virar:</b> Face Down deles > Face Up sua > Face Down sua > Face Up deles.",
     pri_general: "<b>3. Habilidade Instantânea:</b> Resolva o efeito se possível. Se houver escolha, dê a maior vantagem possível para a IA.",
     pri_no_effect: "Sem efeito instantâneo.",
@@ -429,10 +444,10 @@ const DICT = {
     stampActive: "Live",
     setupPhysicalTitle: "Physical Setup",
     setupTitle1: "1. Theater Order (Left to Right)",
-    setupThDesc: "Select the 3 theaters in order from Left to Right as placed on your table.",
+    setupThDesc: "Select the theaters in order from Left to Right as placed on your table.",
     btnClearTh: "Reset Order",
     setupTitle2: "2. Your Starting Hand",
-    setupHandDesc: "Select the 6 cards you drew. The simulator will compile the remaining cards for the enemy AI.",
+    setupHandDesc: "Select the cards you drew. The simulator will compile the remaining cards for the enemy AI.",
     selected: "Selected",
     lblMode: "3. AI Protocol",
     btnModeAuto: "Autonomous",
@@ -445,17 +460,17 @@ const DICT = {
     statLostTheatres: "Theatres Lost",
     btnNewGame: "Abort Mission",
     btnEnhanceDraw: "Deploy Bonus Card",
-    setupPhys1: "Place the 3 Theater cards in the center of the table.",
-    setupPhys2: "Shuffle the remaining cards (Base + chosen Expansions) into a deck of 15 cards.",
-    setupPhys3: "Deal 6 cards to yourself to form your starting hand.",
-    setupPhys4: "The app will automatically manage the enemy's hand and deck. No physical cards are needed for the AI!",
-    setupPhys5: "Determine who goes first (you or the AI) based on standard game rules.",
+    setupPhys1: "Place the Theater cards in the center of the table.",
+    setupPhys2: "Shuffle the remaining cards (Base + chosen Expansions) into a deck.",
+    setupPhys3: "Deal cards to yourself to form your starting hand.",
+    setupPhys4: "The app will automatically manage the enemy's hand and deck.",
+    setupPhys5: "Determine who goes first (you or the AI).",
     th_air: "Air", th_land: "Land", th_sea: "Sea", th_econ: "Econ", th_diplo: "Diplo", th_intel: "Intel",
     pri_auto_title: "AI Orders (Autonomous)",
     pri_semi_title: "AI Orders (Semiautonomous)",
     pri_play: "<b>1. Placement:</b> Play to the {th} theater.",
     pri_withdraw: "<b>2. Withdraw:</b> If this is the 4th card on their side of {th}, they <b>WITHDRAW</b> instead (unless this ability averts it).",
-    pri_choice: "<b>3. Target Choice:</b> Target priority: 1st Adj Right, 2nd Adj Left, 3rd Matching, 4th Non-Adj.",
+    pri_choice: "<b>3. Target Choice:</b> {targets}",
     pri_flip: "<b>4. Flip Priority:</b> Their Face Down to Face Up &gt; Your Face Up to Face Down &gt; Your Face Down to Face Up &gt; Their Face Up to Face Down.",
     pri_general: "<b>3. Instant Ability:</b> Resolve the effect if possible. If a choice is needed, prioritize giving the AI the biggest advantage.",
     pri_no_effect: "No instant effect.",
@@ -468,6 +483,9 @@ const DICT = {
 
 let currentLang = localStorage.getItem('boardbots_lang') || 'en';
 let mode = 'auto';
+let gameFormat = 'standard'; // 'standard' (3) or 'epic' (5)
+let maxTheaters = 3;
+let handSize = 6;
 let selectedTheaters = [];
 let playerHand = [];
 let botDeck = [];
@@ -475,7 +493,7 @@ let outOfGameDeck = [];
 let theatresLost = 0;
 let botCardsPlayed = 0;
 
-let tableau = [[], [], []];
+let tableau = []; // length will match maxTheaters
 
 let scorePlayer = 0;
 let scoreAI = 0;
@@ -502,6 +520,42 @@ function setLang(lang) {
   }
 }
 
+function setFormat(fmt) {
+    gameFormat = fmt;
+    maxTheaters = fmt === 'standard' ? 3 : 5;
+    handSize = fmt === 'standard' ? 6 : 10;
+    
+    document.getElementById('btnFormatStd').className = 'btn' + (fmt === 'standard' ? ' active' : '');
+    document.getElementById('btnFormatEpic').className = 'btn' + (fmt === 'epic' ? ' active' : '');
+    
+    document.getElementById('handTarget').innerText = handSize;
+    clearTheaters();
+}
+
+function randomizeTheaters() {
+    const base = ['air', 'land', 'sea'];
+    const exp = ['econ', 'diplo', 'intel'];
+    let pool = [];
+    if (document.getElementById('chkBase').checked) pool = pool.concat(base);
+    if (document.getElementById('chkExp').checked) pool = pool.concat(exp);
+    
+    if (pool.length < maxTheaters) {
+        alert("Not enough theaters in the selected pool. Please check both boxes.");
+        return;
+    }
+    
+    // shuffle pool
+    for (let i = pool.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
+    
+    selectedTheaters = pool.slice(0, maxTheaters);
+    updateTheaterUI();
+    playerHand = [];
+    renderHandSelector();
+}
+
 function setMode(m) {
   mode = m;
   document.getElementById('btnModeAuto').className = 'btn' + (m === 'auto' ? ' active' : '');
@@ -519,7 +573,7 @@ function toggleTh(th) {
   if (selectedTheaters.includes(th)) {
     selectedTheaters = selectedTheaters.filter(x => x !== th);
   } else {
-    if (selectedTheaters.length >= 3) return;
+    if (selectedTheaters.length >= maxTheaters) return;
     selectedTheaters.push(th);
   }
   updateTheaterUI();
@@ -545,8 +599,8 @@ function renderHandSelector() {
   const area = document.getElementById('handSelectArea');
   area.innerHTML = '';
   
-  if (selectedTheaters.length < 3) {
-      area.innerHTML = `<p class="text-dim">Select 3 theaters first.</p>`;
+  if (selectedTheaters.length < maxTheaters) {
+      area.innerHTML = `<p class="text-dim">Select ${maxTheaters} theaters first.</p>`;
       document.getElementById('btnStart').disabled = true;
       return;
   }
@@ -554,6 +608,9 @@ function renderHandSelector() {
   const pool = DB.filter(c => selectedTheaters.includes(c.th));
   const grid = document.createElement('div');
   grid.className = 'hand-grid';
+  // Add columns for epic mode
+  if (maxTheaters === 5) grid.style.gridTemplateColumns = 'repeat(5, 1fr)';
+  else grid.style.gridTemplateColumns = 'repeat(6, 1fr)';
   
   pool.forEach(c => {
     const btn = document.createElement('div');
@@ -567,19 +624,19 @@ function renderHandSelector() {
         playerHand = playerHand.filter(x => x !== c.id);
         btn.classList.remove('selected');
       } else {
-        if (playerHand.length >= 6) return;
+        if (playerHand.length >= handSize) return;
         playerHand.push(c.id);
         btn.classList.add('selected');
       }
       document.getElementById('handCount').innerText = playerHand.length;
-      document.getElementById('btnStart').disabled = playerHand.length !== 6;
+      document.getElementById('btnStart').disabled = playerHand.length !== handSize;
     };
     grid.appendChild(btn);
   });
   
   area.appendChild(grid);
   document.getElementById('handCount').innerText = playerHand.length;
-  document.getElementById('btnStart').disabled = playerHand.length !== 6;
+  document.getElementById('btnStart').disabled = playerHand.length !== handSize;
 }
 
 function startGame() {
@@ -599,10 +656,12 @@ function initRoundLogic() {
     [remaining[i], remaining[j]] = [remaining[j], remaining[i]];
   }
   
-  botDeck = remaining.slice(0, 6);
-  outOfGameDeck = remaining.slice(6);
+  botDeck = remaining.slice(0, handSize);
+  outOfGameDeck = remaining.slice(handSize);
   botCardsPlayed = 0;
-  tableau = [[], [], []];
+  
+  tableau = [];
+  for(let i=0; i<maxTheaters; i++) tableau.push([]);
   
   renderBotHand();
   updateTableauUI();
@@ -611,12 +670,20 @@ function initRoundLogic() {
 function renderBotHand() {
   const ui = document.getElementById('botHandUI');
   ui.innerHTML = '';
-  for(let i=0; i<6; i++) {
+  // Scale bot hand size
+  if (handSize > 6) {
+      ui.style.flexWrap = 'wrap';
+      ui.style.maxWidth = '300px';
+  } else {
+      ui.style.flexWrap = 'nowrap';
+  }
+  
+  for(let i=0; i<handSize; i++) {
     const b = document.createElement('div');
     b.className = 'bot-card-back' + (i < botCardsPlayed ? ' used' : '');
     ui.appendChild(b);
   }
-  const empty = botCardsPlayed >= 6;
+  const empty = botCardsPlayed >= handSize;
   document.getElementById('btnDraw').disabled = empty;
   document.getElementById('btnDrawFacedown').disabled = empty;
 }
@@ -642,14 +709,41 @@ function drawEnhancement() {
   displayCardPrompt(currentPendingCard, false, true);
 }
 
+function getAdjacencyString(thId) {
+    const idx = selectedTheaters.indexOf(thId);
+    if (idx === -1) return "1st Adj Right, 2nd Adj Left, 3rd Matching, 4th Non-Adj";
+    
+    const adjRight = idx < maxTheaters - 1 ? DICT[currentLang]['th_' + selectedTheaters[idx + 1]] : null;
+    const adjLeft = idx > 0 ? DICT[currentLang]['th_' + selectedTheaters[idx - 1]] : null;
+    const matching = DICT[currentLang]['th_' + thId];
+    
+    let targets = [];
+    if (adjRight) targets.push(`1º ${adjRight}`);
+    if (adjLeft) targets.push(`2º ${adjLeft}`);
+    targets.push(`3º ${matching}`);
+    targets.push(`4º Non-adj`);
+    
+    return targets.join(", ");
+}
+
 function displayCardPrompt(card, facedown, isEnhancement = false) {
   const modal = document.getElementById('activePlayArea');
   const playArea = document.getElementById('playArea');
   const pBox = document.getElementById('priorityBox');
+  const btnsArea = document.getElementById('placeButtonsArea');
   modal.classList.remove('hidden');
   
-  for(let i=0; i<3; i++) {
-      document.getElementById('btnPlace'+i).innerText = `Place in ${DICT[currentLang]['th_' + selectedTheaters[i]]}`;
+  btnsArea.innerHTML = '';
+  for(let i=0; i<maxTheaters; i++) {
+      const b = document.createElement('button');
+      b.className = 'btn';
+      b.style.flex = '1';
+      b.style.minWidth = '100px';
+      b.style.padding = '16px 8px';
+      b.style.fontSize = '0.8em';
+      b.innerText = `Place in ${DICT[currentLang]['th_' + selectedTheaters[i]]}`;
+      b.onclick = () => placeCard(i);
+      btnsArea.appendChild(b);
   }
 
   if (facedown) {
@@ -695,10 +789,10 @@ function displayCardPrompt(card, facedown, isEnhancement = false) {
       priHtml += `<li>${DICT[currentLang].pri_withdraw.replace('{th}', thName)}</li>`;
       
       if (txtLow.includes('flip')) {
-          priHtml += `<li>${DICT[currentLang].pri_choice}</li>`;
+          priHtml += `<li>${DICT[currentLang].pri_choice.replace('{targets}', getAdjacencyString(card.th))}</li>`;
           priHtml += `<li>${DICT[currentLang].pri_flip}</li>`;
       } else if (txtLow.includes('move') || txtLow.includes('destroy')) {
-          priHtml += `<li>${DICT[currentLang].pri_choice}</li>`;
+          priHtml += `<li>${DICT[currentLang].pri_choice.replace('{targets}', getAdjacencyString(card.th))}</li>`;
       } else if (card.v === 6) {
           priHtml += `<li><i>${DICT[currentLang].pri_no_effect}</i></li>`;
       } else {
@@ -736,10 +830,37 @@ function placeCard(colIndex) {
 }
 
 function updateTableauUI() {
-    for (let i=0; i<3; i++) {
-        document.getElementById('colName-'+i).innerText = DICT[currentLang]['th_' + selectedTheaters[i]];
-        const colDiv = document.getElementById('colCards-'+i);
-        colDiv.innerHTML = '';
+    const colsContainer = document.getElementById('tableauCols');
+    colsContainer.innerHTML = '';
+    
+    for (let i=0; i<maxTheaters; i++) {
+        const colDiv = document.createElement('div');
+        colDiv.style.flex = '1';
+        colDiv.style.minWidth = '80px';
+        colDiv.style.border = '1px dashed var(--ink-soft)';
+        colDiv.style.borderRadius = '4px';
+        colDiv.style.display = 'flex';
+        colDiv.style.flexDirection = 'column';
+        colDiv.style.alignItems = 'center';
+        colDiv.style.padding = '8px 4px';
+        
+        const titleDiv = document.createElement('div');
+        titleDiv.style.fontWeight = 'bold';
+        titleDiv.style.fontSize = '0.8em';
+        titleDiv.style.marginBottom = '10px';
+        titleDiv.style.textTransform = 'uppercase';
+        titleDiv.style.borderBottom = '1px solid var(--ink)';
+        titleDiv.style.paddingBottom = '4px';
+        titleDiv.style.width = '100%';
+        titleDiv.style.textAlign = 'center';
+        titleDiv.innerText = DICT[currentLang]['th_' + selectedTheaters[i]];
+        colDiv.appendChild(titleDiv);
+        
+        const cardsDiv = document.createElement('div');
+        cardsDiv.style.display = 'flex';
+        cardsDiv.style.flexDirection = 'column';
+        cardsDiv.style.gap = '10px';
+        cardsDiv.style.width = '100%';
         
         tableau[i].forEach((item, idx) => {
             const el = document.createElement('div');
@@ -754,7 +875,7 @@ function updateTableauUI() {
                 <div class="card-controls" style="display:flex; justify-content:space-between; background:#111; padding:4px 2px; margin-top:auto; font-size:12px; border-top:1px solid #000; position:relative; z-index:2;">
                     <span onclick="moveCard(event, ${i}, ${idx}, -1)" style="color:#fff; cursor:pointer; opacity:${i===0 ? 0.2 : 1}; pointer-events:${i===0 ? 'none' : 'auto'}; padding:0 2px;" title="Move Left">◀</span>
                     <span onclick="flipCard(event, ${i}, ${idx})" style="color:#fff; cursor:pointer; padding:0 2px;" title="Flip">↺</span>
-                    <span onclick="moveCard(event, ${i}, ${idx}, 1)" style="color:#fff; cursor:pointer; opacity:${i===2 ? 0.2 : 1}; pointer-events:${i===2 ? 'none' : 'auto'}; padding:0 2px;" title="Move Right">▶</span>
+                    <span onclick="moveCard(event, ${i}, ${idx}, 1)" style="color:#fff; cursor:pointer; opacity:${i===maxTheaters-1 ? 0.2 : 1}; pointer-events:${i===maxTheaters-1 ? 'none' : 'auto'}; padding:0 2px;" title="Move Right">▶</span>
                     <span onclick="returnToHand(event, ${i}, ${idx})" style="color:#6cf; cursor:pointer; padding:0 2px;" title="Return to Hand">↑</span>
                     <span onclick="discardCard(event, ${i}, ${idx})" style="color:#f66; cursor:pointer; padding:0 2px;" title="Discard">✖</span>
                 </div>
@@ -767,15 +888,18 @@ function updateTableauUI() {
                 };
             }
             
-            colDiv.appendChild(el);
+            cardsDiv.appendChild(el);
         });
+        
+        colDiv.appendChild(cardsDiv);
+        colsContainer.appendChild(colDiv);
     }
 }
 
 function moveCard(e, colIndex, cardIndex, dir) {
     e.stopPropagation();
     const newCol = colIndex + dir;
-    if (newCol >= 0 && newCol <= 2) {
+    if (newCol >= 0 && newCol < maxTheaters) {
         const item = tableau[colIndex].splice(cardIndex, 1)[0];
         tableau[newCol].push(item);
         updateTableauUI();
@@ -809,14 +933,11 @@ function adjustTheatres(delta) {
   document.getElementById('vTheatresLost').innerText = theatresLost;
   
   const box = document.getElementById('enhancementBox');
-  const btn = document.getElementById('btnEnhance');
   if (theatresLost >= 2) {
       box.classList.remove('hidden');
       box.innerHTML = `<p style="margin:0; font-weight:bold; color:var(--seal);">${theatresLost >= 3 ? DICT[currentLang].enhancement3 : DICT[currentLang].enhancement2}</p>`;
-      btn.style.display = 'block';
   } else {
       box.classList.add('hidden');
-      btn.style.display = 'none';
   }
 }
 
@@ -824,6 +945,14 @@ function endRound() {
     document.getElementById('endRoundModal').classList.remove('hidden');
     document.getElementById('scoringStep1').classList.remove('hidden');
     document.getElementById('scoringStep2').classList.add('hidden');
+    
+    if (gameFormat === 'standard') {
+        document.getElementById('scoreBtnsStd').classList.remove('hidden');
+        document.getElementById('scoreBtnsEpic').classList.add('hidden');
+    } else {
+        document.getElementById('scoreBtnsStd').classList.add('hidden');
+        document.getElementById('scoreBtnsEpic').classList.remove('hidden');
+    }
 }
 
 function selectWinner(w) {
@@ -839,16 +968,17 @@ function addScore(pts) {
     document.getElementById('scorePlayer').innerText = scorePlayer;
     document.getElementById('scoreAI').innerText = scoreAI;
     
-    if (scorePlayer >= 12) {
-        alert("Victory! You reached 12 points.");
-    } else if (scoreAI >= 12) {
-        alert("Defeat! The AI reached 12 points.");
+    const targetScore = gameFormat === 'epic' ? 6 : 12;
+    if (scorePlayer >= targetScore) {
+        alert("Victory! You reached " + targetScore + " points.");
+    } else if (scoreAI >= targetScore) {
+        alert("Defeat! The AI reached " + targetScore + " points.");
     }
     
     document.getElementById('endRoundModal').classList.add('hidden');
     
     // Shift theaters
-    if (selectedTheaters.length === 3) {
+    if (selectedTheaters.length === maxTheaters) {
         const rightMost = selectedTheaters.pop();
         selectedTheaters.unshift(rightMost);
         updateTheaterUI();
