@@ -57,6 +57,8 @@ const SITE_I18N = {
     game_memoir44_desc: '"Command HQ" — assistente de decisão tática para os 17 cenários da 2ª Guerra, incluindo o Dia D e a Batalha das Ardenas.',
     game_burgundy_title: 'AutoDuque',
     game_burgundy_desc: 'Automa para Castles of Burgundy — oponente automático com controle de prioridades de construção.',
+    game_airlandsea_title: 'Air, Land & Sea',
+    game_airlandsea_desc: 'Automa não-oficial com os modos Autônomo e Semiautônomo, e referência de prioridades de cartas.',
 
     credits_title: 'Créditos',
     back_link: 'Voltar aos bots',
@@ -80,7 +82,7 @@ const SITE_I18N = {
     credit_memoir44: '<strong>Memoir \'44</strong> — 100% conteúdo, táticas e app originais do autor. Conteúdo de cenários também consultou o compêndio não-oficial "Western Front Scenario Compilation" de Derek "Whaleyland" Whaley. Memoir \'44 criado por Richard Borg, © Days of Wonder (edição em português por Galápagos Jogos).',
     credit_burgundy: '<strong>Castles of Burgundy</strong> — variante solo "AutoDuque" criada por um fã (LENS). Castles of Burgundy © Ravensburger.',
     credit_spacebase: '<strong>Space Base</strong> — Automa "Joanna" é uma variante solo não-oficial de fã do BGG. Assistente de Ataque à Base inspirado nas regras solo. Space Base © AEG.',
-    credit_spacebase: '<strong>Space Base</strong> — Automa "Joanna" é uma variante solo não-oficial de fã do BGG. Assistente de Ataque à Base inspirado nas regras solo. Space Base © AEG.',
+    credit_airlandsea: '<strong>Air, Land & Sea</strong> — Automa baseado nas regras solo originais criadas por <a href="https://boardgamegeek.com/profile/I_2orLess_I" target="_blank" rel="noopener">I_2orLess_I</a>. Air, Land & Sea © Arcane Wonders.',
 
     tools_title: 'Ferramentas',
     tools_desc: 'Utilitários genéricos para qualquer jogo de tabuleiro, sem regras específicas.',
@@ -144,6 +146,8 @@ const SITE_I18N = {
     game_memoir44_desc: '"Command HQ" — tactical decision assistant for the 17 WWII scenarios, including D-Day and the Battle of the Bulge.',
     game_burgundy_title: 'Castles of Burgundy',
     game_burgundy_desc: '"AutoDuque" Automa — automated opponent with building priority control.',
+    game_airlandsea_title: 'Air, Land & Sea',
+    game_airlandsea_desc: 'Unofficial Automa with Autonomous and Semiautonomous modes, and card priority references.',
 
     credits_title: 'Credits',
     back_link: 'Back to bots',
@@ -167,7 +171,7 @@ const SITE_I18N = {
     credit_memoir44: '<strong>Memoir \'44</strong> — 100% original content, tactics and app by the author. Scenario content also referenced the unofficial "Western Front Scenario Compilation" by Derek "Whaleyland" Whaley. Memoir \'44 designed by Richard Borg, © Days of Wonder.',
     credit_burgundy: '<strong>Castles of Burgundy</strong> — "AutoDuque" fan solo variant by LENS. Castles of Burgundy © Ravensburger.',
     credit_spacebase: '<strong>Space Base</strong> — "Joanna" Automa is an unofficial fan solo variant from BGG. Base Attack assistant inspired by solo rules. Space Base © AEG.',
-    credit_spacebase: '<strong>Space Base</strong> — "Joanna" Automa is an unofficial fan solo variant from BGG. Base Attack assistant inspired by solo rules. Space Base © AEG.',
+    credit_airlandsea: '<strong>Air, Land & Sea</strong> — Automa based on the original solo rules designed by <a href="https://boardgamegeek.com/profile/I_2orLess_I" target="_blank" rel="noopener">I_2orLess_I</a>. Air, Land & Sea © Arcane Wonders.',
 
     tools_title: 'Tools',
     tools_desc: 'Generic utilities for any board game, with no game-specific rules.',

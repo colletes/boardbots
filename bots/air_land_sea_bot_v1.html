@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Air, Land & Sea Automa</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rye&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/site.css">
+<style>
+:root{
+  --bg-0:#0d1117; --bg-1:#161b22;
+  --surface:#21262d; --surface-2:#30363d;
+  --border:#30363d; --text:#c9d1d9; --text-dim:#8b949e;
+  --blue:#58a6ff; --blue-soft:#1f6feb; --blue-glow:rgba(88,166,255,0.35);
+  --accent:#238636; --accent-dim:#2ea043;
+  --wood:#30363d; --wood-light:#484f58;
+  --font-display:'Rye','Segoe UI',serif;
+  --font-body:'Inter','Segoe UI',Tahoma,Geneva,Verdana,sans-serif;
+  --radius:14px;
+}
+*{box-sizing:border-box;}
+html{-webkit-text-size-adjust:100%;}
+body{
+  font-family:var(--font-body);
+  background:var(--bg-0);
+  color:var(--text);
+  max-width:760px; margin:0 auto; padding:18px;
+  padding-left:max(18px, env(safe-area-inset-left));
+  padding-right:max(18px, env(safe-area-inset-right));
+  padding-bottom:max(18px, env(safe-area-inset-bottom));
+  -webkit-tap-highlight-color:transparent;
+}
+button, select, input{ touch-action:manipulation; font-family:inherit; }
+.hidden{ display:none !important; }
+@keyframes fadeSlideUp{ from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);} }
+@keyframes popIn{ 0%{transform:scale(0.85); opacity:0;} 60%{transform:scale(1.04);} 100%{transform:scale(1); opacity:1;} }
+
+.hero{ position:relative; border-radius:var(--radius); overflow:hidden; margin-bottom:18px; border:2px solid var(--wood-light); box-shadow:inset 0 0 0 1px var(--wood); animation:fadeSlideUp 0.5s ease both; }
+.hero img{ width:100%; height:170px; object-fit:cover; object-position:top; display:block; filter:saturate(1.2) brightness(0.8); }
+.hero::after{ content:''; position:absolute; inset:0; background:linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.6) 50%, rgba(0,0,0,0.9) 100%); }
+.hero-content{ position:absolute; inset:0; display:flex; flex-direction:column; justify-content:flex-end; padding:14px 18px; }
+h1{ font-family:var(--font-display); font-weight:normal; letter-spacing:1px; margin:0; font-size:2.2em; color:#fff; text-shadow:0 2px 10px rgba(0,0,0,0.8); }
+.subtitle{ color:var(--blue); font-size:0.95em; letter-spacing:0.5px; margin-top:2px; font-weight:600; text-shadow:0 2px 8px rgba(0,0,0,0.9); }
+h2{ font-family:var(--font-display); font-weight:normal; letter-spacing:0.5px; color:var(--blue); margin:0 0 14px; padding-bottom:8px; font-size:1.3em; display:flex; align-items:center; gap:9px; border-bottom:1px dashed var(--wood-light); }
+h3{ color:var(--text); font-size:1em; margin:16px 0 8px; }
+.card{ background:var(--surface); padding:18px; border-radius:var(--radius); border:2px solid var(--wood-light); box-shadow:0 6px 18px rgba(0,0,0,0.35); margin-bottom:16px; animation:fadeSlideUp 0.45s ease both; }
+label{ display:block; margin:10px 0 6px; font-size:0.9em; color:var(--text-dim); }
+select, input[type=number]{ width:100%; padding:11px 12px; font-size:16px; background:var(--surface-2); color:var(--text); border:1px solid var(--border); border-radius:10px; }
+.row{ display:flex; gap:10px; flex-wrap:wrap; }
+.row > *{ flex:1; min-width:120px; }
+.btn{ display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:12px 18px; border-radius:10px; border:1px solid var(--border); background:var(--surface-2); color:var(--text); font-weight:600; font-size:0.95em; cursor:pointer; min-height:44px; }
+.btn:active{ transform:scale(0.97); }
+@media (hover:hover) and (pointer:fine){ .btn:hover{ border-color:var(--blue); } .btn-primary:hover{ filter:brightness(1.1); } }
+.btn-primary{ background:linear-gradient(145deg, var(--blue-soft), var(--blue)); border-color:var(--blue); color:#fff; width:100%; }
+.btn-block{ width:100%; margin-top:8px; }
+.btn.active{ background:var(--blue); border-color:var(--blue-soft); color:#fff; }
+
+.stat-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(130px,1fr)); gap:10px; }
+.stat{ background:var(--surface-2); border:1px solid var(--border); border-radius:12px; padding:10px; text-align:center; }
+.stat .lbl{ font-size:0.75em; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.5px; font-weight:bold; }
+.stat .val{ font-size:1.8em; font-weight:800; margin:4px 0; color:var(--blue); }
+.stat .adj{ display:flex; justify-content:center; gap:6px; }
+.stat .adj button{ width:36px; height:36px; border-radius:8px; border:1px solid var(--border); background:var(--surface); color:var(--text); font-size:1.2em; min-height:36px; display:flex; align-items:center; justify-content:center; }
+
+.rule-box{ background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:14px; font-size:0.9em; margin-bottom:12px; }
+.rule-box h4{ margin:0 0 8px 0; color:var(--blue); font-size:1.05em; }
+.rule-box ul{ margin:0; padding-left:20px; color:var(--text); }
+.rule-box li{ margin-bottom:6px; }
+
+.enhancement-alert{ background:rgba(218, 54, 51, 0.15); border:1px solid rgba(218, 54, 51, 0.5); border-left:4px solid #da3633; border-radius:8px; padding:12px 14px; margin-top:14px; font-weight:500; font-size:0.95em; display:flex; flex-direction:column; gap:6px; }
+.enhancement-alert.hidden{ display:none; }
+.enhancement-title{ color:#da3633; font-weight:bold; text-transform:uppercase; font-size:0.85em; letter-spacing:0.5px; }
+
+.credits{ display:flex; align-items:center; gap:12px; }
+.credits img{ width:52px; height:52px; border-radius:10px; object-fit:cover; }
+.credits a{ color:var(--blue); text-decoration:none; }
+
+.bmc-inline{ display:flex; justify-content:center; align-items:center; gap:8px; margin:14px auto; background:#FFDD00; color:#000; font-weight:700; font-size:0.85em; padding:9px 16px; border-radius:8px; text-decoration:none; box-shadow:0 4px 14px rgba(0,0,0,0.35); transition:transform 0.15s; width:max-content; }
+.bmc-inline:hover{ transform:scale(1.05); }
+.bmc-inline svg{ width:18px; height:18px; flex-shrink:0; }
+
+.btn-help-float{ position:fixed; bottom:20px; right:20px; width:50px; height:50px; border-radius:50%; background:var(--blue); color:#fff; border:none; font-size:1.3em; font-weight:800; box-shadow:0 4px 14px rgba(0,0,0,0.4); z-index:50; }
+.modal-overlay{ position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:100; display:flex; align-items:center; justify-content:center; padding:18px; }
+.modal{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); max-width:640px; width:100%; max-height:85vh; overflow-y:auto; padding:20px; }
+.modal h3{ color:var(--blue); margin-top:0; }
+.modal-close{ float:right; background:var(--surface-2); border:1px solid var(--border); color:var(--text); border-radius:8px; padding:6px 12px; font-weight:bold; }
+.lang-switch{ position:fixed; top:14px; right:14px; z-index:60; display:flex; gap:4px; background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:4px; box-shadow:0 2px 10px rgba(0,0,0,0.5); }
+.lang-switch button{ border:none; background:transparent; color:var(--text-dim); padding:5px 10px; border-radius:16px; font-size:0.8em; font-weight:700; min-height:30px; cursor:pointer; }
+.lang-switch button.active{ background:var(--blue); color:#fff; }
+</style>
+<script src="../assets/logger.js"></script>
+</head>
+<body>
+<div class="lang-switch">
+  <button id="btnPt" onclick="setLang('pt')">PT</button>
+  <button id="btnEn" onclick="setLang('en')">EN</button>
+</div>
+
+<div class="hero">
+  <img src="../assets/art/airlandsea.webp" alt="Air Land and Sea">
+  <div class="hero-content">
+    <h1>Air, Land & Sea</h1>
+    <div class="subtitle" data-i18n="subtitle">Solo Automa Helper</div>
+  </div>
+</div>
+
+<!-- SETUP SCREEN -->
+<div id="setup-screen">
+  <div class="card">
+    <h2 data-i18n="setupPhysicalTitle">Physical Setup</h2>
+    <div class="rule-box">
+        <h4 data-i18n="setupGameTitle">Game Setup</h4>
+        <ul data-i18n-html="setupGameList">
+            <li>Place the 3 Theatre cards as normal.</li>
+            <li>Shuffle the 18 cards.</li>
+            <li>Deal 6 cards to yourself.</li>
+            <li>Deal 6 Face Down cards to the Bot (keep them as a draw pile).</li>
+            <li>The remaining 6 cards are out of the game.</li>
+        </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 data-i18n="setupBotTitle">Bot Options</h2>
+    
+    <label data-i18n="lblMode">Bot Mode:</label>
+    <div class="row">
+      <button class="btn active" id="btnModeAuto" onclick="setMode('auto')" data-i18n="btnModeAuto">Autonomous</button>
+      <button class="btn" id="btnModeSemi" onclick="setMode('semi')" data-i18n="btnModeSemi">Semiautonomous</button>
+    </div>
+    <p style="color:var(--text-dim); font-size:0.85em; margin-top:8px;" id="modeDesc"></p>
+
+    <button class="btn btn-primary btn-block" onclick="startGame()" data-i18n="btnStart" style="margin-top:20px;">Start Game</button>
+  </div>
+  
+  <div class="card credits">
+    <img src="../assets/art/airlandsea.webp" alt="Cover">
+    <div>
+      <div data-i18n="creditsLine1">Unofficial Automa</div>
+      <div data-i18n-html="creditsLine2">Rules designed by <a href="https://boardgamegeek.com/profile/I_2orLess_I" target="_blank">I_2orLess_I</a></div>
+      <div><a href="mailto:colletes@gmail.com">colletes@gmail.com</a></div>
+    </div>
+  </div>
+  
+  <a class="bmc-inline" href="https://ko-fi.com/colletes" target="_blank">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8zM6 1v3M10 1v3M14 1v3"/></svg>
+    <span data-i18n="bmc_btn">Buy me a coffee</span>
+  </a>
+</div>
+
+<!-- GAME SCREEN -->
+<div id="game-area" class="hidden">
+  
+  <div class="card">
+    <h2 data-i18n="statsTitle">Difficulty Enhancements</h2>
+    <p style="font-size:0.85em; color:var(--text-dim); margin-top:0;" data-i18n="statsDesc">If you find it too easy to win, track the number of theatres the Bot has lost across the game.</p>
+    
+    <div class="stat-grid">
+      <div class="stat">
+        <div class="lbl" data-i18n="statLostTheatres">Theatres Lost</div>
+        <div class="val" id="vTheatresLost">0</div>
+        <div class="adj">
+            <button onclick="adjustTheatres(-1)">−</button>
+            <button onclick="adjustTheatres(1)">+</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="enhancementAlert" class="enhancement-alert hidden">
+        <div class="enhancement-title" data-i18n="enhancementActive">Difficulty Enhancement Active!</div>
+        <div id="enhancementText"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 data-i18n="refTitle">Bot Reference</h2>
+    
+    <div class="rule-box">
+        <h4 data-i18n="refBasics">Basics</h4>
+        <ul data-i18n-html="refBasicsList">
+            <li>Bot is always the <b>1st player</b> on every round.</li>
+            <li>Bot plays one from the top of their hand, face up, into a matching theatre–unless the card forces the Bot to withdraw.</li>
+        </ul>
+    </div>
+    
+    <div class="rule-box">
+        <h4 data-i18n="refWithdrawal">Withdrawal</h4>
+        <ul data-i18n-html="refWithdrawalList">
+            <li>If Bot tries to play or move a <b>4th card</b> into their side of a theatre, they return that card to their hand and withdraw.</li>
+            <li><b>Avert:</b> Bot may avert withdrawal if a card could negate the condition, observing Bot Priority and Choice.</li>
+        </ul>
+    </div>
+
+    <div class="rule-box" id="boxPriority">
+        <h4 data-i18n="refPriority">Bot Priority & Choice</h4>
+        <div style="font-size:0.9em; margin-bottom:8px;" data-i18n-html="refPriorityDesc">
+            The card being placed/causing an effect is the <b>Reference Card</b>. When given a choice:
+        </div>
+        <ol style="margin:0; padding-left:24px; font-size:0.9em; color:var(--text);" data-i18n-html="refPriorityList">
+            <li>Adjacent theatre to 'your' <b>right</b> of Reference.</li>
+            <li>Adjacent theatre to 'your' <b>left</b> of Reference.</li>
+            <li>Its own theatre.</li>
+            <li>Non-adjacent theatre.</li>
+            <li><i>If stacked:</i> 1st available card in that stack.</li>
+        </ol>
+        <p style="font-size:0.85em; color:var(--text-dim); margin:8px 0 0 0;" data-i18n-html="refFlipPriority"><b>Flip Priority:</b> Their FD to FU &gt; Your FU to FD &gt; Your FD to FU &gt; Their FU to FD.</p>
+    </div>
+    
+    <div class="rule-box hidden" id="boxSemiPriority">
+        <h4 data-i18n="refPriority">Bot Priority & Choice</h4>
+        <p style="margin:0; font-size:0.95em;" data-i18n-html="refSemiPriorityDesc">
+            When resolving secondary effects: Bot reads 'may' as 'you must' <b>make the best decision for them</b>.
+        </p>
+    </div>
+
+    <button class="btn btn-block" onclick="resetGame()" data-i18n="btnNewGame" style="margin-top:16px;">New Game / Reset</button>
+  </div>
+  
+  <a class="bmc-inline" href="https://ko-fi.com/colletes" target="_blank">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8zM6 1v3M10 1v3M14 1v3"/></svg>
+    <span data-i18n="bmc_btn">Buy me a coffee</span>
+  </a>
+</div>
+
+<button class="btn-help-float" onclick="openHelp()">?</button>
+
+<div class="modal-overlay hidden" id="modalHelp" onclick="if(event.target===this) closeHelp()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeHelp()">X</button>
+    <h3 data-i18n="helpTitle">Full Rules Overview</h3>
+    <div style="font-size:0.9em; line-height:1.5; color:var(--text);" data-i18n-html="helpBody">
+        <p><b>Blockade:</b> Bot observing a Blockade card limitation will instead place the 'discard' card face down, in an adjacent chosen theatre. Returned cards go to the bottom of the hand.</p>
+        <p><b>Secondary Effects:</b> Played after a card has been played or flipped as per box rules. An ineffective, negative or a choice that eventually forces Bot withdrawal must still be played.</p>
+        <p><b>Difficulty Enhancements:</b> Do not resolve the Difficulty Enhancement cards' secondary effects. Do not count the Difficulty Enhancement cards toward the Bot withdrawal number.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+const DICT = {
+  pt: {
+    subtitle: "Assistente de Automa Solo",
+    setupPhysicalTitle: "Setup Físico",
+    setupGameTitle: "Setup do Jogo",
+    setupGameList: "<li>Coloque as 3 cartas de Teatro normalmente.</li><li>Embaralhe as 18 cartas.</li><li>Dê 6 cartas para você.</li><li>Dê 6 cartas viradas para baixo para o Bot (monte de compra).</li><li>As 6 cartas restantes ficam fora do jogo.</li>",
+    setupBotTitle: "Opções do Bot",
+    lblMode: "Modo do Bot:",
+    btnModeAuto: "Autônomo",
+    btnModeSemi: "Semiautônomo",
+    modeDescAuto: "Usa regras estritas de prioridade para escolhas de teatro e cartas viradas.",
+    modeDescSemi: "Regras mais soltas: você toma as melhores decisões em nome do Bot.",
+    btnStart: "Iniciar Jogo",
+    creditsLine1: "Automa Não-Oficial",
+    creditsLine2: "Regras criadas por <a href='https://boardgamegeek.com/profile/I_2orLess_I' target='_blank'>I_2orLess_I</a>",
+    bmc_btn: "Me pague um café",
+    statsTitle: "Melhorias de Dificuldade",
+    statsDesc: "Se achar muito fácil vencer, acompanhe o número de teatros que o Bot perdeu ao longo do jogo.",
+    statLostTheatres: "Teatros Perdidos",
+    enhancementActive: "Melhoria de Dificuldade Ativa!",
+    enhancement2: "O Bot joga a carta do topo do deck de batalha, virada para cima, no teatro correspondente <b>sem restrições</b>.",
+    enhancement3: "O Bot pega as <b>2 cartas do topo</b> do deck de batalha e as joga, viradas para cima, nos seus teatros correspondentes sem restrições.",
+    refTitle: "Referência do Bot",
+    refBasics: "Básicos",
+    refBasicsList: "<li>Bot é sempre o <b>1º jogador</b> em cada rodada.</li><li>Bot joga uma carta do topo da mão, virada para cima, em um teatro correspondente – a menos que a carta force o Bot a recuar.</li>",
+    refWithdrawal: "Recuo (Withdrawal)",
+    refWithdrawalList: "<li>Se o Bot tentar jogar ou mover uma <b>4ª carta</b> para o seu lado de um teatro, ele devolve a carta para a mão e recua.</li><li><b>Evitar:</b> O Bot pode evitar o recuo se uma carta puder anular a condição (ex: Redeploy, Aerodrome, Airdrop), observando as prioridades.</li>",
+    refPriority: "Prioridade e Escolha",
+    refPriorityDesc: "A carta sendo jogada/causando efeito é a <b>Carta de Referência</b>. Ao escolher:",
+    refPriorityList: "<li>Teatro adjacente à <b>direita</b> (sua visão) da Referência.</li><li>Teatro adjacente à <b>esquerda</b> (sua visão) da Referência.</li><li>O próprio teatro da carta.</li><li>Teatro não adjacente.</li><li><i>Se empilhado:</i> 1ª carta disponível na pilha.</li>",
+    refFlipPriority: "<b>Prioridade de Virar:</b> FD deles para FU &gt; FU sua para FD &gt; FD sua para FU &gt; FU deles para FD.",
+    refSemiPriorityDesc: "Ao resolver efeitos secundários: o Bot lê 'pode' como 'você deve' <b>tomar a melhor decisão para ele</b>.",
+    btnNewGame: "Novo Jogo / Resetar",
+    helpTitle: "Visão Geral das Regras",
+    helpBody: "<p><b>Blockade:</b> Se o Bot observar a limitação da carta Blockade, ele jogará a carta 'descartada' virada para baixo, em um teatro adjacente escolhido. Cartas devolvidas vão para o fundo da mão.</p><p><b>Efeitos Secundários:</b> São jogados depois que uma carta é jogada ou virada. Um efeito ineficaz, negativo ou uma escolha que eventualmente force o Bot a recuar deve ser jogado mesmo assim.</p><p><b>Cartas de Melhoria:</b> Não resolva os efeitos secundários das cartas puxadas pelo bônus de Dificuldade. Elas não contam para o limite de recuo do Bot (4ª carta).</p>"
+  },
+  en: {
+    subtitle: "Solo Automa Helper",
+    setupPhysicalTitle: "Physical Setup",
+    setupGameTitle: "Game Setup",
+    setupGameList: "<li>Place the 3 Theatre cards as normal.</li><li>Shuffle the 18 cards.</li><li>Deal 6 cards to yourself.</li><li>Deal 6 Face Down cards to the Bot (keep them as a draw pile).</li><li>The remaining 6 cards are out of the game.</li>",
+    setupBotTitle: "Bot Options",
+    lblMode: "Bot Mode:",
+    btnModeAuto: "Autonomous",
+    btnModeSemi: "Semiautonomous",
+    modeDescAuto: "Uses strict priority rules for theatre choices and card flips.",
+    modeDescSemi: "Looser rules: you make the best decisions on behalf of the Bot.",
+    btnStart: "Start Game",
+    creditsLine1: "Unofficial Automa",
+    creditsLine2: "Rules designed by <a href='https://boardgamegeek.com/profile/I_2orLess_I' target='_blank'>I_2orLess_I</a>",
+    bmc_btn: "Buy me a coffee",
+    statsTitle: "Difficulty Enhancements",
+    statsDesc: "If you find it too easy to win, track the number of theatres the Bot has lost across the game.",
+    statLostTheatres: "Theatres Lost",
+    enhancementActive: "Difficulty Enhancement Active!",
+    enhancement2: "Bot plays the top card from the battle deck, face up, on to the matching theatre <b>without restriction</b>.",
+    enhancement3: "Bot takes the <b>top 2 cards</b> from the battle deck and plays them, face up, on to their matching theatres without restriction.",
+    refTitle: "Bot Reference",
+    refBasics: "Basics",
+    refBasicsList: "<li>Bot is always the <b>1st player</b> on every round.</li><li>Bot plays one from the top of their hand, face up, into a matching theatre–unless the card forces the Bot to withdraw.</li>",
+    refWithdrawal: "Withdrawal",
+    refWithdrawalList: "<li>If Bot tries to play or move a <b>4th card</b> into their side of a theatre, they return that card to their hand and withdraw.</li><li><b>Avert:</b> Bot may avert withdrawal if a card could negate the condition, observing Bot Priority and Choice.</li>",
+    refPriority: "Bot Priority & Choice",
+    refPriorityDesc: "The card being placed/causing an effect is the <b>Reference Card</b>. When given a choice:",
+    refPriorityList: "<li>Adjacent theatre to 'your' <b>right</b> of Reference.</li><li>Adjacent theatre to 'your' <b>left</b> of Reference.</li><li>Its own theatre.</li><li>Non-adjacent theatre.</li><li><i>If stacked:</i> 1st available card in that stack.</li>",
+    refFlipPriority: "<b>Flip Priority:</b> Their FD to FU &gt; Your FU to FD &gt; Your FD to FU &gt; Their FU to FD.",
+    refSemiPriorityDesc: "When resolving secondary effects: Bot reads 'may' as 'you must' <b>make the best decision for them</b>.",
+    btnNewGame: "New Game / Reset",
+    helpTitle: "Full Rules Overview",
+    helpBody: "<p><b>Blockade:</b> Bot observing a Blockade card limitation will instead place the 'discard' card face down, in an adjacent chosen theatre. Returned cards go to the bottom of the hand.</p><p><b>Secondary Effects:</b> Played after a card has been played or flipped as per box rules. An ineffective, negative or a choice that eventually forces Bot withdrawal must still be played.</p><p><b>Difficulty Enhancements:</b> Do not resolve the Difficulty Enhancement cards' secondary effects. Do not count the Difficulty Enhancement cards toward the Bot withdrawal number.</p>"
+  }
+};
+
+let currentLang = localStorage.getItem('boardbots_lang') || 'en';
+let mode = 'auto';
+let theatresLost = 0;
+
+function setLang(lang) {
+  currentLang = lang;
+  localStorage.setItem('boardbots_lang', lang);
+  document.getElementById('btnPt').className = lang === 'pt' ? 'active' : '';
+  document.getElementById('btnEn').className = lang === 'en' ? 'active' : '';
+  
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (DICT[lang][key]) el.innerHTML = DICT[lang][key];
+  });
+  document.querySelectorAll('[data-i18n-html]').forEach(el => {
+    const key = el.getAttribute('data-i18n-html');
+    if (DICT[lang][key]) el.innerHTML = DICT[lang][key];
+  });
+  
+  updateModeDesc();
+  updateEnhancementUI();
+}
+
+function setMode(m) {
+  mode = m;
+  document.getElementById('btnModeAuto').className = 'btn' + (m === 'auto' ? ' active' : '');
+  document.getElementById('btnModeSemi').className = 'btn' + (m === 'semi' ? ' active' : '');
+  updateModeDesc();
+}
+
+function updateModeDesc() {
+  const mkey = mode === 'auto' ? 'modeDescAuto' : 'modeDescSemi';
+  document.getElementById('modeDesc').innerHTML = DICT[currentLang][mkey];
+}
+
+function startGame() {
+  document.getElementById('setup-screen').classList.add('hidden');
+  document.getElementById('game-area').classList.remove('hidden');
+  
+  if (mode === 'auto') {
+    document.getElementById('boxPriority').classList.remove('hidden');
+    document.getElementById('boxSemiPriority').classList.add('hidden');
+  } else {
+    document.getElementById('boxPriority').classList.add('hidden');
+    document.getElementById('boxSemiPriority').classList.remove('hidden');
+  }
+}
+
+function adjustTheatres(delta) {
+  theatresLost += delta;
+  if (theatresLost < 0) theatresLost = 0;
+  document.getElementById('vTheatresLost').innerText = theatresLost;
+  updateEnhancementUI();
+}
+
+function updateEnhancementUI() {
+  const alertEl = document.getElementById('enhancementAlert');
+  const textEl = document.getElementById('enhancementText');
+  
+  if (theatresLost >= 3) {
+    alertEl.classList.remove('hidden');
+    textEl.innerHTML = DICT[currentLang]['enhancement3'];
+  } else if (theatresLost === 2) {
+    alertEl.classList.remove('hidden');
+    textEl.innerHTML = DICT[currentLang]['enhancement2'];
+  } else {
+    alertEl.classList.add('hidden');
+  }
+}
+
+function resetGame() {
+  theatresLost = 0;
+  adjustTheatres(0);
+  document.getElementById('setup-screen').classList.remove('hidden');
+  document.getElementById('game-area').classList.add('hidden');
+}
+
+function openHelp() {
+  document.getElementById('modalHelp').classList.remove('hidden');
+}
+function closeHelp() {
+  document.getElementById('modalHelp').classList.add('hidden');
+}
+
+// Init
+setLang(currentLang);
+setMode('auto');
+</script>
+</body>
+</html>
