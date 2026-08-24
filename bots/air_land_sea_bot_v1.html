@@ -744,16 +744,39 @@ function updateTableauUI() {
             el.innerHTML = `
                 <div class="header" style="background:var(--th-${item.card.th})">${item.card.v}</div>
                 <div class="name">${item.card.name}</div>
+                <div class="card-controls" style="display:flex; justify-content:space-between; background:#111; padding:2px 4px; margin-top:auto; font-size:14px; border-top:1px solid #000;">
+                    <span onclick="moveCard(event, ${i}, ${idx}, -1)" style="color:#fff; cursor:pointer; opacity:${i===0 ? 0.2 : 1}; pointer-events:${i===0 ? 'none' : 'auto'}; padding:0 4px;">◀</span>
+                    <span onclick="flipCard(event, ${i}, ${idx})" style="color:#fff; cursor:pointer; padding:0 4px;">↺</span>
+                    <span onclick="moveCard(event, ${i}, ${idx}, 1)" style="color:#fff; cursor:pointer; opacity:${i===2 ? 0.2 : 1}; pointer-events:${i===2 ? 'none' : 'auto'}; padding:0 4px;">▶</span>
+                </div>
             `;
             
-            el.onclick = () => {
-                item.facedown = !item.facedown;
-                updateTableauUI();
-            };
+            if (item.facedown) {
+                el.onclick = (e) => {
+                    item.facedown = false;
+                    updateTableauUI();
+                };
+            }
             
             colDiv.appendChild(el);
         });
     }
+}
+
+function moveCard(e, colIndex, cardIndex, dir) {
+    e.stopPropagation();
+    const newCol = colIndex + dir;
+    if (newCol >= 0 && newCol <= 2) {
+        const item = tableau[colIndex].splice(cardIndex, 1)[0];
+        tableau[newCol].push(item);
+        updateTableauUI();
+    }
+}
+
+function flipCard(e, colIndex, cardIndex) {
+    e.stopPropagation();
+    tableau[colIndex][cardIndex].facedown = !tableau[colIndex][cardIndex].facedown;
+    updateTableauUI();
 }
 
 function adjustTheatres(delta) {
