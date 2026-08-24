@@ -173,8 +173,15 @@ h2{ font-family:var(--font-serif); color:var(--ink); margin:0 0 14px; border-bot
 </div>
 
 <!-- SETUP SCREEN -->
+
+<!-- SCORE HEADER -->
+<div id="score-header" class="hidden" style="display:flex; justify-content:space-between; background:#222; padding:10px 18px; border:2px solid var(--seal); border-radius:4px; margin-bottom:18px; font-family:sans-serif; font-weight:bold; font-size:1.2em;">
+    <div style="color:var(--paper)">YOU: <span id="scorePlayer">0</span></div>
+    <div style="color:var(--seal)">AI: <span id="scoreAI">0</span></div>
+</div>
+
+<!-- SETUP SCREEN -->
 <div id="setup-screen">
-  
   <div class="card" id="physical-setup-card">
     <h2 data-i18n="setupPhysicalTitle">Physical Setup</h2>
     <ul style="font-family:sans-serif; font-size:0.9em; line-height:1.5; color:var(--ink); padding-left:20px; margin-top:0;">
@@ -188,15 +195,17 @@ h2{ font-family:var(--font-serif); color:var(--ink); margin:0 0 14px; border-bot
 
   <div class="card">
     <div class="stamp-secret" data-i18n="stampSetup">Top Secret</div>
-    <h2 data-i18n="setupTitle1">1. Active Theaters</h2>
+    <h2 data-i18n="setupTitle1">1. Theater Order (Left to Right)</h2>
+    <p class="text-dim" style="font-size:0.85em; margin-top:0;" data-i18n="setupThDesc">Select the 3 theaters in order from Left to Right as placed on your table.</p>
     <div class="theater-grid" id="thGrid">
-      <div class="th-btn" data-id="air" onclick="toggleTh('air')"><span data-i18n="th_air">Air</span></div>
-      <div class="th-btn" data-id="land" onclick="toggleTh('land')"><span data-i18n="th_land">Land</span></div>
-      <div class="th-btn" data-id="sea" onclick="toggleTh('sea')"><span data-i18n="th_sea">Sea</span></div>
-      <div class="th-btn" data-id="econ" onclick="toggleTh('econ')"><span data-i18n="th_econ">Economics</span></div>
-      <div class="th-btn" data-id="diplo" onclick="toggleTh('diplo')"><span data-i18n="th_diplo">Diplomacy</span></div>
-      <div class="th-btn" data-id="intel" onclick="toggleTh('intel')"><span data-i18n="th_intel">Intelligence</span></div>
+      <div class="th-btn" data-id="air" onclick="toggleTh('air')"><span data-i18n="th_air">Air</span><span class="order-badge"></span></div>
+      <div class="th-btn" data-id="land" onclick="toggleTh('land')"><span data-i18n="th_land">Land</span><span class="order-badge"></span></div>
+      <div class="th-btn" data-id="sea" onclick="toggleTh('sea')"><span data-i18n="th_sea">Sea</span><span class="order-badge"></span></div>
+      <div class="th-btn" data-id="econ" onclick="toggleTh('econ')"><span data-i18n="th_econ">Economics</span><span class="order-badge"></span></div>
+      <div class="th-btn" data-id="diplo" onclick="toggleTh('diplo')"><span data-i18n="th_diplo">Diplomacy</span><span class="order-badge"></span></div>
+      <div class="th-btn" data-id="intel" onclick="toggleTh('intel')"><span data-i18n="th_intel">Intelligence</span><span class="order-badge"></span></div>
     </div>
+    <button class="btn" onclick="clearTheaters()" style="font-size:0.8em; padding:8px;" data-i18n="btnClearTh">Reset Order</button>
     
     <h2 data-i18n="setupTitle2" style="margin-top:30px;">2. Your Starting Hand</h2>
     <p class="text-dim" style="font-size:0.85em;" data-i18n="setupHandDesc">Select the 6 cards you drew. The simulator will compile the remaining cards for the enemy AI.</p>
@@ -216,18 +225,53 @@ h2{ font-family:var(--font-serif); color:var(--ink); margin:0 0 14px; border-bot
 <!-- GAME SCREEN -->
 <div id="game-area" class="hidden">
   
+  <!-- Active Play Area (Modal style for current drawn card) -->
+  <div id="activePlayArea" class="hidden" style="background:rgba(0,0,0,0.9); position:fixed; inset:0; z-index:100; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:18px; overflow-y:auto;">
+      <h2 style="color:var(--paper); margin-bottom:10px;">Resolving Card</h2>
+      <div id="playArea" class="play-area" style="margin:0 0 10px 0; transform:scale(0.85); transform-origin:top center;"></div>
+      <div id="priorityBox" class="priority-box" style="background:#111; width:100%; max-width:400px; padding:14px; border:2px solid var(--seal);"></div>
+      
+      <p style="color:#fff; margin-top:20px; font-weight:bold;">Where was this card placed?</p>
+      <div style="display:flex; gap:10px; width:100%; max-width:400px; margin-bottom:20px;">
+          <button class="btn" style="flex:1; padding:16px 8px; font-size:0.8em;" onclick="placeCard(0)" id="btnPlace0"></button>
+          <button class="btn" style="flex:1; padding:16px 8px; font-size:0.8em;" onclick="placeCard(1)" id="btnPlace1"></button>
+          <button class="btn" style="flex:1; padding:16px 8px; font-size:0.8em;" onclick="placeCard(2)" id="btnPlace2"></button>
+      </div>
+  </div>
+
   <div class="card" style="text-align:center;">
     <div class="stamp-secret" data-i18n="stampActive">Live</div>
     <h2 data-i18n="botHandTitle">Enemy Hand</h2>
     <div class="bot-hand" id="botHandUI"></div>
     
-    <button class="btn btn-primary" onclick="drawBotCard()" id="btnDraw" style="font-size:1.2em; padding:16px 24px; display:inline-block; margin:0 auto;">
-        <span data-i18n="btnDraw">Deploy AI Card</span>
-    </button>
-    
-    <div id="playArea" class="play-area hidden"></div>
-    
-    <div id="priorityBox" class="priority-box hidden" style="text-align:left;"></div>
+    <div style="display:flex; gap:10px; justify-content:center; margin: 20px 0;">
+        <button class="btn btn-primary" onclick="drawBotCard(false)" id="btnDraw" style="font-size:1.1em; padding:16px 14px;">
+            Deploy AI Card
+        </button>
+        <button class="btn" onclick="drawBotCard(true)" id="btnDrawFacedown" style="font-size:0.9em; padding:16px 14px; border:2px dashed var(--glow-dim);">
+            Deploy FD
+        </button>
+    </div>
+  </div>
+  
+  <div class="card" style="padding:20px 10px;">
+      <h2 style="text-align:center; font-size:1.1em; margin-top:0;">Enemy Tableau</h2>
+      <p style="text-align:center; font-size:0.8em; margin-top:0; margin-bottom:14px;" class="text-dim">Tap a card to flip it face up/down.</p>
+      
+      <div style="display:flex; gap:6px; min-height:200px;">
+          <div style="flex:1; border:1px dashed var(--ink-soft); border-radius:4px; display:flex; flex-direction:column; align-items:center; padding:8px 4px;" id="col-0">
+              <div style="font-weight:bold; font-size:0.8em; margin-bottom:10px; text-transform:uppercase; border-bottom:1px solid var(--ink); padding-bottom:4px; width:100%; text-align:center;" id="colName-0"></div>
+              <div id="colCards-0" style="display:flex; flex-direction:column; gap:10px; width:100%;"></div>
+          </div>
+          <div style="flex:1; border:1px dashed var(--ink-soft); border-radius:4px; display:flex; flex-direction:column; align-items:center; padding:8px 4px;" id="col-1">
+              <div style="font-weight:bold; font-size:0.8em; margin-bottom:10px; text-transform:uppercase; border-bottom:1px solid var(--ink); padding-bottom:4px; width:100%; text-align:center;" id="colName-1"></div>
+              <div id="colCards-1" style="display:flex; flex-direction:column; gap:10px; width:100%;"></div>
+          </div>
+          <div style="flex:1; border:1px dashed var(--ink-soft); border-radius:4px; display:flex; flex-direction:column; align-items:center; padding:8px 4px;" id="col-2">
+              <div style="font-weight:bold; font-size:0.8em; margin-bottom:10px; text-transform:uppercase; border-bottom:1px solid var(--ink); padding-bottom:4px; width:100%; text-align:center;" id="colName-2"></div>
+              <div id="colCards-2" style="display:flex; flex-direction:column; gap:10px; width:100%;"></div>
+          </div>
+      </div>
   </div>
 
   <div class="card">
@@ -248,47 +292,88 @@ h2{ font-family:var(--font-serif); color:var(--ink); margin:0 0 14px; border-bot
     </button>
   </div>
 
-  <button class="btn btn-block" onclick="location.reload()" data-i18n="btnNewGame" style="margin-bottom: 20px;">Abort Mission (Reset)</button>
+  <div style="display:flex; gap:10px; margin-bottom:20px;">
+      <button class="btn btn-block" onclick="endRound()" style="margin-bottom:0; background:linear-gradient(160deg, #b58d20 0%, #856106 100%); color:#000; border:2px solid #e3c274;">End Round / Withdraw</button>
+      <button class="btn btn-block" onclick="location.reload()" data-i18n="btnNewGame" style="margin-bottom:0; flex:0.4;">Abort</button>
+  </div>
 </div>
+
+<!-- END ROUND MODAL -->
+<div id="endRoundModal" class="hidden" style="background:rgba(0,0,0,0.9); position:fixed; inset:0; z-index:200; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:18px;">
+    <div class="card" style="width:100%; max-width:400px; text-align:center;">
+        <h2>Round Ended</h2>
+        
+        <div id="scoringStep1">
+            <p style="font-weight:bold; margin-bottom:20px;">Who won this round?</p>
+            <button class="btn btn-block" onclick="selectWinner('player')">I WON</button>
+            <button class="btn btn-block" onclick="selectWinner('ai')">AI WON</button>
+        </div>
+        
+        <div id="scoringStep2" class="hidden">
+            <p style="font-weight:bold; margin-bottom:20px;">How did it end?</p>
+            <button class="btn btn-block" onclick="addScore(6)">Normal End (Battle Resolved)</button>
+            <button class="btn btn-block" onclick="addScore(2)">Withdrawn with 4+ cards left</button>
+            <button class="btn btn-block" onclick="addScore(3)">Withdrawn with 2-3 cards left</button>
+            <button class="btn btn-block" onclick="addScore(4)">Withdrawn with 1 card left</button>
+            <button class="btn btn-block" onclick="addScore(6)">Withdrawn with 0 cards left</button>
+            
+            <button class="btn btn-block" onclick="document.getElementById('scoringStep2').classList.add('hidden'); document.getElementById('scoringStep1').classList.remove('hidden');" style="margin-top:20px; border:none; background:transparent;">Back</button>
+        </div>
+        
+        <button class="btn btn-block" onclick="document.getElementById('endRoundModal').classList.add('hidden')" style="margin-top:30px; border-color:var(--seal); color:var(--seal);">Cancel</button>
+    </div>
+</div>
+
+<style>
+.order-badge { position:absolute; top:-8px; right:-8px; background:var(--seal); color:#fff; width:22px; height:22px; border-radius:50%; font-size:12px; display:flex; align-items:center; justify-content:center; border:2px solid #000; display:none; font-family:sans-serif; }
+.th-btn { position:relative; }
+.th-btn.active .order-badge { display:flex; }
+.mini-card { width:100%; aspect-ratio:2/3; border:2px solid #000; border-radius:4px; font-family:sans-serif; display:flex; flex-direction:column; background-color:#222; position:relative; overflow:hidden; cursor:pointer; user-select:none; }
+.mini-card .header { background:var(--bg); color:#fff; font-weight:900; font-size:1.1em; padding:2px 4px; display:flex; align-items:center; justify-content:center; border-bottom:2px solid #000; }
+.mini-card .name { font-size:0.6em; text-align:center; padding:4px 2px; font-weight:bold; color:#fff; text-transform:uppercase; line-height:1.1; }
+.mini-card.facedown { background:repeating-linear-gradient(45deg, #2b2b2b, #2b2b2b 5px, #444 5px, #444 10px); border-color:#222; }
+.mini-card.facedown * { display:none; }
+.mini-card.facedown::after { content:'2'; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#fff; font-size:2em; font-weight:900; text-shadow:0 2px 4px rgba(0,0,0,0.8); }
+</style>
 
 <script>
 const DB = [
-  { id:'a1', th:'air', v:1, name_en:'Support', name_pt:'Apoio', txt_en:'You gain +3 strength in each adjacent theater.', txt_pt:'Você ganha +3 de força em cada teatro adjacente.' },
-  { id:'a2', th:'air', v:2, name_en:'Air Drop', name_pt:'Lançamento Aéreo', txt_en:'On your next turn, you may play a card to a non-matching theater.', txt_pt:'No seu próximo turno, você pode jogar uma carta em um teatro não correspondente.' },
-  { id:'a3', th:'air', v:3, name_en:'Maneuver', name_pt:'Manobra', txt_en:'Flip a card in an adjacent theater.', txt_pt:'Vire uma carta em um teatro adjacente.' },
-  { id:'a4', th:'air', v:4, name_en:'Aerodrome', name_pt:'Aeródromo', txt_en:'You may play cards of strength 3 or less to non-matching theaters.', txt_pt:'Você pode jogar cartas de força 3 ou menos em teatros não correspondentes.' },
-  { id:'a5', th:'air', v:5, name_en:'Containment', name_pt:'Contenção', txt_en:'If either player plays a card face down, immediately discard that card.', txt_pt:'Se qualquer jogador jogar uma carta virada para baixo, descarte-a imediatamente.' },
-  { id:'a6', th:'air', v:6, name_en:'Heavy Bombers', name_pt:'Bombardeiros Pesados', txt_en:'', txt_pt:'' },
-  { id:'l1', th:'land', v:1, name_en:'Reinforce', name_pt:'Reforço', txt_en:'Look at the top card of the deck. You may play it facedown in an adjacent theater.', txt_pt:'Olhe a carta do topo do baralho. Você pode jogá-la virada para baixo em um teatro adjacente.' },
-  { id:'l2', th:'land', v:2, name_en:'Ambush', name_pt:'Emboscada', txt_en:'Flip a card in any theater.', txt_pt:'Vire uma carta em qualquer teatro.' },
-  { id:'l3', th:'land', v:3, name_en:'Maneuver', name_pt:'Manobra', txt_en:'Flip a card in an adjacent theater.', txt_pt:'Vire uma carta em um teatro adjacente.' },
-  { id:'l4', th:'land', v:4, name_en:'Covered Fire', name_pt:'Fogo de Cobertura', txt_en:'All cards covered by this card are now strength 4.', txt_pt:'Todas as cartas cobertas por esta carta agora têm força 4.' },
-  { id:'l5', th:'land', v:5, name_en:'Disrupt', name_pt:'Perturbar', txt_en:'Your enemy chooses and flips 1 of their cards. Then you flip 1 of yours.', txt_pt:'Seu inimigo escolhe e vira 1 das cartas dele. Então você vira 1 das suas.' },
-  { id:'l6', th:'land', v:6, name_en:'Heavy Tanks', name_pt:'Tanques Pesados', txt_en:'', txt_pt:'' },
-  { id:'s1', th:'sea', v:1, name_en:'Transport', name_pt:'Transporte', txt_en:'You may move 1 of your cards to a different theater.', txt_pt:'Você pode mover 1 das suas cartas para um teatro diferente.' },
-  { id:'s2', th:'sea', v:2, name_en:'Escalation', name_pt:'Escalada', txt_en:'All of your facedown cards are now strength 4.', txt_pt:'Todas as suas cartas viradas para baixo agora têm força 4.' },
-  { id:'s3', th:'sea', v:3, name_en:'Maneuver', name_pt:'Manobra', txt_en:'Flip a card in an adjacent theater.', txt_pt:'Vire uma carta em um teatro adjacente.' },
-  { id:'s4', th:'sea', v:4, name_en:'Redeploy', name_pt:'Reposicionar', txt_en:'You may return 1 of your facedown cards to your hand to gain 1 extra turn.', txt_pt:'Você pode retornar 1 carta sua virada para baixo para sua mão para ganhar 1 turno extra.' },
-  { id:'s5', th:'sea', v:5, name_en:'Blockade', name_pt:'Bloqueio', txt_en:'If a card is played in an adjacent theater with 3 or more cards already in it, discard that card with no effect.', txt_pt:'Se uma carta for jogada em um teatro adjacente com 3 ou mais cartas já nele, descarte-a sem efeito.' },
-  { id:'s6', th:'sea', v:6, name_en:'Super Battleships', name_pt:'Super Encouraçados', txt_en:'', txt_pt:'' },
-  { id:'e1', th:'econ', v:1, name_en:'Retrofit', name_pt:'Retrofit', txt_en:'Choose 1 of your uncovered cards in any theater. Gain supplies equal to its strength. Then flip the card.', txt_pt:'Escolha 1 carta sua descoberta. Ganhe suprimentos iguais à força dela. Então vire a carta.' },
-  { id:'e2', th:'econ', v:2, name_en:'Supply Lines', name_pt:'Linhas de Suprimento', txt_en:'On your turn, you may play to a non-matching theater. Your enemy gains 1 supply there.', txt_pt:'No seu turno, você pode jogar num teatro não correspondente. Seu inimigo ganha 1 suprimento lá.' },
-  { id:'e3', th:'econ', v:3, name_en:'Manipulate', name_pt:'Manipular', txt_en:'Flip an uncovered card in an adjacent theater.', txt_pt:'Vire uma carta descoberta em um teatro adjacente.' },
-  { id:'e4', th:'econ', v:4, name_en:'Requisition', name_pt:'Requisição', txt_en:'You may reveal a card to gain 2 supplies in that card’s theater.', txt_pt:'Você pode revelar uma carta para ganhar 2 suprimentos no teatro daquela carta.' },
-  { id:'e5', th:'econ', v:5, name_en:'Arms Race', name_pt:'Corrida Armamentista', txt_en:'Gain 2 supplies in any theater. Then enemy chooses a different theater and gains 2 supplies there.', txt_pt:'Ganhe 2 suprimentos em qualquer teatro. Então seu inimigo escolhe um teatro diferente e ganha 2 suprimentos lá.' },
-  { id:'e6', th:'econ', v:6, name_en:'Production Surge', name_pt:'Aumento de Produção', txt_en:'', txt_pt:'' },
-  { id:'d1', th:'diplo', v:1, name_en:'Relinquish', name_pt:'Renunciar', txt_en:'You may destroy 1 of your other cards to destroy any uncovered card.', txt_pt:'Você pode destruir 1 de suas outras cartas para destruir qualquer carta descoberta.' },
-  { id:'d2', th:'diplo', v:2, name_en:'Envoy', name_pt:'Enviado', txt_en:'After you play a card in an adjacent theater, you may move this card to cover it.', txt_pt:'Depois de jogar uma carta em um teatro adjacente, você pode mover esta carta para cobri-la.' },
-  { id:'d3', th:'diplo', v:3, name_en:'Maneuver', name_pt:'Manobra', txt_en:'Flip a card in an adjacent theater.', txt_pt:'Vire uma carta em um teatro adjacente.' },
-  { id:'d4', th:'diplo', v:4, name_en:'Leverage', name_pt:'Alavancagem', txt_en:'You may reveal a card to flip an uncovered card lower than or equal to your revealed card.', txt_pt:'Você pode revelar uma carta para virar uma carta descoberta de força menor ou igual à revelada.' },
-  { id:'d5', th:'diplo', v:5, name_en:'Give & Take', name_pt:'Dar e Receber', txt_en:'Draw 1 card. Give it to enemy and draw another, OR keep it and enemy draws 1.', txt_pt:'Compre 1 carta. Dê ao inimigo e compre outra, OU fique com ela e o inimigo compra 1.' },
-  { id:'d6', th:'diplo', v:6, name_en:'Grand Betrayal', name_pt:'Grande Traição', txt_en:'', txt_pt:'' },
-  { id:'i1', th:'intel', v:1, name_en:'Incite', name_pt:'Incitar', txt_en:'Use any uncovered card’s instant ability as if it were on this card.', txt_pt:'Use a habilidade instantânea de qualquer carta descoberta como se estivesse nesta carta.' },
-  { id:'i2', th:'intel', v:2, name_en:'Spy Network', name_pt:'Rede de Espiões', txt_en:'For each of your facedown cards in adjacent theaters, gain +3 strength here.', txt_pt:'Para cada carta sua virada para baixo em teatros adjacentes, ganhe +3 de força neste teatro.' },
-  { id:'i3', th:'intel', v:3, name_en:'Maneuver', name_pt:'Manobra', txt_en:'Flip a card in an adjacent theater.', txt_pt:'Vire uma carta em um teatro adjacente.' },
-  { id:'i4', th:'intel', v:4, name_en:'Neutralize', name_pt:'Neutralizar', txt_en:'Name a card. If in enemy’s hand, they must reveal it and play it facedown next time.', txt_pt:'Nomeie uma carta. Se estiver na mão do inimigo, ele revela e joga-a virada para baixo na próxima jogada.' },
-  { id:'i5', th:'intel', v:5, name_en:'Surveil', name_pt:'Vigiar', txt_en:'Enemy must reveal a card. You may reveal a lower card to flip any uncovered faceup card.', txt_pt:'Inimigo revela uma carta. Você pode revelar uma carta menor para virar qualquer carta virada para cima descoberta.' },
-  { id:'i6', th:'intel', v:6, name_en:'Covert Operations', name_pt:'Operações Secretas', txt_en:'', txt_pt:'' }
+  { id:'a1', th:'air', v:1, name:'Support', txt:'You gain +3 strength in each adjacent theater.' },
+  { id:'a2', th:'air', v:2, name:'Air Drop', txt:'On your next turn, you may play a card to a non-matching theater.' },
+  { id:'a3', th:'air', v:3, name:'Maneuver', txt:'Flip a card in an adjacent theater.' },
+  { id:'a4', th:'air', v:4, name:'Aerodrome', txt:'You may play cards of strength 3 or less to non-matching theaters.' },
+  { id:'a5', th:'air', v:5, name:'Containment', txt:'If either player plays a card face down, immediately discard that card.' },
+  { id:'a6', th:'air', v:6, name:'Heavy Bombers', txt:'' },
+  { id:'l1', th:'land', v:1, name:'Reinforce', txt:'Look at the top card of the deck. You may play it facedown in an adjacent theater.' },
+  { id:'l2', th:'land', v:2, name:'Ambush', txt:'Flip a card in any theater.' },
+  { id:'l3', th:'land', v:3, name:'Maneuver', txt:'Flip a card in an adjacent theater.' },
+  { id:'l4', th:'land', v:4, name:'Covered Fire', txt:'All cards covered by this card are now strength 4.' },
+  { id:'l5', th:'land', v:5, name:'Disrupt', txt:'Your enemy chooses and flips 1 of their cards. Then you flip 1 of yours.' },
+  { id:'l6', th:'land', v:6, name:'Heavy Tanks', txt:'' },
+  { id:'s1', th:'sea', v:1, name:'Transport', txt:'You may move 1 of your cards to a different theater.' },
+  { id:'s2', th:'sea', v:2, name:'Escalation', txt:'All of your facedown cards are now strength 4.' },
+  { id:'s3', th:'sea', v:3, name:'Maneuver', txt:'Flip a card in an adjacent theater.' },
+  { id:'s4', th:'sea', v:4, name:'Redeploy', txt:'You may return 1 of your facedown cards to your hand to gain 1 extra turn.' },
+  { id:'s5', th:'sea', v:5, name:'Blockade', txt:'If a card is played in an adjacent theater with 3 or more cards already in it, discard that card with no effect.' },
+  { id:'s6', th:'sea', v:6, name:'Super Battleships', txt:'' },
+  { id:'e1', th:'econ', v:1, name:'Retrofit', txt:'Choose 1 of your uncovered cards in any theater. Gain supplies equal to its strength. Then flip the card.' },
+  { id:'e2', th:'econ', v:2, name:'Supply Lines', txt:'On your turn, you may play to a non-matching theater. Your enemy gains 1 supply there.' },
+  { id:'e3', th:'econ', v:3, name:'Manipulate', txt:'Flip an uncovered card in an adjacent theater.' },
+  { id:'e4', th:'econ', v:4, name:'Requisition', txt:'You may reveal a card to gain 2 supplies in that card’s theater.' },
+  { id:'e5', th:'econ', v:5, name:'Arms Race', txt:'Gain 2 supplies in any theater. Then enemy chooses a different theater and gains 2 supplies there.' },
+  { id:'e6', th:'econ', v:6, name:'Production Surge', txt:'' },
+  { id:'d1', th:'diplo', v:1, name:'Relinquish', txt:'You may destroy 1 of your other cards to destroy any uncovered card.' },
+  { id:'d2', th:'diplo', v:2, name:'Envoy', txt:'After you play a card in an adjacent theater, you may move this card to cover it.' },
+  { id:'d3', th:'diplo', v:3, name:'Maneuver', txt:'Flip a card in an adjacent theater.' },
+  { id:'d4', th:'diplo', v:4, name:'Leverage', txt:'You may reveal a card to flip an uncovered card lower than or equal to your revealed card.' },
+  { id:'d5', th:'diplo', v:5, name:'Give & Take', txt:'Draw 1 card. Either give it to enemy and draw another, OR keep it and enemy draws 1.' },
+  { id:'d6', th:'diplo', v:6, name:'Grand Betrayal', txt:'' },
+  { id:'i1', th:'intel', v:1, name:'Incite', txt:'Use any uncovered card’s instant ability as if it were on this card.' },
+  { id:'i2', th:'intel', v:2, name:'Spy Network', txt:'For each of your facedown cards in adjacent theaters, gain +3 strength here.' },
+  { id:'i3', th:'intel', v:3, name:'Maneuver', txt:'Flip a card in an adjacent theater.' },
+  { id:'i4', th:'intel', v:4, name:'Neutralize', txt:'Name a card. If in enemy’s hand, they must reveal it and play it facedown next time.' },
+  { id:'i5', th:'intel', v:5, name:'Surveil', txt:'Enemy must reveal a card. You may reveal a lower card to flip any uncovered faceup card.' },
+  { id:'i6', th:'intel', v:6, name:'Covert Operations', txt:'' }
 ];
 
 const DICT = {
@@ -297,7 +382,9 @@ const DICT = {
     stampSetup: "Altamente Secreto",
     stampActive: "Em Campo",
     setupPhysicalTitle: "Configuração Física",
-    setupTitle1: "1. Teatros Ativos",
+    setupTitle1: "1. Ordem dos Teatros (Esq. para Dir.)",
+    setupThDesc: "Selecione os 3 teatros na ordem em que estão posicionados na sua mesa, da Esquerda para a Direita.",
+    btnClearTh: "Limpar Ordem",
     setupTitle2: "2. Sua Mão Inicial",
     setupHandDesc: "Selecione as 6 cartas que você comprou. O simulador processará as cartas restantes para a IA inimiga.",
     selected: "Selecionadas",
@@ -310,7 +397,7 @@ const DICT = {
     statsTitle: "Inteligência de Dificuldade",
     statsDesc: "Se o inimigo precisar de reforços, marque os teatros perdidos para liberar cartas bônus.",
     statLostTheatres: "Teatros Perdidos",
-    btnNewGame: "Abortar Missão (Resetar)",
+    btnNewGame: "Abortar Missão",
     btnEnhanceDraw: "Posicionar Carta Bônus",
     setupPhys1: "Coloque as 3 cartas de Teatro no centro da mesa.",
     setupPhys2: "Embaralhe as cartas restantes (Base + Expansões escolhidas) em um baralho de 15 cartas.",
@@ -321,9 +408,9 @@ const DICT = {
     pri_auto_title: "Ordens da IA (Autônomo)",
     pri_semi_title: "Ordens da IA (Semiautônomo)",
     pri_play: "<b>1. Posicionamento:</b> Tente colocar esta carta no teatro {th}.",
-    pri_withdraw: "<b>2. Recuar:</b> Se esta for a 4ª carta da IA no teatro de {th}, ela <b>RECUA</b> a não ser que esta habilidade evite.",
+    pri_withdraw: "<b>2. Recuar:</b> Se esta for a 4ª carta da IA no teatro {th}, ela <b>RECUA</b> a não ser que esta habilidade evite.",
     pri_choice: "<b>Alvo:</b> 1º Adj. à Direita, 2º Adj. à Esquerda, 3º Mesmo teatro, 4º Não adjacente.",
-    pri_flip: "<b>Virar:</b> FD deles p/ FU > FU sua p/ FD > FD sua p/ FU > FU deles p/ FD.",
+    pri_flip: "<b>Virar:</b> Face Down deles > Face Up sua > Face Down sua > Face Up deles.",
     pri_general: "<b>3. Habilidade Instantânea:</b> Resolva o efeito se possível. Se houver escolha, dê a maior vantagem possível para a IA.",
     pri_no_effect: "Sem efeito instantâneo.",
     pri_semi_text: "<b>3. Comando Tático:</b> Resolva o efeito tomando a melhor decisão a favor da IA (leia 'pode' como 'deve').",
@@ -336,7 +423,9 @@ const DICT = {
     stampSetup: "Top Secret",
     stampActive: "Live",
     setupPhysicalTitle: "Physical Setup",
-    setupTitle1: "1. Active Theaters",
+    setupTitle1: "1. Theater Order (Left to Right)",
+    setupThDesc: "Select the 3 theaters in order from Left to Right as placed on your table.",
+    btnClearTh: "Reset Order",
     setupTitle2: "2. Your Starting Hand",
     setupHandDesc: "Select the 6 cards you drew. The simulator will compile the remaining cards for the enemy AI.",
     selected: "Selected",
@@ -349,7 +438,7 @@ const DICT = {
     statsTitle: "Difficulty Intel",
     statsDesc: "If the enemy needs reinforcements, track lost theatres to trigger bonus deployments.",
     statLostTheatres: "Theatres Lost",
-    btnNewGame: "Abort Mission (Reset)",
+    btnNewGame: "Abort Mission",
     btnEnhanceDraw: "Deploy Bonus Card",
     setupPhys1: "Place the 3 Theater cards in the center of the table.",
     setupPhys2: "Shuffle the remaining cards (Base + chosen Expansions) into a deck of 15 cards.",
@@ -362,7 +451,7 @@ const DICT = {
     pri_play: "<b>1. Placement:</b> Play to the {th} theater.",
     pri_withdraw: "<b>2. Withdraw:</b> If this is the 4th card on their side of {th}, they <b>WITHDRAW</b> instead (unless this ability averts it).",
     pri_choice: "<b>3. Target Choice:</b> Target priority: 1st Adj Right, 2nd Adj Left, 3rd Matching, 4th Non-Adj.",
-    pri_flip: "<b>4. Flip Priority:</b> Their FD to FU &gt; Your FU to FD &gt; Your FD to FU &gt; Their FU to FD.",
+    pri_flip: "<b>4. Flip Priority:</b> Their Face Down to Face Up &gt; Your Face Up to Face Down &gt; Your Face Down to Face Up &gt; Their Face Up to Face Down.",
     pri_general: "<b>3. Instant Ability:</b> Resolve the effect if possible. If a choice is needed, prioritize giving the AI the biggest advantage.",
     pri_no_effect: "No instant effect.",
     pri_semi_text: "<b>3. Tactical Command:</b> Resolve the effect by making the best possible decision for the AI (reads 'may' as 'must').",
@@ -374,12 +463,20 @@ const DICT = {
 
 let currentLang = localStorage.getItem('boardbots_lang') || 'en';
 let mode = 'auto';
-let selectedTheaters = ['air', 'land', 'sea'];
+let selectedTheaters = [];
 let playerHand = [];
 let botDeck = [];
 let outOfGameDeck = [];
 let theatresLost = 0;
 let botCardsPlayed = 0;
+
+let tableau = [[], [], []];
+
+let scorePlayer = 0;
+let scoreAI = 0;
+let roundWinner = null;
+let currentPendingCard = null;
+let currentPendingFacedown = false;
 
 function setLang(lang) {
   currentLang = lang;
@@ -391,7 +488,13 @@ function setLang(lang) {
     const key = el.getAttribute('data-i18n');
     if (DICT[lang][key]) el.innerHTML = DICT[lang][key];
   });
-  renderHandSelector();
+  
+  if (document.getElementById('setup-screen').classList.contains('hidden') === false) {
+      renderHandSelector();
+      updateTheaterUI();
+  } else {
+      updateTableauUI();
+  }
 }
 
 function setMode(m) {
@@ -400,26 +503,48 @@ function setMode(m) {
   document.getElementById('btnModeSemi').className = 'btn' + (m === 'semi' ? ' active' : '');
 }
 
+function clearTheaters() {
+    selectedTheaters = [];
+    playerHand = [];
+    updateTheaterUI();
+    renderHandSelector();
+}
+
 function toggleTh(th) {
   if (selectedTheaters.includes(th)) {
-    if (selectedTheaters.length <= 3) return;
     selectedTheaters = selectedTheaters.filter(x => x !== th);
   } else {
-    if (selectedTheaters.length >= 3) selectedTheaters.shift();
+    if (selectedTheaters.length >= 3) return;
     selectedTheaters.push(th);
   }
-  
-  document.querySelectorAll('.th-btn').forEach(btn => {
-    btn.classList.toggle('active', selectedTheaters.includes(btn.dataset.id));
-  });
+  updateTheaterUI();
   
   playerHand = [];
   renderHandSelector();
 }
 
+function updateTheaterUI() {
+    document.querySelectorAll('.th-btn').forEach(btn => {
+        const id = btn.dataset.id;
+        const idx = selectedTheaters.indexOf(id);
+        if (idx !== -1) {
+            btn.classList.add('active');
+            btn.querySelector('.order-badge').innerText = idx + 1;
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+}
+
 function renderHandSelector() {
   const area = document.getElementById('handSelectArea');
   area.innerHTML = '';
+  
+  if (selectedTheaters.length < 3) {
+      area.innerHTML = `<p class="text-dim">Select 3 theaters first.</p>`;
+      document.getElementById('btnStart').disabled = true;
+      return;
+  }
   
   const pool = DB.filter(c => selectedTheaters.includes(c.th));
   const grid = document.createElement('div');
@@ -453,6 +578,14 @@ function renderHandSelector() {
 }
 
 function startGame() {
+  initRoundLogic();
+  
+  document.getElementById('setup-screen').classList.add('hidden');
+  document.getElementById('game-area').classList.remove('hidden');
+  document.getElementById('score-header').classList.remove('hidden');
+}
+
+function initRoundLogic() {
   const pool = DB.filter(c => selectedTheaters.includes(c.th));
   let remaining = pool.filter(c => !playerHand.includes(c.id));
   
@@ -463,11 +596,11 @@ function startGame() {
   
   botDeck = remaining.slice(0, 6);
   outOfGameDeck = remaining.slice(6);
-  
-  document.getElementById('setup-screen').classList.add('hidden');
-  document.getElementById('game-area').classList.remove('hidden');
+  botCardsPlayed = 0;
+  tableau = [[], [], []];
   
   renderBotHand();
+  updateTableauUI();
 }
 
 function renderBotHand() {
@@ -478,32 +611,54 @@ function renderBotHand() {
     b.className = 'bot-card-back' + (i < botCardsPlayed ? ' used' : '');
     ui.appendChild(b);
   }
-  document.getElementById('btnDraw').disabled = botCardsPlayed >= 6;
+  const empty = botCardsPlayed >= 6;
+  document.getElementById('btnDraw').disabled = empty;
+  document.getElementById('btnDrawFacedown').disabled = empty;
 }
 
-function drawBotCard() {
+function drawBotCard(facedown = false) {
   if (botCardsPlayed >= botDeck.length) {
     alert(DICT[currentLang].bot_out_of_cards);
     return;
   }
-  const card = botDeck[botCardsPlayed];
+  currentPendingCard = botDeck[botCardsPlayed];
+  currentPendingFacedown = facedown;
+  
   botCardsPlayed++;
   renderBotHand();
-  displayCard(card);
+  
+  displayCardPrompt(currentPendingCard, facedown);
 }
 
 function drawEnhancement() {
   if (outOfGameDeck.length === 0) return;
-  const card = outOfGameDeck.pop();
-  displayCard(card, true);
+  currentPendingCard = outOfGameDeck.pop();
+  currentPendingFacedown = false;
+  displayCardPrompt(currentPendingCard, false, true);
 }
 
-function displayCard(card, isEnhancement = false) {
+function displayCardPrompt(card, facedown, isEnhancement = false) {
+  const modal = document.getElementById('activePlayArea');
   const playArea = document.getElementById('playArea');
-  playArea.classList.remove('hidden');
+  const pBox = document.getElementById('priorityBox');
+  modal.classList.remove('hidden');
   
-  const name = currentLang === 'pt' ? card.name_pt : card.name_en;
-  const text = currentLang === 'pt' ? card.txt_pt : card.txt_en;
+  for(let i=0; i<3; i++) {
+      document.getElementById('btnPlace'+i).innerText = `Place in ${DICT[currentLang]['th_' + selectedTheaters[i]]}`;
+  }
+
+  if (facedown) {
+      playArea.innerHTML = `
+        <div class="playing-card" style="border-color: #444; background:repeating-linear-gradient(45deg, #2b2b2b, #2b2b2b 5px, #444 5px, #444 10px);">
+            <div style="flex:1; display:flex; align-items:center; justify-content:center; color:#fff; font-size:6em; font-weight:900;">2</div>
+        </div>
+      `;
+      pBox.innerHTML = `<h4 style="color:#fff;"><span class="dog-tag">Face Down Card</span></h4><p style="color:#bbb;">Select where the bot will place this Face Down card.</p>`;
+      return;
+  }
+  
+  const name = card.name;
+  const text = card.txt;
   const thName = DICT[currentLang]['th_'+card.th];
   
   playArea.innerHTML = `
@@ -522,16 +677,13 @@ function displayCard(card, isEnhancement = false) {
     </div>
   `;
   
-  const pBox = document.getElementById('priorityBox');
-  pBox.classList.remove('hidden');
-  
   if (isEnhancement) {
-      pBox.innerHTML = `<h4><span class="dog-tag">Bonus Deployment</span></h4><p style="margin:8px 0 0">Enemy plays this card without restriction. Ignore secondary effects.</p>`;
+      pBox.innerHTML = `<h4><span class="dog-tag">Bonus Deployment</span></h4><p style="margin:8px 0 0; color:#fff;">Enemy plays this card without restriction. Ignore secondary effects.</p>`;
       return;
   }
   
   let priHtml = '';
-  const txtLow = card.txt_en.toLowerCase();
+  const txtLow = card.txt.toLowerCase();
   
   if (mode === 'auto') {
       priHtml += `<li>${DICT[currentLang].pri_play.replace('{th}', '<b>' + thName + '</b>')}</li>`;
@@ -569,6 +721,41 @@ function displayCard(card, isEnhancement = false) {
   }
 }
 
+function placeCard(colIndex) {
+    document.getElementById('activePlayArea').classList.add('hidden');
+    tableau[colIndex].push({
+        card: currentPendingCard,
+        facedown: currentPendingFacedown
+    });
+    updateTableauUI();
+}
+
+function updateTableauUI() {
+    for (let i=0; i<3; i++) {
+        document.getElementById('colName-'+i).innerText = DICT[currentLang]['th_' + selectedTheaters[i]];
+        const colDiv = document.getElementById('colCards-'+i);
+        colDiv.innerHTML = '';
+        
+        tableau[i].forEach((item, idx) => {
+            const el = document.createElement('div');
+            el.className = 'mini-card' + (item.facedown ? ' facedown' : '');
+            el.style.borderColor = 'var(--th-' + item.card.th + ')';
+            
+            el.innerHTML = `
+                <div class="header" style="background:var(--th-${item.card.th})">${item.card.v}</div>
+                <div class="name">${item.card.name}</div>
+            `;
+            
+            el.onclick = () => {
+                item.facedown = !item.facedown;
+                updateTableauUI();
+            };
+            
+            colDiv.appendChild(el);
+        });
+    }
+}
+
 function adjustTheatres(delta) {
   theatresLost += delta;
   if (theatresLost < 0) theatresLost = 0;
@@ -586,11 +773,46 @@ function adjustTheatres(delta) {
   }
 }
 
-// Init
-document.querySelectorAll('.th-btn').forEach(btn => {
-  btn.classList.toggle('active', selectedTheaters.includes(btn.dataset.id));
-});
-renderHandSelector();
+function endRound() {
+    document.getElementById('endRoundModal').classList.remove('hidden');
+    document.getElementById('scoringStep1').classList.remove('hidden');
+    document.getElementById('scoringStep2').classList.add('hidden');
+}
+
+function selectWinner(w) {
+    roundWinner = w;
+    document.getElementById('scoringStep1').classList.add('hidden');
+    document.getElementById('scoringStep2').classList.remove('hidden');
+}
+
+function addScore(pts) {
+    if (roundWinner === 'player') scorePlayer += pts;
+    else scoreAI += pts;
+    
+    document.getElementById('scorePlayer').innerText = scorePlayer;
+    document.getElementById('scoreAI').innerText = scoreAI;
+    
+    if (scorePlayer >= 12) {
+        alert("Victory! You reached 12 points.");
+    } else if (scoreAI >= 12) {
+        alert("Defeat! The AI reached 12 points.");
+    }
+    
+    document.getElementById('endRoundModal').classList.add('hidden');
+    
+    // Shift theaters
+    if (selectedTheaters.length === 3) {
+        const rightMost = selectedTheaters.pop();
+        selectedTheaters.unshift(rightMost);
+        updateTheaterUI();
+    }
+    
+    playerHand = [];
+    document.getElementById('game-area').classList.add('hidden');
+    document.getElementById('setup-screen').classList.remove('hidden');
+    renderHandSelector();
+}
+
 setLang(currentLang);
 </script>
 </body>
