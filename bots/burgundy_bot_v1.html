@@ -278,6 +278,19 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
         
         <div class="turn-summary" id="turnSummary"></div>
         <button class="copy-btn" id="copyBtn" onclick="copySummary()" data-i18n="copyInstructions">📋 Copiar Instruções</button>
+
+        <!-- Silverling Tracker -->
+        <div id="silverlingTracker" style="margin-top:16px; background:rgba(197,160,89,0.12); border:1px solid rgba(197,160,89,0.4); border-radius:8px; padding:12px;">
+            <div style="font-family:var(--font-display); font-size:0.85em; font-weight:700; color:var(--burgundy-dark); margin-bottom:8px;" data-i18n="silverlingTitle">🪙 Peças de Prata</div>
+            <div style="display:flex; gap:10px; align-items:center;">
+                <button class="stepper-btn" onclick="changeSilverlings(-1)">−</button>
+                <span id="silverlingCount" style="font-family:var(--font-display); font-size:1.4em; font-weight:700; color:var(--burgundy-dark); min-width:32px; text-align:center;">0</span>
+                <button class="stepper-btn" onclick="changeSilverlings(1)">+</button>
+            </div>
+            <div id="autoBuyPrompt" style="display:none; margin-top:10px; padding:8px; background:rgba(197,160,89,0.25); border-radius:4px; font-size:0.85em; color:var(--burgundy-dark); font-weight:600;" data-i18n="autoBuyPrompt">
+                ⚡ 2+ peças de prata! Gaste 2 para comprar 1 peça do Depósito Paralelo (priorize a cor que falta).
+            </div>
+        </div>
     </div>
     
     <div>
@@ -300,10 +313,8 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
         
         <div class="panel board-section">
             <h2 data-i18n="botReserve">Reserva do AutoDuque</h2>
-            <p id="boardTip" style="font-size:0.85em;color:#666;margin-top:0;" data-i18n="boardTip">Clique na imagem para adicionar tokens onde as peças já foram colocadas.</p>
-            <div class="image-container" id="slotBoard">
-                <img src="../assets/art/burgundy_cards/board_front.jpg" alt="Bot Board">
-            </div>
+            <p id="boardTip" style="font-size:0.85em;color:#666;margin-top:0;" data-i18n="boardTip">Clique nos hexágonos da reserva para marcar/desmarcar peças adquiridas.</p>
+            <div id="reserveHexGrid" style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center; padding:10px 4px;"></div>
         </div>
 
         <div class="deck-status" id="deckStatus"></div>
@@ -582,7 +593,14 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
             summaryEnd: "<strong>⚡ Ao final do turno:</strong> Se o AutoDuque terminar com 2 ou mais peças de prata, ele gasta 2 para comprar 1 peça do Depósito Paralelo (priorize a cor que falta na reserva).",
             botDecision: "<strong>Decisão do AutoDuque:</strong><br><br>",
             leftCardName: "CARTA DE VILA ESQUERDA (1–4)",
-            rightCardName: "CARTA DE VILA DIREITA (5–6)"
+            rightCardName: "CARTA DE VILA DIREITA (5–6)",
+            silverlingTitle: "🪙 Peças de Prata",
+            autoBuyPrompt: "⚡ 2+ peças de prata! Gaste 2 para comprar 1 peça do Depósito Paralelo (priorize a cor que falta na reserva).",
+            scoringCompletedHeader: "Cartas Completadas",
+            scoringVPLabel: "PV",
+            scoringTotalLabel: "Total das Cartas",
+            cardLabel: "Carta {id}",
+            depotOrderLabel: "Ordem dos Depósitos (↻ Horário):"
         },
         en: {
             pageTitle: "Castles of Burgundy — AutoDuque Bot",
@@ -622,7 +640,7 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
             rightCard: "Right Estate Card (5-6)",
             completeCard: "Complete Card",
             botReserve: "AutoDuque Reserve",
-            boardTip: "Click on the image to add tokens where tiles have already been placed.",
+            boardTip: "Click reserve hexes to mark/unmark tiles obtained.",
             completedCards: "Completed Cards",
             endGame: "🏁 End Game and Score",
             rulesTitle: "📜 Rules — AutoDuque",
@@ -672,7 +690,14 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
             summaryEnd: "<strong>⚡ At the end of turn:</strong> If AutoDuque ends with 2 or more silverlings, it spends 2 to buy 1 tile from the Black Market (prioritize missing color in reserve).",
             botDecision: "<strong>AutoDuque Decision:</strong><br><br>",
             leftCardName: "LEFT ESTATE CARD (1–4)",
-            rightCardName: "RIGHT ESTATE CARD (5–6)"
+            rightCardName: "RIGHT ESTATE CARD (5–6)",
+            silverlingTitle: "🪙 Silverlings",
+            autoBuyPrompt: "⚡ 2+ silverlings! Spend 2 to buy 1 tile from the Black Market (prioritize missing color in reserve).",
+            scoringCompletedHeader: "Completed Cards",
+            scoringVPLabel: "VP",
+            scoringTotalLabel: "Total Cards",
+            cardLabel: "Card {id}",
+            depotOrderLabel: "Depot Search Order (↻ Clockwise):"
         }
     };
 
@@ -689,13 +714,13 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
     function applyI18n() {
         document.querySelectorAll('[data-i18n]').forEach(el => {
             const key = el.getAttribute('data-i18n');
-            if (el.tagName === 'INPUT' && el.type === 'placeholder') {
+            if (el.tagName === 'INPUT' && el.hasAttribute('placeholder')) {
                 el.placeholder = t(key);
             } else {
                 el.innerHTML = t(key);
             }
         });
-        document.documentElement.lang = currentLang;
+        document.documentElement.lang = currentLang === 'pt' ? 'pt-BR' : 'en';
     }
 
     window.toggleLanguage = function() {
@@ -704,59 +729,79 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
         applyI18n();
         updateUI(); 
         updateManualColorLabel();
+        renderReserveBoard();
     };
 
     const CARD_VP={1:[8,12,16],2:[14,18,22],3:[14,18,22],4:[17,21,25],5:[14,18,22],6:[14,18,22],7:[17,21,25],8:[14,18,22],9:[14,18,22]};
     const LS_KEY='burgundy_bot_v2';
+
+    const RESERVE_COLORS = ['#3498db','#1b5e20','#f1c40f','#7f8c8d','#2ecc71','#8d6e63','#9b59b6','#222222'];
+    const RESERVE_NAMES_PT = ['Azul (Navio)','Verde (Castelo)','Amarelo (Monastério)','Cinza (Mina)','Verde-claro (Animais)','Marrom (Construções)','Roxo (Especial)','★ Curinga'];
+    const RESERVE_NAMES_EN = ['Blue (Ship)','Green (Castle)','Yellow (Monastery)','Gray (Mine)','Light Green (Animals)','Brown (Buildings)','Purple (Special)','★ Wildcard'];
 
     let diceBox=null,diceBoxReady=false,isRolling=false;
     let deck=[1,2,3,4,5,6,7,8,9],discard=[],leftCard=null,rightCard=null;
     let setupComplete=false,completedCards=[];
     let diceMode='manual',boardMode='virtual',difficulty=0;
     let manualBot=1,manualWhite=1;
+    let silverlings = 0;
+    let reserveSlots = Array(8).fill(null).map(() => ({ filled: false }));
 
-    function saveState(){try{localStorage.setItem(LS_KEY,JSON.stringify({deck,discard,leftCard,rightCard,setupComplete,completedCards,diceMode,boardMode,difficulty}));}catch(e){}}
+    function saveState(){
+        try{
+            localStorage.setItem(LS_KEY,JSON.stringify({
+                deck,discard,leftCard,rightCard,setupComplete,completedCards,
+                diceMode,boardMode,difficulty,silverlings,reserveSlots
+            }));
+        }catch(e){}
+    }
 
     function loadState(){
         try{
             const raw=localStorage.getItem(LS_KEY);
             if(!raw)return false;
             const s=JSON.parse(raw);
-            deck=s.deck??[1,2,3,4,5,6,7,8,9];discard=s.discard??[];leftCard=s.leftCard??null;rightCard=s.rightCard??null;
-            setupComplete=s.setupComplete??false;completedCards=s.completedCards??[];
-            diceMode=s.diceMode??'manual';boardMode=s.boardMode??'virtual';difficulty=s.difficulty??0;
+            deck=s.deck??[1,2,3,4,5,6,7,8,9];
+            discard=s.discard??[];
+            leftCard=s.leftCard??null;
+            rightCard=s.rightCard??null;
+            setupComplete=s.setupComplete??false;
+            completedCards=s.completedCards??[];
+            diceMode=s.diceMode??'manual';
+            boardMode=s.boardMode??'virtual';
+            difficulty=s.difficulty??0;
+            silverlings=s.silverlings??0;
+            reserveSlots=s.reserveSlots??Array(8).fill(null).map(()=>({filled:false}));
             return true;
         }catch(e){return false;}
     }
 
-        async function initDiceBox() { logEvent("initDiceBox() called. diceBoxReady=" + diceBoxReady);
+    async function initDiceBox() { logEvent("initDiceBox() called. diceBoxReady=" + diceBoxReady);
         if(diceBox)return;
         try{
-            logEvent("Fetching dice-box import..."); const{default:DiceBox}=await import('https://unpkg.com/@3d-dice/dice-box@1.1.3/dist/dice-box.es.min.js');
-            logEvent('DiceBox class imported successfully'); diceBox=new DiceBox({container:'#dice-box',assetPath: 'assets/',origin:'https://unpkg.com/@3d-dice/dice-box@1.1.3/dist/',theme:'default',scale:6,gravity:2.5,friction:0.8,restitution:0.5});
+            const{default:DiceBox}=await import('https://unpkg.com/@3d-dice/dice-box@1.1.3/dist/dice-box.es.min.js');
+            diceBox=new DiceBox({container:'#dice-box',assetPath: 'assets/',origin:'https://unpkg.com/@3d-dice/dice-box@1.1.3/dist/',theme:'default',scale:6,gravity:2.5,friction:0.8,restitution:0.5});
             
-            logEvent('Starting diceBox.init() race...');
             await Promise.race([
                 diceBox.init().then(() => logEvent('diceBox.init() RESOLVED')),
-                new Promise((_, reject) => setTimeout(() => { logEvent('diceBox.init() TIMEOUT reached'); reject(new Error('Timeout')); }, 10000))
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 10000))
             ]);
-            logEvent('Race finished successfully');
     
-            diceBoxReady=true; logEvent("diceBoxReady set to TRUE");
+            diceBoxReady=true;
             diceBox.onRollComplete=(results)=>{
                 isRolling=false;
                 const botVal=results[0]?.value??1,whiteVal=results[1]?.value??1;
                 const hex=document.getElementById('botColor').value;
-                const cName = t(Object.keys(I18N.pt).find(k=>I18N.pt[k]===getColorName(hex)));
+                const cName = t(getColorKey(hex));
                 document.getElementById('diceResult').innerHTML=`<span style="color:${hex}">${cName}: ${botVal}</span>&nbsp;|&nbsp;<span style="color:#666">${t('whiteDie').replace(':','')} ${whiteVal}</span>`;
                 showSummary(botVal,whiteVal);
                 document.getElementById('rollBtn').disabled=false;
             };
-        }catch(err){ logEvent("initDiceBox catch block: " + err.message); diceBoxReady=false; }
+        }catch(err){ diceBoxReady=false; }
     }
 
-    function getColorName(hex) {
-        return {'#d64545':'Vermelho','#4f8cff':'Azul','#3cb371':'Verde','#333333':'Preto'}[hex] || 'Cor';
+    function getColorKey(hex) {
+        return {'#d64545':'red','#4f8cff':'blue','#3cb371':'green','#333333':'black'}[hex] || 'red';
     }
 
     window.startCardSetup = function() {
@@ -786,10 +831,10 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
 
     function updateManualColorLabel(){
         const hex=document.getElementById('botColor').value;
-        const colorKey = Object.keys(I18N.pt).find(k=>I18N.pt[k]===getColorName(hex)) || getColorName(hex);
+        const colorKey = getColorKey(hex);
         document.getElementById('manualColorLabel').textContent = t('colorPrefix', {color: t(colorKey)});
         document.documentElement.style.setProperty('--bot-color', hex);
-        if(typeof updateManualUI === 'function') updateManualUI();
+        updateManualUI();
     }
 
     window.stepDie=function(which,delta){
@@ -822,24 +867,53 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
         boardMode=mode;saveState();
         document.getElementById('btnBoardVirtual').classList.toggle('active',mode==='virtual');
         document.getElementById('btnBoardPhysical').classList.toggle('active',mode==='physical');
-        if(mode==='physical'){
-            document.body.classList.add('physical-board');
-            document.getElementById('boardTip').style.display='none';
-            document.getElementById('slotLeft').onclick=null;
-            document.getElementById('slotRight').onclick=null;
-        }else{
-            document.body.classList.remove('physical-board');
-            document.getElementById('boardTip').style.display='';
-            attachTokenListeners();
-        }
+        renderReserveBoard();
     };
+
+    window.changeSilverlings = function(delta) {
+        silverlings = Math.max(0, silverlings + delta);
+        document.getElementById('silverlingCount').textContent = silverlings;
+        const promptEl = document.getElementById('autoBuyPrompt');
+        if (promptEl) promptEl.style.display = silverlings >= 2 ? 'block' : 'none';
+        saveState();
+    };
+
+    function renderReserveBoard() {
+        const grid = document.getElementById('reserveHexGrid');
+        if (!grid) return;
+        grid.innerHTML = '';
+        const names = currentLang === 'en' ? RESERVE_NAMES_EN : RESERVE_NAMES_PT;
+
+        reserveSlots.forEach((slot, i) => {
+            const isWild = i === 7;
+            const color = RESERVE_COLORS[i];
+            const hex = document.createElement('div');
+            hex.style.cssText = `
+                width: 68px; height: 68px; border-radius: 12px; cursor: ${boardMode==='physical' ? 'default' : 'pointer'};
+                background: ${slot.filled ? color : 'rgba(255,255,255,0.06)'};
+                border: 2px ${isWild ? 'dashed' : 'solid'} ${color};
+                display: flex; flex-direction: column; align-items: center; justify-content: center;
+                color: ${slot.filled ? '#fff' : color}; font-weight: bold; font-size: 0.65em;
+                transition: all 0.2s; user-select: none; text-align: center; line-height: 1.1; padding: 4px;
+            `;
+            hex.innerHTML = `<div style="font-size:1.4em; margin-bottom:2px;">${slot.filled ? '✓' : '○'}</div><div>${names[i]}</div>`;
+            if (boardMode !== 'physical') {
+                hex.onclick = () => {
+                    slot.filled = !slot.filled;
+                    renderReserveBoard();
+                    saveState();
+                };
+            }
+            grid.appendChild(hex);
+        });
+    }
 
     window.handleRollOrConfirm=function(){
         if(!setupComplete)return;
         if(diceMode==='manual'){
             const hex=document.getElementById('botColor').value;
-            const colorKey = Object.keys(I18N.pt).find(k=>I18N.pt[k]===getColorName(hex)) || getColorName(hex);
-            document.getElementById('diceResult').innerHTML=`<span style="color:${hex}">${t(colorKey)}: ${manualBot}</span>&nbsp;|&nbsp;<span style="color:#666">${t('whiteDie').replace(':','')} ${manualWhite}</span>`;
+            const cName = t(getColorKey(hex));
+            document.getElementById('diceResult').innerHTML=`<span style="color:${hex}">${cName}: ${manualBot}</span>&nbsp;|&nbsp;<span style="color:#666">${t('whiteDie').replace(':','')} ${manualWhite}</span>`;
             showSummary(manualBot,manualWhite);return;
         }
         if(isRolling)return;
@@ -847,8 +921,8 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
             const botVal = Math.floor(Math.random() * 6) + 1;
             const whiteVal = Math.floor(Math.random() * 6) + 1;
             const hex = document.getElementById('botColor').value;
-            const colorKey = Object.keys(I18N.pt).find(k=>I18N.pt[k]===getColorName(hex));
-            document.getElementById('diceResult').innerHTML=`<span style="color:${hex}">${t(colorKey)}: ${botVal}</span>&nbsp;|&nbsp;<span style="color:#666">${t('whiteDie').replace(':','')} ${whiteVal}</span>`;
+            const cName = t(getColorKey(hex));
+            document.getElementById('diceResult').innerHTML=`<span style="color:${hex}">${cName}: ${botVal}</span>&nbsp;|&nbsp;<span style="color:#666">${t('whiteDie').replace(':','')} ${whiteVal}</span>`;
             showSummary(botVal, whiteVal);
             return;
         }
@@ -868,9 +942,22 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
         document.getElementById(targetId).style.boxShadow='0 0 0 6px var(--burgundy-gold)';
         const next=botVal===6?1:botVal+1;
         const summary=document.getElementById('turnSummary');
+
+        // Build Depot Search Sequence
+        const depotSeq = [];
+        for (let s = 0; s < 6; s++) {
+            depotSeq.push(((botVal - 1 + s) % 6) + 1);
+        }
+        const depotHTML = depotSeq.map((d, i) =>
+            `<span style="display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:50%; background:${i===0?'var(--burgundy-gold)':'rgba(197,160,89,0.2)'}; color:${i===0?'var(--burgundy-dark)':'#fff'}; font-weight:bold; font-size:0.85em; margin:2px;">${d}</span>`
+        ).join(' → ');
         
         summary.innerHTML= t('botDecision') + `
-            <ol style="margin-top:0;padding-left:20px;line-height:1.8;">
+            <div style="margin-bottom:12px; padding:8px; background:rgba(197,160,89,0.15); border-radius:6px; font-size:0.85em;">
+                <b>${t('depotOrderLabel')}</b><br>
+                <div style="margin-top:6px;">${depotHTML}</div>
+            </div>
+            <ol style="margin-top:0;padding-left:20px;line-height:1.7; font-size:0.9em;">
                 <li>${t('summaryStep1', {whiteVal, cardStr})}</li>
                 <li>${t('summaryStep2', {botVal})}</li>
                 <li>${t('summaryStep3', {next})}</li>
@@ -880,20 +967,9 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
                 <li>${t('summaryStep7')}</li>
             </ol>
             <hr style="border:none;border-top:1px solid rgba(197,160,89,0.4);margin:10px 0;">
-            <span style="color:var(--burgundy-dark);">${t('summaryEnd')}</span>`;
+            <span style="color:var(--burgundy-dark); font-size:0.9em;">${t('summaryEnd')}</span>`;
         summary.classList.add('active');
     }
-
-    window.addToken=function(event,container){
-        if(boardMode==='physical')return;
-        if(event.target.classList.contains('hex-token')){event.target.remove();return;}
-        const rect=container.getBoundingClientRect();
-        const x=((event.clientX-rect.left)/rect.width)*100;
-        const y=((event.clientY-rect.top)/rect.height)*100;
-        const token=document.createElement('div');
-        token.className='hex-token';token.style.left=x+'%';token.style.top=y+'%';
-        container.appendChild(token);
-    };
 
     function shuffle(arr){for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}}
 
@@ -909,7 +985,9 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
         document.getElementById('btnCompleteRight').disabled=false;
         document.getElementById('endGameBtn').style.display='block';
         document.getElementById('rollBtn').disabled=false;
+        document.getElementById('silverlingTracker').style.display='block';
         if (diceMode === '3d') initDiceBox();
+        renderReserveBoard();
         saveState();updateUI();
     };
 
@@ -928,7 +1006,6 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
         if(deck.length>0){rightCard=deck.shift();}
         else if(discard.length>0){deck=[...discard];discard=[];shuffle(deck);rightCard=deck.shift();}
         else{rightCard=null;alert(t('alertCompleted'));}
-        document.querySelectorAll('#slotLeft .hex-token,#slotRight .hex-token').forEach(t=>t.remove());
         saveState();updateUI();
     };
 
@@ -944,6 +1021,9 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
         clearHighlights();
         document.getElementById('turnSummary').classList.remove('active');
         document.getElementById('diceResult').innerHTML=t('waitingRoll');
+        document.getElementById('silverlingCount').textContent = silverlings;
+        const promptEl = document.getElementById('autoBuyPrompt');
+        if (promptEl) promptEl.style.display = silverlings >= 2 ? 'block' : 'none';
     }
 
     function clearHighlights(){
@@ -956,7 +1036,7 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
         const list=document.getElementById('completedCardsList');
         if(completedCards.length===0){section.style.display='none';return;}
         section.style.display='block';
-        list.innerHTML=completedCards.map(c=>`<li>Carta ${c.cardId} &mdash; ${c.vp} PV</li>`).join('');
+        list.innerHTML=completedCards.map(c=>`<li>${t('cardLabel', {id: c.cardId})} &mdash; ${c.vp} ${t('scoringVPLabel')}</li>`).join('');
     }
 
     window.copySummary=function(){
@@ -972,15 +1052,14 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
     window.closeModal=function(id){document.getElementById(id).style.display='none';};
 
     window.openScoringModal=function(){
-        const diff=parseInt(document.getElementById('difficulty').value);
         const totalCards=completedCards.reduce((s,c)=>s+c.vp,0);
-        const rows=completedCards.map(c=>`<tr><td>Carta ${c.cardId}</td><td>${c.vp} PV</td></tr>`).join('')||'<tr><td colspan="2">-</td></tr>';
+        const rows=completedCards.map(c=>`<tr><td>${t('cardLabel', {id: c.cardId})}</td><td>${c.vp} ${t('scoringVPLabel')}</td></tr>`).join('')||'<tr><td colspan="2">-</td></tr>';
         document.getElementById('scoringCardsSummary').innerHTML=`
             <table class="score-table">
-                <thead><tr><th>Cartas Completadas</th><th>PV</th></tr></thead>
+                <thead><tr><th>${t('scoringCompletedHeader')}</th><th>${t('scoringVPLabel')}</th></tr></thead>
                 <tbody>
                     ${rows}
-                    <tr><td><strong>Total das Cartas</strong></td><td><strong>${totalCards} PV</strong></td></tr>
+                    <tr><td><strong>${t('scoringTotalLabel')}</strong></td><td><strong>${totalCards} ${t('scoringVPLabel')}</strong></td></tr>
                 </tbody>
             </table>`;
         calcB();
@@ -1008,17 +1087,8 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
         location.reload();
     };
 
-    function attachTokenListeners(){
-        if(boardMode==='virtual'){
-            document.getElementById('slotLeft').onclick=(e)=>addToken(e,document.getElementById('slotLeft'));
-            document.getElementById('slotRight').onclick=(e)=>addToken(e,document.getElementById('slotRight'));
-            document.getElementById('slotBoard').onclick=(e)=>addToken(e,document.getElementById('slotBoard'));
-        }
-    }
-
     function applySettings(){
         document.getElementById('difficulty').value=difficulty;
-        document.getElementById('botColor').value=document.getElementById('botColor').value;
         document.getElementById('btnDice3D').classList.toggle('active',diceMode==='3d');
         document.getElementById('btnDiceManual').classList.toggle('active',diceMode==='manual');
         if(diceMode==='3d'){
@@ -1034,7 +1104,6 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
         updateManualColorLabel();
         document.getElementById('btnBoardVirtual').classList.toggle('active',boardMode==='virtual');
         document.getElementById('btnBoardPhysical').classList.toggle('active',boardMode==='physical');
-        if(boardMode==='physical'){document.body.classList.add('physical-board');document.getElementById('boardTip').style.display='none';}
     }
 
     function init(){
@@ -1046,6 +1115,7 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
             document.getElementById('btnCompleteLeft').disabled=false;
             document.getElementById('btnCompleteRight').disabled=false;
             document.getElementById('endGameBtn').style.display='block';
+            document.getElementById('silverlingTracker').style.display='block';
             updateUI();updateCompletedList();
             document.getElementById('rollBtn').disabled=false;
         }else{
@@ -1053,7 +1123,7 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
             shuffle(deck);showSetupPreview();
         }
         applySettings();
-        attachTokenListeners();
+        renderReserveBoard();
         document.getElementById('botColor').addEventListener('change',()=>{updateManualColorLabel();saveState();});
         document.getElementById('difficulty').addEventListener('change',(e)=>{difficulty=parseInt(e.target.value);saveState();});
     }

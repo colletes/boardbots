@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Board Bots</title>
 <link rel="icon" href="assets/mascot-trimmed.png" type="image/png">
-<meta name="description" content="Solo-play companion apps for board games — Stone Age, Battle of Hoth, Heroscape, Mystic Vale, Rock Hard: 1977, Thunder Road: Vendetta, Ultra Tiny Epic Kingdoms, Café Baras, Ark Nova, Sanctuary, Eleven, Memoir '44.">
+<meta name="description" content="Solo-play companion apps for board games — Stone Age, Battle of Hoth, Heroscape, Mystic Vale, Rock Hard: 1977, Thunder Road: Vendetta, Ultra Tiny Epic Kingdoms, Café Baras, Ark Nova, Sanctuary, Eleven, Memoir '44, Air Land & Sea, Space Base, Castles of Burgundy (AutoDuque).">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -350,6 +350,15 @@
         const searchInput = document.getElementById('gameSearchInput');
         if (!searchInput) return;
 
+        function searchT(key) {
+            const lang = localStorage.getItem('boardbots_lang') || 'pt';
+            const dict = {
+                pt: { noResults: 'Nenhum jogo ou ferramenta encontrado.', results: '{n} resultado(s) encontrado(s).' },
+                en: { noResults: 'No game or tool found.', results: '{n} result(s) found.' }
+            };
+            return (dict[lang] || dict.pt)[key] || key;
+        }
+
         searchInput.addEventListener('input', () => {
             try {
                 const query = searchInput.value.toLowerCase().trim();
@@ -374,10 +383,10 @@
                 const introText = document.getElementById('introText');
                 if (introText) {
                     if (visibleCount === 0) {
-                        introText.textContent = "Nenhum jogo ou ferramenta encontrado.";
+                        introText.textContent = searchT('noResults');
                     } else {
                         if (query.length > 0) {
-                            introText.textContent = `${visibleCount} resultado(s) encontrado(s).`;
+                            introText.textContent = searchT('results').replace('{n}', visibleCount);
                         } else {
                             introText.setAttribute('data-i18n-html', 'intro_html');
                             if (typeof applySiteI18n === 'function') applySiteI18n();
