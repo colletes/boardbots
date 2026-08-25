@@ -160,6 +160,7 @@ h2{ font-family:var(--font-serif); color:var(--ink); margin:0 0 14px; border-bot
 </head>
 <body>
 <div class="lang-switch">
+  <button id="btnRules" onclick="openRulesModal()" title="Como Jogar / Rules" style="margin-right:6px; background:rgba(217,201,160,0.2); color:var(--paper);">📖 <span data-i18n="btnRules">Regras</span></button>
   <button id="btnPt" onclick="setLang('pt')">PT</button>
   <button id="btnEn" onclick="setLang('en')">EN</button>
 </div>
@@ -185,6 +186,18 @@ h2{ font-family:var(--font-serif); color:var(--ink); margin:0 0 14px; border-bot
 
 <!-- SETUP SCREEN -->
 <div id="setup-screen">
+  <!-- Physical Setup Instructions -->
+  <div class="card" id="physical-setup-card" style="margin-bottom:14px;">
+    <h2 style="margin-top:0;" data-i18n="setupPhysicalTitle">Setup Físico (Na Mesa)</h2>
+    <ul style="font-family:sans-serif; font-size:0.85em; line-height:1.5; color:var(--ink); padding-left:18px; margin:0;">
+      <li data-i18n="setupPhys1">Coloque as cartas de Teatro no centro da mesa na ordem escolhida abaixo.</li>
+      <li data-i18n="setupPhys2">Embaralhe as 18 cartas correspondentes aos teatros em jogo (6 cartas de cada teatro).</li>
+      <li data-i18n="setupPhys3">Compre sua mão inicial (6 cartas no Standard / 10 no Epic).</li>
+      <li data-i18n="setupPhys4">O app gerencia automaticamente as cartas restantes da IA. Não precisa de baralho físico para o bot!</li>
+      <li data-i18n="setupPhys5">O primeiro jogador na 1ª rodada é determinado normalmente; o perdedor da rodada escolhe quem começa a próxima.</li>
+    </ul>
+  </div>
+
   <div class="card">
     <h2 style="margin-top:0;" data-i18n="setupFormatTitle">0. Formato do Jogo</h2>
     <div class="row" style="margin-bottom:14px;">
@@ -223,9 +236,13 @@ h2{ font-family:var(--font-serif); color:var(--ink); margin:0 0 14px; border-bot
     
     <div class="bot-hand-container" id="botHandUI"></div>
     
+    <div id="botWithdrawAlert" class="priority-box hidden" style="border-left-color:var(--seal); background:rgba(138,31,31,0.12); margin-top:12px; margin-bottom:4px; font-size:0.85em;">
+    </div>
+
     <div class="row" style="margin-top:14px; gap:8px;">
         <button class="btn btn-primary btn-block" id="btnDrawBot" onclick="drawBotCard(false)" data-i18n="btnDraw" style="margin-bottom:0; flex:1.5;">Posicionar Carta IA</button>
         <button class="btn btn-block" onclick="drawBotCard(true)" style="margin-bottom:0; flex:1; border-color:#555; background:#2b2b2b; color:#fff;" title="Deploy Face Down (Strength 2)" data-i18n="btnDrawFD">Posicionar FD</button>
+        <button class="btn btn-block" id="btnDrawBonus" onclick="drawEnhancement()" style="margin-bottom:0; flex:1; border-color:var(--seal); color:var(--seal);" title="Comprar carta extra / reforço" data-i18n="btnDrawBonus">Carta Bônus</button>
     </div>
   </div>
 
@@ -264,6 +281,29 @@ h2{ font-family:var(--font-serif); color:var(--ink); margin:0 0 14px; border-bot
       <button class="btn btn-block" onclick="endRound()" style="margin-bottom:0; background:linear-gradient(160deg, #b58d20 0%, #856106 100%); color:#000; border:2px solid #e3c274;" data-i18n="btnEndRound">Fim da Rodada / Recuo</button>
       <button class="btn btn-block" onclick="confirmReset()" data-i18n="btnNewGame" style="margin-bottom:0; flex:0.4;">Abortar</button>
   </div>
+</div>
+
+<!-- RULES / HOW TO PLAY MODAL -->
+<div id="rulesModal" class="hidden" style="background:rgba(0,0,0,0.9); position:fixed; inset:0; z-index:250; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:18px;">
+    <div class="card" style="width:100%; max-width:540px; max-height:85vh; overflow-y:auto; position:relative; box-shadow:0 10px 25px rgba(0,0,0,0.8); text-align:left;">
+        <h2 style="margin-top:0;" data-i18n="rulesModalTitle">Como Jogar — Air, Land & Sea Solo</h2>
+        
+        <div style="font-family:sans-serif; font-size:0.85em; line-height:1.6; color:var(--ink);">
+            <h4 style="margin:12px 0 4px; color:var(--seal);" data-i18n="rulesS1Title">1. Objetivo & Formato</h4>
+            <p data-i18n="rulesS1Text">Vence o primeiro a alcançar 12 Pontos de Vitória (VP) no modo Standard (3 Teatros) ou 6 VP no modo Epic (5 Teatros). A cada rodada, os jogadores disputam o controle dos teatros jogando cartas Face Up (com habilidade) ou Face Down (Força 2).</p>
+
+            <h4 style="margin:12px 0 4px; color:var(--seal);" data-i18n="rulesS2Title">2. Turno da IA (Bot)</h4>
+            <p data-i18n="rulesS2Text">Clique em <strong>Posicionar Carta IA</strong> para revelar a próxima carta da IA. O app indicará o teatro prioritário, o alvo de efeitos e se a IA deve recuar. Se o efeito da carta permitir virar uma carta do adversário ou jogar virada para baixo, use <strong>Posicionar FD</strong>.</p>
+
+            <h4 style="margin:12px 0 4px; color:var(--seal);" data-i18n="rulesS3Title">3. Regra de Recuo da IA</h4>
+            <p data-i18n="rulesS3Text">A IA <strong>RECUA</strong> imediatamente se for forçada a jogar uma 4ª carta no mesmo teatro (ou 5ª no modo Epic), ou se sua mão terminar sem chance de vitória. Você também pode escolher recuar no seu turno para conceder menos pontos ao adversário!</p>
+
+            <h4 style="margin:12px 0 4px; color:var(--seal);" data-i18n="rulesS4Title">4. Reforços e Cartas Bônus</h4>
+            <p data-i18n="rulesS4Text">Se você vencer múltiplos teatros, o nível de dificuldade do bot aumenta e ele ganha acesso a <strong>Cartas Bônus</strong> puxadas do deck fora de jogo. Use o botão <strong>Carta Bônus</strong> para ativá-las.</p>
+        </div>
+
+        <button class="btn btn-primary btn-block" onclick="closeRulesModal()" style="margin-top:16px;" data-i18n="btnCloseRules">Entendido / Fechar</button>
+    </div>
 </div>
 
 <!-- END ROUND MODAL -->
@@ -363,6 +403,23 @@ const DB = [
 const DICT = {
   pt: {
     subtitle: "Command HQ - Simulador de Deck",
+    btnRules: "Regras",
+    rulesModalTitle: "Como Jogar — Air, Land & Sea Solo",
+    rulesS1Title: "1. Objetivo & Formato",
+    rulesS1Text: "Vence quem alcançar 12 Pontos de Vitória (Standard, 3 Teatros) ou 6 VP (Epic, 5 Teatros). A cada rodada, os jogadores disputam o controle dos teatros jogando cartas Face Up (com habilidade) ou Face Down (Força 2).",
+    rulesS2Title: "2. Turno da IA (Bot)",
+    rulesS2Text: "Clique em 'Posicionar Carta IA' para revelar a carta do bot. O app indica o teatro prioritário, o alvo e dicas táticas. Se a IA for jogar virada para baixo, use 'Posicionar FD'.",
+    rulesS3Title: "3. Regra de Recuo da IA",
+    rulesS3Text: "A IA RECUA se for forçada a jogar uma 4ª carta no mesmo teatro (ou 5ª no modo Epic), ou ao esgotar sua mão se estiver perdendo a rodada. O jogador também pode recuar no seu turno para conceder menos VP ao oponente.",
+    rulesS4Title: "4. Reforços e Cartas Bônus",
+    rulesS4Text: "Se você vencer teatros, o nível de dificuldade do bot sobe e ele pode comprar cartas extras de reforço do baralho fora de jogo através do botão 'Carta Bônus'.",
+    btnCloseRules: "Entendido / Fechar",
+    setupPhysicalTitle: "Setup Físico (Na Mesa)",
+    setupPhys1: "Coloque as cartas de Teatro no centro da mesa na ordem escolhida abaixo.",
+    setupPhys2: "Embaralhe as 18 cartas correspondentes aos teatros em jogo (6 cartas de cada teatro).",
+    setupPhys3: "Compre sua mão inicial (6 cartas no Standard / 10 no Epic).",
+    setupPhys4: "O app gerencia automaticamente as cartas restantes da IA. Não precisa de baralho físico para o bot!",
+    setupPhys5: "O primeiro jogador na 1ª rodada é determinado normalmente; o perdedor da rodada escolhe quem começa a próxima.",
     setupFormatTitle: "0. Formato do Jogo",
     btnFormatStd: "Standard (3 Teatros)",
     btnFormatEpic: "Epic (5 Teatros)",
@@ -379,6 +436,7 @@ const DICT = {
     botHandTitle: "Mão do Inimigo",
     btnDraw: "Posicionar Carta IA",
     btnDrawFD: "Posicionar FD",
+    btnDrawBonus: "Carta Bônus",
     stampActive: "Em Campo",
     tableauTitle: "Tableau do Inimigo",
     placePromptTitle: "Onde esta carta foi posicionada?",
@@ -419,12 +477,31 @@ const DICT = {
     pri_semi_text: "<b>3. Comando Tático:</b> Escolha a melhor opção para a IA (leia 'pode' como 'deve').",
     enhancement2: "Dificuldade Nível 2! Bônus de reforço ativo.",
     enhancement3: "Dificuldade Nível 3! Bônus grande de reforço ativo.",
-    bot_out_of_cards: "A IA inimiga não tem cartas!",
+    bot_out_of_cards: "A IA inimiga não tem cartas restantes na mão!",
+    warn_full_hand: "⚠️ <b>Fim da Mão da IA:</b> A IA jogou todas as suas cartas ({size}/{size}). Se não estiver em vantagem, ela deve <b>RECUAR</b>!",
+    warn_withdraw_limit_reached: "⚠️ <b>Limite Atingido:</b> O teatro <b>{th}</b> atingiu {limit} cartas da IA. A IA <b>RECUA</b> imediatamente!",
     gameOverVictory: "Missão cumprida! Você alcançou {pts} pontos.",
     gameOverDefeat: "Derrota! A IA alcançou {pts} pontos."
   },
   en: {
     subtitle: "Command HQ - Smart Deck",
+    btnRules: "Rules",
+    rulesModalTitle: "How to Play — Air, Land & Sea Solo",
+    rulesS1Title: "1. Goal & Format",
+    rulesS1Text: "First to reach 12 Victory Points (Standard, 3 Theaters) or 6 VP (Epic, 5 Theaters) wins. Each round, battle for theater control by playing cards Face Up (with effects) or Face Down (Strength 2).",
+    rulesS2Title: "2. AI (Bot) Turn",
+    rulesS2Text: "Click 'Deploy AI Card' to reveal the bot's card. The app provides target advice and deployment hints. If the AI plays a card face-down, use 'Deploy FD'.",
+    rulesS3Title: "3. Bot Withdrawal Rule",
+    rulesS3Text: "The AI WITHDRAWS immediately if forced to play a 4th card to the same theater (or 5th in Epic), or when its hand is depleted and trailing. You can also withdraw on your turn to concede fewer VP.",
+    rulesS4Title: "4. Reinforcements & Bonus Cards",
+    rulesS4Text: "If you win multiple theaters, the AI's difficulty increases and it gains access to Bonus deployment cards via the 'Bonus Card' button.",
+    btnCloseRules: "Understood / Close",
+    setupPhysicalTitle: "Physical Setup (On Table)",
+    setupPhys1: "Place the Theater cards in the center of the table in the order chosen below.",
+    setupPhys2: "Shuffle the 18 cards corresponding to the active theaters (6 cards per theater).",
+    setupPhys3: "Deal your starting hand (6 cards in Standard / 10 in Epic).",
+    setupPhys4: "The app automatically manages the AI's cards. No physical cards needed for the bot!",
+    setupPhys5: "First player in Round 1 is chosen normally; round loser decides who goes first next.",
     setupFormatTitle: "0. Game Format",
     btnFormatStd: "Standard (3 Theaters)",
     btnFormatEpic: "Epic (5 Theaters)",
@@ -441,6 +518,7 @@ const DICT = {
     botHandTitle: "Enemy Hand",
     btnDraw: "Deploy AI Card",
     btnDrawFD: "Deploy FD",
+    btnDrawBonus: "Bonus Card",
     stampActive: "Live",
     tableauTitle: "Enemy Tableau",
     placePromptTitle: "Where was this card placed?",
@@ -481,7 +559,9 @@ const DICT = {
     pri_semi_text: "<b>3. Tactical Command:</b> Make the best choice for the AI.",
     enhancement2: "Difficulty Level 2 active! AI reinforcement bonus active.",
     enhancement3: "Difficulty Level 3 active! Major reinforcement bonus active.",
-    bot_out_of_cards: "Enemy AI has no cards!",
+    bot_out_of_cards: "Enemy AI has no cards left in hand!",
+    warn_full_hand: "⚠️ <b>AI Hand Exhausted:</b> The AI played all {size}/{size} cards. If not leading, it should <b>WITHDRAW</b>!",
+    warn_withdraw_limit_reached: "⚠️ <b>Threshold Reached:</b> Theater <b>{th}</b> reached {limit} AI cards. AI <b>WITHDRAWS</b> immediately!",
     gameOverVictory: "Mission accomplished! You reached {pts} points.",
     gameOverDefeat: "Defeat! The AI reached {pts} points."
   }
@@ -548,6 +628,14 @@ function resetAllState() {
 
 function confirmReset() {
   if (confirm(currentLang === 'pt' ? 'Abortar missão?' : 'Abort mission?')) resetAllState();
+}
+
+function openRulesModal() {
+  document.getElementById('rulesModal').classList.remove('hidden');
+}
+
+function closeRulesModal() {
+  document.getElementById('rulesModal').classList.add('hidden');
 }
 
 function setLang(l) {
@@ -681,6 +769,34 @@ function renderBotHand() {
   }
 }
 
+function checkWithdrawalAlerts() {
+  const alertBox = document.getElementById('botWithdrawAlert');
+  if (!alertBox) return;
+  const withdrawLimit = gameFormat === 'epic' ? 5 : 4;
+  let alerts = [];
+
+  // Check theater card counts
+  for (let i = 0; i < maxTheaters; i++) {
+    const count = (tableau[i] || []).length;
+    const thName = DICT[currentLang]['th_' + selectedTheaters[i]] || ('TH ' + (i+1));
+    if (count >= withdrawLimit) {
+      alerts.push(DICT[currentLang].warn_withdraw_limit_reached.replace('{th}', thName).replace('{limit}', withdrawLimit));
+    }
+  }
+
+  // Check if AI played its full hand
+  if (botCardsPlayed >= handSize) {
+    alerts.push(DICT[currentLang].warn_full_hand.replace('{size}', handSize));
+  }
+
+  if (alerts.length > 0) {
+    alertBox.innerHTML = alerts.join('<br>');
+    alertBox.classList.remove('hidden');
+  } else {
+    alertBox.classList.add('hidden');
+  }
+}
+
 function drawBotCard(fd) {
   if (botCardsPlayed >= botDeck.length) {
     alert(DICT[currentLang].bot_out_of_cards);
@@ -690,6 +806,17 @@ function drawBotCard(fd) {
   currentPendingFacedown = fd;
   renderBotHand();
   displayCardPrompt(currentPendingCard, fd);
+  saveState();
+}
+
+function drawEnhancement() {
+  if (outOfGameDeck.length === 0) {
+    alert(currentLang === 'pt' ? 'O baralho de fora de jogo está vazio!' : 'Out-of-game deck is empty!');
+    return;
+  }
+  currentPendingCard = outOfGameDeck.pop();
+  currentPendingFacedown = false;
+  displayCardPrompt(currentPendingCard, false, true);
   saveState();
 }
 
@@ -897,6 +1024,8 @@ function updateTableauUI() {
 
         colsContainer.appendChild(colDiv);
     }
+
+    checkWithdrawalAlerts();
 }
 
 function moveCard(e, colIndex, cardIndex, dir) {
@@ -920,9 +1049,13 @@ function flipCard(e, colIndex, cardIndex) {
 function returnToHand(e, colIndex, cardIndex) {
     e.stopPropagation();
     const item = tableau[colIndex].splice(cardIndex, 1)[0];
-    botDeck.splice(botCardsPlayed, 0, item.card);
-    botCardsPlayed--;
-    if (botCardsPlayed < 0) botCardsPlayed = 0;
+    if (botCardsPlayed > 0) botCardsPlayed--;
+    // Place returned card into remaining unplayed bot cards and reshuffle unplayed deck
+    const remainingDeck = botDeck.slice(botCardsPlayed);
+    remainingDeck.push(item.card);
+    shuffleArray(remainingDeck);
+    botDeck = botDeck.slice(0, botCardsPlayed).concat(remainingDeck);
+    
     renderBotHand();
     updateTableauUI();
     saveState();
