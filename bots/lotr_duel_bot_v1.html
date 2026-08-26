@@ -1911,9 +1911,13 @@
         
         diceBox.onRollComplete = (results) => {
           setTimeout(() => { document.getElementById('dice-box').style.display = 'none'; isRolling = false; }, 2000);
-          const val = results[0].value;
+          let val = 0;
+          const group = Array.isArray(results) ? results[0] : results;
+          if (group && group.rolls && group.rolls.length > 0) val = group.rolls[0].value;
+          else if (group) val = group.value;
+          
           if (currentDiceResolve) {
-            currentDiceResolve(val);
+            currentDiceResolve(val || Math.floor(Math.random() * 6) + 1); // fallback to random if 0/undefined
             currentDiceResolve = null;
           }
         };
@@ -1982,10 +1986,11 @@
 
 
     function addLog(msg) {
-      if (msg.type === 'generic') { state.logs.unshift(msg); if (state.logs.length > 25) state.logs.pop(); renderLogs(); return; }
+      if (msg.type === 'generic') { state.logs.unshift(msg); if (state.logs.length > 25) state.logs.pop(); renderLogs(); saveState(); return; }
       state.logs.unshift(msg);
       if (state.logs.length > 25) state.logs.pop();
       renderLogs();
+      saveState();
     }
 
     function renderLogs() {
