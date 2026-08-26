@@ -930,7 +930,10 @@
             <span id="activeLeaderDetails">Progresso • Cor</span>
           </div>
         </div>
-        <div>
+        <div style="display:flex; gap:8px;">
+          <button class="btn-secondary" onclick="confirmReset()" title="Abandonar partida e começar de novo" style="padding:8px 12px; font-size:0.8rem; border-color:rgba(239,68,68,0.4); color:#fca5a5;">
+            <span>🔄</span> <span data-i18n="abandonBtn">Abandonar</span>
+          </button>
           <button class="btn-secondary" onclick="openEndAgeModal()" data-i18n="endAgeBtn">Fim de Era</button>
         </div>
       </div>
@@ -1038,10 +1041,15 @@
         <div id="logList" style="display:flex; flex-direction:column; gap:6px;"></div>
       </div>
 
-      <!-- End Game Button -->
-      <button class="btn-secondary" onclick="openEndGameModal()" style="width:100%; border-color:var(--border);" data-i18n="endGameBtn">
-        🏁 Finalizar Jogo & Contar Pontos
-      </button>
+      <!-- End Game Button & Restart Options -->
+      <div style="display:flex; flex-direction:column; gap:10px; width:100%;">
+        <button class="btn-secondary" onclick="openEndGameModal()" style="width:100%; border-color:var(--border);" data-i18n="endGameBtn">
+          🏁 Finalizar Jogo & Contar Pontos
+        </button>
+        <button class="btn-secondary" onclick="confirmReset()" style="width:100%; border-color:rgba(239,68,68,0.3); color:#fca5a5; font-size:0.85rem;" data-i18n="restartMatchBtn">
+          🔄 Abandonar e Reiniciar Partida
+        </button>
+      </div>
 
     </section>
 
@@ -1243,19 +1251,20 @@
     };
 
     // Verified Decision Cards Data (12 cards)
+    // Priorities strictly follow the arrow direction (1st = largest card nearest arrow, 2nd = middle, 3rd = smallest)
     const DECISION_CARDS = [
-      { id: 1,  priority: ['green', 'red',    'leader'], fallbackDir: 'right', extraTurn: false },
-      { id: 2,  priority: ['leader','red',    'green' ], fallbackDir: 'left',  extraTurn: false },
-      { id: 3,  priority: ['green', 'red',    'leader'], fallbackDir: 'right', extraTurn: false },
-      { id: 4,  priority: ['leader','green',  'red'   ], fallbackDir: 'left',  extraTurn: false },
-      { id: 5,  priority: ['green', 'red',    'leader'], fallbackDir: 'right', extraTurn: false },
-      { id: 6,  priority: ['leader','green',  'red'   ], fallbackDir: 'left',  extraTurn: false },
-      { id: 7,  priority: ['red',   'green',  'leader'], fallbackDir: 'right', extraTurn: false },
-      { id: 8,  priority: ['leader','green',  'red'   ], fallbackDir: 'left',  extraTurn: false },
-      { id: 9,  priority: ['red',   'green',  'leader'], fallbackDir: 'right', extraTurn: false },
-      { id: 10, priority: ['leader','red',    'green' ], fallbackDir: 'left',  extraTurn: false },
-      { id: 11, priority: ['leader','red',    'green' ], fallbackDir: 'right', extraTurn: true  },
-      { id: 12, priority: ['red',   'green',  'leader'], fallbackDir: 'left',  extraTurn: true  }
+      { id: 1,  priority: ['green',  'red',    'leader'], fallbackDir: 'right', extraTurn: false },
+      { id: 2,  priority: ['green',  'red',    'leader'], fallbackDir: 'left',  extraTurn: false },
+      { id: 3,  priority: ['green',  'red',    'leader'], fallbackDir: 'right', extraTurn: false },
+      { id: 4,  priority: ['red',    'green',  'leader'], fallbackDir: 'left',  extraTurn: false },
+      { id: 5,  priority: ['green',  'red',    'leader'], fallbackDir: 'right', extraTurn: false },
+      { id: 6,  priority: ['red',    'green',  'leader'], fallbackDir: 'left',  extraTurn: false },
+      { id: 7,  priority: ['red',    'green',  'leader'], fallbackDir: 'right', extraTurn: false },
+      { id: 8,  priority: ['red',    'green',  'leader'], fallbackDir: 'left',  extraTurn: false },
+      { id: 9,  priority: ['red',    'green',  'leader'], fallbackDir: 'right', extraTurn: false },
+      { id: 10, priority: ['green',  'red',    'leader'], fallbackDir: 'left',  extraTurn: false },
+      { id: 11, priority: ['leader', 'red',    'green' ], fallbackDir: 'right', extraTurn: true  },
+      { id: 12, priority: ['leader', 'green',  'red'   ], fallbackDir: 'left',  extraTurn: true  }
     ];
 
     const SCIENCE_TYPES = [
@@ -1301,6 +1310,8 @@
         actionLogTitle: 'Histórico de Ações',
         endGameBtn: '🏁 Finalizar Jogo & Contar Pontos',
         newGameBtn: 'Novo Jogo',
+        abandonBtn: 'Abandonar',
+        restartMatchBtn: '🔄 Abandonar e Reiniciar Partida',
         creditsFooter: 'Baseado no modo solo oficial de <strong>7 Wonders Duel</strong> (expansão gratuita P&P).<br>7 Wonders Duel © Repos Production, design de Antoine Bauza e Bruno Cathala.<br>Aplicativo web não-oficial desenvolvido por fãs para a comunidade.',
         kofiBtn: 'Apoie no Ko-fi',
         helpModalTitle: 'Regras & Guia do Automa',
@@ -1371,6 +1382,8 @@
         actionLogTitle: 'Action History',
         endGameBtn: '🏁 End Game & Tally Score',
         newGameBtn: 'New Game',
+        abandonBtn: 'Abandon',
+        restartMatchBtn: '🔄 Abandon and Restart Match',
         creditsFooter: 'Based on the official solo mode of <strong>7 Wonders Duel</strong> (free P&P expansion).<br>7 Wonders Duel © Repos Production, designed by Antoine Bauza and Bruno Cathala.<br>Unofficial fan-made web companion for the board game community.',
         kofiBtn: 'Support on Ko-fi',
         helpModalTitle: 'Rules & Automa Guide',

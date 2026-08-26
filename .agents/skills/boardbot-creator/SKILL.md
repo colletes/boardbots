@@ -120,11 +120,17 @@ Ao atualizar um plano existente, sempre inclua uma seção **"Task Status Audit"
 
 ### Mecânica de Cartas de Decisão (verificado no PDF)
 
-Cada carta mostra **3 prioridades** (não 7): verde (Ciência), vermelho (Militar), e a **cor do Líder** (silhueta do busto). A silhueta resolve-se para a cor do cartão do Líder selecionado.
+Cada carta mostra **3 retângulos de tamanhos decrescentes** na direção da seta:
+- **1ª escolha:** Retângulo **Maior/Mais alto** (mais próximo da base da seta)
+- **2ª escolha:** Retângulo **Médio** (no centro)
+- **3ª escolha:** Retângulo **Menor** (na ponta oposta)
 
-- Extra turn = cartas 11 e 12 (universal para todos os Líderes, símbolo ↺)
-- Quando o baralho esgota → **embaralha novamente** (o baralho sempre é reembaralhado)
-- Direção de fallback = seta na carta (→ direita, ← esquerda)
+Cores das prioridades: verde (Ciência), vermelho (Militar), e a **cor do Líder** (silhueta do busto).
+- Em cartas com seta `→`: a leitura é da Esquerda para a Direita.
+- Em cartas com seta `←`: a leitura é da Direita para a Esquerda.
+- Extra turn = cartas 11 e 12 (universal para todos os Líderes, símbolo ↺).
+- Quando o baralho esgota → **embaralha novamente** (o baralho sempre é reembaralhado).
+- Fallback = se nenhuma cor estiver acessível, pega a 1ª carta no sentido da seta.
 
 ### Líderes (verificado no PDF)
 | Líder | Tokens iniciais | Cor da carta | Dificuldade | Especial |
