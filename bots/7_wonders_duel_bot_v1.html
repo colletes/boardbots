@@ -541,13 +541,13 @@
     }
     .decision-card-img-wrap {
       width: 100%;
-      max-width: 360px;
-      background: #000;
+      max-width: 380px;
+      background: transparent;
       border-radius: var(--radius-sm);
       overflow: hidden;
       border: 1px solid var(--border);
-      box-shadow: 0 6px 20px rgba(0,0,0,0.6);
-      aspect-ratio: 16 / 9;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+      aspect-ratio: 600 / 390;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -555,7 +555,8 @@
     .decision-card-img {
       width: 100%;
       height: 100%;
-      object-fit: contain;
+      object-fit: cover;
+      display: block;
     }
     .card-meta-bar {
       display: flex;
@@ -1329,6 +1330,16 @@
         scanFallbackRight: 'Se nenhuma cor disponível: pegue a 1ª carta acessível da <strong>ESQUERDA para a DIREITA (→)</strong> a partir da base.',
         colorScience: 'Verde (Ciência)',
         colorMilitary: 'Vermelho (Militar)',
+        cardCounter: 'Carta {id} de 12',
+        deckCounter: '{count} no monte',
+        militaryPlayerLead: 'Você avançou {count}',
+        militaryLeaderLead: 'Líder avançou {count}',
+        militaryNeutral: 'Neutro',
+        logStart: '⚔️ Partida iniciada contra {leader}.',
+        logReshuffle: '🔄 Baralho de Decisão esgotou e foi reembaralhado.',
+        logResolved: 'Era {age} | Carta #{cardId} resolvida.{extra}',
+        logAge: '📅 Avançou para a Era {age}.',
+        logExtraTurnTag: ' ⚡ [TURNO EXTRA]',
         resetConfirmPrompt: 'Tem certeza que deseja reiniciar a partida? O progresso atual será perdido.'
       },
       en: {
@@ -1389,6 +1400,16 @@
         scanFallbackRight: 'If no priority color available: take 1st accessible card from <strong>LEFT to RIGHT (→)</strong> starting at the base.',
         colorScience: 'Green (Science)',
         colorMilitary: 'Red (Military)',
+        cardCounter: 'Card {id} of 12',
+        deckCounter: '{count} in deck',
+        militaryPlayerLead: 'You advanced {count}',
+        militaryLeaderLead: 'Leader advanced {count}',
+        militaryNeutral: 'Neutral',
+        logStart: '⚔️ Match started against {leader}.',
+        logReshuffle: '🔄 Decision Deck exhausted and reshuffled.',
+        logResolved: 'Age {age} | Card #{cardId} resolved.{extra}',
+        logAge: '📅 Advanced to Age {age}.',
+        logExtraTurnTag: ' ⚡ [EXTRA TURN]',
         resetConfirmPrompt: 'Are you sure you want to reset the match? Current progress will be lost.'
       }
     };
@@ -1434,8 +1455,11 @@
       applyI18n();
       renderLeaderGrid();
       renderScienceChips();
-      if (state.inGame && state.currentCard) {
-        displayActiveCard(state.currentCard);
+      if (state.inGame) {
+        showGameScreen();
+        if (state.currentCard) {
+          displayActiveCard(state.currentCard);
+        }
       }
       saveState();
     }
@@ -1509,7 +1533,7 @@
       state.scienceSymbols = {};
       state.logs = [];
       
-      addLog(`⚔️ Partida iniciada contra ${LEADERS[state.selectedLeader].name}.`);
+      addLog({ type: 'start', leader: LEADERS[state.selectedLeader].name });
       showGameScreen();
       flipNextCard();
       saveState();
@@ -1554,7 +1578,7 @@
         state.deck = shuffleArray([...DECISION_CARDS]);
         state.cardIndex = 0;
         notice.style.display = 'block';
-        addLog(`🔄 Baralho de Decisão esgotou e foi reembaralhado.`);
+        addLog({ type: 'reshuffle' });
       }
 
       const card = state.deck[state.cardIndex];
@@ -1579,8 +1603,8 @@
       document.getElementById('decisionCardImg').src = imgPath;
 
       // Counters
-      document.getElementById('cardCounter').textContent = `Carta ${card.id} de 12`;
-      document.getElementById('deckCounter').textContent = `${12 - state.cardIndex + 1} no monte`;
+      document.getElementById('cardCounter').textContent = dict.cardCounter.replace('{id}', card.id);
+      document.getElementById('deckCounter').textContent = dict.deckCounter.replace('{count}', (12 - state.cardIndex + 1));
 
       // Priority Pills
       const priorityContainer = document.getElementById('priorityList');
@@ -1627,7 +1651,7 @@
       const card = state.currentCard;
       const extra = state.extraTurnPending;
 
-      addLog(`Era ${state.currentAge} | Carta #${card.id} resolvida. ${extra ? '⚡ [TURNO EXTRA]' : ''}`);
+      addLog({ type: 'resolved', age: state.currentAge, cardId: card.id, extra: extra });
 
       if (extra) {
         state.extraTurnPending = false;
@@ -1657,7 +1681,7 @@
 
     function setAge(age) {
       state.currentAge = age;
-      addLog(`📅 Avançou para a Era ${age}.`);
+      addLog({ type: 'age', age: age });
       updateUI();
       saveState();
     }
@@ -1719,15 +1743,16 @@
     function updateUI() {
       document.getElementById('militaryVal').textContent = (state.military > 0 ? `+${state.military}` : state.military);
       
+      const dict = I18N[state.lang] || I18N.pt;
       const sub = document.getElementById('militarySubtext');
       if (state.military < 0) {
-        sub.textContent = `Você avançou ${Math.abs(state.military)}`;
+        sub.textContent = dict.militaryPlayerLead.replace('{count}', Math.abs(state.military));
         sub.style.color = 'var(--green)';
       } else if (state.military > 0) {
-        sub.textContent = `Líder avançou ${state.military}`;
+        sub.textContent = dict.militaryLeaderLead.replace('{count}', state.military);
         sub.style.color = 'var(--red)';
       } else {
-        sub.textContent = 'Neutro';
+        sub.textContent = dict.militaryNeutral;
         sub.style.color = 'var(--text-muted)';
       }
 
@@ -1750,10 +1775,30 @@
     function renderLogs() {
       const container = document.getElementById('logList');
       container.innerHTML = '';
+      const dict = I18N[state.lang] || I18N.pt;
+
       state.logs.slice(0, 10).forEach(log => {
         const item = document.createElement('div');
         item.className = 'log-item';
-        item.textContent = log;
+        
+        let text = '';
+        if (typeof log === 'string') {
+          text = log;
+        } else if (log && log.type) {
+          if (log.type === 'start') {
+            text = dict.logStart.replace('{leader}', log.leader);
+          } else if (log.type === 'reshuffle') {
+            text = dict.logReshuffle;
+          } else if (log.type === 'resolved') {
+            text = dict.logResolved
+              .replace('{age}', log.age)
+              .replace('{cardId}', log.cardId)
+              .replace('{extra}', log.extra ? dict.logExtraTurnTag : '');
+          } else if (log.type === 'age') {
+            text = dict.logAge.replace('{age}', log.age);
+          }
+        }
+        item.textContent = text;
         container.appendChild(item);
       });
     }
