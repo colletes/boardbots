@@ -1821,27 +1821,34 @@
     let diceInitialized = false;
     let currentDiceResolve = null;
 
+    let diceFallback = false;
     async function initDiceBox() {
       if (diceInitialized) return;
-      const { default: DiceBox } = await import('../assets/dice-box/dice-box.es.min.js');
-      diceBox = new DiceBox({
-        container: '#dice-box',
-        assetPath: '../assets/dice-box/',
-        theme: 'default',
-        themeColor: '#475569',
-        scale: 6
-      });
-      await diceBox.init();
-      diceInitialized = true;
-      
-      diceBox.onRollComplete = (results) => {
-        setTimeout(() => { document.getElementById('dice-box').style.display = 'none'; }, 2000);
-        const val = results[0].value;
-        if (currentDiceResolve) {
-          currentDiceResolve(val);
-          currentDiceResolve = null;
-        }
-      };
+      try {
+        const { default: DiceBox } = await import('../assets/dice-box/dice-box.es.min.js');
+        diceBox = new DiceBox({
+          container: '#dice-box',
+          assetPath: '../assets/dice-box/', origin: window.location.origin + window.location.pathname.replace(/[^\/]*$/, ''),
+          theme: 'default',
+          themeColor: '#475569',
+          scale: 6
+        });
+        await diceBox.init();
+        diceInitialized = true;
+        
+        diceBox.onRollComplete = (results) => {
+          setTimeout(() => { document.getElementById('dice-box').style.display = 'none'; }, 2000);
+          const val = results[0].value;
+          if (currentDiceResolve) {
+            currentDiceResolve(val);
+            currentDiceResolve = null;
+          }
+        };
+      } catch (e) {
+        console.error('DiceBox failed to load, falling back to math.random', e);
+        diceFallback = true;
+        diceInitialized = true;
+      }
     }
     
     window.addEventListener('DOMContentLoaded', initDiceBox);
@@ -1856,11 +1863,6 @@
       else if (lColor === 'yellow') hex = '#eab308';
       else if (lColor === 'redpurple') hex = '#a855f7';
       else if (lColor === 'grey') hex = '#64748b';
-      diceBox.updateConfig({ themeColor: hex });
-
-      document.getElementById('dice-box').style.display = 'block';
-      diceBox.roll('1d6');
-      
       currentDiceResolve = (val) => {
         const el = document.getElementById('inlineDiceResult');
         if (reason === 'landmark') {
@@ -1878,6 +1880,15 @@
           el.textContent = `🎲 Dado: ${val} -> Pegue a ${res}`;
         }
       };
+
+      if (diceFallback) {
+         currentDiceResolve(Math.floor(Math.random() * 6) + 1);
+         return;
+      }
+
+      diceBox.updateConfig({ themeColor: hex });
+      document.getElementById('dice-box').style.display = 'block';
+      diceBox.roll('1d6');
     }
 
     function botBuyLandmark() {
