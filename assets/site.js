@@ -62,7 +62,9 @@ const SITE_I18N = {
     game_airlandsea_title: 'Air, Land & Sea',
     game_airlandsea_desc: 'Automa não-oficial com os modos Autônomo e Semiautônomo, e referência de prioridades de cartas.',
     game_7wd_title: '7 Wonders Duel',
+    game_lotrduel_title: 'Lord of the Rings: Duel for Middle-earth',
     game_7wd_desc: 'Automa Duelist — enfrente 5 Líderes históricos com o baralho de decisão oficial.',
+    game_lotrduel_desc: 'Automa Duelist — enfrente 8 Líderes com o baralho de decisão.',
 
     credits_title: 'Créditos',
     back_link: 'Voltar aos bots',
@@ -87,7 +89,7 @@ const SITE_I18N = {
     credit_burgundy: '<strong>Castles of Burgundy</strong> — variante solo "AutoDuque" criada por um fã (LENS). Castles of Burgundy © Ravensburger.',
     credit_spacebase: '<strong>Space Base</strong> — Automa "Joanna" é uma variante solo não-oficial de fã do BGG. Assistente de Ataque à Base inspirado nas regras solo. Space Base © AEG.',
     credit_airlandsea: '<strong>Air, Land & Sea</strong> — Automa baseado nas regras solo originais criadas por <a href="https://boardgamegeek.com/profile/I_2orLess_I" target="_blank" rel="noopener">I_2orLess_I</a>. Air, Land & Sea © Arcane Wonders.',
-    credit_7wd: '<strong>7 Wonders Duel</strong> — baseado no modo solo oficial (expansão gratuita P&P). 7 Wonders Duel © Repos Production, design de Antoine Bauza e Bruno Cathala.',
+    credit_lotrduel: '<strong>Lord of the Rings: Duel for Middle-earth</strong> — baseado no bot Automa Duelist. Lord of the Rings: Duel for Middle-earth © Repos Production.',
 
     tools_title: 'Ferramentas',
     tools_desc: 'Utilitários genéricos para qualquer jogo de tabuleiro, sem regras específicas.',
@@ -156,7 +158,9 @@ const SITE_I18N = {
     game_airlandsea_title: 'Air, Land & Sea',
     game_airlandsea_desc: 'Unofficial Automa with Autonomous and Semiautonomous modes, and card priority references.',
     game_7wd_title: '7 Wonders Duel',
+    game_lotrduel_title: 'Lord of the Rings: Duel for Middle-earth',
     game_7wd_desc: 'Automa Duelist — face 5 historical Leaders driven by the official decision card deck.',
+    game_lotrduel_desc: 'Automa Duelist — face 8 Leaders driven by the decision card deck.',
 
     credits_title: 'Credits',
     back_link: 'Back to bots',
@@ -181,7 +185,7 @@ const SITE_I18N = {
     credit_burgundy: '<strong>Castles of Burgundy</strong> — "AutoDuque" fan solo variant by LENS. Castles of Burgundy © Ravensburger.',
     credit_spacebase: '<strong>Space Base</strong> — "Joanna" Automa is an unofficial fan solo variant from BGG. Base Attack assistant inspired by solo rules. Space Base © AEG.',
     credit_airlandsea: '<strong>Air, Land & Sea</strong> — Automa based on the original solo rules designed by <a href="https://boardgamegeek.com/profile/I_2orLess_I" target="_blank" rel="noopener">I_2orLess_I</a>. Air, Land & Sea © Arcane Wonders.',
-    credit_7wd: '<strong>7 Wonders Duel</strong> — based on the official solo mode (free P&P expansion). 7 Wonders Duel © Repos Production, designed by Antoine Bauza and Bruno Cathala.',
+    credit_lotrduel: '<strong>Lord of the Rings: Duel for Middle-earth</strong> — based on the Automa Duelist bot. Lord of the Rings: Duel for Middle-earth © Repos Production.',
 
     tools_title: 'Tools',
     tools_desc: 'Generic utilities for any board game, with no game-specific rules.',
