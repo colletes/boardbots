@@ -9,32 +9,139 @@ description: >-
 Siga este passo-a-passo rigorosamente ao criar novos bots para a plataforma "Boardbots".
 
 ## 1. Coleta de Informações e Assets
+
 Antes de começar a codificar, você deve:
-*   **Solicitar Manuais:** Pedir ao usuário a documentação do jogo e o manual do automa (se disponível). Isso garante que as regras implementadas sejam precisas e usem a terminologia oficial.
-*   **Solicitar Imagens:** Pedir as imagens de capa: uma para o "hero banner" do bot e outra menor (webp) para o card na página inicial (`index.html`).
 
-## 2. Estrutura e Navegação (UI/UX Coerente)
-A UI deve ser coerente com os demais bots da página:
-*   Mantenha o padrão de cores, fontes e estilo global (usando `assets/site.css`).
-*   **Responsividade:** Leve em conta telas grandes (desktops) e dispositivos móveis, utilizando design responsivo.
-*   **Tela Inicial Separada:** O bot DEVE ter uma tela/modal inicial dedicada apenas para as **Opções do Bot** e para o **Setup Físico do Jogo**, antes do usuário acessar a tela principal de jogo.
-*   **Rodapé Obrigatório:** Inclua no final da página do bot:
-    *   A seção de Créditos (mencionando designers originais e adaptações).
-    *   O botão de "Buy me a coffee" (Ko-fi).
+- **Solicitar Manuais:** Pedir ao usuário a documentação do jogo e o manual do automa (se disponível).
+- **Solicitar Imagens:** Pedir as imagens de capa: uma para o "hero banner" do bot e outra (webp) para o card na `index.html`.
+- **PDFs de regras:** Se o PDF for baseado em imagens (sem camada de texto), use `pdfplumber` + `page.to_image(resolution=150)` para renderizá-lo como PNG e leia visualmente. Se as imagens estiverem de cabeça para baixo, peça ao usuário para rotacioná-las. Extraia crops de cartas/líderes para uso direto como assets no repo.
 
-## 3. Internacionalização (i18n)
-O bot deve suportar os idiomas `pt-BR` e `en-US`:
-*   Todo texto visível deve usar uma arquitetura de internacionalização (ex: atributos `data-i18n`).
-*   **NÃO** deixe textos fixos no HTML que o usuário final verá. Crie dicionários JS locais para o bot, ou integre as lógicas compatíveis com a variável `localStorage.getItem('boardbots_lang')`.
+## 2. Extração de Assets de PDFs (novo conhecimento)
 
-## 4. Ajuda e Tutoriais (Modal de Regras)
-Uma boa documentação in-app é fundamental:
-*   **Modal Compreensiva:** Crie uma modal de regras/ajuda detalhada acessível via botão `?`.
-*   **Setup:** Inclua as instruções do setup físico do jogo e o setup do bot na tela inicial e também disponíveis na ajuda.
-*   **Exemplos Práticos:** Sempre que possível, inclua exemplos visuais/didáticos na ajuda (ex: mostrando como o bot escolhe um alvo numa carta marcada).
+Quando o jogo tem P&P (Print & Play) com imagens de cartas:
 
-## 5. Modificações na Página Inicial (`index.html`)
-Ao integrar o bot novo na home:
-*   Adicione o card dele com a arte e o título.
-*   **Likes/Dislikes:** Certifique-se de adicionar botões de like/dislike no card da página inicial.
-*   Traduza o card na página principal através da estrutura existente no `assets/site.js`.
+1. Renderize cada página do PDF como imagem: `page.to_image(resolution=150).save(path)`
+2. Identifique separadores de linhas usando luminosidade média por linha (numpy): `row_means = np.array(img.convert('RGB')).mean(axis=(1,2))`; picos = separadores.
+3. Recorte cada carta individualmente e salve como `.webp` (qualidade 88).
+4. Para cartas rotacionadas: use `img.rotate(270, expand=True)` (Bilkis no 7WD estava de lado).
+5. Salve na estrutura: `assets/art/{jogo}/leaders/{nome}.webp` e `assets/art/{jogo}/decision_cards/dc_{nn}.webp`.
+6. Use as imagens reais no HTML do bot em vez de CSS puro.
+
+**Exemplo (7 Wonders Duel):**
+- `assets/art/7wd/leaders/` — 5 líderes extraídos da página 1 do PDF de cartas
+- `assets/art/7wd/decision_cards/dc_01..12.webp` — 12 cartas de decisão extraídas da página 3
+
+## 3. Estrutura e Navegação (UI/UX Coerente)
+
+- Mantenha o padrão de cores, fontes e estilo global (usando `assets/site.css`).
+- **Responsividade:** Desktop e mobile.
+- **Tela Inicial Separada:** Setup screen obrigatória antes da tela de jogo.
+  - Inclui seleção de modo/dificuldade
+  - Inclui checklist de setup físico do jogo
+- **Rodapé Obrigatório:** Créditos + botão Ko-fi ("Buy me a coffee").
+
+## 4. Internacionalização (i18n)
+
+- Todo texto visível via atributos `data-i18n`, `data-i18n-html`, `data-i18n-aria`.
+- Objeto local `const I18N = { pt: {…}, en: {…} }`.
+- Idioma: `localStorage.getItem('boardbots_lang') || 'pt'`.
+- Floating language switch (top-right, fixed): botões PT / EN.
+
+## 5. Ajuda e Tutoriais (Modal de Regras)
+
+- Modal acessível via botão `?` (bottom-right, fixed).
+- Deve incluir: visão geral das regras, como ler cartas/tokens, condições de vitória, lembrete de setup.
+- Use `<details>` colapsáveis dentro da modal para organizar seções.
+
+## 6. Modificações na Página Inicial (`index.html`)
+
+- Adicione o card com arte + título + like/dislike.
+- Adicione chaves de i18n em `assets/site.js` (pt e en): `game_{key}_title`, `game_{key}_desc`, `credit_{key}`.
+- Adicione `<li data-i18n-html="credit_{key}">` em `credits.html`.
+
+## 7. Trello — Gestão de Tarefas
+
+O projeto usa Trello: https://trello.com/b/98ErrGT4/boardbots
+
+- **Credenciais:** `tools/trello.env` no repositório (gitignored via `*.env`). Também em `/Users/thiagocarvalho/Documents/Board games/tools/trello.env`.
+- **Formato do arquivo `trello.env`:**
+  ```
+  # trello API key
+  7c36db0487fb2e6d9727a2965d73b33c
+  # trello token
+  ATTAd11813f38743311d8d636adbd241cd6f25fcf8e1481403b0da49be22ac76f5ffB70D18DC
+  ```
+- **Colunas do quadro (list IDs):**
+  | Coluna | ID |
+  |--------|-----|
+  | Backlog | `6a8f03d44d7de4aad6f8b2e8` |
+  | Design | `6a8f03d44d7de4aad6f8b2e9` |
+  | A Fazer | `6a8f03d44d7de4aad6f8b2ea` |
+  | Em andamento | `6a8f03d44d7de4aad6f8b2eb` |
+  | Revisão e QA | `6a8f03d44d7de4aad6f8b2ec` |
+  | Fase de teste | `6a8f03d44d7de4aad6f8b2ed` |
+  | Concluído 🎉 | `6a8f03d44d7de4aad6f8b2ee` |
+
+- **Mover card para Design:**
+  ```bash
+  curl -X PUT "https://api.trello.com/1/cards/{CARD_ID}?key={API_KEY}&token={TOKEN}&idList=6a8f03d44d7de4aad6f8b2e9"
+  ```
+- **Atualizar descrição:**
+  ```bash
+  curl -X PUT "https://api.trello.com/1/cards/{CARD_ID}?key={API_KEY}&token={TOKEN}" \
+    --data-urlencode "desc=Texto aqui"
+  ```
+- Card ID = parte da URL do card: `https://trello.com/c/{CARD_ID}/...`
+- Ao criar/atualizar plano de implementação: **sempre** atualizar o card Trello correspondente + mover para a coluna correta.
+
+## 8. Prompt de Geração de Código (para modelos de menor capacidade)
+
+Ao finalizar o `implementation_plan.md`, inclua sempre uma seção **"Code Generation Prompt"** com um prompt detalhado para delegar a implementação. O prompt deve conter:
+
+- Convenções da plataforma (HTML auto-contido, sem build, dark theme, i18n local, localStorage)
+- Variáveis CSS do padrão do Stone Age bot (copiadas integralmente)
+- Estrutura de cada tela (setup screen, game screen, help modal, footer)
+- **Dados do jogo codificados como constantes JS verificadas** (nunca placeholder)
+- Referências a paths de imagens reais (ex: `../assets/art/7wd/leaders/{nome}.webp`)
+- Lista de chaves i18n a implementar (pt e en)
+- Textos de crédito para embutir
+- Instrução de output: "Produza o arquivo HTML completo e auto-contido"
+
+## 9. Auditoria de Tarefas
+
+Ao atualizar um plano existente, sempre inclua uma seção **"Task Status Audit"** com:
+
+- ✅ Já feito (com o arquivo/artefato correspondente)
+- ❌ Ainda pendente
+- 🚫 Removido do plano (não faz mais sentido) com justificativa
+- 🆕 Novo / adicionado ao plano
+
+## 10. Conhecimento Específico: 7 Wonders Duel Solo Mode
+
+### Mecânica de Cartas de Decisão (verificado no PDF)
+
+Cada carta mostra **3 prioridades** (não 7): verde (Ciência), vermelho (Militar), e a **cor do Líder** (silhueta do busto). A silhueta resolve-se para a cor do cartão do Líder selecionado.
+
+- Extra turn = cartas 11 e 12 (universal para todos os Líderes, símbolo ↺)
+- Quando o baralho esgota → **embaralha novamente** (o baralho sempre é reembaralhado)
+- Direção de fallback = seta na carta (→ direita, ← esquerda)
+
+### Líderes (verificado no PDF)
+| Líder | Tokens iniciais | Cor da carta | Dificuldade | Especial |
+|-------|----------------|--------------|-------------|---------|
+| Caesar | Strategy | Purple | ⭐ | — |
+| Aristotle | Law + Mathematics | Grey | ⭐⭐⭐ | — |
+| Hammurabi | Economy | Yellow | ⭐⭐ | +5 VP no final |
+| Bilkis | Economy | Brown (também grey) | ⭐⭐⭐⭐⭐ | — |
+| Cleopatra | Philosophy + Agriculture | Blue | ⭐⭐⭐⭐ | — |
+
+### Assets
+```
+assets/art/7wondersduel.webp            ← capa
+assets/art/7wd/leaders/caesar.webp      ← portrait do líder
+assets/art/7wd/leaders/aristotle.webp
+assets/art/7wd/leaders/hammurabi.webp
+assets/art/7wd/leaders/cleopatra.webp
+assets/art/7wd/leaders/bilkis.webp
+assets/art/7wd/decision_cards/dc_01.webp … dc_12.webp
+```

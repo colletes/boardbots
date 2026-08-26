@@ -1,0 +1,1851 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title data-i18n="docTitle">7 Wonders Duel — Automa Duelist</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="../assets/logger.js"></script>
+
+  <style>
+    :root {
+      --bg-0: #0b0e12;
+      --bg-1: #12161c;
+      --surface: #181d25;
+      --surface-2: #202630;
+      --surface-3: #2a3240;
+      --border: #2d3644;
+      --border-focus: #c9a227;
+      --text: #eef1f5;
+      --text-dim: #9aa4b2;
+      --text-muted: #677284;
+      
+      --accent: #c9a227;
+      --accent-soft: rgba(201, 162, 39, 0.15);
+      --accent-glow: rgba(201, 162, 39, 0.35);
+      
+      --red: #ef4444;
+      --red-soft: rgba(239, 68, 68, 0.15);
+      --green: #22c55e;
+      --green-soft: rgba(34, 197, 94, 0.15);
+      --blue: #3b82f6;
+      --blue-soft: rgba(59, 130, 246, 0.15);
+      --purple: #a855f7;
+      --purple-soft: rgba(168, 85, 247, 0.15);
+      --yellow: #eab308;
+      --yellow-soft: rgba(234, 179, 8, 0.15);
+      --grey: #94a3b8;
+      --grey-soft: rgba(148, 163, 184, 0.15);
+      --brown: #b45309;
+      --brown-soft: rgba(180, 83, 9, 0.2);
+
+      --font-display: 'Cinzel', serif;
+      --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+      --radius: 14px;
+      --radius-sm: 8px;
+      --shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background: radial-gradient(circle at 50% 0%, var(--bg-1) 0%, var(--bg-0) 100%);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-bottom: calc(40px + env(safe-area-inset-bottom));
+      overflow-x: hidden;
+    }
+
+    button {
+      font-family: inherit;
+      cursor: pointer;
+      touch-action: manipulation;
+      border: none;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    /* Fixed Top Floating Header */
+    .top-nav {
+      width: 100%;
+      max-width: 760px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      backdrop-filter: blur(12px);
+      background: rgba(11, 14, 18, 0.75);
+      border-bottom: 1px solid rgba(45, 54, 68, 0.4);
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-display);
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .lang-btn {
+      background: var(--surface);
+      color: var(--text-dim);
+      border: 1px solid var(--border);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    .lang-btn.active {
+      background: var(--accent-soft);
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .icon-btn {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+    }
+    .icon-btn:hover {
+      background: var(--surface-2);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* Main Container */
+    .container {
+      width: 100%;
+      max-width: 720px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* Hero Banner */
+    .hero {
+      position: relative;
+      border-radius: var(--radius);
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      min-height: 180px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 24px;
+    }
+    .hero-bg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center 25%;
+      opacity: 0.45;
+      filter: saturate(1.2) brightness(0.8);
+      z-index: 1;
+    }
+    .hero-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(to top, var(--bg-0) 10%, rgba(11, 14, 18, 0.4) 60%, transparent 100%);
+      z-index: 2;
+    }
+    .hero-content {
+      position: relative;
+      z-index: 3;
+    }
+    .hero-title {
+      font-family: var(--font-display);
+      font-size: 1.8rem;
+      font-weight: 900;
+      color: #fff;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+      letter-spacing: 0.5px;
+    }
+    .hero-subtitle {
+      font-size: 0.85rem;
+      color: var(--accent);
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+
+    /* Cards & Panels */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      box-shadow: var(--shadow);
+      animation: fadeIn 0.3s ease;
+    }
+
+    .card-title {
+      font-family: var(--font-display);
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Setup Screen: Leaders List */
+    .leader-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .leader-option {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: var(--surface-2);
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 14px;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .leader-option:hover {
+      border-color: rgba(201, 162, 39, 0.5);
+      background: var(--surface-3);
+    }
+    .leader-option.selected {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      box-shadow: 0 0 16px var(--accent-glow);
+    }
+    .leader-thumb {
+      width: 58px;
+      height: 74px;
+      border-radius: var(--radius-sm);
+      object-fit: cover;
+      border: 1px solid var(--border);
+      flex-shrink: 0;
+      background: var(--bg-1);
+    }
+    .leader-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .leader-name-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .leader-name {
+      font-family: var(--font-display);
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .leader-stars {
+      color: var(--accent);
+      font-size: 0.8rem;
+    }
+    .leader-meta {
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+    }
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      border: 1px solid transparent;
+    }
+    .tag-purple { background: var(--purple-soft); color: var(--purple); border-color: rgba(168, 85, 247, 0.3); }
+    .tag-grey { background: var(--grey-soft); color: var(--grey); border-color: rgba(148, 163, 184, 0.3); }
+    .tag-yellow { background: var(--yellow-soft); color: var(--yellow); border-color: rgba(234, 179, 8, 0.3); }
+    .tag-brown { background: var(--brown-soft); color: var(--brown); border-color: rgba(180, 83, 9, 0.3); }
+    .tag-blue { background: var(--blue-soft); color: var(--blue); border-color: rgba(59, 130, 246, 0.3); }
+
+    /* Collapsible Details */
+    details {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      transition: all 0.2s ease;
+    }
+    details[open] {
+      background: var(--surface-3);
+      border-color: rgba(201, 162, 39, 0.4);
+    }
+    summary {
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      user-select: none;
+    }
+    .setup-desc {
+      margin-top: 10px;
+      font-size: 0.84rem;
+      color: var(--text-dim);
+      line-height: 1.5;
+    }
+    .setup-desc ul {
+      padding-left: 20px;
+      margin-top: 6px;
+    }
+    .setup-desc li {
+      margin-bottom: 4px;
+    }
+
+    /* Primary Start Button */
+    .btn-primary {
+      background: linear-gradient(135deg, #e5b93b 0%, #c9a227 100%);
+      color: #0b0e12;
+      font-family: var(--font-display);
+      font-size: 1.05rem;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      padding: 14px 24px;
+      border-radius: var(--radius);
+      box-shadow: 0 4px 18px var(--accent-glow);
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn-primary:hover {
+      filter: brightness(1.1);
+      transform: translateY(-1px);
+    }
+    .btn-primary:active {
+      transform: translateY(1px);
+    }
+
+    .btn-secondary {
+      background: var(--surface-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      font-weight: 600;
+      padding: 10px 16px;
+      border-radius: var(--radius-sm);
+    }
+    .btn-secondary:hover {
+      background: var(--surface-3);
+      border-color: var(--accent);
+    }
+
+    /* Game Area */
+    #game-area {
+      display: none;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* Active Leader Header */
+    .active-leader-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 16px;
+    }
+    .active-leader-identity {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .active-leader-portrait {
+      width: 44px;
+      height: 56px;
+      border-radius: 6px;
+      object-fit: cover;
+      border: 1px solid var(--border);
+    }
+    .active-leader-text h3 {
+      font-family: var(--font-display);
+      font-size: 1rem;
+      color: var(--accent);
+    }
+    .active-leader-text span {
+      font-size: 0.76rem;
+      color: var(--text-dim);
+    }
+
+    /* Status Grid */
+    .status-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 10px;
+    }
+    .status-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 6px;
+    }
+    .status-label {
+      font-size: 0.74rem;
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: var(--text-dim);
+    }
+    .status-val {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--text);
+    }
+    .status-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .step-btn {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-sm);
+      font-size: 1.1rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .step-btn:hover {
+      background: var(--surface-3);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* Science Tracker Chips */
+    .science-tracker {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .science-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--text-dim);
+      text-transform: uppercase;
+    }
+    .science-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .science-chip {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      border-radius: 20px;
+      padding: 6px 12px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .science-chip.active {
+      background: var(--green-soft);
+      border-color: var(--green);
+      color: var(--green);
+      box-shadow: 0 0 10px rgba(34, 197, 94, 0.25);
+    }
+
+    /* Decision Card Display Panel */
+    .decision-panel {
+      background: var(--surface);
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+    .decision-card-img-wrap {
+      width: 100%;
+      max-width: 360px;
+      background: #000;
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      border: 1px solid var(--border);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.6);
+      aspect-ratio: 16 / 9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .decision-card-img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+    .card-meta-bar {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      font-weight: 600;
+      padding: 0 4px;
+    }
+    .priority-list {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .priority-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      border: 1px solid transparent;
+    }
+    .priority-arrow {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .fallback-info {
+      font-size: 0.82rem;
+      color: var(--text-dim);
+      background: var(--surface-2);
+      padding: 8px 14px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      width: 100%;
+    }
+
+    /* Extra Turn Banner */
+    .extra-turn-badge {
+      display: none;
+      background: linear-gradient(135deg, rgba(234, 179, 8, 0.25), rgba(201, 162, 39, 0.35));
+      border: 1px solid var(--yellow);
+      color: #fef08a;
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 0.86rem;
+      font-weight: 700;
+      width: 100%;
+      animation: pulseGlow 1.5s infinite alternate;
+    }
+
+    /* Supremacy Banners */
+    .supremacy-alert {
+      display: none;
+      padding: 14px 18px;
+      border-radius: var(--radius);
+      font-weight: 700;
+      text-align: center;
+      animation: bounceIn 0.4s ease;
+      font-size: 0.95rem;
+    }
+    .supremacy-alert.win {
+      background: var(--green-soft);
+      border: 2px solid var(--green);
+      color: #bbf7d0;
+    }
+    .supremacy-alert.lose {
+      background: var(--red-soft);
+      border: 2px solid var(--red);
+      color: #fecaca;
+    }
+
+    /* Deck Notification Pill */
+    .deck-notice {
+      display: none;
+      background: var(--blue-soft);
+      border: 1px solid var(--blue);
+      color: #93c5fd;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+
+    /* Action Buttons Row */
+    .action-row {
+      display: flex;
+      width: 100%;
+      gap: 10px;
+    }
+    .action-row button {
+      flex: 1;
+    }
+
+    /* History Log */
+    .log-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 160px;
+      overflow-y: auto;
+    }
+    .log-title {
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+    .log-item {
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      border-left: 2px solid var(--accent);
+      padding-left: 8px;
+      line-height: 1.4;
+    }
+
+    /* Floating Help & Reset Buttons */
+    .floating-btn-wrap {
+      position: fixed;
+      bottom: calc(16px + env(safe-area-inset-bottom));
+      display: flex;
+      gap: 12px;
+      z-index: 50;
+    }
+    .float-left { left: 16px; }
+    .float-right { right: 16px; }
+
+    .btn-fab {
+      background: var(--surface-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 30px;
+      padding: 10px 16px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.6);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-fab:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--surface-3);
+    }
+
+    /* Modals */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(8px);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .modal-overlay.open {
+      display: flex;
+    }
+    .modal-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      max-width: 560px;
+      width: 100%;
+      max-height: 85vh;
+      overflow-y: auto;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+      animation: modalPop 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 12px;
+    }
+    .modal-header h2 {
+      font-family: var(--font-display);
+      color: var(--accent);
+      font-size: 1.25rem;
+    }
+    .close-btn {
+      background: transparent;
+      color: var(--text-dim);
+      font-size: 1.4rem;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .close-btn:hover {
+      color: #fff;
+    }
+
+    /* Footer & Credits */
+    .footer {
+      margin-top: 30px;
+      text-align: center;
+      font-size: 0.76rem;
+      color: var(--text-muted);
+      max-width: 600px;
+      line-height: 1.6;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    .bmc-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #ff5e5b;
+      color: #fff;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 0.75rem;
+      padding: 8px 14px;
+      border-radius: 20px;
+      transition: transform 0.2s ease;
+    }
+    .bmc-link:hover {
+      transform: scale(1.04);
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes modalPop {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    @keyframes pulseGlow {
+      from { box-shadow: 0 0 4px rgba(234, 179, 8, 0.3); }
+      to { box-shadow: 0 0 16px rgba(234, 179, 8, 0.7); }
+    }
+    @keyframes bounceIn {
+      0% { transform: scale(0.9); opacity: 0; }
+      70% { transform: scale(1.02); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Fixed Navigation -->
+  <header class="top-nav">
+    <a href="../index.html" class="nav-brand">
+      <span>🏛️</span>
+      <span>Boardbots</span>
+    </a>
+    <div class="nav-actions">
+      <button class="lang-btn" id="langPtBtn" onclick="setLang('pt')">PT</button>
+      <button class="lang-btn" id="langEnBtn" onclick="setLang('en')">EN</button>
+      <button class="icon-btn" onclick="openHelp()" title="Ajuda / Regras">?</button>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <!-- Hero Section -->
+    <section class="hero">
+      <img src="../assets/art/7wondersduel.webp" alt="7 Wonders Duel" class="hero-bg">
+      <div class="hero-overlay"></div>
+      <div class="hero-content">
+        <h1 class="hero-title" style="display:flex; align-items:center; flex-wrap:wrap; gap:8px;"><span data-i18n="heroTitle">7 Wonders Duel</span> <span style="background:var(--accent); color:#000; font-size:0.65rem; font-weight:800; padding:3px 8px; border-radius:4px; letter-spacing:1px;">ALPHA</span></h1>
+        <p class="hero-subtitle" data-i18n="heroSubtitle">Automa Duelist • Modo Solo Oficial</p>
+      </div>
+    </section>
+
+    <!-- Supremacy Alert Banners -->
+    <div id="supremacyAlert" class="supremacy-alert"></div>
+
+    <!-- ==================== SETUP SCREEN ==================== -->
+    <section id="setup-screen" class="card">
+      
+      <!-- Card 1: Leader Selection -->
+      <div class="card-title">
+        <span>👑</span>
+        <span data-i18n="selectLeaderTitle">Escolha o seu Oponente (Líder)</span>
+      </div>
+
+      <div class="leader-grid" id="leaderGrid">
+        <!-- Injected via JS -->
+      </div>
+
+      <!-- Card 2: Physical Table Setup Checklist -->
+      <div class="card-title" style="margin-top: 8px;">
+        <span>📜</span>
+        <span data-i18n="physicalSetupTitle">Preparação na Mesa</span>
+      </div>
+
+      <details open>
+        <summary data-i18n="setupPyramidTitle">🃏 Estrutura de Cartas da Era I</summary>
+        <div class="setup-desc" data-i18n-html="setupPyramidDesc">
+          Monte a pirâmide da Era I com as 20 cartas (alternando fileiras viradas para cima e para baixo) conforme as regras padrão.
+        </div>
+      </details>
+
+      <details>
+        <summary data-i18n="setupBoardTitle">⚔️ Tabuleiro & Marcadores</summary>
+        <div class="setup-desc" data-i18n-html="setupBoardDesc">
+          <ul>
+            <li>Coloque o peão de Conflito Militar no centro (posição 0).</li>
+            <li>Coloque os 4 marcadores de Penalidade Militar nos seus espaços.</li>
+            <li>Embaralhe os 10 marcadores de Progresso e coloque 5 virados para cima no tabuleiro.</li>
+            <li>Você começa com <strong>7 moedas</strong>. O Líder começa com <strong>0 moedas</strong>.</li>
+          </ul>
+        </div>
+      </details>
+
+      <details>
+        <summary data-i18n="setupWondersTitle">🏛️ Escolha de Maravilhas (Draft)</summary>
+        <div class="setup-desc" data-i18n-html="setupWondersDesc">
+          <p>Embaralhe as 12 cartas de Maravilha. Compre 3:</p>
+          <ul>
+            <li>Você escolhe <strong>2</strong> para você.</li>
+            <li>A <strong>3ª</strong> vai para o Líder.</li>
+          </ul>
+          <p>Repita o processo mais uma vez (Compre 3 → Pegue 2 → 1 para o Líder). No total, você terá 4 e o Líder terá 2.</p>
+          <p style="margin-top:6px; color: var(--accent);"><strong>Importante:</strong> As 2 Maravilhas do Líder já são tratadas como <strong>construídas imediatamente</strong>! Aplique todos os seus efeitos no setup (moedas, avanço militar, compra de tokens de progresso descartados).</p>
+        </div>
+      </details>
+
+      <details>
+        <summary data-i18n="setupDeckTitle">🎴 Baralho de Decisão</summary>
+        <div class="setup-desc" data-i18n="setupDeckDesc">
+          O aplicativo já embaralha digitalmente as 12 Cartas de Decisão oficiais. Você não precisa recortar as cartas físicas.
+        </div>
+      </details>
+
+      <!-- Start Button -->
+      <button class="btn-primary" onclick="startGame()" style="margin-top: 10px;">
+        <span data-i18n="startBtn">Começar Duelo</span>
+        <span>⚔️</span>
+      </button>
+
+    </section>
+
+    <!-- ==================== GAME AREA ==================== -->
+    <section id="game-area">
+
+      <!-- Active Leader Bar -->
+      <div class="active-leader-bar">
+        <div class="active-leader-identity">
+          <img id="activeLeaderImg" src="" alt="Leader" class="active-leader-portrait">
+          <div class="active-leader-text">
+            <h3 id="activeLeaderName">Líder</h3>
+            <span id="activeLeaderDetails">Progresso • Cor</span>
+          </div>
+        </div>
+        <div>
+          <button class="btn-secondary" onclick="openEndAgeModal()" data-i18n="endAgeBtn">Fim de Era</button>
+        </div>
+      </div>
+
+      <!-- Decision Card Display -->
+      <div class="decision-panel">
+        
+        <div class="card-meta-bar">
+          <span id="cardCounter">Carta 1 de 12</span>
+          <span id="deckCounter">12 restantes</span>
+        </div>
+
+        <div id="deckNotice" class="deck-notice" data-i18n="deckReshuffledNotice">
+          🔄 Baralho esgotado! Reembaralhado automaticamente.
+        </div>
+
+        <div class="decision-card-img-wrap">
+          <img id="decisionCardImg" src="../assets/art/7wd/decision_cards/dc_01.webp" alt="Carta de Decisão" class="decision-card-img">
+        </div>
+
+        <!-- Extra Turn Notice -->
+        <div id="extraTurnBadge" class="extra-turn-badge">
+          ⚡ <span data-i18n="extraTurnNotice">TURNO EXTRA! O Líder joga outra carta em seguida.</span>
+        </div>
+
+        <!-- Priority Breakdown -->
+        <div style="display:flex; flex-direction:column; gap:6px; width:100%;">
+          <span style="font-size:0.75rem; text-transform:uppercase; font-weight:700; color:var(--text-dim);" data-i18n="priorityOrderLabel">Ordem de Prioridade:</span>
+          <div class="priority-list" id="priorityList">
+            <!-- Dynamic pills -->
+          </div>
+        </div>
+
+        <!-- Fallback Scan Direction -->
+        <div class="fallback-info" id="fallbackInfo">
+          <!-- Fallback text -->
+        </div>
+
+        <!-- Action Controls -->
+        <div class="action-row">
+          <button class="btn-primary" id="flipBtn" onclick="flipNextCard()">
+            <span data-i18n="flipCardBtn">Virar Carta</span>
+            <span>▶</span>
+          </button>
+          <button class="btn-secondary" id="resolveBtn" onclick="resolveCard()" style="display:none;">
+            <span data-i18n="cardResolvedBtn">Carta Resolvida</span>
+            <span>✓</span>
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Status Trackers Grid -->
+      <div class="status-grid">
+
+        <!-- Military Pawn Position -->
+        <div class="status-box">
+          <span class="status-label" data-i18n="militaryTrackerLabel">Militar</span>
+          <div class="status-val" id="militaryVal">0</div>
+          <span style="font-size:0.68rem; color:var(--text-muted);" id="militarySubtext">Neutro</span>
+          <div class="status-controls">
+            <button class="step-btn" onclick="adjustMilitary(-1)" title="Você avança militarmente">−</button>
+            <button class="step-btn" onclick="adjustMilitary(1)" title="Líder avança militarmente">+</button>
+          </div>
+        </div>
+
+        <!-- Leader VP Tracker -->
+        <div class="status-box">
+          <span class="status-label" data-i18n="leaderVpLabel">PVs do Líder</span>
+          <div class="status-val" id="leaderVpVal">0</div>
+          <span style="font-size:0.68rem; color:var(--text-muted);" data-i18n="vpSubtext">Cartas Azuis / Bônus</span>
+          <div class="status-controls">
+            <button class="step-btn" onclick="adjustLeaderVp(-1)">−</button>
+            <button class="step-btn" onclick="adjustLeaderVp(1)">+</button>
+          </div>
+        </div>
+
+        <!-- Current Age Selector -->
+        <div class="status-box">
+          <span class="status-label" data-i18n="ageTrackerLabel">Era Atual</span>
+          <div class="status-val" id="ageVal" style="color:var(--accent);">I</div>
+          <div class="status-controls">
+            <button class="step-btn" onclick="setAge('I')">I</button>
+            <button class="step-btn" onclick="setAge('II')">II</button>
+            <button class="step-btn" onclick="setAge('III')">III</button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Science Chips Tracker -->
+      <div class="science-tracker">
+        <div class="science-header">
+          <span data-i18n="scienceTrackerTitle">Símbolos Científicos do Líder</span>
+          <span id="scienceCountBadge" style="color:var(--accent); font-weight:800;">0 / 7</span>
+        </div>
+        <div class="science-chips" id="scienceChips">
+          <!-- 7 symbols injected via JS -->
+        </div>
+      </div>
+
+      <!-- Action Log -->
+      <div class="log-panel">
+        <div class="log-title" data-i18n="actionLogTitle">Histórico de Ações</div>
+        <div id="logList" style="display:flex; flex-direction:column; gap:6px;"></div>
+      </div>
+
+      <!-- End Game Button -->
+      <button class="btn-secondary" onclick="openEndGameModal()" style="width:100%; border-color:var(--border);" data-i18n="endGameBtn">
+        🏁 Finalizar Jogo & Contar Pontos
+      </button>
+
+    </section>
+
+    <!-- Floating Reset Button -->
+    <div class="floating-btn-wrap float-left">
+      <button class="btn-fab" id="resetBtn" onclick="confirmReset()" style="display:none;">
+        <span>🔄</span>
+        <span data-i18n="newGameBtn">Novo Jogo</span>
+      </button>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div data-i18n-html="creditsFooter">
+        Baseado no modo solo oficial de <strong>7 Wonders Duel</strong> (expansão gratuita P&P).<br>
+        7 Wonders Duel © Repos Production, design de Antoine Bauza e Bruno Cathala.<br>
+        Aplicativo web não-oficial desenvolvido por fãs para a comunidade.
+      </div>
+      <a href="https://ko-fi.com/colletes" target="_blank" rel="noopener" class="bmc-link">
+        <span>☕</span>
+        <span data-i18n="kofiBtn">Apoie no Ko-fi</span>
+      </a>
+    </footer>
+
+  </main>
+
+  <!-- ==================== HELP MODAL ==================== -->
+  <div class="modal-overlay" id="helpModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2 data-i18n="helpModalTitle">Regras & Guia do Automa</h2>
+        <button class="close-btn" onclick="closeHelp()">✕</button>
+      </div>
+
+      <details open>
+        <summary data-i18n="helpHowItWorksTitle">🎯 Como o Automa Funciona</summary>
+        <div class="setup-desc" data-i18n-html="helpHowItWorksDesc">
+          <p>No turno do Líder:</p>
+          <ol style="padding-left:18px; margin-top:6px;">
+            <li>Vire a Carta de Decisão do topo.</li>
+            <li>Observe a <strong>Ordem de Prioridade</strong> (1ª → 2ª → 3ª cor).</li>
+            <li>O Líder pega a <strong>primeira carta acessível</strong> na pirâmide da cor prioritária, seguindo o sentido da seta (← ou →).</li>
+            <li>Se nenhuma das 3 cores prioritárias estiver acessível, ele pega a primeira carta disponível em qualquer cor seguindo a seta.</li>
+            <li>O Líder <strong>constrói a carta de graça</strong> (não paga recursos nem moedas).</li>
+          </ol>
+        </div>
+      </details>
+
+      <details>
+        <summary data-i18n="helpExtraTurnsTitle">⚡ Turnos Extras</summary>
+        <div class="setup-desc" data-i18n-html="helpExtraTurnsDesc">
+          Quando a carta virada possuir o símbolo circular <strong>↺</strong> (Cartas 11 e 12), o Líder joga <strong>imediatamente outro turno</strong> após resolver a carta atual!
+        </div>
+      </details>
+
+      <details>
+        <summary data-i18n="helpSupremacyTitle">🏆 Condições de Vitória</summary>
+        <div class="setup-desc" data-i18n-html="helpSupremacyDesc">
+          <ul>
+            <li><strong>Supremacia Militar:</strong> Se o peão alcançar a capital adversária (posição ±9), o jogo termina imediatamente com vitória de quem invadiu!</li>
+            <li><strong>Supremacia Científica:</strong> Se você ou o Líder reunir <strong>6 símbolos científicos diferentes</strong>, vence imediatamente!</li>
+            <li><strong>Vitória Civil:</strong> Ao fim da Era III, some seus Pontos de Vitória (cartas azuis, maravilhas, moedas, militar, progresso) e compare com os PVs do Líder.</li>
+          </ul>
+        </div>
+      </details>
+
+      <details>
+        <summary data-i18n="helpLeadersSummaryTitle">👑 Resumo dos Líderes</summary>
+        <div class="setup-desc" data-i18n-html="helpLeadersSummaryDesc">
+          <p><strong>César (⭐):</strong> Começa com Estratégia (+1 escudo). Cor: Roxo.</p>
+          <p><strong>Aristóteles (⭐⭐⭐):</strong> Começa com Lei e Matemática. Cor: Cinza.</p>
+          <p><strong>Hamurabi (⭐⭐):</strong> Começa com Economia. +5 PV no final do jogo. Cor: Amarelo.</p>
+          <p><strong>Bilkis (⭐⭐⭐⭐⭐):</strong> Começa com Economia. Cor: Marrom.</p>
+          <p><strong>Cleópatra (⭐⭐⭐⭐):</strong> Começa com Filosofia e Agricultura. Cor: Azul.</p>
+        </div>
+      </details>
+
+      <button class="btn-primary" onclick="closeHelp()" style="margin-top:8px;" data-i18n="gotItBtn">Entendido</button>
+    </div>
+  </div>
+
+  <!-- ==================== END AGE MODAL ==================== -->
+  <div class="modal-overlay" id="endAgeModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2 data-i18n="endAgeModalTitle">Transição de Era</h2>
+        <button class="close-btn" onclick="closeEndAgeModal()">✕</button>
+      </div>
+
+      <div class="setup-desc" data-i18n-html="endAgeDesc">
+        <p>Ao terminar uma Era:</p>
+        <ul>
+          <li>Descarte quaisquer cartas não coletadas da estrutura.</li>
+          <li>Monte a estrutura de cartas da próxima Era (Era II ou III).</li>
+          <li><strong>Quem joga primeiro:</strong> Na Era I o Líder sempre começa. Nas Eras II e III, quem estiver perdendo na trilha militar escolhe quem começa (se o Líder tiver a escolha, ele sempre escolhe começar primeiro).</li>
+        </ul>
+      </div>
+
+      <div style="display:flex; gap:10px; margin-top:10px;">
+        <button class="btn-primary" onclick="advanceAge()" style="flex:1;" data-i18n="advanceAgeBtn">Avançar Era</button>
+        <button class="btn-secondary" onclick="closeEndAgeModal()" data-i18n="cancelBtn">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== END GAME MODAL ==================== -->
+  <div class="modal-overlay" id="endGameModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2 data-i18n="endGameModalTitle">Resultado da Partida</h2>
+        <button class="close-btn" onclick="closeEndGameModal()">✕</button>
+      </div>
+
+      <div id="endGameContent" style="display:flex; flex-direction:column; gap:12px;">
+        <p data-i18n="enterPlayerVpPrompt">Insira seus Pontos de Vitória totais para comparar com o Líder:</p>
+        <div style="display:flex; gap:10px; align-items:center;">
+          <input type="number" id="playerVpInput" placeholder="Seus PVs" style="flex:1; padding:12px; background:var(--surface-2); border:1px solid var(--border); border-radius:var(--radius-sm); color:#fff; font-size:1.1rem; font-weight:700;">
+          <button class="btn-primary" onclick="calculateCivilVictory()" data-i18n="calcResultBtn">Calcular</button>
+        </div>
+        <div id="finalResultBanner" style="display:none; padding:14px; border-radius:var(--radius-sm); text-align:center; font-weight:700;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== JAVASCRIPT LOGIC ==================== -->
+  <script>
+    /* ==========================================================
+       1. DATA DEFINITIONS
+    ========================================================== */
+    const STORAGE_KEY = '7wd_solo_state_v1';
+    const LANG_KEY = 'boardbots_lang';
+
+    const LEADERS = {
+      caesar: {
+        name: 'Caesar',
+        cardColor: 'purple',
+        colorNamePt: 'Roxo (Guildas)',
+        colorNameEn: 'Purple (Guilds)',
+        tokensPt: 'Estratégia (+1 escudo)',
+        tokensEn: 'Strategy (+1 shield)',
+        difficulty: 1,
+        endBonus: 0,
+        thumb: '../assets/art/7wd/leaders/caesar.webp',
+        flavorPt: 'General romano. Foco militar e agressivo.',
+        flavorEn: 'Roman general. Military and aggressive.'
+      },
+      hammurabi: {
+        name: 'Hammurabi',
+        cardColor: 'yellow',
+        colorNamePt: 'Amarelo (Comércio)',
+        colorNameEn: 'Yellow (Commercial)',
+        tokensPt: 'Economia',
+        tokensEn: 'Economy',
+        difficulty: 2,
+        endBonus: 5,
+        thumb: '../assets/art/7wd/leaders/hammurabi.webp',
+        flavorPt: 'Rei babilônico. Recebe +5 PVs no final.',
+        flavorEn: 'Babylonian king. Gains +5 VP at game end.'
+      },
+      aristotle: {
+        name: 'Aristotle',
+        cardColor: 'grey',
+        colorNamePt: 'Cinza (Manufatura)',
+        colorNameEn: 'Grey (Manufactured)',
+        tokensPt: 'Lei + Matemática',
+        tokensEn: 'Law + Mathematics',
+        difficulty: 3,
+        endBonus: 0,
+        thumb: '../assets/art/7wd/leaders/aristotle.webp',
+        flavorPt: 'Filósofo grego. Início científico poderoso.',
+        flavorEn: 'Greek philosopher. Strong scientific start.'
+      },
+      cleopatra: {
+        name: 'Cleopatra',
+        cardColor: 'blue',
+        colorNamePt: 'Azul (Civis)',
+        colorNameEn: 'Blue (Civilian)',
+        tokensPt: 'Filosofia (7 PV) + Agricultura (6 moedas, 4 PV)',
+        tokensEn: 'Philosophy (7 VP) + Agriculture (6 coins, 4 VP)',
+        difficulty: 4,
+        endBonus: 0,
+        thumb: '../assets/art/7wd/leaders/cleopatra.webp',
+        flavorPt: 'Rainha do Egito. Grande geradora de PVs.',
+        flavorEn: 'Queen of Egypt. Massive victory point engine.'
+      },
+      bilkis: {
+        name: 'Bilkis',
+        cardColor: 'brown',
+        colorNamePt: 'Marrom (Matérias-primas)',
+        colorNameEn: 'Brown (Raw Materials)',
+        tokensPt: 'Economia',
+        tokensEn: 'Economy',
+        difficulty: 5,
+        endBonus: 0,
+        thumb: '../assets/art/7wd/leaders/bilkis.webp',
+        flavorPt: 'Rainha de Sabá. Oponente mais implacável.',
+        flavorEn: 'Queen of Sheba. The most challenging opponent.'
+      }
+    };
+
+    // Verified Decision Cards Data (12 cards)
+    const DECISION_CARDS = [
+      { id: 1,  priority: ['green', 'red',    'leader'], fallbackDir: 'right', extraTurn: false },
+      { id: 2,  priority: ['leader','red',    'green' ], fallbackDir: 'left',  extraTurn: false },
+      { id: 3,  priority: ['green', 'red',    'leader'], fallbackDir: 'right', extraTurn: false },
+      { id: 4,  priority: ['leader','green',  'red'   ], fallbackDir: 'left',  extraTurn: false },
+      { id: 5,  priority: ['green', 'red',    'leader'], fallbackDir: 'right', extraTurn: false },
+      { id: 6,  priority: ['leader','green',  'red'   ], fallbackDir: 'left',  extraTurn: false },
+      { id: 7,  priority: ['red',   'green',  'leader'], fallbackDir: 'right', extraTurn: false },
+      { id: 8,  priority: ['leader','green',  'red'   ], fallbackDir: 'left',  extraTurn: false },
+      { id: 9,  priority: ['red',   'green',  'leader'], fallbackDir: 'right', extraTurn: false },
+      { id: 10, priority: ['leader','red',    'green' ], fallbackDir: 'left',  extraTurn: false },
+      { id: 11, priority: ['leader','red',    'green' ], fallbackDir: 'right', extraTurn: true  },
+      { id: 12, priority: ['red',   'green',  'leader'], fallbackDir: 'left',  extraTurn: true  }
+    ];
+
+    const SCIENCE_TYPES = [
+      { id: 'sundial',   icon: '☀️', namePt: 'Relógio de Sol', nameEn: 'Sundial' },
+      { id: 'mortar',    icon: '🔮', namePt: 'Almofariz',     nameEn: 'Mortar' },
+      { id: 'compass',   icon: '🧭', namePt: 'Compasso',      nameEn: 'Compass' },
+      { id: 'writing',   icon: '✒️', namePt: 'Escrita',       nameEn: 'Writing' },
+      { id: 'gear',      icon: '⚙️', namePt: 'Engrenagem',    nameEn: 'Gear' },
+      { id: 'plumbline', icon: '📐', namePt: 'Fio de Prumo',  nameEn: 'Plumb-line' },
+      { id: 'law',       icon: '🪵', namePt: 'Lei',           nameEn: 'Law' }
+    ];
+
+    /* ==========================================================
+       2. INTERNATIONALIZATION (i18n)
+    ========================================================== */
+    const I18N = {
+      pt: {
+        docTitle: '7 Wonders Duel — Automa Duelist',
+        heroTitle: '7 Wonders Duel',
+        heroSubtitle: 'Automa Duelist • Modo Solo Oficial',
+        selectLeaderTitle: 'Escolha o seu Oponente (Líder)',
+        physicalSetupTitle: 'Preparação na Mesa',
+        setupPyramidTitle: '🃏 Estrutura de Cartas da Era I',
+        setupPyramidDesc: 'Monte a pirâmide da Era I com as 20 cartas (alternando fileiras viradas para cima e para baixo) conforme as regras padrão.',
+        setupBoardTitle: '⚔️ Tabuleiro & Marcadores',
+        setupBoardDesc: '<ul><li>Coloque o peão de Conflito Militar no centro (posição 0).</li><li>Coloque os 4 marcadores de Penalidade Militar nos seus espaços.</li><li>Embaralhe os 10 marcadores de Progresso e coloque 5 virados para cima no tabuleiro.</li><li>Você começa com <strong>7 moedas</strong>. O Líder começa com <strong>0 moedas</strong>.</li></ul>',
+        setupWondersTitle: '🏛️ Escolha de Maravilhas (Draft)',
+        setupWondersDesc: '<p>Embaralhe as 12 cartas de Maravilha. Compre 3:</p><ul><li>Você escolhe <strong>2</strong> para você.</li><li>A <strong>3ª</strong> vai para o Líder.</li></ul><p>Repita o processo mais uma vez (Compre 3 → Pegue 2 → 1 para o Líder). No total, você terá 4 e o Líder terá 2.</p><p style="margin-top:6px; color: var(--accent);"><strong>Importante:</strong> As 2 Maravilhas do Líder já são tratadas como <strong>construídas imediatamente</strong>! Aplique todos os seus efeitos no setup (moedas, avanço militar, compra de tokens de progresso descartados).</p>',
+        setupDeckTitle: '🎴 Baralho de Decisão',
+        setupDeckDesc: 'O aplicativo já embaralha digitalmente as 12 Cartas de Decisão oficiais. Você não precisa recortar as cartas físicas.',
+        startBtn: 'Começar Duelo',
+        endAgeBtn: 'Fim de Era',
+        deckReshuffledNotice: '🔄 Baralho esgotado! Reembaralhado automaticamente.',
+        extraTurnNotice: 'TURNO EXTRA! O Líder joga outra carta em seguida.',
+        priorityOrderLabel: 'Ordem de Prioridade:',
+        flipCardBtn: 'Virar Carta',
+        cardResolvedBtn: 'Carta Resolvida',
+        militaryTrackerLabel: 'Militar',
+        leaderVpLabel: 'PVs do Líder',
+        vpSubtext: 'Cartas Azuis / Bônus',
+        ageTrackerLabel: 'Era Atual',
+        scienceTrackerTitle: 'Símbolos Científicos do Líder',
+        actionLogTitle: 'Histórico de Ações',
+        endGameBtn: '🏁 Finalizar Jogo & Contar Pontos',
+        newGameBtn: 'Novo Jogo',
+        creditsFooter: 'Baseado no modo solo oficial de <strong>7 Wonders Duel</strong> (expansão gratuita P&P).<br>7 Wonders Duel © Repos Production, design de Antoine Bauza e Bruno Cathala.<br>Aplicativo web não-oficial desenvolvido por fãs para a comunidade.',
+        kofiBtn: 'Apoie no Ko-fi',
+        helpModalTitle: 'Regras & Guia do Automa',
+        helpHowItWorksTitle: '🎯 Como o Automa Funciona',
+        helpHowItWorksDesc: '<p>No turno do Líder:</p><ol style="padding-left:18px; margin-top:6px;"><li>Vire a Carta de Decisão do topo.</li><li>Observe a <strong>Ordem de Prioridade</strong> (1ª → 2ª → 3ª cor).</li><li>O Líder pega a <strong>primeira carta acessível</strong> na pirâmide da cor prioritária, seguindo o sentido da seta (← ou →).</li><li>Se nenhuma das 3 cores prioritárias estiver acessível, ele pega a primeira carta disponível em qualquer cor seguindo a seta.</li><li>O Líder <strong>constrói a carta de graça</strong> (não paga recursos nem moedas).</li></ol>',
+        helpExtraTurnsTitle: '⚡ Turnos Extras',
+        helpExtraTurnsDesc: 'Quando a carta virada possuir o símbolo circular <strong>↺</strong> (Cartas 11 e 12), o Líder joga <strong>imediatamente outro turno</strong> após resolver a carta atual!',
+        helpSupremacyTitle: '🏆 Condições de Vitória',
+        helpSupremacyDesc: '<ul><li><strong>Supremacia Militar:</strong> Se o peão alcançar a capital adversária (posição ±9), o jogo termina imediatamente com vitória de quem invadiu!</li><li><strong>Supremacia Científica:</strong> Se você ou o Líder reunir <strong>6 símbolos científicos diferentes</strong>, vence imediatamente!</li><li><strong>Vitória Civil:</strong> Ao fim da Era III, some seus Pontos de Vitória (cartas azuis, maravilhas, moedas, militar, progresso) e compare com os PVs do Líder.</li></ul>',
+        helpLeadersSummaryTitle: '👑 Resumo dos Líderes',
+        helpLeadersSummaryDesc: '<p><strong>César (⭐):</strong> Começa com Estratégia (+1 escudo). Cor: Roxo.</p><p><strong>Aristóteles (⭐⭐⭐):</strong> Começa com Lei e Matemática. Cor: Cinza.</p><p><strong>Hamurabi (⭐⭐):</strong> Começa com Economia. +5 PV no final do jogo. Cor: Amarelo.</p><p><strong>Bilkis (⭐⭐⭐⭐⭐):</strong> Começa com Economia. Cor: Marrom.</p><p><strong>Cleópatra (⭐⭐⭐⭐):</strong> Começa com Filosofia e Agricultura. Cor: Azul.</p>',
+        gotItBtn: 'Entendido',
+        endAgeModalTitle: 'Transição de Era',
+        endAgeDesc: '<p>Ao terminar uma Era:</p><ul><li>Descarte quaisquer cartas não coletadas da estrutura.</li><li>Monte a estrutura de cartas da próxima Era (Era II ou III).</li><li><strong>Quem joga primeiro:</strong> Na Era I o Líder sempre começa. Nas Eras II e III, quem estiver perdendo na trilha militar escolhe quem começa (se o Líder tiver a escolha, ele sempre escolhe começar primeiro).</li></ul>',
+        advanceAgeBtn: 'Avançar Era',
+        cancelBtn: 'Cancelar',
+        endGameModalTitle: 'Resultado da Partida',
+        enterPlayerVpPrompt: 'Insira seus Pontos de Vitória totais para comparar com o Líder:',
+        calcResultBtn: 'Calcular',
+        youWinText: '🎉 Parabéns! Você venceu o duelo por Pontos de Vitória!',
+        youLoseText: '💀 O Líder venceu o duelo por Pontos de Vitória!',
+        tieText: '⚖️ Empate em Pontos de Vitória! Vence quem tiver mais PVs em cartas azuis.',
+        militaryWinAlert: '⚔️ VITÓRIA POR SUPREMACIA MILITAR! Você invadiu a capital inimiga!',
+        militaryLoseAlert: '⚔️ DERROTA POR SUPREMACIA MILITAR! O Líder conquistou a sua capital!',
+        scienceLoseAlert: '🔬 DERROTA POR SUPREMACIA CIENTÍFICA! O Líder reuniu 6 símbolos científicos distintos!',
+        scanFallbackLeft: 'Se nenhuma cor disponível: pegue a 1ª carta acessível da <strong>DIREITA para a ESQUERDA (←)</strong> a partir da base.',
+        scanFallbackRight: 'Se nenhuma cor disponível: pegue a 1ª carta acessível da <strong>ESQUERDA para a DIREITA (→)</strong> a partir da base.',
+        colorScience: 'Verde (Ciência)',
+        colorMilitary: 'Vermelho (Militar)',
+        resetConfirmPrompt: 'Tem certeza que deseja reiniciar a partida? O progresso atual será perdido.'
+      },
+      en: {
+        docTitle: '7 Wonders Duel — Automa Duelist',
+        heroTitle: '7 Wonders Duel',
+        heroSubtitle: 'Automa Duelist • Official Solo Mode',
+        selectLeaderTitle: 'Choose your Opponent (Leader)',
+        physicalSetupTitle: 'Table Setup Checklist',
+        setupPyramidTitle: '🃏 Age I Card Structure',
+        setupPyramidDesc: 'Set up the Age I pyramid with the 20 cards (alternating face-up and face-down rows) according to standard rules.',
+        setupBoardTitle: '⚔️ Board & Tokens',
+        setupBoardDesc: '<ul><li>Place the Conflict pawn in the center (position 0).</li><li>Place the 4 Military Penalty tokens in their spaces.</li><li>Shuffle the 10 Progress tokens and place 5 face-up on the board.</li><li>You start with <strong>7 coins</strong>. The Leader starts with <strong>0 coins</strong>.</li></ul>',
+        setupWondersTitle: '🏛️ Wonder Selection (Draft)',
+        setupWondersDesc: '<p>Shuffle the 12 Wonder cards. Draw 3:</p><ul><li>Choose <strong>2</strong> for yourself.</li><li>The <strong>3rd</strong> goes to the Leader.</li></ul><p>Repeat the process once more (Draw 3 → Pick 2 → 1 for Leader). You will have 4 and the Leader 2.</p><p style="margin-top:6px; color: var(--accent);"><strong>Important:</strong> The Leader’s 2 Wonders are considered <strong>immediately pre-built</strong>! Apply all effects at setup (coins, military pawn movement, progress token acquisition).</p>',
+        setupDeckTitle: '🎴 Decision Deck',
+        setupDeckDesc: 'The companion app digitally shuffles the 12 official Decision Cards. No need to cut or sleeve physical solo cards.',
+        startBtn: 'Start Duel',
+        endAgeBtn: 'End of Age',
+        deckReshuffledNotice: '🔄 Deck exhausted! Automatically reshuffled.',
+        extraTurnNotice: 'EXTRA TURN! The Leader immediately plays another card next.',
+        priorityOrderLabel: 'Priority Order:',
+        flipCardBtn: 'Flip Card',
+        cardResolvedBtn: 'Card Resolved',
+        militaryTrackerLabel: 'Military',
+        leaderVpLabel: 'Leader VPs',
+        vpSubtext: 'Blue Cards / Bonuses',
+        ageTrackerLabel: 'Current Age',
+        scienceTrackerTitle: 'Leader Scientific Symbols',
+        actionLogTitle: 'Action History',
+        endGameBtn: '🏁 End Game & Tally Score',
+        newGameBtn: 'New Game',
+        creditsFooter: 'Based on the official solo mode of <strong>7 Wonders Duel</strong> (free P&P expansion).<br>7 Wonders Duel © Repos Production, designed by Antoine Bauza and Bruno Cathala.<br>Unofficial fan-made web companion for the board game community.',
+        kofiBtn: 'Support on Ko-fi',
+        helpModalTitle: 'Rules & Automa Guide',
+        helpHowItWorksTitle: '🎯 How the Automa Works',
+        helpHowItWorksDesc: '<p>On the Leader’s turn:</p><ol style="padding-left:18px; margin-top:6px;"><li>Flip the top Decision Card.</li><li>Check the <strong>Priority Order</strong> (1st → 2nd → 3rd color).</li><li>The Leader takes the <strong>first accessible card</strong> in the pyramid of that priority color, following the arrow direction (← or →).</li><li>If none of the 3 priority colors are accessible, they take the first available card of any color following the arrow.</li><li>The Leader <strong>builds the card for free</strong> (pays no resources or coins).</li></ol>',
+        helpExtraTurnsTitle: '⚡ Extra Turns',
+        helpExtraTurnsDesc: 'When the flipped card has the circular arrow symbol <strong>↺</strong> (Cards 11 and 12), the Leader plays <strong>another turn immediately</strong> after resolving the current card!',
+        helpSupremacyTitle: '🏆 Victory Conditions',
+        helpSupremacyDesc: '<ul><li><strong>Military Supremacy:</strong> If the pawn reaches the opponent’s capital (position ±9), the game ends immediately with victory for the invader!</li><li><strong>Scientific Supremacy:</strong> If you or the Leader collect <strong>6 different scientific symbols</strong>, you win immediately!</li><li><strong>Civilian Victory:</strong> At the end of Age III, tally your Victory Points (blue cards, wonders, coins, military, progress) and compare against the Leader’s VPs.</li></ul>',
+        helpLeadersSummaryTitle: '👑 Leaders Summary',
+        helpLeadersSummaryDesc: '<p><strong>Caesar (⭐):</strong> Starts with Strategy (+1 shield). Color: Purple.</p><p><strong>Aristotle (⭐⭐⭐):</strong> Starts with Law and Mathematics. Color: Grey.</p><p><strong>Hammurabi (⭐⭐):</strong> Starts with Economy. +5 VP at game end. Color: Yellow.</p><p><strong>Bilkis (⭐⭐⭐⭐⭐):</strong> Starts with Economy. Color: Brown.</p><p><strong>Cleopatra (⭐⭐⭐⭐):</strong> Starts with Philosophy and Agriculture. Color: Blue.</p>',
+        gotItBtn: 'Got it',
+        endAgeModalTitle: 'Age Transition',
+        endAgeDesc: '<p>At the end of an Age:</p><ul><li>Discard any uncollected cards from the pyramid structure.</li><li>Set up the card structure for the next Age (Age II or III).</li><li><strong>First Player:</strong> In Age I the Leader always goes first. In Ages II and III, the player trailing on military chooses who goes first (if the Leader has the choice, they always choose to go first).</li></ul>',
+        advanceAgeBtn: 'Advance Age',
+        cancelBtn: 'Cancel',
+        endGameModalTitle: 'Game Results',
+        enterPlayerVpPrompt: 'Enter your total Victory Points to compare against the Leader:',
+        calcResultBtn: 'Calculate',
+        youWinText: '🎉 Congratulations! You won the duel by Victory Points!',
+        youLoseText: '💀 The Leader won the duel by Victory Points!',
+        tieText: '⚖️ Tie in Victory Points! The player with the most VPs on Blue cards wins.',
+        militaryWinAlert: '⚔️ MILITARY SUPREMACY VICTORY! You invaded the enemy capital!',
+        militaryLoseAlert: '⚔️ MILITARY SUPREMACY DEFEAT! The Leader conquered your capital!',
+        scienceLoseAlert: '🔬 SCIENTIFIC SUPREMACY DEFEAT! The Leader collected 6 distinct scientific symbols!',
+        scanFallbackLeft: 'If no priority color available: take 1st accessible card from <strong>RIGHT to LEFT (←)</strong> starting at the base.',
+        scanFallbackRight: 'If no priority color available: take 1st accessible card from <strong>LEFT to RIGHT (→)</strong> starting at the base.',
+        colorScience: 'Green (Science)',
+        colorMilitary: 'Red (Military)',
+        resetConfirmPrompt: 'Are you sure you want to reset the match? Current progress will be lost.'
+      }
+    };
+
+    /* ==========================================================
+       3. APPLICATION STATE
+    ========================================================== */
+    let state = {
+      lang: localStorage.getItem(LANG_KEY) || 'pt',
+      inGame: false,
+      selectedLeader: 'caesar',
+      deck: [],
+      cardIndex: 0,
+      currentCard: null,
+      extraTurnPending: false,
+      military: 0, // -9 (Player win) to +9 (Leader win)
+      leaderVp: 0,
+      currentAge: 'I',
+      scienceSymbols: {}, // symbolId: true/false
+      logs: []
+    };
+
+    /* ==========================================================
+       4. INITIALIZATION & I18N ENGINE
+    ========================================================== */
+    function init() {
+      loadState();
+      applyI18n();
+      renderLeaderGrid();
+      renderScienceChips();
+      if (state.inGame) {
+        showGameScreen();
+      } else {
+        showSetupScreen();
+      }
+    }
+
+    function setLang(lang) {
+      state.lang = lang;
+      localStorage.setItem(LANG_KEY, lang);
+      document.getElementById('langPtBtn').classList.toggle('active', lang === 'pt');
+      document.getElementById('langEnBtn').classList.toggle('active', lang === 'en');
+      applyI18n();
+      renderLeaderGrid();
+      renderScienceChips();
+      if (state.inGame && state.currentCard) {
+        displayActiveCard(state.currentCard);
+      }
+      saveState();
+    }
+
+    function applyI18n() {
+      const dict = I18N[state.lang] || I18N.pt;
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (dict[key]) el.textContent = dict[key];
+      });
+      document.querySelectorAll('[data-i18n-html]').forEach(el => {
+        const key = el.getAttribute('data-i18n-html');
+        if (dict[key]) el.innerHTML = dict[key];
+      });
+      document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        const key = el.getAttribute('data-i18n-placeholder');
+        if (dict[key]) el.setAttribute('placeholder', dict[key]);
+      });
+    }
+
+    /* ==========================================================
+       5. SETUP SCREEN LOGIC
+    ========================================================== */
+    function renderLeaderGrid() {
+      const grid = document.getElementById('leaderGrid');
+      grid.innerHTML = '';
+      const isPt = state.lang === 'pt';
+
+      Object.entries(LEADERS).forEach(([key, leader]) => {
+        const opt = document.createElement('div');
+        opt.className = `leader-option ${state.selectedLeader === key ? 'selected' : ''}`;
+        opt.onclick = () => selectLeader(key);
+
+        const stars = '★'.repeat(leader.difficulty) + '☆'.repeat(5 - leader.difficulty);
+        const colorName = isPt ? leader.colorNamePt : leader.colorNameEn;
+        const tokens = isPt ? leader.tokensPt : leader.tokensEn;
+        const flavor = isPt ? leader.flavorPt : leader.flavorEn;
+
+        opt.innerHTML = `
+          <img src="${leader.thumb}" alt="${leader.name}" class="leader-thumb">
+          <div class="leader-info">
+            <div class="leader-name-row">
+              <span class="leader-name">${leader.name}</span>
+              <span class="leader-stars" title="Dificuldade ${leader.difficulty}/5">${stars}</span>
+            </div>
+            <div class="leader-meta">
+              <span class="tag tag-${leader.cardColor}">🎴 ${colorName}</span>
+              <span>•</span>
+              <span>🏅 ${tokens}</span>
+            </div>
+            <span style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">${flavor}</span>
+          </div>
+        `;
+        grid.appendChild(opt);
+      });
+    }
+
+    function selectLeader(key) {
+      state.selectedLeader = key;
+      renderLeaderGrid();
+      saveState();
+    }
+
+    function startGame() {
+      state.inGame = true;
+      state.deck = shuffleArray([...DECISION_CARDS]);
+      state.cardIndex = 0;
+      state.military = 0;
+      state.leaderVp = LEADERS[state.selectedLeader].endBonus || 0;
+      state.currentAge = 'I';
+      state.scienceSymbols = {};
+      state.logs = [];
+      
+      addLog(`⚔️ Partida iniciada contra ${LEADERS[state.selectedLeader].name}.`);
+      showGameScreen();
+      flipNextCard();
+      saveState();
+    }
+
+    /* ==========================================================
+       6. GAMEPLAY ENGINE & DECISION CARDS
+    ========================================================== */
+    function showSetupScreen() {
+      document.getElementById('setup-screen').style.display = 'flex';
+      document.getElementById('game-area').style.display = 'none';
+      document.getElementById('resetBtn').style.display = 'none';
+    }
+
+    function showGameScreen() {
+      document.getElementById('setup-screen').style.display = 'none';
+      document.getElementById('game-area').style.display = 'flex';
+      document.getElementById('resetBtn').style.display = 'flex';
+
+      const leader = LEADERS[state.selectedLeader];
+      const isPt = state.lang === 'pt';
+      document.getElementById('activeLeaderImg').src = leader.thumb;
+      document.getElementById('activeLeaderName').textContent = leader.name;
+      document.getElementById('activeLeaderDetails').textContent = `${isPt ? leader.colorNamePt : leader.colorNameEn} • 🏅 ${isPt ? leader.tokensPt : leader.tokensEn}`;
+
+      updateUI();
+    }
+
+    function shuffleArray(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function flipNextCard() {
+      const notice = document.getElementById('deckNotice');
+      notice.style.display = 'none';
+
+      if (state.cardIndex >= state.deck.length) {
+        state.deck = shuffleArray([...DECISION_CARDS]);
+        state.cardIndex = 0;
+        notice.style.display = 'block';
+        addLog(`🔄 Baralho de Decisão esgotou e foi reembaralhado.`);
+      }
+
+      const card = state.deck[state.cardIndex];
+      state.currentCard = card;
+      state.cardIndex++;
+
+      displayActiveCard(card);
+
+      document.getElementById('flipBtn').style.display = 'none';
+      document.getElementById('resolveBtn').style.display = 'inline-flex';
+
+      saveState();
+    }
+
+    function displayActiveCard(card) {
+      const leader = LEADERS[state.selectedLeader];
+      const isPt = state.lang === 'pt';
+      const dict = I18N[state.lang];
+
+      // Update card image
+      const imgPath = `../assets/art/7wd/decision_cards/dc_${String(card.id).padStart(2, '0')}.webp`;
+      document.getElementById('decisionCardImg').src = imgPath;
+
+      // Counters
+      document.getElementById('cardCounter').textContent = `Carta ${card.id} de 12`;
+      document.getElementById('deckCounter').textContent = `${12 - state.cardIndex + 1} no monte`;
+
+      // Priority Pills
+      const priorityContainer = document.getElementById('priorityList');
+      priorityContainer.innerHTML = '';
+
+      card.priority.forEach((slot, idx) => {
+        const isLeaderSlot = slot === 'leader';
+        const colorKey = isLeaderSlot ? leader.cardColor : slot;
+        let colorName = '';
+
+        if (slot === 'green') colorName = dict.colorScience;
+        else if (slot === 'red') colorName = dict.colorMilitary;
+        else colorName = isPt ? leader.colorNamePt : leader.colorNameEn;
+
+        const pill = document.createElement('div');
+        pill.className = `priority-item tag-${colorKey}`;
+        pill.innerHTML = `<span>${idx + 1}º</span> <span>${colorName}</span>`;
+        priorityContainer.appendChild(pill);
+
+        if (idx < card.priority.length - 1) {
+          const arrow = document.createElement('span');
+          arrow.className = 'priority-arrow';
+          arrow.textContent = '➔';
+          priorityContainer.appendChild(arrow);
+        }
+      });
+
+      // Fallback description
+      const fallbackEl = document.getElementById('fallbackInfo');
+      fallbackEl.innerHTML = card.fallbackDir === 'left' ? dict.scanFallbackLeft : dict.scanFallbackRight;
+
+      // Extra Turn badge
+      const extraTurnBadge = document.getElementById('extraTurnBadge');
+      if (card.extraTurn) {
+        extraTurnBadge.style.display = 'block';
+        state.extraTurnPending = true;
+      } else {
+        extraTurnBadge.style.display = 'none';
+        state.extraTurnPending = false;
+      }
+    }
+
+    function resolveCard() {
+      const card = state.currentCard;
+      const extra = state.extraTurnPending;
+
+      addLog(`Era ${state.currentAge} | Carta #${card.id} resolvida. ${extra ? '⚡ [TURNO EXTRA]' : ''}`);
+
+      if (extra) {
+        state.extraTurnPending = false;
+        flipNextCard();
+      } else {
+        document.getElementById('flipBtn').style.display = 'inline-flex';
+        document.getElementById('resolveBtn').style.display = 'none';
+      }
+      saveState();
+    }
+
+    /* ==========================================================
+       7. TRACKERS & SUPREMACY CHECKS
+    ========================================================== */
+    function adjustMilitary(delta) {
+      state.military = Math.max(-9, Math.min(9, state.military + delta));
+      updateUI();
+      checkSupremacy();
+      saveState();
+    }
+
+    function adjustLeaderVp(delta) {
+      state.leaderVp = Math.max(0, state.leaderVp + delta);
+      updateUI();
+      saveState();
+    }
+
+    function setAge(age) {
+      state.currentAge = age;
+      addLog(`📅 Avançou para a Era ${age}.`);
+      updateUI();
+      saveState();
+    }
+
+    function renderScienceChips() {
+      const container = document.getElementById('scienceChips');
+      container.innerHTML = '';
+      const isPt = state.lang === 'pt';
+
+      SCIENCE_TYPES.forEach(item => {
+        const chip = document.createElement('button');
+        const isActive = !!state.scienceSymbols[item.id];
+        chip.className = `science-chip ${isActive ? 'active' : ''}`;
+        chip.innerHTML = `<span>${item.icon}</span> <span>${isPt ? item.namePt : item.nameEn}</span>`;
+        chip.onclick = () => toggleScienceSymbol(item.id);
+        container.appendChild(chip);
+      });
+
+      const count = Object.values(state.scienceSymbols).filter(Boolean).length;
+      document.getElementById('scienceCountBadge').textContent = `${count} / 6`;
+    }
+
+    function toggleScienceSymbol(symId) {
+      state.scienceSymbols[symId] = !state.scienceSymbols[symId];
+      renderScienceChips();
+      checkSupremacy();
+      saveState();
+    }
+
+    function checkSupremacy() {
+      const alertBox = document.getElementById('supremacyAlert');
+      const dict = I18N[state.lang];
+      alertBox.style.display = 'none';
+      alertBox.className = 'supremacy-alert';
+
+      // Military check (±9)
+      if (state.military <= -9) {
+        alertBox.textContent = dict.militaryWinAlert;
+        alertBox.classList.add('win');
+        alertBox.style.display = 'block';
+        return;
+      }
+      if (state.military >= 9) {
+        alertBox.textContent = dict.militaryLoseAlert;
+        alertBox.classList.add('lose');
+        alertBox.style.display = 'block';
+        return;
+      }
+
+      // Science check (6 distinct symbols)
+      const distinctScience = Object.values(state.scienceSymbols).filter(Boolean).length;
+      if (distinctScience >= 6) {
+        alertBox.textContent = dict.scienceLoseAlert;
+        alertBox.classList.add('lose');
+        alertBox.style.display = 'block';
+      }
+    }
+
+    function updateUI() {
+      document.getElementById('militaryVal').textContent = (state.military > 0 ? `+${state.military}` : state.military);
+      
+      const sub = document.getElementById('militarySubtext');
+      if (state.military < 0) {
+        sub.textContent = `Você avançou ${Math.abs(state.military)}`;
+        sub.style.color = 'var(--green)';
+      } else if (state.military > 0) {
+        sub.textContent = `Líder avançou ${state.military}`;
+        sub.style.color = 'var(--red)';
+      } else {
+        sub.textContent = 'Neutro';
+        sub.style.color = 'var(--text-muted)';
+      }
+
+      document.getElementById('leaderVpVal').textContent = state.leaderVp;
+      document.getElementById('ageVal').textContent = state.currentAge;
+
+      renderScienceChips();
+      renderLogs();
+    }
+
+    /* ==========================================================
+       8. LOGS & MODALS
+    ========================================================== */
+    function addLog(msg) {
+      state.logs.unshift(msg);
+      if (state.logs.length > 25) state.logs.pop();
+      renderLogs();
+    }
+
+    function renderLogs() {
+      const container = document.getElementById('logList');
+      container.innerHTML = '';
+      state.logs.slice(0, 10).forEach(log => {
+        const item = document.createElement('div');
+        item.className = 'log-item';
+        item.textContent = log;
+        container.appendChild(item);
+      });
+    }
+
+    function openHelp() {
+      document.getElementById('helpModal').classList.add('open');
+    }
+    function closeHelp() {
+      document.getElementById('helpModal').classList.remove('open');
+    }
+
+    function openEndAgeModal() {
+      document.getElementById('endAgeModal').classList.add('open');
+    }
+    function closeEndAgeModal() {
+      document.getElementById('endAgeModal').classList.remove('open');
+    }
+    function advanceAge() {
+      if (state.currentAge === 'I') setAge('II');
+      else if (state.currentAge === 'II') setAge('III');
+      closeEndAgeModal();
+    }
+
+    function openEndGameModal() {
+      document.getElementById('endGameModal').classList.add('open');
+      document.getElementById('finalResultBanner').style.display = 'none';
+      document.getElementById('playerVpInput').value = '';
+    }
+    function closeEndGameModal() {
+      document.getElementById('endGameModal').classList.remove('open');
+    }
+
+    function calculateCivilVictory() {
+      const pVp = parseInt(document.getElementById('playerVpInput').value, 10);
+      if (isNaN(pVp)) return;
+
+      const banner = document.getElementById('finalResultBanner');
+      const dict = I18N[state.lang];
+      banner.style.display = 'block';
+
+      if (pVp > state.leaderVp) {
+        banner.style.background = 'var(--green-soft)';
+        banner.style.color = '#bbf7d0';
+        banner.style.border = '2px solid var(--green)';
+        banner.innerHTML = `${dict.youWinText}<br><small>Você: ${pVp} PVs vs Líder: ${state.leaderVp} PVs</small>`;
+      } else if (pVp < state.leaderVp) {
+        banner.style.background = 'var(--red-soft)';
+        banner.style.color = '#fecaca';
+        banner.style.border = '2px solid var(--red)';
+        banner.innerHTML = `${dict.youLoseText}<br><small>Você: ${pVp} PVs vs Líder: ${state.leaderVp} PVs</small>`;
+      } else {
+        banner.style.background = 'var(--yellow-soft)';
+        banner.style.color = '#fef08a';
+        banner.style.border = '2px solid var(--yellow)';
+        banner.innerHTML = `${dict.tieText}<br><small>Empate em ${pVp} PVs!</small>`;
+      }
+    }
+
+    function confirmReset() {
+      const dict = I18N[state.lang];
+      if (confirm(dict.resetConfirmPrompt)) {
+        localStorage.removeItem(STORAGE_KEY);
+        state.inGame = false;
+        state.deck = [];
+        state.cardIndex = 0;
+        state.currentCard = null;
+        showSetupScreen();
+        saveState();
+      }
+    }
+
+    /* ==========================================================
+       9. LOCAL STORAGE PERSISTENCE
+    ========================================================== */
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          state = { ...state, ...parsed };
+        }
+      } catch (e) {
+        console.error('Failed to load state', e);
+      }
+    }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
