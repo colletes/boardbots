@@ -1367,7 +1367,23 @@
         logResolved: 'Chapter {age} | Carta #{cardId} resolvida.{extra}',
         logAge: '📅 Avançou para a Chapter {age}.',
         logExtraTurnTag: ' ⚡ [TURNO EXTRA]',
-        resetConfirmPrompt: 'Tem certeza que deseja reiniciar a partida? O progresso atual será perdido.'
+        resetConfirmPrompt: 'Tem certeza que deseja reiniciar a partida? O progresso atual será perdido.',
+        panelLandmarksTitle: '🏛️ Landmarks (Comprar)',
+        panelRingTokensTitle: '💍 Trilha do Anel & Fichas',
+        panelRingTokensDraftDesc: 'Quando o Bot formar uma aliança, use os botões abaixo para sortear qual Ficha Física ele pega da mesa. <strong>O poder da ficha física deve ser resolvido pelo jogador imediatamente ou quando aplicável!</strong>',
+        panelRingTokensBtn2: 'Sortear de 2 iguais (1d2)',
+        panelRingTokensBtn3: 'Sortear de 3 difer. (1d3)',
+        logDiceLandmark: 'Rolou {val} para escolher Landmark.',
+        logDiceRace: 'Rolou {val} para Ficha de Raça: {res}.',
+        diceResultLandmark: '🎲 Dado: {val} (Pegue o Landmark correspondente)',
+        diceResultRace: '🎲 Dado: {val} -> Pegue a {res}',
+        raceLeft: '1ª Ficha (Esquerda)',
+        raceMiddle: '2ª Ficha (Meio)',
+        raceRight: '3ª Ficha (Direita)',
+        logBuyLandmark: '🏛️ O Líder comprou um Landmark por {cost} moedas!',
+        panelLandmarksDesc: 'O Bot sempre compra o Landmark no início de seu turno se possuir moedas (no cap. 1: 7 moedas, cap. 2: 5 moedas, cap. 3: 2 moedas) + 1 moeda por Fortaleza no tabuleiro. Ele prioriza comprar o que der vitória imediata. Se empatar, clique no botão para rolar o dado (1d6).',
+        panelRingTokensDesc: 'Efeitos da Trilha: 1 Moeda | ↺ (sem turno extra se símbolo já ativado) | 1 Unidade | ❌ Destruir Fortaleza (em região s/ unidades do jogador).',
+        panelRingTokensSubtitle: 'Sorteio de Fichas de Raça FÍSICAS:'
       },
       en: {
         docTitle: 'Lord of the Rings: Duel for Middle-earth — Automa Duelist',
@@ -1911,13 +1927,19 @@
         
         diceBox.onRollComplete = (results) => {
           setTimeout(() => { document.getElementById('dice-box').style.display = 'none'; isRolling = false; }, 2000);
-          let val = 0;
-          const group = Array.isArray(results) ? results[0] : results;
-          if (group && group.rolls && group.rolls.length > 0) val = group.rolls[0].value;
-          else if (group) val = group.value;
+          let val = null;
+          try {
+            const group = Array.isArray(results) ? results[0] : results;
+            if (group && group.rolls && group.rolls.length > 0) val = group.rolls[0].value;
+            else if (group) val = group.value;
+          } catch(e) {}
           
+          // force integer, if invalid use random
+          val = parseInt(val, 10);
+          if (isNaN(val) || val <= 0) val = Math.floor(Math.random() * 6) + 1;
+
           if (currentDiceResolve) {
-            currentDiceResolve(val || Math.floor(Math.random() * 6) + 1); // fallback to random if 0/undefined
+            currentDiceResolve(val);
             currentDiceResolve = null;
           }
         };
