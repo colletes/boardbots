@@ -1313,7 +1313,7 @@
         helpSupremacyTitle: '🏆 Condições de Vitória',
         helpSupremacyDesc: '<ul><li><strong>Conquista:</strong> Se alguém posicionar sua 7ª Fortaleza (ou Mount Doom / Ring for concluído), vence imediatamente!</li><li><strong>Apoio das Raças:</strong> Se reunir <strong>6 símbolos de Raças diferentes</strong>, vence imediatamente!</li><li><strong>Jornada do Anel:</strong> Caso a trilha do Anel chegue ao fim (Sauron ou Comitiva).</li><li><strong>Desempate:</strong> Se nenhuma vitória imediata ocorrer até o fim do Capítulo 3, vence quem tiver presença (fortaleza ou unidade) no maior número de regiões.</li></ul>',
         helpLeadersSummaryTitle: '👑 Resumo dos Líderes',
-        helpLeadersSummaryDesc: '<p><strong>Witch-king:</strong> O Rei Bruxo de Angmar.</p><p><strong>Galadriel:</strong> Senhora de Lórien.</p><p><strong>Tom Bombadil:</strong> Velho Tom Bombadil.</p><p><strong>Saruman:</strong> O Mago Branco.</p><p><strong>Elrond:</strong> Senhor de Valfenda.</p><p><strong>Smaug:</strong> O Dourado.</p><p><strong>Sauron:</strong> O Senhor do Escuro.</p><p><strong>Gandalf:</strong> O Cinzento.</p>',
+        
         gotItBtn: 'Entendido',
         btnRollDie: '🎲 Rolar Dado',
         btnLandmarks: '🏛️ Landmarks',
@@ -1389,7 +1389,7 @@
         helpSupremacyTitle: '🏆 Victory Conditions',
         helpSupremacyDesc: '<ul><li><strong>Conquer Victory:</strong> If someone places their 7th Fortress, they win immediately!</li><li><strong>Support of the Races:</strong> If someone collects <strong>6 different Race symbols</strong>, they win immediately!</li><li><strong>Quest of the Ring:</strong> If the Ring track is completed.</li><li><strong>Tiebreaker:</strong> If no immediate victory occurs by the end of Chapter 3, the player present in the most regions (fortress or unit) wins.</li></ul>',
         helpLeadersSummaryTitle: '👑 Leaders Summary',
-        helpLeadersSummaryDesc: '<p><strong>Witch-king:</strong> The Witch-king of Angmar.</p><p><strong>Galadriel:</strong> Lady of Lórien.</p><p><strong>Tom Bombadil:</strong> Old Tom Bombadil.</p><p><strong>Saruman:</strong> The White Wizard.</p><p><strong>Elrond:</strong> Lord of Rivendell.</p><p><strong>Smaug:</strong> The Golden.</p><p><strong>Sauron:</strong> The Dark Lord.</p><p><strong>Gandalf:</strong> The Grey.</p>',
+        
         gotItBtn: 'Got it',
         btnRollDie: '🎲 Roll Die',
         btnLandmarks: '🏛️ Landmarks',
@@ -1480,6 +1480,7 @@
 
     function applyI18n() {
       const dict = I18N[state.lang] || I18N.pt;
+      renderHelpLeaders();
       document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
         if (dict[key]) el.textContent = dict[key];
@@ -1497,6 +1498,38 @@
     /* ==========================================================
        5. SETUP SCREEN LOGIC
     ========================================================== */
+
+    function renderHelpLeaders() {
+      const container = document.getElementById('helpLeadersContainer');
+      if (!container) return;
+      container.innerHTML = '';
+      const isPt = state.lang === 'pt';
+
+      Object.entries(LEADERS).forEach(([key, leader]) => {
+        const opt = document.createElement('div');
+        opt.className = 'leader-option';
+        opt.style.cursor = 'default';
+        opt.style.opacity = '1';
+
+        const colorName = isPt ? leader.colorNamePt : leader.colorNameEn;
+        const power = isPt ? leader.powerPt : leader.powerEn;
+
+        opt.innerHTML = `
+          <img src="${leader.thumb}" alt="${leader.name}" class="leader-thumb">
+          <div class="leader-info" style="gap:4px;">
+            <div class="leader-name-row">
+              <span class="leader-name" style="width: 100%;">${leader.name}</span>
+            </div>
+            <div class="leader-meta">
+              <span class="tag tag-${leader.cardColor}">🎴 ${colorName}</span>
+            </div>
+            <span style="font-size:0.75rem; color:var(--text-muted); margin-top:2px; line-height: 1.2;">⚡ ${power}</span>
+          </div>
+        `;
+        container.appendChild(opt);
+      });
+    }
+
     function renderLeaderGrid() {
       const grid = document.getElementById('leaderGrid');
       grid.innerHTML = '';
