@@ -499,7 +499,7 @@ h1, h2, h3 { font-family: 'Poppins', sans-serif; margin-top: 0; }
       </button>
       <button class="diff-btn" onclick="setDifficulty('hard', this)">
         <strong data-i18n="lc_diff_hard">Hard</strong>
-        <small data-i18n="lc_diff_hard_desc">Replaces if card is up to 3 values lower.</small>
+        <small data-i18n="lc_diff_hard_desc">Adds card to expedition if up to 2 values lower.</small>
       </button>
       <button class="diff-btn btn-gods" onclick="setDifficulty('gods', this)">
         🗿 <strong data-i18n="lc_diff_gods">Challenge of the Ancient Gods</strong> 🗿
@@ -659,7 +659,7 @@ Object.assign(I18N.pt, {
     lc_diff_med: "Médio",
     lc_diff_medium_desc: "Substitui se a carta for até 2 valores menor (Regra Variante).",
     lc_diff_hard: "Difícil",
-    lc_diff_hard_desc: "Substitui se a carta for até 3 valores menor (Regra Variante Plus).",
+    lc_diff_hard_desc: "Mantém a carta e adiciona se for até 2 valores menor (Sem substituir).",
     lc_diff_gods: "Desafio dos Deuses Antigos",
     lc_diff_gods_desc: "O Automa trapaceia e organiza as cartas magicamente.",
 
@@ -722,7 +722,7 @@ Object.assign(I18N.en, {
     lc_diff_med: "Medium",
     lc_diff_medium_desc: "Replaces if the card is up to 2 values lower (Variant Rule).",
     lc_diff_hard: "Hard",
-    lc_diff_hard_desc: "Replaces if the card is up to 3 values lower (Variant Rule Plus).",
+    lc_diff_hard_desc: "Adds card to expedition if up to 2 values lower (Does not replace).",
     lc_diff_gods: "Challenge of the Ancient Gods",
     lc_diff_gods_desc: "The Automa cheats and magically sorts the cards.",
 
@@ -791,6 +791,7 @@ function setDifficulty(d, btn) {
   difficulty = d;
   document.querySelectorAll('#diffOptionsContainer .diff-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
+  renderTableau();
 }
 
 
@@ -1077,9 +1078,14 @@ function processCard() {
           
           if (selVal > highest) {
               if (col.length === 0) {
-                  // Keep smart starts for medium/hard
-                  if ((difficulty === 'medium' || difficulty === 'hard') && selVal > 5) {
-                      result = "DISCARD";
+                  // Late game awareness
+                  let totalCards = 0;
+                  COLORS.forEach(c => totalCards += expeditions[c].length);
+                  
+                  if (totalCards >= 15) {
+                      result = "DISCARD"; // Late game, don't start new expeditions
+                  } else if ((difficulty === 'medium' || difficulty === 'hard') && selVal > 5) {
+                      result = "DISCARD"; // Too high to start early
                   } else {
                       result = "PLAY"; col.push(selVal);
                   }
@@ -1088,16 +1094,28 @@ function processCard() {
                   col.push(selVal);
               }
           } else {
-              // Discard or Replace logic
-              let maxDiff = 0;
-              if (difficulty === 'medium') maxDiff = 2;
-              else if (difficulty === 'hard') maxDiff = 3;
-              
               const diff = highest - selVal;
-              if (diff > 0 && diff <= maxDiff && selVal > secondHighest) {
-                  result = "REPLACE";
-                  col[col.length - 1] = selVal;
+              if (difficulty === 'hard') {
+                  // Hard Mode Add Rule (diff up to 2)
+                  if (diff > 0 && diff <= 2 && !col.includes(selVal)) {
+                      result = "PLAY";
+                      col.push(selVal);
+                      let hArr = col.filter(x => x === 'H');
+                      let numArr = col.filter(x => x !== 'H').sort((a,b) => a - b);
+                      expeditions[selColor] = hArr.concat(numArr);
+                  } else {
+                      result = "DISCARD";
+                  }
+              } else if (difficulty === 'medium') {
+                  // Medium Mode Replace Rule (diff up to 2)
+                  if (diff > 0 && diff <= 2 && selVal > secondHighest) {
+                      result = "REPLACE";
+                      col[col.length - 1] = selVal;
+                  } else {
+                      result = "DISCARD";
+                  }
               } else {
+                  // Easy mode
                   result = "DISCARD";
               }
           }
@@ -1202,20 +1220,25 @@ function updateWantedCards() {
   
   COLORS.forEach(c => {
       const arr = expeditions[c];
-      let wanted = null;
+      let wanted = [];
       if (arr.length === 0) {
-          wanted = '🤝, 2';
+          wanted.push('🤝, 2');
       } else {
           const last = arr[arr.length - 1];
           if (last === 'H') {
-              if (arr.length < 3) wanted = '🤝, 2';
-              else wanted = '2';
+              if (arr.length < 3) wanted.push('🤝, 2');
+              else wanted.push('2');
           } else {
-              if (last < 10) wanted = (last + 1).toString();
+              if (last < 10) wanted.push((last + 1).toString());
+              
+              if (difficulty === 'hard' || difficulty === 'gods') {
+                  if (last - 1 >= 2 && !arr.includes(last - 1)) wanted.push((last - 1).toString());
+                  if (last - 2 >= 2 && !arr.includes(last - 2)) wanted.push((last - 2).toString());
+              }
           }
       }
-      if (wanted) {
-          badgesContainer.innerHTML += `<div class="wanted-badge c-${c}">${colorNames[c]} ${wanted}</div>`;
+      if (wanted.length > 0) {
+          badgesContainer.innerHTML += `<div class="wanted-badge c-${c}">${colorNames[c]} ${wanted.join(', ')}</div>`;
           hasWanted = true;
       }
   });
@@ -1223,7 +1246,6 @@ function updateWantedCards() {
   if (!hasWanted) {
       badgesContainer.innerHTML = `<div class="wanted-badge" style="background:#555; color:#fff;" data-i18n="wantedNone">Nenhuma (Sempre baralho)</div>`;
       if (typeof applyI18n === 'function') {
-          // manually run translation for this injected node
           const lang = localStorage.getItem('boardbots_lang') || 'pt';
           if (I18N[lang] && I18N[lang].wantedNone) {
               badgesContainer.querySelector('[data-i18n="wantedNone"]').innerText = I18N[lang].wantedNone;
@@ -1267,7 +1289,7 @@ Object.assign(I18N.pt, {
     lc_diff_med: "Médio",
     lc_diff_medium_desc: "Substitui se a carta for até 2 valores menor (Regra Variante).",
     lc_diff_hard: "Difícil",
-    lc_diff_hard_desc: "Substitui se a carta for até 3 valores menor (Regra Variante Plus).",
+    lc_diff_hard_desc: "Mantém a carta e adiciona se for até 2 valores menor (Sem substituir).",
     lc_diff_gods: "Desafio dos Deuses Antigos",
     lc_diff_gods_desc: "O Automa trapaceia e organiza as cartas magicamente.",
 
@@ -1306,7 +1328,7 @@ Object.assign(I18N.pt, {
     helpRulesTitle: "Regras do Automa",
     helpRulesIntro: "Na vez do automa, ele recebe uma carta. Você deve comprá-la e apresentá-la ao app usando os botões abaixo.",
     helpDrawTitle: "Compra (Deck vs Descarte)",
-    helpDrawText: "O automa sempre compra a carta do topo do <strong>baralho</strong>, com UMA exceção:<br>Se o <strong>descarte</strong> de alguma cor tiver uma carta que seja <strong>exatamente um valor acima</strong> da maior carta do automa naquela cor (ou um Aperto de Mão se ele não tiver números e menos de 3 apertos), o automa <strong>comprará do descarte</strong>.",
+    helpDrawText: "O automa sempre compra do <strong>baralho</strong>, EXCETO se o <strong>descarte</strong> tiver uma das cartas indicadas no painel abaixo do tabuleiro. No nível Difícil ou Deuses, ele também tentará pegar cartas menores para preencher buracos em suas expedições!",
     helpDecisionsTitle: "Decisões (Jogar, Substituir, Descartar)",
     helpDecisionsList: "<li><strong>Easy:</strong> Plays smartly but does not use the replace rule.</li><li><strong>Medium:</strong> Uses the variant rule: replaces the highest card if the drawn one is up to 2 values lower.</li><li><strong>Hard:</strong> Expands the variant rule: replaces if it is up to 3 values lower.</li><li><strong>Ancient Gods:</strong> The Automa cheats! It plays every card it receives, magically sorting them out of order into its expedition to maximize points!</li>"
 ,
@@ -1319,7 +1341,7 @@ Object.assign(I18N.en, {
     lc_diff_med: "Medium",
     lc_diff_medium_desc: "Replaces if the card is up to 2 values lower (Variant Rule).",
     lc_diff_hard: "Hard",
-    lc_diff_hard_desc: "Replaces if the card is up to 3 values lower (Variant Rule Plus).",
+    lc_diff_hard_desc: "Adds card to expedition if up to 2 values lower (Does not replace).",
     lc_diff_gods: "Challenge of the Ancient Gods",
     lc_diff_gods_desc: "The Automa cheats and magically sorts the cards.",
 
@@ -1358,7 +1380,7 @@ Object.assign(I18N.en, {
     helpRulesTitle: "Automa Rules",
     helpRulesIntro: "On the automa's turn, it receives a card. You must draw it and present it to the app using the buttons below.",
     helpDrawTitle: "Drawing (Deck vs Discard)",
-    helpDrawText: "The automa always draws from the top of the <strong>deck</strong>, with ONE exception:<br>If the <strong>discard pile</strong> of any color has a card that is <strong>exactly one value higher</strong> than the automa's highest card in that color (or a Handshake if it has no numbers and less than 3 handshakes), the automa will <strong>draw from the discard pile</strong> instead.",
+    helpDrawText: "The automa always draws from the <strong>deck</strong>, UNLESS the <strong>discard pile</strong> has one of the specific cards listed in the panel below the board. On Hard or Gods difficulty, it will also try to snipe slightly lower cards to fill gaps in its expeditions!",
     helpDecisionsTitle: "Decisions (Play, Replace, Discard)",
     helpDecisionsList: "<li><strong>Easy:</strong> Plays smartly but does not use the replace rule.</li><li><strong>Medium:</strong> Uses the variant rule: replaces the highest card if the drawn one is up to 2 values lower.</li><li><strong>Hard:</strong> Expands the variant rule: replaces if it is up to 3 values lower.</li><li><strong>Ancient Gods:</strong> The Automa cheats! It plays every card it receives, magically sorting them out of order into its expedition to maximize points!</li>"
 ,
