@@ -151,3 +151,26 @@ assets/art/7wd/leaders/cleopatra.webp
 assets/art/7wd/leaders/bilkis.webp
 assets/art/7wd/decision_cards/dc_01.webp … dc_12.webp
 ```
+
+## 11. Conhecimento Específico: 3D Dice Box
+
+Ao integrar o `@3d-dice/dice-box` para rolagem física de dados:
+
+1. **Evite Bugs de CORS/Web Worker:** Sempre use CDN com configuração exata para `assetPath` e `origin`. O worker precisa ser carregado do root do `dist/`.
+2. **Setup do Objeto:**
+   ```javascript
+   const { default: DiceBox } = await import('https://unpkg.com/@3d-dice/dice-box@1.1.3/dist/dice-box.es.min.js');
+   diceBox = new DiceBox({
+     container: '#dice-box',
+     assetPath: 'assets/', 
+     origin: 'https://unpkg.com/@3d-dice/dice-box@1.1.3/dist/',
+     theme: 'default', themeColor: '#475569', scale: 9
+   });
+   ```
+3. **Failsafe Global Rigoroso:** Para evitar congelamento infinito da UI caso o CDN caia ou o CSP bloqueie o import, enrole o `initDiceBox()` inteiro em um `Promise.race` de 3 segundos dentro de um bloco `try/catch`. Se falhar, ative um fallback imediato para `Math.random()`.
+4. **Mecânica de "Dice Tray" Dinâmico (Restrição de Espaço):**
+   - O contêiner HTML do dado deve ser `position: absolute; width: 100%; height: 100%; z-index: 10; pointer-events: none;`.
+   - Antes de chamar `diceBox.roll()`, aninhe o `#dice-box` no elemento HTML de destino (`targetEl.appendChild(diceBoxEl)`).
+   - Defina o `targetEl.style.position = 'relative'` e `targetEl.style.minHeight = '150px'` para abrir espaço na tela para o "tray".
+   - Dispare um evento `resize` para forçar o canvas WebGL a adaptar-se ao contêiner (`window.dispatchEvent(new Event('resize'))`).
+   - Limpe o `minHeight` quando o dado terminar de rolar.
