@@ -58,6 +58,8 @@ Ao criar o HTML do bot, **você DEVE copiar e utilizar os seguintes elementos pa
    Sempre inclua os créditos do autor (`.credits`), o botão Buy Me a Coffee (`.bmc-inline`) e o botão Home para voltar (`.btn-home`).
 6. **Theming e Personalidade:**
    O bot não pode ter uma interface genérica! Use variáveis CSS (`--bg-color`, `--text-main`, `--accent`) e backgrounds temáticos para injetar a personalidade do jogo original. Se for um jogo de fantasia, use texturas de pergaminho/madeira; se for sci-fi, use painéis futuristas. Se a temática não puder ser inferida pelas regras ou pela arte da capa, **PERGUNTE AO USUÁRIO** antes de prosseguir.
+7. **Painel de Histórico (Log):**
+   É OBRIGATÓRIO incluir um painel de histórico de ações (log) na tela do jogo. O log deve registrar todas as ações e decisões do bot, para que o jogador possa auditar o que aconteceu caso clique rápido demais. O HTML deve conter um container (ex: `<div id="logPanel" class="log-panel"></div>`) e o JS deve alimentar esse painel com mensagens descritivas a cada jogada.
 ## 4.1 Internacionalização (i18n)
 
 
