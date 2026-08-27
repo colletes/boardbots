@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Lost Cities - The Rival Explorer</title>
+<link rel="icon" href="../assets/mascot-trimmed.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/site.css">
+<style>
+:root {
+  --bg-color: #0f172a;
+  --panel-bg: #1e293b;
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --accent: #3b82f6;
+  --accent-hover: #2563eb;
+  
+  --c-yellow: #f59e0b;
+  --c-blue: #3b82f6;
+  --c-white: #e2e8f0;
+  --c-green: #22c55e;
+  --c-red: #ef4444;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  font-family: 'Inter', sans-serif;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+header {
+  background: rgba(15, 23, 42, 0.9);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  padding: 15px 20px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.total-score {
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.25rem;
+  font-weight: bold;
+}
+.total-score span {
+  color: var(--c-yellow);
+}
+
+.setup-screen {
+  padding: 20px;
+  max-width: 600px;
+  margin: 0 auto;
+  flex: 1;
+}
+
+.setup-card {
+  background: var(--panel-bg);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+h1, h2, h3 { font-family: 'Poppins', sans-serif; margin-top: 0; }
+
+.difficulty-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 20px 0;
+}
+
+.diff-btn {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: #fff;
+  padding: 15px;
+  border-radius: 8px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.diff-btn.active {
+  background: rgba(59, 130, 246, 0.2);
+  border-color: var(--accent);
+}
+.diff-btn strong { display: block; font-size: 1.1rem; margin-bottom: 4px; color: var(--accent); }
+.diff-btn small { color: var(--text-muted); }
+
+.start-btn {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  width: 100%;
+  padding: 16px;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  font-family: 'Poppins', sans-serif;
+}
+
+.game-screen {
+  display: none;
+  flex: 1;
+  padding: 10px;
+  max-width: 1000px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.input-panel {
+  background: var(--panel-bg);
+  border-radius: 12px;
+  padding: 15px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+}
+
+.color-selector {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+.color-btn {
+  flex: 1;
+  height: 50px;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+.color-btn.active { border-color: #fff; transform: scale(1.05); }
+.c-yellow { background: var(--c-yellow); }
+.c-blue { background: var(--c-blue); }
+.c-white { background: var(--c-white); }
+.c-green { background: var(--c-green); }
+.c-red { background: var(--c-red); }
+
+.value-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 15px;
+}
+.val-btn {
+  flex: 1;
+  min-width: calc(20% - 8px);
+  padding: 12px 0;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: #fff;
+  border-radius: 8px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  cursor: pointer;
+}
+.val-btn.active {
+  background: rgba(255,255,255,0.2);
+  border-color: #fff;
+}
+
+.process-btn {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  width: 100%;
+  padding: 15px;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+}
+.process-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.tableau {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+}
+.column {
+  background: rgba(0,0,0,0.2);
+  border-radius: 8px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 200px;
+}
+.col-header {
+  width: 100%;
+  height: 8px;
+  border-radius: 4px;
+  margin-bottom: 10px;
+}
+.col-score {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+  font-family: 'Poppins', sans-serif;
+}
+.card-list {
+  display: flex;
+  flex-direction: column;
+  gap: -15px;
+  width: 100%;
+}
+.card-item {
+  background: #fff;
+  color: #000;
+  border: 2px solid #000;
+  border-radius: 4px;
+  padding: 5px;
+  text-align: center;
+  font-weight: bold;
+  margin-bottom: 15px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  position: relative;
+}
+.card-item.handshake { color: #f59e0b; }
+
+.result-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.8);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 20px;
+}
+.result-card {
+  background: var(--panel-bg);
+  padding: 30px;
+  border-radius: 16px;
+  text-align: center;
+  max-width: 400px;
+  width: 100%;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+  animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+@keyframes popIn { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+
+.result-icon { font-size: 3rem; margin-bottom: 15px; display: block; }
+.result-title { font-family: 'Poppins', sans-serif; font-size: 1.5rem; margin-bottom: 10px; }
+.result-desc { color: var(--text-muted); margin-bottom: 20px; }
+.result-btn {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  padding: 12px 30px;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  width: 100%;
+}
+
+</style>
+</head>
+<body>
+
+<div class="lang-switch">
+    <button class="lang-btn" data-lang="pt" onclick="setSiteLang('pt')">PT</button>
+    <button class="lang-btn" data-lang="en" onclick="setSiteLang('en')">EN</button>
+</div>
+
+<!-- SETUP SCREEN -->
+<div class="setup-screen" id="setupScreen">
+  <h1 data-i18n="lc_title">The Rival Explorer</h1>
+  <p data-i18n="lc_subtitle" style="color:var(--text-muted);">Lost Cities Automa</p>
+  
+  <div class="setup-card">
+    <h3 data-i18n="lc_setup_head">Setup</h3>
+    <ul style="color:var(--text-muted); line-height:1.6; margin-top:10px; padding-left:20px;">
+      <li data-i18n="lc_setup_1">Shuffle the 60 cards. Deal 8 cards to yourself.</li>
+      <li data-i18n="lc_setup_2">The bot has NO physical hand. It draws from the deck.</li>
+      <li data-i18n="lc_setup_3">When the bot draws a card (or snatches one from the discard), input it here to see what the bot does!</li>
+    </ul>
+  </div>
+  
+  <div class="setup-card">
+    <h3 data-i18n="lc_diff_head">Difficulty</h3>
+    <div class="difficulty-options">
+      <button class="diff-btn" onclick="setDifficulty('easy', this)">
+        <strong data-i18n="lc_diff_easy">Easy</strong>
+        <small data-i18n="lc_diff_easy_desc">Bot only plays cards if they are strictly higher.</small>
+      </button>
+      <button class="diff-btn active" onclick="setDifficulty('medium', this)">
+        <strong data-i18n="lc_diff_medium">Medium</strong>
+        <small data-i18n="lc_diff_medium_desc">Bot replaces cards if the drawn card is exactly 1 less than its highest card.</small>
+      </button>
+      <button class="diff-btn" onclick="setDifficulty('hard', this)">
+        <strong data-i18n="lc_diff_hard">Hard</strong>
+        <small data-i18n="lc_diff_hard_desc">Bot replaces cards if the drawn card is 1 or 2 less than its highest card.</small>
+      </button>
+    </div>
+  </div>
+  
+  <button class="start-btn" onclick="startGame()" data-i18n="lc_start">Start Game</button>
+</div>
+
+<!-- GAME SCREEN -->
+<div class="game-screen" id="gameScreen">
+  <header>
+    <div class="total-score"><span data-i18n="lc_total">Total Score:</span> <span id="totalScoreText">0</span></div>
+    <button style="background:none; border:none; color:#fff; cursor:pointer;" onclick="location.reload()">
+      <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+    </button>
+  </header>
+  
+  <div class="input-panel">
+    <div style="font-weight:bold; margin-bottom:10px;" data-i18n="lc_input_card">Show card to bot:</div>
+    <div class="color-selector">
+      <button class="color-btn c-yellow" data-color="yellow" onclick="selectColor('yellow')"></button>
+      <button class="color-btn c-blue" data-color="blue" onclick="selectColor('blue')"></button>
+      <button class="color-btn c-white" data-color="white" onclick="selectColor('white')"></button>
+      <button class="color-btn c-green" data-color="green" onclick="selectColor('green')"></button>
+      <button class="color-btn c-red" data-color="red" onclick="selectColor('red')"></button>
+    </div>
+    <div class="value-selector">
+      <button class="val-btn" data-val="H" onclick="selectVal('H')">🤝</button>
+      <button class="val-btn" data-val="2" onclick="selectVal(2)">2</button>
+      <button class="val-btn" data-val="3" onclick="selectVal(3)">3</button>
+      <button class="val-btn" data-val="4" onclick="selectVal(4)">4</button>
+      <button class="val-btn" data-val="5" onclick="selectVal(5)">5</button>
+      <button class="val-btn" data-val="6" onclick="selectVal(6)">6</button>
+      <button class="val-btn" data-val="7" onclick="selectVal(7)">7</button>
+      <button class="val-btn" data-val="8" onclick="selectVal(8)">8</button>
+      <button class="val-btn" data-val="9" onclick="selectVal(9)">9</button>
+      <button class="val-btn" data-val="10" onclick="selectVal(10)">10</button>
+    </div>
+    <button class="process-btn" id="processBtn" disabled onclick="processCard()" data-i18n="lc_process">Process Card</button>
+  </div>
+  
+  <div class="tableau">
+    <!-- Rendered via JS -->
+  </div>
+</div>
+
+<!-- RESULT MODAL -->
+<div class="result-overlay" id="resultModal">
+  <div class="result-card">
+    <span class="result-icon" id="resIcon">✅</span>
+    <h3 class="result-title" id="resTitle">Play to Expedition</h3>
+    <p class="result-desc" id="resDesc">Place the Green 7 on the bot's expedition.</p>
+    <button class="result-btn" onclick="closeResult()" data-i18n="lc_ok">OK</button>
+  </div>
+</div>
+
+<script src="../assets/site.js"></script>
+<script>
+// --- I18N DICTIONARY ---
+window.I18N = window.I18N || { pt: {}, en: {} };
+
+Object.assign(I18N.pt, {
+  lc_title: "The Rival Explorer",
+  lc_subtitle: "Automa para Lost Cities",
+  lc_setup_head: "Preparação",
+  lc_setup_1: "Embaralhe as 60 cartas. Dê 8 para você.",
+  lc_setup_2: "O bot NÃO tem mão. Ele compra direto do baralho.",
+  lc_setup_3: "Quando o bot comprar uma carta (ou pegar do descarte), informe a carta aqui para ver o que ele faz!",
+  lc_diff_head: "Dificuldade",
+  lc_diff_easy: "Fácil",
+  lc_diff_easy_desc: "O bot só joga cartas se forem estritamente maiores.",
+  lc_diff_medium: "Médio",
+  lc_diff_medium_desc: "O bot substitui cartas se a nova for exatamente 1 a menos que a maior.",
+  lc_diff_hard: "Difícil",
+  lc_diff_hard_desc: "O bot substitui cartas se a nova for 1 ou 2 a menos que a maior.",
+  lc_start: "Começar Jogo",
+  lc_total: "Pontuação Total:",
+  lc_input_card: "Mostrar carta para o bot:",
+  lc_process: "Processar Carta",
+  lc_ok: "Entendido",
+  lc_res_play_title: "JOGAR NA EXPEDIÇÃO",
+  lc_res_play_desc: "Coloque a carta na expedição do bot.",
+  lc_res_discard_title: "DESCARTAR",
+  lc_res_discard_desc: "O bot não quer essa carta. Coloque-a no descarte.",
+  lc_res_replace_title: "SUBSTITUIR CARTA",
+  lc_res_replace_desc: "Descarte a carta mais alta e coloque a nova na expedição no lugar dela!",
+  c_yellow: "Amarelo", c_blue: "Azul", c_white: "Branco", c_green: "Verde", c_red: "Vermelho"
+});
+
+Object.assign(I18N.en, {
+  lc_title: "The Rival Explorer",
+  lc_subtitle: "Lost Cities Automa",
+  lc_setup_head: "Setup",
+  lc_setup_1: "Shuffle the 60 cards. Deal 8 cards to yourself.",
+  lc_setup_2: "The bot has NO physical hand. It draws from the deck.",
+  lc_setup_3: "When the bot draws a card (or snatches one from the discard), input it here to see what the bot does!",
+  lc_diff_head: "Difficulty",
+  lc_diff_easy: "Easy",
+  lc_diff_easy_desc: "Bot only plays cards if they are strictly higher.",
+  lc_diff_medium: "Medium",
+  lc_diff_medium_desc: "Bot replaces cards if the drawn card is exactly 1 less than its highest card.",
+  lc_diff_hard: "Hard",
+  lc_diff_hard_desc: "Bot replaces cards if the drawn card is 1 or 2 less than its highest card.",
+  lc_start: "Start Game",
+  lc_total: "Total Score:",
+  lc_input_card: "Show card to bot:",
+  lc_process: "Process Card",
+  lc_ok: "Got it",
+  lc_res_play_title: "PLAY TO EXPEDITION",
+  lc_res_play_desc: "Place the card on the bot's expedition.",
+  lc_res_discard_title: "DISCARD",
+  lc_res_discard_desc: "The bot doesn't want this card. Discard it.",
+  lc_res_replace_title: "REPLACE CARD",
+  lc_res_replace_desc: "Discard the highest card and slide the new card into the expedition instead!",
+  c_yellow: "Yellow", c_blue: "Blue", c_white: "White", c_green: "Green", c_red: "Red"
+});
+
+// --- STATE ---
+let difficulty = 'medium';
+let expeditions = { yellow: [], blue: [], white: [], green: [], red: [] };
+let selColor = null;
+let selVal = null;
+
+const COLORS = ['yellow', 'blue', 'white', 'green', 'red'];
+
+function setDifficulty(lvl, btn) {
+  difficulty = lvl;
+  document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function startGame() {
+  document.getElementById('setupScreen').style.display = 'none';
+  document.getElementById('gameScreen').style.display = 'block';
+  renderTableau();
+}
+
+function selectColor(c) {
+  selColor = c;
+  document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`.color-btn[data-color="${c}"]`).classList.add('active');
+  checkReady();
+}
+
+function selectVal(v) {
+  selVal = v === 'H' ? 'H' : parseInt(v);
+  document.querySelectorAll('.val-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`.val-btn[data-val="${v}"]`).classList.add('active');
+  checkReady();
+}
+
+function checkReady() {
+  document.getElementById('processBtn').disabled = !(selColor && selVal);
+}
+
+function processCard() {
+  if (!selColor || !selVal) return;
+  const col = expeditions[selColor];
+  let result = "";
+  
+  if (selVal === 'H') {
+    const hasNumbers = col.some(v => v !== 'H');
+    if (hasNumbers || col.length >= 3) {
+      result = "DISCARD";
+    } else {
+      result = "PLAY";
+      col.push('H');
+    }
+  } else {
+    const numbers = col.filter(v => v !== 'H');
+    const highest = numbers.length > 0 ? numbers[numbers.length - 1] : 0;
+    const secondHighest = numbers.length > 1 ? numbers[numbers.length - 2] : 0;
+    
+    if (selVal > highest) {
+      result = "PLAY";
+      col.push(selVal);
+    } else if (selVal <= secondHighest) {
+      result = "DISCARD";
+    } else {
+      const diff = highest - selVal;
+      const maxDiff = difficulty === 'medium' ? 1 : (difficulty === 'hard' ? 2 : 0);
+      if (diff > 0 && diff <= maxDiff) {
+        result = "REPLACE";
+        col[col.length - 1] = selVal; // Replace highest
+      } else {
+        result = "DISCARD";
+      }
+    }
+  }
+  
+  showResult(result, selColor, selVal);
+  
+  // reset selection
+  selColor = null; selVal = null;
+  document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.val-btn').forEach(b => b.classList.remove('active'));
+  checkReady();
+  
+  renderTableau();
+}
+
+function calculateScore(colArray) {
+  if (colArray.length === 0) return 0;
+  let mult = 1;
+  let sum = 0;
+  for (let v of colArray) {
+    if (v === 'H') mult++;
+    else sum += v;
+  }
+  let score = (sum - 20) * mult;
+  if (colArray.length >= 8) score += 20;
+  return score;
+}
+
+function renderTableau() {
+  const container = document.querySelector('.tableau');
+  container.innerHTML = '';
+  let totalScore = 0;
+  
+  COLORS.forEach(c => {
+    const colArray = expeditions[c];
+    const score = calculateScore(colArray);
+    totalScore += score;
+    
+    let html = `<div class="column">
+      <div class="col-header c-${c}"></div>
+      <div class="col-score">${score} pts</div>
+      <div class="card-list">`;
+    
+    colArray.forEach((v, idx) => {
+      let topPadding = idx > 0 ? 'margin-top: -15px;' : '';
+      let display = v === 'H' ? '🤝' : v;
+      let clss = v === 'H' ? 'handshake' : '';
+      html += `<div class="card-item ${clss}" style="${topPadding} z-index: ${idx}">${display}</div>`;
+    });
+    
+    html += `</div></div>`;
+    container.innerHTML += html;
+  });
+  
+  document.getElementById('totalScoreText').innerText = totalScore;
+}
+
+function showResult(action, color, value) {
+  const modal = document.getElementById('resultModal');
+  const icon = document.getElementById('resIcon');
+  const title = document.getElementById('resTitle');
+  const desc = document.getElementById('resDesc');
+  
+  if (action === 'PLAY') {
+    icon.innerText = '🟢';
+    title.innerText = i18n('lc_res_play_title');
+    desc.innerText = i18n('lc_res_play_desc');
+  } else if (action === 'DISCARD') {
+    icon.innerText = '🗑️';
+    title.innerText = i18n('lc_res_discard_title');
+    desc.innerText = i18n('lc_res_discard_desc');
+  } else if (action === 'REPLACE') {
+    icon.innerText = '🔄';
+    title.innerText = i18n('lc_res_replace_title');
+    desc.innerText = i18n('lc_res_replace_desc');
+  }
+  
+  modal.style.display = 'flex';
+}
+
+function closeResult() {
+  document.getElementById('resultModal').style.display = 'none';
+}
+
+setTimeout(() => { if(typeof applyI18n === 'function') applyI18n(); }, 100);
+</script>
+</body>
+</html>
