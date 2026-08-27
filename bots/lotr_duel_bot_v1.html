@@ -1936,7 +1936,7 @@
         const { default: DiceBox } = await import('https://unpkg.com/@3d-dice/dice-box@1.1.3/dist/dice-box.es.min.js');
         diceBox = new DiceBox({
           container: '#dice-box',
-          assetPath: 'https://unpkg.com/@3d-dice/dice-box@1.1.3/dist/assets/', origin: 'https://unpkg.com/@3d-dice/dice-box@1.1.3/dist/',
+          assetPath: 'assets/', origin: 'https://unpkg.com/@3d-dice/dice-box@1.1.3/dist/',
           theme: 'default',
           themeColor: '#475569',
           scale: 6
@@ -1980,7 +1980,12 @@
       isRolling = true;
       
       try {
-        if (!diceInitialized) await initDiceBox();
+        if (!diceInitialized) {
+          await Promise.race([
+            initDiceBox(),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('initDiceBox global timeout')), 3000))
+          ]);
+        }
       } catch (e) {
         console.error('initDiceBox threw error', e);
         diceFallback = true;
