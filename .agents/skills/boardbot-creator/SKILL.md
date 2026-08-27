@@ -56,6 +56,9 @@ Quando o jogo tem P&P (Print & Play) com imagens de cartas:
 ## 6. Modificações na Página Inicial (`index.html`)
 
 - Adicione o card com arte + título + like/dislike.
+- **Status Alpha:** Todo novo bot deve ser adicionado na seção "Em Teste (Alpha)" (o segundo `<div class="games-grid">`).
+- **Badge Alpha:** Inclua sempre a tag `<span class="badge-alpha">ALPHA</span>` logo após a tag `<img>` dentro do `<div class="game-art">`.
+- **Organização:** Insira o card do novo bot mantendo a ordem alfabética dentro da seção Alpha.
 - Adicione chaves de i18n em `assets/site.js` (pt e en): `game_{key}_title`, `game_{key}_desc`, `credit_{key}`.
 - Adicione `<li data-i18n-html="credit_{key}">` em `credits.html`.
 
