@@ -410,6 +410,25 @@ h1, h2, h3 { font-family: 'Poppins', sans-serif; margin-top: 0; }
 .log-item { margin-bottom: 4px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 4px; }
 .log-item:last-child { border-bottom: none; }
 
+
+@keyframes flame {
+  0% { box-shadow: 0 0 10px #ff6600, 0 0 20px #ff3300 inset; color: #fff; }
+  50% { box-shadow: 0 0 20px #ffcc00, 0 0 30px #ff6600 inset; color: #ffeeaa; }
+  100% { box-shadow: 0 0 10px #ff6600, 0 0 20px #ff3300 inset; color: #fff; }
+}
+.btn-gods {
+    background: linear-gradient(45deg, #4a0000, #800000);
+    border: 2px solid #ffaa00;
+    animation: flame 1.5s infinite alternate;
+    text-shadow: 0 2px 4px #000;
+    margin-top: 10px;
+}
+.btn-gods.active {
+    background: linear-gradient(45deg, #800000, #cc0000);
+    border-color: #ffff00;
+    animation: flame 0.5s infinite alternate;
+}
+
 </style>
 </head>
 <body>
@@ -469,18 +488,22 @@ h1, h2, h3 { font-family: 'Poppins', sans-serif; margin-top: 0; }
   
   <div class="setup-card">
     <h3 data-i18n="lc_diff_head">Difficulty</h3>
-    <div class="difficulty-options">
+    <div class="difficulty-options" id="diffOptionsContainer">
       <button class="diff-btn" onclick="setDifficulty('easy', this)">
         <strong data-i18n="lc_diff_easy">Easy</strong>
-        <small data-i18n="lc_diff_easy_desc">Bot only plays cards if they are strictly higher.</small>
+        <small data-i18n="lc_diff_easy_desc">Plays smartly but doesn't replace.</small>
       </button>
       <button class="diff-btn active" onclick="setDifficulty('medium', this)">
         <strong data-i18n="lc_diff_medium">Medium</strong>
-        <small data-i18n="lc_diff_medium_desc">Bot replaces cards if the drawn card is exactly 1 less than its highest card.</small>
+        <small data-i18n="lc_diff_medium_desc">Replaces if card is 1 or 2 values lower.</small>
       </button>
       <button class="diff-btn" onclick="setDifficulty('hard', this)">
         <strong data-i18n="lc_diff_hard">Hard</strong>
-        <small data-i18n="lc_diff_hard_desc">Bot replaces cards if the drawn card is 1 or 2 less than its highest card.</small>
+        <small data-i18n="lc_diff_hard_desc">Replaces if card is up to 3 values lower.</small>
+      </button>
+      <button class="diff-btn btn-gods" onclick="setDifficulty('gods', this)">
+        🗿 <strong data-i18n="lc_diff_gods">Challenge of the Ancient Gods</strong> 🗿
+        <small data-i18n="lc_diff_gods_desc" style="display:block; margin-top:4px;">The Automa cheats and magically sorts all cards.</small>
       </button>
     </div>
   </div>
@@ -631,6 +654,16 @@ window.I18N = window.I18N || { pt: {}, en: {} };
 
 Object.assign(I18N.pt, {
 
+    lc_diff_easy: "Fácil",
+    lc_diff_easy_desc: "Joga de forma inteligente, sem substituir cartas.",
+    lc_diff_med: "Médio",
+    lc_diff_medium_desc: "Substitui se a carta for até 2 valores menor (Regra Variante).",
+    lc_diff_hard: "Difícil",
+    lc_diff_hard_desc: "Substitui se a carta for até 3 valores menor (Regra Variante Plus).",
+    lc_diff_gods: "Desafio dos Deuses Antigos",
+    lc_diff_gods_desc: "O Automa trapaceia e organiza as cartas magicamente.",
+
+
     lc_mode_title: "Modo de Jogo",
     lc_mode_automa: "Solo vs Automa",
     lc_mode_calc: "Apenas Calculadora (Multiplayer)",
@@ -683,6 +716,16 @@ Object.assign(I18N.pt, {
 });
 
 Object.assign(I18N.en, {
+
+    lc_diff_easy: "Easy",
+    lc_diff_easy_desc: "Plays smartly, without replacing cards.",
+    lc_diff_med: "Medium",
+    lc_diff_medium_desc: "Replaces if the card is up to 2 values lower (Variant Rule).",
+    lc_diff_hard: "Hard",
+    lc_diff_hard_desc: "Replaces if the card is up to 3 values lower (Variant Rule Plus).",
+    lc_diff_gods: "Challenge of the Ancient Gods",
+    lc_diff_gods_desc: "The Automa cheats and magically sorts the cards.",
+
 
     lc_mode_title: "Game Mode",
     lc_mode_automa: "Solo vs Automa",
@@ -744,9 +787,9 @@ let selVal = null;
 
 const COLORS = ['yellow', 'blue', 'white', 'green', 'red'];
 
-function setDifficulty(lvl, btn) {
-  difficulty = lvl;
-  document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
+function setDifficulty(d, btn) {
+  difficulty = d;
+  document.querySelectorAll('#diffOptionsContainer .diff-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
 }
 
@@ -985,7 +1028,7 @@ function logAction(action, color, value) {
         msg = lang === 'pt' ? `Descartou ${valText} do ${cName}.` : `Discarded ${valText} from ${cName}.`;
     }
     
-    if (difficulty === 'hard' && action === 'PLAY') {
+    if (difficulty === 'gods' && action === 'PLAY') {
          msg += lang === 'pt' ? " (Trapaça!)" : " (Cheat!)";
     }
     
@@ -1006,7 +1049,7 @@ function processCard() {
   const col = expeditions[selColor];
   let result = "DISCARD";
   
-  if (difficulty === 'hard') {
+  if (difficulty === 'gods') {
       result = "PLAY";
       if (selVal === 'H') {
           if (col.filter(x => x === 'H').length < 3) col.unshift('H');
@@ -1030,17 +1073,33 @@ function processCard() {
       } else {
           const numbers = col.filter(v => v !== 'H');
           const highest = numbers.length > 0 ? numbers[numbers.length - 1] : 0;
+          const secondHighest = numbers.length > 1 ? numbers[numbers.length - 2] : 0;
           
           if (selVal > highest) {
               if (col.length === 0) {
-                  if (difficulty === 'medium' && selVal > 5) result = "DISCARD";
-                  else { result = "PLAY"; col.push(selVal); }
+                  // Keep smart starts for medium/hard
+                  if ((difficulty === 'medium' || difficulty === 'hard') && selVal > 5) {
+                      result = "DISCARD";
+                  } else {
+                      result = "PLAY"; col.push(selVal);
+                  }
               } else {
                   result = "PLAY";
                   col.push(selVal);
               }
           } else {
-              result = "DISCARD";
+              // Discard or Replace logic
+              let maxDiff = 0;
+              if (difficulty === 'medium') maxDiff = 2;
+              else if (difficulty === 'hard') maxDiff = 3;
+              
+              const diff = highest - selVal;
+              if (diff > 0 && diff <= maxDiff && selVal > secondHighest) {
+                  result = "REPLACE";
+                  col[col.length - 1] = selVal;
+              } else {
+                  result = "DISCARD";
+              }
           }
       }
   }
@@ -1203,6 +1262,16 @@ function setLang(l) {
 // Add strings to I18N
 Object.assign(I18N.pt, {
 
+    lc_diff_easy: "Fácil",
+    lc_diff_easy_desc: "Joga de forma inteligente, sem substituir cartas.",
+    lc_diff_med: "Médio",
+    lc_diff_medium_desc: "Substitui se a carta for até 2 valores menor (Regra Variante).",
+    lc_diff_hard: "Difícil",
+    lc_diff_hard_desc: "Substitui se a carta for até 3 valores menor (Regra Variante Plus).",
+    lc_diff_gods: "Desafio dos Deuses Antigos",
+    lc_diff_gods_desc: "O Automa trapaceia e organiza as cartas magicamente.",
+
+
     lc_mode_title: "Modo de Jogo",
     lc_mode_automa: "Solo vs Automa",
     lc_mode_calc: "Apenas Calculadora (Multiplayer)",
@@ -1239,11 +1308,21 @@ Object.assign(I18N.pt, {
     helpDrawTitle: "Compra (Deck vs Descarte)",
     helpDrawText: "O automa sempre compra a carta do topo do <strong>baralho</strong>, com UMA exceção:<br>Se o <strong>descarte</strong> de alguma cor tiver uma carta que seja <strong>exatamente um valor acima</strong> da maior carta do automa naquela cor (ou um Aperto de Mão se ele não tiver números e menos de 3 apertos), o automa <strong>comprará do descarte</strong>.",
     helpDecisionsTitle: "Decisões (Jogar, Substituir, Descartar)",
-    helpDecisionsList: "<li><strong>Easy:</strong> Plays any valid card immediately, even starting an expedition with a 10 (poor strategy).</li><li><strong>Medium:</strong> Plays smartly. Only starts new expeditions with low cards (Handshake up to 5).</li><li><strong>Hard:</strong> The Automa cheats! It plays every card it receives, magically sorting them out of order into its expedition to maximize points!</li>"
+    helpDecisionsList: "<li><strong>Easy:</strong> Plays smartly but does not use the replace rule.</li><li><strong>Medium:</strong> Uses the variant rule: replaces the highest card if the drawn one is up to 2 values lower.</li><li><strong>Hard:</strong> Expands the variant rule: replaces if it is up to 3 values lower.</li><li><strong>Ancient Gods:</strong> The Automa cheats! It plays every card it receives, magically sorting them out of order into its expedition to maximize points!</li>"
 ,
     creditsText: "Criado por <strong>Thiago Colletes de Carvalho</strong> (<a href='mailto:colletes@gmail.com'>colletes@gmail.com</a>) — regras da variante originais. Lost Cities criado por Reiner Knizia, © KOSMOS. Uso pessoal e não comercial."
 });
 Object.assign(I18N.en, {
+
+    lc_diff_easy: "Easy",
+    lc_diff_easy_desc: "Plays smartly, without replacing cards.",
+    lc_diff_med: "Medium",
+    lc_diff_medium_desc: "Replaces if the card is up to 2 values lower (Variant Rule).",
+    lc_diff_hard: "Hard",
+    lc_diff_hard_desc: "Replaces if the card is up to 3 values lower (Variant Rule Plus).",
+    lc_diff_gods: "Challenge of the Ancient Gods",
+    lc_diff_gods_desc: "The Automa cheats and magically sorts the cards.",
+
 
     lc_mode_title: "Game Mode",
     lc_mode_automa: "Solo vs Automa",
@@ -1281,7 +1360,7 @@ Object.assign(I18N.en, {
     helpDrawTitle: "Drawing (Deck vs Discard)",
     helpDrawText: "The automa always draws from the top of the <strong>deck</strong>, with ONE exception:<br>If the <strong>discard pile</strong> of any color has a card that is <strong>exactly one value higher</strong> than the automa's highest card in that color (or a Handshake if it has no numbers and less than 3 handshakes), the automa will <strong>draw from the discard pile</strong> instead.",
     helpDecisionsTitle: "Decisions (Play, Replace, Discard)",
-    helpDecisionsList: "<li><strong>Easy:</strong> Plays any valid card immediately, even starting an expedition with a 10 (poor strategy).</li><li><strong>Medium:</strong> Plays smartly. Only starts new expeditions with low cards (Handshake up to 5).</li><li><strong>Hard:</strong> The Automa cheats! It plays every card it receives, magically sorting them out of order into its expedition to maximize points!</li>"
+    helpDecisionsList: "<li><strong>Easy:</strong> Plays smartly but does not use the replace rule.</li><li><strong>Medium:</strong> Uses the variant rule: replaces the highest card if the drawn one is up to 2 values lower.</li><li><strong>Hard:</strong> Expands the variant rule: replaces if it is up to 3 values lower.</li><li><strong>Ancient Gods:</strong> The Automa cheats! It plays every card it receives, magically sorting them out of order into its expedition to maximize points!</li>"
 ,
     creditsText: "Made by <strong>Thiago Colletes de Carvalho</strong> (<a href='mailto:colletes@gmail.com'>colletes@gmail.com</a>) — original variant rules. Lost Cities designed by Reiner Knizia, © KOSMOS. Personal, non-commercial use."
 });
