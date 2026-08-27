@@ -50,9 +50,13 @@ Ao criar o HTML do bot, **você DEVE copiar e utilizar os seguintes elementos pa
    Inclua o botão de ajuda (`btn-help-float`), botão de reiniciar partida (`btn-reset-float`) e o seletor de idioma (`lang-switch`) fixos na tela.
 2. **Hero Banner (Topo da página):**
    Sempre inclua uma div `.hero` contendo a imagem da caixa do jogo (`<img src="../assets/art/nome.webp">`). Ela deve ser estilizada para cortar (crop) e mostrar o título do jogo de forma legível.
-3. **Footer (Fim do body):**
+3. **Setup Físico (Na tela de Setup):**
+   É OBRIGATÓRIO incluir um checklist de setup físico (ex: usando tags `<details>` ou painel colapsável) detalhando os componentes do jogo e como o jogador deve preparar a mesa.
+4. **Modal de Ajuda (Fim do body):**
+   É OBRIGATÓRIO incluir o Modal de Regras (`#helpModal`) para explicar como o automa toma decisões, condições de vitória, e regras de desempate. Nunca assuma que as regras são simples demais para dispensar o modal.
+5. **Footer (Fim do body):**
    Sempre inclua os créditos do autor (`.credits`), o botão Buy Me a Coffee (`.bmc-inline`) e o botão Home para voltar (`.btn-home`).
-4. **Theming e Personalidade:**
+6. **Theming e Personalidade:**
    O bot não pode ter uma interface genérica! Use variáveis CSS (`--bg-color`, `--text-main`, `--accent`) e backgrounds temáticos para injetar a personalidade do jogo original. Se for um jogo de fantasia, use texturas de pergaminho/madeira; se for sci-fi, use painéis futuristas. Se a temática não puder ser inferida pelas regras ou pela arte da capa, **PERGUNTE AO USUÁRIO** antes de prosseguir.
 ## 4.1 Internacionalização (i18n)
 
