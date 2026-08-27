@@ -844,7 +844,7 @@
 </head>
 <body>
   <!-- Dice Box Container -->
-  <div id="dice-box" style="position:fixed; top:0; left:0; width:100%; height:100%; z-index:9999; pointer-events:none;"></div>
+  <div id="dice-box" style="position:absolute; top:0; left:0; width:100%; height:100%; z-index:10; pointer-events:none;"></div>
 
 
   <!-- Top Fixed Navigation -->
@@ -1939,7 +1939,7 @@
           assetPath: 'assets/', origin: 'https://unpkg.com/@3d-dice/dice-box@1.1.3/dist/',
           theme: 'default',
           themeColor: '#475569',
-          scale: 6
+          scale: 9
         });
         await Promise.race([
           diceBox.init(),
@@ -1948,7 +1948,12 @@
         diceInitialized = true;
         
         diceBox.onRollComplete = (results) => {
-          setTimeout(() => { diceBox.clear(); isRolling = false; }, 2500);
+          setTimeout(() => { 
+            diceBox.clear(); 
+            isRolling = false; 
+            document.getElementById('landmarkDiceResult').style.minHeight = '0';
+            document.getElementById('inlineDiceResult').style.minHeight = '0';
+          }, 2500);
           let val = null;
           try {
             const group = Array.isArray(results) ? results[0] : results;
@@ -1990,6 +1995,15 @@
         console.error('initDiceBox threw error', e);
         diceFallback = true;
       }
+      
+      const diceBoxEl = document.getElementById('dice-box');
+      const targetEl = reason === 'landmark' ? document.getElementById('landmarkDiceResult') : document.getElementById('inlineDiceResult');
+      
+      targetEl.textContent = ''; // clear old text so tray is empty during roll
+      targetEl.style.position = 'relative';
+      targetEl.style.minHeight = '150px';
+      targetEl.appendChild(diceBoxEl);
+      setTimeout(() => window.dispatchEvent(new Event('resize')), 50);
       
       const lColor = LEADERS[state.selectedLeader]?.cardColor;
       let hex = '#475569';
@@ -2035,6 +2049,8 @@
           console.warn('Dice roll timed out! Forcing fallback.');
           diceBox.clear();
           isRolling = false;
+          document.getElementById('landmarkDiceResult').style.minHeight = '0';
+          document.getElementById('inlineDiceResult').style.minHeight = '0';
           let maxVal = reason === 'landmark' ? 6 : reason === 'race2' ? 2 : 3;
           currentDiceResolve(Math.floor(Math.random() * maxVal) + 1);
           currentDiceResolve = null;
