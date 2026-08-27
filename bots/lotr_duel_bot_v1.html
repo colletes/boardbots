@@ -1107,15 +1107,35 @@
       </div>
 
       <!-- Science Chips Tracker -->
+      <!-- Supremacy Symbols Panel -->
       <div class="science-tracker">
-        <div class="science-header">
-          <span data-i18n="scienceTrackerTitle">Símbolos Científicos do Líder</span>
-          <span id="scienceCountBadge" style="color:var(--accent); font-weight:800;">0 / 6</span>
+        <div class="science-header" style="flex-direction:column; align-items:flex-start; gap:4px;">
+          <div style="display:flex; justify-content:space-between; width:100%;">
+            <span data-i18n="panelSupremacyTitle">Supremacia (Símbolos)</span>
+            <span id="scienceCountBadge" style="color:var(--accent); font-weight:800; background:var(--surface-2); padding:2px 8px; border-radius:12px; font-size:0.8rem;">0 / 6</span>
+          </div>
+          <span style="font-size:0.75rem; color:var(--text-dim); font-weight:normal;" data-i18n="panelSupremacyDesc">Marque os símbolos de raça presentes nas cartas do bot.</span>
         </div>
-        <div class="science-chips" id="scienceChips">
-          <!-- 6 symbols injected via JS -->
+        <div class="science-chips" id="scienceChips" style="grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));">
+          <!-- Dynamic tokens (now 7 including Eagles) -->
         </div>
-        <div id="activeRaceEffects" class="fallback-info" style="display:none; margin-top:8px; text-align:left;"></div>
+        <div id="supremacyAlert" class="supremacy-alert" style="display:none; margin-top:12px; font-size:0.85rem;" data-i18n="alertSupremacy">
+          🏆 O Bot venceu por Apoio das Raças! (6 símbolos diferentes)
+        </div>
+      </div>
+
+      <!-- Alliance Tokens Reference Guide -->
+      <div class="science-tracker" style="margin-top:16px;">
+        <div class="science-header" style="flex-direction:column; align-items:flex-start; gap:4px;">
+          <span data-i18n="panelAllianceTitle">Fichas de Aliança (Lembretes)</span>
+          <span style="font-size:0.75rem; color:var(--text-dim); font-weight:normal;" data-i18n="panelAllianceDesc">Clique em uma Raça para ver suas regras passivas.</span>
+        </div>
+        <div class="science-chips" id="allianceButtons" style="grid-template-columns: repeat(3, 1fr);">
+          <!-- Dynamic accordion buttons -->
+        </div>
+        <div id="allianceEffectDetails" class="fallback-info" style="display:none; margin-top:8px; text-align:left;">
+          <!-- Details shown here -->
+        </div>
       </div>
 
       <!-- Action Log -->
@@ -1292,13 +1312,89 @@
       { id: 12, priority: ['bluered', 'green', 'leader'], fallbackDir: 'left',  repeat: 'none' }
     ];
 
-        const SCIENCE_TYPES = [
-      { id: 'elves',   icon: '🧝', namePt: 'Elfos', nameEn: 'Elves', tooltipPt: 'Sem turno extra em amarela duplicada. Ignora Skills. Coloca Unidades como carta Vermelha.', tooltipEn: 'No extra turn on yellow if card has symbol. Ignores skills. Places units like Red cards.' },
-      { id: 'dwarves', icon: '⛏️', namePt: 'Anões', nameEn: 'Dwarves', tooltipPt: 'Ignora custo adicional de fortalezas em Landmarks. Movimenta como carta Roxa.', tooltipEn: 'Ignores extra Fortress cost for Landmarks. Moves like Purple cards.' },
-      { id: 'hobbit',  icon: '💍', namePt: 'Hobbits', nameEn: 'Hobbits', tooltipPt: 'Ganha 3 moedas ao obter a ficha (sem encadeamento). Águia conta como raça extra.', tooltipEn: 'Gains 3 coins upon claiming token. Eagle symbol counts as extra race.' },
-      { id: 'humans',  icon: '🐎', namePt: 'Humanos', nameEn: 'Humans', tooltipPt: 'Cartas Amarelas avançam Nazgul/Frodo em 1. Cartas Vermelhas dão +1 Unidade.', tooltipEn: 'Yellow cards advance Nazgul/Frodo 1 space. Red cards give +1 Unit.' },
-      { id: 'ents',    icon: '🌳', namePt: 'Ents', nameEn: 'Ents', tooltipPt: 'Remove 1 Fortaleza do jogador (região com menos unidades). Rola o dado 3x para carta Roxa.', tooltipEn: 'Removes player Fortress (from region with fewest units). Rolls die 3x for Purple card effects.' },
-      { id: 'wizards', icon: '🧙', namePt: 'Magos', nameEn: 'Wizards', tooltipPt: 'Avança Nazgul/Frodo em 2. Revela Decisão para jogar do descarte.', tooltipEn: 'Advances Nazgul/Frodo 2 spaces. Reveals Decision card to play from discard pile.' }
+        const SUPREMACY_SYMBOLS = [
+      { id: 'elves',   icon: '🧝', namePt: 'Elfos', nameEn: 'Elves' },
+      { id: 'dwarves', icon: '⛏️', namePt: 'Anões', nameEn: 'Dwarves' },
+      { id: 'hobbit',  icon: '💍', namePt: 'Hobbits', nameEn: 'Hobbits' },
+      { id: 'humans',  icon: '🐎', namePt: 'Humanos', nameEn: 'Humans' },
+      { id: 'ents',    icon: '🌳', namePt: 'Ents', nameEn: 'Ents' },
+      { id: 'wizards', icon: '🧙', namePt: 'Magos', nameEn: 'Wizards' },
+      { id: 'eagle',   icon: '🦅', namePt: 'Águias', nameEn: 'Eagles' }
+    ];
+
+    const ALLIANCE_TOKENS = [
+      { id: 'elves', icon: '🧝', namePt: 'Elfos', nameEn: 'Elves', 
+        htmlPt: `
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><span style="background:#eab308; color:#000; padding:2px 6px; border-radius:4px; font-weight:bold;">🟨 ↺❌</span> Sem turno extra ao jogar Amarela com símbolo do líder.</div>
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><span style="background:#ef4444; color:#fff; padding:2px 6px; border-radius:4px; font-weight:bold;">🟥 🏰</span> Coloca Unidades seguindo as regras de cartas Vermelhas.</div>
+          <div style="display:flex; align-items:center; gap:8px;"><span style="background:#475569; color:#fff; padding:2px 6px; border-radius:4px; font-weight:bold;">⭕ ❌</span> O bot SEMPRE ignora as fichas de Habilidade (Skills).</div>
+        `,
+        htmlEn: `
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><span style="background:#eab308; color:#000; padding:2px 6px; border-radius:4px; font-weight:bold;">🟨 ↺❌</span> No extra turn on yellow if card has symbol.</div>
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><span style="background:#ef4444; color:#fff; padding:2px 6px; border-radius:4px; font-weight:bold;">🟥 🏰</span> Places units following Red card rules.</div>
+          <div style="display:flex; align-items:center; gap:8px;"><span style="background:#475569; color:#fff; padding:2px 6px; border-radius:4px; font-weight:bold;">⭕ ❌</span> The bot ALWAYS ignores Skills.</div>
+        `
+      },
+      { id: 'dwarves', icon: '⛏️', namePt: 'Anões', nameEn: 'Dwarves',
+        htmlPt: `
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><span style="background:#d97706; color:#fff; padding:2px 6px; border-radius:4px; font-weight:bold;">💰 ❌</span> Ignora custo adicional de Fortalezas inimigas nas Landmarks.</div>
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><span style="background:#94a3b8; color:#000; padding:2px 6px; border-radius:4px; font-weight:bold;">🏛️ ↺</span> Sem turno extra ao comprar Landmark.</div>
+          <div style="display:flex; align-items:center; gap:8px;"><span style="background:#a855f7; color:#fff; padding:2px 6px; border-radius:4px; font-weight:bold;">🟪 ⏩</span> Movimentação extra segue a regra das cartas Roxas.</div>
+        `,
+        htmlEn: `
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><span style="background:#d97706; color:#fff; padding:2px 6px; border-radius:4px; font-weight:bold;">💰 ❌</span> Removes the additional enemy Fortress cost for Landmarks.</div>
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><span style="background:#94a3b8; color:#000; padding:2px 6px; border-radius:4px; font-weight:bold;">🏛️ ↺</span> No extra turn when it claims a Landmark.</div>
+          <div style="display:flex; align-items:center; gap:8px;"><span style="background:#a855f7; color:#fff; padding:2px 6px; border-radius:4px; font-weight:bold;">🟪 ⏩</span> Follows Purple cards section for movement.</div>
+        `
+      },
+      { id: 'hobbit', icon: '💍', namePt: 'Hobbits', nameEn: 'Hobbits',
+        htmlPt: `
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><span style="background:#65a30d; color:#fff; padding:2px 6px; border-radius:4px; font-weight:bold;">🦅</span> O Símbolo de Águia conta como uma Raça adicional (para a vitória).</div>
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><span style="background:#3b82f6; color:#fff; padding:2px 6px; border-radius:4px; font-weight:bold;">🟦 1⚔️</span> Ao colocar Unidades, siga a regra de cartas Vermelhas.</div>
+          <div style="display:flex; align-items:center; gap:8px;"><span style="background:#fbbf24; color:#000; padding:2px 6px; border-radius:12px; font-weight:bold;">💰 3</span> Ganha 3 moedas (Apenas ao obter esta ficha, sem turno extra).</div>
+        `,
+        htmlEn: `
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><span style="background:#65a30d; color:#fff; padding:2px 6px; border-radius:4px; font-weight:bold;">🦅</span> Eagle symbol counts as an additional Race symbol.</div>
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><span style="background:#3b82f6; color:#fff; padding:2px 6px; border-radius:4px; font-weight:bold;">🟦 1⚔️</span> Follow the Red cards section for bot Unit placement.</div>
+          <div style="display:flex; align-items:center; gap:8px;"><span style="background:#fbbf24; color:#000; padding:2px 6px; border-radius:12px; font-weight:bold;">💰 3</span> Gains 3 coins immediately (no extra turn).</div>
+        `
+      },
+      { id: 'humans', icon: '🐎', namePt: 'Humanos', nameEn: 'Humans',
+        htmlPt: `
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><span style="background:#eab308; color:#000; padding:2px 6px; border-radius:4px; font-weight:bold;">🟨 💍+1</span> Cartas Amarelas avançam Nazgul/Frodo 1 espaço.</div>
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><span style="background:#ef4444; color:#fff; padding:2px 6px; border-radius:4px; font-weight:bold;">🟥 +1⚔️</span> Cartas Vermelhas colocam +1 Unidade adicional.</div>
+          <div style="display:flex; align-items:center; gap:8px;"><span style="background:#64748b; color:#fff; padding:2px 6px; border-radius:4px; font-weight:bold;">🎴 ❌</span> NUNCA descarta cartas para ganhar moedas (foco na prioridade).</div>
+        `,
+        htmlEn: `
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><span style="background:#eab308; color:#000; padding:2px 6px; border-radius:4px; font-weight:bold;">🟨 💍+1</span> Yellow cards advance Nazgul/Frodo 1 space.</div>
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><span style="background:#ef4444; color:#fff; padding:2px 6px; border-radius:4px; font-weight:bold;">🟥 +1⚔️</span> Red cards place +1 additional Unit.</div>
+          <div style="display:flex; align-items:center; gap:8px;"><span style="background:#64748b; color:#fff; padding:2px 6px; border-radius:4px; font-weight:bold;">🎴 ❌</span> NEVER discards card to gain Coins.</div>
+        `
+      },
+      { id: 'ents', icon: '🌳', namePt: 'Ents', nameEn: 'Ents',
+        htmlPt: `
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><span style="background:#64748b; color:#fff; padding:2px 6px; border-radius:4px; font-weight:bold;">↺ ❌</span> Sem turno extra ao obter esta ficha.</div>
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><span style="background:#1e293b; color:#ef4444; padding:2px 6px; border-radius:4px; font-weight:bold;">🏰 ❌</span> Remove 1 Fortaleza do jogador (região com menos unidades do jogador).</div>
+          <div style="display:flex; align-items:center; gap:8px;"><span style="background:#f1f5f9; color:#000; padding:2px 6px; border-radius:4px; font-weight:bold;">🎲 x3</span> Rola o dado 3 vezes para resolver efeitos de carta Roxa.</div>
+        `,
+        htmlEn: `
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><span style="background:#64748b; color:#fff; padding:2px 6px; border-radius:4px; font-weight:bold;">↺ ❌</span> No additional turn when it takes this token.</div>
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><span style="background:#1e293b; color:#ef4444; padding:2px 6px; border-radius:4px; font-weight:bold;">🏰 ❌</span> Removes a player Fortress (region with fewest player units).</div>
+          <div style="display:flex; align-items:center; gap:8px;"><span style="background:#f1f5f9; color:#000; padding:2px 6px; border-radius:4px; font-weight:bold;">🎲 x3</span> Rolls the die 3 times to determine Purple card effects.</div>
+        `
+      },
+      { id: 'wizards', icon: '🧙', namePt: 'Magos', nameEn: 'Wizards',
+        htmlPt: `
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><span style="background:#fbbf24; color:#000; padding:2px 6px; border-radius:12px; font-weight:bold;">💍 💍</span> Avança Nazgul ou Frodo/Sam 2 espaços.</div>
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><span style="background:#64748b; color:#fff; padding:2px 6px; border-radius:4px; font-weight:bold;">1⚔️ 1⚔️</span> Regras de colocação seguem as cartas Vermelhas.</div>
+          <div style="display:flex; align-items:center; gap:8px;"><span style="background:#a855f7; color:#fff; padding:2px 6px; border-radius:4px; font-weight:bold;">🎴 ⏪ ❌</span> Revela carta do deck de Decisão para jogar carta do descarte, ignorando símbolo de turno extra.</div>
+        `,
+        htmlEn: `
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><span style="background:#fbbf24; color:#000; padding:2px 6px; border-radius:12px; font-weight:bold;">💍 💍</span> Advances Nazgul or Frodo and Sam 2 spaces.</div>
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><span style="background:#64748b; color:#fff; padding:2px 6px; border-radius:4px; font-weight:bold;">1⚔️ 1⚔️</span> Follow Red cards section for bot Units placement.</div>
+          <div style="display:flex; align-items:center; gap:8px;"><span style="background:#a855f7; color:#fff; padding:2px 6px; border-radius:4px; font-weight:bold;">🎴 ⏪ ❌</span> Reveal Decision card to play from discard pile (ignoring extra turn symbol).</div>
+        `
+      }
     ];
 
     /* ==========================================================
@@ -1329,6 +1425,10 @@
         vpSubtext: 'Cartas Azuis / Bônus',
         ageTrackerLabel: 'Capítulo',
         scienceTrackerTitle: 'Símbolos de Raça (Cartas Verdes)',
+        panelSupremacyTitle: 'Supremacia (Símbolos)',
+        panelSupremacyDesc: 'Marque os símbolos de raça presentes nas cartas do bot.',
+        panelAllianceTitle: 'Fichas de Aliança (Lembretes)',
+        panelAllianceDesc: 'Clique em uma Raça para ver suas regras passivas.',
         actionLogTitle: 'Histórico de Ações',
         endGameBtn: '🏁 Finalizar Jogo & Contar Pontos',
         newGameBtn: 'Novo Jogo',
@@ -1362,7 +1462,7 @@
         tieText: '⚖️ Empate em Pontos de Vitória! Vence quem tiver mais PVs em cartas azuis.',
         militaryWinAlert: '⚔️ VITÓRIA POR SUPREMACIA MILITAR! Você invadiu a capital inimiga!',
         militaryLoseAlert: '⚔️ DERROTA POR SUPREMACIA MILITAR! O Líder conquistou a sua capital!',
-        scienceLoseAlert: '🔬 DERROTA POR SUPREMACIA CIENTÍFICA! O Líder reuniu 6 fichas de raça distintas!',
+        scienceLoseAlert: '🏆 DERROTA POR APOIO DAS RAÇAS! O Bot reuniu 6 símbolos de raça diferentes!',
         scanFallbackLeft: 'Se nenhuma cor disponível: pegue a 1ª carta acessível da <strong>DIREITA para a ESQUERDA (←)</strong> a partir da base.',
         scanFallbackRight: 'Se nenhuma cor disponível: pegue a 1ª carta acessível da <strong>ESQUERDA para a DIREITA (→)</strong> a partir da base.',
         colorScience: 'Verde (Ciência)',
@@ -1421,6 +1521,10 @@
         vpSubtext: 'Blue Cards / Bonuses',
         ageTrackerLabel: 'Chapter',
         scienceTrackerTitle: 'Leader Race Chips',
+        panelSupremacyTitle: 'Supremacy (Symbols)',
+        panelSupremacyDesc: 'Mark the race symbols present on the bot\'s cards.',
+        panelAllianceTitle: 'Alliance Tokens (Reminders)',
+        panelAllianceDesc: 'Click a Race to see its passive rules.',
         actionLogTitle: 'Action History',
         endGameBtn: '🏁 End Game & Tally Score',
         newGameBtn: 'New Game',
@@ -1475,7 +1579,7 @@
         logBuyLandmark: '🏛️ Leader bought a Landmark for {cost} coins!',
         militaryWinAlert: '⚔️ MILITARY SUPREMACY VICTORY! You invaded the enemy capital!',
         militaryLoseAlert: '⚔️ MILITARY SUPREMACY DEFEAT! The Leader conquered your capital!',
-        scienceLoseAlert: '🔬 SCIENTIFIC SUPREMACY DEFEAT! The Leader collected 6 distinct race chips!',
+        scienceLoseAlert: '🏆 SUPPORT OF THE RACES DEFEAT! The Bot collected 6 different race symbols!',
         scanFallbackLeft: 'If no priority color available: take 1st accessible card from <strong>RIGHT to LEFT (←)</strong> starting at the base.',
         scanFallbackRight: 'If no priority color available: take 1st accessible card from <strong>LEFT to RIGHT (→)</strong> starting at the base.',
         colorScience: 'Green (Science)',
@@ -1823,10 +1927,10 @@
       container.innerHTML = '';
       const isPt = state.lang === 'pt';
 
-      SCIENCE_TYPES.forEach(item => {
+      SUPREMACY_SYMBOLS.forEach(item => {
         const chip = document.createElement('button');
         const isActive = !!state.scienceSymbols[item.id];
-        chip.className = `science-chip ${isActive ? 'active' : ''}`; chip.title = isPt ? item.tooltipPt : item.tooltipEn;
+        chip.className = `science-chip ${isActive ? 'active' : ''}`;
         chip.innerHTML = `<span>${item.icon}</span> <span>${isPt ? item.namePt : item.nameEn}</span>`;
         chip.onclick = () => toggleScienceSymbol(item.id);
         container.appendChild(chip);
@@ -1834,34 +1938,51 @@
 
       const count = Object.values(state.scienceSymbols).filter(Boolean).length;
       document.getElementById('scienceCountBadge').textContent = `${count} / 6`;
+      
+      // Also render alliance buttons
+      renderAllianceButtons();
     }
 
     function toggleScienceSymbol(symId) {
       state.scienceSymbols[symId] = !state.scienceSymbols[symId];
       renderScienceChips();
-      updateRaceEffectsBox();
       checkSupremacy();
       saveState();
     }
     
-    function updateRaceEffectsBox() {
-      const box = document.getElementById('activeRaceEffects');
-      const activeIds = Object.keys(state.scienceSymbols).filter(k => state.scienceSymbols[k]);
-      if (activeIds.length === 0) {
-        box.style.display = 'none';
-        return;
-      }
-      box.style.display = 'block';
+    function renderAllianceButtons() {
+      const container = document.getElementById('allianceButtons');
+      container.innerHTML = '';
       const isPt = state.lang === 'pt';
-      let html = '<ul style="margin:0; padding-left:16px;">';
-      activeIds.forEach(id => {
-        const item = SCIENCE_TYPES.find(x => x.id === id);
-        if (item) {
-          html += `<li><strong>${item.icon} ${isPt ? item.namePt : item.nameEn}:</strong> ${isPt ? item.tooltipPt : item.tooltipEn}</li>`;
-        }
+      
+      ALLIANCE_TOKENS.forEach(item => {
+        const chip = document.createElement('button');
+        const isActive = (state.activeAllianceView === item.id);
+        chip.className = `science-chip ${isActive ? 'active' : ''}`;
+        chip.style.borderColor = isActive ? 'var(--accent)' : 'var(--border)';
+        chip.innerHTML = `<span>${item.icon}</span> <span>${isPt ? item.namePt : item.nameEn}</span>`;
+        chip.onclick = () => toggleAllianceView(item.id);
+        container.appendChild(chip);
       });
-      html += '</ul>';
-      box.innerHTML = html;
+      
+      const box = document.getElementById('allianceEffectDetails');
+      if (!state.activeAllianceView) {
+        box.style.display = 'none';
+      } else {
+        box.style.display = 'block';
+        const item = ALLIANCE_TOKENS.find(x => x.id === state.activeAllianceView);
+        box.innerHTML = isPt ? item.htmlPt : item.htmlEn;
+      }
+    }
+    
+    function toggleAllianceView(id) {
+      if (state.activeAllianceView === id) {
+        state.activeAllianceView = null;
+      } else {
+        state.activeAllianceView = id;
+      }
+      renderAllianceButtons();
+      saveState();
     }
 
     function checkSupremacy() {
@@ -1920,7 +2041,6 @@
 
 
       renderScienceChips();
-      updateRaceEffectsBox();
       renderLogs();
     }
 
