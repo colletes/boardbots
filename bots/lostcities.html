@@ -405,6 +405,11 @@ h1, h2, h3 { font-family: 'Poppins', sans-serif; margin-top: 0; }
 .score-table th, .score-table td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); }
 .score-table thead { background: rgba(255,255,255,0.05); }
 
+
+.log-panel { background: rgba(0,0,0,0.4); border-radius: 8px; padding: 10px; margin-top: 20px; max-height: 150px; overflow-y: auto; font-size: 0.9em; color: var(--text-muted); text-align: left; }
+.log-item { margin-bottom: 4px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 4px; }
+.log-item:last-child { border-bottom: none; }
+
 </style>
 </head>
 <body>
@@ -526,7 +531,11 @@ h1, h2, h3 { font-family: 'Poppins', sans-serif; margin-top: 0; }
     </div>
 
 
-    <button class="start-btn" style="margin-top:20px; margin-bottom:20px;" onclick="endAutomaRound()" data-i18n="lc_end_round">Terminar Rodada e Calcular</button>
+    
+    <h3 style="margin-top:20px; font-size:1.1em; color:var(--text-muted);" data-i18n="lc_log_title">Histórico de Ações:</h3>
+    <div class="log-panel" id="logPanel"></div>
+
+<button class="start-btn" style="margin-top:20px; margin-bottom:20px;" onclick="endAutomaRound()" data-i18n="lc_end_round">Terminar Rodada e Calcular</button>
 
 </div>
 
@@ -642,6 +651,7 @@ Object.assign(I18N.pt, {
     lc_p2_wins_multi: "Jogador 2 Venceu! 🏆",
     lc_tie: "Empate! 🤝",
     lc_player: "Jogador",
+    lc_log_title: "Histórico de Ações:",
 
     wantedPanelText: "O Automa compra do <strong>BARALHO</strong>, exceto se alguma destas cartas estiver no <strong>DESCARTE</strong>:",
     wantedNone: "Nenhuma (Sempre baralho)",
@@ -694,6 +704,7 @@ Object.assign(I18N.en, {
     lc_p2_wins_multi: "Player 2 Wins! 🏆",
     lc_tie: "It's a Tie! 🤝",
     lc_player: "Player",
+    lc_log_title: "Action History:",
 
     wantedPanelText: "The Automa draws from the <strong>DECK</strong>, unless one of these cards is in the <strong>DISCARD</strong> pile:",
     wantedNone: "None (Always deck)",
@@ -727,6 +738,7 @@ Object.assign(I18N.en, {
 // --- STATE ---
 let difficulty = 'medium';
 let expeditions = { yellow: [], blue: [], white: [], green: [], red: [] };
+        gameLog = []; renderLog();
 let selColor = null;
 let selVal = null;
 
@@ -776,6 +788,7 @@ function startRound() {
     if (gameMode === 'automa') {
         document.getElementById('gameScreen').style.display = 'block';
         expeditions = { yellow: [], blue: [], white: [], green: [], red: [] };
+        gameLog = []; renderLog();
         renderTableau();
     } else {
         calcCurrentPlayer = 1;
@@ -956,44 +969,85 @@ function checkReady() {
   document.getElementById('processBtn').disabled = !(selColor && selVal);
 }
 
+let gameLog = [];
+
+function logAction(action, color, value) {
+    const valText = value === 'H' ? '🤝' : value;
+    const colorNamesPt = { yellow: 'Amarelo', blue: 'Azul', white: 'Branco', green: 'Verde', red: 'Vermelho' };
+    const colorNamesEn = { yellow: 'Yellow', blue: 'Blue', white: 'White', green: 'Green', red: 'Red' };
+    const lang = localStorage.getItem('boardbots_lang') || 'pt';
+    const cName = lang === 'pt' ? colorNamesPt[color] : colorNamesEn[color];
+    
+    let msg = "";
+    if (action === 'PLAY') {
+        msg = lang === 'pt' ? `Jogou ${valText} no ${cName}.` : `Played ${valText} on ${cName}.`;
+    } else {
+        msg = lang === 'pt' ? `Descartou ${valText} do ${cName}.` : `Discarded ${valText} from ${cName}.`;
+    }
+    
+    if (difficulty === 'hard' && action === 'PLAY') {
+         msg += lang === 'pt' ? " (Trapaça!)" : " (Cheat!)";
+    }
+    
+    gameLog.unshift(`[${new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit', second:'2-digit'})}] ${msg}`);
+    if (gameLog.length > 30) gameLog.pop();
+    
+    renderLog();
+}
+
+function renderLog() {
+    const panel = document.getElementById('logPanel');
+    if (!panel) return;
+    panel.innerHTML = gameLog.map(l => `<div class="log-item">${l}</div>`).join('');
+}
+
 function processCard() {
   if (!selColor || !selVal) return;
   const col = expeditions[selColor];
-  let result = "";
+  let result = "DISCARD";
   
-  if (selVal === 'H') {
-    const hasNumbers = col.some(v => v !== 'H');
-    if (hasNumbers || col.length >= 3) {
-      result = "DISCARD";
-    } else {
+  if (difficulty === 'hard') {
       result = "PLAY";
-      col.push('H');
-    }
-  } else {
-    const numbers = col.filter(v => v !== 'H');
-    const highest = numbers.length > 0 ? numbers[numbers.length - 1] : 0;
-    const secondHighest = numbers.length > 1 ? numbers[numbers.length - 2] : 0;
-    
-    if (selVal > highest) {
-      result = "PLAY";
-      col.push(selVal);
-    } else if (selVal <= secondHighest) {
-      result = "DISCARD";
-    } else {
-      const diff = highest - selVal;
-      const maxDiff = difficulty === 'medium' ? 1 : (difficulty === 'hard' ? 2 : 0);
-      if (diff > 0 && diff <= maxDiff) {
-        result = "REPLACE";
-        col[col.length - 1] = selVal; // Replace highest
+      if (selVal === 'H') {
+          if (col.filter(x => x === 'H').length < 3) col.unshift('H');
+          else result = "DISCARD";
       } else {
-        result = "DISCARD";
+          if (!col.includes(selVal)) {
+              col.push(selVal);
+              let hArr = col.filter(x => x === 'H');
+              let numArr = col.filter(x => x !== 'H').sort((a,b) => a - b);
+              expeditions[selColor] = hArr.concat(numArr);
+          } else {
+              result = "DISCARD";
+          }
       }
-    }
+  } else {
+      if (selVal === 'H') {
+          if (col.length === 0 || (col.length > 0 && col[col.length-1] === 'H' && col.length < 3)) {
+              result = "PLAY";
+              col.push('H');
+          }
+      } else {
+          const numbers = col.filter(v => v !== 'H');
+          const highest = numbers.length > 0 ? numbers[numbers.length - 1] : 0;
+          
+          if (selVal > highest) {
+              if (col.length === 0) {
+                  if (difficulty === 'medium' && selVal > 5) result = "DISCARD";
+                  else { result = "PLAY"; col.push(selVal); }
+              } else {
+                  result = "PLAY";
+                  col.push(selVal);
+              }
+          } else {
+              result = "DISCARD";
+          }
+      }
   }
   
   showResult(result, selColor, selVal);
+  logAction(result, selColor, selVal);
   
-  // reset selection
   selColor = null; selVal = null;
   document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.val-btn').forEach(b => b.classList.remove('active'));
@@ -1169,6 +1223,7 @@ Object.assign(I18N.pt, {
     lc_p2_wins_multi: "Jogador 2 Venceu! 🏆",
     lc_tie: "Empate! 🤝",
     lc_player: "Jogador",
+    lc_log_title: "Histórico de Ações:",
 
     wantedPanelText: "O Automa compra do <strong>BARALHO</strong>, exceto se alguma destas cartas estiver no <strong>DESCARTE</strong>:",
     wantedNone: "Nenhuma (Sempre baralho)",
@@ -1184,7 +1239,7 @@ Object.assign(I18N.pt, {
     helpDrawTitle: "Compra (Deck vs Descarte)",
     helpDrawText: "O automa sempre compra a carta do topo do <strong>baralho</strong>, com UMA exceção:<br>Se o <strong>descarte</strong> de alguma cor tiver uma carta que seja <strong>exatamente um valor acima</strong> da maior carta do automa naquela cor (ou um Aperto de Mão se ele não tiver números e menos de 3 apertos), o automa <strong>comprará do descarte</strong>.",
     helpDecisionsTitle: "Decisões (Jogar, Substituir, Descartar)",
-    helpDecisionsList: "<li><strong>Jogar:</strong> Se a carta for maior que a do topo da expedição, ele joga.</li><li><strong>Substituir:</strong> Dependendo da dificuldade, ele pode descartar a carta do topo e jogar a recém-comprada no lugar (se for apenas 1 ou 2 valores menor que o topo, mas maior que a penúltima carta).</li><li><strong>Descartar:</strong> Se a carta não for útil, ele a descarta.</li>"
+    helpDecisionsList: "<li><strong>Easy:</strong> Plays any valid card immediately, even starting an expedition with a 10 (poor strategy).</li><li><strong>Medium:</strong> Plays smartly. Only starts new expeditions with low cards (Handshake up to 5).</li><li><strong>Hard:</strong> The Automa cheats! It plays every card it receives, magically sorting them out of order into its expedition to maximize points!</li>"
 ,
     creditsText: "Criado por <strong>Thiago Colletes de Carvalho</strong> (<a href='mailto:colletes@gmail.com'>colletes@gmail.com</a>) — regras da variante originais. Lost Cities criado por Reiner Knizia, © KOSMOS. Uso pessoal e não comercial."
 });
@@ -1210,6 +1265,7 @@ Object.assign(I18N.en, {
     lc_p2_wins_multi: "Player 2 Wins! 🏆",
     lc_tie: "It's a Tie! 🤝",
     lc_player: "Player",
+    lc_log_title: "Action History:",
 
     wantedPanelText: "The Automa draws from the <strong>DECK</strong>, unless one of these cards is in the <strong>DISCARD</strong> pile:",
     wantedNone: "None (Always deck)",
@@ -1225,7 +1281,7 @@ Object.assign(I18N.en, {
     helpDrawTitle: "Drawing (Deck vs Discard)",
     helpDrawText: "The automa always draws from the top of the <strong>deck</strong>, with ONE exception:<br>If the <strong>discard pile</strong> of any color has a card that is <strong>exactly one value higher</strong> than the automa's highest card in that color (or a Handshake if it has no numbers and less than 3 handshakes), the automa will <strong>draw from the discard pile</strong> instead.",
     helpDecisionsTitle: "Decisions (Play, Replace, Discard)",
-    helpDecisionsList: "<li><strong>Play:</strong> If the card is higher than the top of its expedition, it plays it.</li><li><strong>Replace:</strong> Depending on difficulty, it may discard its top card and play the newly drawn one in its place (if it's only 1 or 2 values lower than the top, but higher than the second-to-top card).</li><li><strong>Discard:</strong> If the card isn't useful, it discards it.</li>"
+    helpDecisionsList: "<li><strong>Easy:</strong> Plays any valid card immediately, even starting an expedition with a 10 (poor strategy).</li><li><strong>Medium:</strong> Plays smartly. Only starts new expeditions with low cards (Handshake up to 5).</li><li><strong>Hard:</strong> The Automa cheats! It plays every card it receives, magically sorting them out of order into its expedition to maximize points!</li>"
 ,
     creditsText: "Made by <strong>Thiago Colletes de Carvalho</strong> (<a href='mailto:colletes@gmail.com'>colletes@gmail.com</a>) — original variant rules. Lost Cities designed by Reiner Knizia, © KOSMOS. Personal, non-commercial use."
 });
