@@ -1669,6 +1669,14 @@
       document.getElementById('activeLeaderEffect').textContent = `⚡ ${isPt ? leader.powerPt : leader.powerEn}`;
 
       updateUI();
+      if (state.currentCard) {
+        displayActiveCard(state.currentCard);
+      } else {
+        document.getElementById('flipBtn').style.display = 'inline-flex';
+        document.getElementById('resolveBtn').style.display = 'none';
+        document.getElementById('priorityList').innerHTML = '';
+        document.getElementById('decisionCardImg').src = 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='; // empty
+      }
     }
 
     function shuffleArray(arr) {
@@ -2158,6 +2166,18 @@
         if (raw) {
           const parsed = JSON.parse(raw);
           state = { ...state, ...parsed };
+          
+          // Failsafe: if loaded deck has old 7 Wonders tags, invalidate it
+          if (state.deck && state.deck.some(c => c.priority && (c.priority.includes('science') || c.priority.includes('military') || !c.repeat))) {
+             console.warn('Found outdated deck schema in storage. Invalidating state.');
+             state.inGame = false;
+             state.deck = [];
+             state.currentCard = null;
+          }
+          if (state.currentCard && state.currentCard.priority && (state.currentCard.priority.includes('science') || state.currentCard.priority.includes('military') || !state.currentCard.repeat)) {
+             state.inGame = false;
+             state.currentCard = null;
+          }
         }
       } catch (e) {
         console.error('Failed to load state', e);
