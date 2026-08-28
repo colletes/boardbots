@@ -44,6 +44,10 @@ Implemented directly in `bots/memoir44_bot_v3.html`:
 - Changed hand columns to centered tracks capped at `--card-w`.
 - Changed hand row alignment to start at the top of the hand area.
 - Added `box-sizing: border-box` to cards so padding does not expand their rendered width.
+- Added Hoth-style section ratings before card evaluation.
+- Combined card urgency (40%) with section priority (60%) and preserved hand order on ties.
+- Added fixed-section badges and rating context during evaluation.
+- Made the analyzed result panel non-shrinking so the executed card stays contained.
 
 ## Completion Criteria
 
