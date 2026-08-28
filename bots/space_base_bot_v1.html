@@ -5,137 +5,996 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title data-i18n="pageTitle">Space Base Bot</title>
 <link rel="icon" href="../assets/mascot-trimmed.png" type="image/png">
-<meta name="description" content="Automa and SoloPlay opponent for Space Base.">
+<meta name="description" content="Automa and SoloPlay companion for Space Base.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/site.css?v=7">
+<script src="../assets/logger.js"></script>
+
 <style>
-html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
-    :root {
-        --sb-bg: #0f172a;
-        --sb-card: #1e293b;
-        --sb-primary: #3b82f6;
-        --sb-accent: #f59e0b;
-        --sb-text: #f8fafc;
-        --sb-border: #334155;
-        --font-display: 'Orbitron', sans-serif;
+:root {
+    --bg-space: #06090f;
+    --bg-surface: #0f172a;
+    --bg-card: #141e33;
+    --bg-card-sub: #1b2844;
+    --border-hud: #243556;
+    --border-glow: #38bdf8;
+    
+    --text-main: #f8fafc;
+    --text-dim: #94a3b8;
+    --text-muted: #64748b;
+    
+    --neon-green: #22c55e;
+    --neon-green-glow: rgba(34, 197, 94, 0.35);
+    --neon-green-bg: rgba(34, 197, 94, 0.12);
+    
+    --neon-yellow: #facc15;
+    --neon-yellow-glow: rgba(250, 204, 21, 0.35);
+    --neon-yellow-bg: rgba(250, 204, 21, 0.12);
+    
+    --neon-pink: #ec4899;
+    --neon-pink-glow: rgba(236, 72, 153, 0.35);
+    --neon-pink-bg: rgba(236, 72, 153, 0.12);
+    
+    --neon-cyan: #38bdf8;
+    --neon-cyan-glow: rgba(56, 189, 248, 0.4);
+    --neon-cyan-bg: rgba(56, 189, 248, 0.12);
+    
+    --neon-amber: #f59e0b;
+    
+    --font-display: 'Orbitron', -apple-system, sans-serif;
+    --font-body: 'Inter', -apple-system, sans-serif;
+    --radius: 12px;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+    overflow-x: hidden;
+    width: 100%;
+    min-height: 100vh;
+    background-color: var(--bg-space);
+    background-image: 
+        radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.12) 0%, transparent 60%),
+        radial-gradient(circle at 10% 50%, rgba(34, 197, 94, 0.05) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(236, 72, 153, 0.05) 0%, transparent 40%),
+        linear-gradient(180deg, #06090f 0%, #0c121e 100%);
+    background-attachment: fixed;
+    color: var(--text-main);
+    font-family: var(--font-body);
+}
+
+/* --- Top Sticky Navigation Bar --- */
+.top-nav {
+    width: 100%;
+    max-width: 1080px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    background: rgba(6, 9, 15, 0.85);
+    border-bottom: 1px solid rgba(56, 189, 248, 0.2);
+}
+
+.nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-display);
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--neon-cyan);
+    text-decoration: none;
+    letter-spacing: 1px;
+    text-shadow: 0 0 10px var(--neon-cyan-glow);
+}
+
+.nav-brand svg {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+
+.nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.nav-btn {
+    background: var(--bg-card);
+    color: var(--text-dim);
+    border: 1px solid var(--border-hud);
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: var(--font-display);
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.nav-btn:hover {
+    color: #fff;
+    border-color: var(--neon-cyan);
+    box-shadow: 0 0 8px var(--neon-cyan-glow);
+}
+
+.lang-btn {
+    background: var(--bg-card);
+    color: var(--neon-cyan);
+    border: 1px solid var(--neon-cyan);
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: var(--font-display);
+    box-shadow: 0 0 8px rgba(56, 189, 248, 0.2);
+}
+
+/* --- Hero Banner --- */
+.hero-wrapper {
+    max-width: 1080px;
+    margin: 16px auto;
+    padding: 0 16px;
+}
+
+.hero {
+    position: relative;
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: 1px solid var(--border-hud);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+}
+
+.hero img {
+    width: 100%;
+    height: 160px;
+    object-fit: cover;
+    object-position: center 25%;
+    display: block;
+    filter: brightness(0.65) saturate(1.2);
+}
+
+.hero::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(6,9,15,0.2) 0%, rgba(6,9,15,0.92) 100%);
+}
+
+.hero-content {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 16px 20px;
+    z-index: 2;
+}
+
+.hero-title {
+    font-family: var(--font-display);
+    font-size: 1.8rem;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    color: #fff;
+    text-shadow: 0 0 16px rgba(56, 189, 248, 0.6);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.hero-subtitle {
+    color: var(--neon-cyan);
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-top: 4px;
+    letter-spacing: 0.5px;
+}
+
+/* --- App Containers --- */
+.app-container {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 0 16px 40px;
+}
+
+/* Widescreen Responsive Grid */
+.board-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+    animation: fadeIn 0.4s ease-out;
+}
+
+@media (min-width: 960px) {
+    .board-grid {
+        grid-template-columns: 380px 1fr;
+        align-items: start;
     }
-    body {
-        background-color: var(--sb-bg);
-        background-image: radial-gradient(circle at 50% 50%, #1e293b 0%, #0f172a 100%);
-        color: var(--sb-text);
-        padding-bottom: 50px;
+}
+
+/* Sci-fi HUD Panels */
+.hud-panel {
+    background: var(--bg-card);
+    border: 1px solid var(--border-hud);
+    border-radius: var(--radius);
+    padding: 20px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    position: relative;
+    overflow: hidden;
+}
+
+.hud-panel::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--neon-cyan), transparent);
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-hud);
+    padding-bottom: 12px;
+    margin-bottom: 16px;
+}
+
+.panel-title {
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--neon-cyan);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* --- Action Buttons --- */
+.btn-command {
+    width: 100%;
+    padding: 14px 18px;
+    background: linear-gradient(135deg, #0284c7, #0369a1);
+    color: #fff;
+    border: 1px solid var(--neon-cyan);
+    border-radius: 10px;
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    cursor: pointer;
+    box-shadow: 0 0 16px rgba(56, 189, 248, 0.3);
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-command:hover {
+    background: linear-gradient(135deg, #0ea5e9, #0284c7);
+    box-shadow: 0 0 24px rgba(56, 189, 248, 0.6);
+    transform: translateY(-2px);
+}
+
+.btn-command:active {
+    transform: translateY(0);
+}
+
+.btn-secondary {
+    width: 100%;
+    padding: 10px 14px;
+    background: var(--bg-card-sub);
+    color: var(--text-main);
+    border: 1px solid var(--border-hud);
+    border-radius: 8px;
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+}
+
+.btn-secondary:hover {
+    border-color: var(--neon-cyan);
+    background: rgba(56, 189, 248, 0.1);
+    color: #fff;
+}
+
+/* --- Dice Area --- */
+#dice-box {
+    width: 100%;
+    height: 180px;
+    background: rgba(6, 9, 15, 0.6);
+    border: 1px solid var(--border-hud);
+    border-radius: 10px;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 14px;
+    display: none;
+}
+
+#dice-box canvas {
+    width: 100% !important;
+    height: 100% !important;
+    display: block;
+}
+
+.dice-result-badge {
+    text-align: center;
+    color: var(--neon-yellow);
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    font-weight: 700;
+    background: rgba(6, 9, 15, 0.6);
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px dashed var(--border-hud);
+    margin-bottom: 14px;
+    letter-spacing: 1px;
+}
+
+/* Manual Dice Inputs */
+.manual-dice-box {
+    display: none;
+    background: rgba(6, 9, 15, 0.6);
+    border: 1px solid var(--border-hud);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 14px;
+}
+
+.sb-dice-row {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 8px;
+    justify-content: space-between;
+}
+
+.sb-die-btn {
+    flex: 1;
+    height: 36px;
+    background: var(--bg-card-sub);
+    color: var(--text-dim);
+    border: 1px solid var(--border-hud);
+    border-radius: 6px;
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.sb-die-btn.active-die1 {
+    background: #0284c7;
+    border-color: var(--neon-cyan);
+    color: #fff;
+    box-shadow: 0 0 10px var(--neon-cyan-glow);
+}
+
+.sb-die-btn.active-die2 {
+    background: #059669;
+    border-color: var(--neon-green);
+    color: #fff;
+    box-shadow: 0 0 10px var(--neon-green-glow);
+}
+
+/* --- Score Trackers --- */
+.score-box {
+    background: rgba(6, 9, 15, 0.5);
+    border: 1px solid var(--border-hud);
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 14px;
+}
+
+.score-title {
+    font-family: var(--font-display);
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--neon-amber);
+    letter-spacing: 0.5px;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+}
+
+.score-counter-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.btn-counter {
+    width: 42px;
+    height: 42px;
+    background: var(--bg-card-sub);
+    border: 1px solid var(--border-hud);
+    border-radius: 8px;
+    color: #fff;
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-counter:hover {
+    border-color: var(--neon-cyan);
+    color: var(--neon-cyan);
+}
+
+.score-input {
+    flex: 1;
+    min-width: 0;
+    height: 42px;
+    background: rgba(6, 9, 15, 0.8);
+    border: 1px solid var(--border-hud);
+    border-radius: 8px;
+    color: #fff;
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 800;
+    text-align: center;
+}
+
+.active-row-indicator {
+    padding: 10px 12px;
+    background: rgba(56, 189, 248, 0.12);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    border-radius: 8px;
+    font-size: 0.85rem;
+    color: var(--neon-cyan);
+    text-align: center;
+    line-height: 1.4;
+    box-shadow: inset 0 0 12px rgba(56, 189, 248, 0.1);
+}
+
+/* --- Tactical Automa Card Display --- */
+.automa-card-wrapper {
+    background: #0f172a;
+    border: 2px solid var(--border-hud);
+    border-radius: var(--radius);
+    padding: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+    position: relative;
+}
+
+.automa-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-hud);
+    padding-bottom: 12px;
+    margin-bottom: 14px;
+}
+
+.automa-commander-name {
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+    color: #fff;
+}
+
+.automa-thresholds-badge {
+    font-family: var(--font-display);
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text-dim);
+    background: var(--bg-card-sub);
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border-hud);
+}
+
+/* Rows */
+.card-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    padding: 10px 12px;
+    background: var(--bg-card-sub);
+    border-radius: 10px;
+    border: 1px solid transparent;
+    transition: all 0.25s ease;
+}
+
+/* Neon Badges requested by user */
+.row-icon {
+    width: 78px;
+    min-width: 78px;
+    height: 38px;
+    border-radius: 6px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: 800;
+    margin-right: 10px;
+    font-size: 0.78rem;
+    font-family: var(--font-display);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.row-1-icon {
+    background: var(--neon-green);
+    color: #052e16;
+    border: 1px solid #16a34a;
+    box-shadow: 0 0 8px var(--neon-green-glow);
+}
+
+.row-2-icon {
+    background: var(--neon-yellow);
+    color: #713f12;
+    border: 1px solid #eab308;
+    box-shadow: 0 0 8px var(--neon-yellow-glow);
+}
+
+.row-3-icon {
+    background: var(--neon-pink);
+    color: #ffffff;
+    border: 1px solid #db2777;
+    box-shadow: 0 0 8px var(--neon-pink-glow);
+}
+
+.ships-container {
+    flex: 1;
+    display: flex;
+    gap: 4px;
+}
+
+.ship-slot {
+    flex: 1;
+    height: 38px;
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 6px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ship-crossed {
+    background: rgba(220, 38, 38, 0.2) !important;
+    border-color: #ef4444 !important;
+}
+
+.ship-crossed::after {
+    content: '✕';
+    position: absolute;
+    color: #ef4444;
+    font-size: 24px;
+    font-weight: 900;
+    font-family: var(--font-display);
+    text-shadow: 0 0 8px rgba(239, 68, 68, 0.8);
+}
+
+.rocket-vp {
+    width: 40px;
+    height: 48px;
+    background: linear-gradient(180deg, #38bdf8, #0284c7);
+    clip-path: polygon(50% 0%, 100% 25%, 100% 100%, 0% 100%, 0% 25%);
+    color: #fff;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: 6px;
+    font-weight: 800;
+    margin-left: 10px;
+    font-size: 1.15rem;
+    font-family: var(--font-display);
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+}
+
+/* --- Base Attack Damage Grid --- */
+.sector-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+@media (min-width: 600px) {
+    .sector-grid {
+        grid-template-columns: repeat(6, 1fr);
     }
-    .bot-header {
-        background: linear-gradient(135deg, #0f172a, #1e293b);
-        color: var(--sb-text);
-        padding: 40px 20px 30px;
-        text-align: center;
-        border-bottom: 4px solid var(--sb-primary);
-        border-radius: 0 0 16px 16px;
-        margin-bottom: 30px;
-        position: relative;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-    }
-    .bot-header h1 { font-family: var(--font-display); font-weight: 700; font-size: 2.2em; margin: 0 0 10px; letter-spacing: 1px; color: #fff; }
-    .bot-header p { color: #cbd5e1; font-size: 1.1em; margin: 0; }
-    .lang-toggle { position: absolute; top: 15px; right: 15px; background: rgba(255,255,255,0.1); padding: 5px 10px; border-radius: 6px; color: #fff; cursor: pointer; border: 1px solid var(--sb-border); font-weight: bold; }
-    .lang-toggle:hover { background: rgba(255,255,255,0.2); }
-    
-    .board-container { max-width: 1000px; margin: 0 auto; padding: 0 20px; display: grid; grid-template-columns: 1fr; gap: 20px; }
-    @media (min-width: 992px) { .board-container { grid-template-columns: 350px 1fr; } }
-    
-    .panel { background: var(--sb-card); border: 1px solid var(--sb-border); border-radius: 12px; padding: 24px; box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
-    .panel h2 { font-family: var(--font-display); color: var(--sb-primary); margin: 0 0 20px; font-size: 1.3em; border-bottom: 2px solid var(--sb-border); padding-bottom: 10px; }
-    
-    .action-btn { background: var(--sb-primary); color: #fff; border: none; padding: 16px 24px; border-radius: 8px; font-family: var(--font-display); font-size: 1.1em; font-weight: 700; cursor: pointer; width: 100%; transition: all 0.2s; text-transform: uppercase; letter-spacing: 1px; }
-    .action-btn:hover { background: #2563eb; transform: translateY(-2px); }
-    .action-btn.secondary { background: transparent; border: 2px solid var(--sb-border); color: var(--sb-text); }
-    .action-btn.secondary:hover { background: rgba(255,255,255,0.05); }
+}
 
-    .setup-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); z-index: 1000; display: flex; justify-content: center; align-items: center; padding: 20px; }
-    .setup-modal { background: var(--sb-card); border: 2px solid var(--sb-primary); border-radius: 12px; padding: 30px; max-width: 600px; width: 100%; text-align: center; }
-    .setup-modal h2 { font-family: var(--font-display); color: #fff; margin-top: 0; }
-    .setup-row { margin-bottom: 20px; text-align: left; }
-    .setup-row label { display: block; font-weight: bold; margin-bottom: 8px; color: var(--sb-accent); }
-    .setup-row select, .setup-row input { width: 100%; padding: 10px; background: #0f172a; color: #fff; border: 1px solid var(--sb-border); border-radius: 6px; }
+.sector-card {
+    background: var(--bg-card-sub);
+    border: 1px solid var(--border-hud);
+    border-radius: 8px;
+    padding: 10px 6px;
+    text-align: center;
+}
 
-    /* Dice Box */
-    #dice-box { width: 100%; height: 200px; background: rgba(0,0,0,0.2); border: 2px inset var(--sb-border); border-radius: 8px; position: relative; overflow: hidden; margin-bottom: 16px; display: none; }
-    #dice-box canvas { width: 100% !important; height: 100% !important; display: block; }
+.sector-num {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #fff;
+}
 
-    /* Automa Card Styling */
-    .automa-card { width: 100%; max-width: 380px; background: #fff; color: #000; border-radius: 12px; padding: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.4); margin: 0 auto; display: none; }
-    .row-icon { width: 68px; min-width: 68px; height: 38px; border-radius: 6px; display: flex; justify-content: center; align-items: center; font-weight: 800; margin-right: 10px; font-size: 0.8em; font-family: var(--font-display); letter-spacing: 0.5px; text-transform: uppercase; }
-    .row-1-icon { background: #22c55e; color: #052e16; border: 1px solid #16a34a; }
-    .row-2-icon { background: #facc15; color: #713f12; border: 1px solid #eab308; }
-    .row-3-icon { background: #ec4899; color: #ffffff; border: 1px solid #db2777; }
-    .ships-container { flex: 1; display: flex; gap: 4px; }
-    .ship-slot { flex: 1; height: 35px; background: #94a3b8; border-radius: 4px; position: relative; }
-    .ship-crossed::after { content: 'X'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #dc2626; font-size: 28px; font-weight: bold; font-family: sans-serif; }
-    .rocket-vp { width: 35px; height: 45px; background: #3b82f6; clip-path: polygon(50% 0%, 100% 25%, 100% 100%, 0% 100%, 0% 25%); color: #fff; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 6px; font-weight: bold; margin-left: 10px; font-size: 1.1em; }
+.sector-hits {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    margin-top: 4px;
+}
 
-    /* Base Attack Log */
-    .attack-log { list-style: none; padding: 0; margin: 0; max-height: 400px; overflow-y: auto; display: none; }
-    .attack-item { background: rgba(220, 38, 38, 0.1); border-left: 4px solid #dc2626; padding: 16px; margin-bottom: 12px; border-radius: 4px; }
-    .attack-cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(50px, 1fr)); gap: 8px; margin-top: 10px; }
-    .attack-card { background: #334155; padding: 12px 0; text-align: center; border-radius: 6px; font-weight: bold; font-size: 1.4em; border: 1px solid #475569; color:#fff; }
+.sector-destroyed {
+    background: rgba(220, 38, 38, 0.25);
+    border-color: #ef4444;
+}
 
-    /* Deck Status */
-    .status-text { font-size: 0.9em; color: #94a3b8; text-align: center; margin-top: 10px; }
-    
-    .help-btn { position: fixed; bottom: 24px; right: 24px; width: 50px; height: 50px; background: var(--sb-primary); color: #fff; border: 2px solid #60a5fa; border-radius: 50%; font-family: var(--font-display); font-size: 1.4em; font-weight: 700; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.5); z-index: 500; display: flex; align-items: center; justify-content: center; transition: transform 0.2s; }
-    .help-btn:hover { transform: scale(1.1); }
+.sector-destroyed .sector-num {
+    color: #ef4444;
+    text-decoration: line-through;
+}
 
-    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 2000; justify-content: center; align-items: flex-start; padding: 20px; overflow-y: auto; display: none; }
-    .modal-box { background: var(--sb-bg); border: 2px solid var(--sb-primary); border-radius: 12px; padding: 28px; max-width: 640px; width: 100%; margin: auto; position: relative; }
-    .modal-close { position: absolute; top: 14px; right: 14px; background: none; border: none; font-size: 1.4em; cursor: pointer; color: #fff; }
+/* Attack Log */
+.attack-log {
+    list-style: none;
+    max-height: 280px;
+    overflow-y: auto;
+}
 
-    
+.attack-item {
+    background: rgba(220, 38, 38, 0.1);
+    border-left: 4px solid #ef4444;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    border-radius: 6px;
+}
 
-    footer.credits { text-align: center; margin-top: 40px; padding: 20px; font-size: 0.9em; color: #94a3b8; border-top: 1px solid var(--sb-border); }
-    footer.credits img { max-width: 120px; border-radius: 8px; margin-bottom: 10px; }
-    footer.credits a { color: var(--sb-primary); text-decoration: none; font-weight: bold; }
+.attack-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
+    gap: 6px;
+    margin-top: 8px;
+}
 
-        
-.dice-result-text { font-size: 1.5em; text-align: center; color: #e2e8f0; font-family: var(--font-display); margin: 20px 0; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; border: 1px dashed var(--sb-border); font-weight: bold; word-break: break-word; }
-        .sb-select { width: 100%; max-width: 100%; padding: 10px; border-radius: 6px; background: #1e293b; color: #fff; border: 1px solid var(--sb-border); font-size: 1em; margin-bottom: 20px; box-sizing: border-box; }
+.attack-card {
+    background: #0f172a;
+    padding: 8px 0;
+    text-align: center;
+    border-radius: 6px;
+    font-weight: 800;
+    font-size: 1.2rem;
+    border: 1px solid #334155;
+    color: #fff;
+    font-family: var(--font-display);
+}
+
+/* Tactical Event Audit Log */
+.game-log-panel {
+    background: rgba(6, 9, 15, 0.5);
+    border: 1px solid var(--border-hud);
+    border-radius: 10px;
+    padding: 12px 14px;
+    max-height: 220px;
+    overflow-y: auto;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+}
+
+.log-entry {
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.log-entry:last-child {
+    border-bottom: none;
+}
+
+.log-time {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    font-family: monospace;
+}
+
+/* --- Setup Modal / Screen --- */
+.setup-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(6, 9, 15, 0.92);
+    backdrop-filter: blur(8px);
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.setup-modal {
+    background: var(--bg-card);
+    border: 1px solid var(--neon-cyan);
+    box-shadow: 0 0 32px rgba(56, 189, 248, 0.25);
+    border-radius: var(--radius);
+    padding: 28px;
+    max-width: 640px;
+    width: 100%;
+    position: relative;
+}
+
+.setup-title {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #fff;
+    text-align: center;
+    margin-bottom: 20px;
+    letter-spacing: 1px;
+    text-shadow: 0 0 12px var(--neon-cyan-glow);
+}
+
+.setup-row {
+    margin-bottom: 18px;
+}
+
+.setup-label {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--neon-cyan);
+    margin-bottom: 8px;
+    letter-spacing: 0.5px;
+}
+
+.setup-select {
+    width: 100%;
+    padding: 12px 14px;
+    background: #06090f;
+    color: #fff;
+    border: 1px solid var(--border-hud);
+    border-radius: 8px;
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.setup-select:focus {
+    border-color: var(--neon-cyan);
+    outline: none;
+    box-shadow: 0 0 10px var(--neon-cyan-glow);
+}
+
+/* Collapsible Physical Setup */
+.phys-setup-details {
+    background: rgba(56, 189, 248, 0.08);
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 20px;
+    font-size: 0.88rem;
+    line-height: 1.6;
+    color: var(--text-dim);
+}
+
+.phys-setup-details summary {
+    font-family: var(--font-display);
+    font-weight: 700;
+    color: var(--neon-cyan);
+    cursor: pointer;
+    outline: none;
+    user-select: none;
+}
+
+.phys-setup-content {
+    margin-top: 10px;
+    max-height: 220px;
+    overflow-y: auto;
+    padding-right: 6px;
+}
+
+/* --- Rules Modal --- */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(6, 9, 15, 0.88);
+    backdrop-filter: blur(6px);
+    z-index: 2000;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 20px;
+    overflow-y: auto;
+    display: none;
+}
+
+.modal-box {
+    background: var(--bg-card);
+    border: 1px solid var(--neon-cyan);
+    border-radius: var(--radius);
+    padding: 28px;
+    max-width: 680px;
+    width: 100%;
+    margin: 40px auto;
+    position: relative;
+    box-shadow: 0 0 32px rgba(56, 189, 248, 0.3);
+}
+
+.modal-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--text-dim);
+    transition: color 0.2s;
+}
+
+.modal-close:hover {
+    color: #fff;
+}
+
+.rule-details {
+    background: var(--bg-card-sub);
+    border: 1px solid var(--border-hud);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 12px;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--text-dim);
+}
+
+.rule-details summary {
+    font-family: var(--font-display);
+    font-weight: 700;
+    color: var(--neon-cyan);
+    cursor: pointer;
+}
+
+.rule-details[open] summary {
+    margin-bottom: 10px;
+    border-bottom: 1px solid var(--border-hud);
+    padding-bottom: 6px;
+}
+
+/* Floating Help Button */
+.help-btn {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 52px;
+    height: 52px;
+    background: var(--bg-card);
+    color: var(--neon-cyan);
+    border: 2px solid var(--neon-cyan);
+    border-radius: 50%;
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6), 0 0 16px var(--neon-cyan-glow);
+    z-index: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.help-btn:hover {
+    transform: scale(1.1);
+    background: var(--neon-cyan);
+    color: #06090f;
+}
+
+/* --- Footer --- */
+footer.credits {
+    text-align: center;
+    margin-top: 40px;
+    padding: 30px 20px;
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    border-top: 1px solid var(--border-hud);
+    max-width: 1080px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+footer.credits a {
+    color: var(--neon-cyan);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
 </style>
-    <script src="../assets/logger.js"></script>
 </head>
 
-    
-    
 <body>
 
-<div class="bot-header">
-    <button class="lang-toggle" onclick="toggleLanguage()">EN / PT</button>
-    <h1 data-i18n="title">Space Base Bot</h1>
-    <p data-i18n="subtitle">Automa e Ataque à Base (SoloPlay)</p>
+<!-- Fixed Top Navigation -->
+<nav class="top-nav">
+    <a class="nav-brand" href="../index.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
+        <span>Board Bots</span>
+    </a>
+    <div class="nav-actions">
+        <button class="nav-btn" onclick="openNewGameModal()">
+            <span>🔄</span> <span data-i18n="newGameShort">Novo</span>
+        </button>
+        <button class="nav-btn" onclick="document.getElementById('rulesModal').style.display='flex'">
+            <span>?</span> <span data-i18n="rulesTitleShort">Ajuda</span>
+        </button>
+        <button class="lang-btn" onclick="toggleLanguage()">PT / EN</button>
+    </div>
+</nav>
+
+<!-- Hero Banner -->
+<div class="hero-wrapper">
+    <div class="hero">
+        <img src="../assets/art/spacebase.webp" alt="Space Base">
+        <div class="hero-content">
+            <h1 class="hero-title">
+                <span data-i18n="title">Space Base Bot</span>
+            </h1>
+            <div class="hero-subtitle" data-i18n="subtitle">Automa e Ataque à Base (SoloPlay)</div>
+        </div>
+    </div>
 </div>
 
-<!-- Setup Modal -->
+<!-- Setup Modal (Screen 1) -->
 <div class="setup-overlay" id="setupOverlay">
     <div class="setup-modal">
-        <h2 data-i18n="setupTitle">Configuração do Jogo</h2>
+        <h2 class="setup-title" data-i18n="setupTitle">Configuração do Jogo</h2>
         
-        <div style="background:rgba(59,130,246,0.1); padding:14px 16px; border-radius:8px; border-left:4px solid #3b82f6; margin-bottom:18px; font-size:0.85em; text-align:left; color:#cbd5e1; line-height:1.6; max-height:240px; overflow-y:auto;">
-            <strong id="physSetupTitleText" style="color:#60a5fa; display:block; margin-bottom:8px; font-size:1.05em;">🛸 Setup Físico:</strong>
-            <div id="physSetupDescText"></div>
-        </div>
+        <details class="phys-setup-details" open>
+            <summary id="physSetupTitleText">🛸 Setup Físico do Jogo</summary>
+            <div class="phys-setup-content" id="physSetupDescText"></div>
+        </details>
         
         <div class="setup-row">
-            <label data-i18n="gameMode">Modo de Jogo</label>
-            <select id="gameMode" onchange="updateSetupUI()">
-                <option value="joanna" data-i18n="modeJoanna">Automa (Joanna/Devin/Clarie)</option>
+            <label class="setup-label" data-i18n="gameMode">Modo de Jogo</label>
+            <select class="setup-select" id="gameMode" onchange="updateSetupUI()">
+                <option value="joanna" data-i18n="modeJoanna">Automa Oficial (Joanna/Devin/Clarie)</option>
                 <option value="base_attack" data-i18n="modeBaseAttack">Ataque à Base (SoloPlay)</option>
             </select>
         </div>
 
         <div class="setup-row" id="joannaDiffRow">
-            <label data-i18n="difficulty">Dificuldade (Automa)</label>
-            <select id="difficulty">
+            <label class="setup-label" data-i18n="difficulty">Dificuldade (Automa)</label>
+            <select class="setup-select" id="difficulty">
                 <option value="easy" data-i18n="diffEasy">Joanna (Fácil)</option>
                 <option value="medium" data-i18n="diffMedium">Devin (Médio)</option>
                 <option value="hard" data-i18n="diffHard">Clarie (Difícil)</option>
@@ -143,232 +1002,244 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
         </div>
 
         <div class="setup-row">
-            <label data-i18n="diceMode">Rolagem de Dados</label>
-            <select id="diceMode">
+            <label class="setup-label" data-i18n="diceMode">Rolagem de Dados</label>
+            <select class="setup-select" id="diceMode">
                 <option value="virtual" data-i18n="diceVirtual">Dados Virtuais 3D</option>
                 <option value="physical" data-i18n="dicePhysical">Dados Físicos (Manual)</option>
             </select>
         </div>
 
-        <button class="action-btn" onclick="startGame()" data-i18n="startBtn">Iniciar Partida</button>
+        <button class="btn-command" onclick="startGame()" style="margin-top: 10px;">
+            <span>🚀</span> <span data-i18n="startBtn">Iniciar Partida</span>
+        </button>
     </div>
 </div>
 
-<div class="board-container" id="mainContainer" style="display:none;">
-    <!-- Controls Panel -->
-    <div class="panel">
-        <h2 data-i18n="turnControl">Controle do Turno</h2>
+<!-- Main Game View (Screen 2) -->
+<main class="app-container">
+    <div class="board-grid" id="mainContainer" style="display:none;">
         
-        <!-- Virtual Dice Box -->
-        <div id="dice-box"></div>
-        
-        <!-- Virtual Dice Results -->
-        <div id="diceResultText" class="dice-result-text">🎲 -- | --</div>
-        
-        <style>
-            .sb-die-btn {
-                flex: 1; min-width: 40px; padding: 10px 0; font-family: var(--font-display); font-size: 1.1em; font-weight: 700;
-                background: transparent; color: var(--sb-text); border: 1px solid var(--sb-border); border-radius: 6px; cursor: pointer;
-            }
-            .sb-die-btn:active { transform: scale(0.95); }
-            .sb-die-btn.active-die1 { background: #3b82f6; border-color: #3b82f6; color: white; }
-            .sb-die-btn.active-die2 { background: #10b981; border-color: #10b981; color: white; }
-            .sb-dice-row { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; justify-content: center; }
-        </style>
-        <div id="manualDiceArea" style="display:none; background:rgba(255,255,255,0.05); border:1px solid var(--sb-border); border-radius:8px; padding:14px; margin-bottom:16px;">
-            <p style="font-size:0.85em; color:#94a3b8; margin:0 0 10px;" data-i18n="manualDicePrompt">Dados físicos: informe o resultado dos dois dados:</p>
-            
-            <label style="font-size:0.75em; color:#94a3b8; display:block; margin-bottom:4px;" data-i18n="die1Label">Dado 1</label>
-            <div class="sb-dice-row" id="die1Buttons">
-                <button class="sb-die-btn active-die1" onclick="setManualDie(1, 1)">1</button>
-                <button class="sb-die-btn" onclick="setManualDie(1, 2)">2</button>
-                <button class="sb-die-btn" onclick="setManualDie(1, 3)">3</button>
-                <button class="sb-die-btn" onclick="setManualDie(1, 4)">4</button>
-                <button class="sb-die-btn" onclick="setManualDie(1, 5)">5</button>
-                <button class="sb-die-btn" onclick="setManualDie(1, 6)">6</button>
+        <!-- Left Column: Command & Action Sidebar -->
+        <div class="hud-panel">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <span>🎮</span> <span data-i18n="turnControl">Controle do Turno</span>
+                </div>
             </div>
-            
-            <label style="font-size:0.75em; color:#94a3b8; display:block; margin-bottom:4px;" data-i18n="die2Label">Dado 2</label>
-            <div class="sb-dice-row" id="die2Buttons">
-                <button class="sb-die-btn active-die2" onclick="setManualDie(2, 1)">1</button>
-                <button class="sb-die-btn" onclick="setManualDie(2, 2)">2</button>
-                <button class="sb-die-btn" onclick="setManualDie(2, 3)">3</button>
-                <button class="sb-die-btn" onclick="setManualDie(2, 4)">4</button>
-                <button class="sb-die-btn" onclick="setManualDie(2, 5)">5</button>
-                <button class="sb-die-btn" onclick="setManualDie(2, 6)">6</button>
-            </div>
-            
-            <div style="text-align:center; margin-top:8px;">
-                <label style="font-size:0.75em; color:#94a3b8; display:block; margin-bottom:4px;" data-i18n="sumLabel">Soma</label>
-                <span id="manualDiceSum" style="font-family:var(--font-display);font-size:1.6em;font-weight:bold;color:#e2e8f0;">2</span>
-            </div>
-            
-        </div>
 
-        <!-- Joanna Controls -->
-        <div id="joannaControls">
-            <button class="action-btn" onclick="nextJoannaTurn()" id="btnNextTurn" data-i18n="nextTurn">Próximo Turno (Revelar Carta)</button>
-            <div class="status-text" id="joannaDeckStatus">Cartas no Deck: 6 | Descarte: 0</div>
+            <!-- Virtual Dice Box -->
+            <div id="dice-box"></div>
+            <div id="diceResultText" class="dice-result-badge">🎲 -- | --</div>
 
-            <!-- Automa Score & Active Track Tracker -->
-            <div id="automaTracksPanel" style="margin-top:20px; background:rgba(255,255,255,0.05); border:1px solid var(--sb-border); border-radius:8px; padding:14px;">
-                <div style="font-size:0.85em; font-weight:700; color:var(--sb-accent); margin-bottom:10px;" data-i18n="automaTracksTitle">Pontuação do Automa (VP)</div>
-
-                <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
-                    <button class="action-btn" style="width:36px; min-width:36px; padding:0 !important; font-size:1.2em;" onclick="changeAutomaVP(-1)">−</button>
-                    <input type="number" id="automaVPVal" value="0" min="0" onchange="setAutomaVP(this.value)" style="flex:1; min-width:0; background:rgba(0,0,0,0.3); border:1px solid var(--sb-border); border-radius:6px; color:#e2e8f0; font-size:1.5em; font-weight:bold; font-family:var(--font-display); text-align:center; padding:4px 0;">
-                    <button class="action-btn" style="width:36px; min-width:36px; padding:0 !important; font-size:1.2em;" onclick="changeAutomaVP(1)">+</button>
+            <!-- Manual Physical Dice Area -->
+            <div id="manualDiceArea" class="manual-dice-box">
+                <p style="font-size:0.8rem; color:var(--text-dim); margin-bottom:8px;" data-i18n="manualDicePrompt">Informe o resultado dos dois dados físicos:</p>
+                
+                <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:4px;" data-i18n="die1Label">Dado 1</label>
+                <div class="sb-dice-row" id="die1Buttons">
+                    <button class="sb-die-btn active-die1" onclick="setManualDie(1, 1)">1</button>
+                    <button class="sb-die-btn" onclick="setManualDie(1, 2)">2</button>
+                    <button class="sb-die-btn" onclick="setManualDie(1, 3)">3</button>
+                    <button class="sb-die-btn" onclick="setManualDie(1, 4)">4</button>
+                    <button class="sb-die-btn" onclick="setManualDie(1, 5)">5</button>
+                    <button class="sb-die-btn" onclick="setManualDie(1, 6)">6</button>
                 </div>
                 
-                <button class="action-btn secondary" id="btnScoreCardVP" style="font-size:0.85em; padding:8px 12px; margin-bottom:12px; width:100%; border-color:var(--sb-primary); color:#60a5fa;" onclick="scoreCurrentCardVP()" data-i18n="scoreCardVPBtn">+ Pontuar VP da Carta Atual</button>
-
-                <div id="automaActiveRow" style="padding:10px; background:rgba(59,130,246,0.18); border-radius:6px; font-size:0.85em; font-weight:bold; color:#60a5fa; text-align:center; line-height:1.4;"></div>
-            </div>
-            
-            <div style="margin-top: 15px; background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px;">
-                <h3 style="font-size:0.85em; margin-top:0; color:var(--sb-accent);" data-i18n="playerVpTracker">Seus Pontos (VP Jogador)</h3>
-                <div style="display:flex; align-items:center; gap:10px; margin-top:6px;">
-                    <button class="action-btn" style="width:35px; min-width:35px; padding:0 !important;" onclick="changeVP(-1)">-</button>
-                    <input type="number" id="vpCounter" value="0" style="flex:1; min-width:0; background:transparent; border:none; color:var(--sb-accent); font-size:1.3em; font-weight:bold; font-family:var(--font-display); text-align:center;">
-                    <button class="action-btn" style="width:35px; min-width:35px; padding:0 !important;" onclick="changeVP(1)">+</button>
+                <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:4px;" data-i18n="die2Label">Dado 2</label>
+                <div class="sb-dice-row" id="die2Buttons">
+                    <button class="sb-die-btn active-die2" onclick="setManualDie(2, 1)">1</button>
+                    <button class="sb-die-btn" onclick="setManualDie(2, 2)">2</button>
+                    <button class="sb-die-btn" onclick="setManualDie(2, 3)">3</button>
+                    <button class="sb-die-btn" onclick="setManualDie(2, 4)">4</button>
+                    <button class="sb-die-btn" onclick="setManualDie(2, 5)">5</button>
+                    <button class="sb-die-btn" onclick="setManualDie(2, 6)">6</button>
+                </div>
+                
+                <div style="text-align:center; margin-top:10px;">
+                    <span style="font-size:0.8rem; color:var(--text-dim);"><span data-i18n="sumLabel">Soma</span>: </span>
+                    <strong id="manualDiceSum" style="font-family:var(--font-display); font-size:1.4rem; color:var(--neon-yellow);">2</strong>
                 </div>
             </div>
+
+            <!-- Automa Mode Controls -->
+            <div id="joannaControls">
+                <button class="btn-command" onclick="nextJoannaTurn()" id="btnNextTurn" style="margin-bottom: 12px;">
+                    <span>⚡</span> <span data-i18n="nextTurn">Próximo Turno (Revelar Carta)</span>
+                </button>
+                <div style="font-size:0.85rem; color:var(--text-muted); text-align:center; margin-bottom:16px;" id="joannaDeckStatus">Cartas no Deck: 6 | Descarte: 0</div>
+
+                <!-- Automa Score Tracker -->
+                <div class="score-box">
+                    <div class="score-title" data-i18n="automaTracksTitle">Pontuação do Automa (VP)</div>
+                    <div class="score-counter-row">
+                        <button class="btn-counter" onclick="changeAutomaVP(-1)">−</button>
+                        <input type="number" class="score-input" id="automaVPVal" value="0" min="0" onchange="setAutomaVP(this.value)">
+                        <button class="btn-counter" onclick="changeAutomaVP(1)">+</button>
+                    </div>
+                    
+                    <button class="btn-secondary" id="btnScoreCardVP" style="margin-bottom:10px; border-color:var(--neon-cyan); color:var(--neon-cyan);" onclick="scoreCurrentCardVP()" data-i18n="scoreCardVPBtn">
+                        + Pontuar VP da Carta Atual
+                    </button>
+
+                    <div id="automaActiveRow" class="active-row-indicator"></div>
+                </div>
+
+                <!-- Player Score Tracker -->
+                <div class="score-box">
+                    <div class="score-title" style="color:var(--neon-cyan);" data-i18n="playerVpTracker">Seus Pontos (VP Jogador)</div>
+                    <div class="score-counter-row">
+                        <button class="btn-counter" onclick="changeVP(-1)">−</button>
+                        <input type="number" class="score-input" id="vpCounter" value="0" min="0" onchange="setPlayerVP(this.value)">
+                        <button class="btn-counter" onclick="changeVP(1)">+</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Base Attack Controls -->
+            <div id="baseAttackControls" style="display:none;">
+                <p style="font-size: 0.9rem; margin-bottom: 12px; color:var(--text-dim);" data-i18n="baseAttackPrompt">O que você comprou no seu turno?</p>
+                <button class="btn-secondary" style="margin-bottom:8px;" onclick="baseAttackTurn(0)" data-i18n="baColony">Comprei Colony Ship (Ataque: 0)</button>
+                <button class="btn-secondary" style="margin-bottom:8px;" onclick="baseAttackTurn(2)" data-i18n="baShip">Comprei Ship (Ataque: 2)</button>
+                
+                <p style="font-size: 0.8rem; margin: 12px 0 8px; color:var(--text-muted);" data-i18n="baDidNotBuy">Não comprei nada (Ataque baseado na sua renda):</p>
+                <div style="display:grid; grid-template-columns: repeat(5, 1fr); gap:4px; margin-bottom:14px;">
+                    <button class="btn-secondary" style="padding:8px 0; font-size:0.8rem;" onclick="baseAttackTurn(1)">≤10¢</button>
+                    <button class="btn-secondary" style="padding:8px 0; font-size:0.8rem;" onclick="baseAttackTurn(2)">11-20¢</button>
+                    <button class="btn-secondary" style="padding:8px 0; font-size:0.8rem;" onclick="baseAttackTurn(3)">21-30¢</button>
+                    <button class="btn-secondary" style="padding:8px 0; font-size:0.8rem;" onclick="baseAttackTurn(4)">31-40¢</button>
+                    <button class="btn-secondary" style="padding:8px 0; font-size:0.8rem;" onclick="baseAttackTurn(5)">41+¢</button>
+                </div>
+                
+                <div style="font-size:0.85rem; color:var(--text-muted); text-align:center; margin-bottom:12px;" id="baDeckStatus">Baralho de Ataque: 48/48</div>
+                <button class="btn-secondary" style="border-color:#ef4444; color:#ef4444;" onclick="shuffleAttackDeck()" data-i18n="shuffleDeckBtn">Embaralhar Descarte no Deck</button>
+            </div>
         </div>
 
-        <!-- Base Attack Controls -->
-        <div id="baseAttackControls" style="display:none;">
-            <p style="font-size: 0.95em; margin-bottom: 15px; color:#cbd5e1;" data-i18n="baseAttackPrompt">O que você comprou no seu turno?</p>
-            <button class="action-btn secondary" style="margin-bottom:10px;" onclick="baseAttackTurn(0)" data-i18n="baColony">Comprei Colony Ship (Ataque: 0)</button>
-            <button class="action-btn secondary" style="margin-bottom:10px;" onclick="baseAttackTurn(2)" data-i18n="baShip">Comprei Ship (Ataque: 2)</button>
-            
-            <p style="font-size: 0.85em; margin-bottom: 8px; margin-top:15px; color:#94a3b8;" data-i18n="baDidNotBuy">Não comprei nada (Ataque baseado na sua renda):</p>
-            <div style="display:flex; gap:6px; flex-wrap:wrap;">
-                <button class="action-btn secondary" style="padding:12px; font-size:0.9em; flex:1;" onclick="baseAttackTurn(1)">≤10¢</button>
-                <button class="action-btn secondary" style="padding:12px; font-size:0.9em; flex:1;" onclick="baseAttackTurn(2)">11-20¢</button>
-                <button class="action-btn secondary" style="padding:12px; font-size:0.9em; flex:1;" onclick="baseAttackTurn(3)">21-30¢</button>
-                <button class="action-btn secondary" style="padding:12px; font-size:0.9em; flex:1;" onclick="baseAttackTurn(4)">31-40¢</button>
-                <button class="action-btn secondary" style="padding:12px; font-size:0.9em; flex:1;" onclick="baseAttackTurn(5)">41+¢</button>
+        <!-- Right Column: Tactical Screen -->
+        <div class="hud-panel">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <span>📡</span> <span id="mainDisplayTitle" data-i18n="botArea">Área Tática do Bot</span>
+                </div>
             </div>
-            
-            <div class="status-text" id="baDeckStatus" style="margin-top:25px;">Baralho de Ataque: 48/48</div>
-            <button class="action-btn secondary" style="margin-top:15px; border-color:#dc2626; color:#dc2626;" onclick="shuffleAttackDeck()" data-i18n="shuffleDeckBtn">Embaralhar Descarte no Deck</button>
+
+            <!-- Automa Card Display -->
+            <div class="automa-card-wrapper" id="joannaCardDisplay">
+                <div class="automa-card-header">
+                    <div class="automa-commander-name" id="cardDiffName">JOANNA</div>
+                    <div class="automa-thresholds-badge" id="vpThresholds">🌍 15 VP | 🪙 25 VP</div>
+                </div>
+                
+                <!-- Row 1: Neon Green / Tier 3 -->
+                <div class="card-row" id="cardRow1">
+                    <div class="row-icon row-1-icon" data-i18n="rowLabel1">Linha 1</div>
+                    <div class="ships-container" id="row1Ships">
+                        <div class="ship-slot"></div><div class="ship-slot"></div><div class="ship-slot"></div><div class="ship-slot ship-crossed"></div><div class="ship-slot"></div><div class="ship-slot"></div>
+                    </div>
+                    <div class="rocket-vp" id="row1VP">1</div>
+                </div>
+                
+                <!-- Row 2: Neon Yellow / Tier 2 -->
+                <div class="card-row" id="cardRow2">
+                    <div class="row-icon row-2-icon" data-i18n="rowLabel2">Linha 2</div>
+                    <div class="ships-container" id="row2Ships">
+                        <div class="ship-slot"></div><div class="ship-slot"></div><div class="ship-slot ship-crossed"></div><div class="ship-slot"></div><div class="ship-slot"></div><div class="ship-slot"></div>
+                    </div>
+                    <div class="rocket-vp" id="row2VP">1</div>
+                </div>
+                
+                <!-- Row 3: Neon Pink / Tier 1 -->
+                <div class="card-row" id="cardRow3">
+                    <div class="row-icon row-3-icon" data-i18n="rowLabel3">Linha 3</div>
+                    <div class="ships-container" id="row3Ships">
+                        <div class="ship-slot ship-crossed"></div><div class="ship-slot"></div><div class="ship-slot"></div><div class="ship-slot"></div><div class="ship-slot"></div><div class="ship-slot"></div>
+                    </div>
+                    <div class="rocket-vp" id="row3VP">1</div>
+                </div>
+
+                <div style="font-size:0.85rem; color:var(--text-dim); margin-top:14px; text-align:center; font-weight:500;" data-i18n="cardInstruction">
+                    Descarte a nave do mercado central indicada pelo 'X' na linha ativa (Linha 1 = Nível 3, Linha 2 = Nível 2, Linha 3 = Nível 1) e pontue os VPs no foguete azul.
+                </div>
+            </div>
+
+            <!-- Base Attack Display -->
+            <div id="attackLogContainer" style="display:none;">
+                <div style="font-family:var(--font-display); font-size:0.85rem; color:var(--neon-cyan); margin-bottom:8px; text-transform:uppercase;">Status dos Setores da Base (1–12)</div>
+                <div class="sector-grid" id="sectorDamageGrid">
+                    <!-- 12 sectors populated dynamically -->
+                </div>
+
+                <div style="font-family:var(--font-display); font-size:0.85rem; color:var(--neon-amber); margin:14px 0 8px; text-transform:uppercase;">Histórico de Ataques dos Rivais</div>
+                <div id="emptyLogState" style="text-align:center; color:var(--text-muted); padding:30px 0;" data-i18n="emptyLog">
+                    Aguardando a resolução do seu turno...
+                </div>
+                <ul class="attack-log" id="attackLogDisplay"></ul>
+            </div>
+
+            <!-- Chronological Game Event Log -->
+            <div style="margin-top: 20px;">
+                <div style="font-family:var(--font-display); font-size:0.85rem; color:var(--text-muted); margin-bottom:8px; text-transform:uppercase; display:flex; justify-content:space-between; align-items:center;">
+                    <span>📜 <span data-i18n="actionLogTitle">Registro de Ações</span></span>
+                    <button onclick="clearGameLog()" style="background:none; border:none; color:var(--text-muted); font-size:0.75rem; cursor:pointer;" data-i18n="clearLog">Limpar</button>
+                </div>
+                <div class="game-log-panel" id="gameActionLog">
+                    <div class="log-entry"><span class="log-time">--:--</span><span>Pronto para iniciar a missão.</span></div>
+                </div>
+            </div>
+
         </div>
-        
-        <button class="action-btn secondary" style="margin-top:30px;" onclick="localStorage.removeItem('space_base_bot_v1'); location.reload();" data-i18n="newGame">🔄 Nova Partida</button>
     </div>
+</main>
 
-    <!-- Main Display Panel -->
-    <div class="panel">
-        <h2 id="mainDisplayTitle" data-i18n="botArea">Área do Bot</h2>
+<!-- Floating Rules Button -->
+<button class="help-btn" onclick="document.getElementById('rulesModal').style.display='flex'">?</button>
+
+<!-- Rules & Help Modal -->
+<div class="modal-overlay" id="rulesModal" onclick="if(event.target===this)this.style.display='none'">
+    <div class="modal-box">
+        <button class="modal-close" onclick="document.getElementById('rulesModal').style.display='none'">✕</button>
+        <h2 style="font-family:var(--font-display); color:#fff; margin-bottom:20px; font-size:1.35rem;" data-i18n="rulesTitle">Regras & Ajuda</h2>
         
-        <!-- Joanna Card Display -->
-        <div class="automa-card" id="joannaCardDisplay">
-            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #ccc; padding-bottom:10px; margin-bottom:15px;">
-                <strong id="cardDiffName" style="font-size:1.3em; font-family:var(--font-display); text-transform:uppercase;">JOANNA</strong>
-                <span id="vpThresholds" style="font-size:0.85em; color:#666; font-weight:bold;">15 VP | 25 VP</span>
-            </div>
-            
-            <div class="card-row" id="cardRow1">
-                <div class="row-icon row-1-icon" data-i18n="rowLabel1">Linha 1</div>
-                <div class="ships-container" id="row1Ships">
-                    <div class="ship-slot"></div><div class="ship-slot"></div><div class="ship-slot"></div><div class="ship-slot ship-crossed"></div><div class="ship-slot"></div><div class="ship-slot"></div>
-                </div>
-                <div class="rocket-vp" id="row1VP">1</div>
-            </div>
-            
-            <div class="card-row" id="cardRow2">
-                <div class="row-icon row-2-icon" data-i18n="rowLabel2">Linha 2</div>
-                <div class="ships-container" id="row2Ships">
-                    <div class="ship-slot"></div><div class="ship-slot"></div><div class="ship-slot ship-crossed"></div><div class="ship-slot"></div><div class="ship-slot"></div><div class="ship-slot"></div>
-                </div>
-                <div class="rocket-vp" id="row2VP">1</div>
-            </div>
-            
-            <div class="card-row" id="cardRow3">
-                <div class="row-icon row-3-icon" data-i18n="rowLabel3">Linha 3</div>
-                <div class="ships-container" id="row3Ships">
-                    <div class="ship-slot ship-crossed"></div><div class="ship-slot"></div><div class="ship-slot"></div><div class="ship-slot"></div><div class="ship-slot"></div><div class="ship-slot"></div>
-                </div>
-                <div class="rocket-vp" id="row3VP">1</div>
-            </div>
-            <div style="font-size:0.85em; color:#444; margin-top:15px; text-align:center; font-weight:500;" data-i18n="cardInstruction">
-                Descarte a nave do mercado central na posição marcada com 'X' na linha ativa e pontue os VPs no foguete azul.
-            </div>
-        </div>
-
-        <!-- Base Attack Log Display -->
-        <div id="attackLogContainer" style="display:none;">
-            <div id="emptyLogState" style="text-align:center; color:#64748b; padding:40px 0;" data-i18n="emptyLog">
-                Aguardando a resolução do seu turno...
-            </div>
-            <ul class="attack-log" id="attackLogDisplay">
-                <!-- Attack items will be appended here -->
+        <details class="rule-details" open>
+            <summary data-i18n="ruleAutomaTitle">Modo Automa (Joanna, Devin, Clarie)</summary>
+            <ul style="padding-left:18px; margin-top:8px;">
+                <li style="margin-bottom:8px;" data-i18n="ruleAutoma1"><strong>Seu Turno:</strong> Jogue normalmente. O Automa só ganha VP no seu turno se você ativar uma recompensa vermelha que beneficia "todos os outros jogadores" (ele ganha os VPs indicados).</li>
+                <li style="margin-bottom:8px;" data-i18n="ruleAutoma2"><strong>Turno do Automa:</strong> Clique em "Próximo Turno". O bot rolará os dados e revelará a carta do turno. Os dados rolam para você ativar suas recompensas vermelhas.</li>
+                <li style="margin-bottom:8px;" data-i18n="ruleAutoma3"><strong>Determinação da Linha Ativa:</strong> A carta possui 3 linhas numeradas de cima para baixo (Linha 1 no topo, Linha 2 no meio, Linha 3 embaixo). O jogo começa na <strong>Linha 1 (Topo)</strong> e, conforme o Automa acumula VP, a linha ativa desce:<br><ul style="margin-top:6px; color:#94a3b8;"><li>Se os VPs do Automa forem <strong>menores que o Limite de Renda</strong> (ex: &lt; 15 VP para Joanna), a linha ativa é a <strong>Linha 1 (Topo — Naves Nível 3)</strong>.</li><li>Se os VPs atingirem o <strong>Limite de Renda</strong> mas forem menores que o Limite de Moedas (ex: 15 a 24 VP para Joanna), a linha ativa desce para a <strong>Linha 2 (Meio — Naves Nível 2)</strong>.</li><li>Se os VPs atingirem o <strong>Limite de Moedas</strong> (ex: 25+ VP para Joanna), a linha ativa desce para a <strong>Linha 3 (Baixo — Naves Nível 1)</strong>.</li></ul></li>
+                <li style="margin-bottom:8px;" data-i18n="ruleAutoma4"><strong>Ação da Linha:</strong> Na linha ativada, observe qual espaço (1 a 6) tem um 'X'. <strong>Descarte</strong> a carta de nave daquele espaço no mercado central (Linha 1 = Nível 3, Linha 2 = Nível 2, Linha 3 = Nível 1). Em seguida, o Automa ganha a quantidade de VPs no foguete azul daquela linha.</li>
+                <li data-i18n="ruleAutoma5"><strong>Deck Exclusivo e Ciclo:</strong> Cada oponente (Joanna, Devin ou Clarie) possui seu baralho próprio de 6 cartas. Quando sobrar apenas 1 carta no deck, ela será ignorada, as 6 cartas são reembaralhadas e 1 carta é descartada para iniciar um novo ciclo.</li>
             </ul>
-        </div>
+        </details>
+
+        <details class="rule-details">
+            <summary data-i18n="ruleSoloTitle">Modo SoloPlay (Ataque à Base)</summary>
+            <ul style="padding-left:18px; margin-top:8px;">
+                <li style="margin-bottom:8px;" data-i18n="ruleSolo1">Neste modo você não joga contra um Automa com pontos, mas contra um deck de ataque que destrói suas posições.</li>
+                <li style="margin-bottom:8px;" data-i18n="ruleSolo2">Sempre que você usar uma ação de compra ou implantação, clique no botão correspondente na lateral esquerda. O bot sorteará cartas de ataque.</li>
+                <li style="margin-bottom:8px;" data-i18n="ruleSolo3">Cada carta sacada ataca um setor numérico da sua base. Coloque a carta do baralho de ataque invertida debaixo do setor atacado (ela funcionará como uma recompensa vermelha para você no futuro!).</li>
+                <li style="margin-bottom:8px;" data-i18n="ruleSolo4"><strong>Destruição:</strong> Se um mesmo setor acumular 4 cartas de dano, ele é permanentemente destruído. Retire as 4 cartas de dano e vire-as para cima bloqueando aquele setor. Se você perder 5 setores, você perde o jogo.</li>
+            </ul>
+        </details>
     </div>
 </div>
 
+<!-- Footer -->
 <footer class="credits">
-    <div style="margin-bottom: 10px;">
-        <img src="../assets/art/spacebase.webp" alt="Space Base Box Art">
-    </div>
-    <div style="margin-bottom: 15px;">
+    <div style="margin-bottom: 12px;">
         <p data-i18n="creditsText">Space Base Bot desenvolvido com ❤️ por Thiago Colletes. Automa "Joanna" por <a href="https://boardgamegeek.com/profile/xbigtk13x" target="_blank" rel="noopener">xbigtk13x</a>. Ataque à Base por <a href="https://boardgamegeek.com/profile/GameRulesforOne" target="_blank" rel="noopener">GameRulesforOne</a>.</p>
     </div>
-    <div style="margin-bottom: 15px;">
-        <a class="bmc-inline" href="https://www.buymeacoffee.com/colletes" target="_blank" style="background-color: var(--sb-accent); padding: 10px 15px; border-radius: 8px; color: white; text-decoration: none; font-weight: bold;">☕ Buy me a coffee</a>
+    <div style="margin-bottom: 16px;">
+        <a class="bmc-inline" href="https://www.buymeacoffee.com/colletes" target="_blank" rel="noopener" style="background:var(--neon-amber); color:#000; padding:8px 14px; border-radius:8px; font-weight:700; text-decoration:none; display:inline-flex; align-items:center; gap:6px;">
+            ☕ <span data-i18n="bmcBtn">Me pague um café</span>
+        </a>
     </div>
     <div>
-        <a href="../index.html" style="display: inline-flex; align-items: center; gap: 5px; color: var(--sb-text);" data-i18n="backHome">
+        <a href="../index.html" style="display:inline-flex; align-items:center; gap:6px; color:var(--neon-cyan);" data-i18n="backHome">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9 21v-6h6v6"/></svg>
             Voltar para Home
         </a>
     </div>
 </footer>
-
-<button class="help-btn" onclick="document.getElementById('rulesModal').style.display='flex'">?</button>
-
-<div class="modal-overlay" id="rulesModal" onclick="if(event.target===this)this.style.display='none'">
-    <div class="modal-box" style="max-width: 600px;">
-        <button class="modal-close" onclick="document.getElementById('rulesModal').style.display='none'">✕</button>
-        <h2 data-i18n="rulesTitle">Regras & Ajuda</h2>
-        <div style="font-size:0.92em; line-height:1.6; color:#cbd5e1;">
-            <h3 style="color:var(--sb-accent); border-bottom:1px solid #334155; padding-bottom:4px;" data-i18n="ruleAutomaTitle">Modo Automa (Joanna, Devin, Clarie)</h3>
-            <ul style="padding-left:20px; margin-bottom: 20px;">
-                <li style="margin-bottom:8px;" data-i18n="ruleAutoma1"><strong>Seu Turno:</strong> Jogue normalmente. O Automa só ganha VP no seu turno se você ativar uma recompensa vermelha que beneficia "todos os outros jogadores" (ele ganha os VPs indicados).</li>
-                <li style="margin-bottom:8px;" data-i18n="ruleAutoma2"><strong>Turno do Automa:</strong> Clique em "Próximo Turno". O bot rolará os dados e revelará a carta do turno. Os dados rolam para você ativar suas recompensas vermelhas.</li>
-                <li style="margin-bottom:8px;" data-i18n="ruleAutoma3"><strong>Determinação da Linha Ativa:</strong> A carta mostra 3 linhas: Moedas/Nível 1 (topo), Renda/Nível 2 (meio) e VP/Nível 3 (baixo). Conforme acumula pontos de VP, o Automa sobe pelas linhas:
-                    <ul style="margin-top:6px; color:#94a3b8;">
-                        <li>Se os VPs do Automa forem <strong>menores que o Limite de Renda</strong> (ex: &lt; 15 VP para Joanna), a linha ativa é a <strong>Linha 3 (VP / Nível 3 🏆)</strong>.</li>
-                        <li>Se os VPs atingirem o <strong>Limite de Renda</strong> mas forem menores que o Limite de Moedas (ex: 15 a 24 VP para Joanna), a linha ativa sobe para a <strong>Linha 2 (Renda / Nível 2 🌍)</strong>.</li>
-                        <li>Se os VPs atingirem o <strong>Limite de Moedas</strong> (ex: 25+ VP para Joanna), a linha ativa sobe para a <strong>Linha 1 (Moedas / Nível 1 🪙)</strong>.</li>
-                    </ul>
-                </li>
-                <li style="margin-bottom:8px;" data-i18n="ruleAutoma4"><strong>Ação da Linha:</strong> Na linha ativada, observe qual espaço (1 a 6) tem um 'X'. <strong>Descarte</strong> a carta de nave daquele espaço no mercado central (níveis 1, 2 e 3 correspondem aos ícones). Em seguida, o Automa ganha a quantidade de VPs no foguete azul daquela linha.</li>
-                <li data-i18n="ruleAutoma5"><strong>Deck Exclusivo e Ciclo:</strong> Cada oponente (Joanna, Devin ou Clarie) possui seu baralho próprio de 6 cartas. Quando sobrar apenas 1 carta no deck, ela será ignorada, as 6 cartas são reembaralhadas e 1 carta é descartada para iniciar um novo ciclo.</li>
-            </ul>
-            
-            <h3 style="color:var(--sb-accent); border-bottom:1px solid #334155; padding-bottom:4px;" data-i18n="ruleSoloTitle">Modo SoloPlay (Ataque à Base)</h3>
-            <ul style="padding-left:20px;">
-                <li style="margin-bottom:8px;" data-i18n="ruleSolo1">Neste modo você não joga contra um Automa com pontos, mas contra um deck de ataque que destrói suas posições.</li>
-                <li style="margin-bottom:8px;" data-i18n="ruleSolo2">Sempre que você usar uma ação de compra ou implantação, clique no botão correspondente na lateral esquerda. O bot sorteará cartas de ataque.</li>
-                <li style="margin-bottom:8px;" data-i18n="ruleSolo3">Cada carta sacada ataca um setor numérico da sua base. Coloque a carta do baralho de ataque invertida debaixo do setor atacado (ela funcionará como uma recompensa vermelha para você no futuro!).</li>
-                <li style="margin-bottom:8px;" data-i18n="ruleSolo4"><strong>Destruição:</strong> Se um mesmo setor acumular 4 cartas de dano, ele é permanentemente destruído. Retire as 4 cartas de dano e vire-as para cima bloqueando aquele setor. Se você perder 5 setores, você perde o jogo.</li>
-            </ul>
-        </div>
-    </div>
-</div>
-            
-            <h3 style="color:var(--sb-accent); border-bottom:1px solid #334155; padding-bottom:4px;" data-i18n="ruleSoloTitle">Modo SoloPlay (Ataque à Base)</h3>
-            <ul style="padding-left:20px;">
-                <li style="margin-bottom:8px;" data-i18n="ruleSolo1">Neste modo você não joga contra um Automa com pontos, mas contra um deck de ataque que destrói suas posições.</li>
-                <li style="margin-bottom:8px;" data-i18n="ruleSolo2">Sempre que você usar uma ação de compra ou implantação, clique no botão correspondente na lateral esquerda. O bot sorteará cartas de ataque.</li>
-                <li style="margin-bottom:8px;" data-i18n="ruleSolo3">Cada carta sacada ataca um setor numérico da sua base. Coloque a carta do baralho de ataque invertida debaixo do setor atacado (ela funcionará como uma recompensa vermelha para você no futuro!).</li>
-                <li style="margin-bottom:8px;" data-i18n="ruleSolo4"><strong>Destruição:</strong> Se um mesmo setor acumular 4 cartas de dano, ele é permanentemente destruído. Retire as 4 cartas de dano e vire-as para cima bloqueando aquele setor. Se você perder 5 setores, você perde o jogo.</li>
-            </ul>
-        </div>
-    </div>
-</div>
 
 <script>
     // --- Translations ---
@@ -377,11 +1248,12 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
             pageTitle: "Space Base Bot",
             title: "Space Base Bot",
             subtitle: "Automa e Ataque à Base (SoloPlay)",
+            newGameShort: "Novo",
+            rulesTitleShort: "Ajuda",
             setupTitle: "Configuração do Jogo",
-            physSetupTitle: "Setup Físico (Automa):",
-            physSetupDesc: "Coloque o cubo de pontuação (VP) do Automa no 0. Compre uma carta inicial Nível 1 aleatória para ele. Ele não recebe cartas iniciais de setor. Os jogadores começam com seus tabuleiros normais (cubos no 5🪙, 0🌍, 0🏆) e 1 nave inicial.",
+            physSetupTitle: "🛸 Setup Físico do Jogo",
             gameMode: "Modo de Jogo",
-            modeJoanna: "Automa (Joanna/Devin/Clarie)",
+            modeJoanna: "Automa Oficial (Joanna/Devin/Clarie)",
             modeBaseAttack: "Ataque à Base (SoloPlay)",
             difficulty: "Dificuldade (Automa)",
             diffEasy: "Joanna (Fácil)",
@@ -404,11 +1276,13 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
             baShip: "Comprei Ship (Ataque: 2)",
             baDidNotBuy: "Não comprei nada (Ataque baseado na sua renda):",
             shuffleDeckBtn: "Embaralhar Descarte no Deck",
-            botArea: "Área do Bot",
-            cardInstruction: "Descarte a nave do mercado central indicada pelo 'X' na linha ativa e pontue os VPs no foguete azul.",
+            botArea: "Área Tática do Bot",
+            cardInstruction: "Descarte a nave do mercado central indicada pelo 'X' na linha ativa (Linha 1 = Nível 3, Linha 2 = Nível 2, Linha 3 = Nível 1) e pontue os VPs no foguete azul.",
             emptyLog: "Aguardando a resolução do seu turno...",
             rulesTitle: "Regras & Ajuda",
             newGame: "🔄 Nova Partida",
+            actionLogTitle: "Registro de Ações",
+            clearLog: "Limpar",
             attackMessage: "Oponentes atacam com {n} nave(s) nos setores:",
             ruleAutomaTitle: 'Modo Automa (Joanna, Devin, Clarie)',
             ruleAutoma1: '<strong>Seu Turno:</strong> Jogue normalmente. O Automa só ganha VP no seu turno se você ativar uma recompensa vermelha que beneficia "todos os outros jogadores" (ele ganha os VPs indicados).',
@@ -423,8 +1297,9 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
             ruleSolo4: '<strong>Destruição:</strong> Se um mesmo setor acumular 4 cartas de dano, ele é permanentemente destruído. Retire as 4 cartas de dano e vire-as para cima bloqueando aquele setor. Se você perder 5 setores, você perde o jogo.',
             shuffledLog: '🔄 Deck de Ataque Embaralhado',
             creditsText: 'Space Base Bot desenvolvido com ❤️ por Thiago Colletes. Automa "Joanna" por <a href="https://boardgamegeek.com/profile/xbigtk13x" target="_blank" rel="noopener">xbigtk13x</a>. Ataque à Base por <a href="https://boardgamegeek.com/profile/GameRulesforOne" target="_blank" rel="noopener">GameRulesforOne</a>.',
+            bmcBtn: "Me pague um café",
             backHome: 'Voltar para Home',
-            manualDicePrompt: 'Dados físicos: informe o resultado dos dois dados:',
+            manualDicePrompt: 'Informe o resultado dos dois dados físicos:',
             die1Label: 'Dado 1',
             die2Label: 'Dado 2',
             sumLabel: 'Soma'
@@ -432,10 +1307,11 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
         en: {
             pageTitle: "Space Base Bot",
             title: "Space Base Bot",
-            subtitle: "Automa and Base Attack (SoloPlay)",
+            subtitle: "Automa & Base Attack (SoloPlay)",
+            newGameShort: "New",
+            rulesTitleShort: "Help",
             setupTitle: "Game Setup",
-            physSetupTitle: "Physical Setup (Automa):",
-            physSetupDesc: "Place the Automa's VP score cube on 0. Draw one random Level 1 starting card for it. It does not get sector starting cards. Players start with their normal boards (cubes on 5🪙, 0🌍, 0🏆) and 1 starting ship.",
+            physSetupTitle: "🛸 Physical Game Setup",
             gameMode: "Game Mode",
             modeJoanna: "Official Automa (Joanna/Devin/Clarie)",
             modeBaseAttack: "Base Attack (SoloPlay)",
@@ -460,11 +1336,13 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
             baShip: "Bought Ship (Attack: 2)",
             baDidNotBuy: "Did not buy (Attack based on income):",
             shuffleDeckBtn: "Shuffle Discard into Deck",
-            botArea: "Bot Area",
+            botArea: "Tactical Bot Area",
             cardInstruction: "Discard the ship from the central market at the 'X' slot of the active row (Row 1 = Tier 3, Row 2 = Tier 2, Row 3 = Tier 1) and score the VPs in the blue rocket.",
             emptyLog: "Waiting for your turn resolution...",
             rulesTitle: "Rules & Help",
             newGame: "🔄 New Game",
+            actionLogTitle: "Action Log",
+            clearLog: "Clear",
             attackMessage: "Opponents attack with {n} ship(s) in sectors:",
             ruleAutomaTitle: 'Automa Mode (Joanna, Devin, Clarie)',
             ruleAutoma1: '<strong>Your Turn:</strong> Play normally. The Automa only scores VP on your turn if you trigger a red reward that benefits "all other players" (it gains the indicated VPs).',
@@ -479,8 +1357,9 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
             ruleSolo4: '<strong>Destruction:</strong> If the same sector accumulates 4 damage cards, it is permanently destroyed. Remove the 4 damage cards and flip them face up to block that sector. If you lose 5 sectors, you lose the game.',
             shuffledLog: '🔄 Attack Deck Shuffled',
             creditsText: 'Space Base Bot developed with ❤️ by Thiago Colletes. "Joanna" Automa by <a href="https://boardgamegeek.com/profile/xbigtk13x" target="_blank" rel="noopener">xbigtk13x</a>. Base Attack by <a href="https://boardgamegeek.com/profile/GameRulesforOne" target="_blank" rel="noopener">GameRulesforOne</a>.',
+            bmcBtn: "Buy me a coffee",
             backHome: 'Back to Home',
-            manualDicePrompt: 'Physical dice: enter the result of both dice:',
+            manualDicePrompt: 'Enter the result of both physical dice:',
             die1Label: 'Die 1',
             die2Label: 'Die 2',
             sumLabel: 'Sum'
@@ -508,6 +1387,7 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
         currentLang = currentLang === 'pt' ? 'en' : 'pt';
         localStorage.setItem('boardbots_lang', currentLang);
         applyI18n();
+        updateSetupUI();
         updateDeckStatusText();
         updateAutomaTrackUI();
     };
@@ -515,17 +1395,19 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
     // --- State Variables ---
     let gameMode = 'joanna';
     let diceMode = 'virtual';
-    let difficulty = 'easy'; // easy (joanna), medium (devin), hard (clarie)
+    let difficulty = 'easy';
     
     // Joanna State
     let automaDeck = [0, 1, 2, 3, 4, 5];
     let automaDiscard = [];
     let automaVP = 0;
+    let playerVP = 0;
     
     // Base Attack State
     let attackDeck = [];
     let attackDiscard = [];
-    let sectorDamage = [0,0,0,0,0,0,0,0,0,0,0,0]; // 1-12
+    let sectorDamage = [0,0,0,0,0,0,0,0,0,0,0,0]; // Sectors 1-12
+    let gameLog = [];
 
     const LS_KEY = 'space_base_bot_v1';
 
@@ -534,9 +1416,9 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
             localStorage.setItem(LS_KEY, JSON.stringify({
                 gameMode, diceMode, difficulty,
                 automaDeck, automaDiscard,
-                automaVP,
+                automaVP, playerVP,
                 attackDeck, attackDiscard, sectorDamage,
-                vpCounter: parseInt(document.getElementById('vpCounter')?.value || 0)
+                gameLog
             }));
         } catch(e) { console.error(e); }
     }
@@ -552,14 +1434,16 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
             automaDeck = s.automaDeck ?? [0,1,2,3,4,5];
             automaDiscard = s.automaDiscard ?? [];
             automaVP = s.automaVP ?? 0;
+            playerVP = s.playerVP ?? (s.vpCounter ?? 0);
             attackDeck = s.attackDeck ?? [];
             attackDiscard = s.attackDiscard ?? [];
-            sectorDamage = s.sectorDamage ?? {};
-            return { vpCounter: s.vpCounter ?? 0 };
+            sectorDamage = s.sectorDamage ?? [0,0,0,0,0,0,0,0,0,0,0,0];
+            gameLog = s.gameLog ?? [];
+            return true;
         } catch(e) { return false; }
     }
 
-    // --- Automa Cards Data (3 unique sets: Joanna, Devin, Clarie) ---
+    // --- Automa Cards Data (Joanna, Devin, Clarie) ---
     // Row 1 (Top / Tier 3), Row 2 (Middle / Tier 2), Row 3 (Bottom / Tier 1)
     const automaCardsData = {
         joanna: [
@@ -599,14 +1483,13 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
         return automaCardsData[conf.key] || automaCardsData.joanna;
     }
 
-    // --- Logic ---
+    // --- Physical Setup Guidance ---
     function updateSetupUI() {
-        logEvent("updateSetupUI called. Mode=" + document.getElementById("gameMode").value);
         gameMode = document.getElementById('gameMode').value;
         const titleEl = document.getElementById('physSetupTitleText');
         const descEl = document.getElementById('physSetupDescText');
         
-        if(gameMode === 'joanna') {
+        if (gameMode === 'joanna') {
             document.getElementById('joannaDiffRow').style.display = 'block';
             if (titleEl) {
                 titleEl.innerHTML = currentLang === 'en' ? '🛸 Physical Setup (Automa Mode):' : '🛸 Setup Físico (Modo Automa):';
@@ -615,16 +1498,16 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
                 descEl.innerHTML = currentLang === 'en' ? `
                     <ul style="padding-left:18px; margin:0;">
                         <li style="margin-bottom:6px;"><strong>Player Console:</strong> Place cubes on 🪙 <strong>5 Credits</strong>, 🌍 <strong>0 Income</strong>, and 🏆 <strong>0 VP</strong>. Place your 12 starting ships face up in sectors 1–12.</li>
-                        <li style="margin-bottom:6px;"><strong>Initial Tier 1 Ship:</strong> Draw the top card of the Tier 1 ship deck, pay its credit cost by reducing your credit marker, place it into its matching sector, and deploy (tuck) the starting ship with its red reward showing above your console.</li>
+                        <li style="margin-bottom:6px;"><strong>Initial Tier 1 Ship:</strong> Draw the top Tier 1 ship card, pay its credit cost by adjusting your marker, place it into its sector, and deploy (tuck) the starting ship with its red reward visible above your console.</li>
                         <li style="margin-bottom:6px;"><strong>Shipyard Market:</strong> Shuffle ship decks 1, 2, and 3 separately and deal <strong>6 cards face up</strong> from each deck. Arrange the 12 Colony cards in ascending order.</li>
-                        <li><strong>Automa Setup:</strong> Place the Automa's VP score cube on <strong>0</strong> (or track it directly on this app). The Automa does not need a player board or sector cards.</li>
+                        <li><strong>Automa Setup:</strong> Place the Automa's VP score marker on <strong>0</strong> (or track it here). The Automa does not require a physical board or sector cards.</li>
                     </ul>
                 ` : `
                     <ul style="padding-left:18px; margin:0;">
-                        <li style="margin-bottom:6px;"><strong>Console do Jogador:</strong> Coloque seus cubos em 🪙 <strong>5 Créditos</strong>, 🌍 <strong>0 Renda</strong> e 🏆 <strong>0 VP</strong>. Coloque suas 12 naves iniciais nos setores 1 a 12 (lado azul para cima).</li>
-                        <li style="margin-bottom:6px;"><strong>Nave Nível 1 Inicial:</strong> Compre a carta do topo do baralho Nível 1, pague seu custo em créditos, encaixe-a no setor correspondente e implante (tuck) a nave inicial daquele setor com o lado vermelho visível acima do console.</li>
-                        <li style="margin-bottom:6px;"><strong>Mercado Central:</strong> Embaralhe os baralhos de naves 1, 2 e 3 separadamente e abra <strong>6 cartas</strong> de cada nível. Disponha as 12 cartas de Colônia em ordem crescente.</li>
-                        <li><strong>Setup do Automa:</strong> Coloque o marcador de VP do Automa no <strong>0</strong> (ou use este app para acompanhar). O Automa não precisa de console próprio nem de naves de setor.</li>
+                        <li style="margin-bottom:6px;"><strong>Console do Jogador:</strong> Coloque seus marcadores em 🪙 <strong>5 Créditos</strong>, 🌍 <strong>0 Renda</strong> e 🏆 <strong>0 VP</strong>. Coloque suas 12 naves iniciais nos setores 1 a 12 (lado azul para cima).</li>
+                        <li style="margin-bottom:6px;"><strong>Nave Nível 1 Inicial:</strong> Compre a carta do topo do Nível 1, pague seu custo em créditos, encaixe-a no setor e implante (tuck) a nave inicial com o lado vermelho visível.</li>
+                        <li style="margin-bottom:6px;"><strong>Mercado Central:</strong> Embaralhe os baralhos 1, 2 e 3 separadamente e abra <strong>6 cartas</strong> de cada nível. Disponha as 12 Colônias em ordem crescente.</li>
+                        <li><strong>Setup do Automa:</strong> Coloque o marcador de VP do Automa no <strong>0</strong> (ou use este app). O Automa não precisa de console próprio nem de naves de setor.</li>
                     </ul>
                 `;
             }
@@ -637,18 +1520,18 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
                 descEl.innerHTML = currentLang === 'en' ? `
                     <ul style="padding-left:18px; margin:0;">
                         <li style="margin-bottom:6px;"><strong>Player Console:</strong> Setup console with cubes on 🪙 <strong>5 Credits</strong>, 🌍 <strong>0 Income</strong>, 🏆 <strong>0 VP</strong>, and 12 starting ships in sectors 1–12.</li>
-                        <li style="margin-bottom:6px;"><strong>Initial Tier 1 Ship:</strong> Draw the top Tier 1 card, pay its cost in credits, place into its sector, and deploy the starting ship to show its red reward.</li>
+                        <li style="margin-bottom:6px;"><strong>Initial Tier 1 Ship:</strong> Draw top Tier 1 card, pay credits, place into its sector, and deploy starting ship.</li>
                         <li style="margin-bottom:6px;"><strong>Shipyard Market:</strong> Deal <strong>4 cards face up</strong> from each level (1, 2, and 3) instead of 6.</li>
-                        <li style="margin-bottom:6px;"><strong>Attack Deck:</strong> Shuffle the other 4 sets of starter ships (48 cards total: 4 of each sector 1–12) into a facedown attack deck (or use this bot to draw automatically).</li>
-                        <li><strong>Colonies Pool:</strong> Shuffle Colony cards and reveal until reaching your difficulty target (Easy: 4–5 cards total 30–35 VP; Normal: 4–5 cards total 35–42 VP; Expert: 5–6 cards total 43+ VP). Remove remaining colonies from the game.</li>
+                        <li style="margin-bottom:6px;"><strong>Attack Deck:</strong> Shuffle the other 4 sets of starter ships (48 cards total: 4 of each sector 1–12) into a facedown attack deck (or use this bot).</li>
+                        <li><strong>Colonies Pool:</strong> Shuffle Colonies and reveal until target sum (Easy: 30–35 VP; Normal: 35–42 VP; Expert: 43+ VP). Discard remaining colonies.</li>
                     </ul>
                 ` : `
                     <ul style="padding-left:18px; margin:0;">
-                        <li style="margin-bottom:6px;"><strong>Console do Jogador:</strong> Prepare o console com cubos em 🪙 <strong>5 Créditos</strong>, 🌍 <strong>0 Renda</strong>, 🏆 <strong>0 VP</strong> e as 12 naves iniciais nos setores 1–12.</li>
-                        <li style="margin-bottom:6px;"><strong>Nave Nível 1 Inicial:</strong> Compre a carta do topo do Nível 1, pague o custo em créditos, coloque-a no setor e implante a nave inicial com o lado vermelho visível.</li>
+                        <li style="margin-bottom:6px;"><strong>Console do Jogador:</strong> Prepare o console com cubos em 🪙 <strong>5 Créditos</strong>, 🌍 <strong>0 Renda</strong>, 🏆 <strong>0 VP</strong> e 12 naves nos setores 1–12.</li>
+                        <li style="margin-bottom:6px;"><strong>Nave Nível 1 Inicial:</strong> Compre a carta do topo do Nível 1, pague o custo, encaixe no setor e implante a nave inicial.</li>
                         <li style="margin-bottom:6px;"><strong>Mercado Central:</strong> Abra <strong>4 cartas</strong> de cada nível (1, 2 e 3) ao invés de 6.</li>
-                        <li style="margin-bottom:6px;"><strong>Baralho de Ataque:</strong> Embaralhe os outros 4 conjuntos de naves iniciais (48 cartas: 4 de cada setor 1–12) para formar o baralho de ataque dos rivais (ou use o sorteio automático deste app).</li>
-                        <li><strong>Colônias em Jogo:</strong> Embaralhe as cartas de Colônia e revele até atingir a meta da sua dificuldade (Fácil: 4–5 cartas total 30–35 VP; Normal: 4–5 cartas total 35–42 VP; Expert: 5–6 cartas total 43+ VP). Descarte as demais colônias da partida.</li>
+                        <li style="margin-bottom:6px;"><strong>Baralho de Ataque:</strong> Embaralhe os outros 4 conjuntos de naves iniciais (48 cartas: 4 de cada setor 1–12) para formar o baralho de ataque dos rivais.</li>
+                        <li><strong>Colônias em Jogo:</strong> Revele Colônias até atingir a meta (Fácil: 30–35 VP; Normal: 35–42 VP; Expert: 43+ VP). Descarte as demais.</li>
                     </ul>
                 `;
             }
@@ -660,36 +1543,29 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
     let diceBoxReady = false;
 
     async function initDiceBox() {
-        logEvent("initDiceBox() called. diceBoxReady=" + diceBoxReady);
         if(diceBox) return;
         try {
-            logEvent("Fetching dice-box import...");
             const { default: DiceBox } = await import('https://unpkg.com/@3d-dice/dice-box@1.1.3/dist/dice-box.es.min.js');
-            logEvent('DiceBox class imported successfully');
             diceBox = new DiceBox({
                 container: '#dice-box',
                 assetPath: 'assets/',
                 origin: 'https://unpkg.com/@3d-dice/dice-box@1.1.3/dist/',
                 theme: 'default',
-                themeColor: '#1e293b',
+                themeColor: '#0284c7',
                 scale: 6,
                 gravity: 2.5,
                 friction: 0.8,
                 restitution: 0.5
             });
             
-            logEvent('Starting diceBox.init() race...');
             await Promise.race([
-                diceBox.init().then(() => logEvent('diceBox.init() RESOLVED')),
-                new Promise((_, reject) => setTimeout(() => { logEvent('diceBox.init() TIMEOUT reached'); reject(new Error('Timeout')); }, 10000))
+                diceBox.init(),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('DiceBox timeout')), 8000))
             ]);
-            logEvent('Race finished successfully');
-    
+            
             diceBoxReady = true;
-            logEvent("diceBoxReady set to TRUE");
             
             diceBox.onRollComplete = (results) => {
-                logEvent("onRollComplete triggered");
                 let d1 = 1, d2 = 1;
                 if (results[0] && results[0].rolls && results[0].rolls.length >= 2) {
                     d1 = results[0].rolls[0].value;
@@ -698,39 +1574,34 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
                     d1 = results[0].value;
                     d2 = results[1].value;
                 }
-                logEvent("Dice values parsed: " + d1 + " and " + d2);
                 const txt = document.getElementById('diceResultText');
                 txt.style.display = 'block';
-                txt.innerText = `🎲 ${d1} | ${d2}  (Soma: ${d1+d2})`;
+                txt.innerText = `🎲 ${d1} | ${d2}  (${currentLang === 'en' ? 'Sum' : 'Soma'}: ${d1+d2})`;
+                addGameLog(`🎲 ${currentLang === 'en' ? 'Dice Rolled' : 'Dados Rolados'}: [${d1}, ${d2}] ➔ ${currentLang === 'en' ? 'Sum' : 'Soma'} ${d1+d2}`);
             };
         } catch(err) {
-            logEvent("initDiceBox catch block: " + err.message); 
-            console.error("Failed to load dice-box", err);
+            console.error("Dice-box fallback:", err);
             diceBoxReady = false;
         }
     }
 
     function rollVirtualDice() {
-        logEvent("rollVirtualDice() called. diceBoxReady=" + diceBoxReady);
-        if(diceMode !== 'virtual') return;
-        if(!diceBoxReady) {
-            // fallback
+        if (diceMode !== 'virtual') return;
+        if (!diceBoxReady) {
             const d1 = Math.floor(Math.random() * 6) + 1;
             const d2 = Math.floor(Math.random() * 6) + 1;
             const txt = document.getElementById('diceResultText');
             txt.style.display = 'block';
-            txt.innerText = `🎲 ${d1} | ${d2}  (Soma: ${d1+d2})`;
+            txt.innerText = `🎲 ${d1} | ${d2}  (${currentLang === 'en' ? 'Sum' : 'Soma'}: ${d1+d2})`;
+            addGameLog(`🎲 ${currentLang === 'en' ? 'Dice Rolled' : 'Dados Rolados'}: [${d1}, ${d2}] ➔ ${currentLang === 'en' ? 'Sum' : 'Soma'} ${d1+d2}`);
             return;
         }
         
         try {
             document.getElementById('diceResultText').style.display = 'none';
-            logEvent("Calling diceBox.roll('2d6')");
-            diceBox.roll('2d6').then(r => logEvent("diceBox.roll resolved")).catch(err => {
-                logEvent("diceBox.roll catch: " + err.message);
-                console.error(err);
+            diceBox.roll('2d6').catch(() => {
                 diceBoxReady = false;
-                rollVirtualDice(); // triggers fallback
+                rollVirtualDice();
             });
         } catch(err) {
             diceBoxReady = false;
@@ -750,10 +1621,42 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
             document.querySelectorAll('#die2Buttons .sb-die-btn').forEach((b, i) => b.classList.toggle('active-die2', i + 1 === value));
         }
         document.getElementById('manualDiceSum').textContent = manualD1 + manualD2;
+        addGameLog(`🎲 ${currentLang === 'en' ? 'Manual Dice Set' : 'Dados Informados'}: [${manualD1}, ${manualD2}] ➔ ${currentLang === 'en' ? 'Sum' : 'Soma'} ${manualD1+manualD2}`);
     };
 
+    // --- Action Audit Log ---
+    function addGameLog(text) {
+        const now = new Date();
+        const timeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+        gameLog.unshift({ time: timeStr, text });
+        if (gameLog.length > 50) gameLog.pop();
+        renderGameLog();
+        saveState();
+    }
+
+    function renderGameLog() {
+        const container = document.getElementById('gameActionLog');
+        if (!container) return;
+        if (gameLog.length === 0) {
+            container.innerHTML = `<div class="log-entry"><span class="log-time">--:--</span><span>${currentLang === 'en' ? 'Ready for mission orders.' : 'Pronto para iniciar a missão.'}</span></div>`;
+            return;
+        }
+        container.innerHTML = gameLog.map(e => `
+            <div class="log-entry">
+                <span class="log-time">${e.time}</span>
+                <span>${e.text}</span>
+            </div>
+        `).join('');
+    }
+
+    window.clearGameLog = function() {
+        gameLog = [];
+        renderGameLog();
+        saveState();
+    };
+
+    // --- Game Lifecycle ---
     window.startGame = async function() {
-        logEvent("startGame() - Mode:" + document.getElementById("gameMode").value + " Dice:" + document.getElementById("diceMode").value);
         gameMode = document.getElementById('gameMode').value;
         diceMode = document.getElementById('diceMode').value;
         difficulty = document.getElementById('difficulty').value;
@@ -763,10 +1666,10 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
         
         if (diceMode === 'virtual') {
             document.getElementById('dice-box').style.display = 'block';
+            document.getElementById('manualDiceArea').style.display = 'none';
             initDiceBox();
-        }
-
-        if (diceMode === 'physical') {
+        } else {
+            document.getElementById('dice-box').style.display = 'none';
             document.getElementById('manualDiceArea').style.display = 'block';
         }
 
@@ -783,7 +1686,7 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
             automaDeck = [0, 1, 2, 3, 4, 5];
             shuffleArray(automaDeck);
             automaDiscard = [];
-            // Reveal first card and roll initial dice
+            addGameLog(`🚀 ${currentLang === 'en' ? 'Game Started vs Automa' : 'Partida Iniciada contra Automa'}: ${conf.name}`);
             nextJoannaTurn(false);
         } else {
             document.getElementById('joannaControls').style.display = 'none';
@@ -792,21 +1695,46 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
             document.getElementById('attackLogContainer').style.display = 'block';
             
             initAttackDeck();
+            renderSectorGrid();
+            addGameLog(`⚔️ ${currentLang === 'en' ? 'Base Attack SoloPlay Started' : 'Ataque à Base Iniciado'}`);
             rollVirtualDice();
         }
         saveState();
+    };
+
+    window.openNewGameModal = function() {
+        if (confirm(currentLang === 'en' ? 'Start a new game? Current match state will be reset.' : 'Iniciar uma nova partida? O estado atual será resetado.')) {
+            localStorage.removeItem(LS_KEY);
+            location.reload();
+        }
     };
 
     // --- Automa Score & Active Track Tracker ---
     window.changeAutomaVP = function(delta) {
         automaVP = Math.max(0, automaVP + delta);
         updateAutomaTrackUI();
+        addGameLog(`⭐ Automa VP ${delta > 0 ? '+' : ''}${delta} ➔ ${automaVP} VP`);
         saveState();
     };
 
     window.setAutomaVP = function(val) {
         automaVP = Math.max(0, parseInt(val) || 0);
         updateAutomaTrackUI();
+        addGameLog(`⭐ Automa VP ➔ ${automaVP} VP`);
+        saveState();
+    };
+
+    window.changeVP = function(delta) {
+        playerVP = Math.max(0, playerVP + delta);
+        document.getElementById('vpCounter').value = playerVP;
+        addGameLog(`👤 ${currentLang === 'en' ? 'Player' : 'Jogador'} VP ${delta > 0 ? '+' : ''}${delta} ➔ ${playerVP} VP`);
+        saveState();
+    };
+
+    window.setPlayerVP = function(val) {
+        playerVP = Math.max(0, parseInt(val) || 0);
+        document.getElementById('vpCounter').value = playerVP;
+        addGameLog(`👤 ${currentLang === 'en' ? 'Player' : 'Jogador'} VP ➔ ${playerVP} VP`);
         saveState();
     };
 
@@ -818,16 +1746,21 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
 
         const conf = diffConfigs[difficulty] || diffConfigs.easy;
         let earned = 0;
+        let rowNum = 1;
         if (automaVP < conf.t_income) {
             earned = cardData.r1.vp; // Active is Row 1 (Top / Tier 3)
+            rowNum = 1;
         } else if (automaVP < conf.t_coins) {
             earned = cardData.r2.vp; // Active is Row 2 (Middle / Tier 2)
+            rowNum = 2;
         } else {
             earned = cardData.r3.vp; // Active is Row 3 (Bottom / Tier 1)
+            rowNum = 3;
         }
 
         automaVP += earned;
         updateAutomaTrackUI();
+        addGameLog(`🎯 ${currentLang === 'en' ? 'Scored Card VP' : 'Pontuou VP da Carta'} (Linha ${rowNum}): +${earned} VP ➔ Total: ${automaVP} VP`);
         saveState();
     };
 
@@ -837,35 +1770,41 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
 
         const conf = diffConfigs[difficulty] || diffConfigs.easy;
 
-        let activeRowKey = 'row1'; // default: Row 1 (Top / Tier 3)
-        let activeRowIndex = 0; // 0: r1, 1: r2, 2: r3
+        let activeRowKey = 'row1';
+        let activeRowIndex = 0;
 
         if (automaVP < conf.t_income) {
             activeRowKey = 'row1';
-            activeRowIndex = 0; // Row 1 (Top)
+            activeRowIndex = 0;
         } else if (automaVP < conf.t_coins) {
             activeRowKey = 'row2';
-            activeRowIndex = 1; // Row 2 (Middle)
+            activeRowIndex = 1;
         } else {
             activeRowKey = 'row3';
-            activeRowIndex = 2; // Row 3 (Bottom)
+            activeRowIndex = 2;
         }
 
         const banner = document.getElementById('automaActiveRow');
         if (banner) {
             banner.style.display = 'block';
             if (activeRowKey === 'row1') {
+                banner.style.borderColor = 'rgba(34, 197, 94, 0.4)';
+                banner.style.background = 'rgba(34, 197, 94, 0.12)';
                 banner.innerHTML = currentLang === 'pt'
-                    ? `<strong>Linha Ativa: Linha 1 (Topo — Naves Nível 3)</strong><br><span style="font-size:0.85em; font-weight:normal; color:#cbd5e1;">${automaVP} &lt; ${conf.t_income} VP (Limite de Renda)</span>`
-                    : `<strong>Active Row: Row 1 (Top — Tier 3 Ships)</strong><br><span style="font-size:0.85em; font-weight:normal; color:#cbd5e1;">${automaVP} &lt; ${conf.t_income} VP (Income Threshold)</span>`;
+                    ? `<strong style="color:var(--neon-green);">Linha Ativa: Linha 1 (Topo — Naves Nível 3)</strong><br><span style="font-size:0.8rem; color:#cbd5e1;">${automaVP} &lt; ${conf.t_income} VP (Limite de Renda)</span>`
+                    : `<strong style="color:var(--neon-green);">Active Row: Row 1 (Top — Tier 3 Ships)</strong><br><span style="font-size:0.8rem; color:#cbd5e1;">${automaVP} &lt; ${conf.t_income} VP (Income Threshold)</span>`;
             } else if (activeRowKey === 'row2') {
+                banner.style.borderColor = 'rgba(250, 204, 21, 0.4)';
+                banner.style.background = 'rgba(250, 204, 21, 0.12)';
                 banner.innerHTML = currentLang === 'pt'
-                    ? `<strong>Linha Ativa: Linha 2 (Meio — Naves Nível 2)</strong><br><span style="font-size:0.85em; font-weight:normal; color:#cbd5e1;">${automaVP} ≥ ${conf.t_income} VP e &lt; ${conf.t_coins} VP (Limite de Moedas)</span>`
-                    : `<strong>Active Row: Row 2 (Middle — Tier 2 Ships)</strong><br><span style="font-size:0.85em; font-weight:normal; color:#cbd5e1;">${automaVP} ≥ ${conf.t_income} VP &amp; &lt; ${conf.t_coins} VP (Coins Threshold)</span>`;
+                    ? `<strong style="color:var(--neon-yellow);">Linha Ativa: Linha 2 (Meio — Naves Nível 2)</strong><br><span style="font-size:0.8rem; color:#cbd5e1;">${automaVP} ≥ ${conf.t_income} VP e &lt; ${conf.t_coins} VP (Limite de Moedas)</span>`
+                    : `<strong style="color:var(--neon-yellow);">Active Row: Row 2 (Middle — Tier 2 Ships)</strong><br><span style="font-size:0.8rem; color:#cbd5e1;">${automaVP} ≥ ${conf.t_income} VP &amp; &lt; ${conf.t_coins} VP (Coins Threshold)</span>`;
             } else {
+                banner.style.borderColor = 'rgba(236, 72, 153, 0.4)';
+                banner.style.background = 'rgba(236, 72, 153, 0.12)';
                 banner.innerHTML = currentLang === 'pt'
-                    ? `<strong>Linha Ativa: Linha 3 (Baixo — Naves Nível 1)</strong><br><span style="font-size:0.85em; font-weight:normal; color:#cbd5e1;">${automaVP} ≥ ${conf.t_coins} VP (Limite de Moedas)</span>`
-                    : `<strong>Active Row: Row 3 (Bottom — Tier 1 Ships)</strong><br><span style="font-size:0.85em; font-weight:normal; color:#cbd5e1;">${automaVP} ≥ ${conf.t_coins} VP (Coins Threshold)</span>`;
+                    ? `<strong style="color:var(--neon-pink);">Linha Ativa: Linha 3 (Baixo — Naves Nível 1)</strong><br><span style="font-size:0.8rem; color:#cbd5e1;">${automaVP} ≥ ${conf.t_coins} VP (Limite de Moedas)</span>`
+                    : `<strong style="color:var(--neon-pink);">Active Row: Row 3 (Bottom — Tier 1 Ships)</strong><br><span style="font-size:0.8rem; color:#cbd5e1;">${automaVP} ≥ ${conf.t_coins} VP (Coins Threshold)</span>`;
             }
         }
 
@@ -874,41 +1813,56 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
         rows.forEach((r, idx) => {
             if (idx === activeRowIndex) {
                 if (activeRowKey === 'row1') {
-                    r.style.boxShadow = '0 0 0 3px #22c55e';
-                    r.style.background = '#dcfce7';
+                    r.style.borderColor = 'var(--neon-green)';
+                    r.style.boxShadow = '0 0 16px var(--neon-green-glow)';
+                    r.style.background = 'rgba(34, 197, 94, 0.12)';
                 } else if (activeRowKey === 'row2') {
-                    r.style.boxShadow = '0 0 0 3px #facc15';
-                    r.style.background = '#fef9c3';
+                    r.style.borderColor = 'var(--neon-yellow)';
+                    r.style.boxShadow = '0 0 16px var(--neon-yellow-glow)';
+                    r.style.background = 'rgba(250, 204, 21, 0.12)';
                 } else {
-                    r.style.boxShadow = '0 0 0 3px #ec4899';
-                    r.style.background = '#fce7f3';
+                    r.style.borderColor = 'var(--neon-pink)';
+                    r.style.boxShadow = '0 0 16px var(--neon-pink-glow)';
+                    r.style.background = 'rgba(236, 72, 153, 0.12)';
                 }
             } else {
+                r.style.borderColor = 'transparent';
                 r.style.boxShadow = '';
-                r.style.background = '#f1f5f9';
+                r.style.background = 'var(--bg-card-sub)';
             }
         });
     }
 
     // --- Automa Turn & Card Logic ---
     window.nextJoannaTurn = function(skipRoll = false) {
-        logEvent("nextJoannaTurn called. skipRoll=" + skipRoll + " Deck:" + automaDeck.length + " Discard:" + automaDiscard.length);
         if (automaDeck.length <= 1) {
-            // "Whenever Joanna has one card left... shuffle all back... skip one card"
             automaDeck = [0, 1, 2, 3, 4, 5];
             shuffleArray(automaDeck);
-            // Skip one card (remove it completely for this cycle)
             automaDeck.pop();
             automaDiscard = [];
+            addGameLog(`🔄 ${currentLang === 'en' ? 'Automa Deck Reshuffled & 1 Card Discarded' : 'Deck do Automa Reembaralhado e 1 Carta Descartada'}`);
         }
         
         const cardIndex = automaDeck.pop();
-        logEvent("Drew Joanna card index " + cardIndex);
         automaDiscard.push(cardIndex);
         
         renderJoannaCard(cardIndex);
         updateDeckStatusText();
         updateAutomaTrackUI();
+        
+        const deck = getAutomaCardDeck();
+        const card = deck[cardIndex];
+        const conf = diffConfigs[difficulty] || diffConfigs.easy;
+        let activeRow = 1;
+        let discardSlot = card.r1.x;
+        let vp = card.r1.vp;
+        if (automaVP >= conf.t_coins) {
+            activeRow = 3; discardSlot = card.r3.x; vp = card.r3.vp;
+        } else if (automaVP >= conf.t_income) {
+            activeRow = 2; discardSlot = card.r2.x; vp = card.r2.vp;
+        }
+        addGameLog(`🃏 ${currentLang === 'en' ? 'Revealed Card' : 'Carta Revelada'} ➔ Linha ${activeRow} (Desc. Nave #${discardSlot}, +${vp} VP)`);
+
         if (!skipRoll) rollVirtualDice();
         saveState();
     };
@@ -935,24 +1889,31 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
         renderRow(3, data.r3);
     }
 
-    window.changeVP = function(amount) {
-        const input = document.getElementById('vpCounter');
-        let val = parseInt(input.value) || 0;
-        val += amount;
-        if(val < 0) val = 0;
-        input.value = val;
-        saveState();
-    };
-
     // --- Base Attack Logic ---
     function initAttackDeck() {
         attackDeck = [];
         for(let i=1; i<=12; i++) {
-            attackDeck.push(i, i, i, i); // 4 of each
+            attackDeck.push(i, i, i, i);
         }
         shuffleArray(attackDeck);
         attackDiscard = [];
+        sectorDamage = [0,0,0,0,0,0,0,0,0,0,0,0];
         updateDeckStatusText();
+    }
+
+    function renderSectorGrid() {
+        const grid = document.getElementById('sectorDamageGrid');
+        if (!grid) return;
+        grid.innerHTML = sectorDamage.map((hits, idx) => {
+            const sec = idx + 1;
+            const isDestroyed = hits >= 4;
+            return `
+                <div class="sector-card ${isDestroyed ? 'sector-destroyed' : ''}">
+                    <div class="sector-num">${isDestroyed ? '💥 ' + sec : 'Setor ' + sec}</div>
+                    <div class="sector-hits">${isDestroyed ? (currentLang === 'en' ? 'DESTROYED' : 'DESTRUÍDO') : hits + '/4 ' + (currentLang === 'en' ? 'damage' : 'danos')}</div>
+                </div>
+            `;
+        }).join('');
     }
 
     function renderAttackLog() {
@@ -960,20 +1921,13 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
         if (!log) return;
         log.style.display = 'block';
         document.getElementById('emptyLogState').style.display = 'none';
-        const notice = document.createElement('li');
-        notice.className = 'attack-item';
-        notice.style.borderColor = '#3b82f6';
-        notice.style.background = 'rgba(59, 130, 246, 0.1)';
-        notice.innerHTML = `<div style="color:#3b82f6; font-size:0.85em; text-align:center;">
-            ${currentLang === 'en' ? '⟳ Session restored. Previous attacks remain applied to physical board.' : '⟳ Sessão restaurada. Danos anteriores permanecem aplicados na sua base.'}
-        </div>`;
-        log.prepend(notice);
     }
 
     window.baseAttackTurn = function(cardsToDraw) {
         if(cardsToDraw === 0) {
             rollVirtualDice();
-            return; // no attack
+            addGameLog(`🛡️ ${currentLang === 'en' ? 'Bought Colony Ship — No attacks generated.' : 'Comprou Colônia — Nenhum ataque gerado.'}`);
+            return;
         }
         
         document.getElementById('emptyLogState').style.display = 'none';
@@ -984,11 +1938,15 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
                 attackDeck = [...attackDiscard];
                 attackDiscard = [];
                 shuffleArray(attackDeck);
+                addGameLog(`🔄 ${currentLang === 'en' ? 'Attack Deck Reshuffled' : 'Baralho de Ataque Reembaralhado'}`);
             }
             if(attackDeck.length > 0) {
                 const c = attackDeck.pop();
                 drawn.push(c);
                 attackDiscard.push(c);
+                if (sectorDamage[c - 1] !== undefined) {
+                    sectorDamage[c - 1] += 1;
+                }
             }
         }
         
@@ -1007,11 +1965,14 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
         const li = document.createElement('li');
         li.className = 'attack-item';
         li.innerHTML = `
-            <div style="font-size:0.9em; color:#cbd5e1; margin-bottom:5px;">${msg}</div>
+            <div style="font-size:0.85rem; color:#cbd5e1; margin-bottom:5px;">${msg}</div>
             <div class="attack-cards-grid">${cardsHTML}</div>
         `;
         log.prepend(li);
         
+        addGameLog(`💥 ${currentLang === 'en' ? 'Rivals Attacked' : 'Rivais Atacaram'}: ${drawn.map(s => '#' + s).join(', ')}`);
+        
+        renderSectorGrid();
         updateDeckStatusText();
         rollVirtualDice();
         saveState();
@@ -1027,10 +1988,11 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
         log.style.display = 'block';
         const li = document.createElement('li');
         li.className = 'attack-item';
-        li.style.borderColor = '#3b82f6';
-        li.style.background = 'rgba(59, 130, 246, 0.1)';
-        li.innerHTML = `<div style="color:#3b82f6; font-weight:bold; text-align:center;">${t('shuffledLog')}</div>`;
+        li.style.borderColor = 'var(--neon-cyan)';
+        li.style.background = 'rgba(56, 189, 248, 0.1)';
+        li.innerHTML = `<div style="color:var(--neon-cyan); font-weight:bold; text-align:center;">${t('shuffledLog')}</div>`;
         log.prepend(li);
+        addGameLog(`🔄 ${currentLang === 'en' ? 'Attack Discard Shuffled into Deck' : 'Descarte de Ataque Embaralhado no Deck'}`);
         saveState();
     };
 
@@ -1051,15 +2013,14 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
         }
     }
 
-    // Init i18n on load
+    // --- Init ---
     applyI18n();
     updateSetupUI();
     
-    const saved = localStorage.getItem(LS_KEY);
+    const saved = loadState();
     if (saved) {
         document.getElementById("setupOverlay").style.display = "none";
         document.getElementById("mainContainer").style.display = "grid";
-        const loadedState = loadState();
         
         if (gameMode === 'joanna') {
             document.getElementById('joannaControls').style.display = 'block';
@@ -1076,27 +2037,24 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
             }
             updateDeckStatusText();
             updateAutomaTrackUI();
-            if (loadedState && loadedState.vpCounter !== undefined) {
-                document.getElementById('vpCounter').value = loadedState.vpCounter;
-            }
+            document.getElementById('vpCounter').value = playerVP;
         } else {
             document.getElementById('joannaControls').style.display = 'none';
             document.getElementById('baseAttackControls').style.display = 'block';
             document.getElementById('joannaCardDisplay').style.display = 'none';
             document.getElementById('attackLogContainer').style.display = 'block';
             updateDeckStatusText();
+            renderSectorGrid();
             renderAttackLog();
         }
 
         if (diceMode === "virtual") { 
             document.getElementById("dice-box").style.display = "block"; 
             initDiceBox(); 
+        } else {
+            document.getElementById("manualDiceArea").style.display = "block";
         }
-        if (diceMode === "physical") { 
-            const mda = document.getElementById("manualDiceArea");
-            mda.style.display = "block";
-            mda.classList.add("active");
-        }
+        renderGameLog();
     }
 </script>
 </body>
