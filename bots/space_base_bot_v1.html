@@ -211,38 +211,23 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
             <button class="action-btn" onclick="nextJoannaTurn()" id="btnNextTurn" data-i18n="nextTurn">Próximo Turno (Revelar Carta)</button>
             <div class="status-text" id="joannaDeckStatus">Cartas no Deck: 6 | Descarte: 0</div>
 
-            <!-- Automa Tracks Smart Tracker -->
+            <!-- Automa Score & Active Track Tracker -->
             <div id="automaTracksPanel" style="margin-top:20px; background:rgba(255,255,255,0.05); border:1px solid var(--sb-border); border-radius:8px; padding:14px;">
-                <div style="font-size:0.85em; font-weight:700; color:var(--sb-accent); margin-bottom:12px;" data-i18n="automaTracksTitle">Trilhas do Automa</div>
+                <div style="font-size:0.85em; font-weight:700; color:var(--sb-accent); margin-bottom:10px;" data-i18n="automaTracksTitle">Pontuação do Automa (VP)</div>
 
-                <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-                    <span style="min-width:70px; font-size:0.8em; color:#94a3b8;" data-i18n="trackVP">🏆 VP:</span>
-                    <button class="action-btn" style="width:30px; min-width:30px; padding:0 !important; font-size:1.1em;" onclick="changeAutomaTrack('vp',-1)">−</button>
-                    <span id="automaVPVal" style="min-width:32px; text-align:center; font-family:var(--font-display); font-weight:bold; font-size:1.1em; color:#e2e8f0;">0</span>
-                    <button class="action-btn" style="width:30px; min-width:30px; padding:0 !important; font-size:1.1em;" onclick="changeAutomaTrack('vp',1)">+</button>
-                    <span id="automaVPStatus" style="font-size:0.75em; color:#94a3b8; margin-left:auto;"></span>
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+                    <button class="action-btn" style="width:36px; min-width:36px; padding:0 !important; font-size:1.2em;" onclick="changeAutomaVP(-1)">−</button>
+                    <input type="number" id="automaVPVal" value="0" min="0" onchange="setAutomaVP(this.value)" style="flex:1; min-width:0; background:rgba(0,0,0,0.3); border:1px solid var(--sb-border); border-radius:6px; color:#e2e8f0; font-size:1.5em; font-weight:bold; font-family:var(--font-display); text-align:center; padding:4px 0;">
+                    <button class="action-btn" style="width:36px; min-width:36px; padding:0 !important; font-size:1.2em;" onclick="changeAutomaVP(1)">+</button>
                 </div>
+                
+                <button class="action-btn secondary" id="btnScoreCardVP" style="font-size:0.85em; padding:8px 12px; margin-bottom:12px; width:100%; border-color:var(--sb-primary); color:#60a5fa;" onclick="scoreCurrentCardVP()" data-i18n="scoreCardVPBtn">+ Pontuar VP da Carta Atual</button>
 
-                <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-                    <span style="min-width:70px; font-size:0.8em; color:#94a3b8;" data-i18n="trackIncome">🌍 Renda:</span>
-                    <button class="action-btn" style="width:30px; min-width:30px; padding:0 !important; font-size:1.1em;" onclick="changeAutomaTrack('income',-1)">−</button>
-                    <span id="automaIncomeVal" style="min-width:32px; text-align:center; font-family:var(--font-display); font-weight:bold; font-size:1.1em; color:#e2e8f0;">0</span>
-                    <button class="action-btn" style="width:30px; min-width:30px; padding:0 !important; font-size:1.1em;" onclick="changeAutomaTrack('income',1)">+</button>
-                    <span id="automaIncomeStatus" style="font-size:0.75em; color:#94a3b8; margin-left:auto;"></span>
-                </div>
-
-                <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
-                    <span style="min-width:70px; font-size:0.8em; color:#94a3b8;" data-i18n="trackCoins">🪙 Moedas:</span>
-                    <button class="action-btn" style="width:30px; min-width:30px; padding:0 !important; font-size:1.1em;" onclick="changeAutomaTrack('coins',-1)">−</button>
-                    <span id="automaCoinsVal" style="min-width:32px; text-align:center; font-family:var(--font-display); font-weight:bold; font-size:1.1em; color:#e2e8f0;">0</span>
-                    <button class="action-btn" style="width:30px; min-width:30px; padding:0 !important; font-size:1.1em;" onclick="changeAutomaTrack('coins',1)">+</button>
-                </div>
-
-                <div id="automaActiveRow" style="display:none; padding:8px; background:rgba(59,130,246,0.18); border-radius:4px; font-size:0.85em; font-weight:bold; color:#60a5fa; text-align:center;"></div>
+                <div id="automaActiveRow" style="padding:10px; background:rgba(59,130,246,0.18); border-radius:6px; font-size:0.85em; font-weight:bold; color:#60a5fa; text-align:center; line-height:1.4;"></div>
             </div>
             
-            <div style="margin-top: 20px; background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px;">
-                <h3 style="font-size:0.85em; margin-top:0; color:var(--sb-accent);" data-i18n="vpTracker">Rastreador de VP (Manual)</h3>
+            <div style="margin-top: 15px; background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px;">
+                <h3 style="font-size:0.85em; margin-top:0; color:var(--sb-accent);" data-i18n="playerVpTracker">Seus Pontos (VP Jogador)</h3>
                 <div style="display:flex; align-items:center; gap:10px; margin-top:6px;">
                     <button class="action-btn" style="width:35px; min-width:35px; padding:0 !important;" onclick="changeVP(-1)">-</button>
                     <input type="number" id="vpCounter" value="0" style="flex:1; min-width:0; background:transparent; border:none; color:var(--sb-accent); font-size:1.3em; font-weight:bold; font-family:var(--font-display); text-align:center;">
@@ -281,7 +266,7 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
         <div class="automa-card" id="joannaCardDisplay">
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #ccc; padding-bottom:10px; margin-bottom:15px;">
                 <strong id="cardDiffName" style="font-size:1.3em; font-family:var(--font-display); text-transform:uppercase;">JOANNA</strong>
-                <span id="vpThresholds" style="font-size:0.85em; color:#666; font-weight:bold;">25🪙 | 15🌍 | 4.0VP</span>
+                <span id="vpThresholds" style="font-size:0.85em; color:#666; font-weight:bold;">🌍 15 VP | 🪙 25 VP</span>
             </div>
             
             <div class="card-row">
@@ -301,14 +286,14 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
             </div>
             
             <div class="card-row">
-                <div class="row-icon row-3-icon">VP</div>
+                <div class="row-icon row-3-icon">🏆</div>
                 <div class="ships-container" id="row3Ships">
                     <div class="ship-slot ship-crossed"></div><div class="ship-slot"></div><div class="ship-slot"></div><div class="ship-slot"></div><div class="ship-slot"></div><div class="ship-slot"></div>
                 </div>
                 <div class="rocket-vp" id="row3VP">1</div>
             </div>
             <div style="font-size:0.85em; color:#444; margin-top:15px; text-align:center; font-weight:500;" data-i18n="cardInstruction">
-                Mova o cubo do automa na sua base e escolha a linha correspondente à trilha onde o cubo está.
+                Descarte a nave do mercado central na posição marcada com 'X' na linha ativa e pontue os VPs no foguete azul.
             </div>
         </div>
 
@@ -351,18 +336,29 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
         <div style="font-size:0.92em; line-height:1.6; color:#cbd5e1;">
             <h3 style="color:var(--sb-accent); border-bottom:1px solid #334155; padding-bottom:4px;" data-i18n="ruleAutomaTitle">Modo Automa (Joanna, Devin, Clarie)</h3>
             <ul style="padding-left:20px; margin-bottom: 20px;">
-                <li style="margin-bottom:8px;" data-i18n="ruleAutoma1"><strong>Seu Turno:</strong> Jogue normalmente. O Automa só ganha coisas no seu turno se você ativar uma recompensa vermelha que beneficia "todos os outros jogadores" (ele ganha os VPs indicados, mas ignora moedas/renda).</li>
-                <li style="margin-bottom:8px;" data-i18n="ruleAutoma2"><strong>Turno do Automa:</strong> Clique em "Próximo Turno". O bot rolará os dados e revelará a carta do turno. Os dados rolam para você ativar recompensas vermelhas.</li>
-                <li style="margin-bottom:8px;" data-i18n="ruleAutoma3"><strong>Verificar Trilhas:</strong> A carta mostra 3 trilhas: VPs (topo), Renda (meio) e Moedas (baixo). O Automa age dependendo do seu progresso:
+                <li style="margin-bottom:8px;" data-i18n="ruleAutoma1"><strong>Seu Turno:</strong> Jogue normalmente. O Automa só ganha VP no seu turno se você ativar uma recompensa vermelha que beneficia "todos os outros jogadores" (ele ganha os VPs indicados).</li>
+                <li style="margin-bottom:8px;" data-i18n="ruleAutoma2"><strong>Turno do Automa:</strong> Clique em "Próximo Turno". O bot rolará os dados e revelará a carta do turno. Os dados rolam para você ativar suas recompensas vermelhas.</li>
+                <li style="margin-bottom:8px;" data-i18n="ruleAutoma3"><strong>Determinação da Linha Ativa:</strong> A carta mostra 3 linhas: Moedas/Nível 1 (topo), Renda/Nível 2 (meio) e VP/Nível 3 (baixo). Conforme acumula pontos de VP, o Automa sobe pelas linhas:
                     <ul style="margin-top:6px; color:#94a3b8;">
-                        <li>Se os VPs do Automa forem <strong>menores</strong> que o Limite (ex: 4.0 VP), use a linha de VP.</li>
-                        <li>Se VPs >= Limite, mas a Renda do Automa for menor que o Limite (ex: 15🌍), use a linha de Renda.</li>
-                        <li>Se Renda >= Limite, use a linha de Moedas.</li>
+                        <li>Se os VPs do Automa forem <strong>menores que o Limite de Renda</strong> (ex: &lt; 15 VP para Joanna), a linha ativa é a <strong>Linha 3 (VP / Nível 3 🏆)</strong>.</li>
+                        <li>Se os VPs atingirem o <strong>Limite de Renda</strong> mas forem menores que o Limite de Moedas (ex: 15 a 24 VP para Joanna), a linha ativa sobe para a <strong>Linha 2 (Renda / Nível 2 🌍)</strong>.</li>
+                        <li>Se os VPs atingirem o <strong>Limite de Moedas</strong> (ex: 25+ VP para Joanna), a linha ativa sobe para a <strong>Linha 1 (Moedas / Nível 1 🪙)</strong>.</li>
                     </ul>
                 </li>
-                <li style="margin-bottom:8px;" data-i18n="ruleAutoma4"><strong>Ação da Linha:</strong> Na linha ativada, observe qual espaço (1 a 6) tem um 'X'. <strong>Descarte</strong> a carta de nave daquele espaço no mercado central (níveis 1, 2 e 3 correspondem aos ícones). Em seguida, o Automa ganha a quantidade de VPs no foguete azul daquela linha. (Nota: o Automa nunca ganha moedas ou renda de verdade).</li>
-                <li data-i18n="ruleAutoma5"><strong>Ciclo do Deck:</strong> O deck tem 6 cartas. Quando sobrar apenas 1, ela será ignorada, o deck é re-embaralhado e o ciclo recomeça.</li>
+                <li style="margin-bottom:8px;" data-i18n="ruleAutoma4"><strong>Ação da Linha:</strong> Na linha ativada, observe qual espaço (1 a 6) tem um 'X'. <strong>Descarte</strong> a carta de nave daquele espaço no mercado central (níveis 1, 2 e 3 correspondem aos ícones). Em seguida, o Automa ganha a quantidade de VPs no foguete azul daquela linha.</li>
+                <li data-i18n="ruleAutoma5"><strong>Deck Exclusivo e Ciclo:</strong> Cada oponente (Joanna, Devin ou Clarie) possui seu baralho próprio de 6 cartas. Quando sobrar apenas 1 carta no deck, ela será ignorada, as 6 cartas são reembaralhadas e 1 carta é descartada para iniciar um novo ciclo.</li>
             </ul>
+            
+            <h3 style="color:var(--sb-accent); border-bottom:1px solid #334155; padding-bottom:4px;" data-i18n="ruleSoloTitle">Modo SoloPlay (Ataque à Base)</h3>
+            <ul style="padding-left:20px;">
+                <li style="margin-bottom:8px;" data-i18n="ruleSolo1">Neste modo você não joga contra um Automa com pontos, mas contra um deck de ataque que destrói suas posições.</li>
+                <li style="margin-bottom:8px;" data-i18n="ruleSolo2">Sempre que você usar uma ação de compra ou implantação, clique no botão correspondente na lateral esquerda. O bot sorteará cartas de ataque.</li>
+                <li style="margin-bottom:8px;" data-i18n="ruleSolo3">Cada carta sacada ataca um setor numérico da sua base. Coloque a carta do baralho de ataque invertida debaixo do setor atacado (ela funcionará como uma recompensa vermelha para você no futuro!).</li>
+                <li style="margin-bottom:8px;" data-i18n="ruleSolo4"><strong>Destruição:</strong> Se um mesmo setor acumular 4 cartas de dano, ele é permanentemente destruído. Retire as 4 cartas de dano e vire-as para cima bloqueando aquele setor. Se você perder 5 setores, você perde o jogo.</li>
+            </ul>
+        </div>
+    </div>
+</div>
             
             <h3 style="color:var(--sb-accent); border-bottom:1px solid #334155; padding-bottom:4px;" data-i18n="ruleSoloTitle">Modo SoloPlay (Ataque à Base)</h3>
             <ul style="padding-left:20px;">
@@ -382,7 +378,9 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
             pageTitle: "Space Base Bot",
             title: "Space Base Bot",
             subtitle: "Automa e Ataque à Base (SoloPlay)",
-            setupTitle: "Configuração do Jogo", physSetupTitle: "Setup Físico (Joanna):", physSetupDesc: "Coloque os 3 cubos da Joanna no 0 (VP, Moeda e Renda). Compre uma carta inicial Nível 1 aleatória para ela. Ela não recebe cartas iniciais de setor.",
+            setupTitle: "Configuração do Jogo",
+            physSetupTitle: "Setup Físico (Automa):",
+            physSetupDesc: "Coloque o cubo de pontuação (VP) do Automa no 0. Compre uma carta inicial Nível 1 aleatória para ele. Ele não recebe cartas iniciais de setor. Os jogadores começam com seus tabuleiros normais (cubos no 5🪙, 0🌍, 0🏆) e 1 nave inicial.",
             gameMode: "Modo de Jogo",
             modeJoanna: "Automa (Joanna/Devin/Clarie)",
             modeBaseAttack: "Ataque à Base (SoloPlay)",
@@ -396,24 +394,26 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
             startBtn: "Iniciar Partida",
             turnControl: "Controle do Turno",
             nextTurn: "Próximo Turno (Revelar Carta)",
-            vpTracker: "Rastreador de VP (Opcional)",
+            automaTracksTitle: "Pontuação do Automa (VP)",
+            scoreCardVPBtn: "+ Pontuar VP da Carta Atual",
+            playerVpTracker: "Seus Pontos (VP Jogador)",
             baseAttackPrompt: "O que você comprou no seu turno?",
             baColony: "Comprei Colony Ship (Ataque: 0)",
             baShip: "Comprei Ship (Ataque: 2)",
             baDidNotBuy: "Não comprei nada (Ataque baseado na sua renda):",
             shuffleDeckBtn: "Embaralhar Descarte no Deck",
             botArea: "Área do Bot",
-            cardInstruction: "Mova o cubo do automa na sua base e escolha a linha correspondente à trilha onde o cubo está.",
+            cardInstruction: "Descarte a nave do mercado central indicada pelo 'X' na linha ativa e pontue os VPs no foguete azul.",
             emptyLog: "Aguardando a resolução do seu turno...",
             rulesTitle: "Regras & Ajuda",
             newGame: "🔄 Nova Partida",
             attackMessage: "Oponentes atacam com {n} nave(s) nos setores:",
             ruleAutomaTitle: 'Modo Automa (Joanna, Devin, Clarie)',
-            ruleAutoma1: '<strong>Seu Turno:</strong> Jogue normalmente. O Automa só ganha coisas no seu turno se você ativar uma recompensa vermelha que beneficia "todos os outros jogadores" (ele ganha os VPs indicados, mas ignora moedas/renda).',
-            ruleAutoma2: '<strong>Turno do Automa:</strong> Clique em "Próximo Turno". O bot rolará os dados e revelará a carta do turno. Os dados rolam para você ativar recompensas vermelhas.',
-            ruleAutoma3: '<strong>Verificar Trilhas:</strong> A carta mostra 3 trilhas: VPs (topo), Renda (meio) e Moedas (baixo). O Automa age dependendo do seu progresso:<br><ul style="margin-top:6px; color:#94a3b8;"><li>Se os VPs do Automa forem <strong>menores</strong> que o Limite (ex: 4.0 VP), use a linha de VP.</li><li>Se VPs >= Limite, mas a Renda do Automa for menor que o Limite (ex: 15🌍), use a linha de Renda.</li><li>Se Renda >= Limite, use a linha de Moedas.</li></ul>',
-            ruleAutoma4: '<strong>Ação da Linha:</strong> Na linha ativada, observe qual espaço (1 a 6) tem um \'X\'. <strong>Descarte</strong> a carta de nave daquele espaço no mercado central (níveis 1, 2 e 3 correspondem aos ícones). Em seguida, o Automa ganha a quantidade de VPs no foguete azul daquela linha. (Nota: o Automa nunca ganha moedas ou renda de verdade).',
-            ruleAutoma5: '<strong>Ciclo do Deck:</strong> O deck tem 6 cartas. Quando sobrar apenas 1, ela será ignorada, o deck é re-embaralhado e o ciclo recomeça.',
+            ruleAutoma1: '<strong>Seu Turno:</strong> Jogue normalmente. O Automa só ganha VP no seu turno se você ativar uma recompensa vermelha que beneficia "todos os outros jogadores" (ele ganha os VPs indicados).',
+            ruleAutoma2: '<strong>Turno do Automa:</strong> Clique em "Próximo Turno". O bot rolará os dados e revelará a carta do turno. Os dados rolam para você ativar suas recompensas vermelhas.',
+            ruleAutoma3: '<strong>Determinação da Linha Ativa:</strong> A carta mostra 3 linhas: Moedas/Nível 1 (topo), Renda/Nível 2 (meio) e VP/Nível 3 (baixo). Conforme acumula pontos de VP, o Automa sobe pelas linhas:<br><ul style="margin-top:6px; color:#94a3b8;"><li>Se os VPs do Automa forem <strong>menores que o Limite de Renda</strong> (ex: &lt; 15 VP para Joanna), a linha ativa é a <strong>Linha 3 (VP / Nível 3 🏆)</strong>.</li><li>Se os VPs atingirem o <strong>Limite de Renda</strong> mas forem menores que o Limite de Moedas (ex: 15 a 24 VP para Joanna), a linha ativa sobe para a <strong>Linha 2 (Renda / Nível 2 🌍)</strong>.</li><li>Se os VPs atingirem o <strong>Limite de Moedas</strong> (ex: 25+ VP para Joanna), a linha ativa sobe para a <strong>Linha 1 (Moedas / Nível 1 🪙)</strong>.</li></ul>',
+            ruleAutoma4: '<strong>Ação da Linha:</strong> Na linha ativada, observe qual espaço (1 a 6) tem um \'X\'. <strong>Descarte</strong> a carta de nave daquele espaço no mercado central (níveis 1, 2 e 3 correspondem aos ícones). Em seguida, o Automa ganha a quantidade de VPs no foguete azul daquela linha.',
+            ruleAutoma5: '<strong>Deck Exclusivo e Ciclo:</strong> Cada oponente (Joanna, Devin ou Clarie) possui seu baralho próprio de 6 cartas. Quando sobrar apenas 1 carta no deck, ela será ignorada, as 6 cartas são reembaralhadas e 1 carta é descartada para iniciar um novo ciclo.',
             ruleSoloTitle: 'Modo SoloPlay (Ataque à Base)',
             ruleSolo1: 'Neste modo você não joga contra um Automa com pontos, mas contra um deck de ataque que destrói suas posições.',
             ruleSolo2: 'Sempre que você usar uma ação de compra ou implantação, clique no botão correspondente na lateral esquerda. O bot sorteará cartas de ataque.',
@@ -425,17 +425,15 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
             manualDicePrompt: 'Dados físicos: informe o resultado dos dois dados:',
             die1Label: 'Dado 1',
             die2Label: 'Dado 2',
-            sumLabel: 'Soma',
-            automaTracksTitle: 'Trilhas do Automa',
-            trackVP: '🏆 VP:',
-            trackIncome: '🌍 Renda:',
-            trackCoins: '🪙 Moedas:'
+            sumLabel: 'Soma'
         },
         en: {
             pageTitle: "Space Base Bot",
             title: "Space Base Bot",
             subtitle: "Automa and Base Attack (SoloPlay)",
-            setupTitle: "Game Setup", physSetupTitle: "Physical Setup (Joanna):", physSetupDesc: "Place Joanna\'s 3 cubes on 0 (VP, Coins, and Income). Draw one random Level 1 starting card for her. She does not get sector starting cards.",
+            setupTitle: "Game Setup",
+            physSetupTitle: "Physical Setup (Automa):",
+            physSetupDesc: "Place the Automa's VP score cube on 0. Draw one random Level 1 starting card for it. It does not get sector starting cards. Players start with their normal boards (cubes on 5🪙, 0🌍, 0🏆) and 1 starting ship.",
             gameMode: "Game Mode",
             modeJoanna: "Official Automa (Joanna/Devin/Clarie)",
             modeBaseAttack: "Base Attack (SoloPlay)",
@@ -449,24 +447,26 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
             startBtn: "Start Game",
             turnControl: "Turn Control",
             nextTurn: "Next Turn (Reveal Card)",
-            vpTracker: "VP Tracker (Optional)",
+            automaTracksTitle: "Automa Score (VP)",
+            scoreCardVPBtn: "+ Score Current Card VP",
+            playerVpTracker: "Your Score (Player VP)",
             baseAttackPrompt: "What did you buy on your turn?",
             baColony: "Bought Colony Ship (Attack: 0)",
             baShip: "Bought Ship (Attack: 2)",
             baDidNotBuy: "Did not buy (Attack based on income):",
             shuffleDeckBtn: "Shuffle Discard into Deck",
             botArea: "Bot Area",
-            cardInstruction: "Move the automa's cube on your board and choose the row matching the track the cube is on.",
+            cardInstruction: "Discard the ship from the central market at the 'X' slot of the active row and score the VPs in the blue rocket.",
             emptyLog: "Waiting for your turn resolution...",
             rulesTitle: "Rules & Help",
             newGame: "🔄 New Game",
             attackMessage: "Opponents attack with {n} ship(s) in sectors:",
             ruleAutomaTitle: 'Automa Mode (Joanna, Devin, Clarie)',
-            ruleAutoma1: '<strong>Your Turn:</strong> Play normally. The Automa only gains things on your turn if you trigger a red reward that benefits "all other players" (it gains the indicated VPs, but ignores coins/income).',
-            ruleAutoma2: '<strong>Automa\'s Turn:</strong> Click "Next Turn". The bot will roll dice and reveal the turn card. The dice roll is for you to activate your red rewards.',
-            ruleAutoma3: '<strong>Check Tracks:</strong> The card shows 3 tracks: VPs (top), Income (middle), and Coins (bottom). The Automa acts depending on its progress:<br><ul style="margin-top:6px; color:#94a3b8;"><li>If Automa VPs are <strong>less</strong> than the Limit (e.g. 4.0 VP), use the VP track.</li><li>If VPs >= Limit, but Automa Income is less than the Limit (e.g. 15🌍), use the Income track.</li><li>If Income >= Limit, use the Coins track.</li></ul>',
-            ruleAutoma4: '<strong>Track Action:</strong> On the active track, check which space (1 to 6) has an \'X\'. <strong>Discard</strong> the ship card from that space in the central market (levels 1, 2, and 3 correspond to the icons). Then, the Automa gains the amount of VPs in the blue rocket of that track. (Note: the Automa never actually gains coins or income).',
-            ruleAutoma5: '<strong>Deck Cycle:</strong> The deck has 6 cards. When only 1 is left, it is ignored, the deck is reshuffled, and the cycle restarts.',
+            ruleAutoma1: '<strong>Your Turn:</strong> Play normally. The Automa only scores VP on your turn if you trigger a red reward that benefits "all other players" (it gains the indicated VPs).',
+            ruleAutoma2: '<strong>Automa\'s Turn:</strong> Click "Next Turn". The bot will roll dice and reveal the turn card. Use the dice roll to trigger your red rewards.',
+            ruleAutoma3: '<strong>Active Track Determination:</strong> The card shows 3 rows: Coins/Tier 1 (top), Income/Tier 2 (middle), and VP/Tier 3 (bottom). As the Automa scores VPs, it moves up the tracks:<br><ul style="margin-top:6px; color:#94a3b8;"><li>If Automa VP is <strong>less than Income Threshold</strong> (e.g. &lt; 15 VP for Joanna), the active row is <strong>Row 3 (VP / Tier 3 🏆)</strong>.</li><li>If VP reaches the <strong>Income Threshold</strong> but is below Coins Threshold (e.g. 15 to 24 VP for Joanna), the active row moves up to <strong>Row 2 (Income / Tier 2 🌍)</strong>.</li><li>If VP reaches the <strong>Coins Threshold</strong> (e.g. 25+ VP for Joanna), the active row moves up to <strong>Row 1 (Coins / Tier 1 🪙)</strong>.</li></ul>',
+            ruleAutoma4: '<strong>Track Action:</strong> On the active row, find the slot (1 to 6) marked with an \'X\'. <strong>Discard</strong> the ship card from that market slot in the central market (Tier 1, 2, or 3). Then, the Automa gains the VPs shown in the blue rocket.',
+            ruleAutoma5: '<strong>Unique Deck &amp; Cycle:</strong> Each opponent (Joanna, Devin, or Clarie) has its own deck of 6 cards. When only 1 card remains in the deck, it is ignored, all 6 cards are reshuffled, and 1 card is discarded to start a new cycle.',
             ruleSoloTitle: 'SoloPlay Mode (Base Attack)',
             ruleSolo1: 'In this mode you do not play against a scoring Automa, but against an attack deck that destroys your stations.',
             ruleSolo2: 'Whenever you use a buy or deploy action, click the corresponding button on the left sidebar. The bot will draw attack cards.',
@@ -478,11 +478,7 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
             manualDicePrompt: 'Physical dice: enter the result of both dice:',
             die1Label: 'Die 1',
             die2Label: 'Die 2',
-            sumLabel: 'Sum',
-            automaTracksTitle: 'Automa Tracks',
-            trackVP: '🏆 VP:',
-            trackIncome: '🌍 Income:',
-            trackCoins: '🪙 Coins:'
+            sumLabel: 'Sum'
         }
     };
 
@@ -508,19 +504,18 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
         localStorage.setItem('boardbots_lang', currentLang);
         applyI18n();
         updateDeckStatusText();
+        updateAutomaTrackUI();
     };
 
     // --- State Variables ---
     let gameMode = 'joanna';
     let diceMode = 'virtual';
-    let difficulty = 'easy'; // easy, medium, hard
+    let difficulty = 'easy'; // easy (joanna), medium (devin), hard (clarie)
     
     // Joanna State
     let automaDeck = [0, 1, 2, 3, 4, 5];
     let automaDiscard = [];
     let automaVP = 0;
-    let automaIncome = 0;
-    let automaCoins = 0;
     
     // Base Attack State
     let attackDeck = [];
@@ -534,7 +529,7 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
             localStorage.setItem(LS_KEY, JSON.stringify({
                 gameMode, diceMode, difficulty,
                 automaDeck, automaDiscard,
-                automaVP, automaIncome, automaCoins,
+                automaVP,
                 attackDeck, attackDiscard, sectorDamage,
                 vpCounter: parseInt(document.getElementById('vpCounter')?.value || 0)
             }));
@@ -552,8 +547,6 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
             automaDeck = s.automaDeck ?? [0,1,2,3,4,5];
             automaDiscard = s.automaDiscard ?? [];
             automaVP = s.automaVP ?? 0;
-            automaIncome = s.automaIncome ?? 0;
-            automaCoins = s.automaCoins ?? 0;
             attackDeck = s.attackDeck ?? [];
             attackDiscard = s.attackDiscard ?? [];
             sectorDamage = s.sectorDamage ?? [0,0,0,0,0,0,0,0,0,0,0,0];
@@ -561,37 +554,64 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
         } catch(e) { return false; }
     }
 
-    // --- Joanna Card Data ---
-    // Approximated 6-card distribution for the automa
-    const automaCardsData = [
-        { r1: {x:4, vp:1}, r2: {x:3, vp:1}, r3: {x:1, vp:1} },
-        { r1: {x:5, vp:1}, r2: {x:4, vp:1}, r3: {x:2, vp:1} },
-        { r1: {x:2, vp:2}, r2: {x:5, vp:2}, r3: {x:3, vp:2} },
-        { r1: {x:3, vp:2}, r2: {x:6, vp:2}, r3: {x:4, vp:2} },
-        { r1: {x:4, vp:3}, r2: {x:2, vp:3}, r3: {x:5, vp:3} },
-        { r1: {x:6, vp:3}, r2: {x:1, vp:3}, r3: {x:6, vp:3} }
-    ];
-
-    const diffConfigs = {
-        easy:   { name: 'Joanna', t_coins: 25, t_income: 15, vp_mod: 0 },
-        medium: { name: 'Devin',  t_coins: 28, t_income: 12, vp_mod: 1 },
-        hard:   { name: 'Clarie', t_coins: 26, t_income: 14, vp_mod: 2 }
+    // --- Automa Cards Data (3 unique sets: Joanna, Devin, Clarie) ---
+    const automaCardsData = {
+        joanna: [
+            { r1: {x:5, vp:1}, r2: {x:3, vp:1}, r3: {x:1, vp:1} },
+            { r1: {x:6, vp:1}, r2: {x:4, vp:1}, r3: {x:2, vp:1} },
+            { r1: {x:1, vp:1}, r2: {x:5, vp:1}, r3: {x:3, vp:2} },
+            { r1: {x:2, vp:2}, r2: {x:6, vp:2}, r3: {x:4, vp:2} },
+            { r1: {x:3, vp:3}, r2: {x:1, vp:2}, r3: {x:5, vp:2} },
+            { r1: {x:4, vp:3}, r2: {x:2, vp:3}, r3: {x:6, vp:3} }
+        ],
+        devin: [
+            { r1: {x:5, vp:1}, r2: {x:3, vp:1}, r3: {x:1, vp:1} },
+            { r1: {x:6, vp:1}, r2: {x:4, vp:1}, r3: {x:2, vp:2} },
+            { r1: {x:1, vp:2}, r2: {x:5, vp:2}, r3: {x:3, vp:2} },
+            { r1: {x:2, vp:2}, r2: {x:6, vp:2}, r3: {x:4, vp:2} },
+            { r1: {x:3, vp:3}, r2: {x:1, vp:3}, r3: {x:5, vp:2} },
+            { r1: {x:4, vp:3}, r2: {x:2, vp:3}, r3: {x:6, vp:3} }
+        ],
+        clarie: [
+            { r1: {x:5, vp:1}, r2: {x:3, vp:1}, r3: {x:1, vp:1} },
+            { r1: {x:6, vp:2}, r2: {x:4, vp:2}, r3: {x:2, vp:2} },
+            { r1: {x:1, vp:2}, r2: {x:5, vp:2}, r3: {x:3, vp:2} },
+            { r1: {x:2, vp:2}, r2: {x:6, vp:2}, r3: {x:4, vp:2} },
+            { r1: {x:3, vp:3}, r2: {x:1, vp:3}, r3: {x:5, vp:2} },
+            { r1: {x:4, vp:4}, r2: {x:2, vp:4}, r3: {x:6, vp:4} }
+        ]
     };
 
+    const diffConfigs = {
+        easy:   { key: 'joanna', name: 'Joanna', t_coins: 25, t_income: 15 },
+        medium: { key: 'devin',  name: 'Devin',  t_coins: 28, t_income: 12 },
+        hard:   { key: 'clarie', name: 'Clarie', t_coins: 26, t_income: 14 }
+    };
+
+    function getAutomaCardDeck() {
+        const conf = diffConfigs[difficulty] || diffConfigs.easy;
+        return automaCardsData[conf.key] || automaCardsData.joanna;
+    }
+
     // --- Logic ---
-    function updateSetupUI() { logEvent("updateSetupUI called. Mode=" + document.getElementById("gameMode").value);
+    function updateSetupUI() {
+        logEvent("updateSetupUI called. Mode=" + document.getElementById("gameMode").value);
         gameMode = document.getElementById('gameMode').value;
         const titleEl = document.querySelector('[data-i18n="physSetupTitle"]');
         const descEl = document.querySelector('[data-i18n="physSetupDesc"]');
         
         if(gameMode === 'joanna') {
             document.getElementById('joannaDiffRow').style.display = 'block';
-            titleEl.innerHTML = currentLang === 'en' ? 'Physical Setup (Joanna):' : 'Setup Físico (Joanna):';
-            descEl.innerHTML = currentLang === 'en' ? 'Place Joanna\'s 3 cubes on 0 (VP, Coins, and Income). Draw one random Level 1 starting card for her. She does not get sector starting cards. Players start with their normal boards (cubes on 5, 0, 0) and 1 starting ship.' : 'Coloque os 3 cubos da Joanna no 0 (VP, Moeda e Renda). Compre uma carta inicial Nível 1 aleatória para ela. Ela não recebe cartas iniciais de setor. Os jogadores começam com seus tabuleiros normais (cubos no 5, 0, 0) e 1 nave inicial.';
+            titleEl.innerHTML = currentLang === 'en' ? 'Physical Setup (Automa):' : 'Setup Físico (Automa):';
+            descEl.innerHTML = currentLang === 'en'
+                ? 'Place the Automa\'s VP score cube on 0. Draw one random Level 1 starting card for it. It does not get sector starting cards. Players start with their normal boards (cubes on 5🪙, 0🌍, 0🏆) and 1 starting ship.'
+                : 'Coloque o cubo de pontuação (VP) do Automa no 0. Compre uma carta inicial Nível 1 aleatória para ele. Ele não recebe cartas iniciais de setor. Os jogadores começam com seus tabuleiros normais (cubos no 5🪙, 0🌍, 0🏆) e 1 nave inicial.';
         } else {
             document.getElementById('joannaDiffRow').style.display = 'none';
             titleEl.innerHTML = currentLang === 'en' ? 'Physical Setup (Base Attack):' : 'Setup Físico (Ataque à Base):';
-            descEl.innerHTML = currentLang === 'en' ? 'There is no Automa board. Set up your normal player board (cubes on 5, 0, 0) and 1 starting ship. Every time you buy/deploy a card, click the corresponding button on the bot.' : 'Não há tabuleiro de Automa. Prepare seu tabuleiro normal de jogador (cubos no 5, 0, 0) e 1 nave inicial. Sempre que você comprar/implantar uma carta, clique no botão correspondente no bot.';
+            descEl.innerHTML = currentLang === 'en'
+                ? 'There is no Automa board. Set up your normal player board (cubes on 5🪙, 0🌍, 0🏆) and 1 starting ship. Every time you buy/deploy a card, click the corresponding button on the bot.'
+                : 'Não há tabuleiro de Automa. Prepare seu tabuleiro normal de jogador (cubos no 5🪙, 0🌍, 0🏆) e 1 nave inicial. Sempre que você comprar/implantar uma carta, clique no botão correspondente no bot.';
         }
     }
 
@@ -599,11 +619,14 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
     let diceBox = null;
     let diceBoxReady = false;
 
-        async function initDiceBox() { logEvent("initDiceBox() called. diceBoxReady=" + diceBoxReady);
+    async function initDiceBox() {
+        logEvent("initDiceBox() called. diceBoxReady=" + diceBoxReady);
         if(diceBox) return;
         try {
-            logEvent("Fetching dice-box import..."); const { default: DiceBox } = await import('https://unpkg.com/@3d-dice/dice-box@1.1.3/dist/dice-box.es.min.js');
-            logEvent('DiceBox class imported successfully'); diceBox = new DiceBox({
+            logEvent("Fetching dice-box import...");
+            const { default: DiceBox } = await import('https://unpkg.com/@3d-dice/dice-box@1.1.3/dist/dice-box.es.min.js');
+            logEvent('DiceBox class imported successfully');
+            diceBox = new DiceBox({
                 container: '#dice-box',
                 assetPath: 'assets/',
                 origin: 'https://unpkg.com/@3d-dice/dice-box@1.1.3/dist/',
@@ -622,7 +645,8 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
             ]);
             logEvent('Race finished successfully');
     
-            diceBoxReady = true; logEvent("diceBoxReady set to TRUE");
+            diceBoxReady = true;
+            logEvent("diceBoxReady set to TRUE");
             
             diceBox.onRollComplete = (results) => {
                 logEvent("onRollComplete triggered");
@@ -639,13 +663,15 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
                 txt.style.display = 'block';
                 txt.innerText = `🎲 ${d1} | ${d2}  (Soma: ${d1+d2})`;
             };
-        } catch(err) { logEvent("initDiceBox catch block: " + err.message); 
+        } catch(err) {
+            logEvent("initDiceBox catch block: " + err.message); 
             console.error("Failed to load dice-box", err);
             diceBoxReady = false;
-         }
+        }
     }
 
-    function rollVirtualDice() { logEvent("rollVirtualDice() called. diceBoxReady=" + diceBoxReady);
+    function rollVirtualDice() {
+        logEvent("rollVirtualDice() called. diceBoxReady=" + diceBoxReady);
         if(diceMode !== 'virtual') return;
         if(!diceBoxReady) {
             // fallback
@@ -657,10 +683,11 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
             return;
         }
         
-        
         try {
             document.getElementById('diceResultText').style.display = 'none';
-            logEvent("Calling diceBox.roll('2d6')"); diceBox.roll('2d6').then(r => logEvent("diceBox.roll resolved")).catch(err => { logEvent("diceBox.roll catch: " + err.message);
+            logEvent("Calling diceBox.roll('2d6')");
+            diceBox.roll('2d6').then(r => logEvent("diceBox.roll resolved")).catch(err => {
+                logEvent("diceBox.roll catch: " + err.message);
                 console.error(err);
                 diceBoxReady = false;
                 rollVirtualDice(); // triggers fallback
@@ -670,7 +697,6 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
             rollVirtualDice();
         }
     }
-
 
     let manualD1 = 1;
     let manualD2 = 1;
@@ -686,8 +712,8 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
         document.getElementById('manualDiceSum').textContent = manualD1 + manualD2;
     };
 
-
-    window.startGame = async function() { logEvent("startGame() - Mode:" + document.getElementById("gameMode").value + " Dice:" + document.getElementById("diceMode").value);
+    window.startGame = async function() {
+        logEvent("startGame() - Mode:" + document.getElementById("gameMode").value + " Dice:" + document.getElementById("diceMode").value);
         gameMode = document.getElementById('gameMode').value;
         diceMode = document.getElementById('diceMode').value;
         difficulty = document.getElementById('difficulty').value;
@@ -710,12 +736,14 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
             document.getElementById('joannaCardDisplay').style.display = 'block';
             document.getElementById('attackLogContainer').style.display = 'none';
             
-            const conf = diffConfigs[difficulty];
+            const conf = diffConfigs[difficulty] || diffConfigs.easy;
             document.getElementById('cardDiffName').innerText = conf.name;
-            document.getElementById('vpThresholds').innerText = `${conf.t_coins}🪙 | ${conf.t_income}🌍 | 4.0VP`;
+            document.getElementById('vpThresholds').innerText = `🌍 ${conf.t_income} VP | 🪙 ${conf.t_coins} VP`;
             
+            automaDeck = [0, 1, 2, 3, 4, 5];
             shuffleArray(automaDeck);
-            // Mostrar a primeira carta e rolar dados imediatamente:
+            automaDiscard = [];
+            // Reveal first card and roll initial dice
             nextJoannaTurn(false);
         } else {
             document.getElementById('joannaControls').style.display = 'none';
@@ -724,75 +752,107 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
             document.getElementById('attackLogContainer').style.display = 'block';
             
             initAttackDeck();
-            // Rolar os dados iniciais para o jogador no modo Base Attack
             rollVirtualDice();
         }
         saveState();
     };
 
-    // --- Smart Track Tracker for Automa ---
-    window.changeAutomaTrack = function(track, delta) {
-        if (track === 'vp') automaVP = Math.max(0, automaVP + delta);
-        else if (track === 'income') automaIncome = Math.max(0, automaIncome + delta);
-        else if (track === 'coins') automaCoins = Math.max(0, automaCoins + delta);
+    // --- Automa Score & Active Track Tracker ---
+    window.changeAutomaVP = function(delta) {
+        automaVP = Math.max(0, automaVP + delta);
+        updateAutomaTrackUI();
+        saveState();
+    };
+
+    window.setAutomaVP = function(val) {
+        automaVP = Math.max(0, parseInt(val) || 0);
+        updateAutomaTrackUI();
+        saveState();
+    };
+
+    window.scoreCurrentCardVP = function() {
+        if (automaDiscard.length === 0) return;
+        const deck = getAutomaCardDeck();
+        const cardData = deck[automaDiscard[automaDiscard.length - 1]];
+        if (!cardData) return;
+
+        const conf = diffConfigs[difficulty] || diffConfigs.easy;
+        let earned = 0;
+        if (automaVP < conf.t_income) {
+            earned = cardData.r3.vp;
+        } else if (automaVP < conf.t_coins) {
+            earned = cardData.r2.vp;
+        } else {
+            earned = cardData.r1.vp;
+        }
+
+        automaVP += earned;
         updateAutomaTrackUI();
         saveState();
     };
 
     function updateAutomaTrackUI() {
-        const vpEl = document.getElementById('automaVPVal');
-        const incEl = document.getElementById('automaIncomeVal');
-        const coinsEl = document.getElementById('automaCoinsVal');
-        if (!vpEl) return;
-        
-        vpEl.innerText = automaVP;
-        incEl.innerText = automaIncome;
-        coinsEl.innerText = automaCoins;
+        const vpInput = document.getElementById('automaVPVal');
+        if (vpInput) vpInput.value = automaVP;
 
         const conf = diffConfigs[difficulty] || diffConfigs.easy;
 
-        let activeRowKey = 'coins';
-        if (automaVP < 4) {
+        let activeRowKey = 'vp'; // default: Row 3 (VP / Tier 3)
+        let activeRowIndex = 2; // 0: r1, 1: r2, 2: r3
+
+        if (automaVP < conf.t_income) {
             activeRowKey = 'vp';
-        } else if (automaIncome < conf.t_income) {
+            activeRowIndex = 2; // Row 3
+        } else if (automaVP < conf.t_coins) {
             activeRowKey = 'income';
+            activeRowIndex = 1; // Row 2
         } else {
             activeRowKey = 'coins';
+            activeRowIndex = 0; // Row 1
         }
 
         const banner = document.getElementById('automaActiveRow');
         if (banner) {
             banner.style.display = 'block';
             if (activeRowKey === 'vp') {
-                banner.innerText = currentLang === 'pt' ? '🏆 Linha Ativa: VP (Linha 1 — Topo)' : '🏆 Active: VP Track (Row 1 — Top)';
+                banner.innerHTML = currentLang === 'pt'
+                    ? `🏆 <strong>Linha Ativa: VP (Linha 3 — Nível 3)</strong><br><span style="font-size:0.85em; font-weight:normal; color:#cbd5e1;">${automaVP} &lt; ${conf.t_income} VP (Limite Renda 🌍)</span>`
+                    : `🏆 <strong>Active: VP Track (Row 3 — Tier 3)</strong><br><span style="font-size:0.85em; font-weight:normal; color:#cbd5e1;">${automaVP} &lt; ${conf.t_income} VP (Income Threshold 🌍)</span>`;
             } else if (activeRowKey === 'income') {
-                banner.innerText = currentLang === 'pt' ? '🌍 Linha Ativa: Renda (Linha 2 — Meio)' : '🌍 Active: Income Track (Row 2 — Mid)';
+                banner.innerHTML = currentLang === 'pt'
+                    ? `🌍 <strong>Linha Ativa: Renda (Linha 2 — Nível 2)</strong><br><span style="font-size:0.85em; font-weight:normal; color:#cbd5e1;">${automaVP} ≥ ${conf.t_income} VP e &lt; ${conf.t_coins} VP (Limite Moedas 🪙)</span>`
+                    : `🌍 <strong>Active: Income Track (Row 2 — Tier 2)</strong><br><span style="font-size:0.85em; font-weight:normal; color:#cbd5e1;">${automaVP} ≥ ${conf.t_income} VP &amp; &lt; ${conf.t_coins} VP (Coins Threshold 🪙)</span>`;
             } else {
-                banner.innerText = currentLang === 'pt' ? '🪙 Linha Ativa: Moedas (Linha 3 — Baixo)' : '🪙 Active: Coins Track (Row 3 — Bottom)';
+                banner.innerHTML = currentLang === 'pt'
+                    ? `🪙 <strong>Linha Ativa: Moedas (Linha 1 — Nível 1)</strong><br><span style="font-size:0.85em; font-weight:normal; color:#cbd5e1;">${automaVP} ≥ ${conf.t_coins} VP (Limite Moedas 🪙)</span>`
+                    : `🪙 <strong>Active: Coins Track (Row 1 — Tier 1)</strong><br><span style="font-size:0.85em; font-weight:normal; color:#cbd5e1;">${automaVP} ≥ ${conf.t_coins} VP (Coins Threshold 🪙)</span>`;
             }
-        }
-
-        const vpStat = document.getElementById('automaVPStatus');
-        if (vpStat) {
-            vpStat.innerText = automaVP < 4 ? `< 4.0 (${currentLang==='pt'?'Ativa':'Active'})` : `≥ 4.0 ✓`;
-        }
-        const incStat = document.getElementById('automaIncomeStatus');
-        if (incStat) {
-            incStat.innerText = automaIncome < conf.t_income ? `< ${conf.t_income} (${currentLang==='pt'?'Ativa':'Active'})` : `≥ ${conf.t_income} ✓`;
         }
 
         // Highlight active card row
         const rows = document.querySelectorAll('.card-row');
-        rows.forEach(r => { r.style.boxShadow = ''; r.style.background = ''; });
-        const rowMap = { vp: 0, income: 1, coins: 2 };
-        if (rows[rowMap[activeRowKey]]) {
-            rows[rowMap[activeRowKey]].style.boxShadow = '0 0 0 3px #3b82f6';
-            rows[rowMap[activeRowKey]].style.background = 'rgba(59, 130, 246, 0.08)';
-        }
+        rows.forEach((r, idx) => {
+            if (idx === activeRowIndex) {
+                if (activeRowKey === 'vp') {
+                    r.style.boxShadow = '0 0 0 3px #f59e0b';
+                    r.style.background = '#fef3c7';
+                } else if (activeRowKey === 'income') {
+                    r.style.boxShadow = '0 0 0 3px #10b981';
+                    r.style.background = '#d1fae5';
+                } else {
+                    r.style.boxShadow = '0 0 0 3px #3b82f6';
+                    r.style.background = '#dbeafe';
+                }
+            } else {
+                r.style.boxShadow = '';
+                r.style.background = '#f1f5f9';
+            }
+        });
     }
 
-    // --- Joanna Logic ---
-    window.nextJoannaTurn = function(skipRoll = false) { logEvent("nextJoannaTurn called. skipRoll=" + skipRoll + " Deck:" + automaDeck.length + " Discard:" + automaDiscard.length);
+    // --- Automa Turn & Card Logic ---
+    window.nextJoannaTurn = function(skipRoll = false) {
+        logEvent("nextJoannaTurn called. skipRoll=" + skipRoll + " Deck:" + automaDeck.length + " Discard:" + automaDiscard.length);
         if (automaDeck.length <= 1) {
             // "Whenever Joanna has one card left... shuffle all back... skip one card"
             automaDeck = [0, 1, 2, 3, 4, 5];
@@ -802,7 +862,8 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
             automaDiscard = [];
         }
         
-        const cardIndex = automaDeck.pop(); logEvent("Drew Joanna card index " + cardIndex);
+        const cardIndex = automaDeck.pop();
+        logEvent("Drew Joanna card index " + cardIndex);
         automaDiscard.push(cardIndex);
         
         renderJoannaCard(cardIndex);
@@ -810,11 +871,11 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
         updateAutomaTrackUI();
         if (!skipRoll) rollVirtualDice();
         saveState();
-    }
+    };
 
     function renderJoannaCard(index) {
-        const data = automaCardsData[index];
-        const conf = diffConfigs[difficulty];
+        const deck = getAutomaCardDeck();
+        const data = deck[index] || deck[0];
         
         function renderRow(rowId, rowData) {
             const container = document.getElementById(`row${rowId}Ships`);
@@ -826,12 +887,7 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
                     container.innerHTML += `<div class="ship-slot"></div>`;
                 }
             }
-            // Add VP mod for devin/clarie for higher VP values (e.g. if base vp >= 2, add mod)
-            let finalVP = rowData.vp;
-            if (finalVP >= 2 && conf.vp_mod > 0) {
-                finalVP += conf.vp_mod;
-            }
-            document.getElementById(`row${rowId}VP`).innerText = finalVP;
+            document.getElementById(`row${rowId}VP`).innerText = rowData.vp;
         }
 
         renderRow(1, data.r1);
@@ -846,7 +902,7 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
         if(val < 0) val = 0;
         input.value = val;
         saveState();
-    }
+    };
 
     // --- Base Attack Logic ---
     function initAttackDeck() {
@@ -919,7 +975,7 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
         updateDeckStatusText();
         rollVirtualDice();
         saveState();
-    }
+    };
 
     window.shuffleAttackDeck = function() {
         attackDeck = attackDeck.concat(attackDiscard);
@@ -936,7 +992,7 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
         li.innerHTML = `<div style="color:#3b82f6; font-weight:bold; text-align:center;">${t('shuffledLog')}</div>`;
         log.prepend(li);
         saveState();
-    }
+    };
 
     function updateDeckStatusText() {
         if(gameMode === 'joanna') {
@@ -945,6 +1001,13 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
         } else {
             let txt = currentLang === 'en' ? `Attack Deck: ${attackDeck.length}/48` : `Baralho de Ataque: ${attackDeck.length}/48`;
             document.getElementById('baDeckStatus').innerText = txt;
+        }
+    }
+
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
         }
     }
 
@@ -965,7 +1028,7 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
             
             const conf = diffConfigs[difficulty] || diffConfigs.easy;
             document.getElementById('cardDiffName').textContent = conf.name;
-            document.getElementById('vpThresholds').innerText = `${conf.t_coins}🪙 | ${conf.t_income}🌍 | 4.0VP`;
+            document.getElementById('vpThresholds').innerText = `🌍 ${conf.t_income} VP | 🪙 ${conf.t_coins} VP`;
             
             if (automaDiscard.length > 0) {
                 renderJoannaCard(automaDiscard[automaDiscard.length - 1]);
