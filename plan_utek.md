@@ -85,6 +85,9 @@ Implementado em `bots/utek_bot_v2.html`:
 - Criada composição responsiva para setup, tracker, pontuação, assistência, guerra e histórico.
 - Aplicada direção visual de mesa de reino medieval, com estandarte, pergaminho, madeira, brasões e acentos de floresta/bordô/dourado.
 - Neutralizado o bloco duplicado de estilos no final do HTML para evitar sobrescritas acidentais.
+- Restaurado o botão de café como link compacto direto, sem aplicar o seletor incorreto de link-filho.
+- Adicionadas as regras visuais da Bússola Oficial: ponteiro, marcações, rótulo da rolagem, badge de fase e estado noturno.
+- Corrigida a geometria final do ponteiro e das marcações da Bússola, que estavam sendo manipuladas pelo JavaScript sem estilos correspondentes.
 - Mantida a alternância entre modo GJJ e Modo Oficial, sem alteração da lógica de turnos ou pontuação.
 
 Validação concluída:
@@ -95,3 +98,6 @@ Validação concluída:
 - Setup e jogo alternam corretamente.
 - Modos GJJ e Oficial exibem apenas seus blocos correspondentes.
 - Partida iniciou e renderizou tracker, Bússola, assistência, resolvedor de guerra e histórico sem erros de página.
+- Bússola Oficial testada com rolagem real e ponteiro girando para o número/ação resultante.
+- Botão de café medido em 185×44 px no mobile, sem dimensões exageradas.
+- Bússola Oficial medida em 240×240 px no mobile, com 12 marcações, ponteiro rotacionado e rolagem exibida no centro.
