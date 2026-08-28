@@ -1,0 +1,2079 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Mistborn: Deckbuilding Game — Automa Solo & Co-op</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Cinzel+Decorative:wght@700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-0: #0a0c10;
+            --bg-1: #10141b;
+            --surface: #161b24;
+            --surface-2: #1e2532;
+            --surface-3: #283142;
+            --border: #2e394b;
+            --border-glow: rgba(0, 229, 255, 0.3);
+            --text: #f0f4f8;
+            --text-dim: #9aa8bc;
+            --text-muted: #627289;
+            
+            --atium: #00e5ff;
+            --atium-glow: rgba(0, 229, 255, 0.4);
+            --steel: #64b5f6;
+            --iron: #90a4ae;
+            --pewter: #e57373;
+            --tin: #81c784;
+            --zinc: #ffd54f;
+            --brass: #ffb74d;
+            --copper: #ff8a65;
+            --bronze: #ba68c8;
+            --duralumin: #fff176;
+            --gold: #d4af37;
+            --accent: #00e5ff;
+            
+            --danger: #ff5252;
+            --danger-soft: rgba(255, 82, 82, 0.15);
+            --success: #4caf50;
+            --warning: #ffb300;
+            
+            --font-display: 'Cinzel', serif;
+            --font-title: 'Cinzel Decorative', serif;
+            --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+            --radius-sm: 8px;
+            --radius: 12px;
+            --radius-lg: 18px;
+            --shadow-card: 0 8px 24px rgba(0, 0, 0, 0.45);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { -webkit-text-size-adjust: 100%; }
+        body {
+            font-family: var(--font-body);
+            background: 
+                radial-gradient(circle at 10% 0%, rgba(0, 229, 255, 0.05), transparent 45%),
+                radial-gradient(circle at 90% 100%, rgba(212, 175, 55, 0.04), transparent 40%),
+                radial-gradient(circle at 50% 50%, rgba(229, 115, 115, 0.03), transparent 60%),
+                linear-gradient(180deg, var(--bg-0) 0%, var(--bg-1) 100%);
+            background-attachment: fixed;
+            color: var(--text);
+            min-height: 100vh;
+            padding: 16px;
+            padding-left: max(16px, env(safe-area-inset-left));
+            padding-right: max(16px, env(safe-area-inset-right));
+            padding-bottom: max(32px, env(safe-area-inset-bottom));
+            -webkit-tap-highlight-color: transparent;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        .mist-layer {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            background: radial-gradient(ellipse at center, rgba(100, 181, 246, 0.03) 0%, transparent 70%);
+            opacity: 0.7;
+            animation: mistFloat 20s ease-in-out infinite alternate;
+        }
+        @keyframes mistFloat {
+            0% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-20px) scale(1.05); }
+            100% { transform: translateY(10px) scale(0.98); }
+        }
+
+        .app-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        .floating-controls {
+            position: fixed;
+            top: 14px;
+            right: 14px;
+            display: flex;
+            gap: 8px;
+            z-index: 100;
+        }
+        .btn-float {
+            background: rgba(22, 27, 36, 0.85);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border);
+            color: var(--text);
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.5);
+            transition: all 0.25s ease;
+            font-size: 14px;
+            font-weight: 700;
+        }
+        .btn-float:hover {
+            border-color: var(--atium);
+            box-shadow: 0 0 14px var(--atium-glow);
+            transform: translateY(-2px);
+        }
+
+        .hero {
+            position: relative;
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-card);
+            margin-bottom: 20px;
+            background: #000;
+        }
+        .hero img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            object-position: center 25%;
+            filter: brightness(0.65) contrast(1.15) saturate(1.1);
+            display: block;
+        }
+        .hero-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(10, 12, 16, 0.2) 0%, rgba(10, 12, 16, 0.95) 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 20px;
+        }
+        .hero-title {
+            font-family: var(--font-display);
+            font-size: 1.85rem;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            color: #fff;
+            text-shadow: 0 2px 12px rgba(0, 229, 255, 0.4);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .hero-badge {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            background: rgba(0, 229, 255, 0.15);
+            border: 1px solid var(--atium);
+            color: var(--atium);
+            font-weight: 700;
+        }
+        .hero-subtitle {
+            font-size: 0.9rem;
+            color: var(--text-dim);
+            margin-top: 4px;
+            letter-spacing: 0.5px;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+        @media (min-width: 960px) {
+            .main-grid {
+                grid-template-columns: 1.15fr 1fr;
+            }
+            .grid-full {
+                grid-column: 1 / -1;
+            }
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow-card);
+            position: relative;
+            backdrop-filter: blur(8px);
+            transition: border-color 0.25s ease;
+        }
+        .card:hover {
+            border-color: rgba(100, 181, 246, 0.4);
+        }
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding-bottom: 12px;
+        }
+        .card-title {
+            font-family: var(--font-display);
+            font-size: 1.2rem;
+            font-weight: 700;
+            letter-spacing: 0.8px;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-dim);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        select, input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 12px 14px;
+            background: var(--bg-1);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text);
+            font-size: 0.95rem;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+        select:focus, input:focus {
+            border-color: var(--atium);
+            box-shadow: 0 0 10px var(--atium-glow);
+        }
+
+        button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 18px;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text);
+            font-family: var(--font-body);
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+            user-select: none;
+            touch-action: manipulation;
+        }
+        button:active { transform: scale(0.98); }
+        button.btn-primary {
+            background: linear-gradient(135deg, #00b4d8 0%, #0077b6 100%);
+            border-color: #00e5ff;
+            color: #fff;
+            box-shadow: 0 4px 14px rgba(0, 180, 216, 0.35);
+        }
+        button.btn-primary:hover {
+            box-shadow: 0 0 18px rgba(0, 229, 255, 0.6);
+            transform: translateY(-1px);
+        }
+        button.btn-danger {
+            background: linear-gradient(135deg, #d32f2f 0%, #9a0007 100%);
+            border-color: var(--danger);
+            color: #fff;
+        }
+        button.btn-accent {
+            background: linear-gradient(135deg, #d4af37 0%, #aa820a 100%);
+            border-color: #ffd54f;
+            color: #000;
+            font-weight: 700;
+        }
+        button.btn-sm {
+            padding: 8px 12px;
+            font-size: 0.85rem;
+            border-radius: 6px;
+        }
+
+        .selection-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 14px;
+            margin-top: 10px;
+        }
+        .select-card {
+            background: var(--surface-2);
+            border: 2px solid var(--border);
+            border-radius: var(--radius);
+            padding: 14px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            gap: 14px;
+            align-items: center;
+        }
+        .select-card:hover {
+            border-color: var(--steel);
+            transform: translateY(-2px);
+        }
+        .select-card.selected {
+            border-color: var(--atium);
+            background: rgba(0, 229, 255, 0.08);
+            box-shadow: 0 0 16px var(--atium-glow);
+        }
+        .select-card img {
+            width: 60px;
+            height: 60px;
+            border-radius: var(--radius-sm);
+            object-fit: cover;
+            border: 1px solid var(--border);
+        }
+        .select-info h4 {
+            font-family: var(--font-display);
+            font-size: 1rem;
+            color: #fff;
+            margin-bottom: 2px;
+        }
+        .select-info p {
+            font-size: 0.78rem;
+            color: var(--text-dim);
+            line-height: 1.3;
+        }
+
+        .gauge-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .gauge-box {
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 12px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        .gauge-box.danger-glow {
+            border-color: var(--danger);
+            background: var(--danger-soft);
+        }
+        .gauge-box.atium-glow {
+            border-color: var(--atium);
+            background: rgba(0, 229, 255, 0.05);
+        }
+        .gauge-label {
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-dim);
+            margin-bottom: 4px;
+        }
+        .gauge-value {
+            font-family: var(--font-display);
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: #fff;
+            line-height: 1;
+            margin: 4px 0;
+        }
+        .gauge-adjust {
+            display: flex;
+            gap: 6px;
+            margin-top: 6px;
+        }
+        .gauge-btn {
+            width: 34px;
+            height: 34px;
+            padding: 0;
+            font-size: 1.1rem;
+            border-radius: 6px;
+            background: var(--surface-3);
+        }
+
+        .dom-track-container {
+            margin: 16px 0;
+            background: var(--surface-2);
+            border-radius: var(--radius);
+            padding: 14px;
+            border: 1px solid var(--border);
+        }
+        .dom-steps {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 6px;
+            scrollbar-width: thin;
+        }
+        .dom-step {
+            flex: 1;
+            min-width: 85px;
+            padding: 10px 8px;
+            background: var(--surface-3);
+            border: 2px solid var(--border);
+            border-radius: var(--radius-sm);
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        .dom-step.active {
+            border-color: var(--danger);
+            background: rgba(255, 82, 82, 0.2);
+            box-shadow: 0 0 14px rgba(255, 82, 82, 0.4);
+            transform: scale(1.03);
+        }
+        .dom-step.passed {
+            opacity: 0.55;
+            border-color: var(--border);
+        }
+        .dom-step-title {
+            font-family: var(--font-display);
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: #fff;
+        }
+        .dom-active-banner {
+            margin-top: 12px;
+            padding: 12px 14px;
+            background: rgba(255, 82, 82, 0.1);
+            border-left: 4px solid var(--danger);
+            border-radius: 4px;
+            font-size: 0.88rem;
+            line-height: 1.4;
+            color: #ffcdd2;
+        }
+
+        .adversary-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+            margin-top: 12px;
+        }
+        .adversary-card {
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 12px;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+        .adversary-card.defeated {
+            opacity: 0.4;
+            text-decoration: line-through;
+        }
+        .adversary-name {
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: #fff;
+            margin-bottom: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .shields-row {
+            display: flex;
+            gap: 6px;
+            margin: 8px 0;
+        }
+        .shield-token {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #2a3442;
+            border: 2px solid var(--steel);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: 800;
+            color: #fff;
+            transition: all 0.2s ease;
+        }
+        .shield-token.covered {
+            background: #111;
+            border-color: #555;
+            color: #777;
+            position: relative;
+        }
+        .shield-token.covered::after {
+            content: '✖';
+            color: var(--danger);
+            font-size: 14px;
+        }
+
+        .char-dashboard {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+        .char-levels-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+        .level-tab {
+            padding: 8px;
+            text-align: center;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .level-tab.active {
+            border-color: var(--atium);
+            background: rgba(0, 229, 255, 0.12);
+            font-weight: 700;
+            color: var(--atium);
+        }
+        .char-ability-box {
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+        }
+        .power-choice {
+            padding: 12px;
+            margin-bottom: 8px;
+            background: var(--surface-3);
+            border: 2px solid var(--border);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .power-choice.chosen {
+            border-color: var(--atium);
+            background: rgba(0, 229, 255, 0.1);
+        }
+        .power-tilt-btn {
+            margin-top: 10px;
+            width: 100%;
+        }
+        .power-tilt-btn.tilted {
+            background: #332222;
+            border-color: var(--danger);
+            color: #ff8a80;
+        }
+
+        .log-panel {
+            background: var(--bg-1);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 12px;
+            max-height: 180px;
+            overflow-y: auto;
+            font-size: 0.84rem;
+            line-height: 1.5;
+            display: flex;
+            flex-direction: column-reverse;
+            gap: 6px;
+        }
+        .log-entry {
+            padding: 6px 10px;
+            border-radius: 6px;
+            background: var(--surface);
+            border-left: 3px solid var(--atium);
+            color: var(--text-dim);
+        }
+        .log-entry strong { color: #fff; }
+        .log-entry.danger { border-left-color: var(--danger); }
+        .log-entry.accent { border-left-color: var(--gold); }
+
+        .turn-stepper {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 12px;
+        }
+        .step-item {
+            padding: 12px;
+            background: var(--surface-2);
+            border-radius: var(--radius-sm);
+            border-left: 4px solid var(--border);
+            font-size: 0.88rem;
+            line-height: 1.4;
+        }
+        .step-item.current {
+            border-left-color: var(--atium);
+            background: rgba(0, 229, 255, 0.08);
+            color: #fff;
+        }
+
+        .dice-tray-box {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            padding: 16px;
+            background: var(--bg-1);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            margin: 12px 0;
+        }
+        .die-face {
+            width: 58px;
+            height: 58px;
+            background: linear-gradient(145deg, #263242, #141a24);
+            border: 2px solid var(--atium);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-display);
+            font-size: 1.8rem;
+            font-weight: 900;
+            color: var(--atium);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.1);
+            transition: all 0.2s ease;
+        }
+        .die-face.rolling {
+            animation: dieShake 0.4s ease infinite;
+        }
+        @keyframes dieShake {
+            0% { transform: rotate(0deg) scale(1); }
+            25% { transform: rotate(-15deg) scale(1.08); }
+            75% { transform: rotate(15deg) scale(0.95); }
+            100% { transform: rotate(0deg) scale(1); }
+        }
+
+        .modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(12px);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease;
+        }
+        .modal.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .modal-content {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            width: 100%;
+            max-width: 680px;
+            max-height: 88vh;
+            overflow-y: auto;
+            padding: 24px;
+            box-shadow: 0 16px 40px rgba(0,0,0,0.8);
+            position: relative;
+        }
+        .modal-close {
+            position: absolute;
+            top: 18px;
+            right: 18px;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        details {
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+        summary {
+            padding: 14px 16px;
+            font-weight: 700;
+            font-family: var(--font-display);
+            cursor: pointer;
+            user-select: none;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        summary::-webkit-details-marker { display: none; }
+        .details-body {
+            padding: 14px 16px;
+            border-top: 1px solid var(--border);
+            font-size: 0.9rem;
+            line-height: 1.55;
+            color: var(--text-dim);
+        }
+        .details-body ul { padding-left: 20px; }
+        .details-body li { margin-bottom: 8px; }
+
+        .footer {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+        .bmc-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            background: #ffdd00;
+            color: #000;
+            font-weight: 700;
+            text-decoration: none;
+            font-size: 0.85rem;
+            transition: transform 0.2s ease;
+        }
+        .bmc-btn:hover { transform: scale(1.04); }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+<div class="mist-layer"></div>
+
+<div class="app-container">
+    <!-- Floating Language & Controls -->
+    <div class="floating-controls">
+        <button id="btnSound" class="btn-float" title="Toggle Sound" aria-label="Toggle Sound">🔊</button>
+        <button id="btnLang" class="btn-float" title="Change Language">PT</button>
+        <button id="btnHelp" class="btn-float" title="Rules & Help">?</button>
+        <button id="btnReset" class="btn-float" title="Reset Game">↺</button>
+    </div>
+
+    <!-- Hero Banner -->
+    <header class="hero">
+        <img src="../assets/art/mistborn.webp" alt="Mistborn Cover">
+        <div class="hero-overlay">
+            <h1 class="hero-title">
+                MISTBORN
+                <span class="hero-badge" data-i18n="badge_automa">AUTOMA COMPANION</span>
+            </h1>
+            <p class="hero-subtitle" data-i18n="hero_subtitle">The Deckbuilding Game — Solo & Co-op Assistant</p>
+        </div>
+    </header>
+
+    <!-- SETUP SCREEN -->
+    <section id="setupScreen" class="main-grid">
+        <div class="card grid-full">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:22px; height:22px; color:var(--atium);"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                    <span data-i18n="setup_title">Configuração da Partida</span>
+                </h2>
+            </div>
+
+            <!-- Game Mode & Player Count -->
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:14px; margin-bottom:18px;">
+                <div>
+                    <label data-i18n="label_players">Número de Jogadores</label>
+                    <select id="setupPlayerCount">
+                        <option value="1" data-i18n="opt_p1">1 Jogador (Solo)</option>
+                        <option value="2" data-i18n="opt_p2">2 Jogadores (Co-op)</option>
+                        <option value="3" data-i18n="opt_p3">3 Jogadores (Co-op)</option>
+                        <option value="4" data-i18n="opt_p4">4 Jogadores (Co-op)</option>
+                    </select>
+                </div>
+                <div>
+                    <label data-i18n="label_difficulty">Trilha de Dificuldade / Dominância</label>
+                    <select id="setupDifficulty">
+                        <option value="standard_a" data-i18n="diff_lr_stda">Lord Ruler — Standard A</option>
+                        <option value="standard_b" data-i18n="diff_lr_stdb">Lord Ruler — Standard B</option>
+                        <option value="intro" data-i18n="diff_lr_intro">Lord Ruler — Intro (Iniciante)</option>
+                        <option value="hard_a" data-i18n="diff_lr_harda">Lord Ruler — Hard A</option>
+                        <option value="hard_b" data-i18n="diff_lr_hardb">Lord Ruler — Hard B</option>
+                        <option value="extreme" data-i18n="diff_lr_extreme">Lord Ruler — EXTREME</option>
+                        <option value="standard" data-i18n="diff_other_std">Outros Vilões — Modo Padrão</option>
+                        <option value="advanced" data-i18n="diff_other_adv">Outros Vilões — Modo Avançado</option>
+                    </select>
+                </div>
+                <div>
+                    <label data-i18n="label_expansion">Módulos de Expansão</label>
+                    <select id="setupExpansion">
+                        <option value="base_only" data-i18n="mod_base">Apenas Jogo Base</option>
+                        <option value="duralumin" data-i18n="mod_duralumin" selected>Com Expansão Duralumin Flare</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Villain Selection -->
+            <label style="margin-top:16px;" data-i18n="label_select_villain">Selecione o Vilão (Inimigo)</label>
+            <div class="selection-grid" id="villainGrid">
+                <!-- Populated via JS -->
+            </div>
+
+            <!-- Character Selection -->
+            <label style="margin-top:24px;" data-i18n="label_select_char">Selecione seu Personagem Principal</label>
+            <div class="selection-grid" id="charGrid">
+                <!-- Populated via JS -->
+            </div>
+
+            <!-- Physical Setup Checklist -->
+            <details style="margin-top:24px;">
+                <summary data-i18n="setup_checklist_title">📋 Checklist de Preparação na Mesa</summary>
+                <div class="details-body">
+                    <ul>
+                        <li data-i18n="check_1">Coloque as 8 cartas de Missão (ou 3 sorteadas) na mesa.</li>
+                        <li data-i18n="check_2">Embaralhe o Baralho do Mercado e abra 5 cartas.</li>
+                        <li data-i18n="check_3">Monte o Baralho do Vilão com as cartas de Adversário e Édito.</li>
+                        <li data-i18n="check_4">Pegue seu marcador de Treinamento no nível 0 e seus 8 tokens de Metal.</li>
+                        <li data-i18n="check_5">Se jogar com Duralumin Flare, distribua 2 cartas para cada jogador, escolha 1 e descarte a outra.</li>
+                    </ul>
+                </div>
+            </details>
+
+            <button id="btnStartGame" class="btn-primary" style="width:100%; margin-top:20px; font-size:1.1rem; padding:16px;">
+                <span data-i18n="btn_start_game">Iniciar Batalha</span> ⚔️
+            </button>
+        </div>
+    </section>
+
+    <!-- GAME DASHBOARD SCREEN -->
+    <section id="gameScreen" class="main-grid hidden">
+        <!-- Left Column: Villain Command & Dominance -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <span id="displayVillainName">Lord Ruler</span>
+                    <span id="villainTypeBadge" class="hero-badge">STANDARD</span>
+                </h2>
+                <button id="btnDrawVillainCard" class="btn-primary btn-sm">
+                    <span data-i18n="btn_draw_villain">Comprar Carta do Vilão</span> 📜
+                </button>
+            </div>
+
+            <!-- Dynamic Gauges (HP, City, Defense, etc.) -->
+            <div class="gauge-row" id="villainGauges">
+                <div class="gauge-box danger-glow">
+                    <span class="gauge-label" data-i18n="gauge_villain_hp">Vida do Vilão</span>
+                    <span class="gauge-value" id="valVillainHp">36</span>
+                    <div class="gauge-adjust">
+                        <button class="gauge-btn" onclick="adjustGauge('villainHp', -5)">-5</button>
+                        <button class="gauge-btn" onclick="adjustGauge('villainHp', -1)">-1</button>
+                        <button class="gauge-btn" onclick="adjustGauge('villainHp', 1)">+1</button>
+                    </div>
+                </div>
+                <div class="gauge-box atium-glow hidden" id="boxExtraGauge">
+                    <span class="gauge-label" id="lblExtraGauge">Escudo</span>
+                    <span class="gauge-value" id="valExtraGauge">0</span>
+                    <div class="gauge-adjust">
+                        <button class="gauge-btn" onclick="adjustGauge('extra', -1)">-1</button>
+                        <button class="gauge-btn" onclick="adjustGauge('extra', 1)">+1</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dominance Track Indicator -->
+            <div class="dom-track-container">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <span style="font-weight:700; font-size:0.85rem; text-transform:uppercase;" data-i18n="label_dominance">Trilha de Dominância</span>
+                    <div style="display:flex; gap:6px;">
+                        <button class="btn-sm" onclick="stepDominance(-1)">◀</button>
+                        <button class="btn-sm btn-primary" onclick="stepDominance(1)">▶ <span data-i18n="btn_dom_advance">Avançar</span></button>
+                    </div>
+                </div>
+                <div class="dom-steps" id="domStepsRow">
+                    <!-- Populated by JS -->
+                </div>
+                <div class="dom-active-banner" id="domActiveBanner">
+                    <!-- Text of current dominance effect -->
+                </div>
+            </div>
+
+            <!-- Integrated 3D Dice Roller -->
+            <div class="dice-tray-box">
+                <div class="die-face" id="dieFace">1</div>
+                <div>
+                    <button id="btnRollDie" class="btn-primary btn-sm" onclick="rollGameDie()">
+                        <span data-i18n="btn_roll_die">Rolar Dado (D6)</span> 🎲
+                    </button>
+                    <p style="font-size:0.75rem; color:var(--text-dim); margin-top:4px;" id="diePurpose" data-i18n="die_purpose">Para Éditos, Assassinato ou Movimento de Zane</p>
+                </div>
+            </div>
+
+            <!-- Turn Phase Guide -->
+            <div class="card-header" style="margin-top:16px;">
+                <h3 class="card-title" style="font-size:1rem;" data-i18n="phase_guide_title">Guia de Fases do Turno</h3>
+                <span id="currentTurnBadge" class="hero-badge">TURNO DO JOGADOR</span>
+            </div>
+            <div class="turn-stepper" id="turnStepsContainer">
+                <!-- Dynamically updated -->
+            </div>
+            <div style="display:flex; gap:10px; margin-top:12px;">
+                <button id="btnNextPhase" class="btn-primary" style="flex:1;" onclick="advanceTurnPhase()">
+                    <span data-i18n="btn_next_phase">Próxima Fase</span> ➔
+                </button>
+            </div>
+        </div>
+
+        <!-- Right Column: Adversary Battlefield & Character Dashboard -->
+        <div class="card">
+            <!-- Active Adversary Battlefield -->
+            <div class="card-header">
+                <h2 class="card-title">
+                    <span data-i18n="battlefield_title">Campo de Batalha (Adversários)</span>
+                </h2>
+                <button class="btn-sm btn-primary" onclick="showAddAdversaryModal()">
+                    + <span data-i18n="btn_add_adv">Novo Adversário</span>
+                </button>
+            </div>
+            <div class="adversary-list" id="adversaryList">
+                <!-- Active adversaries listed here -->
+            </div>
+            <button class="btn-sm" style="width:100%; margin-top:10px;" onclick="triggerAdversaryEndEffects()">
+                ⚡ <span data-i18n="btn_resolve_adv">Resolver Efeitos de Fim de Turno (Esq. p/ Dir.)</span>
+            </button>
+
+            <!-- Character Dashboard -->
+            <div class="card-header" style="margin-top:24px;">
+                <h2 class="card-title">
+                    <span id="displayCharName">Vin</span> — <span data-i18n="label_level">Nível</span> <span id="valCharLevel">0</span>
+                </h2>
+                <div style="display:flex; gap:6px;">
+                    <button class="btn-sm" onclick="levelUpChar(-1)" data-i18n="btn_lvl_down">- Niv</button>
+                    <button class="btn-sm btn-accent" onclick="levelUpChar(1)" data-i18n="btn_lvl_up">+ Subir Nível</button>
+                </div>
+            </div>
+
+            <div class="char-dashboard">
+                <div class="char-levels-grid" id="charLevelTabs">
+                    <div class="level-tab active" onclick="selectCharLevelView(0)">Nível 0</div>
+                    <div class="level-tab" onclick="selectCharLevelView(1)">Nível 1</div>
+                    <div class="level-tab" onclick="selectCharLevelView(2)">Nível 2</div>
+                    <div class="level-tab" onclick="selectCharLevelView(3)">Nível 3</div>
+                </div>
+
+                <div class="char-ability-box" id="charAbilityBox">
+                    <div class="power-choice chosen" id="powerChoiceA" onclick="choosePowerSide('A')">
+                        <strong data-i18n="side_a">Lado A</strong>: <span id="txtPowerA">Habilidade A</span>
+                    </div>
+                    <div class="power-choice" id="powerChoiceB" onclick="choosePowerSide('B')">
+                        <strong data-i18n="side_b">Lado B</strong>: <span id="txtPowerB">Habilidade B</span>
+                    </div>
+                    <button id="btnTiltPower" class="btn-sm power-tilt-btn" onclick="toggleTiltPower()">
+                        <span data-i18n="btn_tilt">Virar Carta (Usar Poder 1x por Partida)</span>
+                    </button>
+                </div>
+
+                <!-- Starting Deck Reference -->
+                <div style="font-size:0.8rem; color:var(--text-dim); background:var(--surface-2); padding:10px; border-radius:var(--radius-sm);">
+                    <strong style="color:#fff;" data-i18n="label_starter_deck">Deck Inicial:</strong>
+                    <span id="txtStarterDeck">4 Metais + 6 Financiamentos</span>
+                </div>
+            </div>
+
+            <!-- Duralumin Flare Module -->
+            <div id="duraluminModule" class="card-header hidden" style="margin-top:20px; flex-direction:column; align-items:flex-start; gap:8px;">
+                <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
+                    <h3 class="card-title" style="font-size:1rem; color:var(--duralumin);">⚡ Duralumin Flare</h3>
+                    <button class="btn-sm btn-accent" onclick="drawDuraluminCard()" data-i18n="btn_draw_flare">Comprar Flare</button>
+                </div>
+                <div id="duraluminCardDisplay" style="width:100%; background:var(--surface-3); padding:12px; border-radius:var(--radius-sm); font-size:0.85rem;">
+                    Nenhum Duralumin Flare ativo.
+                </div>
+            </div>
+
+            <!-- Action Audit Log -->
+            <div class="card-header" style="margin-top:24px;">
+                <h3 class="card-title" style="font-size:0.95rem;" data-i18n="log_title">Histórico de Ações</h3>
+                <button class="btn-sm" onclick="clearLog()" data-i18n="btn_clear_log">Limpar</button>
+            </div>
+            <div class="log-panel" id="logPanel"></div>
+        </div>
+    </section>
+
+    <!-- RULES & HELP MODAL -->
+    <div class="modal" id="helpModal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeHelpModal()">✕</button>
+            <h2 class="hero-title" style="font-size:1.5rem; margin-bottom:16px;" data-i18n="help_modal_title">Regras & Guia do Automa</h2>
+
+            <details open>
+                <summary data-i18n="help_sec_flow_title">Como Funciona a Vez do Vilão</summary>
+                <div class="details-body" data-i18n-html="help_sec_flow_html">
+                    <ul>
+                        <li>Após a vez do jogador, compre a carta do topo do Baralho do Vilão.</li>
+                        <li><strong>Adversário:</strong> Entra no campo de batalha à direita dos já existentes.</li>
+                        <li><strong>Édito:</strong> Execute as ações do Édito em ordem. Mova a trilha de Dominância e aplique o efeito imediato da nova seção.</li>
+                        <li><strong>Fim de Turno:</strong> Resolva as habilidades dos Adversários da esquerda para a direita.</li>
+                    </ul>
+                </div>
+            </details>
+
+            <details>
+                <summary data-i18n="help_sec_dom_title">Regras de Dominância Atualizadas (!)</summary>
+                <div class="details-body" data-i18n-html="help_sec_dom_html">
+                    <p>Ao avançar a trilha de Dominância, execute <strong>apenas</strong> a seção onde você parou. A exceção são seções com ponto de exclamação (<strong>!</strong>): essas sempre devem ser executadas mesmo se você passar direto por elas!</p>
+                </div>
+            </details>
+
+            <details>
+                <summary data-i18n="help_sec_villains_title">Visão Geral dos 8 Vilões</summary>
+                <div class="details-body" data-i18n-html="help_sec_villains_html">
+                    <ul>
+                        <li><strong>Lord Ruler:</strong> O Senhor Soberano com 6 trilhas oficiais de dificuldade (Intro, Standard A/B, Hard A/B, Extreme).</li>
+                        <li><strong>Steel Ministry:</strong> Vilão de exército! Ataques danificam a cidade de Tathingdwen (10 de vida). Se a cidade cair, derrota!</li>
+                        <li><strong>Jastes Lekal:</strong> Moedas falsas! Os jogadores vencem comprando todo o baralho de Moedas Falsas.</li>
+                        <li><strong>Ashweather Cett:</strong> Múltiplos escudos e trilha de assassinato com dado D6.</li>
+                        <li><strong>Ruin:</strong> Ruína cósmica! Exige gastar combate para reduzir a trilha de Ruína antes que a névoa engula tudo.</li>
+                        <li><strong>Zane Venture:</strong> Defesa dinâmica (0-6) e movimento contínuo entre as 6 cartas de missão.</li>
+                        <li><strong>Straff Venture:</strong> Contrata brumas (Mistings) que concedem poderes passivos; exige derrotar todas as cartas.</li>
+                        <li><strong>Koloss:</strong> Força bruta e expurgo contínuo de cartas de Zinco e Latão do mercado.</li>
+                    </ul>
+                </div>
+            </details>
+
+            <details>
+                <summary data-i18n="help_sec_duralumin_title">Módulo Duralumin Flare</summary>
+                <div class="details-body" data-i18n-html="help_sec_duralumin_html">
+                    <p>O Duralumin concede uma explosão colossal de poder imediato (topo da carta), mas coloca cubos pretos que ativam penalidades no fim da partida (base da carta). Use com sabedoria!</p>
+                </div>
+            </details>
+        </div>
+    </div>
+
+    <!-- ADD ADVERSARY MODAL -->
+    <div class="modal" id="addAdversaryModal">
+        <div class="modal-content" style="max-width:420px;">
+            <button class="modal-close" onclick="closeAddAdversaryModal()">✕</button>
+            <h3 class="card-title" style="margin-bottom:14px;" data-i18n="add_adv_title">Novo Adversário</h3>
+            <label data-i18n="label_adv_name">Nome do Adversário</label>
+            <input type="text" id="inpAdvName" data-i18n-placeholder="ph_adv_name" placeholder="Ex: Inquisidor de Aço, Guarda Real">
+            <label style="margin-top:12px;" data-i18n="label_adv_shields">Quantidade de Escudos</label>
+            <select id="inpAdvShields">
+                <option value="1" data-i18n="opt_s1">1 Escudo</option>
+                <option value="2" data-i18n="opt_s2">2 Escudos</option>
+                <option value="3" data-i18n="opt_s3">3 Escudos</option>
+                <option value="4" data-i18n="opt_s4">4 Escudos</option>
+            </select>
+            <label style="margin-top:12px;" data-i18n="label_adv_effect">Efeito de Fim de Turno (Opcional)</label>
+            <input type="text" id="inpAdvEffect" data-i18n-placeholder="ph_adv_effect" placeholder="Ex: 2 de dano, descarta 1 carta">
+            <button class="btn-primary" style="width:100%; margin-top:18px;" onclick="confirmAddAdversary()" data-i18n="btn_confirm_add">Adicionar ao Campo</button>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <p data-i18n="footer_copy">Mistborn: The Deckbuilding Game &copy; Brotherwise Games &amp; Dragonsteel Entertainment. Fan Automa by Kagan Eden &amp; Boardbots.</p>
+        <a href="https://ko-fi.com/thiagocarvalho" target="_blank" class="bmc-btn" data-i18n="bmc_btn">☕ Buy me a Coffee</a>
+        <a href="../index.html" style="color:var(--atium); text-decoration:none; font-weight:600;" data-i18n="back_home">← Voltar para a Página Inicial</a>
+    </footer>
+</div>
+
+<script>
+const I18N = {
+    pt: {
+        badge_automa: "AUTOMA COMPANION",
+        hero_subtitle: "The Deckbuilding Game — Assistente Solo & Co-op",
+        setup_title: "Configuração da Partida",
+        label_players: "Número de Jogadores",
+        opt_p1: "1 Jogador (Solo)",
+        opt_p2: "2 Jogadores (Co-op)",
+        opt_p3: "3 Jogadores (Co-op)",
+        opt_p4: "4 Jogadores (Co-op)",
+        label_difficulty: "Trilha de Dificuldade / Dominância",
+        diff_lr_stda: "Lord Ruler — Standard A",
+        diff_lr_stdb: "Lord Ruler — Standard B",
+        diff_lr_intro: "Lord Ruler — Intro (Iniciante)",
+        diff_lr_harda: "Lord Ruler — Hard A",
+        diff_lr_hardb: "Lord Ruler — Hard B",
+        diff_lr_extreme: "Lord Ruler — EXTREME",
+        diff_other_std: "Outros Vilões — Modo Padrão",
+        diff_other_adv: "Outros Vilões — Modo Avançado",
+        label_expansion: "Módulos de Expansão",
+        mod_base: "Apenas Jogo Base",
+        mod_duralumin: "Com Expansão Duralumin Flare",
+        label_select_villain: "Selecione o Vilão (Inimigo)",
+        label_select_char: "Selecione seu Personagem Principal",
+        setup_checklist_title: "📋 Checklist de Preparação na Mesa",
+        check_1: "Coloque as 8 cartas de Missão (ou 3 sorteadas) na mesa.",
+        check_2: "Embaralhe o Baralho do Mercado e abra 5 cartas.",
+        check_3: "Monte o Baralho do Vilão com as cartas de Adversário e Édito.",
+        check_4: "Pegue seu marcador de Treinamento no nível 0 e seus 8 tokens de Metal.",
+        check_5: "Se jogar com Duralumin Flare, distribua 2 cartas para cada jogador, escolha 1 e descarte a outra.",
+        btn_start_game: "Iniciar Batalha",
+        gauge_villain_hp: "Vida do Vilão",
+        btn_draw_villain: "Comprar Carta do Vilão",
+        label_dominance: "Trilha de Dominância",
+        btn_dom_advance: "Avançar",
+        btn_roll_die: "Rolar Dado (D6)",
+        die_purpose: "Para Éditos, Assassinato ou Movimento de Zane",
+        phase_guide_title: "Guia de Fases do Turno",
+        btn_next_phase: "Próxima Fase",
+        battlefield_title: "Campo de Batalha (Adversários)",
+        btn_add_adv: "Novo Adversário",
+        btn_resolve_adv: "Resolver Efeitos de Fim de Turno (Esq. p/ Dir.)",
+        label_level: "Nível",
+        btn_lvl_down: "- Niv",
+        btn_lvl_up: "+ Subir Nível",
+        side_a: "Lado A",
+        side_b: "Lado B",
+        btn_tilt: "Virar Carta (Usar Poder 1x por Partida)",
+        label_starter_deck: "Deck Inicial:",
+        btn_draw_flare: "Comprar Flare",
+        log_title: "Histórico de Ações",
+        btn_clear_log: "Limpar",
+        help_modal_title: "Regras & Guia do Automa",
+        help_sec_flow_title: "Como Funciona a Vez do Vilão",
+        help_sec_flow_html: "<ul><li>Após a vez do jogador, compre a carta do topo do Baralho do Vilão.</li><li><strong>Adversário:</strong> Entra no campo de batalha à direita dos já existentes.</li><li><strong>Édito:</strong> Execute as ações do Édito em ordem. Mova a trilha de Dominância e aplique o efeito imediato da nova seção.</li><li><strong>Fim de Turno:</strong> Resolva as habilidades dos Adversários da esquerda para a direita.</li></ul>",
+        help_sec_dom_title: "Regras de Dominância Atualizadas (!)",
+        help_sec_dom_html: "<p>Ao avançar a trilha de Dominância, execute <strong>apenas</strong> a seção onde você parou. A exceção são seções com ponto de exclamação (<strong>!</strong>): essas sempre devem ser executadas mesmo se você passar direto por elas!</p>",
+        help_sec_villains_title: "Visão Geral dos 8 Vilões",
+        help_sec_villains_html: "<ul><li><strong>Lord Ruler:</strong> O Senhor Soberano com 6 trilhas oficiais de dificuldade (Intro, Standard A/B, Hard A/B, Extreme).</li><li><strong>Steel Ministry:</strong> Vilão de exército! Ataques danificam a cidade de Tathingdwen (10 de vida). Se a cidade cair, derrota!</li><li><strong>Jastes Lekal:</strong> Moedas falsas! Os jogadores vencem comprando todo o baralho de Moedas Falsas.</li><li><strong>Ashweather Cett:</strong> Múltiplos escudos e trilha de assassinato com dado D6.</li><li><strong>Ruin:</strong> Ruína cósmica! Exige gastar combate para reduzir a trilha de Ruína antes que a névoa engula tudo.</li><li><strong>Zane Venture:</strong> Defesa dinâmica (0-6) e movimento contínuo entre as 6 cartas de missão.</li><li><strong>Straff Venture:</strong> Contrata brumas (Mistings) que concedem poderes passivos; exige derrotar todas as cartas.</li><li><strong>Koloss:</strong> Força bruta e expurgo contínuo de cartas de Zinco e Latão do mercado.</li></ul>",
+        help_sec_duralumin_title: "Módulo Duralumin Flare",
+        help_sec_duralumin_html: "<p>O Duralumin concede uma explosão colossal de poder imediato (topo da carta), mas coloca cubos pretos que ativam penalidades no fim da partida (base da carta). Use com sabedoria!</p>",
+        add_adv_title: "Novo Adversário",
+        label_adv_name: "Nome do Adversário",
+        ph_adv_name: "Ex: Inquisidor de Aço, Guarda Real",
+        label_adv_shields: "Quantidade de Escudos",
+        opt_s1: "1 Escudo",
+        opt_s2: "2 Escudos",
+        opt_s3: "3 Escudos",
+        opt_s4: "4 Escudos",
+        label_adv_effect: "Efeito de Fim de Turno (Opcional)",
+        ph_adv_effect: "Ex: 2 de dano, descarta 1 carta",
+        btn_confirm_add: "Adicionar ao Campo",
+        footer_copy: "Mistborn: The Deckbuilding Game © Brotherwise Games & Dragonsteel Entertainment. Fan Automa por Kagan Eden & Boardbots.",
+        bmc_btn: "☕ Buy me a Coffee",
+        back_home: "← Voltar para a Página Inicial",
+        lvl_prefix: "Nível "
+    },
+    en: {
+        badge_automa: "AUTOMA COMPANION",
+        hero_subtitle: "The Deckbuilding Game — Solo & Co-op Assistant",
+        setup_title: "Game Setup",
+        label_players: "Number of Players",
+        opt_p1: "1 Player (Solo)",
+        opt_p2: "2 Players (Co-op)",
+        opt_p3: "3 Players (Co-op)",
+        opt_p4: "4 Players (Co-op)",
+        label_difficulty: "Difficulty Track / Dominance",
+        diff_lr_stda: "Lord Ruler — Standard A",
+        diff_lr_stdb: "Lord Ruler — Standard B",
+        diff_lr_intro: "Lord Ruler — Intro (Beginner)",
+        diff_lr_harda: "Lord Ruler — Hard A",
+        diff_lr_hardb: "Lord Ruler — Hard B",
+        diff_lr_extreme: "Lord Ruler — EXTREME",
+        diff_other_std: "Other Villains — Standard Mode",
+        diff_other_adv: "Other Villains — Advanced Mode",
+        label_expansion: "Expansion Modules",
+        mod_base: "Base Game Only",
+        mod_duralumin: "With Duralumin Flare Expansion",
+        label_select_villain: "Select Villain",
+        label_select_char: "Select Main Character",
+        setup_checklist_title: "📋 Table Setup Checklist",
+        check_1: "Place the Mission cards on the table.",
+        check_2: "Shuffle Market deck and reveal 5 cards.",
+        check_3: "Form the Villain deck with Adversary & Edict cards.",
+        check_4: "Place your Training cube at Level 0 and prepare your 8 metal tokens.",
+        check_5: "If using Duralumin Flare, deal 2 to each player (keep 1, discard 1).",
+        btn_start_game: "Start Battle",
+        gauge_villain_hp: "Villain Health",
+        btn_draw_villain: "Draw Villain Card",
+        label_dominance: "Dominance Track",
+        btn_dom_advance: "Advance",
+        btn_roll_die: "Roll Die (D6)",
+        die_purpose: "For Edicts, Assassination or Zane Movement",
+        phase_guide_title: "Turn Phase Guide",
+        btn_next_phase: "Next Phase",
+        battlefield_title: "Battlefield (Adversaries)",
+        btn_add_adv: "New Adversary",
+        btn_resolve_adv: "Resolve End of Turn Effects (Left to Right)",
+        label_level: "Level",
+        btn_lvl_down: "- Lvl",
+        btn_lvl_up: "+ Level Up",
+        side_a: "Side A",
+        side_b: "Side B",
+        btn_tilt: "Tilt Card (Use Once per Game Power)",
+        label_starter_deck: "Starting Deck:",
+        btn_draw_flare: "Draw Flare",
+        log_title: "Action History",
+        btn_clear_log: "Clear",
+        help_modal_title: "Rules & Automa Guide",
+        help_sec_flow_title: "How the Villain Turn Works",
+        help_sec_flow_html: "<ul><li>After the player turn, draw the top card of the Villain deck.</li><li><strong>Adversary:</strong> Enters the battlefield to the right of existing ones.</li><li><strong>Edict:</strong> Carry out Edict actions in order. Advance the Dominance track and apply the new tier effect.</li><li><strong>End of Turn:</strong> Trigger Adversary abilities from left to right.</li></ul>",
+        help_sec_dom_title: "Updated Dominance Rules (!)",
+        help_sec_dom_html: "<p>When advancing the Dominance track, only execute the section where you landed. Sections with exclamation points (<strong>!</strong>) must always be executed even if you move past them!</p>",
+        help_sec_villains_title: "Overview of the 8 Villains",
+        help_sec_villains_html: "<ul><li><strong>Lord Ruler:</strong> The Sovereign with 6 official Print & Play difficulty tracks (Intro, Standard A/B, Hard A/B, Extreme).</li><li><strong>Steel Ministry:</strong> Army villain! Attacks damage the city of Tathingdwen (10 HP). If the city falls, you lose!</li><li><strong>Jastes Lekal:</strong> Fake coins! Win by buying out the entire Fake Coin deck.</li><li><strong>Ashweather Cett:</strong> Sequential black shields and D6 assassination track.</li><li><strong>Ruin:</strong> Cosmic decay! Spend combat to lower Ruin before the mists consume everything.</li><li><strong>Zane Venture:</strong> Dynamic Defense (0-6) and mobile roaming across missions.</li><li><strong>Straff Venture:</strong> Hires Mistings with passive powers; win by conquering all deck cards.</li><li><strong>Koloss:</strong> Brute swarm purging Zinc and Brass from the market.</li></ul>",
+        help_sec_duralumin_title: "Duralumin Flare Module",
+        help_sec_duralumin_html: "<p>Duralumin grants a massive burst of immediate power (top), but places black cubes that trigger late-game penalties (bottom). Use wisely!</p>",
+        add_adv_title: "New Adversary",
+        label_adv_name: "Adversary Name",
+        ph_adv_name: "e.g., Steel Inquisitor, Royal Guard",
+        label_adv_shields: "Number of Shields",
+        opt_s1: "1 Shield",
+        opt_s2: "2 Shields",
+        opt_s3: "3 Shields",
+        opt_s4: "4 Shields",
+        label_adv_effect: "End of Turn Effect (Optional)",
+        ph_adv_effect: "e.g., 2 damage, discard 1 card",
+        btn_confirm_add: "Add to Battlefield",
+        footer_copy: "Mistborn: The Deckbuilding Game © Brotherwise Games & Dragonsteel Entertainment. Fan Automa by Kagan Eden & Boardbots.",
+        bmc_btn: "☕ Buy me a Coffee",
+        back_home: "← Back to Home",
+        lvl_prefix: "Level "
+    }
+};
+
+let currentLang = localStorage.getItem('boardbots_lang') || 'pt';
+let soundEnabled = true;
+
+const VILLAINS = [
+    {
+        id: 'lord_ruler',
+        name: 'Lord Ruler',
+        title: { pt: 'O Senhor Soberano', en: 'The Sovereign God' },
+        hp: 36,
+        type: 'Standard',
+        img: '../assets/art/mistborn/villains/lord_ruler.webp',
+        desc: {
+            pt: 'O Senhor Soberano com 6 trilhas de dificuldade oficiais do P&P (Intro, Standard A/B, Hard A/B, Extreme).',
+            en: 'The Sovereign with 6 official Print & Play difficulty tracks (Intro, Standard A/B, Hard A/B, Extreme).'
+        },
+        tracks: {
+            intro: [
+                { label: 'X=1', effect: { pt: 'Nenhum efeito.', en: 'No effect.' } },
+                { label: 'X=2', effect: { pt: 'O jogador ativo deve queimar (Flare) 1 metal ou comprar outra carta do Senhor Soberano.', en: 'Active player must Flare 1 metal or draw another Lord Ruler card.' } },
+                { label: 'X=2', effect: { pt: 'Cada jogador queima 1 metal ou sofre 3 de dano.', en: 'Each player Flares a metal or takes 3 damage.' } },
+                { label: 'X=3', effect: { pt: 'Cada jogador pode sofrer 3 de dano para recuperar até 2 metais.', en: 'Each player may take 3 damage to refresh up to 2 metals.' } },
+                { label: 'FLIP', effect: { pt: 'Vire esta carta! Cada jogador compra 2 cartas do mercado, fica com 1 e elimina a outra (sofre dano igual a 2x o custo).', en: 'Flip this card! Each player gains 2 random market cards, keeps 1, eliminates 1 and takes damage equal to twice its cost.' } },
+                { label: 'Mists Rise!', effect: { pt: 'Cada jogador recupera todos os metais. Cada jogador sofre 10 de dano! Dominância adicional causa +10 dano por avanço.', en: 'Each player refreshes all metals. Each player takes 10 damage! Additional dominance does +10 damage.' } }
+            ],
+            standard_a: [
+                { label: 'X=1', effect: { pt: 'Nenhum efeito.', en: 'No effect.' } },
+                { label: 'X=2', effect: { pt: 'O jogador ativo queima (Flare) 1 metal ou compra outra carta do Senhor Soberano.', en: 'Active player Flares 1 metal or draws another Lord Ruler card.' } },
+                { label: 'X=3', effect: { pt: 'Cada jogador queima 1 metal ou sofre 3 de dano.', en: 'Each player Flares a metal or takes 3 damage.' } },
+                { label: 'FLIP', effect: { pt: 'Vire esta carta! Para cada adversário na sua frente, queime 1 metal ou elimine um Aliado.', en: 'Flip this card! For each Adversary in front of a player they must Flare a metal or defeat an Ally.' } },
+                { label: 'X=4', effect: { pt: 'O jogador ativo queima 2 metais ou compra outra carta do Senhor Soberano.', en: 'Active player must Flare 2 metals or draw another Lord Ruler card.' } },
+                { label: 'X=5', effect: { pt: 'Cada jogador sofre 3 de dano para cada metal queimado (Flared).', en: 'Each player takes 3 damage for each of their Flared metals.' } },
+                { label: 'X=6', effect: { pt: 'Em ordem de turno: adicione 1 carta de Financiamento eliminada ao topo do deck ou sofra 3 de dano.', en: 'In turn order: add an eliminated Funding card to top of deck or take 3 damage.' } },
+                { label: 'Mists Rise!', effect: { pt: 'Cada jogador recupera todos os metais e pode eliminar 1 carta do descarte. Cada jogador sofre 10 de dano (+10 por dominância adicional).', en: 'Each player refreshes all metals and may eliminate a card from discard. Each player takes 10 damage (+10 per additional dominance).' } }
+            ],
+            standard_b: [
+                { label: 'X=1', effect: { pt: 'Nenhum efeito.', en: 'No effect.' } },
+                { label: 'X=2', effect: { pt: 'Limpe todos os cubos pretos dos escudos dos Adversários!', en: 'Clear all black cubes on Adversary shields!' } },
+                { label: 'X=3', effect: { pt: 'Cada jogador queima 1 metal ou sofre 3 de dano.', en: 'Each player Flares a metal or takes 3 damage.' } },
+                { label: 'FLIP', effect: { pt: 'Vire esta carta! Elimine o aliado de maior custo de cada jogador.', en: 'Flip this card! Defeat each player\'s highest cost Ally.' } },
+                { label: 'X=4', effect: { pt: 'Em ordem de turno: cada jogador escolhe 1 adversário derrotado e coloca em jogo na sua frente.', en: 'In turn order: each player chooses a defeated Adversary and puts it into play in front of them.' } },
+                { label: 'X=5', effect: { pt: 'Limpe todos os cubos pretos dos escudos dos Adversários! Cada jogador sofre 6 de dano.', en: 'Clear all black cubes on Adversary shields! Each player takes 6 damage.' } },
+                { label: 'Mists Rise!', effect: { pt: 'Cada jogador restaura todos os metais e ganha 1 Atium. Cada jogador sofre 5 de dano (+10 por dominância adicional).', en: 'Each player refreshes all metals and gains 1 Atium. Each player takes 5 damage (+10 per additional dominance).' } }
+            ],
+            hard_a: [
+                { label: 'X=1', effect: { pt: 'Nenhum efeito.', en: 'No effect.' } },
+                { label: 'X=2', effect: { pt: 'O jogador ativo deve queimar 2 metais ou comprar outra carta do Senhor Soberano.', en: 'Active player must Flare 2 metals or draw another Lord Ruler card.' } },
+                { label: 'X=3', effect: { pt: 'Cada jogador queima 1 metal ou sofre 4 de dano.', en: 'Each player Flares a metal or takes 4 damage.' } },
+                { label: 'FLIP', effect: { pt: 'Vire esta carta! Cada jogador queima 1 metal ou elimina um Aliado (execute 2x!).', en: 'Flip this card! Each player must Flare a metal or defeat an Ally (complete twice!).' } },
+                { label: 'X=4', effect: { pt: 'Para cada Adversário que você tiver, queime 1 metal ou elimine um Aliado.', en: 'For each Adversary you have, Flare a metal or defeat an Ally.' } },
+                { label: 'X=5', effect: { pt: 'Cada jogador deve queimar 2 metais ou descartar a carta mais cara da mão.', en: 'Each player must Flare 2 metals or discard the most expensive card in hand.' } },
+                { label: 'X=6', effect: { pt: 'Cada jogador sofre 3 de dano para CADA metal queimado (Flared)!', en: 'Each player takes 3 damage for EACH Flared metal!' } },
+                { label: 'X=7', effect: { pt: 'Em ordem de turno: adicione 2 cartas de Financiamento eliminadas ao topo do deck ou sofra 6 de dano.', en: 'In turn order: add 2 eliminated Funding cards to top of deck or take 6 damage.' } },
+                { label: 'Mists Rise!', effect: { pt: 'Cada jogador recupera metais e pode eliminar qualquer nº de cartas da mão. Cada jogador sofre 10 de dano (+10 por avanço adicional).', en: 'Each player refreshes metals and may eliminate any cards from hand. Each player takes 10 damage (+10 per additional dominance).' } }
+            ],
+            hard_b: [
+                { label: 'X=1', effect: { pt: 'Nenhum efeito.', en: 'No effect.' } },
+                { label: 'X=2', effect: { pt: 'Limpe todos os cubos pretos dos escudos de todos os Adversários!', en: 'Clear all black cubes on Adversary shields!' } },
+                { label: 'X=3', effect: { pt: 'Cada jogador queima 1 metal ou sofre 4 de dano.', en: 'Each player Flares a metal or takes 4 damage.' } },
+                { label: 'FLIP', effect: { pt: 'Vire esta carta! Cada jogador sofre 4 de dano para cada Adversário na sua frente.', en: 'Flip this card! Each player takes 4 damage for each Adversary in front of them.' } },
+                { label: 'X=4', effect: { pt: 'Em ordem de turno: cada jogador coloca 1 Adversário derrotado em jogo na sua frente.', en: 'In turn order: each player puts 1 defeated Adversary into play in front of them.' } },
+                { label: 'X=5', effect: { pt: 'Cada jogador compra 2 cartas e descarta 3 cartas.', en: 'Each player draws 2 cards then discards 3 cards.' } },
+                { label: 'X=6', effect: { pt: 'Limpe todos os cubos de escudos dos Adversários e reviva outro Adversário derrotado!', en: 'Clear all black cubes on shields and resurrect another defeated Adversary!' } },
+                { label: 'X=7', effect: { pt: 'Elimine o Aliado de maior custo de cada jogador e cada um sofre 6 de dano.', en: 'Defeat each player\'s highest cost Ally and each takes 6 damage.' } },
+                { label: 'Mists Rise!', effect: { pt: 'Cada jogador restaura metais ou derrota 2 Adversários na sua frente. Cada jogador sofre 10 de dano (+10 por avanço adicional).', en: 'Each player refreshes metals or defeats 2 Adversaries in front of them. Each takes 10 damage (+10 per additional dominance).' } }
+            ],
+            extreme: [
+                { label: 'X=2', effect: { pt: 'Cada jogador sofre 2 de dano imediato.', en: 'Each player takes 2 damage.' } },
+                { label: 'X=3', effect: { pt: 'Cada jogador sofre 4 de dano.', en: 'Each player takes 4 damage.' } },
+                { label: 'X=4', effect: { pt: 'Cada jogador sofre 3 de dano e deve eliminar 1 Aliado à sua escolha.', en: 'Each player takes 3 damage and must defeat an Ally of choice.' } },
+                { label: 'FLIP', effect: { pt: 'Vire esta carta! Cada jogador deve sofrer 5 de dano e eliminar 1 Aliado.', en: 'Flip this card! Each player must take 5 damage and defeat an Ally.' } },
+                { label: 'X=5', effect: { pt: 'Cada jogador deve sofrer 4 de dano e eliminar 1 Aliado.', en: 'Each player must take 4 damage and defeat an Ally.' } },
+                { label: 'X=6', effect: { pt: 'Cada jogador sofre 6 de dano.', en: 'Each player takes 6 damage.' } },
+                { label: 'X=7', effect: { pt: 'Cada jogador sofre 8 de dano.', en: 'Each player takes 8 damage.' } },
+                { label: 'X=8', effect: { pt: 'Cada jogador sofre 7 de dano e elimina 1 Aliado.', en: 'Each player takes 7 damage and defeats an Ally.' } },
+                { label: 'X=9', effect: { pt: 'Cada jogador sofre 8 de dano e elimina 1 Aliado.', en: 'Each player takes 8 damage and defeats an Ally.' } },
+                { label: 'X=10', effect: { pt: 'Cada jogador sofre 7 de dano.', en: 'Each player takes 7 damage.' } },
+                { label: 'Mists Rise!', effect: { pt: 'Jogadores derrotados ressuscitam com 16 de vida! Cada jogador sofre 10 de dano (+15 por dominância adicional).', en: 'Defeated players revive with 16 HP! Each player takes 10 damage (+15 per additional dominance).' } }
+            ]
+        },
+        domSteps: []
+    },
+    {
+        id: 'steel_ministry',
+        name: 'Steel Ministry',
+        title: { pt: 'Vilão de Exército', en: 'Army Villain' },
+        hp: 48,
+        extraGauge: { name: { pt: 'Vida da Cidade (Tathingdwen)', en: 'Tathingdwen City HP' }, initial: 10, max: 10 },
+        img: '../assets/art/mistborn/villains/steel_ministry.webp',
+        desc: {
+            pt: 'Vilão de Exército. Éditos causam 5 de dano à cidade de Tathingdwen (reduzido por missões). Se a cidade cair, derrota!',
+            en: 'Army Villain. Edicts deal 5 damage to Tathingdwen (reduced by missions). If the city falls, you lose!'
+        },
+        domSteps: [
+            { label: 'Start', effect: { pt: 'Ministério do Aço ativo na capital.', en: 'Steel Ministry active in the capital.' } },
+            { label: 'X=2', effect: { pt: 'Reduza todos os jogadores em qualquer missão em -2.', en: 'Lower all players on any mission by -2.' } },
+            { label: 'X=3', effect: { pt: 'Escolha: 1 jogador sofre 4 de dano OU Tathingdwen sofre 1 de dano.', en: 'Pick 1: a player takes 4 damage OR Tathingdwen takes 1 damage.' } },
+            { label: 'X=4', effect: { pt: 'Enquanto no topo: todos os Éditos causam +2 de dano!', en: 'While on top: all Edicts deal +2 damage!' } },
+            { label: 'Mists Rise!', effect: { pt: 'Cada jogador ganha 4 moedas e sofre 4 de dano. Tathingdwen sofre 2 de dano.', en: 'Each player gains 4 coins and takes 4 damage. Tathingdwen takes 2 damage.' } }
+        ]
+    },
+    {
+        id: 'jastes_lekal',
+        name: 'Jastes Lekal',
+        title: { pt: 'Nobre Rebelde', en: 'Rebel Noble' },
+        hp: 24,
+        extraGauge: { name: { pt: 'Moedas Falsas Restantes', en: 'Fake Coins Left' }, initial: 8, max: 16 },
+        img: '../assets/art/mistborn/villains/jastes_lekal.webp',
+        desc: {
+            pt: 'Compre todas as cartas do Baralho de Moedas Falsas para vencer! O Atium causa dano enquanto no topo.',
+            en: 'Buy out all cards in the Fake Coin deck to win! Atium causes damage while on top.'
+        },
+        domSteps: [
+            { label: 'Start', effect: { pt: 'Moedas falsas distribuídas.', en: 'Fake coins distributed.' } },
+            { label: 'X=1', effect: { pt: 'Enquanto no topo: Atium causa 6 de dano se jogado!', en: 'While on top: playing Atium deals 6 damage!' } },
+            { label: 'X=2', effect: { pt: 'Adicione as 2 cartas mais baratas do mercado ao topo das Moedas Falsas.', en: 'Add 2 cheapest market cards to top of Fake Coins.' } },
+            { label: 'X=3', effect: { pt: 'Cada jogador pode adicionar 1 carta do mercado ao deck falso para ganhar 1 Atium.', en: 'Each player may add 1 market card to fake coin deck to gain 1 Atium.' } },
+            { label: 'Mists Rise!', effect: { pt: 'Elimine 2 adversários e cada jogador ganha 1 Atium.', en: 'Kill 2 adversaries and each player gains 1 Atium.' } }
+        ]
+    },
+    {
+        id: 'ashweather_cett',
+        name: 'Ashweather Cett',
+        title: { pt: 'Senhor da Guerra de Fadrex', en: 'Warlord of Fadrex' },
+        hp: 28,
+        extraGauge: { name: { pt: 'Trilha de Retaliação', en: 'Retaliation Track' }, initial: 1, max: 6 },
+        img: '../assets/art/mistborn/villains/ashweather_cett.webp',
+        desc: {
+            pt: 'Escudos pretos sequenciais! Destruir um escudo ativa retaliação imediata e avança a trilha de assassinato.',
+            en: 'Sequential black shields! Destroying a shield triggers retaliation and advances assassination track.'
+        },
+        domSteps: [
+            { label: 'X=1', effect: { pt: 'Retaliação nível 1 ativa.', en: 'Retaliation level 1 active.' } },
+            { label: 'X=2', effect: { pt: 'Rode o dado de assassinato: mova 3 espaços menos missões completas.', en: 'Roll assassination die: move 3 spaces minus completed missions.' } },
+            { label: 'X=3', effect: { pt: 'Jogue 2 adversários e 2 éditos descartados.', en: 'Play 2 discarded adversaries and 2 discarded edicts.' } },
+            { label: 'Mists Rise!', effect: { pt: 'Cada jogador treina 3 níveis e sofre 5 de dano.', en: 'Each player trains 3 spots and takes 5 damage.' } }
+        ]
+    },
+    {
+        id: 'ruin',
+        name: 'Ruin',
+        title: { pt: 'Força Cósmica da Decadência', en: 'Cosmic Force of Decay' },
+        hp: 40,
+        extraGauge: { name: { pt: 'Escalação da Ruína', en: 'Ruin Escalation' }, initial: 0, max: 12 },
+        img: '../assets/art/mistborn/villains/ruin.webp',
+        desc: {
+            pt: 'A força da destruição. Os jogadores podem gastar combate para reduzir a Ruína. Requer missões completas para avançar.',
+            en: 'Cosmic destruction. Players may spend combat to lower Ruin. Requires completed missions to advance.'
+        },
+        domSteps: [
+            { label: 'X=1', effect: { pt: 'Enquanto no topo: jogadores podem pagar 3 de combate para reduzir Ruína em -1.', en: 'While on top: players may pay 3 combat to lower Ruin by -1.' } },
+            { label: 'X=2', effect: { pt: 'Cada jogador escolhe: comprar 3 cartas a menos OU curar 2 adversários OU jogar 2º vilão.', en: 'Pick 1: draw 3 less cards OR fully heal 2 adversaries OR play 2nd villain card.' } },
+            { label: 'X=3', effect: { pt: 'Elimine todos os aliados ou sofra 8 de dano.', en: 'Kill all allies or take 8 damage.' } },
+            { label: 'The End of Ruin', effect: { pt: 'Se a Ruína alcançar o topo, derrota cósmica imediata!', en: 'If Ruin reaches the end, immediate defeat!' } }
+        ]
+    },
+    {
+        id: 'zane_venture',
+        name: 'Zane Venture',
+        title: { pt: 'Assassino Mortal', en: 'Deadly Assassin' },
+        hp: 18,
+        extraGauge: { name: { pt: 'Defesa de Zane', en: 'Zane Defense' }, initial: 2, max: 6 },
+        img: '../assets/art/mistborn/villains/zane_venture.webp',
+        desc: {
+            pt: 'Zane salta entre as 6 cartas de missão com o D6. É obrigatório avançar na missão onde Zane está para poder atacá-lo!',
+            en: 'Zane hops between the 6 missions with D6. You must progress on his mission to deal damage to him!'
+        },
+        domSteps: [
+            { label: 'X=1', effect: { pt: 'Aumente a defesa de Zane em 1 ou um jogador queima 2 metais.', en: 'Increase Zane defense by 1 or flare 2 metals.' } },
+            { label: 'X=2', effect: { pt: 'Remova 1 cubo de escudo de 1 adversário. Se não houver, sofra 2 de dano.', en: 'Remove 1 shield cube from 1 adversary or take 2 damage.' } },
+            { label: 'X=3', effect: { pt: 'Cada jogador sofre 3 de dano e queima 1 metal.', en: 'Each player takes 3 damage and flares 1 metal.' } },
+            { label: 'Mists Rise!', effect: { pt: 'Cada jogador restaura todos os metais e sofre 5 de dano.', en: 'Each player refreshes all metals and takes 5 damage.' } }
+        ]
+    },
+    {
+        id: 'straff_venture',
+        name: 'Straff Venture',
+        title: { pt: 'Lorde de Luthadel', en: 'Lord of Luthadel' },
+        hp: 20,
+        extraGauge: { name: { pt: 'Mistings Contratados', en: 'Hired Mistings' }, initial: 1, max: 6 },
+        img: '../assets/art/mistborn/villains/straff_venture.webp',
+        desc: {
+            pt: 'Contrata brumas (Mistings). Vença eliminando todos os Adversários e Éditos do baralho!',
+            en: 'Hires Mistings. Win by killing every Adversary and Edict in the villain deck!'
+        },
+        domSteps: [
+            { label: 'X=1', effect: { pt: 'Straff contrata 1 novo Misting.', en: 'Straff Venture hires a new Misting.' } },
+            { label: 'X=2', effect: { pt: 'Tudo no mercado custa 2 moedas extras.', en: 'Everything in market costs 2 extra coins.' } },
+            { label: 'X=3', effect: { pt: 'Descarte 2 boxings para ganhar 1 Atium.', en: 'Discard 2 boxings to gain 1 Atium.' } },
+            { label: 'Mists Rise!', effect: { pt: 'Cada jogador ganha 4 boxings e sofre 3 de dano.', en: 'Each player gains 4 boxings and takes 3 damage.' } }
+        ]
+    },
+    {
+        id: 'koloss',
+        name: 'Koloss Horde',
+        title: { pt: 'Horda Brutal', en: 'Brute Swarm' },
+        hp: 38,
+        img: '../assets/art/mistborn/villains/koloss.webp',
+        desc: {
+            pt: 'Horda implacável! Expurga cartas de Zinco e Latão e força o descarte de cartas caras sob pena de 12 de dano.',
+            en: 'Relentless swarm! Purges Zinc and Brass and forces expensive card discards or 12 damage.'
+        },
+        domSteps: [
+            { label: 'X=1', effect: { pt: 'Descarte 2 cartas do mercado para curar 4 de dano.', en: 'Discard 2 market cards to heal 4.' } },
+            { label: 'X=2', effect: { pt: 'Descarte todas as cartas do mercado com Zinco ou Latão. Se não houver, sofra 4 de dano.', en: 'Discard all market cards with Zinc or Brass, or take 4 damage.' } },
+            { label: 'X=3', effect: { pt: 'Descarte todo o mercado! Não reponha até o próximo turno.', en: 'Discard all market cards! Do not refill until next turn.' } },
+            { label: 'Mists Rise!', effect: { pt: 'Cada jogador descarte a carta mais cara da mão ou sofra 12 de dano!', en: 'Each player discards most expensive card in hand or takes 12 damage!' } }
+        ]
+    }
+];
+
+const CHARACTERS = [
+    {
+        id: 'vin',
+        name: 'Vin',
+        title: { pt: 'A Guerreira', en: 'The Warrior' },
+        portrait: '../assets/art/mistborn/portraits/vin.webp',
+        starter: { pt: 'MARSH / VIN (Pewter, Iron, Steel, Tin + 6 Financiamentos)', en: 'MARSH / VIN (Pewter, Iron, Steel, Tin + 6 Funding)' },
+        levels: [
+            { l: 0, a: { pt: '1x por jogo: Vire a carta para curar 5 de vida.', en: 'Once per game: Turn sideways to heal 5.' }, b: { pt: 'No seu turno: Ignore 1 adversário que impeça dano ao vilão.', en: 'On your turn: Ignore 1 adversary preventing damage to villain.' }, tilted: false },
+            { l: 1, a: { pt: 'Queimando Pewter: Ganhe +1 Combate / +1 Cura / +1 Missão.', en: 'Burning Pewter: Gain +1 Combat / +1 Heal / +1 Mission.' }, b: { pt: 'Queimando Pewter: Ganhe +2 Combate / +2 Cura.', en: 'Burning Pewter: Gain +2 Combat / +2 Heal.' } },
+            { l: 2, a: { pt: 'Cartas no mercado que queimam Pewter custam 1 moeda a menos.', en: 'Market cards that burn Pewter cost 1 coin less.' }, b: { pt: 'Queimando Iron: Ganhe +1 Combate adicional.', en: 'Burning Iron: Gain +1 Combat.' } },
+            { l: 3, a: { pt: 'Queimando Atium: Ganhe +4 Combate / +2 Ações.', en: 'Burning Atium: Gain +4 Combat / +2 Actions.' }, b: { pt: 'Queimando Atium: Ganhe +6 Combate.', en: 'Burning Atium: Gain +6 Combat.' } }
+        ]
+    },
+    {
+        id: 'kelsier',
+        name: 'Kelsier',
+        title: { pt: 'O Sobrevivente', en: 'The Survivor' },
+        portrait: '../assets/art/mistborn/portraits/kelsier.webp',
+        starter: { pt: 'KELSIER / SHAN (Steel, Iron, Zinc, Brass + 6 Financiamentos)', en: 'KELSIER / SHAN (Steel, Iron, Zinc, Brass + 6 Funding)' },
+        levels: [
+            { l: 0, a: { pt: '1x por jogo: Previna todo o dano causado a você por 1 rodada.', en: 'Once per game: Prevent all damage done to you for 1 turn.' }, b: { pt: '1x por jogo: Elimine até 6 cartas do mercado.', en: 'Once per game: Eliminate up to 6 market cards.' }, tilted: false },
+            { l: 1, a: { pt: 'Queimando Steel: Ganhe +2 Combate.', en: 'Burning Steel: Gain +2 Combat.' }, b: { pt: 'Queimando Iron ou Steel: Ganhe +1 / +1.', en: 'Burning Iron or Steel: Gain +1 / +1.' } },
+            { l: 2, a: { pt: 'Se já usou Steel neste turno, pode usar Iron como Steel.', en: 'If already used Steel, can use Iron as Steel.' }, b: { pt: '1x por turno: Restaure seu Iron OU Steel.', en: 'Once per turn: Refresh your Iron OR Steel.' } },
+            { l: 3, a: { pt: 'Queimando Atium: Ganhe +2 Combate / +4 Missão.', en: 'Burning Atium: Gain +2 Combat / +4 Mission.' }, b: { pt: 'Queimando Atium: Ganhe +2 / +1.', en: 'Burning Atium: Gain +2 / +1.' } }
+        ]
+    },
+    {
+        id: 'elend',
+        name: 'Elend Venture',
+        title: { pt: 'O Rei', en: 'The King' },
+        portrait: '../assets/art/mistborn/portraits/elend.webp',
+        starter: { pt: 'KELSIER / SHAN (Steel, Zinc, Brass, Copper + 6 Financiamentos)', en: 'KELSIER / SHAN (Steel, Zinc, Brass, Copper + 6 Funding)' },
+        levels: [
+            { l: 0, a: { pt: '1x por jogo: Busque 2 cartas no seu deck.', en: 'Once per game: Search 2 cards in deck.' }, b: { pt: '1x por jogo: Ganhe 3 moedas imediatas.', en: 'Once per game: Gain 3 coins.' }, tilted: false },
+            { l: 1, a: { pt: 'Queimando Steel: Ganhe +2 Combate.', en: 'Burning Steel: Gain +2 Combat.' }, b: { pt: 'Queimando Zinc: Ganhe +2 Moedas.', en: 'Burning Zinc: Gain +2 Coins.' } },
+            { l: 2, a: { pt: '1x por turno: Descarte 1 carta do mercado.', en: 'Once per turn: Discard 1 market card.' }, b: { pt: 'Queimando Copper: Ganhe +1 / +1.', en: 'Burning Copper: Gain +1 / +1.' } },
+            { l: 3, a: { pt: 'Queimando Atium: Ganhe +4 Combate dividido entre todos.', en: 'Burning Atium: Gain +4 Combat split among all.' }, b: { pt: 'Queimando Atium: Divida 4 boxings entre todos.', en: 'Burning Atium: Divide 4 boxings among all.' } }
+        ]
+    },
+    {
+        id: 'sazed',
+        name: 'Sazed',
+        title: { pt: 'O Erudito', en: 'The Scholar' },
+        portrait: '../assets/art/mistborn/portraits/sazed.webp',
+        starter: { pt: 'MARSH / VIN (Pewter, Brass, Bronze, Copper + 6 Financiamentos)', en: 'MARSH / VIN (Pewter, Brass, Bronze, Copper + 6 Funding)' },
+        levels: [
+            { l: 0, a: { pt: 'Ignore qualquer redução de missão de 1 adversário/édito.', en: 'Ignore 1 mission reduction from adversary/edict.' }, b: { pt: '1x por jogo: Se um aliado for eliminado, salve-o.', en: 'Once per game: If an ally would die, save it.' }, tilted: false },
+            { l: 1, a: { pt: 'Queimando Brass: Ganhe +1 / +1.', en: 'Burning Brass: Gain +1 / +1.' }, b: { pt: 'Queimando Bronze: Ganhe +1 / +1.', en: 'Burning Bronze: Gain +1 / +1.' } },
+            { l: 2, a: { pt: 'Se for forçado a descartar/destruir uma carta, compre 3 cartas.', en: 'If forced to discard/destroy, draw 3 cards.' }, b: { pt: 'Você pode comprar a carta do topo da pilha de descarte do mercado.', en: 'You may buy top card of market discard pile.' } },
+            { l: 3, a: { pt: 'Queimando Atium: Ganhe +4 / +2.', en: 'Burning Atium: Gain +4 / +2.' }, b: { pt: 'Queimando Atium: Ganhe +4 / +2.', en: 'Burning Atium: Gain +4 / +2.' } }
+        ]
+    },
+    {
+        id: 'marsh',
+        name: 'Marsh',
+        title: { pt: 'O Espião', en: 'The Spy' },
+        portrait: '../assets/art/mistborn/portraits/marsh.webp',
+        starter: { pt: 'MARSH / VIN (Iron, Bronze, Brass, Pewter + 6 Financiamentos)', en: 'MARSH / VIN (Iron, Bronze, Brass, Pewter + 6 Funding)' },
+        levels: [
+            { l: 0, a: { pt: 'Comece a partida com 1 Atium.', en: 'Start the game with 1 Atium.' }, b: { pt: '1x por jogo: Quando uma carta do vilão for comprada, reembaralhe e compre outra.', en: 'Once per game: When villain card drawn, reshuffle and draw another.' }, tilted: false },
+            { l: 1, a: { pt: 'Queimando Bronze: Ganhe +2 / +1.', en: 'Burning Bronze: Gain +2 / +1.' }, b: { pt: 'Queimando Brass: Ganhe +2 / +1.', en: 'Burning Brass: Gain +2 / +1.' } },
+            { l: 2, a: { pt: 'Queimando Iron: Ganhe +2 Combate.', en: 'Burning Iron: Gain +2 Combat.' }, b: { pt: 'Cartas no mercado que queimam Atium custam 2 a menos.', en: 'Market cards that burn Atium cost 2 less.' } },
+            { l: 3, a: { pt: 'Queimando Atium: Ganhe +3 / +3.', en: 'Burning Atium: Gain +3 / +3.' }, b: { pt: 'Queimando Atium: Ganhe +2 / +2 / +2.', en: 'Burning Atium: Gain +2 / +2 / +2.' } }
+        ]
+    },
+    {
+        id: 'shan',
+        name: 'Shan Elariel',
+        title: { pt: 'A Nobre', en: 'The Noble' },
+        portrait: '../assets/art/mistborn/portraits/shan.webp',
+        starter: { pt: 'KELSIER / SHAN (Zinc, Copper, Steel, Tin + 6 Financiamentos)', en: 'KELSIER / SHAN (Zinc, Copper, Steel, Tin + 6 Funding)' },
+        levels: [
+            { l: 0, a: { pt: 'Jogue com a carta do topo do mercado aberta. Shan pode comprá-la.', en: 'Play with top market card face up; Shan may buy it.' }, b: { pt: '1x por jogo: Cubra 1 escudo de um adversário multi-escudo.', en: 'Once per game: Cover 1 shield of multi-shield adversary.' }, tilted: false },
+            { l: 1, a: { pt: 'Queimando Zinc: Ganhe +2 Moedas.', en: 'Burning Zinc: Gain +2 Coins.' }, b: { pt: 'Queimando Copper: Recupere 1 carta do descarte.', en: 'Burning Copper: Retrieve 1 card from discard.' } },
+            { l: 2, a: { pt: '1x por turno ao queimar metal para dano, adicione +2 ao total.', en: 'Once per turn when flaring metal for damage, add +2.' }, b: { pt: 'Descarte 1 carta do mercado e use sua habilidade por 1-2 moedas a menos.', en: 'Discard market card and use top ability for 1-2 coins less.' } },
+            { l: 3, a: { pt: 'Queimando Atium: Ganhe +2 / +2.', en: 'Burning Atium: Gain +2 / +2.' }, b: { pt: 'Queimando Atium: Ganhe +3 / +1.', en: 'Burning Atium: Gain +3 / +1.' } }
+        ]
+    },
+    {
+        id: 'spook',
+        name: 'Spook',
+        title: { pt: 'O Savant de Estanho', en: 'The Tin Savant' },
+        portrait: '../assets/art/mistborn/portraits/spook.webp',
+        starter: { pt: 'KELSIER / SHAN (Tin, Steel, Iron, Pewter + 6 Financiamentos)', en: 'KELSIER / SHAN (Tin, Steel, Iron, Pewter + 6 Funding)' },
+        levels: [
+            { l: 0, a: { pt: 'Se o vilão usar dado, você pode rolar +1 vez e escolher.', en: 'If villain uses die, reroll 1 time and pick.' }, b: { pt: 'Jogue a carta do topo do vilão revelada pelo resto do jogo.', en: 'Play top villain card revealed rest of game.' }, tilted: false },
+            { l: 1, a: { pt: 'Queimando Tin: Ganhe +1 / +1.', en: 'Burning Tin: Gain +1 / +1.' }, b: { pt: 'Queimando Tin: Ganhe +2 / +1.', en: 'Burning Tin: Gain +2 / +1.' } },
+            { l: 2, a: { pt: 'Se não houver cartas de Tin no mercado, compre do descarte (+1 custo).', en: 'If no Tin in market, buy from discard (+1 cost).' }, b: { pt: 'Cartas de Tin no mercado custam 1 moeda a menos.', en: 'Market Tin cards cost 1 coin less.' } },
+            { l: 3, a: { pt: 'Queimando Atium: Ganhe +6 Combate.', en: 'Burning Atium: Gain +6 Combat.' }, b: { pt: 'Queimando Atium: Ganhe +6 Combate.', en: 'Burning Atium: Gain +6 Combat.' } }
+        ]
+    }
+];
+
+const DURALUMIN_FLARES = [
+    { id: 1, burst: { pt: "Ganhe +4 Combate e +2 Ações neste turno.", en: "Gain +4 Combat and +2 Actions this turn." }, drawback: { pt: "Quando a 2ª missão for concluída, descarte 4 cartas da mão.", en: "When 2nd mission is completed, discard 4 cards in hand." } },
+    { id: 2, burst: { pt: "Cubra 1 escudo em qualquer adversário.", en: "Cover 1 shield on any adversary." }, drawback: { pt: "O próximo Atium que você receber é descartado.", en: "The next Atium you receive is discarded." } },
+    { id: 3, burst: { pt: "Mova 3 espaços em qualquer Missão.", en: "Move 3 spaces on any mission." }, drawback: { pt: "No próximo turno do vilão, compre 2 cartas extras.", en: "Next villain turn, draw 2 extra cards." } },
+    { id: 4, burst: { pt: "Restaure todos os seus metais queimados.", en: "Refresh all flared metals." }, drawback: { pt: "Sofra 5 de dano quando a Dominância avançar.", en: "Take 5 damage when Dominance advances." } },
+    { id: 5, burst: { pt: "Queime todos os metais para curar o dobro de vida.", en: "Burn all metals to heal double life." }, drawback: { pt: "Não ganhe a recompensa superior da sua 1ª missão.", en: "Don't gain top reward from 1st completed mission." } }
+];
+
+const TURN_STEPS = [
+    { title: { pt: "1. Treinamento", en: "1. Training" }, desc: { pt: "Mova seu marcador 1 espaço para a direita na trilha de Treinamento.", en: "Move your tracker 1 space right on the Training track." } },
+    { title: { pt: "2. Ações & Queima", en: "2. Actions & Burning" }, desc: { pt: "Jogue cartas, queime/flameje metais, use aliados e avance em missões.", en: "Play cards, burn/flare metals, activate allies and move on missions." } },
+    { title: { pt: "3. Combate", en: "3. Combat" }, desc: { pt: "Ataque os adversários no campo ou cause dano direto ao Vilão.", en: "Attack adversaries in the field or deal direct damage to the Villain." } },
+    { title: { pt: "4. Compras & Descarte", en: "4. Market & Discard" }, desc: { pt: "Compre cartas do mercado, descarte a mão e compre 5 novas cartas.", en: "Buy market cards, discard played/hand cards and draw 5 new cards." } },
+    { title: { pt: "5. Vez do Vilão", en: "5. Villain Turn" }, desc: { pt: "Compre a carta do Vilão, resolva Éditos/Dominância e efeitos de fim de turno.", en: "Draw Villain card, resolve Edicts/Dominance, and trigger adversary effects." } }
+];
+
+let gameState = {
+    selectedVillain: 'lord_ruler',
+    selectedChar: 'vin',
+    playerCount: 1,
+    difficulty: 'standard_a',
+    expansion: 'duralumin',
+    villainHp: 36,
+    extraGauge: 0,
+    domIndex: 0,
+    charLevel: 0,
+    charChoices: { 0: 'A', 1: 'A', 2: 'A', 3: 'A' },
+    charTilted: false,
+    adversaries: [],
+    turnPhase: 0,
+    activeFlare: null,
+    logs: []
+};
+
+function playSound(type) {
+    if (!soundEnabled) return;
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        
+        if (type === 'hit') {
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(140, ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(30, ctx.currentTime + 0.15);
+            gain.gain.setValueAtTime(0.3, ctx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+            osc.start();
+            osc.stop(ctx.currentTime + 0.15);
+        } else if (type === 'flare') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(300, ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.25);
+            gain.gain.setValueAtTime(0.25, ctx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.01, ctx.currentTime + 0.25);
+            osc.start();
+            osc.stop(ctx.currentTime + 0.25);
+        } else if (type === 'dice') {
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(450, ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(150, ctx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.2, ctx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.01, ctx.currentTime + 0.1);
+            osc.start();
+            osc.stop(ctx.currentTime + 0.1);
+        }
+    } catch(e) {}
+}
+
+function initApp() {
+    applyLanguage();
+    setupEventListeners();
+}
+
+function applyLanguage() {
+    const t = I18N[currentLang] || I18N.pt;
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const k = el.getAttribute('data-i18n');
+        if (t[k]) el.textContent = t[k];
+    });
+    document.querySelectorAll('[data-i18n-html]').forEach(el => {
+        const k = el.getAttribute('data-i18n-html');
+        if (t[k]) el.innerHTML = t[k];
+    });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        const k = el.getAttribute('data-i18n-placeholder');
+        if (t[k]) el.placeholder = t[k];
+    });
+    document.getElementById('btnLang').textContent = currentLang.toUpperCase();
+
+    renderSetupSelectors();
+
+    if (!document.getElementById('gameScreen').classList.contains('hidden')) {
+        const v = VILLAINS.find(x => x.id === gameState.selectedVillain);
+        const c = CHARACTERS.find(x => x.id === gameState.selectedChar);
+        if (v) renderDominanceTrack(v);
+        if (c) renderCharacterDashboard(c);
+        updateTurnStepper();
+    }
+}
+
+function setupEventListeners() {
+    document.getElementById('btnLang').addEventListener('click', () => {
+        currentLang = currentLang === 'pt' ? 'en' : 'pt';
+        localStorage.setItem('boardbots_lang', currentLang);
+        applyLanguage();
+    });
+
+    document.getElementById('btnSound').addEventListener('click', () => {
+        soundEnabled = !soundEnabled;
+        document.getElementById('btnSound').textContent = soundEnabled ? '🔊' : '🔇';
+    });
+
+    document.getElementById('btnHelp').addEventListener('click', () => {
+        document.getElementById('helpModal').classList.add('open');
+    });
+
+    document.getElementById('btnReset').addEventListener('click', () => {
+        const msg = currentLang === 'pt' ? "Deseja reiniciar a partida atual?" : "Reset current match?";
+        if (confirm(msg)) {
+            location.reload();
+        }
+    });
+
+    document.getElementById('btnStartGame').addEventListener('click', startGame);
+}
+
+function renderSetupSelectors() {
+    const vGrid = document.getElementById('villainGrid');
+    vGrid.innerHTML = VILLAINS.map(v => {
+        const descText = typeof v.desc === 'object' ? (v.desc[currentLang] || v.desc.pt) : v.desc;
+        const titleText = typeof v.title === 'object' ? (v.title[currentLang] || v.title.pt) : (v.title || '');
+        return `
+            <div class="select-card ${v.id === gameState.selectedVillain ? 'selected' : ''}" onclick="selectVillain('${v.id}')">
+                <img src="${v.img}" alt="${v.name}">
+                <div class="select-info">
+                    <h4>${v.name}</h4>
+                    <p><strong>${titleText}</strong> — ${descText}</p>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    const cGrid = document.getElementById('charGrid');
+    cGrid.innerHTML = CHARACTERS.map(c => {
+        const starterText = typeof c.starter === 'object' ? (c.starter[currentLang] || c.starter.pt) : c.starter;
+        const titleText = typeof c.title === 'object' ? (c.title[currentLang] || c.title.pt) : c.title;
+        return `
+            <div class="select-card ${c.id === gameState.selectedChar ? 'selected' : ''}" onclick="selectChar('${c.id}')">
+                <img src="${c.portrait}" alt="${c.name}">
+                <div class="select-info">
+                    <h4>${c.name}</h4>
+                    <p><strong>${titleText}</strong> — ${starterText}</p>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function selectVillain(id) {
+    gameState.selectedVillain = id;
+    renderSetupSelectors();
+    playSound('flare');
+}
+
+function selectChar(id) {
+    gameState.selectedChar = id;
+    renderSetupSelectors();
+    playSound('flare');
+}
+
+function closeHelpModal() {
+    document.getElementById('helpModal').classList.remove('open');
+}
+
+function startGame() {
+    gameState.playerCount = parseInt(document.getElementById('setupPlayerCount').value);
+    gameState.difficulty = document.getElementById('setupDifficulty').value;
+    gameState.expansion = document.getElementById('setupExpansion').value;
+
+    const v = VILLAINS.find(x => x.id === gameState.selectedVillain);
+    if (v.id === 'lord_ruler' && v.tracks) {
+        const trackKey = v.tracks[gameState.difficulty] ? gameState.difficulty : 'standard_a';
+        v.domSteps = v.tracks[trackKey];
+    }
+    gameState.villainHp = v.hp;
+    if (v.extraGauge) gameState.extraGauge = v.extraGauge.initial;
+
+    document.getElementById('setupScreen').classList.add('hidden');
+    document.getElementById('gameScreen').classList.remove('hidden');
+
+    setupGameDashboard();
+    const initMsg = currentLang === 'pt'
+        ? `⚔️ Partida iniciada contra <strong>${v.name}</strong> (${gameState.playerCount} jogadores, modo ${gameState.difficulty}).`
+        : `⚔️ Match started against <strong>${v.name}</strong> (${gameState.playerCount} players, mode ${gameState.difficulty}).`;
+    addLog(initMsg);
+    playSound('flare');
+}
+
+function setupGameDashboard() {
+    const v = VILLAINS.find(x => x.id === gameState.selectedVillain);
+    const c = CHARACTERS.find(x => x.id === gameState.selectedChar);
+
+    document.getElementById('displayVillainName').textContent = v.name;
+    document.getElementById('villainTypeBadge').textContent = v.type ? v.type.toUpperCase() : 'VILLAIN';
+    document.getElementById('valVillainHp').textContent = gameState.villainHp;
+
+    const extraBox = document.getElementById('boxExtraGauge');
+    if (v.extraGauge) {
+        extraBox.classList.remove('hidden');
+        const gaugeName = typeof v.extraGauge.name === 'object' ? (v.extraGauge.name[currentLang] || v.extraGauge.name.pt) : v.extraGauge.name;
+        document.getElementById('lblExtraGauge').textContent = gaugeName;
+        document.getElementById('valExtraGauge').textContent = gameState.extraGauge;
+    } else {
+        extraBox.classList.add('hidden');
+    }
+
+    renderDominanceTrack(v);
+    renderCharacterDashboard(c);
+    updateTurnStepper();
+
+    if (gameState.expansion === 'duralumin') {
+        document.getElementById('duraluminModule').classList.remove('hidden');
+    }
+}
+
+function renderDominanceTrack(v) {
+    const row = document.getElementById('domStepsRow');
+    row.innerHTML = v.domSteps.map((s, idx) => `
+        <div class="dom-step ${idx === gameState.domIndex ? 'active' : (idx < gameState.domIndex ? 'passed' : '')}" onclick="setDominance(${idx})">
+            <div class="dom-step-title">${s.label}</div>
+        </div>
+    `).join('');
+
+    const activeStep = v.domSteps[gameState.domIndex] || v.domSteps[0];
+    const effectText = typeof activeStep.effect === 'object' ? (activeStep.effect[currentLang] || activeStep.effect.pt) : activeStep.effect;
+    const titleDom = currentLang === 'pt' ? 'Dominância Atual' : 'Current Dominance';
+    document.getElementById('domActiveBanner').innerHTML = `<strong>${titleDom} (${activeStep.label}):</strong> ${effectText}`;
+}
+
+function stepDominance(delta) {
+    const v = VILLAINS.find(x => x.id === gameState.selectedVillain);
+    gameState.domIndex = Math.max(0, Math.min(v.domSteps.length - 1, gameState.domIndex + delta));
+    renderDominanceTrack(v);
+    const step = v.domSteps[gameState.domIndex];
+    const eff = typeof step.effect === 'object' ? (step.effect[currentLang] || step.effect.pt) : step.effect;
+    const msg = currentLang === 'pt'
+        ? `📈 Dominância avançou para <strong>${step.label}</strong>: ${eff}`
+        : `📈 Dominance advanced to <strong>${step.label}</strong>: ${eff}`;
+    addLog(msg, 'danger');
+    playSound('hit');
+}
+
+function setDominance(idx) {
+    const v = VILLAINS.find(x => x.id === gameState.selectedVillain);
+    gameState.domIndex = idx;
+    renderDominanceTrack(v);
+    const msg = currentLang === 'pt'
+        ? `📍 Dominância ajustada para <strong>${v.domSteps[idx].label}</strong>.`
+        : `📍 Dominance set to <strong>${v.domSteps[idx].label}</strong>.`;
+    addLog(msg);
+}
+
+function adjustGauge(type, delta) {
+    if (type === 'villainHp') {
+        gameState.villainHp = Math.max(0, gameState.villainHp + delta);
+        document.getElementById('valVillainHp').textContent = gameState.villainHp;
+        const msg = currentLang === 'pt'
+            ? `Vida do vilão alterada para <strong>${gameState.villainHp}</strong> (${delta > 0 ? '+' : ''}${delta}).`
+            : `Villain HP changed to <strong>${gameState.villainHp}</strong> (${delta > 0 ? '+' : ''}${delta}).`;
+        addLog(msg);
+        playSound('hit');
+        if (gameState.villainHp === 0) {
+            const winMsg = currentLang === 'pt' ? `🎉 VILÃO DERROTADO! Vitória dos Mistborns!` : `🎉 VILLAIN DEFEATED! Victory for the Mistborns!`;
+            addLog(winMsg, 'accent');
+            alert(winMsg);
+        }
+    } else if (type === 'extra') {
+        gameState.extraGauge = Math.max(0, gameState.extraGauge + delta);
+        document.getElementById('valExtraGauge').textContent = gameState.extraGauge;
+        const msg = currentLang === 'pt'
+            ? `Marcador especial alterado para <strong>${gameState.extraGauge}</strong>.`
+            : `Special marker changed to <strong>${gameState.extraGauge}</strong>.`;
+        addLog(msg);
+        playSound('flare');
+    }
+}
+
+function renderCharacterDashboard(c) {
+    document.getElementById('displayCharName').textContent = c.name;
+    document.getElementById('valCharLevel').textContent = gameState.charLevel;
+    const starterText = typeof c.starter === 'object' ? (c.starter[currentLang] || c.starter.pt) : c.starter;
+    document.getElementById('txtStarterDeck').textContent = starterText;
+
+    const lvlPrefix = I18N[currentLang].lvl_prefix || 'Nível ';
+    document.querySelectorAll('.level-tab').forEach((tab, idx) => {
+        tab.classList.toggle('active', idx === gameState.charLevel);
+        tab.textContent = `${lvlPrefix}${idx}`;
+    });
+
+    const levelData = c.levels[gameState.charLevel];
+    const powerAText = typeof levelData.a === 'object' ? (levelData.a[currentLang] || levelData.a.pt) : levelData.a;
+    const powerBText = typeof levelData.b === 'object' ? (levelData.b[currentLang] || levelData.b.pt) : levelData.b;
+    document.getElementById('txtPowerA').textContent = powerAText;
+    document.getElementById('txtPowerB').textContent = powerBText;
+
+    const chosen = gameState.charChoices[gameState.charLevel] || 'A';
+    document.getElementById('powerChoiceA').classList.toggle('chosen', chosen === 'A');
+    document.getElementById('powerChoiceB').classList.toggle('chosen', chosen === 'B');
+
+    const tiltBtn = document.getElementById('btnTiltPower');
+    if (gameState.charLevel === 0) {
+        tiltBtn.classList.remove('hidden');
+        tiltBtn.classList.toggle('tilted', gameState.charTilted);
+        tiltBtn.textContent = gameState.charTilted 
+            ? (currentLang === 'pt' ? "Carta Virada (Poder Esgotado)" : "Card Tilted (Power Expended)")
+            : (currentLang === 'pt' ? "Virar Carta (Usar Poder 1x por Partida)" : "Tilt Card (Use Once per Game Power)");
+    } else {
+        tiltBtn.classList.add('hidden');
+    }
+}
+
+function selectCharLevelView(lvl) {
+    gameState.charLevel = lvl;
+    const c = CHARACTERS.find(x => x.id === gameState.selectedChar);
+    renderCharacterDashboard(c);
+}
+
+function levelUpChar(delta) {
+    gameState.charLevel = Math.max(0, Math.min(3, gameState.charLevel + delta));
+    const c = CHARACTERS.find(x => x.id === gameState.selectedChar);
+    renderCharacterDashboard(c);
+    const msg = currentLang === 'pt'
+        ? `🌟 ${c.name} alcançou o <strong>Nível ${gameState.charLevel}</strong>!`
+        : `🌟 ${c.name} reached <strong>Level ${gameState.charLevel}</strong>!`;
+    addLog(msg, 'accent');
+    playSound('flare');
+}
+
+function choosePowerSide(side) {
+    gameState.charChoices[gameState.charLevel] = side;
+    const c = CHARACTERS.find(x => x.id === gameState.selectedChar);
+    renderCharacterDashboard(c);
+    const msg = currentLang === 'pt'
+        ? `Poder do Nível ${gameState.charLevel} configurado para o <strong>Lado ${side}</strong>.`
+        : `Level ${gameState.charLevel} power set to <strong>Side ${side}</strong>.`;
+    addLog(msg);
+}
+
+function toggleTiltPower() {
+    gameState.charTilted = !gameState.charTilted;
+    const c = CHARACTERS.find(x => x.id === gameState.selectedChar);
+    renderCharacterDashboard(c);
+    const msg = gameState.charTilted 
+        ? (currentLang === 'pt' ? `⚠️ Habilidade 1x por jogo de ${c.name} foi USADA (virada).` : `⚠️ Once per game ability of ${c.name} USED (tilted).`)
+        : (currentLang === 'pt' ? `Habilidade de ${c.name} restaurada.` : `Ability of ${c.name} restored.`);
+    addLog(msg);
+    playSound('flare');
+}
+
+function showAddAdversaryModal() {
+    document.getElementById('addAdversaryModal').classList.add('open');
+}
+function closeAddAdversaryModal() {
+    document.getElementById('addAdversaryModal').classList.remove('open');
+}
+
+function confirmAddAdversary() {
+    const defaultName = currentLang === 'pt' ? 'Inquisidor de Aço' : 'Steel Inquisitor';
+    const name = document.getElementById('inpAdvName').value.trim() || defaultName;
+    const shields = parseInt(document.getElementById('inpAdvShields').value);
+    const effect = document.getElementById('inpAdvEffect').value.trim();
+
+    const adv = {
+        id: Date.now(),
+        name: name,
+        maxShields: shields,
+        coveredShields: 0,
+        effect: effect
+    };
+
+    gameState.adversaries.push(adv);
+    renderAdversaries();
+    closeAddAdversaryModal();
+    const msg = currentLang === 'pt'
+        ? `👹 Novo adversário entrou no campo: <strong>${name}</strong> (${shields} escudos).`
+        : `👹 New adversary entered the battlefield: <strong>${name}</strong> (${shields} shields).`;
+    addLog(msg);
+    playSound('hit');
+}
+
+function renderAdversaries() {
+    const list = document.getElementById('adversaryList');
+    if (gameState.adversaries.length === 0) {
+        const emptyMsg = currentLang === 'pt' ? 'Nenhum adversário ativo no campo.' : 'No active adversaries on battlefield.';
+        list.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:16px; color:var(--text-muted);">${emptyMsg}</div>`;
+        return;
+    }
+
+    list.innerHTML = gameState.adversaries.map((a, idx) => `
+        <div class="adversary-card ${a.coveredShields >= a.maxShields ? 'defeated' : ''}">
+            <div class="adversary-name">
+                <span>#${idx+1} ${a.name}</span>
+                <button class="btn-sm btn-danger" style="padding:2px 6px; font-size:0.75rem;" onclick="removeAdversary(${a.id})">✕</button>
+            </div>
+            <div class="shields-row">
+                ${Array.from({ length: a.maxShields }).map((_, sIdx) => `
+                    <div class="shield-token ${sIdx < a.coveredShields ? 'covered' : ''}" onclick="toggleAdvShield(${a.id}, ${sIdx})">
+                        ${sIdx+1}
+                    </div>
+                `).join('')}
+            </div>
+            ${a.effect ? `<div style="font-size:0.75rem; color:var(--text-dim);">⚡ ${a.effect}</div>` : ''}
+        </div>
+    `).join('');
+}
+
+function toggleAdvShield(advId, shieldIdx) {
+    const adv = gameState.adversaries.find(a => a.id === advId);
+    if (!adv) return;
+
+    if (shieldIdx < adv.coveredShields) {
+        adv.coveredShields = shieldIdx;
+    } else {
+        adv.coveredShields = shieldIdx + 1;
+    }
+    renderAdversaries();
+    const msg = currentLang === 'pt'
+        ? `🛡️ Escudo de <strong>${adv.name}</strong> atualizado (${adv.coveredShields}/${adv.maxShields}).`
+        : `🛡️ Shield of <strong>${adv.name}</strong> updated (${adv.coveredShields}/${adv.maxShields}).`;
+    addLog(msg);
+    playSound('hit');
+
+    if (adv.coveredShields >= adv.maxShields) {
+        const killMsg = currentLang === 'pt'
+            ? `💀 Adversário <strong>${adv.name}</strong> foi derrotado!`
+            : `💀 Adversary <strong>${adv.name}</strong> defeated!`;
+        addLog(killMsg, 'accent');
+    }
+}
+
+function removeAdversary(advId) {
+    gameState.adversaries = gameState.adversaries.filter(a => a.id !== advId);
+    renderAdversaries();
+    const msg = currentLang === 'pt' ? `Adversário removido do campo.` : `Adversary removed from battlefield.`;
+    addLog(msg);
+}
+
+function triggerAdversaryEndEffects() {
+    if (gameState.adversaries.length === 0) {
+        const emptyMsg = currentLang === 'pt' ? 'Nenhum adversário no campo!' : 'No adversaries on the field!';
+        alert(emptyMsg);
+        return;
+    }
+    const msg = currentLang === 'pt'
+        ? `⚡ Resolvendo efeitos de fim de turno de todos os adversários da esquerda para a direita...`
+        : `⚡ Resolving end-of-turn effects for all adversaries from left to right...`;
+    addLog(msg);
+    gameState.adversaries.forEach((a, i) => {
+        if (a.coveredShields < a.maxShields) {
+            const eff = a.effect || (currentLang === 'pt' ? 'Causa efeito passivo' : 'Causes passive effect');
+            addLog(`• #${i+1} (${a.name}): ${eff}`);
+        }
+    });
+    playSound('hit');
+}
+
+function updateTurnStepper() {
+    const container = document.getElementById('turnStepsContainer');
+    container.innerHTML = TURN_STEPS.map((s, idx) => {
+        const titleText = typeof s.title === 'object' ? (s.title[currentLang] || s.title.pt) : s.title;
+        const descText = typeof s.desc === 'object' ? (s.desc[currentLang] || s.desc.pt) : s.desc;
+        return `
+            <div class="step-item ${idx === gameState.turnPhase ? 'current' : ''}">
+                <strong>${titleText}</strong>
+                <div>${descText}</div>
+            </div>
+        `;
+    }).join('');
+}
+
+function advanceTurnPhase() {
+    gameState.turnPhase = (gameState.turnPhase + 1) % TURN_STEPS.length;
+    updateTurnStepper();
+    playSound('flare');
+}
+
+function rollGameDie() {
+    const die = document.getElementById('dieFace');
+    die.classList.add('rolling');
+    playSound('dice');
+
+    setTimeout(() => {
+        const val = Math.floor(Math.random() * 6) + 1;
+        die.textContent = val;
+        die.classList.remove('rolling');
+        const msg = currentLang === 'pt' ? `🎲 Dado rolado: Resultado <strong>${val}</strong>!` : `🎲 Die rolled: Result <strong>${val}</strong>!`;
+        addLog(msg);
+    }, 350);
+}
+
+function drawDuraluminCard() {
+    const flare = DURALUMIN_FLARES[Math.floor(Math.random() * DURALUMIN_FLARES.length)];
+    gameState.activeFlare = flare;
+    const burstText = typeof flare.burst === 'object' ? (flare.burst[currentLang] || flare.burst.pt) : flare.burst;
+    const drawText = typeof flare.drawback === 'object' ? (flare.drawback[currentLang] || flare.drawback.pt) : flare.drawback;
+    document.getElementById('duraluminCardDisplay').innerHTML = `
+        <div style="color:var(--duralumin); font-weight:700; margin-bottom:4px;">Duralumin Burst: ${burstText}</div>
+        <div style="color:var(--danger); font-size:0.8rem;">⚠️ ${drawText}</div>
+    `;
+    const msg = currentLang === 'pt' ? `⚡ Duralumin Flare sacado: <strong>${burstText}</strong>` : `⚡ Duralumin Flare drawn: <strong>${burstText}</strong>`;
+    addLog(msg);
+    playSound('flare');
+}
+
+function addLog(text, type = '') {
+    const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const entry = { time, text, type };
+    gameState.logs.unshift(entry);
+    
+    const panel = document.getElementById('logPanel');
+    const div = document.createElement('div');
+    div.className = `log-entry ${type}`;
+    div.innerHTML = `<span style="font-size:0.75rem; opacity:0.6;">[${time}]</span> ${text}`;
+    panel.prepend(div);
+}
+
+function clearLog() {
+    gameState.logs = [];
+    document.getElementById('logPanel').innerHTML = '';
+}
+
+window.addEventListener('DOMContentLoaded', initApp);
+</script>
+</body>
+</html>

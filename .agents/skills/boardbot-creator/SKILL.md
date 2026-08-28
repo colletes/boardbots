@@ -56,8 +56,12 @@ Ao criar o HTML do bot, **você DEVE copiar e utilizar os seguintes elementos pa
    É OBRIGATÓRIO incluir o Modal de Regras (`#helpModal`) para explicar como o automa toma decisões, condições de vitória, e regras de desempate. Nunca assuma que as regras são simples demais para dispensar o modal.
 5. **Footer (Fim do body):**
    Sempre inclua os créditos do autor (`.credits`), o botão Buy Me a Coffee (`.bmc-inline`) e o botão Home para voltar (`.btn-home`).
-6. **Theming e Personalidade:**
-   O bot não pode ter uma interface genérica! Use variáveis CSS (`--bg-color`, `--text-main`, `--accent`) e backgrounds temáticos para injetar a personalidade do jogo original. Se for um jogo de fantasia, use texturas de pergaminho/madeira; se for sci-fi, use painéis futuristas. Se a temática não puder ser inferida pelas regras ou pela arte da capa, **PERGUNTE AO USUÁRIO** antes de prosseguir.
+6. **Theming, Personalidade e UI Diegética:**
+   O bot DEVE ter uma interface altamente imersiva e diegética (in-world). A interface deve se parecer com um componente físico ou um elemento dentro do universo do jogo (ex: interface de jornais de guerra da 2ª Guerra Mundial, um mapa de pergaminho de fantasia, ou botões em formato de blocos de mármore esculpidos).
+   - Use texturas densas (noise SVG, degradês complexos), e pseudo-elementos (`::before`, `::after`) para compor cenários de fundo 3D (como mesas de madeira, pilares de pedra ou anéis brilhantes).
+   - Adicione animações CSS (`@keyframes`) para partículas, brilhos, ou elementos flutuantes.
+   - Aplique clip-paths ou bordas personalizadas (ex: cera derretida, bordas queimadas, formas hexagonais) em botões e cards. NUNCA faça uma interface de "aplicativo web genérico".
+   - **Widescreen Layouts (Novo Padrão):** NUNCA confine a tela inteira em um `max-width: 500px` genérico no centro da tela para desktops. Em telas maiores (`min-width: 900px`), o layout deve se expandir utilizando CSS Grid ou Flexbox (ex: uma coluna lateral para status e uma coluna principal maior), aproveitando todo o espaço horizontal sem deixar enormes áreas pretas nas laterais.
 7. **Painel de Histórico (Log):**
    É OBRIGATÓRIO incluir um painel de histórico de ações (log) na tela do jogo. O log deve registrar todas as ações e decisões do bot, para que o jogador possa auditar o que aconteceu caso clique rápido demais. O HTML deve conter um container (ex: `<div id="logPanel" class="log-panel"></div>`) e o JS deve alimentar esse painel com mensagens descritivas a cada jogada.
 ## 4.1 Internacionalização (i18n)
