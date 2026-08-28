@@ -121,9 +121,9 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
     <div class="setup-modal">
         <h2 data-i18n="setupTitle">Configuração do Jogo</h2>
         
-        <div style="background:rgba(59,130,246,0.1); padding:12px; border-radius:6px; border-left:3px solid #3b82f6; margin-bottom:15px; font-size:0.85em; text-align:left; color:#94a3b8;">
-            <strong data-i18n="physSetupTitle" style="color:#e2e8f0; display:block; margin-bottom:5px;">Setup Físico (Joanna):</strong>
-            <span data-i18n="physSetupDesc">Coloque os 3 cubos da Joanna no 0 (VP, Moeda e Renda). Compre uma carta inicial Nível 1 aleatória para ela. Ela não recebe cartas iniciais de setor.</span>
+        <div style="background:rgba(59,130,246,0.1); padding:14px 16px; border-radius:8px; border-left:4px solid #3b82f6; margin-bottom:18px; font-size:0.85em; text-align:left; color:#cbd5e1; line-height:1.6; max-height:240px; overflow-y:auto;">
+            <strong id="physSetupTitleText" style="color:#60a5fa; display:block; margin-bottom:8px; font-size:1.05em;">🛸 Setup Físico:</strong>
+            <div id="physSetupDescText"></div>
         </div>
         
         <div class="setup-row">
@@ -555,7 +555,7 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
             automaVP = s.automaVP ?? 0;
             attackDeck = s.attackDeck ?? [];
             attackDiscard = s.attackDiscard ?? [];
-            sectorDamage = s.sectorDamage ?? [0,0,0,0,0,0,0,0,0,0,0,0];
+            sectorDamage = s.sectorDamage ?? {};
             return { vpCounter: s.vpCounter ?? 0 };
         } catch(e) { return false; }
     }
@@ -603,21 +603,55 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
     function updateSetupUI() {
         logEvent("updateSetupUI called. Mode=" + document.getElementById("gameMode").value);
         gameMode = document.getElementById('gameMode').value;
-        const titleEl = document.querySelector('[data-i18n="physSetupTitle"]');
-        const descEl = document.querySelector('[data-i18n="physSetupDesc"]');
+        const titleEl = document.getElementById('physSetupTitleText');
+        const descEl = document.getElementById('physSetupDescText');
         
         if(gameMode === 'joanna') {
             document.getElementById('joannaDiffRow').style.display = 'block';
-            titleEl.innerHTML = currentLang === 'en' ? 'Physical Setup (Automa):' : 'Setup Físico (Automa):';
-            descEl.innerHTML = currentLang === 'en'
-                ? 'Place the Automa\'s VP score cube on 0. Draw one random Level 1 starting card for it. It does not get sector starting cards. Players start with their normal boards (cubes on 5🪙, 0🌍, 0🏆) and 1 starting ship.'
-                : 'Coloque o cubo de pontuação (VP) do Automa no 0. Compre uma carta inicial Nível 1 aleatória para ele. Ele não recebe cartas iniciais de setor. Os jogadores começam com seus tabuleiros normais (cubos no 5🪙, 0🌍, 0🏆) e 1 nave inicial.';
+            if (titleEl) {
+                titleEl.innerHTML = currentLang === 'en' ? '🛸 Physical Setup (Automa Mode):' : '🛸 Setup Físico (Modo Automa):';
+            }
+            if (descEl) {
+                descEl.innerHTML = currentLang === 'en' ? `
+                    <ul style="padding-left:18px; margin:0;">
+                        <li style="margin-bottom:6px;"><strong>Player Console:</strong> Place cubes on 🪙 <strong>5 Credits</strong>, 🌍 <strong>0 Income</strong>, and 🏆 <strong>0 VP</strong>. Place your 12 starting ships face up in sectors 1–12.</li>
+                        <li style="margin-bottom:6px;"><strong>Initial Tier 1 Ship:</strong> Draw the top card of the Tier 1 ship deck, pay its credit cost by reducing your credit marker, place it into its matching sector, and deploy (tuck) the starting ship with its red reward showing above your console.</li>
+                        <li style="margin-bottom:6px;"><strong>Shipyard Market:</strong> Shuffle ship decks 1, 2, and 3 separately and deal <strong>6 cards face up</strong> from each deck. Arrange the 12 Colony cards in ascending order.</li>
+                        <li><strong>Automa Setup:</strong> Place the Automa's VP score cube on <strong>0</strong> (or track it directly on this app). The Automa does not need a player board or sector cards.</li>
+                    </ul>
+                ` : `
+                    <ul style="padding-left:18px; margin:0;">
+                        <li style="margin-bottom:6px;"><strong>Console do Jogador:</strong> Coloque seus cubos em 🪙 <strong>5 Créditos</strong>, 🌍 <strong>0 Renda</strong> e 🏆 <strong>0 VP</strong>. Coloque suas 12 naves iniciais nos setores 1 a 12 (lado azul para cima).</li>
+                        <li style="margin-bottom:6px;"><strong>Nave Nível 1 Inicial:</strong> Compre a carta do topo do baralho Nível 1, pague seu custo em créditos, encaixe-a no setor correspondente e implante (tuck) a nave inicial daquele setor com o lado vermelho visível acima do console.</li>
+                        <li style="margin-bottom:6px;"><strong>Mercado Central:</strong> Embaralhe os baralhos de naves 1, 2 e 3 separadamente e abra <strong>6 cartas</strong> de cada nível. Disponha as 12 cartas de Colônia em ordem crescente.</li>
+                        <li><strong>Setup do Automa:</strong> Coloque o marcador de VP do Automa no <strong>0</strong> (ou use este app para acompanhar). O Automa não precisa de console próprio nem de naves de setor.</li>
+                    </ul>
+                `;
+            }
         } else {
             document.getElementById('joannaDiffRow').style.display = 'none';
-            titleEl.innerHTML = currentLang === 'en' ? 'Physical Setup (Base Attack):' : 'Setup Físico (Ataque à Base):';
-            descEl.innerHTML = currentLang === 'en'
-                ? 'There is no Automa board. Set up your normal player board (cubes on 5🪙, 0🌍, 0🏆) and 1 starting ship. Every time you buy/deploy a card, click the corresponding button on the bot.'
-                : 'Não há tabuleiro de Automa. Prepare seu tabuleiro normal de jogador (cubos no 5🪙, 0🌍, 0🏆) e 1 nave inicial. Sempre que você comprar/implantar uma carta, clique no botão correspondente no bot.';
+            if (titleEl) {
+                titleEl.innerHTML = currentLang === 'en' ? '⚔️ Physical Setup (Base Attack SoloPlay):' : '⚔️ Setup Físico (Ataque à Base SoloPlay):';
+            }
+            if (descEl) {
+                descEl.innerHTML = currentLang === 'en' ? `
+                    <ul style="padding-left:18px; margin:0;">
+                        <li style="margin-bottom:6px;"><strong>Player Console:</strong> Setup console with cubes on 🪙 <strong>5 Credits</strong>, 🌍 <strong>0 Income</strong>, 🏆 <strong>0 VP</strong>, and 12 starting ships in sectors 1–12.</li>
+                        <li style="margin-bottom:6px;"><strong>Initial Tier 1 Ship:</strong> Draw the top Tier 1 card, pay its cost in credits, place into its sector, and deploy the starting ship to show its red reward.</li>
+                        <li style="margin-bottom:6px;"><strong>Shipyard Market:</strong> Deal <strong>4 cards face up</strong> from each level (1, 2, and 3) instead of 6.</li>
+                        <li style="margin-bottom:6px;"><strong>Attack Deck:</strong> Shuffle the other 4 sets of starter ships (48 cards total: 4 of each sector 1–12) into a facedown attack deck (or use this bot to draw automatically).</li>
+                        <li><strong>Colonies Pool:</strong> Shuffle Colony cards and reveal until reaching your difficulty target (Easy: 4–5 cards total 30–35 VP; Normal: 4–5 cards total 35–42 VP; Expert: 5–6 cards total 43+ VP). Remove remaining colonies from the game.</li>
+                    </ul>
+                ` : `
+                    <ul style="padding-left:18px; margin:0;">
+                        <li style="margin-bottom:6px;"><strong>Console do Jogador:</strong> Prepare o console com cubos em 🪙 <strong>5 Créditos</strong>, 🌍 <strong>0 Renda</strong>, 🏆 <strong>0 VP</strong> e as 12 naves iniciais nos setores 1–12.</li>
+                        <li style="margin-bottom:6px;"><strong>Nave Nível 1 Inicial:</strong> Compre a carta do topo do Nível 1, pague o custo em créditos, coloque-a no setor e implante a nave inicial com o lado vermelho visível.</li>
+                        <li style="margin-bottom:6px;"><strong>Mercado Central:</strong> Abra <strong>4 cartas</strong> de cada nível (1, 2 e 3) ao invés de 6.</li>
+                        <li style="margin-bottom:6px;"><strong>Baralho de Ataque:</strong> Embaralhe os outros 4 conjuntos de naves iniciais (48 cartas: 4 de cada setor 1–12) para formar o baralho de ataque dos rivais (ou use o sorteio automático deste app).</li>
+                        <li><strong>Colônias em Jogo:</strong> Embaralhe as cartas de Colônia e revele até atingir a meta da sua dificuldade (Fácil: 4–5 cartas total 30–35 VP; Normal: 4–5 cartas total 35–42 VP; Expert: 5–6 cartas total 43+ VP). Descarte as demais colônias da partida.</li>
+                    </ul>
+                `;
+            }
         }
     }
 
@@ -1019,6 +1053,7 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
 
     // Init i18n on load
     applyI18n();
+    updateSetupUI();
     
     const saved = localStorage.getItem(LS_KEY);
     if (saved) {
