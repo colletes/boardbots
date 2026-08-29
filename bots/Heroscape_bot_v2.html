@@ -5,32 +5,33 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>A.B.A. - Heroscape Solo Bot</title>
 <style>
-.hidden { display: none !important; }
-
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Metamorphous&display=swap');
 
   :root {
-    --gold: #f5c518;
-    --gold-dark: #c69500;
-    --gold-glow: rgba(245, 197, 24, 0.35);
-    --panel-bg: rgba(14, 25, 44, 0.94);
-    --page-bg: #070d18;
-    --text-light: #e6f1f5;
-    --text-dim: #90a4ae;
-    --blue: #00b4d8;
-    --border: #1e3a5f;
-    --border-gold: rgba(245, 197, 24, 0.5);
+    --gold: #d4af37;
+    --gold-dark: #8b6b22;
+    --gold-glow: rgba(212, 175, 55, 0.5);
+    --purple-bg: #0b0e12;
+    --panel-bg: rgba(24, 29, 37, 0.9);
+    --text-light: #eef1f5;
+    --text-dim: #9aa4b2;
+    --blue: #4f8cff;
+    --blue-soft: #274168;
+    --blue-glow: rgba(79, 140, 255, 0.35);
+    --border: #2b323d;
   }
 
   html { -webkit-text-size-adjust: 100%; }
   body { 
     font-family: 'Segoe UI', Tahoma, sans-serif; 
-    background-color: var(--page-bg); 
-    background-image: 
-      url("data:image/svg+xml,%3Csvg width='60' height='103.923' viewBox='0 0 60 103.923' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l25.98 15v30L30 60 4.02 45V15zM30 103.923l25.98-15v-30L30 43.923l-25.98 15v30z' fill='none' stroke='rgba(245,197,24,0.05)' stroke-width='1'/%3E%3C/svg%3E"),
-      radial-gradient(circle at 50% 30%, #0e1e33 0%, #060b13 100%);
+    background-color: var(--purple-bg); 
+    background-image:
+      radial-gradient(circle at 15% 0%, rgba(79,140,255,0.08), transparent 55%),
+      radial-gradient(circle at 85% 100%, rgba(212,175,55,0.06), transparent 50%),
+      radial-gradient(circle at 50% 50%, #12161c 0%, #0b0e12 100%);
     background-attachment: fixed;
     color: var(--text-light); 
-    max-width: 1400px; 
+    max-width: 720px; 
     margin: 0 auto; 
     padding: 20px; 
     padding-left: max(20px, env(safe-area-inset-left));
@@ -38,226 +39,402 @@
     padding-bottom: max(20px, env(safe-area-inset-bottom));
     -webkit-tap-highlight-color: transparent;
   }
-  
-  @keyframes pulseRune { 0% { text-shadow: 0 0 4px var(--gold); } 50% { text-shadow: 0 0 12px var(--gold), 0 0 20px #fff; } 100% { text-shadow: 0 0 4px var(--gold); } }
-  
-  h1 { font-family: 'Metamorphous', serif; color: #fff; font-size: 2.2em; text-shadow: 0 2px 10px rgba(0,0,0,0.8); margin: 0; display: flex; align-items: center; gap: 10px; }
-  h1 svg { width: 0.85em; height: 0.85em; color: var(--gold); flex-shrink: 0; filter: drop-shadow(0 0 8px var(--gold)); }
-  .subtitle { font-family: 'Cinzel', serif; color: var(--gold); margin-top: 4px; margin-bottom: 0; letter-spacing: 3px; font-size: 0.9em; text-transform: uppercase; font-weight: 800; animation: pulseRune 3s infinite; }
-  
-  .hero { position: relative; border-radius: 8px; overflow: hidden; margin-bottom: 20px; border: 2px solid var(--border-gold); box-shadow: 0 10px 30px rgba(0,0,0,0.6); }
-  .hero img { width: 100%; height: 180px; object-fit: cover; object-position: center 20%; display: block; filter: saturate(1.1) brightness(0.85); }
-  .hero::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(7,13,24,0.2), rgba(7,13,24,0.92)); }
-  .hero-content { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end; padding: 16px 24px; }
-  
+  button, select, .step, .close { touch-action: manipulation; }
+
+  @keyframes fadeSlideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes popIn { 0% { transform: scale(0.85); opacity: 0; } 60% { transform: scale(1.04); } 100% { transform: scale(1); opacity: 1; } }
+
+  h1 { 
+    font-family: 'Metamorphous', serif;
+    color: #fff; 
+    text-align: left; 
+    font-size: 1.9em;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.7);
+    border-bottom: none; 
+    padding-bottom: 0; 
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  h1 svg { width: 0.85em; height: 0.85em; color: var(--gold); flex-shrink: 0; }
+
+  .subtitle {
+    text-align: left;
+    font-family: 'Cinzel', serif;
+    color: var(--gold);
+    margin-top: 4px;
+    margin-bottom: 0;
+    letter-spacing: 2px;
+    font-size: 0.85em;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+
+  .hero {
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 20px;
+    border: 1px solid var(--border);
+    animation: fadeSlideUp 0.5s ease both;
+  }
+  .hero img { width: 100%; height: 150px; object-fit: cover; display: block; filter: saturate(0.9) brightness(0.6); }
+  .hero::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(11,14,18,0.1), rgba(11,14,18,0.92)); }
+  .hero-content { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end; padding: 16px 18px; }
+
+  .btn-help-float {
+    position: fixed; bottom: 18px; right: 18px; z-index: 60;
+    width: 48px; height: 48px; border-radius: 50%;
+    background: linear-gradient(180deg, var(--blue), #2f63c9);
+    color: #fff; border: 1px solid #3f6fd6; font-weight: 800; font-size: 1.3em;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.45);
+    cursor: pointer; transition: transform 0.15s, box-shadow 0.2s; margin: 0; padding: 0;
+  }
+  .btn-help-float:active { transform: scale(0.92); }
+
+  .bmc-inline{ display:flex; justify-content:center; margin-top:14px; }
+  .bmc-inline a{ display:inline-flex; align-items:center; gap:8px; background:#FFDD00; color:#000; font-weight:700; font-size:0.85em; padding:9px 16px; border-radius:8px; text-decoration:none; box-shadow:0 4px 14px rgba(0,0,0,0.45); transition:transform 0.15s; }
+  .bmc-inline a:hover{ transform:scale(1.05); }
+  .bmc-inline svg{ width:18px; height:18px; flex-shrink:0; }
+
+  .lang-switch {
+    position: fixed; top: 14px; right: 14px; z-index: 60; display: flex; gap: 2px;
+    background: var(--panel-bg); border: 1px solid var(--border); border-radius: 999px;
+    padding: 4px; box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+  }
+  .lang-btn {
+    width: auto; margin: 0; padding: 6px 12px; font-size: 0.78em; border-radius: 999px;
+    border: none; background: transparent; color: var(--text-light); opacity: 0.6; font-weight: 700;
+    font-family: 'Cinzel', serif;
+  }
+  .lang-btn.active { background: var(--gold); color: #1a0b26; opacity: 1; }
+
+  h2 { 
+    font-family: 'Cinzel', serif;
+    color: var(--gold); 
+    font-size: 1.3em; 
+    border-bottom: 1px dashed var(--gold-dark); 
+    padding-bottom: 5px; 
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  h2 svg { width: 24px; height: 24px; flex-shrink: 0; }
+
   .section { 
     background: var(--panel-bg); 
-    padding: 22px 24px; 
+    padding: 20px; 
     margin-bottom: 25px; 
     border: 1px solid var(--border);
-    border-radius: 10px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.4); 
-    position: relative;
-  }
-  .section h2 { 
-    margin: -22px -24px 18px -24px; 
-    padding: 12px 24px; 
-    background: linear-gradient(90deg, rgba(30, 58, 95, 0.6), transparent); 
-    color: #fff; 
-    text-shadow: 0 0 8px var(--gold-glow); 
-    font-family: 'Cinzel', serif; 
-    font-size: 1.25em; 
-    border-bottom: 1px solid var(--border); 
-    border-radius: 10px 10px 0 0;
-    display: flex; 
-    align-items: center; 
-    gap: 10px; 
-  }
-  .section h2 svg, .modal-content h3 svg { 
-    width: 22px; 
-    height: 22px; 
-    max-width: 22px; 
-    max-height: 22px; 
-    flex-shrink: 0; 
-    color: var(--gold);
-    filter: drop-shadow(0 0 5px var(--gold-glow));
-  }
-  
-  button { 
-    background: linear-gradient(135deg, #1b3a4b, #0f2430);
-    color: var(--gold); 
-    border: 1px solid var(--border-gold); 
-    padding: 14px 18px; 
-    cursor: pointer; 
-    border-radius: 6px;
-    font-family: 'Cinzel', serif;
-    font-weight: 800; 
-    font-size: 15px; 
-    width: 100%; 
-    margin-top: 12px; 
-    text-transform: uppercase;
-    transition: all 0.2s;
-    display: flex; align-items: center; justify-content: center; gap: 10px;
-    letter-spacing: 1px;
-    text-shadow: 0 0 4px rgba(0,0,0,0.8);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-  }
-  button svg {
-    width: 20px;
-    height: 20px;
-    max-width: 20px;
-    max-height: 20px;
-    flex-shrink: 0;
-  }
-  button:hover { background: linear-gradient(135deg, #244b61, #133040); border-color: var(--gold); box-shadow: 0 0 15px var(--gold-glow); transform: translateY(-2px); }
-  button:active { transform: translateY(1px); }
-  
-  select { 
-    width: 100%; 
-    padding: 12px; 
-    margin-top: 12px; 
-    background: #091320; 
-    color: var(--gold); 
-    font-size: 16px; 
-    border: 1px solid var(--border); 
-    border-radius: 6px; 
-    font-family: inherit; 
-  }
-  
-  .result { 
-    margin-top: 18px; 
-    font-size: 1.15em; 
-    color: #fff; 
-    text-align: center; 
-    min-height: 30px; 
-    background: rgba(9, 19, 32, 0.8); 
-    padding: 14px; 
-    border-left: 4px solid var(--gold); 
-    border-radius: 6px;
-    border-top: 1px solid var(--border);
-    border-right: 1px solid var(--border);
-    border-bottom: 1px solid var(--border);
-  }
-  
-  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  @media (max-width: 600px) { .grid-2 { grid-template-columns: 1fr; } }
-  
-  .stepper { 
-    display: flex; 
-    justify-content: space-between; 
-    margin-bottom: 25px; 
-    padding: 12px; 
-    background: var(--panel-bg); 
-    border: 1px solid var(--border); 
     border-radius: 8px; 
+    box-shadow: inset 0 0 15px rgba(0,0,0,0.8), 0 4px 10px rgba(0,0,0,0.5); 
+    animation: fadeSlideUp 0.45s ease both;
   }
-  .step { flex: 1; text-align: center; cursor: pointer; color: var(--text-dim); font-family: 'Cinzel', serif; font-size: 0.75em; text-transform: uppercase; letter-spacing: 1px; }
-  .step .step-num { 
-    display: block; 
-    width: 32px; 
-    height: 32px; 
-    line-height: 30px; 
-    margin: 0 auto 6px auto; 
-    border-radius: 50%;
-    background: #091320; 
-    border: 2px solid var(--border); 
-    color: var(--text-dim); 
+
+  button { 
+    background: linear-gradient(to bottom, #8b6b22, #4d3a0f);
+    color: #f7f1db; 
+    border: 1px solid var(--gold); 
+    padding: 12px 15px; 
+    cursor: pointer; 
+    border-radius: 8px; 
+    font-family: 'Cinzel', serif;
     font-weight: bold; 
-    font-size: 1.1em; 
+    font-size: 16px; 
+    width: 100%; 
+    margin-top: 10px; 
+    text-transform: uppercase;
+    transition: all 0.3s;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  button svg { width: 22px; height: 22px; flex-shrink: 0; }
+
+  select { 
+    width: 100%; padding: 10px; margin-top: 10px; 
+    border-radius: 4px; border: 1px solid var(--gold-dark); 
+    background: #11061a; color: var(--gold); font-size: 16px; 
+    font-family: inherit;
+  }
+
+  .result { 
+    margin-top: 15px; font-size: 1.1em; 
+    color: #fff; text-align: center; min-height: 25px; 
+    background: rgba(0,0,0,0.4);
+    padding: 10px;
+    border-radius: 5px;
+    border-left: 3px solid var(--gold);
+  }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr; gap: 10px; }
+  
+  .action-btn { background: linear-gradient(to bottom, #2a4166, #16233d); border-color: var(--blue); }
+
+  .perda-btn { background: linear-gradient(to bottom, #5e2b2b, #361212); border-color: #9e4b4b; }
+
+  .hex-btn { background: linear-gradient(to bottom, #1f4a6a, #12303f); border-color: #4b9ecf; }
+  
+  .highlight { color: var(--gold); font-weight: bold; font-size: 1.2em; }
+
+  /* Modal de Ajuda */
+  .modal {
+    display: none; 
+    position: fixed; 
+    z-index: 1000; 
+    left: 0; top: 0; 
+    width: 100%; height: 100%; 
+    background-color: rgba(0,0,0,0.85);
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .modal-content {
+    background: var(--purple-bg);
+    margin: 10% auto;
+    padding: 25px;
+    border: 2px solid var(--gold);
+    border-radius: 8px;
+    width: 85%;
+    max-width: 500px;
+    box-shadow: 0 0 20px var(--gold-glow);
+  }
+  .close {
+    color: var(--gold);
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    line-height: 1;
+    padding: 8px;
+    margin: -8px -8px 0 0;
+  }
+  .modal h3 { font-family: 'Cinzel', serif; color: var(--gold); margin-top: 0; display: flex; align-items: center; gap: 8px; }
+  .modal h3 svg { width: 22px; height: 22px; flex-shrink: 0; }
+  .modal ul { padding-left: 20px; line-height: 1.5; }
+  .modal li { margin-bottom: 10px; }
+
+  /* Footer de Créditos (componente padrão da "casa") */
+  .credits {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: var(--panel-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-top: 25px;
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    animation: fadeSlideUp 0.5s ease both;
+  }
+  .credits img {
+    width: 52px; height: 52px; object-fit: cover; border-radius: 8px;
+    border: 1px solid var(--border); flex-shrink: 0;
+  }
+  .credits-text {
+    font-size: 0.82em;
+    color: var(--text-dim);
+    line-height: 1.5;
+  }
+  .credits-text strong { color: var(--text-light); }
+  .credits-text a {
+    color: var(--blue);
+    text-decoration: none;
+    font-weight: bold;
+    transition: text-shadow 0.2s;
+  }
+
+  .hidden { display: none; }
+
+  /* Textura de fundo em hexágonos (temática) */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: -1;
+    opacity: 0.35;
+    background-image:
+      repeating-linear-gradient(60deg, rgba(212,175,55,0.05) 0px, rgba(212,175,55,0.05) 1px, transparent 1px, transparent 26px),
+      repeating-linear-gradient(-60deg, rgba(212,175,55,0.05) 0px, rgba(212,175,55,0.05) 1px, transparent 1px, transparent 26px),
+      repeating-linear-gradient(0deg, rgba(212,175,55,0.04) 0px, rgba(212,175,55,0.04) 1px, transparent 1px, transparent 26px);
+  }
+
+  .hex-icon { font-size: 0.7em; vertical-align: middle; color: var(--gold-dark); }
+
+  /* Banner de seção (estilo Carta de Exército) */
+  .section h2 {
+    position: relative;
+    margin: -20px -20px 15px -20px;
+    padding: 10px 20px;
+    background: linear-gradient(90deg, #5e1c1c, #8b2c2c 60%, transparent);
+    border-bottom: none;
+    border-radius: 6px 6px 0 0;
+    color: #f7e6b8;
+    text-shadow: 0 0 6px rgba(0,0,0,0.8);
+    font-size: 1.15em;
+  }
+
+  /* Stepper - guia de turno */
+  .stepper {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 25px;
+    padding: 12px 5px;
+    background: var(--panel-bg);
+    border: 1px solid var(--gold-dark);
+    border-radius: 8px;
+  }
+  .step {
+    flex: 1;
+    text-align: center;
+    cursor: pointer;
+    color: #8a7a99;
+    font-family: 'Cinzel', serif;
+    font-size: 0.7em;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: color 0.2s;
+  }
+  .step .step-num {
+    display: block;
+    width: 28px; height: 28px;
+    line-height: 28px;
+    margin: 0 auto 5px auto;
+    border-radius: 50%;
+    background: #11061a;
+    border: 2px solid var(--gold-dark);
+    color: var(--gold-dark);
+    font-weight: bold;
   }
   .step.active { color: var(--gold); }
-  .step.active .step-num { 
-    background: var(--gold-dark); 
-    border-color: var(--gold); 
-    color: #000; 
-    box-shadow: 0 0 12px var(--gold-glow); 
+  .step.active .step-num { border-color: var(--gold); color: var(--gold); box-shadow: 0 0 10px var(--gold-glow); background: rgba(212,175,55,0.15); }
+
+  /* Toggle / checkbox estilizado */
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(0,0,0,0.3);
+    padding: 10px 12px;
+    border-radius: 6px;
+    margin-bottom: 12px;
+    font-size: 0.9em;
+    line-height: 1.3;
   }
-  
-  @media (min-width: 900px) {
-    .sections-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 24px; align-items: start; }
+  .toggle-row input[type="checkbox"] {
+    width: 22px; height: 22px; accent-color: var(--gold); flex-shrink: 0; cursor: pointer;
   }
-  
-  .dial { position: relative; width: 250px; height: 250px; border-radius: 50%; background: radial-gradient(circle, #0e1e33 0%, #060b13 75%); border: 3px solid var(--border-gold); box-shadow: 0 0 20px rgba(0,0,0,0.6), inset 0 0 30px rgba(245,197,24,0.15); }
-  .dial-center { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: flex; align-items: center; justify-content: center; background: #0e2238; border: 2px solid var(--gold); text-shadow: 0 0 8px var(--gold); border-radius: 50%; width: 76px; height: 76px; font-family: 'Cinzel', serif; font-size: 0.8em; color: var(--gold); letter-spacing: 1px; z-index: 3; box-shadow: 0 0 10px rgba(0,0,0,0.8); }
-  .dial-needle { position: absolute; left: 50%; top: 50%; width: 6px; height: 92px; margin-left: -3px; margin-top: -92px; transform-origin: 50% 100%; background: linear-gradient(to top, var(--gold), transparent); transition: transform 0.5s cubic-bezier(.2,1.5,.4,1); z-index: 2; border-radius: 3px; pointer-events: none; }
-  .dial-wedge { position: absolute; left: 50%; top: 50%; min-width: 36px; padding: 3px 6px; background: #091320; border: 1px solid var(--border); font-size: 0.72em; font-weight: bold; text-align: center; color: var(--text-dim); transition: background 0.3s, color 0.3s, border-color 0.3s, box-shadow 0.3s; z-index: 1; border-radius: 4px; pointer-events: none; }
-  
-  .dial-wedge.full-move { border-color: var(--gold); color: #fff; background: #1b3a4b; }
-  .dial-wedge.hit { background: var(--gold) !important; color: #000000 !important; border-color: #ffffff !important; box-shadow: 0 0 16px var(--gold-glow); z-index: 4; }
+  .toggle-row label { cursor: pointer; }
+
+  .point-blank-btn { background: linear-gradient(to bottom, #345080, #1c2c4a); border-color: #6fa8ff; }
+
+  /* Info estática de Ordens de Marcha sem rolagem (Guard/Patrol/Support) */
+  .order-type-info {
+    background: rgba(0,0,0,0.35);
+    border-left: 3px solid var(--gold-dark);
+    border-radius: 5px;
+    padding: 12px 14px;
+    margin-top: 10px;
+    font-size: 0.92em;
+    line-height: 1.5;
+  }
+
+  /* Hover-only styles gated so iOS touch doesn't require a first tap to "hover" before the second tap clicks */
+  @media (hover: hover) and (pointer: fine) {
+    .btn-help-float:hover { box-shadow: 0 0 16px var(--blue-glow); }
+    button:hover { background: linear-gradient(to bottom, #a38232, #6b5218); box-shadow: 0 0 12px var(--gold-glow); text-shadow: 0 0 5px #fff; }
+    .action-btn:hover { background: linear-gradient(to bottom, #35507d, #1d304f); box-shadow: 0 0 12px var(--blue-glow); }
+    .perda-btn:hover { background: linear-gradient(to bottom, #7a3d3d, #4a1c1c); box-shadow: 0 0 12px rgba(158, 75, 75, 0.6); }
+    .hex-btn:hover { background: linear-gradient(to bottom, #2a5b82, #1a3c52); box-shadow: 0 0 12px rgba(75, 158, 207, 0.6); }
+    .close:hover { color: #fff; }
+    .credits-text a:hover { text-shadow: 0 0 8px var(--blue-glow); }
+    .step:hover { color: var(--text-light); }
+    .step:hover .step-num { border-color: var(--gold); color: var(--gold); }
+    .point-blank-btn:hover { background: linear-gradient(to bottom, #3f5f95, #24395c); box-shadow: 0 0 12px var(--blue-glow); }
+  }
+  .order-type-info strong { color: var(--gold); }
+
+  /* Roseta de direção (Sweep / Meander) */
+  .dial-wrap { display: flex; justify-content: center; margin: 20px 0 10px 0; }
+  .dial {
+    position: relative;
+    width: 240px; height: 240px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #1c2430 0%, #0e1218 70%);
+    border: 2px solid var(--border);
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.7);
+  }
+  .dial-center {
+    position: absolute;
+    left: 50%; top: 50%;
+    width: 70px; height: 70px;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background: #11151c;
+    border: 2px solid var(--gold);
+    display: flex; align-items: center; justify-content: center;
+    text-align: center;
+    font-family: 'Cinzel', serif;
+    font-size: 0.8em;
+    color: var(--gold);
+    letter-spacing: 1px;
+    z-index: 3;
+  }
+  .dial-needle {
+    position: absolute;
+    left: 50%; top: 50%;
+    width: 4px; height: 92px;
+    margin-left: -2px; margin-top: -92px;
+    transform-origin: 50% 100%;
+    background: linear-gradient(to top, var(--gold), transparent);
+    transition: transform 0.5s cubic-bezier(.2,1.5,.4,1);
+    z-index: 2;
+    border-radius: 3px;
+  }
+  .dial-wedge {
+    position: absolute;
+    min-width: 40px;
+    padding: 3px 6px;
+    transform: translate(-50%, -50%);
+    background: var(--panel-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 0.72em;
+    font-weight: bold;
+    text-align: center;
+    color: var(--text-dim);
+    transition: all 0.3s;
+    z-index: 1;
+  }
+  .dial-wedge.full-move { border-color: var(--gold-dark); color: #f2d98a; }
+  .dial-wedge.hit {
+    background: var(--gold);
+    color: var(--purple-bg);
+    border-color: #fff;
+    box-shadow: 0 0 15px var(--gold-glow);
+    transform: translate(-50%, -50%) scale(1.25);
+    z-index: 4;
+  }
   .dial-legend { text-align: center; font-size: 0.8em; color: var(--text-dim); margin-top: 8px; }
   .dial-legend span { color: var(--gold); font-weight: bold; }
-  
-  .hidden { display: none; }
-  .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.85); overflow: auto; }
-  .modal-content { background: #0c1829; margin: 10% auto; padding: 25px; border: 2px solid var(--border-gold); width: 85%; max-width: 500px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); border-radius: 12px; }
-  .close { color: var(--gold); float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
-  .btn-help-float { position: fixed; bottom: 18px; right: 18px; z-index: 60; width: 50px; height: 50px; border-radius: 50%; background: linear-gradient(180deg, #1b3a4b, #0c1829); color: var(--gold); border: 2px solid var(--gold); font-weight: 800; font-size: 1.4em; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(0,0,0,0.5); cursor: pointer; }
-  .lang-switch { position: fixed; top: 14px; right: 14px; z-index: 60; display: flex; gap: 4px; background: var(--panel-bg); border: 1px solid var(--border); padding: 4px; border-radius: 20px; }
-  .lang-btn { width: auto; margin: 0; padding: 5px 12px; font-size: 0.78em; border: none; background: transparent; color: var(--text-dim); font-weight: 700; font-family: 'Cinzel', serif; border-radius: 16px; }
-  .lang-btn.active { background: var(--gold); color: #000; }
-  .credits { display: flex; align-items: center; gap: 14px; background: var(--panel-bg); border: 1px solid var(--border); padding: 14px 16px; margin-top: 25px; border-radius: 8px; }
-  .credits img { width: 52px; height: 52px; object-fit: cover; border-radius: 8px; border: 2px solid var(--gold-dark); flex-shrink: 0; }
-  
-  .toggle-row { display: flex; align-items: center; gap: 10px; background: rgba(9, 19, 32, 0.7); padding: 12px; margin-bottom: 12px; font-size: 0.9em; border-radius: 6px; border-left: 3px solid var(--gold); border-top: 1px solid var(--border); border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); }
-  .action-btn { background: linear-gradient(to bottom, #1b3a4b, #0f2430); border-color: var(--border-gold); }
-  .perda-btn { background: linear-gradient(to bottom, #5e2b2b, #361212); border-color: #9e4b4b; }
-  .hex-btn { background: linear-gradient(to bottom, #1b3a4b, #0f2430); border-color: var(--border-gold); }
-  .point-blank-btn { background: linear-gradient(to bottom, #14493a, #0b251d); border-color: #26a69a; }
-  .highlight { color: var(--gold); font-weight: bold; font-size: 1.2em; text-shadow: 0 0 5px var(--gold-glow); }
-  .order-type-info { background: rgba(9, 19, 32, 0.75); border-left: 3px solid var(--gold-dark); border-radius: 6px; padding: 12px 14px; margin-top: 10px; font-size: 0.92em; line-height: 1.5; border-top: 1px solid var(--border); border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); }
-  .order-type-info strong { color: var(--gold); }
-  .dial-wrap { display: flex; justify-content: center; margin: 20px 0 10px 0; }
-  
-  @media (hover: hover) and (pointer: fine) {
-    .btn-help-float:hover { box-shadow: 0 0 20px var(--gold-glow); transform: scale(1.05); }
-    .action-btn:hover { background: linear-gradient(to bottom, #244b61, #133040); box-shadow: 0 0 15px var(--gold-glow); }
-    .perda-btn:hover { background: linear-gradient(to bottom, #7a3d3d, #4a1c1c); box-shadow: 0 0 15px rgba(255,100,100,0.6); }
-    .hex-btn:hover { background: linear-gradient(to bottom, #244b61, #133040); box-shadow: 0 0 15px var(--gold-glow); }
-    .point-blank-btn:hover { background: linear-gradient(to bottom, #1d614e, #0e3328); box-shadow: 0 0 15px rgba(38,166,154,0.6); }
+
+  .sections-grid .section { height: 100%; box-sizing: border-box; }
+
+  /* Widescreen: usa o espa\u00e7o horizontal em vez de empilhar tudo na vertical */
+  @media (min-width: 900px) and (min-aspect-ratio: 1/1) {
+    body { max-width: 1400px; }
+    .stepper { max-width: 1400px; margin-left: auto; margin-right: auto; }
+    .sections-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+      gap: 20px;
+      align-items: start;
+    }
   }
-
-
-/* Standard Buy Me a Coffee Button */
-.bmc-btn, .bmc-inline, .bmc-float {
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 8px !important;
-  background: #FFDD00 !important;
-  color: #000000 !important;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
-  font-weight: 700 !important;
-  font-size: 0.92rem !important;
-  padding: 10px 18px !important;
-  border-radius: 8px !important;
-  border: 1px solid rgba(0,0,0,0.15) !important;
-  text-decoration: none !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25) !important;
-  transition: transform 0.15s ease, box-shadow 0.15s ease !important;
-  cursor: pointer !important;
-  margin: 16px auto !important;
-  width: max-content !important;
-  text-transform: none !important;
-  letter-spacing: normal !important;
-}
-.bmc-btn:hover, .bmc-inline:hover, .bmc-float:hover {
-  transform: translateY(-2px) scale(1.02) !important;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35) !important;
-  background: #FFE433 !important;
-  color: #000000 !important;
-}
-.bmc-btn svg, .bmc-inline svg, .bmc-float svg {
-  width: 20px !important;
-  height: 20px !important;
-  min-width: 20px !important;
-  min-height: 20px !important;
-  max-width: 20px !important;
-  max-height: 20px !important;
-  stroke: #000000 !important;
-  fill: none !important;
-  flex-shrink: 0 !important;
-  vertical-align: middle !important;
-}
 </style>
     <script src="../assets/logger.js"></script>
 </head>
@@ -648,62 +825,16 @@
     applyI18n();
   }
 
-  // 3D Dice Box Integration (SKILL Section 11)
-  let diceBox = null;
-  let diceBoxReady = false;
+  // Lógica de Dados
+  function rolarD20() { return Math.floor(Math.random() * 20) + 1; }
 
-  async function initDiceBox() {
-    try {
-      const loadPromise = (async () => {
-        const { default: DiceBox } = await import('https://unpkg.com/@3d-dice/dice-box@1.1.3/dist/dice-box.es.min.js');
-        diceBox = new DiceBox({
-          container: '#dice-box',
-          assetPath: 'assets/',
-          origin: 'https://unpkg.com/@3d-dice/dice-box@1.1.3/dist/',
-          theme: 'default',
-          themeColor: '#00e5ff',
-          scale: 9
-        });
-        await diceBox.init();
-        diceBoxReady = true;
-      })();
-      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Dice timeout')), 3000));
-      await Promise.race([loadPromise, timeoutPromise]);
-    } catch (e) {
-      console.warn('3D DiceBox failed to load, falling back to Math.random()', e);
-      diceBoxReady = false;
-    }
-  }
-  initDiceBox();
-
-  function rolarD20Fallback() { return Math.floor(Math.random() * 20) + 1; }
-
-  async function rolarD20() {
-    if (diceBoxReady && diceBox) {
-      try {
-        const rollResult = await diceBox.roll('1d20');
-        if (rollResult && rollResult.length > 0 && rollResult[0].value) {
-          return rollResult[0].value;
-        }
-      } catch (err) {
-        console.warn('Dice roll error, using fallback', err);
-      }
-    }
-    return rolarD20Fallback();
+  function rolarIniciativa() {
+    document.getElementById('resIniciativa').innerHTML = S().resInitiative.replace('{d}', rolarD20());
   }
 
-  async function rolarIniciativa() {
-    const el = document.getElementById('resIniciativa');
-    el.innerHTML = '<span style="opacity:0.6;">...</span>';
-    const dado = await rolarD20();
-    el.innerHTML = S().resInitiative.replace('{d}', dado);
-  }
-
-  async function checarAlvo(tipo) {
-    const el = document.getElementById('resAlvo');
-    el.innerHTML = '<span style="opacity:0.6;">...</span>';
+  function checarAlvo(tipo) {
     const atacouAntes = document.getElementById('atacouAntes').checked;
-    const dado = await rolarD20();
+    const dado = rolarD20();
     let res = "";
 
     if (tipo === 'visao') {
@@ -724,12 +855,10 @@
       if (dado <= 7) res = S().targetLostYes.replace('{d}', dado);
       else res = S().targetLostNo.replace('{d}', dado);
     }
-    el.innerHTML = res;
+    document.getElementById('resAlvo').innerHTML = res;
   }
 
-  async function sortearMarcadores() {
-    const resEl = document.getElementById('resMarcadores');
-    resEl.innerHTML = '<span style="opacity:0.6;">...</span>';
+  function sortearMarcadores() {
     const qtd = parseInt(document.getElementById('armyCards').value);
     
     const ranges = {
@@ -743,36 +872,23 @@
     };
     
     const divRanges = ranges[qtd];
-    const marcadores = [1, 2, 3];
-    let diceResults = [];
+    let marcadores = [1, 2, 3];
+    let textoFinal = [];
 
-    if (diceBoxReady && diceBox) {
-      try {
-        const rollResult = await diceBox.roll('3d20');
-        if (rollResult && rollResult.length >= 3) {
-          diceResults = rollResult.map(r => r.value);
-        }
-      } catch (err) {
-        console.warn('Dice roll error, using fallback', err);
-      }
-    }
-    if (diceResults.length < 3) {
-      diceResults = [rolarD20Fallback(), rolarD20Fallback(), rolarD20Fallback()];
-    }
-
-    const textoFinal = marcadores.map((m, idx) => {
-      const d20 = diceResults[idx];
+    marcadores.forEach(m => {
+      const d20 = rolarD20();
       let cartaSelecionada = 1;
+      
       for (let i = 0; i < divRanges.length; i++) {
         if (d20 >= divRanges[i][0] && d20 <= divRanges[i][1]) {
           cartaSelecionada = i + 1;
           break;
         }
       }
-      return S().markerLine.replace('{m}', m).replace('{c}', cartaSelecionada).replace('{d}', d20);
+      textoFinal.push(S().markerLine.replace('{m}', m).replace('{c}', cartaSelecionada).replace('{d}', d20));
     });
 
-    resEl.innerHTML = textoFinal.join("<br>");
+    document.getElementById('resMarcadores').innerHTML = textoFinal.join("<br>");
   }
 
   // --- ORDENS DE MARCHA: Sweep / Meander (rosetas oficiais do manual) ---
@@ -807,12 +923,17 @@
 
   function buildDial(dialId, data) {
     const dial = document.getElementById(dialId);
-    if (!dial) return;
-    dial.querySelectorAll('.dial-wedge').forEach(w => w.remove());
+    const size = dial.clientWidth;
+    const center = size / 2;
+    const radius = center - 28;
     data.forEach(entry => {
+      const rad = entry.angle * Math.PI / 180;
+      const x = center + radius * Math.sin(rad);
+      const y = center - radius * Math.cos(rad);
       const wedge = document.createElement('div');
       wedge.className = 'dial-wedge' + (entry.full ? ' full-move' : '');
-      wedge.style.transform = `translate(-50%, -50%) rotate(${entry.angle}deg) translateY(-94px) rotate(-${entry.angle}deg)`;
+      wedge.style.left = x + 'px';
+      wedge.style.top = y + 'px';
       wedge.innerText = entry.min === entry.max ? entry.min : `${entry.min}-${entry.max}`;
       dial.appendChild(wedge);
       entry.el = wedge;
@@ -822,34 +943,25 @@
   buildDial('dialSweep', sweepData);
   buildDial('dialMeander', meanderData);
 
-  async function rollMovement(type) {
+  function rollMovement(type) {
     const data = type === 'sweep' ? sweepData : meanderData;
     const needle = document.getElementById(type === 'sweep' ? 'needleSweep' : 'needleMeander');
-    const resEl = document.getElementById('resMarcha');
-    resEl.innerHTML = '<span style="opacity:0.6;">...</span>';
-    const dado = await rolarD20();
+    const dado = rolarD20();
 
-    data.forEach(entry => {
-      if (entry.el) {
-        entry.el.classList.remove('hit');
-        entry.el.style.transform = `translate(-50%, -50%) rotate(${entry.angle}deg) translateY(-94px) rotate(-${entry.angle}deg)`;
-      }
-    });
+    data.forEach(entry => entry.el.classList.remove('hit'));
 
     if (type === 'meander' && dado >= 19) {
-      resEl.innerHTML = S().moveMeanderChoice.replace('{d}', dado);
+      document.getElementById('resMarcha').innerHTML = S().moveMeanderChoice.replace('{d}', dado);
       return;
     }
 
     const found = data.find(entry => dado >= entry.min && dado <= entry.max);
-    if (found && found.el) {
-      found.el.classList.add('hit');
-      found.el.style.transform = `translate(-50%, -50%) rotate(${found.angle}deg) translateY(-94px) rotate(-${found.angle}deg) scale(1.22)`;
-      needle.style.transform = `rotate(${found.angle}deg)`;
-    }
+    found.el.classList.add('hit');
+    needle.style.transform = `rotate(${found.angle}deg)`;
 
-    const moveType = (type === 'sweep' && found && found.full) ? S().moveFull : S().moveHalf;
-    resEl.innerHTML = S().moveResult.replace('{d}', dado).replace('{type}', moveType);
+    const moveType = (type === 'sweep' && found.full) ? S().moveFull : S().moveHalf;
+
+    document.getElementById('resMarcha').innerHTML = S().moveResult.replace('{d}', dado).replace('{type}', moveType);
   }
 
   function updateOrderTypeView() {
@@ -865,16 +977,16 @@
 <script type="module" src="../assets/analytics.js"></script>
 <script type="module" src="../assets/bot-view.js"></script>
 
+<!-- Botão Voltar para a Home -->
+<style>
+.btn-home{ display:inline-flex; align-items:center; gap:8px; background:linear-gradient(180deg, var(--blue), #2f63c9); border:1px solid var(--blue); color:#fff; border-radius:10px; padding:12px 26px; font-weight:700; font-size:16px; text-decoration:none; box-shadow:0 4px 14px rgba(0,0,0,0.35); transition:transform 0.15s, box-shadow 0.15s; }
+.btn-home:hover{ transform:translateY(-2px); box-shadow:0 0 14px var(--blue-glow); }
+</style>
 <div style="text-align: center; margin: 40px auto 20px auto; width: 100%;">
-    <a href="../index.html" class="btn-home" style="display:inline-flex; align-items:center; gap:8px; color:var(--gold); text-decoration:none; font-family:'Cinzel',serif; font-size:0.9em; font-weight:bold; padding:8px 16px; border:1px solid var(--border-gold); border-radius:6px; background:rgba(14,25,44,0.9);">
+    <a href="../index.html" class="btn-home">
         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9 21v-6h6v6"/></svg>
         ← Home
     </a>
-</div>
-
-
-<div id="dice-tray" style="position:fixed; bottom:20px; left:20px; width:160px; height:160px; z-index:9999; pointer-events:none;">
-  <div id="dice-box" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none;"></div>
 </div>
 
 </body>

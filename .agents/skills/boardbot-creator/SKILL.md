@@ -56,19 +56,8 @@ Ao criar o HTML do bot, **você DEVE copiar e utilizar os seguintes elementos pa
    É OBRIGATÓRIO incluir o Modal de Regras (`#helpModal`) para explicar como o automa toma decisões, condições de vitória, e regras de desempate. Nunca assuma que as regras são simples demais para dispensar o modal.
 5. **Footer (Fim do body):**
    Sempre inclua os créditos do autor (`.credits`), o botão Buy Me a Coffee (`.bmc-inline`) e o botão Home para voltar (`.btn-home`).
-6. **Theming, Personalidade e UI Diegética (Padrão V2):**
-   O bot DEVE ter uma interface altamente imersiva e diegética (in-world). A interface deve se parecer com um componente físico ou um elemento dentro do universo do jogo (ex: interface de jornais de guerra da 2ª Guerra Mundial, um mapa de pergaminho de fantasia, blocos de mármore esculpidos ou marcadores de papelão/vitral estilo dial).
-   - Use texturas densas (noise SVG, degradês complexos), e pseudo-elementos (`::before`, `::after`) para compor cenários de fundo 3D (como mesas de madeira, ardósia, feltro ou pilares de pedra).
-   - **Componentes Diegéticos Físicos:** Prefira sempre componentes diegéticos estilizados como objetos reais de mesa:
-     - **Diais Físicos de Rodízio Duplo (Dual-Wheel Dials):** Marcadores de vida/pontos em formato de disco de papelão prensado com duas janelas recortadas (dezenas e unidades), rebites metálicos e acabamento temático (ex: Vitral/Obsidiana ou Ouro/Bronze).
-     - **Tokens de Escudo/Marcadores:** Tokens de resina, metal ou madeira com feedback tátil de toque.
-     - **Cartas com Espessura e Sombra 3D:** Bordas com bisel chanfrado e sombras profundas que dão a sensação de cartas reais sobre a mesa.
-   - **Exibição Condicional de Componentes:** NUNCA polua a tela com componentes genéricos desnecessários:
-     - **Rolador de Dados 3D:** Só deve ser exibido quando o vilão/líder/cenário selecionado realmente utilizar dados.
-     - **Diais Secundários:** Diais especiais (ex: vida de cidades reféns, defesas dinâmicas) só devem ser renderizados quando a facção ativa exigir.
-   - **Papel do Companion (Mesa Física vs Simulação Virtual):**
-     - Quando o jogo físico possui cartas na caixa que o jogador compra na mesa, o bot NÃO deve simular a compra aleatória de cartas fictícias. O bot serve como assistente de estado de jogo (gerenciando escudos, dominância, dano, retaliações e gatilhos da mesa).
-   - **Widescreen Layouts:** NUNCA confine a tela inteira em um `max-width: 500px` genérico no centro da tela para desktops. Em telas maiores (`min-width: 900px`), o layout deve se expandir utilizando CSS Grid ou Flexbox (ex: uma coluna lateral para status e uma coluna principal maior), aproveitando todo o espaço horizontal sem deixar enormes áreas pretas nas laterais.
+6. **Theming e Personalidade:**
+   O bot não pode ter uma interface genérica! Use variáveis CSS (`--bg-color`, `--text-main`, `--accent`) e backgrounds temáticos para injetar a personalidade do jogo original. Se for um jogo de fantasia, use texturas de pergaminho/madeira; se for sci-fi, use painéis futuristas. Se a temática não puder ser inferida pelas regras ou pela arte da capa, **PERGUNTE AO USUÁRIO** antes de prosseguir.
 7. **Painel de Histórico (Log):**
    É OBRIGATÓRIO incluir um painel de histórico de ações (log) na tela do jogo. O log deve registrar todas as ações e decisões do bot, para que o jogador possa auditar o que aconteceu caso clique rápido demais. O HTML deve conter um container (ex: `<div id="logPanel" class="log-panel"></div>`) e o JS deve alimentar esse painel com mensagens descritivas a cada jogada.
 ## 4.1 Internacionalização (i18n)
@@ -212,57 +201,3 @@ Ao integrar o `@3d-dice/dice-box` para rolagem física de dados:
      </div>
      ```
    - Assim o dado rolará sempre no mesmo local, livre de bugs de renderização.
-
-## 12. Lições Críticas de Implementação e Boas Práticas (Aprendizados Recentes)
-
-### 12.1 Regra de Estilo Único (Anti-Duplicate Stylesheet Trap)
-- **NUNCA** adicione blocos `<style>` secundários ou duplicados no final do arquivo HTML (próximo ao `</body>`).
-- O CSS no final do arquivo tem maior especificidade e sobrescreve todas as variáveis do `<head>`, reativando acidentalmente temas legados (como o tema neon ou regras antigas de layout).
-- Todas as regras de componentes (incluindo `.btn-home`, `.bmc-float`, modais e botões flutuantes) devem residir exclusivamente dentro do bloco `<style>` principal no `<head>`.
-
-### 12.2 Contenção Universal de SVGs (Prevenção de Ícones Gigantes)
-- Ícones SVG inline sem dimensões explícitas se expandem para 100% da largura do contêiner flex/block no WebKit/Blink (como aconteceu em modais e cabeçalhos).
-- Todo SVG deve ter atributos explícitos (ex: `width="22" height="22"`) e classes padrão (`class="icon-inline"`, `class="btn-icon"`, `class="icon-h1"`).
-- Inclua sempre a regra global de contenção no CSS:
-  ```css
-  svg { max-width: 100%; }
-  .icon-inline, .btn-icon, .icon-h1, h1 svg, h2 svg, h3 svg, button svg, .modal-content svg {
-    display: inline-block !important;
-    width: 1.2em !important;
-    height: 1.2em !important;
-    max-width: 24px !important;
-    max-height: 24px !important;
-    flex-shrink: 0 !important;
-    vertical-align: -0.2em !important;
-  }
-  ```
-
-### 12.3 Dials, Bússolas e Mostradores Circulares (Transformações Polares)
-- Ao construir seletores circulares, roletas ou bússolas (ex: 12 posições de Tiny Epic Kingdoms ou mostradores de movimento em Heroscape), **evite** aninhar rotações em elementos com `inset: 0` ou `width: 100%`, pois o cálculo da caixa delimitadora colapsa para `0x0` em navegadores mobile/WebKit, agrupando todos os rótulos no topo (12 horas).
-- Use o padrão de **Coordenadas Polares** ancorado no centro do mostrador:
-  ```html
-  <!-- Posição a 30° com raio de 114px -->
-  <div class="compass-tick" style="transform: rotate(30deg) translateY(-114px) rotate(-30deg);">
-    <span class="tick-num">1</span>
-    <span>Ação</span>
-  </div>
-  ```
-  ```css
-  .compass-tick {
-    position: absolute; top: 50%; left: 50%; width: 68px; height: 38px;
-    margin-top: -19px; margin-left: -34px;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    pointer-events: none;
-  }
-  ```
-  A rotação `rotate(θ) translateY(-R) rotate(-θ)` garante que o item viaje ao raio $R$ no ângulo exato $\theta$ e mantenha o texto perfeitamente horizontal e legível.
-
-### 12.4 Chips de Ação (Separação de Textos e Cores por Jogador)
-- Em jogos onde o jogador e o bot compartilham ou disputam fichas de ação na tela (ex: Tiny Epic Kingdoms), diferencie as cores dos chips ativados:
-  - Jogador: Bordô / Carmesim (`.by-you`).
-  - Bot: Verde Floresta / Musgo (`.by-ai`).
-- O nome da ação e o nome de quem executou **devem** ser renderizados em tags de bloco separadas (`.chip-name` e `.chip-tag`), impedindo que textos concatenados se unam (ex: `"COMERCIARO JOGADOR BOT"`).
-
-### 12.5 Layouts de Mão e Grid de Jogo
-- Nunca aplique `display: grid; grid-template-columns: 1fr 1fr;` no contêiner raiz de jogo (`#view-game`) caso ele contenha a mão de cartas (`.hand-container`), pois isso esmaga as cartas em uma coluna única.
-- O `#view-game` deve manter fluxo vertical flexível com `overflow-y: auto`, deixando a grade interna de cartas se autoajustar via `repeat(auto-fit, minmax(240px, 1fr))`.
