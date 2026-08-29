@@ -266,3 +266,28 @@ Ao integrar o `@3d-dice/dice-box` para rolagem física de dados:
 ### 12.5 Layouts de Mão e Grid de Jogo
 - Nunca aplique `display: grid; grid-template-columns: 1fr 1fr;` no contêiner raiz de jogo (`#view-game`) caso ele contenha a mão de cartas (`.hand-container`), pois isso esmaga as cartas em uma coluna única.
 - O `#view-game` deve manter fluxo vertical flexível com `overflow-y: auto`, deixando a grade interna de cartas se autoajustar via `repeat(auto-fit, minmax(240px, 1fr))`.
+
+## 13. Regra de Ambientes e Git Workflow Obrigatório (Staging-First)
+
+Para evitar incidentes em produção, o projeto adota um fluxo estrito de dois ambientes:
+
+| Ambiente | Branch | URL Pública | Finalidade |
+|---|---|---|---|
+| **Staging** | `staging` | `https://colletes.github.io/boardbots/staging/` | Testes de novos bots, correções, refatorações de UI. |
+| **Produção** | `main` | `https://colletes.github.io/boardbots/` | Versão pública e estável acessada pelos usuários. |
+
+### ⚠️ Regras Obrigatórias para o Agente:
+1. **Todo Push DEVE ser feito exclusivamente em `staging`**:
+   - Durante o desenvolvimento de um bot ou correção de bugs, **SEMPRE** trabalhe na branch `staging` e faça push para `origin staging`:
+     ```bash
+     git checkout staging
+     git add .
+     git commit -m "feat/fix: descrição da alteração"
+     git push origin staging
+     ```
+   - **NUNCA** faça commits ou pushes diretos na branch `main`.
+2. **Validação no Link de Staging**:
+   - Após o push em `staging`, forneça imediatamente ao usuário o link de staging para testes em dispositivos reais: `https://colletes.github.io/boardbots/staging/` (ou caminho direto do bot em staging).
+3. **Deploy em Produção (Somente com a skill `deploy-to-prod`)**:
+   - Apenas promova código para `main` quando o usuário testar e autorizar expressamente a publicação em produção, utilizando a skill dedicada `deploy-to-prod`.
+
