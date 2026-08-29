@@ -342,6 +342,85 @@
             line-height: 1.3;
         }
 
+        .mistborn-dial-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 4px 0 16px;
+            width: 100%;
+        }
+        .mistborn-dial {
+            position: relative;
+            width: 100%;
+            max-width: 360px;
+            height: 160px;
+            filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.75));
+            user-select: none;
+            touch-action: manipulation;
+        }
+        .dial-art-svg {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        .dial-windows-wrapper {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            gap: 12px;
+            z-index: 5;
+        }
+        .dial-window-box {
+            width: 44px;
+            height: 48px;
+            background: #111419;
+            border-radius: 6px;
+            box-shadow: inset 0 4px 8px rgba(0,0,0,0.95), inset 0 -2px 4px rgba(255,255,255,0.08), 0 0 0 2px #202733;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        .dial-window-box:hover {
+            transform: scale(1.08);
+            box-shadow: inset 0 4px 8px rgba(0,0,0,0.95), 0 0 14px rgba(0, 229, 255, 0.5);
+        }
+        .dial-wheel-digit {
+            font-family: var(--font-display);
+            font-size: 2rem;
+            font-weight: 900;
+            color: #ffffff;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.9), 0 0 12px rgba(255, 255, 255, 0.25);
+            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .dial-wheel-sheen {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(255,255,255,0.14) 0%, transparent 40%, rgba(0,0,0,0.55) 100%);
+            pointer-events: none;
+        }
+        .dial-controls-bar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+        .dial-controls-bar button {
+            min-width: 44px;
+            height: 36px;
+            padding: 0 10px;
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
         .gauge-row {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
@@ -861,24 +940,100 @@
                 </button>
             </div>
 
-            <!-- Dynamic Gauges (HP, City, Defense, etc.) -->
-            <div class="gauge-row" id="villainGauges">
-                <div class="gauge-box danger-glow">
-                    <span class="gauge-label" data-i18n="gauge_villain_hp">Vida do Vilão</span>
-                    <span class="gauge-value" id="valVillainHp">36</span>
-                    <div class="gauge-adjust">
-                        <button class="gauge-btn" onclick="adjustGauge('villainHp', -5)">-5</button>
-                        <button class="gauge-btn" onclick="adjustGauge('villainHp', -1)">-1</button>
-                        <button class="gauge-btn" onclick="adjustGauge('villainHp', 1)">+1</button>
+            <!-- Physical Obsidian Dual-Wheel Health Dial -->
+            <div class="mistborn-dial-container">
+                <span class="gauge-label" style="margin-bottom:8px; font-weight:700; color:var(--text-dim);" data-i18n="gauge_villain_hp">Vida do Vilão</span>
+                <div class="mistborn-dial">
+                    <svg class="dial-art-svg" viewBox="0 0 380 170" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <radialGradient id="obsidianGlow" cx="50%" cy="50%" r="60%">
+                                <stop offset="0%" stop-color="#2a3340" />
+                                <stop offset="45%" stop-color="#181d26" />
+                                <stop offset="100%" stop-color="#090c10" />
+                            </radialGradient>
+                            <radialGradient id="rivetGrad" cx="35%" cy="35%" r="65%">
+                                <stop offset="0%" stop-color="#5a687c" />
+                                <stop offset="50%" stop-color="#1e2530" />
+                                <stop offset="100%" stop-color="#000000" />
+                            </radialGradient>
+                            <filter id="dialShadow" x="-10%" y="-10%" width="120%" height="130%">
+                                <feDropShadow dx="0" dy="6" stdDeviation="6" flood-color="#000" flood-opacity="0.8"/>
+                            </filter>
+                        </defs>
+
+                        <!-- Cardboard Base Layer -->
+                        <path d="M 55 15 C 15 15, 0 45, 0 85 C 0 125, 15 155, 55 155 C 115 155, 155 135, 190 135 C 225 135, 265 155, 325 155 C 365 155, 380 125, 380 85 C 380 45, 365 15, 325 15 C 265 15, 225 35, 190 35 C 155 35, 115 15, 55 15 Z" fill="#0d1117" stroke="#2e3848" stroke-width="4" filter="url(#dialShadow)" />
+
+                        <!-- Stained Glass Face Layer -->
+                        <path d="M 55 18 C 18 18, 5 46, 5 85 C 5 124, 18 152, 55 152 C 114 152, 154 133, 190 133 C 226 133, 266 152, 325 152 C 362 152, 375 124, 375 85 C 375 46, 362 18, 325 18 C 266 18, 226 37, 190 37 C 154 37, 114 18, 55 18 Z" fill="url(#obsidianGlow)" stroke="#3f4d63" stroke-width="1.5" />
+
+                        <!-- Mosaic Shards (Obsidian stained-glass sunburst) -->
+                        <g opacity="0.65" stroke="#090b0e" stroke-width="1.2">
+                            <polygon points="190,85 140,25 90,20" fill="#1b2330" />
+                            <polygon points="190,85 90,20 40,35" fill="#253042" />
+                            <polygon points="190,85 40,35 15,70" fill="#18202c" />
+                            <polygon points="190,85 15,70 15,100" fill="#2d394d" />
+                            <polygon points="190,85 15,100 40,135" fill="#1a222e" />
+                            <polygon points="190,85 40,135 90,150" fill="#253142" />
+                            <polygon points="190,85 90,150 140,145" fill="#1a212d" />
+
+                            <polygon points="190,85 240,25 290,20" fill="#1b2330" />
+                            <polygon points="190,85 290,20 340,35" fill="#253042" />
+                            <polygon points="190,85 340,35 365,70" fill="#18202c" />
+                            <polygon points="190,85 365,70 365,100" fill="#2d394d" />
+                            <polygon points="190,85 365,100 340,135" fill="#1a222e" />
+                            <polygon points="190,85 340,135 290,150" fill="#253142" />
+                            <polygon points="190,85 290,150 240,145" fill="#1a212d" />
+                        </g>
+
+                        <!-- Mist Cloud Filigree lines -->
+                        <path d="M 25 75 Q 40 55, 60 70 T 85 65" stroke="#687890" stroke-width="2" fill="none" opacity="0.45" stroke-linecap="round" />
+                        <path d="M 25 95 Q 40 115, 60 100 T 85 105" stroke="#687890" stroke-width="2" fill="none" opacity="0.45" stroke-linecap="round" />
+                        <path d="M 355 75 Q 340 55, 320 70 T 295 65" stroke="#687890" stroke-width="2" fill="none" opacity="0.45" stroke-linecap="round" />
+                        <path d="M 355 95 Q 340 115, 320 100 T 295 105" stroke="#687890" stroke-width="2" fill="none" opacity="0.45" stroke-linecap="round" />
+
+                        <!-- Left Rivet -->
+                        <circle cx="80" cy="85" r="18" fill="url(#rivetGrad)" stroke="#000" stroke-width="2"/>
+                        <circle cx="80" cy="85" r="14" fill="#0d1117" />
+                        <circle cx="75" cy="80" r="4" fill="#fff" opacity="0.45" />
+
+                        <!-- Right Rivet -->
+                        <circle cx="300" cy="85" r="18" fill="url(#rivetGrad)" stroke="#000" stroke-width="2"/>
+                        <circle cx="300" cy="85" r="14" fill="#0d1117" />
+                        <circle cx="295" cy="80" r="4" fill="#fff" opacity="0.45" />
+                    </svg>
+
+                    <!-- The 2 Cutout Windows with Digits (Tens and Ones) -->
+                    <div class="dial-windows-wrapper">
+                        <div class="dial-window-box" onclick="adjustGauge('villainHp', 10)" title="Clique para +10">
+                            <div class="dial-wheel-digit" id="dialTens">3</div>
+                            <div class="dial-wheel-sheen"></div>
+                        </div>
+                        <div class="dial-window-box" onclick="adjustGauge('villainHp', 1)" title="Clique para +1">
+                            <div class="dial-wheel-digit" id="dialOnes">6</div>
+                            <div class="dial-wheel-sheen"></div>
+                        </div>
                     </div>
                 </div>
-                <div class="gauge-box atium-glow hidden" id="boxExtraGauge">
-                    <span class="gauge-label" id="lblExtraGauge">Escudo</span>
-                    <span class="gauge-value" id="valExtraGauge">0</span>
-                    <div class="gauge-adjust">
-                        <button class="gauge-btn" onclick="adjustGauge('extra', -1)">-1</button>
-                        <button class="gauge-btn" onclick="adjustGauge('extra', 1)">+1</button>
-                    </div>
+
+                <!-- Dial Controls Bar -->
+                <div class="dial-controls-bar">
+                    <button class="btn-sm btn-danger" onclick="adjustGauge('villainHp', -10)">-10</button>
+                    <button class="btn-sm btn-danger" onclick="adjustGauge('villainHp', -5)">-5</button>
+                    <button class="btn-sm" onclick="adjustGauge('villainHp', -1)">-1</button>
+                    <button class="btn-sm" onclick="adjustGauge('villainHp', 1)">+1</button>
+                    <button class="btn-sm btn-primary" onclick="adjustGauge('villainHp', 5)">+5</button>
+                    <button class="btn-sm btn-primary" onclick="adjustGauge('villainHp', 10)">+10</button>
+                </div>
+            </div>
+
+            <!-- Extra Gauge (if active: City HP, Fake Coins, Zane Defense, etc.) -->
+            <div class="gauge-box atium-glow hidden" id="boxExtraGauge" style="margin-bottom:16px;">
+                <span class="gauge-label" id="lblExtraGauge">Escudo</span>
+                <span class="gauge-value" id="valExtraGauge">0</span>
+                <div class="gauge-adjust">
+                    <button class="gauge-btn" onclick="adjustGauge('extra', -1)">-1</button>
+                    <button class="gauge-btn" onclick="adjustGauge('extra', 1)">+1</button>
                 </div>
             </div>
 
@@ -1761,7 +1916,7 @@ function setupGameDashboard() {
 
     document.getElementById('displayVillainName').textContent = v.name;
     document.getElementById('villainTypeBadge').textContent = v.type ? v.type.toUpperCase() : 'VILLAIN';
-    document.getElementById('valVillainHp').textContent = gameState.villainHp;
+    updateVillainHealthDial();
 
     const extraBox = document.getElementById('boxExtraGauge');
     if (v.extraGauge) {
@@ -1779,6 +1934,24 @@ function setupGameDashboard() {
 
     if (gameState.expansion === 'duralumin') {
         document.getElementById('duraluminModule').classList.remove('hidden');
+    }
+}
+
+function updateVillainHealthDial() {
+    const hp = Math.max(0, Math.min(99, gameState.villainHp));
+    const tens = Math.floor(hp / 10);
+    const ones = hp % 10;
+    const tensEl = document.getElementById('dialTens');
+    const onesEl = document.getElementById('dialOnes');
+    if (tensEl) {
+        tensEl.textContent = tens;
+        tensEl.style.transform = 'translateY(-2px) scale(1.15)';
+        setTimeout(() => { tensEl.style.transform = 'translateY(0) scale(1)'; }, 150);
+    }
+    if (onesEl) {
+        onesEl.textContent = ones;
+        onesEl.style.transform = 'translateY(2px) scale(1.15)';
+        setTimeout(() => { onesEl.style.transform = 'translateY(0) scale(1)'; }, 150);
     }
 }
 
@@ -1822,7 +1995,7 @@ function setDominance(idx) {
 function adjustGauge(type, delta) {
     if (type === 'villainHp') {
         gameState.villainHp = Math.max(0, gameState.villainHp + delta);
-        document.getElementById('valVillainHp').textContent = gameState.villainHp;
+        updateVillainHealthDial();
         const msg = currentLang === 'pt'
             ? `Vida do vilão alterada para <strong>${gameState.villainHp}</strong> (${delta > 0 ? '+' : ''}${delta}).`
             : `Villain HP changed to <strong>${gameState.villainHp}</strong> (${delta > 0 ? '+' : ''}${delta}).`;
