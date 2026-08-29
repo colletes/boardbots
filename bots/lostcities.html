@@ -171,7 +171,9 @@ h1, h2 { text-transform: uppercase; letter-spacing: 2px; border-bottom: 2px soli
 }
 
 .game-screen {
-  display: none;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
   flex: 1;
   padding: 20px;
   max-width: 1200px;
@@ -192,8 +194,9 @@ h1, h2 { text-transform: uppercase; letter-spacing: 2px; border-bottom: 2px soli
 @media(min-width: 900px) {
   .game-screen {
     display: grid;
-    grid-template-columns: 320px 1fr;
+    grid-template-columns: 340px 1fr;
     gap: 30px;
+    align-items: start;
   }
 }
 
@@ -657,7 +660,7 @@ h1, h2 { text-transform: uppercase; letter-spacing: 2px; border-bottom: 2px soli
 
 <!-- GAME SCREEN -->
 
-<div class="game-screen" id="gameScreen">
+<div class="game-screen hidden" id="gameScreen">
   <div class="layout-left">
       <header style="position:static; padding:0; margin-bottom:10px; border:none; display:block;">
         <div class="total-score"><span data-i18n="lc_total">Total Score:</span> <span id="totalScoreText">0</span></div>
@@ -716,7 +719,7 @@ h1, h2 { text-transform: uppercase; letter-spacing: 2px; border-bottom: 2px soli
 
 
 <!-- CALCULATOR SCREEN -->
-<div class="calc-screen" id="calcScreen">
+<div class="calc-screen hidden" id="calcScreen">
     <h2 style="text-align:center; font-family:'Poppins', sans-serif;"><span data-i18n="lc_calc_title">Calculadora</span> - <span id="calcPlayerName">P1</span></h2>
     <h4 style="text-align:center; color:var(--text-muted); margin-top:0;"><span data-i18n="lc_round">Rodada</span> <span id="calcRoundText">1</span></h4>
     <div id="calcRowsContainer"></div>
@@ -725,7 +728,7 @@ h1, h2 { text-transform: uppercase; letter-spacing: 2px; border-bottom: 2px soli
 </div>
 
 <!-- SUMMARY SCREEN -->
-<div class="summary-screen" id="summaryScreen">
+<div class="summary-screen hidden" id="summaryScreen">
     <h2 data-i18n="lc_summary_title" style="font-family:'Poppins', sans-serif;">Resumo da Partida</h2>
     <table class="score-table">
         <thead>
@@ -999,8 +1002,24 @@ function setRounds(r) {
     document.getElementById('rounds_3').classList.toggle('active', r === 3);
 }
 
+function showScreen(screenId) {
+    const screens = ['setupScreen', 'gameScreen', 'calcScreen', 'summaryScreen'];
+    screens.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            if (id === screenId) {
+                el.classList.remove('hidden');
+                el.style.display = '';
+            } else {
+                el.classList.add('hidden');
+                el.style.display = 'none';
+            }
+        }
+    });
+}
+
 function startGame() {
-  document.getElementById('setupScreen').style.display = 'none';
+  showScreen('gameScreen');
   document.getElementById('btnResetGame').classList.remove('hidden');
   currentRound = 1;
   scoresP1 = [];
@@ -1009,12 +1028,8 @@ function startGame() {
 }
 
 function startRound() {
-    document.getElementById('gameScreen').style.display = 'none';
-    document.getElementById('calcScreen').style.display = 'none';
-    document.getElementById('summaryScreen').style.display = 'none';
-    
     if (gameMode === 'automa') {
-        document.getElementById('gameScreen').style.display = 'block';
+        showScreen('gameScreen');
         expeditions = { yellow: [], blue: [], white: [], green: [], red: [] };
         gameLog = []; renderLog();
         renderTableau();
@@ -1170,7 +1185,7 @@ function resetGameForced() {
     document.getElementById('gameScreen').style.display = 'none';
     document.getElementById('calcScreen').style.display = 'none';
     document.getElementById('summaryScreen').style.display = 'none';
-    document.getElementById('setupScreen').style.display = 'block';
+    showScreen('setupScreen');
     document.getElementById('btnResetGame').classList.add('hidden');
     scoresP1 = []; scoresP2 = []; currentRound = 1;
     expeditions = { yellow:[], blue:[], white:[], green:[], red:[] };
