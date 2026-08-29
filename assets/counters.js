@@ -33,7 +33,8 @@ async function initVisitCounter(){
   const el = document.getElementById('visitCount');
   if (!el) return;
   try {
-    const count = await bump('site-visits', 1);
+    const isDevOrStaging = location.hostname === 'localhost' || location.hostname === '127.0.0.1' || location.pathname.includes('/staging/');
+    const count = isDevOrStaging ? await readCount('site-visits') : await bump('site-visits', 1);
     el.textContent = formatCount(count);
   } catch (e) {
     console.warn('Board Bots: visit counter failed', e);

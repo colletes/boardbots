@@ -6,5 +6,8 @@ import { getAnalytics } from 'https://www.gstatic.com/firebasejs/10.13.0/firebas
 import { app, ANALYTICS_CONFIGURED } from './firebase-init.js';
 
 if (ANALYTICS_CONFIGURED) {
-  getAnalytics(app);
+  const isDevOrStaging = location.hostname === 'localhost' || location.hostname === '127.0.0.1' || location.pathname.includes('/staging/');
+  if (!isDevOrStaging) {
+    getAnalytics(app);
+  }
 }

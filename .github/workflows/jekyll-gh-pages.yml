@@ -1,12 +1,12 @@
-# Deploy static site to GitHub Pages
+# Deploy static site (Production & Staging) to GitHub Pages
 name: Deploy static site to GitHub Pages
 
 on:
-  # Runs on pushes targeting the default branch
+  # Runs on pushes targeting main or staging branches
   push:
-    branches: ["main"]
+    branches: ["main", "staging"]
 
-  # Allows you to run this workflow manually from the Actions tab
+  # Allows manual runs from the Actions tab
   workflow_dispatch:
 
 # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
@@ -16,7 +16,6 @@ permissions:
   id-token: write
 
 # Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
-# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
 concurrency:
   group: "pages"
   cancel-in-progress: false
@@ -26,14 +25,59 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout main (Production)
         uses: actions/checkout@v4
+        with:
+          ref: main
+          path: _site
+
+      - name: Checkout staging (Staging Preview)
+        uses: actions/checkout@v4
+        with:
+          ref: staging
+          path: _site/staging
+        continue-on-error: true
+
+      - name: Prepare site artifacts
+        run: |
+          # Clean internal git and workflow directories from artifact
+          rm -rf _site/.git _site/.github _site/staging/.git _site/staging/.github
+          
+          # Ensure Jekyll processing is disabled for clean static serving
+          touch _site/.nojekyll
+          if [ -d "_site/staging" ]; then
+            touch _site/staging/.nojekyll
+          fi
+
+      - name: Inject Staging badge into staging environment
+        run: |
+          if [ -d "_site/staging" ]; then
+            python3 -c "
+          import os
+          badge = '<div id=\"bb-staging-badge\" style=\"position:fixed;top:10px;right:10px;z-index:99999;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;font-family:Inter,system-ui,sans-serif;font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;box-shadow:0 4px 12px rgba(0,0,0,0.35);letter-spacing:0.8px;pointer-events:none;text-transform:uppercase;border:1px solid rgba(255,255,255,0.4);\">Staging</div>'
+          for root, _, files in os.walk('_site/staging'):
+              for f in files:
+                  if f.endswith('.html'):
+                      p = os.path.join(root, f)
+                      try:
+                          with open(p, 'r', encoding='utf-8', errors='ignore') as file:
+                              content = file.read()
+                          if '</body>' in content and 'bb-staging-badge' not in content:
+                              content = content.replace('</body>', f'{badge}</body>')
+                              with open(p, 'w', encoding='utf-8') as file:
+                                  file.write(content)
+                      except Exception as e:
+                          print(f'Warning injecting badge to {p}: {e}')
+          "
+          fi
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: "."
+          path: "_site"
 
   # Deployment job
   deploy:
