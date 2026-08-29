@@ -685,7 +685,9 @@
     el.innerHTML = res;
   }
 
-  function sortearMarcadores() {
+  async function sortearMarcadores() {
+    const resEl = document.getElementById('resMarcadores');
+    resEl.innerHTML = '<span style="opacity:0.6;">...</span>';
     const qtd = parseInt(document.getElementById('armyCards').value);
     
     const ranges = {
@@ -699,23 +701,36 @@
     };
     
     const divRanges = ranges[qtd];
-    let marcadores = [1, 2, 3];
-    let textoFinal = [];
+    const marcadores = [1, 2, 3];
+    let diceResults = [];
 
-    marcadores.forEach(m => {
-      const d20 = rolarD20();
+    if (diceBoxReady && diceBox) {
+      try {
+        const rollResult = await diceBox.roll('3d20');
+        if (rollResult && rollResult.length >= 3) {
+          diceResults = rollResult.map(r => r.value);
+        }
+      } catch (err) {
+        console.warn('Dice roll error, using fallback', err);
+      }
+    }
+    if (diceResults.length < 3) {
+      diceResults = [rolarD20Fallback(), rolarD20Fallback(), rolarD20Fallback()];
+    }
+
+    const textoFinal = marcadores.map((m, idx) => {
+      const d20 = diceResults[idx];
       let cartaSelecionada = 1;
-      
       for (let i = 0; i < divRanges.length; i++) {
         if (d20 >= divRanges[i][0] && d20 <= divRanges[i][1]) {
           cartaSelecionada = i + 1;
           break;
         }
       }
-      textoFinal.push(S().markerLine.replace('{m}', m).replace('{c}', cartaSelecionada).replace('{d}', d20));
+      return S().markerLine.replace('{m}', m).replace('{c}', cartaSelecionada).replace('{d}', d20);
     });
 
-    document.getElementById('resMarcadores').innerHTML = textoFinal.join("<br>");
+    resEl.innerHTML = textoFinal.join("<br>");
   }
 
   // --- ORDENS DE MARCHA: Sweep / Meander (rosetas oficiais do manual) ---
