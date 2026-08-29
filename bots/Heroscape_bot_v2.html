@@ -47,7 +47,7 @@
   .subtitle { font-family: 'Cinzel', serif; color: var(--gold); margin-top: 4px; margin-bottom: 0; letter-spacing: 3px; font-size: 0.9em; text-transform: uppercase; font-weight: 800; animation: pulseRune 3s infinite; }
   
   .hero { position: relative; border-radius: 0; clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px); overflow: hidden; margin-bottom: 20px; border: 2px solid var(--border); box-shadow: 0 0 15px var(--blue-glow); }
-  .hero img { width: 100%; height: 180px; object-fit: cover; display: block; filter: saturate(1.2) brightness(0.7) hue-rotate(180deg); }
+  .hero img { width: 100%; height: 180px; object-fit: cover; object-position: center 20%; display: block; filter: saturate(1.1) brightness(0.85); }
   .hero::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(5,10,21,0.2), rgba(5,10,21,0.95)); border: inset 2px var(--gold); }
   .hero-content { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end; padding: 16px 24px; }
   
@@ -133,13 +133,13 @@
     .sections-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 24px; align-items: start; }
   }
   
-  .dial { position: relative; width: 240px; height: 240px; border-radius: 50%; background: radial-gradient(circle, #001f24 0%, #000a0d 70%); border: 3px solid var(--gold); box-shadow: 0 0 20px var(--gold-glow), inset 0 0 30px rgba(0,255,255,0.2); clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); }
-  .dial-center { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: flex; align-items: center; justify-content: center; background: #003333; border: 2px solid var(--gold); text-shadow: 0 0 8px var(--gold); clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); width: 80px; height: 80px; font-family: 'Cinzel', serif; font-size: 0.8em; color: var(--gold); letter-spacing: 1px; z-index: 3; }
-  .dial-needle { position: absolute; left: 50%; top: 50%; width: 6px; height: 92px; margin-left: -3px; margin-top: -92px; transform-origin: 50% 100%; background: linear-gradient(to top, var(--gold), transparent); transition: transform 0.5s cubic-bezier(.2,1.5,.4,1); z-index: 2; border-radius: 0; }
-  .dial-wedge { position: absolute; min-width: 40px; padding: 3px 6px; transform: translate(-50%, -50%); background: #001820; border: 1px solid var(--border); font-size: 0.72em; font-weight: bold; text-align: center; color: var(--text-dim); transition: all 0.3s; z-index: 1; clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px); }
+  .dial { position: relative; width: 250px; height: 250px; border-radius: 50%; background: radial-gradient(circle, #001f24 0%, #000a0d 75%); border: 3px solid var(--gold); box-shadow: 0 0 20px var(--gold-glow), inset 0 0 30px rgba(0,255,255,0.25); }
+  .dial-center { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: flex; align-items: center; justify-content: center; background: #002b2f; border: 2px solid var(--gold); text-shadow: 0 0 8px var(--gold); border-radius: 50%; width: 76px; height: 76px; font-family: 'Cinzel', serif; font-size: 0.8em; color: var(--gold); letter-spacing: 1px; z-index: 3; box-shadow: 0 0 10px rgba(0,0,0,0.8); }
+  .dial-needle { position: absolute; left: 50%; top: 50%; width: 6px; height: 92px; margin-left: -3px; margin-top: -92px; transform-origin: 50% 100%; background: linear-gradient(to top, var(--gold), transparent); transition: transform 0.5s cubic-bezier(.2,1.5,.4,1); z-index: 2; border-radius: 3px; pointer-events: none; }
+  .dial-wedge { position: absolute; left: 50%; top: 50%; min-width: 36px; padding: 3px 6px; background: #001820; border: 1px solid var(--border); font-size: 0.72em; font-weight: bold; text-align: center; color: var(--text-dim); transition: background 0.3s, color 0.3s, border-color 0.3s, box-shadow 0.3s; z-index: 1; border-radius: 4px; pointer-events: none; }
   
-  .dial-wedge.full-move { border-color: var(--gold-dark); color: #80deea; }
-  .dial-wedge.hit { background: var(--gold); color: #001820; border-color: #fff; box-shadow: 0 0 15px var(--gold-glow); transform: translate(-50%, -50%) scale(1.25); z-index: 4; }
+  .dial-wedge.full-move { border-color: var(--gold); color: #80deea; background: #002b2f; }
+  .dial-wedge.hit { background: var(--gold) !important; color: #001820 !important; border-color: #ffffff !important; box-shadow: 0 0 16px var(--gold-glow); z-index: 4; }
   .dial-legend { text-align: center; font-size: 0.8em; color: var(--text-dim); margin-top: 8px; }
   .dial-legend span { color: var(--gold); font-weight: bold; }
   
@@ -750,17 +750,12 @@
 
   function buildDial(dialId, data) {
     const dial = document.getElementById(dialId);
-    const size = dial.clientWidth;
-    const center = size / 2;
-    const radius = center - 28;
+    if (!dial) return;
+    dial.querySelectorAll('.dial-wedge').forEach(w => w.remove());
     data.forEach(entry => {
-      const rad = entry.angle * Math.PI / 180;
-      const x = center + radius * Math.sin(rad);
-      const y = center - radius * Math.cos(rad);
       const wedge = document.createElement('div');
       wedge.className = 'dial-wedge' + (entry.full ? ' full-move' : '');
-      wedge.style.left = x + 'px';
-      wedge.style.top = y + 'px';
+      wedge.style.transform = `translate(-50%, -50%) rotate(${entry.angle}deg) translateY(-94px) rotate(-${entry.angle}deg)`;
       wedge.innerText = entry.min === entry.max ? entry.min : `${entry.min}-${entry.max}`;
       dial.appendChild(wedge);
       entry.el = wedge;
@@ -777,20 +772,27 @@
     resEl.innerHTML = '<span style="opacity:0.6;">...</span>';
     const dado = await rolarD20();
 
-    data.forEach(entry => entry.el.classList.remove('hit'));
+    data.forEach(entry => {
+      if (entry.el) {
+        entry.el.classList.remove('hit');
+        entry.el.style.transform = `translate(-50%, -50%) rotate(${entry.angle}deg) translateY(-94px) rotate(-${entry.angle}deg)`;
+      }
+    });
 
     if (type === 'meander' && dado >= 19) {
-      document.getElementById('resMarcha').innerHTML = S().moveMeanderChoice.replace('{d}', dado);
+      resEl.innerHTML = S().moveMeanderChoice.replace('{d}', dado);
       return;
     }
 
     const found = data.find(entry => dado >= entry.min && dado <= entry.max);
-    found.el.classList.add('hit');
-    needle.style.transform = `rotate(${found.angle}deg)`;
+    if (found && found.el) {
+      found.el.classList.add('hit');
+      found.el.style.transform = `translate(-50%, -50%) rotate(${found.angle}deg) translateY(-94px) rotate(-${found.angle}deg) scale(1.22)`;
+      needle.style.transform = `rotate(${found.angle}deg)`;
+    }
 
-    const moveType = (type === 'sweep' && found.full) ? S().moveFull : S().moveHalf;
-
-    document.getElementById('resMarcha').innerHTML = S().moveResult.replace('{d}', dado).replace('{type}', moveType);
+    const moveType = (type === 'sweep' && found && found.full) ? S().moveFull : S().moveHalf;
+    resEl.innerHTML = S().moveResult.replace('{d}', dado).replace('{type}', moveType);
   }
 
   function updateOrderTypeView() {
