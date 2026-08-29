@@ -56,12 +56,19 @@ Ao criar o HTML do bot, **você DEVE copiar e utilizar os seguintes elementos pa
    É OBRIGATÓRIO incluir o Modal de Regras (`#helpModal`) para explicar como o automa toma decisões, condições de vitória, e regras de desempate. Nunca assuma que as regras são simples demais para dispensar o modal.
 5. **Footer (Fim do body):**
    Sempre inclua os créditos do autor (`.credits`), o botão Buy Me a Coffee (`.bmc-inline`) e o botão Home para voltar (`.btn-home`).
-6. **Theming, Personalidade e UI Diegética:**
-   O bot DEVE ter uma interface altamente imersiva e diegética (in-world). A interface deve se parecer com um componente físico ou um elemento dentro do universo do jogo (ex: interface de jornais de guerra da 2ª Guerra Mundial, um mapa de pergaminho de fantasia, ou botões em formato de blocos de mármore esculpidos).
-   - Use texturas densas (noise SVG, degradês complexos), e pseudo-elementos (`::before`, `::after`) para compor cenários de fundo 3D (como mesas de madeira, pilares de pedra ou anéis brilhantes).
-   - Adicione animações CSS (`@keyframes`) para partículas, brilhos, ou elementos flutuantes.
-   - Aplique clip-paths ou bordas personalizadas (ex: cera derretida, bordas queimadas, formas hexagonais) em botões e cards. NUNCA faça uma interface de "aplicativo web genérico".
-   - **Widescreen Layouts (Novo Padrão):** NUNCA confine a tela inteira em um `max-width: 500px` genérico no centro da tela para desktops. Em telas maiores (`min-width: 900px`), o layout deve se expandir utilizando CSS Grid ou Flexbox (ex: uma coluna lateral para status e uma coluna principal maior), aproveitando todo o espaço horizontal sem deixar enormes áreas pretas nas laterais.
+6. **Theming, Personalidade e UI Diegética (Padrão V2):**
+   O bot DEVE ter uma interface altamente imersiva e diegética (in-world). A interface deve se parecer com um componente físico ou um elemento dentro do universo do jogo (ex: interface de jornais de guerra da 2ª Guerra Mundial, um mapa de pergaminho de fantasia, blocos de mármore esculpidos ou marcadores de papelão/vitral estilo dial).
+   - Use texturas densas (noise SVG, degradês complexos), e pseudo-elementos (`::before`, `::after`) para compor cenários de fundo 3D (como mesas de madeira, ardósia, feltro ou pilares de pedra).
+   - **Componentes Diegéticos Físicos:** Prefira sempre componentes diegéticos estilizados como objetos reais de mesa:
+     - **Diais Físicos de Rodízio Duplo (Dual-Wheel Dials):** Marcadores de vida/pontos em formato de disco de papelão prensado com duas janelas recortadas (dezenas e unidades), rebites metálicos e acabamento temático (ex: Vitral/Obsidiana ou Ouro/Bronze).
+     - **Tokens de Escudo/Marcadores:** Tokens de resina, metal ou madeira com feedback tátil de toque.
+     - **Cartas com Espessura e Sombra 3D:** Bordas com bisel chanfrado e sombras profundas que dão a sensação de cartas reais sobre a mesa.
+   - **Exibição Condicional de Componentes:** NUNCA polua a tela com componentes genéricos desnecessários:
+     - **Rolador de Dados 3D:** Só deve ser exibido quando o vilão/líder/cenário selecionado realmente utilizar dados.
+     - **Diais Secundários:** Diais especiais (ex: vida de cidades reféns, defesas dinâmicas) só devem ser renderizados quando a facção ativa exigir.
+   - **Papel do Companion (Mesa Física vs Simulação Virtual):**
+     - Quando o jogo físico possui cartas na caixa que o jogador compra na mesa, o bot NÃO deve simular a compra aleatória de cartas fictícias. O bot serve como assistente de estado de jogo (gerenciando escudos, dominância, dano, retaliações e gatilhos da mesa).
+   - **Widescreen Layouts:** NUNCA confine a tela inteira em um `max-width: 500px` genérico no centro da tela para desktops. Em telas maiores (`min-width: 900px`), o layout deve se expandir utilizando CSS Grid ou Flexbox (ex: uma coluna lateral para status e uma coluna principal maior), aproveitando todo o espaço horizontal sem deixar enormes áreas pretas nas laterais.
 7. **Painel de Histórico (Log):**
    É OBRIGATÓRIO incluir um painel de histórico de ações (log) na tela do jogo. O log deve registrar todas as ações e decisões do bot, para que o jogador possa auditar o que aconteceu caso clique rápido demais. O HTML deve conter um container (ex: `<div id="logPanel" class="log-panel"></div>`) e o JS deve alimentar esse painel com mensagens descritivas a cada jogada.
 ## 4.1 Internacionalização (i18n)
