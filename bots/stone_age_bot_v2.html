@@ -4,153 +4,714 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Automa — Stone Age Solo (v2)</title>
+    <link rel="icon" href="../assets/mascot-trimmed.png" type="image/png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Rye&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/site.css?v=7">
     <style>
-.hidden { display: none !important; }
-
 :root{
-    --bg-0:#2c241b; --bg-1:#1a1410;
-    --surface:rgba(55, 42, 30, 0.85); --surface-2:rgba(80, 60, 42, 0.75);
-    --border:#8c6946; --text:#f2eadc; --text-dim:#d9c5a3;
+    --bg-0:#241d16; --bg-1:#16110d;
+    --surface:rgba(48, 37, 27, 0.92); --surface-2:rgba(68, 52, 38, 0.85);
+    --border:#8c6946; --text:#f5ede1; --text-dim:#cfba99;
     --blue:#c7623a; --blue-glow:rgba(199, 98, 58, 0.6);
-    --accent:#db9a46; --accent-dim:#b0742a;
-    --font-display:'Caveat', 'Permanent Marker', cursive;
-    --font-body:'Caveat', 'Comic Sans MS', cursive;
-    --radius:2px;
+    --accent:#e6a147; --accent-dim:#b0742a;
+    --font-display:'Caveat', cursive, serif;
+    --font-body:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --radius:6px;
 }
 * { box-sizing:border-box; margin: 0; padding: 0; }
 html { -webkit-text-size-adjust:100%; }
-@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&display=swap');
 body {
     font-family:var(--font-body);
-    font-size: 1.2rem;
+    font-size: 1rem;
+    line-height: 1.5;
     background-color: var(--bg-0);
     background-image: 
-        radial-gradient(circle at 50% 50%, rgba(219, 154, 70, 0.1) 0%, transparent 60%),
-        url('data:image/svg+xml;utf8,<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><filter id="noiseFilter"><feTurbulence type="fractalNoise" baseFrequency="0.6" numOctaves="4" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23noiseFilter)" opacity="0.1"/></svg>');
+        radial-gradient(circle at 50% 50%, rgba(219, 154, 70, 0.08) 0%, transparent 60%),
+        url('data:image/svg+xml;utf8,<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><filter id="noiseFilter"><feTurbulence type="fractalNoise" baseFrequency="0.6" numOctaves="4" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23noiseFilter)" opacity="0.08"/></svg>');
     background-attachment:fixed;
     color:var(--text);
-    max-width: 1300px;
-    margin:0 auto; padding:18px;
-    padding-left:max(18px, env(safe-area-inset-left));
-    padding-right:max(18px, env(safe-area-inset-right));
-    padding-bottom:max(18px, env(safe-area-inset-bottom));
+    margin:0 auto;
+    padding-bottom:max(30px, env(safe-area-inset-bottom));
     -webkit-tap-highlight-color:transparent;
-    animation: firelight 4s infinite alternate;
+    min-height: 100vh;
 }
-@keyframes firelight {
-    0% { background-color: #2c241b; }
-    100% { background-color: #382c20; }
+.hidden { display: none !important; }
+
+/* Top Sticky Navigation */
+.top-nav {
+    width: 100%;
+    max-width: 1300px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 16px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    background: rgba(36, 29, 22, 0.94);
+    border-bottom: 2px solid var(--border);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.4);
 }
-@media (min-width:900px){ body{ max-width:1300px; } }
-button, select, .loc-cell{ touch-action:manipulation; font-family: var(--font-display); font-size: 1.1rem; }
-@keyframes fadeSlideUp{ from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);} }
-@keyframes popIn{ 0%{transform:scale(0.85); opacity:0;} 60%{transform:scale(1.04);} 100%{transform:scale(1); opacity:1;} }
-.hero {
-    position:relative; overflow:hidden; margin-bottom:18px; border:4px solid var(--border);
-    border-radius: 12px 24px 10px 30px / 20px 10px 25px 15px;
-    box-shadow: 0 10px 20px rgba(0,0,0,0.6); animation:fadeSlideUp 0.5s ease both;
+.nav-brand {
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
 }
-.hero img { width:100%; height:180px; object-fit:cover; display:block; filter: sepia(0.5) contrast(1.2); }
-.hero::after { content:''; position:absolute; inset:0; background:linear-gradient(180deg, rgba(26,20,16,0.3) 0%, rgba(26,20,16,0.9) 100%); }
-.hero-content { position:absolute; inset:0; display:flex; flex-direction:column; justify-content:flex-end; padding:14px 18px; z-index:2; }
-h1 { font-family:var(--font-display); font-weight:700; font-size:2.8em; color:#fff; text-shadow:2px 2px 0 #000, -1px -1px 0 #000; margin:0; letter-spacing: 1px; transform: rotate(-2deg); }
-.subtitle { color:var(--accent); font-size:1.2em; font-weight:700; margin-top:2px; text-shadow:1px 1px 0 #000; transform: rotate(-1deg); }
-h2 { font-family:var(--font-display); font-weight:700; color:var(--accent); margin:0 0 14px; padding-bottom:8px; font-size:1.8em; display:flex; align-items:center; gap:9px; border-bottom:3px dashed var(--border); transform: rotate(1deg); }
-h3 { color:var(--text); font-size:1.4em; margin:16px 0 8px; font-family:var(--font-display); font-weight: 700; }
-.card {
-    background:var(--surface); padding:20px; border: 3px solid var(--border);
-    border-radius: 20px 25px 15px 30px / 30px 15px 25px 20px;
-    box-shadow:0 8px 24px rgba(0,0,0,0.5), inset 0 0 40px rgba(0,0,0,0.3);
-    margin-bottom:20px; animation:fadeSlideUp 0.45s ease both; position: relative;
+.nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
-.card::before { content: ''; position: absolute; top: -10px; left: 10px; width: 20px; height: 20px; background: #e8dbcc; border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.5); border: 2px solid #8c6946; }
-.card::after { content: ''; position: absolute; top: -10px; right: 10px; width: 20px; height: 20px; background: #e8dbcc; border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.5); border: 2px solid #8c6946; }
-@media (min-width:700px){
-    #game-area { display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:24px; align-items:start; }
-    #game-area .card { margin-bottom:0; height:100%; }
+.nav-btn, .lang-btn {
+    background: var(--surface-2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 6px 12px;
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.15s;
 }
-label { display:block; margin:10px 0 6px; font-size:1.1em; color:var(--text-dim); }
-select, input[type=number] {
-    width:100%; padding:12px; font-size:1.2em; background:rgba(0,0,0,0.3); color:var(--text);
-    border:2px solid var(--border); border-radius: 8px 12px 6px 10px; font-family: var(--font-display);
-}
-.row { display:flex; gap:12px; flex-wrap:wrap; }
-.row > * { flex:1; min-width:120px; }
-.btn {
-    display:inline-flex; align-items:center; justify-content:center; gap:8px;
-    padding:14px 20px; border-radius: 10px 15px 8px 20px; border:3px solid var(--border);
-    background:var(--surface-2); color:var(--text); font-weight:700; font-size:1.2em;
-    cursor:pointer; min-height:48px; font-family: var(--font-display); transition: all 0.2s;
-    box-shadow: 2px 4px 0 rgba(0,0,0,0.5);
-}
-.btn:active { transform:translateY(4px); box-shadow: 0 0 0 rgba(0,0,0,0.5); }
-.btn-primary { background:var(--blue); border-color:#823315; color:#fff; width:100%; }
-.btn-block { width:100%; margin-top:10px; }
-.loc-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
-.loc-cell {
-    background:rgba(0,0,0,0.3); border:2px solid var(--border); border-radius: 12px 8px 15px 10px;
-    padding:12px 6px; text-align:center; cursor:pointer; user-select:none;
-    display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:85px;
-    transition: transform 0.1s;
-}
-.loc-cell:active { transform:scale(0.95); }
-.loc-cell.locked { opacity:0.4; pointer-events:none; filter:grayscale(1); }
-.loc-cell .c-name { font-size:1.2em; font-weight:700; line-height:1.1; margin-top:6px; color:var(--text); font-family: var(--font-display); }
-.loc-cell .c-emoji { font-size:1.8em; filter: drop-shadow(2px 2px 0 rgba(0,0,0,0.5)); }
-.btn-help-float {
-    position:fixed; bottom:20px; right:20px; z-index:60; width:56px; height:56px; border-radius:50%;
-    background:var(--blue); color:#fff; border:3px solid #823315; font-weight:800; font-size:1.8em;
-    display:flex; align-items:center; justify-content:center; box-shadow:0 6px 14px rgba(0,0,0,0.5);
-    cursor:pointer; transition:transform 0.15s; font-family: var(--font-display);
-}
-.btn-reset-float {
-    position:fixed; bottom:20px; left:20px; z-index:60; padding:12px 20px; border-radius: 20px 15px 25px 10px;
-    background:var(--surface); color:var(--text); border:3px solid var(--border); font-weight:700; font-size:1.1em;
-    box-shadow:0 6px 14px rgba(0,0,0,0.5); cursor:pointer; font-family: var(--font-display);
+.nav-btn:hover, .lang-btn:hover {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
 }
 .lang-switch {
-    position:fixed; top:16px; right:16px; z-index:60; display:flex; gap:6px;
-    background:var(--surface); border:3px solid var(--border); border-radius: 15px 20px 10px 25px; padding:6px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    display: flex;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
 }
 .lang-btn {
-    border:none; background:transparent; color:var(--text-dim); padding:6px 12px;
-    border-radius: 10px; font-size:1.1em; font-weight:700; cursor:pointer; font-family: var(--font-display);
+    border: none;
+    border-radius: 0;
+    padding: 6px 10px;
 }
-.lang-btn.active { background:var(--blue); color:#fff; }
-.modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:100; padding:20px 14px; overflow-y:auto; }
-.modal-overlay.open { display:block; animation:fadeSlideUp 0.2s ease both; }
-.modal-content {
-    background:var(--surface); border:4px solid var(--border); border-radius: 20px 30px 15px 25px;
-    max-width:640px; margin:20px auto; padding:28px; position:relative;
-    box-shadow: inset 0 0 40px rgba(0,0,0,0.5);
+.lang-btn.active {
+    background: var(--accent);
+    color: #fff;
+    font-weight: 800;
 }
-.modal-close { position:absolute; top:14px; right:14px; width:40px; height:40px; border-radius:50%; font-size:1.5em; background: var(--surface-2); border: 2px solid var(--border); color: var(--text); }
-details > summary { cursor:pointer; font-weight:700; color:var(--accent); padding:10px 0; font-family:var(--font-display); font-size: 1.2em; }
-details .setup-list { margin-top:4px; font-size: 1.1em; }
+
+/* Hero Banner */
+.hero-wrapper {
+    width: 100%;
+    max-width: 1300px;
+    margin: 14px auto 18px;
+    padding: 0 16px;
+}
+.hero {
+    position: relative;
+    border-radius: 10px;
+    overflow: hidden;
+    height: 150px;
+    display: flex;
+    align-items: center;
+    border: 3px solid var(--border);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    background: #000;
+}
+.hero-bg {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    object-fit: cover;
+    object-position: center 30%;
+    filter: brightness(0.4) sepia(0.3);
+}
+.hero-content {
+    position: relative;
+    z-index: 2;
+    padding: 20px;
+    width: 100%;
+    background: linear-gradient(90deg, rgba(22,17,13,0.92) 0%, rgba(22,17,13,0.6) 60%, rgba(22,17,13,0.1) 100%);
+}
+.hero-badge {
+    display: inline-block;
+    background: var(--blue);
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    padding: 3px 8px;
+    border-radius: 3px;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+}
+.hero-title {
+    font-family: var(--font-display);
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0;
+    text-shadow: 2px 2px 4px #000;
+    line-height: 1.1;
+}
+.hero-subtitle {
+    color: var(--accent);
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin-top: 2px;
+    letter-spacing: 1px;
+}
+
+.main-interface {
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 0 16px;
+}
+
+#setup-screen {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 18px;
+}
+@media (min-width: 900px) {
+    #setup-screen {
+        grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+    }
+    #game-area {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+        gap: 18px;
+        align-items: start;
+    }
+}
+
+button, select { touch-action:manipulation; }
+@keyframes fadeSlideUp{ from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);} }
+@keyframes popIn{ 0%{transform:scale(0.88); opacity:0;} 100%{transform:scale(1); opacity:1;} }
+
+h2 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    color: var(--accent);
+    margin: 0 0 12px;
+    padding-bottom: 6px;
+    font-size: 1.6rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 2px dashed var(--border);
+}
+h3 {
+    color: var(--accent);
+    font-size: 1.3rem;
+    margin: 14px 0 6px;
+    font-family: var(--font-display);
+    font-weight: 700;
+}
+
+/* Card container */
+.card {
+    background: var(--surface);
+    padding: 18px;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.4);
+    margin-bottom: 18px;
+    animation: fadeSlideUp 0.3s ease both;
+    position: relative;
+    word-break: break-word;
+}
+
+label { display:block; margin:8px 0 4px; font-size:0.9rem; color:var(--text-dim); font-weight: 600; }
+select, input[type=number] {
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 1rem;
+    background: rgba(0,0,0,0.4);
+    color: var(--text);
+    border: 1.5px solid var(--border);
+    border-radius: 6px;
+    font-family: var(--font-body);
+}
+select:focus, input:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+.small {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    margin-top: 4px;
+    line-height: 1.4;
+}
+
+/* Buttons */
+.btn, button.primary, .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 18px;
+    border-radius: 6px;
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-decoration: none;
+}
+button.primary, .btn-primary {
+    background: var(--blue);
+    border: 2px solid #823315;
+    color: #fff;
+    width: 100%;
+    margin-top: 10px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+button.primary:hover {
+    filter: brightness(1.15);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px rgba(0,0,0,0.4);
+}
+button.primary:active {
+    transform: translateY(2px);
+    box-shadow: none;
+}
+button.primary:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    transform: none;
+}
+.btn-secondary {
+    background: var(--surface-2);
+    border: 1.5px solid var(--border);
+    color: var(--text);
+    width: 100%;
+    margin-top: 10px;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.25);
+}
+.btn-secondary:hover {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+}
+
+/* Status Grid & Boxes (+- Buttons) */
+.status-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+    margin: 12px 0;
+    width: 100%;
+}
+.status-box {
+    background: rgba(0,0,0,0.35);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 8px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.25);
+    min-height: 105px;
+}
+.status-box .label {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    line-height: 1.2;
+}
+.status-box .value {
+    font-size: 1.8rem;
+    font-weight: 900;
+    color: var(--accent);
+    margin: 2px 0;
+    line-height: 1;
+    font-family: var(--font-display);
+    text-shadow: 1px 1px 2px #000;
+}
+.adjust-row {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    width: 100%;
+    margin-top: 4px;
+}
+.btn-small {
+    width: 34px;
+    height: 30px;
+    font-size: 1.2rem;
+    font-weight: 900;
+    line-height: 1;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    transition: all 0.12s;
+    font-family: var(--font-body);
+}
+.btn-small:hover {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+}
+.btn-small:active {
+    transform: translateY(1px);
+    box-shadow: none;
+}
+
+/* SVG Icons Standardization (Fixed Too Large Icons) */
+.icon {
+    width: 20px !important;
+    height: 20px !important;
+    max-width: 20px !important;
+    max-height: 20px !important;
+    min-width: 20px !important;
+    min-height: 20px !important;
+    vertical-align: middle;
+    display: inline-block;
+    stroke-width: 2;
+    flex-shrink: 0;
+}
+h2 .icon {
+    width: 24px !important;
+    height: 24px !important;
+    max-width: 24px !important;
+    max-height: 24px !important;
+    min-width: 24px !important;
+    min-height: 24px !important;
+}
+.status-box .label .icon {
+    width: 16px !important;
+    height: 16px !important;
+    max-width: 16px !important;
+    max-height: 16px !important;
+    min-width: 16px !important;
+    min-height: 16px !important;
+}
+.loc-icon {
+    width: 26px !important;
+    height: 26px !important;
+    display: block;
+    margin: 4px auto;
+}
+
+/* Location Grid & Cells */
+.loc-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(95px, 1fr));
+    gap: 8px;
+    margin: 12px 0;
+}
+.loc-cell {
+    background: rgba(0,0,0,0.35);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 4px;
+    text-align: center;
+    cursor: pointer;
+    user-select: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 78px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    transition: all 0.15s;
+    position: relative;
+    line-height: 1.2;
+}
+.loc-cell:hover {
+    border-color: var(--accent);
+    background: rgba(219, 154, 70, 0.12);
+}
+.loc-cell .num {
+    position: absolute;
+    top: 4px;
+    left: 6px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    color: var(--text-dim);
+}
+.loc-cell.occupied {
+    border-color: #ef4444;
+    background: rgba(239, 68, 68, 0.2);
+    opacity: 0.65;
+    text-decoration: line-through;
+}
+.loc-cell.resource-wood { border-left: 4px solid #8d6e63; }
+.loc-cell.resource-clay { border-left: 4px solid #d87d4a; }
+.loc-cell.resource-stone { border-left: 4px solid #9e9e9e; }
+.loc-cell.resource-gold { border-left: 4px solid #fbbf24; }
+
+/* Dice and Turn Output */
+.dice-container {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin: 14px 0;
+}
+.die {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #f7f1dc, #ded5b8);
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    font-size: 2rem;
+    font-weight: 900;
+    color: var(--bg-0);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.35);
+    font-family: var(--font-body);
+}
+.result-title {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 700;
+    margin-top: 8px;
+}
+.result-location {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--accent);
+    margin: 2px 0;
+    font-family: var(--font-display);
+}
+.result-effect {
+    font-size: 0.95rem;
+    color: var(--text);
+    margin: 2px 0 6px;
+    font-weight: 600;
+}
+.fallback {
+    font-size: 0.85rem;
+    color: #f59e0b;
+    font-style: italic;
+    margin-bottom: 6px;
+}
+
+/* History Log */
+.log-panel {
+    background: rgba(0,0,0,0.35);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 10px;
+    max-height: 220px;
+    overflow-y: auto;
+    font-size: 0.88rem;
+    line-height: 1.4;
+}
+.log-panel div {
+    margin-bottom: 6px;
+    border-bottom: 1px dashed rgba(255,255,255,0.08);
+    padding-bottom: 4px;
+}
+.log-panel div:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+/* Mode Selection */
 .mode-select-row {
-    display:flex; align-items:flex-start; gap:12px; padding:16px; border:3px solid var(--border);
-    background:rgba(0,0,0,0.2); border-radius: 15px 20px 10px 25px; margin-bottom:12px; cursor:pointer;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px;
+    border: 2px solid var(--border);
+    background: rgba(0,0,0,0.25);
+    border-radius: 8px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: background 0.15s;
 }
 .mode-select-row:hover { background: rgba(255,255,255,0.05); }
-.mode-select-row input[type=radio] { width:24px; height:24px; margin-top:2px; accent-color:var(--blue); }
-.mode-select-row strong { color:var(--accent); display:block; margin-bottom:4px; font-size: 1.3em; }
-.history-list { margin-top:14px; text-align:left; max-height:280px; overflow-y:auto; padding-right:8px; }
-.history-item { background:rgba(0,0,0,0.3); border:2px solid var(--border); border-radius: 10px 15px 8px 12px; padding:12px; margin-bottom:10px; }
-.history-item .h-head { display:flex; justify-content:space-between; color:var(--accent); font-size:1.1em; margin-bottom:6px; font-weight: 700; }
-.history-item .h-lines { color:var(--text); font-size: 1.1em; }
-.history-empty { color:var(--text-dim); text-align:center; padding:12px 0; font-size: 1.1em; }
-.credits { display:flex; align-items:center; gap:14px; }
-.credits img { width:60px; height:60px; border-radius: 10px 15px 8px 12px; object-fit:cover; border: 2px solid var(--border); }
-.credits a { color:var(--blue); text-decoration:none; font-weight: 700; }
+.mode-select-row input[type=radio] {
+    width: 20px;
+    height: 20px;
+    margin-top: 2px;
+    accent-color: var(--blue);
+    flex-shrink: 0;
+}
+.mode-select-row strong {
+    color: var(--accent);
+    display: block;
+    margin-bottom: 2px;
+    font-size: 1.05rem;
+    font-family: var(--font-body);
+}
 
+details > summary {
+    cursor: pointer;
+    font-weight: 700;
+    color: var(--accent);
+    padding: 8px 0;
+    font-size: 1rem;
+}
+details .setup-list {
+    margin: 6px 0 10px 18px;
+    font-size: 0.9rem;
+}
+details .setup-list li {
+    margin-bottom: 4px;
+}
 
-.log-panel { background: rgba(0,0,0,0.3); border: 2px solid var(--border); border-radius: 12px; padding: 12px; max-height: 200px; overflow-y: auto; font-size: 1.1em; }
-.log-panel p { margin-bottom: 8px; border-bottom: 1px dashed var(--border); padding-bottom: 8px; }
-.log-panel p:last-child { margin-bottom: 0; border-bottom: none; padding-bottom: 0; }
+.end-banner {
+    padding: 14px;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 1.2rem;
+    font-weight: 800;
+    margin-bottom: 12px;
+    font-family: var(--font-display);
+}
+.end-banner.win {
+    background: rgba(34, 197, 94, 0.2);
+    border: 2px solid #22c55e;
+    color: #4ade80;
+}
+.end-banner.lose {
+    background: rgba(239, 68, 68, 0.2);
+    border: 2px solid #ef4444;
+    color: #f87171;
+}
+.exhaustion-value.warn {
+    color: #ef4444 !important;
+}
+
+/* Modal Overlay & Help Dialog */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 1000;
+    padding: 16px;
+    overflow-y: auto;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    align-items: center;
+    justify-content: center;
+}
+.modal-overlay.open {
+    display: flex !important;
+    animation: fadeSlideUp 0.25s ease both;
+}
+.modal-content {
+    background: #30251b;
+    border: 3px solid var(--border);
+    border-radius: 12px;
+    max-width: 680px;
+    width: 100%;
+    max-height: 85vh;
+    overflow-y: auto;
+    padding: 24px 20px;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+    color: #f5ede1;
+    font-family: var(--font-body);
+    font-size: 0.92rem;
+    line-height: 1.6;
+}
+.modal-content h2 {
+    font-family: var(--font-display);
+    font-size: 1.8rem;
+    color: var(--accent);
+    margin-bottom: 12px;
+}
+.modal-content h3 {
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    color: var(--accent);
+    margin: 14px 0 6px;
+}
+.modal-content p {
+    margin-bottom: 10px;
+}
+.modal-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0;
+    font-size: 0.9rem;
+}
+.modal-content th, .modal-content td {
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+}
+.modal-content th {
+    background: rgba(0,0,0,0.3);
+    color: var(--accent);
+}
+.modal-content .rules-list {
+    margin: 6px 0 12px 18px;
+}
+.modal-content .rules-list li {
+    margin-bottom: 6px;
+}
+.modal-close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    font-size: 1.1rem;
+    font-weight: bold;
+    background: var(--surface-2);
+    border: 1.5px solid var(--border);
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 20;
+    transition: all 0.15s;
+}
+.modal-close:hover {
+    background: #b91c1c;
+    border-color: #ef4444;
+}
+
+.credits {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.85rem;
+    margin-top: 16px;
+}
+.credits img {
+    width: 54px;
+    height: 54px;
+    border-radius: 8px;
+    object-fit: cover;
+    border: 2px solid var(--border);
+}
+.credits a { color: var(--accent); text-decoration: none; font-weight: bold; }
 
 /* Standard Buy Me a Coffee Button */
 .bmc-btn, .bmc-inline, .bmc-float {
@@ -184,10 +745,6 @@ details .setup-list { margin-top:4px; font-size: 1.1em; }
 .bmc-btn svg, .bmc-inline svg, .bmc-float svg {
   width: 20px !important;
   height: 20px !important;
-  min-width: 20px !important;
-  min-height: 20px !important;
-  max-width: 20px !important;
-  max-height: 20px !important;
   stroke: #000000 !important;
   fill: none !important;
   flex-shrink: 0 !important;
@@ -197,22 +754,40 @@ details .setup-list { margin-top:4px; font-size: 1.1em; }
     <script src="../assets/logger.js"></script>
 </head>
 <body class="mode-automa">
+
+<!-- Top Sticky Navigation -->
+<nav class="top-nav">
+  <a class="nav-brand" href="../index.html">
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
+    <span>Stone Age</span>
+  </a>
+  <div class="nav-actions">
+    <button class="nav-btn" onclick="openHelp()">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9.3 9.2a2.7 2.7 0 0 1 5.1 1.2c0 1.8-2.4 2-2.4 3.6"/><circle cx="12" cy="17" r="0.6" fill="currentColor"/></svg>
+      <span data-i18n="helpNavBtn">REGRAS / AJUDA</span>
+    </button>
+    <div class="lang-switch">
+      <button class="lang-btn" id="langBtnPt" onclick="setLang('pt')">PT</button>
+      <button class="lang-btn" id="langBtnEn" onclick="setLang('en')">EN</button>
+    </div>
+  </div>
+</nav>
+
+<!-- Hero Banner -->
+<div class="hero-wrapper">
+  <div class="hero">
+    <img src="../assets/art/stoneage.webp" alt="Stone Age box art" class="hero-bg">
+    <div class="hero-content">
+      <div class="hero-badge">SOLO COMPANION</div>
+      <h1 class="hero-title"><span data-i18n="heroTitle">Assistente Automa</span></h1>
+      <div class="hero-subtitle">STONE AGE — SOLO</div>
+    </div>
+  </div>
+</div>
+
 <div class="main-interface">
 
-    <button class="btn-help-float" onclick="openHelp()" aria-label="Help">?</button>
-    <button class="btn-reset-float hidden" id="btnResetGame" onclick="resetGame()" data-i18n="resetBtn">🔄 Nova Partida</button>
-    <div class="lang-switch">
-        <button class="lang-btn" id="langBtnPt" onclick="setLang('pt')">PT</button>
-        <button class="lang-btn" id="langBtnEn" onclick="setLang('en')">EN</button>
-    </div>
-
-    <div class="hero">
-        <img src="../assets/art/stoneage.webp" alt="Stone Age box art">
-        <div class="hero-content">
-            <h1><span data-i18n="heroTitle">Assistente Automa</span></h1>
-            <div class="subtitle">STONE AGE — SOLO</div>
-        </div>
-    </div>
+    <button class="btn-secondary hidden" id="btnResetGame" onclick="resetGame()" data-i18n="resetBtn" style="margin-bottom:14px; border-color:#ef4444; color:#f87171;">🔄 Nova Partida</button>
 
     <div id="setup-screen">
     <div class="card">
@@ -304,22 +879,22 @@ details .setup-list { margin-top:4px; font-size: 1.1em; }
             </h2>
             <div class="status-grid">
                 <div class="status-box">
-                    <div class="label"><svg class="icon" style="width:1.1em;height:1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 21h8M12 17v4M7 4h10v3a5 5 0 0 1-10 0V4Z"/><path d="M17 5h2a2 2 0 0 1 2 2c0 2-2 3-4 3M7 5H5a2 2 0 0 0-2 2c0 2 2 3 4 3"/></svg><span data-i18n="statScoreLabel">Pontos</span></div>
+                    <div class="label"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 21h8M12 17v4M7 4h10v3a5 5 0 0 1-10 0V4Z"/><path d="M17 5h2a2 2 0 0 1 2 2c0 2-2 3-4 3M7 5H5a2 2 0 0 0-2 2c0 2 2 3 4 3"/></svg><span data-i18n="statScoreLabel">Pontos</span></div>
                     <div class="value" id="statScore">0</div>
                     <div class="adjust-row"><button class="btn-small" onclick="adjust('score',-1)">−</button><button class="btn-small" onclick="adjust('score',1)">+</button></div>
                 </div>
                 <div class="status-box">
-                    <div class="label"><svg class="icon" style="width:1.1em;height:1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="3"/><path d="M2 21c0-3.5 3-5 7-5s7 1.5 7 5"/><circle cx="17" cy="8" r="2.4"/><path d="M15.5 21c.2-2.6 1.8-4 4-4.3"/></svg><span data-i18n="statWorkersLabel">Trabalhadores</span></div>
+                    <div class="label"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="3"/><path d="M2 21c0-3.5 3-5 7-5s7 1.5 7 5"/><circle cx="17" cy="8" r="2.4"/><path d="M15.5 21c.2-2.6 1.8-4 4-4.3"/></svg><span data-i18n="statWorkersLabel">Trabalhadores</span></div>
                     <div class="value" id="statWorkers">5</div>
                     <div class="adjust-row"><button class="btn-small" onclick="adjust('workers',-1)">−</button><button class="btn-small" onclick="adjust('workers',1)">+</button></div>
                 </div>
                 <div class="status-box">
-                    <div class="label"><svg class="icon" style="width:1.1em;height:1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 3.5 20.5 9.5 9.5 20.5 3.5 14.5Z"/><path d="M3.5 14.5 7 18"/></svg><span data-i18n="statToolsLabel">Ferramentas</span></div>
+                    <div class="label"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 3.5 20.5 9.5 9.5 20.5 3.5 14.5Z"/><path d="M3.5 14.5 7 18"/></svg><span data-i18n="statToolsLabel">Ferramentas</span></div>
                     <div class="value" id="statTools">0</div>
                     <div class="adjust-row"><button class="btn-small" onclick="adjust('tools',-1)">−</button><button class="btn-small" onclick="adjust('tools',1)">+</button></div>
                 </div>
                 <div class="status-box">
-                    <div class="label"><svg class="icon" style="width:1.1em;height:1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21c0-6 3-9 3-9s3 3 3 9M12 21c0-6-3-9-3-9s-3 3-3 9M12 3v6"/></svg><span data-i18n="statAgriLabel">Agricultura</span></div>
+                    <div class="label"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21c0-6 3-9 3-9s3 3 3 9M12 21c0-6-3-9-3-9s-3 3-3 9M12 3v6"/></svg><span data-i18n="statAgriLabel">Agricultura</span></div>
                     <div class="value" id="statAgri">0</div>
                     <div class="adjust-row"><button class="btn-small" onclick="adjust('agriculture',-1)">−</button><button class="btn-small" onclick="adjust('agriculture',1)">+</button></div>
                 </div>
@@ -364,32 +939,32 @@ details .setup-list { margin-top:4px; font-size: 1.1em; }
             </h2>
             <div class="status-grid">
                 <div class="status-box">
-                    <div class="label"><svg class="icon" style="width:1.1em;height:1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21c0-6 3-9 3-9s3 3 3 9M12 21c0-6-3-9-3-9s-3 3-3 9M12 3v6"/></svg><span data-i18n="officialFoodLabel">Comida</span></div>
+                    <div class="label"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21c0-6 3-9 3-9s3 3 3 9M12 21c0-6-3-9-3-9s-3 3-3 9M12 3v6"/></svg><span data-i18n="officialFoodLabel">Comida</span></div>
                     <div class="value" id="officialFood">20</div>
                     <div class="adjust-row"><button class="btn-small" onclick="officialAdjust('food',-1)">−</button><button class="btn-small" onclick="officialAdjust('food',1)">+</button></div>
                 </div>
                 <div class="status-box">
-                    <div class="label"><svg class="icon" style="width:1.1em;height:1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 3.5 20.5 9.5 9.5 20.5 3.5 14.5Z"/><path d="M3.5 14.5 7 18"/></svg><span data-i18n="officialExhaustionLabel">Exaustão</span></div>
+                    <div class="label"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 3.5 20.5 9.5 9.5 20.5 3.5 14.5Z"/><path d="M3.5 14.5 7 18"/></svg><span data-i18n="officialExhaustionLabel">Exaustão</span></div>
                     <div class="value exhaustion-value" id="officialExhaustion">15</div>
                     <div class="adjust-row"><button class="btn-small" onclick="officialAdjust('exhaustion',-1)">−</button><button class="btn-small" onclick="officialAdjust('exhaustion',1)">+</button></div>
                 </div>
                 <div class="status-box">
-                    <div class="label"><svg class="icon" style="width:1.1em;height:1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21c0-6 3-9 3-9s3 3 3 9M12 21c0-6-3-9-3-9s-3 3-3 9M12 3v6"/></svg><span data-i18n="officialAgriLabel">Agricultura</span></div>
+                    <div class="label"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21c0-6 3-9 3-9s3 3 3 9M12 21c0-6-3-9-3-9s-3 3-3 9M12 3v6"/></svg><span data-i18n="officialAgriLabel">Agricultura</span></div>
                     <div class="value" id="officialAgri">0</div>
                     <div class="adjust-row"><button class="btn-small" onclick="officialAdjust('agriculture',-1)">−</button><button class="btn-small" onclick="officialAdjust('agriculture',1)">+</button></div>
                 </div>
                 <div class="status-box">
-                    <div class="label"><svg class="icon" style="width:1.1em;height:1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="3"/><path d="M2 21c0-3.5 3-5 7-5s7 1.5 7 5"/><circle cx="17" cy="8" r="2.4"/><path d="M15.5 21c.2-2.6 1.8-4 4-4.3"/></svg><span data-i18n="officialFiguresLabel">Figuras no Tabuleiro</span></div>
+                    <div class="label"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="3"/><path d="M2 21c0-3.5 3-5 7-5s7 1.5 7 5"/><circle cx="17" cy="8" r="2.4"/><path d="M15.5 21c.2-2.6 1.8-4 4-4.3"/></svg><span data-i18n="officialFiguresLabel">Figuras no Tabuleiro</span></div>
                     <div class="value" id="officialFigures">8</div>
                     <div class="adjust-row"><button class="btn-small" onclick="officialAdjust('totalFigures',-1)">−</button><button class="btn-small" onclick="officialAdjust('totalFigures',1)">+</button></div>
                 </div>
                 <div class="status-box">
-                    <div class="label"><svg class="icon" style="width:1.1em;height:1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 21h8M12 17v4M7 4h10v3a5 5 0 0 1-10 0V4Z"/><path d="M17 5h2a2 2 0 0 1 2 2c0 2-2 3-4 3M7 5H5a2 2 0 0 0-2 2c0 2 2 3 4 3"/></svg><span data-i18n="officialFoodPerFigureLabel">Comida/Figura</span></div>
+                    <div class="label"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 21h8M12 17v4M7 4h10v3a5 5 0 0 1-10 0V4Z"/><path d="M17 5h2a2 2 0 0 1 2 2c0 2-2 3-4 3M7 5H5a2 2 0 0 0-2 2c0 2 2 3 4 3"/></svg><span data-i18n="officialFoodPerFigureLabel">Comida/Figura</span></div>
                     <div class="value" id="officialFoodPerFigure">1</div>
                     <div class="adjust-row"><button class="btn-small" onclick="officialAdjust('foodPerFigure',-1)">−</button><button class="btn-small" onclick="officialAdjust('foodPerFigure',1)">+</button></div>
                 </div>
                 <div class="status-box">
-                    <div class="label"><svg class="icon" style="width:1.1em;height:1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21V8l9-5 9 5v13"/><path d="M9 21v-6h6v6"/></svg><span data-i18n="officialBuildingsPileLabel">Construções Descartadas</span></div>
+                    <div class="label"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21V8l9-5 9 5v13"/><path d="M9 21v-6h6v6"/></svg><span data-i18n="officialBuildingsPileLabel">Construções Descartadas</span></div>
                     <div class="value" id="officialBuildingsPile">0</div>
                     <div class="adjust-row"><button class="btn-small" onclick="officialAdjust('buildingsPile',-1)">−</button><button class="btn-small" onclick="officialAdjust('buildingsPile',1)">+</button></div>
                 </div>
@@ -418,12 +993,12 @@ details .setup-list { margin-top:4px; font-size: 1.1em; }
         <div class="card official-only">
             <h2><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 21V8l9-5 9 5v13"/><path d="M9 21v-6h6v6"/></svg><span data-i18n="officialRoundCardTitle">Rodada</span></h2>
             <div data-i18n-html="officialRoundReminders"></div>
-            <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                <button class="btn-small" style="flex:1;" onclick="discardBuilding()" data-i18n="officialDiscardBuildingBtn">Descartei a(s) Construção(ões)</button>
-                <button class="btn-small" style="flex:1;" onclick="cantDiscardBuilding()" data-i18n="officialCantDiscardBtn">Não Consegui Descartar (−3 Exaustão)</button>
+            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;">
+                <button class="btn-secondary" style="flex:1; margin-top:0; font-size:1rem;" onclick="discardBuilding()" data-i18n="officialDiscardBuildingBtn">Descartei a(s) Construção(ões)</button>
+                <button class="btn-secondary" style="flex:1; margin-top:0; font-size:1rem; border-color:#ef4444;" onclick="cantDiscardBuilding()" data-i18n="officialCantDiscardBtn">Não Consegui Descartar (−3 Exaustão)</button>
             </div>
             <button class="btn-secondary" onclick="newRoundOfficial()" data-i18n="officialEndRoundBtn">Encerrar Rodada / Nova Rodada</button>
-            <button onclick="markOfficialWin()" data-i18n="officialMarkWinBtn">Fiquei sem Cartas de Civilização (Vitória!)</button>
+            <button class="btn-secondary" style="border-color:#22c55e; color:#4ade80;" onclick="markOfficialWin()" data-i18n="officialMarkWinBtn">Fiquei sem Cartas de Civilização (Vitória!)</button>
         </div>
 
         <div class="card official-only">
@@ -438,17 +1013,21 @@ details .setup-list { margin-top:4px; font-size: 1.1em; }
         <div class="credits-text official-only" data-i18n-html="creditsTextOfficial"></div>
     </div>
 
-    <a class="bmc-inline" href="https://www.buymeacoffee.com/colletes" target="_blank" rel="noopener" aria-label="Buy me a coffee"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h13a2 2 0 0 1 2 2v1a3 3 0 0 1-3 3h-1"/><path d="M4 8h13v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V8Z"/><path d="M8 3c-.6 1 .5 1.6 0 3M12 3c-.6 1 .5 1.6 0 3"/></svg><span data-i18n="bmcBtn">Me pague um café</span></a>
-
-    <!-- Help Modal -->
-    <div id="helpModal" class="modal-overlay">
-        <div class="modal-content">
-            <button class="modal-close" onclick="closeHelp()">✕</button>
-            <h2 data-i18n="helpTitle">❓ Como funciona este assistente</h2>
-            <div class="automa-only" data-i18n-html="helpBody"></div>
-            <div class="official-only" data-i18n-html="helpBodyOfficial"></div>
-        </div>
+    <div style="text-align:center; margin:16px 0;">
+        <a class="bmc-inline" href="https://www.buymeacoffee.com/colletes" target="_blank" rel="noopener" aria-label="Buy me a coffee"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h13a2 2 0 0 1 2 2v1a3 3 0 0 1-3 3h-1"/><path d="M4 8h13v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V8Z"/><path d="M8 3c-.6 1 .5 1.6 0 3M12 3c-.6 1 .5 1.6 0 3"/></svg><span data-i18n="bmcBtn">Me pague um café</span></a>
     </div>
+
+</div>
+
+<!-- Help Modal -->
+<div id="helpModal" class="modal-overlay" onclick="if(event.target===this)closeHelp()">
+    <div class="modal-content">
+        <button class="modal-close" onclick="closeHelp()">✕</button>
+        <h2 data-i18n="helpTitle">❓ Como funciona este assistente</h2>
+        <div class="automa-only" data-i18n-html="helpBody"></div>
+        <div class="official-only" data-i18n-html="helpBodyOfficial"></div>
+    </div>
+</div>
 
     <script>
         // Forces iOS Safari to treat the first tap as a click instead of only "hovering" (WebKit quirk).
@@ -485,6 +1064,7 @@ details .setup-list { margin-top:4px; font-size: 1.1em; }
 
         const I18N = {
             pt: {
+                helpNavBtn: "REGRAS / AJUDA",
                 heroTitle: "Assistente Automa",
                 setupTitle: "Componentes Físicos (Setup)",
                 setupIntro: "Transcrito da variante solo original — prepare a mesa assim antes de iniciar:",
@@ -743,6 +1323,7 @@ details .setup-list { margin-top:4px; font-size: 1.1em; }
                 creditsTextOfficial: `Feito por <strong>Thiago Colletes de Carvalho</strong> (<a href="mailto:colletes@gmail.com">colletes@gmail.com</a>) — Modo Solo Oficial de Stone Age, tradução de <strong>Raphael Gurian</strong>. Stone Age © 2020 Hans im Glück Verlags-GmbH. Uso pessoal, sem fins comerciais.`
             },
             en: {
+                helpNavBtn: "RULES / HELP",
                 heroTitle: "Automa Assistant",
                 setupTitle: "Physical Components (Setup)",
                 setupIntro: "Transcribed from the original solo variant — set up the table like this before starting:",
