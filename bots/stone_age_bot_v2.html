@@ -587,20 +587,50 @@ h2 .icon {
 .loc-cell.resource-stone { border-left: 4px solid #9e9e9e; }
 .loc-cell.resource-gold { border-left: 4px solid #fbbf24; }
 
-/* Dice and Turn Output */
+/* 3D Dice Tray & Box */
+.dice-tray-container {
+    width: 100%;
+    height: 140px;
+    background: rgba(0, 0, 0, 0.4);
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    position: relative;
+    overflow: hidden;
+    margin: 8px 0 14px;
+    box-shadow: inset 0 3px 12px rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+#dice-box {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 2;
+}
+#dice-box canvas {
+    width: 100% !important;
+    height: 100% !important;
+    display: block;
+}
 .dice-container {
     display: flex;
     justify-content: center;
     gap: 16px;
-    margin: 14px 0;
+    z-index: 1;
+}
+.dice-tray-container.has-3d .dice-container {
+    display: none;
 }
 .die {
-    width: 60px;
-    height: 60px;
+    width: 54px;
+    height: 54px;
     background: linear-gradient(135deg, #f7f1dc, #ded5b8);
     border: 2px solid var(--border);
-    border-radius: 10px;
-    font-size: 2rem;
+    border-radius: 8px;
+    font-size: 1.8rem;
     font-weight: 900;
     color: var(--bg-0);
     display: flex;
@@ -1036,11 +1066,15 @@ details .setup-list li {
                 <div class="card">
                     <h2><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12h18M3 6h18M3 18h18"/></svg><span data-i18n="roundCardTitle">Rodada</span></h2>
                     
-                    <button class="primary" id="btnRoll" onclick="rollAutoma()" data-i18n="rollBtn" style="margin-bottom:12px;">Rolar Alocação do Automato (2d6)</button>
-                    <div class="dice-container" style="margin: 10px 0;">
-                        <div class="die" id="die1">-</div>
-                        <div class="die" id="die2">-</div>
+                    <div id="dice-tray" class="dice-tray-container">
+                        <div id="dice-box"></div>
+                        <div class="dice-container" id="fallbackDice">
+                            <div class="die" id="die1">-</div>
+                            <div class="die" id="die2">-</div>
+                        </div>
                     </div>
+
+                    <button class="primary" id="btnRoll" onclick="rollAutoma()" data-i18n="rollBtn" style="margin-bottom:12px;">Rolar Alocação do Automato (2d6)</button>
                     <div class="result-title" data-i18n="locationResultLabel">Local do Automato:</div>
                     <div class="result-location" id="location" data-i18n="waitingRoll">Aguardando rolagem...</div>
                     <div class="result-effect" id="effect"></div>
@@ -1813,6 +1847,7 @@ details .setup-list li {
             } else {
                 const initial = parseInt(document.getElementById('initialScore').value) || 0;
                 state = defaultState(initial);
+                initDiceBox();
             }
             save();
             document.getElementById('setup-screen').classList.add('hidden');
@@ -1861,6 +1896,39 @@ details .setup-list li {
             render();
         }
 
+        let diceBox = null;
+        let diceBoxReady = false;
+
+        async function initDiceBox() {
+            if (diceBox) return;
+            try {
+                const { default: DiceBox } = await import('https://unpkg.com/@3d-dice/dice-box@1.1.3/dist/dice-box.es.min.js');
+                diceBox = new DiceBox({
+                    container: '#dice-box',
+                    assetPath: 'assets/',
+                    origin: 'https://unpkg.com/@3d-dice/dice-box@1.1.3/dist/',
+                    theme: 'default',
+                    themeColor: '#d97706',
+                    scale: 6,
+                    gravity: 2.5,
+                    friction: 0.8,
+                    restitution: 0.5
+                });
+                
+                await Promise.race([
+                    diceBox.init(),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('DiceBox timeout')), 8000))
+                ]);
+                
+                diceBoxReady = true;
+                const tray = document.getElementById('dice-tray');
+                if (tray) tray.classList.add('has-3d');
+            } catch(err) {
+                console.warn("DiceBox 3D fallback:", err);
+                diceBoxReady = false;
+            }
+        }
+
         function findLanding(sum) {
             let pos = sum;
             while (state.occupied.includes(pos)) {
@@ -1870,7 +1938,7 @@ details .setup-list li {
             return pos;
         }
 
-        function rollAutoma() {
+        async function rollAutoma() {
             if (!state.soloHasWorkers) {
                 alert(S().alertNoWorkers);
                 return;
@@ -1879,16 +1947,43 @@ details .setup-list li {
                 alert(S().alertPendingFirst);
                 return;
             }
-            const d1 = Math.floor(Math.random() * 6) + 1;
-            const d2 = Math.floor(Math.random() * 6) + 1;
-            const sum = d1 + d2;
-            const die1El = document.getElementById('die1');
-            const die2El = document.getElementById('die2');
-            die1El.innerText = d1;
-            die2El.innerText = d2;
-            die1El.classList.remove('rolled'); void die1El.offsetWidth; die1El.classList.add('rolled');
-            die2El.classList.remove('rolled'); void die2El.offsetWidth; die2El.classList.add('rolled');
 
+            const btnRoll = document.getElementById('btnRoll');
+            if (btnRoll) btnRoll.disabled = true;
+
+            let d1 = 1, d2 = 1;
+
+            if (diceBoxReady && diceBox) {
+                try {
+                    const results = await diceBox.roll('2d6');
+                    if (results && results.length >= 2) {
+                        d1 = results[0].value;
+                        d2 = results[1].value;
+                    } else if (results && results[0] && results[0].rolls && results[0].rolls.length >= 2) {
+                        d1 = results[0].rolls[0].value;
+                        d2 = results[0].rolls[1].value;
+                    } else {
+                        d1 = Math.floor(Math.random() * 6) + 1;
+                        d2 = Math.floor(Math.random() * 6) + 1;
+                    }
+                } catch(e) {
+                    d1 = Math.floor(Math.random() * 6) + 1;
+                    d2 = Math.floor(Math.random() * 6) + 1;
+                }
+            } else {
+                d1 = Math.floor(Math.random() * 6) + 1;
+                d2 = Math.floor(Math.random() * 6) + 1;
+                const die1El = document.getElementById('die1');
+                const die2El = document.getElementById('die2');
+                if (die1El && die2El) {
+                    die1El.innerText = d1;
+                    die2El.innerText = d2;
+                    die1El.classList.remove('rolled'); void die1El.offsetWidth; die1El.classList.add('rolled');
+                    die2El.classList.remove('rolled'); void die2El.offsetWidth; die2El.classList.add('rolled');
+                }
+            }
+
+            const sum = d1 + d2;
             const landed = findLanding(sum);
             const loc = LOCATIONS[landed];
             const locName = tr(loc.name);
@@ -1964,9 +2059,17 @@ details .setup-list li {
             logMsg(S().logCivTool(tr(state.pending.name), state.tools));
             clearPending();
         }
-        function resolveCivMixedRoll() {
-            const d1 = Math.floor(Math.random() * 6) + 1;
-            const d2 = Math.floor(Math.random() * 6) + 1;
+        async function resolveCivMixedRoll() {
+            let d1 = Math.floor(Math.random() * 6) + 1;
+            let d2 = Math.floor(Math.random() * 6) + 1;
+            if (diceBoxReady && diceBox) {
+                try {
+                    const results = await diceBox.roll('2d6');
+                    if (results && results.length >= 2) {
+                        d1 = results[0].value; d2 = results[1].value;
+                    }
+                } catch(e) {}
+            }
             document.getElementById('civMixedResult').innerText = S().mixedRollResult(d1, d2);
         }
         function resolveCivMixedConfirm() {
@@ -1986,10 +2089,21 @@ details .setup-list li {
             logMsg(S().logBuildingFixed(tr(state.pending.name), pts));
             clearPending();
         }
-        function resolveBuildingDice() {
+        async function resolveBuildingDice() {
             const n = parseInt(document.getElementById('buildingDiceCount').value) || 4;
             let sum = 0, rolls = [];
-            for (let i = 0; i < n; i++) { const r = Math.floor(Math.random() * 6) + 1; rolls.push(r); sum += r; }
+            if (diceBoxReady && diceBox) {
+                try {
+                    const results = await diceBox.roll(`${n}d6`);
+                    if (results && results.length > 0) {
+                        rolls = results.map(r => r.value);
+                        sum = rolls.reduce((a, b) => a + b, 0);
+                    }
+                } catch(e) {}
+            }
+            if (rolls.length === 0) {
+                for (let i = 0; i < n; i++) { const r = Math.floor(Math.random() * 6) + 1; rolls.push(r); sum += r; }
+            }
             state.score += sum;
             logMsg(S().logBuildingDice(tr(state.pending.name), n, rolls, sum));
             clearPending();
@@ -2006,6 +2120,9 @@ details .setup-list li {
             state.occupied = [];
             state.soloHasWorkers = true;
             state.pending = null;
+            if (diceBox && typeof diceBox.clear === 'function') {
+                try { diceBox.clear(); } catch(e) {}
+            }
             document.getElementById('die1').innerText = "-";
             document.getElementById('die2').innerText = "-";
             document.getElementById('location').innerText = S().waitingRoll;
@@ -2261,9 +2378,11 @@ details .setup-list li {
                 document.getElementById('setup-screen').classList.add('hidden');
                 document.getElementById('game-area').classList.remove('hidden');
                 document.getElementById('btnResetGame').classList.remove('hidden');
+                if (state.mode !== 'official') initDiceBox();
                 render();
             } else {
                 syncModeUI(pendingMode);
+                if (pendingMode !== 'official') initDiceBox();
             }
         })();
     </script>
