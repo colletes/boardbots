@@ -217,10 +217,54 @@
         .sdbr-priority-wheel .wheel-arrow { font-size: 1.5em; color: var(--smoke); text-shadow: 0 0 6px var(--smoke); line-height: 1; }
         @keyframes sdbr-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-        /* Indicador de tipo de espaço que aciona a mudança de faixa única do SDBR (vermelho = ficha de perigo; marrom = outro terreno) */
-        .sdbr-hazard-flag { display: inline-block; width: 0; height: 0; margin-left: 2px; border-left: 7px solid transparent; border-right: 7px solid transparent; border-bottom: 11px solid; cursor: help; }
-        .sdbr-hazard-flag.red { border-bottom-color: #e62e00; filter: drop-shadow(0 0 4px rgba(230,46,0,0.8)); }
-        .sdbr-hazard-flag.brown { border-bottom-color: #9c6b30; filter: drop-shadow(0 0 4px rgba(156,107,48,0.8)); }
+        /* Indicador de Perigo/Terreno com Chip Interativo & Tooltip */
+        .sdbr-hazard-chip {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 4px 8px; border-radius: 5px; font-size: 0.76rem; font-weight: 800;
+            text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer;
+            border: 1.5px solid; transition: transform 0.15s, box-shadow 0.15s;
+            line-height: 1; user-select: none;
+        }
+        .sdbr-hazard-chip:hover, .sdbr-hazard-chip:active {
+            transform: scale(1.05);
+        }
+        .sdbr-hazard-chip.red {
+            border-color: #ff3333; color: #ff8888;
+            background: linear-gradient(180deg, #3d0c0c 0%, #1a0404 100%);
+            box-shadow: 0 0 8px rgba(255,51,51,0.5);
+        }
+        .sdbr-hazard-chip.brown {
+            border-color: #d98c00; color: #ffd280;
+            background: linear-gradient(180deg, #38240a 0%, #180e03 100%);
+            box-shadow: 0 0 8px rgba(217,140,0,0.5);
+        }
+        .sdbr-hazard-chip svg {
+            width: 11px; height: 11px; flex-shrink: 0;
+        }
+
+        .sdbr-act-chip {
+            cursor: pointer;
+            transition: transform 0.15s;
+        }
+        .sdbr-act-chip:hover, .sdbr-act-chip:active {
+            transform: scale(1.03);
+        }
+
+        /* Floating Info Toast (Instant mobile & desktop feedback on tap) */
+        .info-toast {
+            position: fixed; bottom: 24px; left: 50%;
+            transform: translateX(-50%) translateY(30px);
+            background: rgba(18, 14, 11, 0.96); border: 2px solid var(--yellow);
+            color: #fff; padding: 12px 18px; border-radius: 8px;
+            font-size: 0.9rem; font-weight: 600; line-height: 1.4;
+            max-width: 90vw; width: 440px; box-shadow: 0 10px 30px rgba(0,0,0,0.85), 0 0 18px rgba(255,204,0,0.35);
+            z-index: 9999; text-align: center; opacity: 0; pointer-events: none;
+            transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .info-toast.show {
+            opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: auto; cursor: pointer;
+        }
+
         .sdbr-skip-arrow { display: inline-flex; align-items: center; justify-content: center; min-width: 30px; height: 30px; margin-left: 6px; padding: 0 8px; border: 2px solid var(--smoke); border-radius: 4px; font-weight: bold; font-size: 1.6em; line-height: 1; color: var(--smoke); text-shadow: 0 0 6px var(--smoke); box-shadow: 0 0 6px rgba(255,51,51,0.5); cursor: help; }
         /* Botões de ação principal (Iniciar Corrida / Comprar Cartas) pulsam como uma granada armada */
         .btn-explosive { position: relative; overflow: hidden; animation: grenade-pulse 1.8s ease-in-out infinite; }
@@ -935,6 +979,8 @@
             sdbrActivationLabel: "Ativação",
             sdbrHazardRed: "Perigo (vermelho)",
             sdbrHazardBrown: "Terreno (marrom)",
+            sdbrHazardRedShort: "Perigo",
+            sdbrHazardBrownShort: "Terreno",
             sdbrSkipTitle: "Dado padrão: 3 (Reparo). Se o comando desta seção estiver destruído no tabuleiro físico, pule para a próxima coluna nesta direção.",
             sdffCardAction: "SDFF: 2 MOTOS OU COMANDO + 1 MOTO POR TURNO",
             sdffBadgeName: "🏍️ SDFF: FINAL FIVE AUTÔNOMO",
@@ -1061,6 +1107,8 @@
             sdbrActivationLabel: "Activation",
             sdbrHazardRed: "Hazard (red)",
             sdbrHazardBrown: "Terrain (brown)",
+            sdbrHazardRedShort: "Hazard",
+            sdbrHazardBrownShort: "Terrain",
             sdbrSkipTitle: "Default die: 3 (Repair). If this section's command is wrecked on the physical board, skip to the neighboring column in this direction.",
             sdffCardAction: "SDFF: 2 BIKES OR COMMAND + 1 BIKE PER TURN",
             sdffBadgeName: "🏍️ SDFF: AUTONOMOUS FINAL FIVE",
@@ -1169,6 +1217,24 @@
         } else {
             window.location.reload();
         }
+    }
+
+    function showInfoToast(msg) {
+        if (!msg) return;
+        let toast = document.getElementById('info-toast');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'info-toast';
+            toast.className = 'info-toast';
+            toast.onclick = () => toast.classList.remove('show');
+            document.body.appendChild(toast);
+        }
+        toast.textContent = msg;
+        toast.classList.add('show');
+        clearTimeout(toast._timer);
+        toast._timer = setTimeout(() => {
+            toast.classList.remove('show');
+        }, 4500);
     }
 
     // --- EFEITO SONORO DO MOTOR ---
@@ -2493,13 +2559,18 @@
                 let activationDir = sectionData.dir || '→';
                 let travel = sectionData.travel || { val: 1, dir: '↗', hazard: 'red' };
                 let movesHtml = renderVehicleMoves([travel], isVisible, 'sdbr');
-                let displaySecName = (secNameMap[sectionKey.toUpperCase()] && secNameMap[sectionKey.toUpperCase()][lang]) || sectionKey;
+                let hazardText = travel.hazard === 'red' ? t('sdbrHazardRedShort') : t('sdbrHazardBrownShort');
+                let hazardRule = t('sdbrHazardTitle')(travel.hazard);
                 let hazardHtml = isVisible
-                    ? `<span class="sdbr-hazard-flag ${travel.hazard}" title="${t('sdbrHazardTitle')(travel.hazard)}"></span>`
+                    ? `<span class="sdbr-hazard-chip ${travel.hazard}" title="${hazardRule}" onclick="showInfoToast('${hazardRule.replace(/'/g, "\\'")}')">
+                         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3L2 21h20L12 3z"/></svg>
+                         <span>${hazardText}</span>
+                       </span>`
                     : '';
+                let skipRule = t('sdbrSkipTitle');
                 let actAndTravelHtml = isVisible
                     ? `<div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; flex:1;">
-                         <div class="sdbr-act-chip" title="${t('sdbrSkipTitle')}">
+                         <div class="sdbr-act-chip" title="${skipRule}" onclick="showInfoToast('${skipRule.replace(/'/g, "\\'")}')">
                            <span>🎲 3 (${lang === 'pt' ? 'Reparo' : 'Repair'})</span>
                            <span class="sdbr-skip-chip">${lang === 'pt' ? 'Pular:' : 'Skip:'} <span class="sdbr-skip-arrow-badge">${activationDir}</span></span>
                          </div>
