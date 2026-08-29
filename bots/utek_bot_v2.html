@@ -156,19 +156,52 @@ button:active, .btn:active{ transform: translateY(1px); box-shadow: 0 2px 4px rg
 /* Action Chips (Carved Wooden Battle Tokens) */
 .action-chips{ display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
 .action-chip{
-  flex: 1 1 135px; min-width: 135px; padding: 12px 14px; 
+  flex: 1 1 140px; min-width: 140px; padding: 12px 14px; min-height: 60px;
   background: linear-gradient(145deg, var(--parchment-dark), var(--parchment-darker));
   border: 2px solid var(--parchment-border); border-radius: 6px; 
-  text-align: center; font-weight: bold; cursor: pointer; 
-  color: var(--ink-soft); transition: all 0.15s ease;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 4px; text-align: center; cursor: pointer; 
+  color: var(--ink); transition: all 0.15s ease;
   font-family: 'Cinzel', serif; font-size: 0.9em;
-  box-shadow: 0 3px 6px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.5);
+  box-shadow: 0 3px 6px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.5);
 }
 .action-chip:hover{ transform: translateY(-2px); border-color: var(--forest); color: var(--forest-dark); }
-.action-chip.active{ 
-  background: linear-gradient(145deg, var(--forest), var(--forest-dark)); 
-  color: #fff9ed; border-color: #0b1a0d; 
-  box-shadow: 0 4px 12px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.3); 
+.action-chip .chip-name{
+  font-weight: 800; font-size: 1.05em; line-height: 1.15; letter-spacing: 0.5px;
+}
+.action-chip .chip-tag{
+  display: block; font-size: 0.72em; font-weight: 700;
+  padding: 2px 8px; border-radius: 4px;
+  background: rgba(0,0,0,0.35); color: #fff;
+  border: 1px solid rgba(255,255,255,0.3);
+  text-transform: uppercase; letter-spacing: 0.5px;
+  margin-top: 2px;
+}
+
+/* Player-selected chip (Royal Burgundy / Crimson) */
+.action-chip.by-you{
+  background: linear-gradient(145deg, #a72829, #681213);
+  color: #ffffff;
+  border-color: var(--gold);
+  box-shadow: 0 4px 14px rgba(143, 29, 30, 0.55), inset 0 1px 0 rgba(255,255,255,0.3);
+}
+.action-chip.by-you .chip-tag{
+  background: rgba(0,0,0,0.45);
+  border-color: var(--gold);
+  color: var(--gold-light);
+}
+
+/* Bot-selected chip (Imperial Forest Green) */
+.action-chip.by-ai{
+  background: linear-gradient(145deg, #245729, #123316);
+  color: #ffffff;
+  border-color: var(--gold);
+  box-shadow: 0 4px 14px rgba(18, 51, 22, 0.55), inset 0 1px 0 rgba(255,255,255,0.3);
+}
+.action-chip.by-ai .chip-tag{
+  background: rgba(0,0,0,0.45);
+  border-color: var(--gold);
+  color: var(--gold-light);
 }
 
 /* Astrolabe / Mariner Compass on War Table */
@@ -1340,7 +1373,8 @@ function render(){
     const chip = document.createElement('div');
     const pickable = !!manualSide && !state.gameOver && (by===null ? !state.turnLocked : (by===manualSide && k===state.currentAction));
     chip.className = 'action-chip'+(by==='you'?' by-you':'')+(by==='ai'?' by-ai':'')+(pickable?'':' locked');
-    chip.innerHTML = ACTION_NAMES[k]+(by ? '<span class="chip-tag">'+(by==='you'?state.you.faction:state.ai.faction)+'</span>' : '');
+    const tagText = by==='you' ? (state.you.faction || (lang==='pt'?'Você':'You')) : (state.ai.faction || (lang==='pt'?'Jogador Bot':'Dummy'));
+    chip.innerHTML = `<span class="chip-name">${ACTION_NAMES[k]}</span>` + (by ? `<span class="chip-tag">${tagText}</span>` : '');
     chip.onclick = ()=>toggleChip(k);
     chipsEl.appendChild(chip);
   });
