@@ -378,7 +378,7 @@ html, body {
         <button class="nav-btn" onclick="document.getElementById('rulesModal').style.display='flex'">
             <span>?</span> <span data-i18n="rulesTitleShort">Ajuda</span>
         </button>
-        <button class="lang-btn" onclick="toggleLanguage()">PT / EN</button>
+        <button class="lang-btn" onclick="toggleLanguage()" id="langBtn">EN</button>
     </div>
 </nav>
 
@@ -592,12 +592,12 @@ html, body {
 
             <!-- Base Attack Display -->
             <div id="attackLogContainer" style="display:none;">
-                <div style="font-family:var(--font-display); font-size:0.85rem; color:var(--neon-cyan); margin-bottom:8px; text-transform:uppercase;">Status dos Setores da Base (1–12)</div>
+                <div style="font-family:var(--font-display); font-size:0.85rem; color:var(--neon-cyan); margin-bottom:8px; text-transform:uppercase;" data-i18n="sectorStatusTitle">Status dos Setores da Base (1–12)</div>
                 <div class="sector-grid" id="sectorDamageGrid">
                     <!-- 12 sectors populated dynamically -->
                 </div>
 
-                <div style="font-family:var(--font-display); font-size:0.85rem; color:var(--neon-amber); margin:14px 0 8px; text-transform:uppercase;">Histórico de Ataques dos Rivais</div>
+                <div style="font-family:var(--font-display); font-size:0.85rem; color:var(--neon-amber); margin:14px 0 8px; text-transform:uppercase;" data-i18n="attackHistoryTitle">Histórico de Ataques dos Rivais</div>
                 <div id="emptyLogState" style="text-align:center; color:var(--text-muted); padding:30px 0;" data-i18n="emptyLog">
                     Aguardando a resolução do seu turno...
                 </div>
@@ -705,6 +705,8 @@ html, body {
             baDidNotBuy: "Não comprei nada (Ataque baseado na sua renda):",
             shuffleDeckBtn: "Embaralhar Descarte no Deck",
             botArea: "Área Tática do Bot",
+            sectorStatusTitle: "Status dos Setores da Base (1–12)",
+            attackHistoryTitle: "Histórico de Ataques dos Rivais",
             directiveTitle: "🎯 AÇÃO DO TURNO (MERCADO CENTRAL):",
             cardInstruction: "Descarte a nave do mercado central indicada pelo 'X' na linha ativa (Linha 1 = Nível 3, Linha 2 = Nível 2, Linha 3 = Nível 1) e pontue os VPs no foguete azul.",
             emptyLog: "Aguardando a resolução do seu turno...",
@@ -766,6 +768,8 @@ html, body {
             baDidNotBuy: "Did not buy (Attack based on income):",
             shuffleDeckBtn: "Shuffle Discard into Deck",
             botArea: "Tactical Bot Area",
+            sectorStatusTitle: "Base Sectors Status (1–12)",
+            attackHistoryTitle: "Rivals Attack History",
             directiveTitle: "🎯 TURN ACTION (CENTRAL MARKET):",
             cardInstruction: "Discard the ship from the central market at the 'X' slot of the active row (Row 1 = Tier 3, Row 2 = Tier 2, Row 3 = Tier 1) and score the VPs in the blue rocket.",
             emptyLog: "Waiting for your turn resolution...",
@@ -810,7 +814,18 @@ html, body {
         document.querySelectorAll('[data-i18n]').forEach(el => {
             el.innerHTML = t(el.getAttribute('data-i18n'));
         });
-        document.documentElement.lang = currentLang;
+        const langBtn = document.getElementById('langBtn');
+        if (langBtn) {
+            langBtn.textContent = currentLang === 'pt' ? 'EN' : 'PT';
+        }
+        document.documentElement.lang = currentLang === 'en' ? 'en' : 'pt-BR';
+        document.title = t('pageTitle');
+        
+        if (typeof diffConfigs !== 'undefined') {
+            const conf = diffConfigs[difficulty] || diffConfigs.easy;
+            const diffNameEl = document.getElementById('cardDiffName');
+            if (diffNameEl) diffNameEl.textContent = conf.name.toUpperCase();
+        }
     }
 
     window.toggleLanguage = function() {
@@ -820,6 +835,8 @@ html, body {
         updateSetupUI();
         updateDeckStatusText();
         updateAutomaTrackUI();
+        renderSectorGrid();
+        renderGameLog();
     };
 
     // --- State Variables ---
@@ -1382,7 +1399,7 @@ html, body {
             const isDestroyed = hits >= 4;
             return `
                 <div class="sector-card ${isDestroyed ? 'sector-destroyed' : ''}">
-                    <div class="sector-num">${isDestroyed ? '💥 ' + sec : 'Setor ' + sec}</div>
+                    <div class="sector-num">${isDestroyed ? '💥 ' + sec : (currentLang === 'en' ? 'Sector ' : 'Setor ') + sec}</div>
                     <div class="sector-hits">${isDestroyed ? (currentLang === 'en' ? 'DESTROYED' : 'DESTRUÍDO') : hits + '/4 ' + (currentLang === 'en' ? 'damage' : 'danos')}</div>
                 </div>
             `;
