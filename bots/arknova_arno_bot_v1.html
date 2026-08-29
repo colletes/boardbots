@@ -628,6 +628,34 @@ function spinFace(face, ms){
 }
 
 // Rolls the configured virtual die with a short spin animation, transparently re-rolling on 1/6 (D6) until a valid position lands.
+// 3D Dice Box Integration (SKILL Section 11)
+let diceBox = null;
+let diceBoxReady = false;
+
+async function initDiceBox() {
+  try {
+    const loadPromise = (async () => {
+      const { default: DiceBox } = await import('https://unpkg.com/@3d-dice/dice-box@1.1.3/dist/dice-box.es.min.js');
+      diceBox = new DiceBox({
+        container: '#dice-box',
+        assetPath: 'assets/',
+        origin: 'https://unpkg.com/@3d-dice/dice-box@1.1.3/dist/',
+        theme: 'default',
+        themeColor: '#e11d48',
+        scale: 9
+      });
+      await diceBox.init();
+      diceBoxReady = true;
+    })();
+    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Dice timeout')), 3000));
+    await Promise.race([loadPromise, timeoutPromise]);
+  } catch (e) {
+    console.warn('3D DiceBox failed to load, falling back to 2D spin', e);
+    diceBoxReady = false;
+  }
+}
+initDiceBox();
+
 async function rollDice(){
   if(!state) return;
   await performPendingCycle();
@@ -637,9 +665,24 @@ async function rollDice(){
   btn.disabled = true;
   flash.textContent = '';
   let pos = null, value = null, guard = 0;
-  do{
-    await spinFace(face, 500 + Math.random()*200);
-    value = 1 + Math.floor(Math.random()*state.die);
+  
+  do {
+    if (diceBoxReady && diceBox) {
+      try {
+        const rollRes = await diceBox.roll(`1d${state.die}`);
+        if (rollRes && rollRes.length > 0 && rollRes[0].value) {
+          value = rollRes[0].value;
+        } else {
+          value = 1 + Math.floor(Math.random()*state.die);
+        }
+      } catch(e) {
+        value = 1 + Math.floor(Math.random()*state.die);
+      }
+    } else {
+      await spinFace(face, 500 + Math.random()*200);
+      value = 1 + Math.floor(Math.random()*state.die);
+    }
+    
     face.textContent = value;
     face.classList.add('settled');
     pos = positionFromRoll(value);
@@ -651,6 +694,7 @@ async function rollDice(){
       flash.textContent = '';
     }
   } while(pos===null && guard<12);
+  
   btn.disabled = false;
   applyTurn(pos, value);
 }
@@ -845,6 +889,11 @@ if(state){ updateDieHint(); renderHistory(); }
         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9 21v-6h6v6"/></svg>
         ← Home
     </a>
+</div>
+
+
+<div id="dice-tray" style="position:fixed; bottom:20px; left:20px; width:160px; height:160px; z-index:9999; pointer-events:none;">
+  <div id="dice-box" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none;"></div>
 </div>
 
 </body>

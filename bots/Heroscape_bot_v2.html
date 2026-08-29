@@ -562,16 +562,62 @@
     applyI18n();
   }
 
-  // Lógica de Dados
-  function rolarD20() { return Math.floor(Math.random() * 20) + 1; }
+  // 3D Dice Box Integration (SKILL Section 11)
+  let diceBox = null;
+  let diceBoxReady = false;
 
-  function rolarIniciativa() {
-    document.getElementById('resIniciativa').innerHTML = S().resInitiative.replace('{d}', rolarD20());
+  async function initDiceBox() {
+    try {
+      const loadPromise = (async () => {
+        const { default: DiceBox } = await import('https://unpkg.com/@3d-dice/dice-box@1.1.3/dist/dice-box.es.min.js');
+        diceBox = new DiceBox({
+          container: '#dice-box',
+          assetPath: 'assets/',
+          origin: 'https://unpkg.com/@3d-dice/dice-box@1.1.3/dist/',
+          theme: 'default',
+          themeColor: '#00e5ff',
+          scale: 9
+        });
+        await diceBox.init();
+        diceBoxReady = true;
+      })();
+      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Dice timeout')), 3000));
+      await Promise.race([loadPromise, timeoutPromise]);
+    } catch (e) {
+      console.warn('3D DiceBox failed to load, falling back to Math.random()', e);
+      diceBoxReady = false;
+    }
+  }
+  initDiceBox();
+
+  function rolarD20Fallback() { return Math.floor(Math.random() * 20) + 1; }
+
+  async function rolarD20() {
+    if (diceBoxReady && diceBox) {
+      try {
+        const rollResult = await diceBox.roll('1d20');
+        if (rollResult && rollResult.length > 0 && rollResult[0].value) {
+          return rollResult[0].value;
+        }
+      } catch (err) {
+        console.warn('Dice roll error, using fallback', err);
+      }
+    }
+    return rolarD20Fallback();
   }
 
-  function checarAlvo(tipo) {
+  async function rolarIniciativa() {
+    const el = document.getElementById('resIniciativa');
+    el.innerHTML = '<span style="opacity:0.6;">...</span>';
+    const dado = await rolarD20();
+    el.innerHTML = S().resInitiative.replace('{d}', dado);
+  }
+
+  async function checarAlvo(tipo) {
+    const el = document.getElementById('resAlvo');
+    el.innerHTML = '<span style="opacity:0.6;">...</span>';
     const atacouAntes = document.getElementById('atacouAntes').checked;
-    const dado = rolarD20();
+    const dado = await rolarD20();
     let res = "";
 
     if (tipo === 'visao') {
@@ -592,7 +638,7 @@
       if (dado <= 7) res = S().targetLostYes.replace('{d}', dado);
       else res = S().targetLostNo.replace('{d}', dado);
     }
-    document.getElementById('resAlvo').innerHTML = res;
+    el.innerHTML = res;
   }
 
   function sortearMarcadores() {
@@ -680,10 +726,12 @@
   buildDial('dialSweep', sweepData);
   buildDial('dialMeander', meanderData);
 
-  function rollMovement(type) {
+  async function rollMovement(type) {
     const data = type === 'sweep' ? sweepData : meanderData;
     const needle = document.getElementById(type === 'sweep' ? 'needleSweep' : 'needleMeander');
-    const dado = rolarD20();
+    const resEl = document.getElementById('resMarcha');
+    resEl.innerHTML = '<span style="opacity:0.6;">...</span>';
+    const dado = await rolarD20();
 
     data.forEach(entry => entry.el.classList.remove('hit'));
 
@@ -719,6 +767,11 @@
         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9 21v-6h6v6"/></svg>
         ← Home
     </a>
+</div>
+
+
+<div id="dice-tray" style="position:fixed; bottom:20px; left:20px; width:160px; height:160px; z-index:9999; pointer-events:none;">
+  <div id="dice-box" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none;"></div>
 </div>
 
 </body>
