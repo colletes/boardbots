@@ -27,7 +27,11 @@
     background-color: var(--page-bg); 
     background-image: 
       url("data:image/svg+xml,%3Csvg width='60' height='103.923' viewBox='0 0 60 103.923' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l25.98 15v30L30 60 4.02 45V15zM30 103.923l25.98-15v-30L30 43.923l-25.98 15v30z' fill='none' stroke='rgba(245,197,24,0.05)' stroke-width='1'/%3E%3C/svg%3E"),
-      radial-gradient(circle at 50% 30%, #0e1e33 0%, #060b13 100%);
+      radial-gradient(circle at 50% 30%, #0e1e33 0%, #060b13 100%),
+      url('../assets/textures/stone-slab.jpg');
+    background-size: auto, auto, 340px 340px;
+    background-repeat: repeat, no-repeat, repeat;
+    background-blend-mode: normal, multiply, normal;
     background-attachment: fixed;
     color: var(--text-light); 
     max-width: 1400px; 
@@ -40,6 +44,24 @@
   }
   
   @keyframes pulseRune { 0% { text-shadow: 0 0 4px var(--gold); } 50% { text-shadow: 0 0 12px var(--gold), 0 0 20px #fff; } 100% { text-shadow: 0 0 4px var(--gold); } }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .torch-glow { position: fixed; inset: 0; pointer-events: none; z-index: -1; background: radial-gradient(circle at 15% 85%, var(--gold-glow) 0%, transparent 45%), radial-gradient(circle at 90% 15%, rgba(0,180,216,0.18) 0%, transparent 40%); animation: torchFlicker 5s ease-in-out infinite alternate; }
+    @keyframes torchFlicker { 0% { opacity: 0.7; } 50% { opacity: 1; } 100% { opacity: 0.85; } }
+    .ember-layer { position: fixed; inset: 0; pointer-events: none; z-index: -1; }
+    .ember { position: absolute; bottom: -12px; width: 4px; height: 4px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 6px 2px var(--gold-glow); animation: emberRise 10s linear infinite; }
+    @keyframes emberRise { 0% { transform: translate(0,0); opacity: 0; } 15% { opacity: 1; } 90% { opacity: 0.8; } 100% { transform: translate(var(--tx, 20px), -100vh); opacity: 0; } }
+    .ember:nth-child(1) { left: 4%; --tx: 30px; animation-duration: 9s; animation-delay: -1s; }
+    .ember:nth-child(2) { left: 12%; --tx: -20px; animation-duration: 12s; animation-delay: -4s; }
+    .ember:nth-child(3) { left: 20%; --tx: 15px; animation-duration: 8s; animation-delay: -6s; }
+    .ember:nth-child(4) { left: 32%; --tx: -35px; animation-duration: 14s; animation-delay: -2s; }
+    .ember:nth-child(5) { left: 45%; --tx: 25px; animation-duration: 10s; animation-delay: -8s; }
+    .ember:nth-child(6) { left: 55%; --tx: -15px; animation-duration: 11s; animation-delay: -3s; }
+    .ember:nth-child(7) { left: 66%; --tx: 20px; animation-duration: 9s; animation-delay: -5s; }
+    .ember:nth-child(8) { left: 76%; --tx: -30px; animation-duration: 13s; animation-delay: -7s; }
+    .ember:nth-child(9) { left: 86%; --tx: 10px; animation-duration: 10s; animation-delay: -9s; }
+    .ember:nth-child(10) { left: 94%; --tx: -18px; animation-duration: 12s; animation-delay: -0.5s; }
+  }
   
   h1 { font-family: 'Metamorphous', serif; color: #fff; font-size: 2.2em; text-shadow: 0 2px 10px rgba(0,0,0,0.8); margin: 0; display: flex; align-items: center; gap: 10px; }
   h1 svg { width: 0.85em; height: 0.85em; color: var(--gold); flex-shrink: 0; filter: drop-shadow(0 0 8px var(--gold)); }
@@ -262,6 +284,12 @@
     <script src="../assets/logger.js"></script>
 </head>
 <body>
+
+<div class="torch-glow" aria-hidden="true"></div>
+<div class="ember-layer" aria-hidden="true">
+  <span class="ember"></span><span class="ember"></span><span class="ember"></span><span class="ember"></span><span class="ember"></span>
+  <span class="ember"></span><span class="ember"></span><span class="ember"></span><span class="ember"></span><span class="ember"></span>
+</div>
 
 <button class="btn-help-float" onclick="abrirModal()" aria-label="Help">?</button>
 <div class="lang-switch">
@@ -654,21 +682,9 @@
 
   async function initDiceBox() {
     try {
-      const loadPromise = (async () => {
-        const { default: DiceBox } = await import('https://unpkg.com/@3d-dice/dice-box@1.1.3/dist/dice-box.es.min.js');
-        diceBox = new DiceBox({
-          container: '#dice-box',
-          assetPath: 'assets/',
-          origin: 'https://unpkg.com/@3d-dice/dice-box@1.1.3/dist/',
-          theme: 'default',
-          themeColor: '#00e5ff',
-          scale: 27
-        });
-        await diceBox.init();
-        diceBoxReady = true;
-      })();
-      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Dice timeout')), 3000));
-      await Promise.race([loadPromise, timeoutPromise]);
+      const { loadDiceBox } = await import('../assets/dice-roller.js');
+      diceBox = await loadDiceBox({ theme: 'rust', themeColor: '#c2543a', scale: 27, timeoutMs: 6000 });
+      diceBoxReady = true;
     } catch (e) {
       console.warn('3D DiceBox failed to load, falling back to Math.random()', e);
       diceBoxReady = false;
@@ -677,11 +693,9 @@
   initDiceBox();
 
   // Physics engine can occasionally never settle (silent hang); guard every roll with a timeout.
-  function rollDiceBoxSafe(notation, timeoutMs = 5000) {
-    return Promise.race([
-      diceBox.roll(notation),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('DiceBox roll timeout')), timeoutMs))
-    ]);
+  async function rollDiceBoxSafe(notation, timeoutMs = 5000) {
+    const { rollDiceSafe } = await import('../assets/dice-roller.js');
+    return rollDiceSafe(diceBox, notation, timeoutMs);
   }
 
   function rolarD20Fallback() { return Math.floor(Math.random() * 20) + 1; }

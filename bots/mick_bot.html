@@ -40,7 +40,11 @@
             background-image: 
                 radial-gradient(circle at center, rgba(0,0,0,0) 0%, rgba(0,0,0,0.8) 100%),
                 repeating-linear-gradient(45deg, #111 0px, #111 2px, #1a1a1a 2px, #1a1a1a 4px),
-                repeating-linear-gradient(-45deg, transparent 0px, transparent 2px, #161616 2px, #161616 4px);
+                repeating-linear-gradient(-45deg, transparent 0px, transparent 2px, #161616 2px, #161616 4px),
+                url('../assets/textures/stage-asphalt.jpg');
+            background-size: auto, auto, auto, 320px 320px;
+            background-repeat: no-repeat, repeat, repeat, repeat;
+            background-blend-mode: normal, multiply, normal, multiply;
             color: var(--text-light); margin: 0; padding: 20px;
             padding-left: max(20px, env(safe-area-inset-left));
             padding-right: max(20px, env(safe-area-inset-right));
@@ -227,10 +231,57 @@
   flex-shrink: 0 !important;
   vertical-align: middle !important;
 }
+
+/* Ambient concert atmosphere: sweeping stage spotlight beams + rising haze */
+.concert-beams{ position: fixed; inset: 0; pointer-events: none; z-index: -1; overflow: hidden; opacity: 0.55; }
+.beam{
+  position: absolute; top: -20%; width: 140px; height: 140%;
+  transform-origin: top center;
+  opacity: 0;
+}
+.beam:nth-child(1){ left: 8%;  background: linear-gradient(180deg, rgba(57,255,20,0.22), transparent 70%); }
+.beam:nth-child(2){ left: 42%; background: linear-gradient(180deg, rgba(255,213,0,0.2), transparent 70%); }
+.beam:nth-child(3){ left: 74%; background: linear-gradient(180deg, rgba(255,30,30,0.2), transparent 70%); }
+@media (prefers-reduced-motion: no-preference){
+  .beam{ animation: beamSweep 9s ease-in-out infinite; }
+  .beam:nth-child(2){ animation-duration: 11s; animation-delay: -3s; }
+  .beam:nth-child(3){ animation-duration: 8s; animation-delay: -5.5s; }
+}
+@keyframes beamSweep{
+  0%   { transform: rotate(-26deg); opacity: 0.2; }
+  50%  { transform: rotate(26deg);  opacity: 0.65; }
+  100% { transform: rotate(-26deg); opacity: 0.2; }
+}
+.haze-layer{ position: fixed; inset: 0; pointer-events: none; z-index: -1; overflow: hidden; }
+.haze-puff{
+  position: absolute; bottom: -60px; width: 220px; height: 90px; border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(230,230,240,0.10) 0%, transparent 70%);
+  opacity: 0;
+}
+@media (prefers-reduced-motion: no-preference){
+  .haze-puff{ animation: hazeDrift linear infinite; }
+}
+@keyframes hazeDrift{
+  0% { transform: translate(0, 0) scale(0.9); opacity: 0; }
+  15% { opacity: 0.8; }
+  85% { opacity: 0.4; }
+  100% { transform: translate(60px, -70vh) scale(1.4); opacity: 0; }
+}
+.haze-puff:nth-child(1){ left: 5%;  animation-duration: 22s; animation-delay: -2s; }
+.haze-puff:nth-child(2){ left: 30%; animation-duration: 26s; animation-delay: -10s; }
+.haze-puff:nth-child(3){ left: 55%; animation-duration: 20s; animation-delay: -6s; }
+.haze-puff:nth-child(4){ left: 78%; animation-duration: 24s; animation-delay: -14s; }
 </style>
     <script src="../assets/logger.js"></script>
 </head>
 <body id="bodyTag">
+
+    <div class="concert-beams" aria-hidden="true">
+        <span class="beam"></span><span class="beam"></span><span class="beam"></span>
+    </div>
+    <div class="haze-layer" aria-hidden="true">
+        <span class="haze-puff"></span><span class="haze-puff"></span><span class="haze-puff"></span><span class="haze-puff"></span>
+    </div>
 
     <div class="container" id="mainContainer">
         <div class="hero">

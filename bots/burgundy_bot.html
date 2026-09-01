@@ -33,7 +33,10 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
         background-image: 
             linear-gradient(90deg, rgba(0,0,0,0.5) 0%, transparent 10%, transparent 90%, rgba(0,0,0,0.5) 100%),
             repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(0,0,0,0.1) 40px, rgba(0,0,0,0.1) 42px),
-            url("data:image/svg+xml,%3Csvg viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='wood'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.01 0.1' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23wood)' opacity='0.25'/%3E%3C/svg%3E");
+            url("data:image/svg+xml,%3Csvg viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='wood'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.01 0.1' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23wood)' opacity='0.25'/%3E%3C/svg%3E"),
+            url('../assets/textures/dark-walnut.jpg');
+        background-size: auto, auto, 100px 100px, 320px 320px;
+        background-repeat: no-repeat, repeat, repeat, repeat;
         color: var(--burgundy-text);
         padding-bottom: 50px;
         font-family: var(--font-display);
@@ -346,6 +349,24 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
   flex-shrink: 0 !important;
   vertical-align: middle !important;
 }
+
+@media (prefers-reduced-motion: no-preference) {
+  .hearth-glow { position: fixed; inset: 0; pointer-events: none; z-index: -1; background: radial-gradient(circle at 12% 88%, rgba(179,155,107,0.18) 0%, transparent 45%), radial-gradient(circle at 88% 8%, rgba(110,44,44,0.14) 0%, transparent 40%); animation: hearthFlicker 5.5s ease-in-out infinite alternate; }
+  @keyframes hearthFlicker { 0% { opacity: 0.7; } 50% { opacity: 1; } 100% { opacity: 0.85; } }
+  .dust-layer { position: fixed; inset: 0; pointer-events: none; z-index: -1; }
+  .dust-mote { position: absolute; bottom: -10px; width: 3px; height: 3px; border-radius: 50%; background: rgba(214,198,159,0.85); box-shadow: 0 0 4px 1px rgba(214,198,159,0.4); animation: motesRise 15s linear infinite; }
+  @keyframes motesRise { 0% { transform: translate(0,0); opacity: 0; } 15% { opacity: 0.9; } 85% { opacity: 0.7; } 100% { transform: translate(var(--tx, 20px), -100vh); opacity: 0; } }
+  .dust-mote:nth-child(1) { left: 5%; --tx: 22px; animation-duration: 14s; animation-delay: -2s; }
+  .dust-mote:nth-child(2) { left: 15%; --tx: -16px; animation-duration: 18s; animation-delay: -7s; }
+  .dust-mote:nth-child(3) { left: 25%; --tx: 14px; animation-duration: 12s; animation-delay: -10s; }
+  .dust-mote:nth-child(4) { left: 37%; --tx: -26px; animation-duration: 20s; animation-delay: -4s; }
+  .dust-mote:nth-child(5) { left: 49%; --tx: 18px; animation-duration: 13s; animation-delay: -12s; }
+  .dust-mote:nth-child(6) { left: 61%; --tx: -14px; animation-duration: 16s; animation-delay: -5s; }
+  .dust-mote:nth-child(7) { left: 71%; --tx: 16px; animation-duration: 14s; animation-delay: -8s; }
+  .dust-mote:nth-child(8) { left: 81%; --tx: -20px; animation-duration: 19s; animation-delay: -11s; }
+  .dust-mote:nth-child(9) { left: 90%; --tx: 10px; animation-duration: 15s; animation-delay: -1s; }
+  .dust-mote:nth-child(10) { left: 96%; --tx: -12px; animation-duration: 17s; animation-delay: -9s; }
+}
 </style>
     <script src="../assets/logger.js"></script>
 </head>
@@ -353,6 +374,12 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
     
     
 <body>
+
+<div class="hearth-glow" aria-hidden="true"></div>
+<div class="dust-layer" aria-hidden="true">
+  <span class="dust-mote"></span><span class="dust-mote"></span><span class="dust-mote"></span><span class="dust-mote"></span><span class="dust-mote"></span>
+  <span class="dust-mote"></span><span class="dust-mote"></span><span class="dust-mote"></span><span class="dust-mote"></span><span class="dust-mote"></span>
+</div>
 
 <!-- Top Navigation -->
 <nav class="top-nav">
@@ -416,16 +443,16 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
         <div style="text-align: left; margin-bottom: 15px;">
             <label style="font-size:0.8em;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--burgundy-dark);display:block;margin-bottom:5px;" data-i18n="diceMode">Modo dos Dados</label>
             <div class="toggle-group">
-                <button class="toggle-btn" id="btnDice3D" onclick="setDiceMode('3d')" data-i18n="dice3d">🎲 Dados 3D</button>
-                <button class="toggle-btn active" id="btnDiceManual" onclick="setDiceMode('manual')" data-i18n="diceManual">✏️ Entrada Manual</button>
+                <button class="toggle-btn" id="btnDice3D" onclick="setDiceMode('3d')" data-i18n="dice3d"><svg class="icon-inline" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="8" r="1.3" fill="currentColor" stroke="none"/><circle cx="16" cy="8" r="1.3" fill="currentColor" stroke="none"/><circle cx="8" cy="16" r="1.3" fill="currentColor" stroke="none"/><circle cx="16" cy="16" r="1.3" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/></svg> Dados 3D</button>
+                <button class="toggle-btn active" id="btnDiceManual" onclick="setDiceMode('manual')" data-i18n="diceManual"><svg class="icon-inline" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Entrada Manual</button>
             </div>
         </div>
 
         <div style="text-align: left; margin-bottom: 25px;">
             <label style="font-size:0.8em;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--burgundy-dark);display:block;margin-bottom:5px;" data-i18n="boardMode">Modo do Tabuleiro</label>
             <div class="toggle-group">
-                <button class="toggle-btn active" id="btnBoardVirtual" onclick="setBoardMode('virtual')" data-i18n="boardVirtual">🖥️ Virtual</button>
-                <button class="toggle-btn" id="btnBoardPhysical" onclick="setBoardMode('physical')" data-i18n="boardPhysical">📄 Tabuleiro Físico</button>
+                <button class="toggle-btn active" id="btnBoardVirtual" onclick="setBoardMode('virtual')" data-i18n="boardVirtual"><svg class="icon-inline" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg> Virtual</button>
+                <button class="toggle-btn" id="btnBoardPhysical" onclick="setBoardMode('physical')" data-i18n="boardPhysical"><svg class="icon-inline" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/></svg> Tabuleiro Físico</button>
             </div>
         </div>
         
@@ -438,8 +465,8 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
         <p data-i18n="setupCardText2">Estou revelando as cartas do baralho embaralhado. Esta carta tem um hexágono de castelo verde-escuro/vermelho?</p>
         <img id="setupPreview" class="setup-card-preview" src="" alt="Preview da carta">
         <div style="display:flex;gap:15px;justify-content:center;margin-top:20px;">
-            <button class="action-btn" style="width:auto;padding:12px 30px;" onclick="setupFoundCastle()" data-i18n="setupCardYes">✅ Sim, tem Castelo!</button>
-            <button class="btn-secondary" style="width:auto;padding:12px 30px;margin-top:0;" onclick="setupNextCard()" data-i18n="setupCardNo">❌ Não tem, puxar outra</button>
+            <button class="action-btn" style="width:auto;padding:12px 30px;" onclick="setupFoundCastle()" data-i18n="setupCardYes"><svg class="icon-inline" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Sim, tem Castelo!</button>
+            <button class="btn-secondary" style="width:auto;padding:12px 30px;margin-top:0;" onclick="setupNextCard()" data-i18n="setupCardNo"><svg class="icon-inline" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg> Não tem, puxar outra</button>
         </div>
     </div>
 </div>
@@ -486,18 +513,18 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
         <div class="dice-result" id="diceResult" data-i18n="waitingRoll">Aguardando rolagem...</div>
         
         <div class="turn-summary" id="turnSummary"></div>
-        <button class="copy-btn" id="copyBtn" onclick="copySummary()" data-i18n="copyInstructions">📋 Copiar Instruções</button>
+        <button class="copy-btn" id="copyBtn" onclick="copySummary()" data-i18n="copyInstructions"><svg class="icon-inline" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M9 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-3"/></svg> Copiar Instruções</button>
 
         <!-- Silverling Tracker -->
         <div id="silverlingTracker" style="margin-top:16px; background:rgba(197,160,89,0.12); border:1px solid rgba(197,160,89,0.4); border-radius:8px; padding:12px;">
-            <div style="font-family:var(--font-display); font-size:0.85em; font-weight:700; color:var(--burgundy-dark); margin-bottom:8px;" data-i18n="silverlingTitle">🪙 Peças de Prata</div>
+            <div style="font-family:var(--font-display); font-size:0.85em; font-weight:700; color:var(--burgundy-dark); margin-bottom:8px;" data-i18n="silverlingTitle"><svg class="icon-inline" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9 9.5c0-1 1-1.7 3-1.7s3 .8 3 1.8-1 1.4-3 1.9-3 .9-3 1.9 1.3 1.8 3 1.8 3-.7 3-1.7"/></svg> Peças de Prata</div>
             <div style="display:flex; gap:10px; align-items:center;">
                 <button class="stepper-btn" onclick="changeSilverlings(-1)">−</button>
                 <span id="silverlingCount" style="font-family:var(--font-display); font-size:1.4em; font-weight:700; color:var(--burgundy-dark); min-width:32px; text-align:center;">0</span>
                 <button class="stepper-btn" onclick="changeSilverlings(1)">+</button>
             </div>
             <div id="autoBuyPrompt" style="display:none; margin-top:10px; padding:8px; background:rgba(197,160,89,0.25); border-radius:4px; font-size:0.85em; color:var(--burgundy-dark); font-weight:600;" data-i18n="autoBuyPrompt">
-                ⚡ 2+ peças de prata! Gaste 2 para comprar 1 peça do Depósito Paralelo (priorize a cor que falta).
+                <svg class="icon-inline" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" stroke="none"><path d="M13 2 3 14h7l-1 8 11-14h-7l1-6Z"/></svg> 2+ peças de prata! Gaste 2 para comprar 1 peça do Depósito Paralelo (priorize a cor que falta).
             </div>
         </div>
     </div>
@@ -533,16 +560,16 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
             <div class="completed-cards-list" id="completedCardsList"></div>
         </div>
         
-        <button class="btn-endgame" id="endGameBtn" onclick="openScoringModal()" data-i18n="endGame">🏁 Encerrar Partida e Pontuar</button>
-        <button class="btn-secondary" style="margin-top:10px; width:100%; border: 1px solid #dc2626; color:#dc2626; background:transparent;" onclick="newGame()" data-i18n="newGame">🔄 Nova Partida</button>
+        <button class="btn-endgame" id="endGameBtn" onclick="openScoringModal()" data-i18n="endGame"><svg class="icon-inline" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3v18"/><path d="M5 4h13l-3 4 3 4H5"/></svg> Encerrar Partida e Pontuar</button>
+        <button class="btn-secondary" style="margin-top:10px; width:100%; border: 1px solid #dc2626; color:#dc2626; background:transparent;" onclick="newGame()" data-i18n="newGame"><svg class="icon-inline" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg> Nova Partida</button>
     </div>
 </div>
 
 <!-- Rules modal -->
 <div class="modal-overlay" id="rulesModal" style="display:none;" onclick="if(event.target===this)closeModal('rulesModal')">
     <div class="modal-box">
-        <button class="modal-close" onclick="closeModal('rulesModal')">✕</button>
-        <h2 data-i18n="rulesTitle">📜 Regras — AutoDuque</h2>
+        <button class="modal-close" onclick="closeModal('rulesModal')"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+        <h2 data-i18n="rulesTitle"><svg class="icon-inline" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5c3 0 6 1 8 3v11c-2-2-5-3-8-3V5Z"/><path d="M20 5c-3 0-6 1-8 3v11c2-2 5-3 8-3V5Z"/></svg> Regras — AutoDuque</h2>
 
         <div class="rules-section">
             <h3 data-i18n="rulesS1Title">1. Turno do AutoDuque</h3>
@@ -561,13 +588,13 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
                 6. Se nada disso for possível, o AutoDuque ganha <strong>+2 peças de prata</strong>.
             </div>
             <div class="rules-highlight" data-i18n="rulesS1Extra2">
-                <strong>⚡ Fim do turno (Compra Automática):</strong> Se o AutoDuque terminar o turno com 2 ou mais peças de prata, ele gasta 2 peças para comprar 1 peça do Depósito Paralelo (sempre priorizando a cor que ele ainda não tem na reserva).
+                <strong><svg class="icon-inline" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" stroke="none"><path d="M13 2 3 14h7l-1 8 11-14h-7l1-6Z"/></svg> Fim do turno (Compra Automática):</strong> Se o AutoDuque terminar o turno com 2 ou mais peças de prata, ele gasta 2 peças para comprar 1 peça do Depósito Paralelo (sempre priorizando a cor que ele ainda não tem na reserva).
             </div>
         </div>
 
         <!-- Depot diagram -->
         <div class="rules-section">
-            <h3 data-i18n="rulesDepotTitle">🗺️ Diagrama dos Depósitos</h3>
+            <h3 data-i18n="rulesDepotTitle"><svg class="icon-inline" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3 3 5v16l6-2 6 2 6-2V3l-6 2-6-2Z"/><path d="M9 3v16M15 5v16"/></svg> Diagrama dos Depósitos</h3>
             <p style="font-size:0.88em; color:#555; margin-bottom:8px;" data-i18n="rulesDepotDesc">Os 6 depósitos do tabuleiro são numerados 1–6 em sentido horário. O dado colorido indica o depósito de partida; busque nos seguintes em sentido ↻.</p>
             <div style="display:flex; justify-content:center; margin: 10px 0;">
                 <svg viewBox="0 0 220 220" width="200" height="200" xmlns="http://www.w3.org/2000/svg">
@@ -607,7 +634,7 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
 
         <!-- How to mark a card -->
         <div class="rules-section">
-            <h3 data-i18n="rulesCardTitle">🃏 Como Preencher a Carta de Vila</h3>
+            <h3 data-i18n="rulesCardTitle"><svg class="icon-inline" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M12 8v8M8 12h8"/></svg> Como Preencher a Carta de Vila</h3>
             <p style="font-size:0.88em; color:#555; margin-bottom:8px;" data-i18n="rulesCardDesc">Cada carta de vila tem hexágonos a preencher. O AutoDuque sempre preenche de <strong>cima para baixo</strong>, e da <strong>esquerda para a direita</strong>. O hexágono com o símbolo de livro/baú é o próximo a ser preenchido.</p>
             <div style="display:flex; gap:16px; align-items:flex-start; flex-wrap:wrap; justify-content:center; margin: 10px 0;">
                 <div style="text-align:center;">
@@ -620,7 +647,7 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
                         <span data-i18n="rulesCardOrder">① Topo-esquerdo → ② Topo-direito<br>③ Meio-esquerdo → ④ Meio-direito<br>⑤ Base-esquerdo → ⑥ Base-direito</span>
                     </div>
                     <div style="margin-top:10px; background:rgba(197,160,89,0.1); border-left:3px solid var(--burgundy-gold); padding:10px; border-radius:4px; font-size:0.85em; line-height:1.6;" data-i18n="rulesCardTip">
-                        💡 <strong>Dica:</strong> O hexágono com o ícone de livro/baú na carta indica qual tipo de peça deve ir naquele espaço. Pegue a peça desse tipo no depósito indicado pelo dado colorido (ou nos seguintes).
+                        <svg class="icon-inline" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.3h6c0-1 .4-1.8 1-2.3A7 7 0 0 0 12 2Z"/></svg> <strong>Dica:</strong> O hexágono com o ícone de livro/baú na carta indica qual tipo de peça deve ir naquele espaço. Pegue a peça desse tipo no depósito indicado pelo dado colorido (ou nos seguintes).
                     </div>
                 </div>
             </div>
@@ -628,7 +655,7 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
 
         <!-- Reserve board -->
         <div class="rules-section">
-            <h3 data-i18n="rulesReserveTitle">🏰 Tabuleiro de Reserva</h3>
+            <h3 data-i18n="rulesReserveTitle"><svg class="icon-inline" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V9h3V6h2v3h2V6h2v3h2V6h2v3h3v12Z"/><path d="M4 21h16"/></svg> Tabuleiro de Reserva</h3>
             <p style="font-size:0.88em; color:#555; margin-bottom:8px;" data-i18n="rulesReserveDesc">O tabuleiro de reserva do AutoDuque tem 7 espaços coloridos + 1 espaço curinga (hexágono preto). As peças compradas do Depósito Paralelo ficam aqui até serem usadas para preencher uma carta de vila.</p>
             <div style="text-align:center; margin: 8px 0;">
                 <img src="../assets/art/burgundy_cards/board_front.jpg" alt="Tabuleiro de Reserva" style="max-width:100%; max-height:200px; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.2);">
@@ -656,8 +683,8 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
 <!-- Scoring modal -->
 <div class="modal-overlay" id="scoringModal" style="display:none;" onclick="if(event.target===this)closeModal('scoringModal')">
     <div class="modal-box">
-        <button class="modal-close" onclick="closeModal('scoringModal')">✕</button>
-        <h2 data-i18n="scoreTitle">🏁 Pontuação Final</h2>
+        <button class="modal-close" onclick="closeModal('scoringModal')"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+        <h2 data-i18n="scoreTitle"><svg class="icon-inline" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3v18"/><path d="M5 4h13l-3 4 3 4H5"/></svg> Pontuação Final</h2>
         <div id="scoringCardsSummary" style="margin-bottom:16px;"></div>
         
         <div class="scoring-panel active" id="panelB">
@@ -690,7 +717,7 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
             <div class="score-total" id="totalB">— PV</div>
         </div>
         <div style="display:flex;gap:10px;margin-top:16px;">
-            <button class="btn-secondary" style="margin-top:0;" onclick="newGame()" data-i18n="newGame">🔄 Nova Partida</button>
+            <button class="btn-secondary" style="margin-top:0;" onclick="newGame()" data-i18n="newGame"><svg class="icon-inline" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg> Nova Partida</button>
             <button class="action-btn" style="font-size:1em;padding:12px;" onclick="closeModal('scoringModal')" data-i18n="close">Fechar</button>
         </div>
     </div>
@@ -701,10 +728,10 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
         <img src="../assets/art/burgundy.webp" alt="Castles of Burgundy Box Art">
     </div>
     <div style="margin-bottom: 15px;">
-        <p data-i18n="creditsText">AutoDuque desenvolvido com ❤️ por <a href="https://boardgamegeek.com/profile/RandomObfuscation" target="_blank" rel="noopener">LENS</a> e Thiago Colletes.</p>
+        <p data-i18n="creditsText">AutoDuque desenvolvido com <svg class="icon-inline" viewBox="0 0 24 24" width="14" height="14" fill="currentColor" stroke="none"><path d="M12 21s-7.5-4.6-10-9.3C.5 8.2 2.4 4 6.2 4c2 0 3.6 1.1 4.3 2.7C11.2 5.1 12.8 4 14.8 4c3.8 0 5.7 4.2 4.2 7.7C19.5 16.4 12 21 12 21Z"/></svg> por <a href="https://boardgamegeek.com/profile/RandomObfuscation" target="_blank" rel="noopener">LENS</a> e Thiago Colletes.</p>
     </div>
     <div style="margin-bottom: 15px;">
-        <a class="bmc-inline" href="https://www.buymeacoffee.com/colletes" target="_blank" rel="noopener" style="background-color: var(--burgundy-gold); padding: 10px 15px; border-radius: 8px; color: white; text-decoration: none; font-weight: bold;">☕ Buy me a coffee</a>
+        <a class="bmc-inline" href="https://www.buymeacoffee.com/colletes" target="_blank" rel="noopener" style="background-color: var(--burgundy-gold); padding: 10px 15px; border-radius: 8px; color: white; text-decoration: none; font-weight: bold;"><svg class="icon-inline" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a3 3 0 0 1 0 6h-1"/><path d="M2 8h16v6a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4Z"/><path d="M6 2v2M10 2v2M14 2v2"/></svg> Buy me a coffee</a>
     </div>
     <div>
         <a href="../index.html" style="display: inline-flex; align-items: center; gap: 5px; color: var(--burgundy-gold-light);" data-i18n="backHome">
@@ -735,17 +762,17 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
             medium: "Médio",
             hard: "Difícil",
             diceMode: "Modo dos Dados",
-            dice3d: "🎲 Dados 3D",
-            diceManual: "✏️ Entrada Manual",
+            dice3d: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><rect x=\"3\" y=\"3\" width=\"18\" height=\"18\" rx=\"3\"/><circle cx=\"8\" cy=\"8\" r=\"1.3\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"16\" cy=\"8\" r=\"1.3\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"8\" cy=\"16\" r=\"1.3\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"16\" cy=\"16\" r=\"1.3\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"12\" cy=\"12\" r=\"1.3\" fill=\"currentColor\" stroke=\"none\"/></svg> Dados 3D",
+            diceManual: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 20h9\"/><path d=\"M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z\"/></svg> Entrada Manual",
             boardMode: "Modo do Tabuleiro",
-            boardVirtual: "🖥️ Virtual",
-            boardPhysical: "📄 Tabuleiro Físico",
+            boardVirtual: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"2\" y=\"4\" width=\"20\" height=\"13\" rx=\"2\"/><path d=\"M8 21h8M12 17v4\"/></svg> Virtual",
+            boardPhysical: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z\"/><path d=\"M14 2v6h6\"/></svg> Tabuleiro Físico",
             startGame: "Iniciar Jogo",
             setupCardTitle: "Setup Inicial da Carta",
             setupCardText1: "A regra do AutoDuque exige que a primeira carta (Slot 1–4) tenha pelo menos um <strong>Hexágono de Castelo (Borgonha)</strong>.",
             setupCardText2: "Estou revelando as cartas do baralho embaralhado. Esta carta tem um hexágono de castelo verde-escuro/vermelho?",
-            setupCardYes: "✅ Sim, tem Castelo!",
-            setupCardNo: "❌ Não tem, puxar outra",
+            setupCardYes: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M20 6 9 17l-5-5\"/></svg> Sim, tem Castelo!",
+            setupCardNo: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M18 6 6 18M6 6l12 12\"/></svg> Não tem, puxar outra",
             turnControl: "Controle do Turno",
             redDie: "Dado Vermelho:",
             whiteDie: "Dado Branco:",
@@ -753,31 +780,31 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
             rollDice: "Rolar Dados do AutoDuque",
             waitingRoll: "Aguardando rolagem...",
             rolling: "Rolando...",
-            copyInstructions: "📋 Copiar Instruções",
+            copyInstructions: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"8\" y=\"2\" width=\"8\" height=\"4\" rx=\"1\"/><path d=\"M9 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-3\"/></svg> Copiar Instruções",
             leftCard: "Carta de Vila Esquerda (1-4)",
             rightCard: "Carta de Vila Direita (5-6)",
             completeCard: "Completar Carta",
             botReserve: "Reserva do AutoDuque",
             boardTip: "Clique nos hexágonos da reserva para marcar/desmarcar peças adquiridas.",
             completedCards: "Cartas Completadas",
-            endGame: "🏁 Encerrar Partida e Pontuar",
-            rulesTitle: "📜 Regras — AutoDuque",
+            endGame: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 3v18\"/><path d=\"M5 4h13l-3 4 3 4H5\"/></svg> Encerrar Partida e Pontuar",
+            rulesTitle: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M4 5c3 0 6 1 8 3v11c-2-2-5-3-8-3V5Z\"/><path d=\"M20 5c-3 0-6 1-8 3v11c2-2 5-3 8-3V5Z\"/></svg> Regras — AutoDuque",
             rulesS1Title: "1. Turno do AutoDuque",
             rulesS1L1: "O <strong>dado branco</strong> (rolado pelo 1º jogador humano) indica a carta de vila escolhida: <strong>1–4 = Carta Esquerda</strong>, <strong>5–6 = Carta Direita</strong>.",
             rulesS1L2: "Role o <strong>dado colorido</strong> do AutoDuque — esse é o depósito inicial de busca.",
             rulesS1L3: "Busque uma peça para preencher a carta de vila escolhida (sempre de cima para baixo, e da esquerda para a direita).",
             rulesS1Extra1: "<strong>Ordem de busca da peça:</strong><br>1. No depósito indicado pelo dado colorido.<br>2. Nos próximos depósitos do tabuleiro, em sentido horário.<br>3. Na <strong>área de reserva</strong> (os 7 espaços no tabuleiro do AutoDuque).<br>4. No <strong>espaço curinga</strong> (hexágono preto na reserva).<br>5. Se o espaço curinga estiver vazio, pegue uma peça aleatória do <strong>Depósito Paralelo</strong> (mercado negro) e coloque virada para baixo no curinga.<br>6. Se nada disso for possível, o AutoDuque ganha <strong>+2 peças de prata</strong>.",
-            rulesS1Extra2: "<strong>⚡ Fim do turno (Compra Automática):</strong> Se o AutoDuque terminar o turno com 2 ou mais peças de prata, ele gasta 2 peças para comprar 1 peça do Depósito Paralelo (sempre priorizando a cor que ele ainda não tem na reserva).",
-            rulesDepotTitle: "🗺️ Diagrama dos Depósitos",
+            rulesS1Extra2: "<strong><svg class=\"icon-inline\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"currentColor\" stroke=\"none\"><path d=\"M13 2 3 14h7l-1 8 11-14h-7l1-6Z\"/></svg> Fim do turno (Compra Automática):</strong> Se o AutoDuque terminar o turno com 2 ou mais peças de prata, ele gasta 2 peças para comprar 1 peça do Depósito Paralelo (sempre priorizando a cor que ele ainda não tem na reserva).",
+            rulesDepotTitle: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M9 3 3 5v16l6-2 6 2 6-2V3l-6 2-6-2Z\"/><path d=\"M9 3v16M15 5v16\"/></svg> Diagrama dos Depósitos",
             rulesDepotDesc: "Os 6 depósitos do tabuleiro são numerados 1–6 em sentido horário. O dado colorido indica o depósito de partida; busque nos seguintes em sentido ↻.",
             rulesDepotEx: "Ex: dado colorido = 3 → busque em 3, depois 4, 5, 6, 1, 2...",
-            rulesCardTitle: "🃏 Como Preencher a Carta de Vila",
+            rulesCardTitle: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"4\" y=\"3\" width=\"16\" height=\"18\" rx=\"2\"/><path d=\"M12 8v8M8 12h8\"/></svg> Como Preencher a Carta de Vila",
             rulesCardDesc: "Cada carta de vila tem hexágonos a preencher. O AutoDuque sempre preenche de <strong>cima para baixo</strong>, e da <strong>esquerda para a direita</strong>. O hexágono com o símbolo de livro/baú é o próximo a ser preenchido.",
             rulesCardEx1: "Carta 2: O hexágono verde-escuro/vermelho (topo-direito) é o próximo a preencher.",
             rulesCardOrderLabel: "Ordem de preenchimento:",
             rulesCardOrder: "① Topo-esquerdo → ② Topo-direito<br>③ Meio-esquerdo → ④ Meio-direito<br>⑤ Base-esquerdo → ⑥ Base-direito",
-            rulesCardTip: "💡 <strong>Dica:</strong> O hexágono com o ícone de livro/baú na carta indica qual tipo de peça deve ir naquele espaço. Pegue a peça desse tipo no depósito indicado pelo dado colorido (ou nos seguintes).",
-            rulesReserveTitle: "🏰 Tabuleiro de Reserva",
+            rulesCardTip: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M9 18h6M10 22h4\"/><path d=\"M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.3h6c0-1 .4-1.8 1-2.3A7 7 0 0 0 12 2Z\"/></svg> <strong>Dica:</strong> O hexágono com o ícone de livro/baú na carta indica qual tipo de peça deve ir naquele espaço. Pegue a peça desse tipo no depósito indicado pelo dado colorido (ou nos seguintes).",
+            rulesReserveTitle: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 21V9h3V6h2v3h2V6h2v3h2V6h2v3h3v12Z\"/><path d=\"M4 21h16\"/></svg> Tabuleiro de Reserva",
             rulesReserveDesc: "O tabuleiro de reserva do AutoDuque tem 7 espaços coloridos + 1 espaço curinga (hexágono preto). As peças compradas do Depósito Paralelo ficam aqui até serem usadas para preencher uma carta de vila.",
             rulesReserveEx: "<strong>Espaço Curinga (hexágono preto):</strong> Pode ser preenchido com qualquer tipo de peça. Se estiver vazio quando necessário, puxe uma peça aleatória do Depósito Paralelo e coloque-a virada para baixo.",
             rulesS2Title: "2. Efeitos das Peças",
@@ -792,20 +819,20 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
             depotCenter1: "Tabuleiro",
             depotCenter2: "Principal",
             close: "Fechar",
-            scoreTitle: "🏁 Pontuação Final",
+            scoreTitle: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 3v18\"/><path d=\"M5 4h13l-3 4 3 4H5\"/></svg> Pontuação Final",
             scoreInstruction: "Consulte o tabuleiro físico e preencha os campos:",
             scoreReserve: "Peças na reserva",
             scoreIncomplete: "Peças em cartas incompletas",
             scoreMonastery: "Monastérios no ducado (fora da reserva)",
             scoreCoins: "Peças de prata",
             scoreGoods: "Mercadorias não vendidos",
-            newGame: "🔄 Nova Partida",
-            creditsText: 'AutoDuque desenvolvido com ❤️ por <a href="https://boardgamegeek.com/profile/RandomObfuscation" target="_blank" rel="noopener">LENS</a> e Thiago Colletes.',
+            newGame: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M21 12a9 9 0 1 1-2.64-6.36\"/><path d=\"M21 3v6h-6\"/></svg> Nova Partida",
+            creditsText: 'AutoDuque desenvolvido com <svg class="icon-inline" viewBox="0 0 24 24" width="14" height="14" fill="currentColor" stroke="none"><path d="M12 21s-7.5-4.6-10-9.3C.5 8.2 2.4 4 6.2 4c2 0 3.6 1.1 4.3 2.7C11.2 5.1 12.8 4 14.8 4c3.8 0 5.7 4.2 4.2 7.7C19.5 16.4 12 21 12 21Z"/></svg> por <a href="https://boardgamegeek.com/profile/RandomObfuscation" target="_blank" rel="noopener">LENS</a> e Thiago Colletes.',
             backHome: "Voltar para Home",
             alertCompleted: "Todas as cartas foram completadas!",
             confirmComplete: "Completou a carta {id}? Ela vale {vp} PV ({diff}).",
             confirmNew: "Iniciar nova partida? O progresso será apagado.",
-            copied: "✅ Copiado!",
+            copied: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M20 6 9 17l-5-5\"/></svg> Copiado!",
             colorPrefix: "Dado {color}:",
             deckStats: "Cartas no baralho: {deck} | Descarte: {discard}",
             summaryStep1: "Dado branco = <strong>{whiteVal}</strong> → carta de vila escolhida: <strong>{cardStr}</strong> (destacada).",
@@ -815,12 +842,12 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
             summaryStep5: "Se ainda não achar, use a <strong>peça curinga</strong> (hexágono preto) da reserva.",
             summaryStep6: "Se o espaço curinga estiver vazio: pegue uma peça aleatória do <strong>Depósito Paralelo</strong> e coloque-a <em>virada para baixo</em> no espaço curinga.",
             summaryStep7: "Se nada disso for possível, o AutoDuque ganha <strong>+2 peças de prata</strong>.",
-            summaryEnd: "<strong>⚡ Ao final do turno:</strong> Se o AutoDuque terminar com 2 ou mais peças de prata, ele gasta 2 para comprar 1 peça do Depósito Paralelo (priorize a cor que falta na reserva).",
+            summaryEnd: "<strong><svg class=\"icon-inline\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"currentColor\" stroke=\"none\"><path d=\"M13 2 3 14h7l-1 8 11-14h-7l1-6Z\"/></svg> Ao final do turno:</strong> Se o AutoDuque terminar com 2 ou mais peças de prata, ele gasta 2 para comprar 1 peça do Depósito Paralelo (priorize a cor que falta na reserva).",
             botDecision: "<strong>Decisão do AutoDuque:</strong><br><br>",
             leftCardName: "CARTA DE VILA ESQUERDA (1–4)",
             rightCardName: "CARTA DE VILA DIREITA (5–6)",
-            silverlingTitle: "🪙 Peças de Prata",
-            autoBuyPrompt: "⚡ 2+ peças de prata! Gaste 2 para comprar 1 peça do Depósito Paralelo (priorize a cor que falta na reserva).",
+            silverlingTitle: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 7v10M9 9.5c0-1 1-1.7 3-1.7s3 .8 3 1.8-1 1.4-3 1.9-3 .9-3 1.9 1.3 1.8 3 1.8 3-.7 3-1.7\"/></svg> Peças de Prata",
+            autoBuyPrompt: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"currentColor\" stroke=\"none\"><path d=\"M13 2 3 14h7l-1 8 11-14h-7l1-6Z\"/></svg> 2+ peças de prata! Gaste 2 para comprar 1 peça do Depósito Paralelo (priorize a cor que falta na reserva).",
             scoringCompletedHeader: "Cartas Completadas",
             scoringVPLabel: "PV",
             scoringTotalLabel: "Total das Cartas",
@@ -847,17 +874,17 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
             medium: "Medium",
             hard: "Hard",
             diceMode: "Dice Mode",
-            dice3d: "🎲 3D Dice",
-            diceManual: "✏️ Manual Input",
+            dice3d: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><rect x=\"3\" y=\"3\" width=\"18\" height=\"18\" rx=\"3\"/><circle cx=\"8\" cy=\"8\" r=\"1.3\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"16\" cy=\"8\" r=\"1.3\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"8\" cy=\"16\" r=\"1.3\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"16\" cy=\"16\" r=\"1.3\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"12\" cy=\"12\" r=\"1.3\" fill=\"currentColor\" stroke=\"none\"/></svg> 3D Dice",
+            diceManual: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 20h9\"/><path d=\"M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z\"/></svg> Manual Input",
             boardMode: "Board Mode",
-            boardVirtual: "🖥️ Virtual",
-            boardPhysical: "📄 Physical Board",
+            boardVirtual: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"2\" y=\"4\" width=\"20\" height=\"13\" rx=\"2\"/><path d=\"M8 21h8M12 17v4\"/></svg> Virtual",
+            boardPhysical: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z\"/><path d=\"M14 2v6h6\"/></svg> Physical Board",
             startGame: "Start Game",
             setupCardTitle: "Initial Card Setup",
             setupCardText1: "AutoDuque rules require the first card (Slot 1–4) to have at least one <strong>Castle Hex (Burgundy)</strong>.",
             setupCardText2: "Revealing cards from the shuffled deck. Does this card have a dark green/red castle hex?",
-            setupCardYes: "✅ Yes, it has a Castle!",
-            setupCardNo: "❌ No, draw another",
+            setupCardYes: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M20 6 9 17l-5-5\"/></svg> Yes, it has a Castle!",
+            setupCardNo: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M18 6 6 18M6 6l12 12\"/></svg> No, draw another",
             turnControl: "Turn Control",
             redDie: "Red Die:",
             whiteDie: "White Die:",
@@ -865,31 +892,31 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
             rollDice: "Roll AutoDuque Dice",
             waitingRoll: "Waiting for roll...",
             rolling: "Rolling...",
-            copyInstructions: "📋 Copy Instructions",
+            copyInstructions: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"8\" y=\"2\" width=\"8\" height=\"4\" rx=\"1\"/><path d=\"M9 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-3\"/></svg> Copy Instructions",
             leftCard: "Left Estate Card (1-4)",
             rightCard: "Right Estate Card (5-6)",
             completeCard: "Complete Card",
             botReserve: "AutoDuque Reserve",
             boardTip: "Click reserve hexes to mark/unmark tiles obtained.",
             completedCards: "Completed Cards",
-            endGame: "🏁 End Game and Score",
-            rulesTitle: "📜 Rules — AutoDuque",
+            endGame: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 3v18\"/><path d=\"M5 4h13l-3 4 3 4H5\"/></svg> End Game and Score",
+            rulesTitle: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M4 5c3 0 6 1 8 3v11c-2-2-5-3-8-3V5Z\"/><path d=\"M20 5c-3 0-6 1-8 3v11c2-2 5-3 8-3V5Z\"/></svg> Rules — AutoDuque",
             rulesS1Title: "1. AutoDuque Turn",
             rulesS1L1: "The <strong>white die</strong> (rolled by the 1st human player) indicates the chosen estate card: <strong>1–4 = Left Card</strong>, <strong>5–6 = Right Card</strong>.",
             rulesS1L2: "Roll the AutoDuque's <strong>colored die</strong> — this is the initial search depot.",
             rulesS1L3: "Search for a tile to fill the chosen estate card (always top to bottom, and left to right).",
             rulesS1Extra1: "<strong>Tile Search Order:</strong><br>1. In the depot indicated by the colored die.<br>2. In the next depots on the board, clockwise.<br>3. In the <strong>reserve area</strong> (the 7 spaces on the AutoDuque board).<br>4. In the <strong>wildcard space</strong> (black hex in the reserve).<br>5. If the wildcard space is empty, take a random tile from the <strong>Black Market</strong> and place it face down on the wildcard space.<br>6. If none of this is possible, AutoDuque gains <strong>+2 silverlings</strong>.",
-            rulesS1Extra2: "<strong>⚡ End of Turn (Auto Buy):</strong> If AutoDuque ends its turn with 2 or more silverlings, it spends 2 to buy 1 tile from the Black Market (always prioritizing a color it doesn't have in reserve).",
-            rulesDepotTitle: "🗺️ Depot Diagram",
+            rulesS1Extra2: "<strong><svg class=\"icon-inline\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"currentColor\" stroke=\"none\"><path d=\"M13 2 3 14h7l-1 8 11-14h-7l1-6Z\"/></svg> End of Turn (Auto Buy):</strong> If AutoDuque ends its turn with 2 or more silverlings, it spends 2 to buy 1 tile from the Black Market (always prioritizing a color it doesn't have in reserve).",
+            rulesDepotTitle: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M9 3 3 5v16l6-2 6 2 6-2V3l-6 2-6-2Z\"/><path d=\"M9 3v16M15 5v16\"/></svg> Depot Diagram",
             rulesDepotDesc: "The 6 board depots are numbered 1–6 clockwise. The colored die indicates the starting depot; search the following ones clockwise ↻.",
             rulesDepotEx: "Ex: colored die = 3 → search in 3, then 4, 5, 6, 1, 2...",
-            rulesCardTitle: "🃏 How to Fill an Estate Card",
+            rulesCardTitle: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"4\" y=\"3\" width=\"16\" height=\"18\" rx=\"2\"/><path d=\"M12 8v8M8 12h8\"/></svg> How to Fill an Estate Card",
             rulesCardDesc: "Each estate card has hexagons to fill. AutoDuque always fills <strong>top to bottom</strong>, and <strong>left to right</strong>. The hexagon with the book/chest icon is the next one to fill.",
             rulesCardEx1: "Card 2: The dark green/red hex (top-right) is the next to fill.",
             rulesCardOrderLabel: "Fill order:",
             rulesCardOrder: "① Top-left → ② Top-right<br>③ Mid-left → ④ Mid-right<br>⑤ Bottom-left → ⑥ Bottom-right",
-            rulesCardTip: "💡 <strong>Tip:</strong> The hexagon with the book/chest icon on the card indicates what type of tile goes in that space. Get that tile type from the depot indicated by the colored die (or the next ones).",
-            rulesReserveTitle: "🏰 Reserve Board",
+            rulesCardTip: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M9 18h6M10 22h4\"/><path d=\"M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.3h6c0-1 .4-1.8 1-2.3A7 7 0 0 0 12 2Z\"/></svg> <strong>Tip:</strong> The hexagon with the book/chest icon on the card indicates what type of tile goes in that space. Get that tile type from the depot indicated by the colored die (or the next ones).",
+            rulesReserveTitle: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 21V9h3V6h2v3h2V6h2v3h2V6h2v3h3v12Z\"/><path d=\"M4 21h16\"/></svg> Reserve Board",
             rulesReserveDesc: "The AutoDuque reserve board has 7 colored spaces + 1 wildcard space (black hexagon). Tiles bought from the Black Market stay here until used to fill an estate card.",
             rulesReserveEx: "<strong>Wildcard Space (black hexagon):</strong> Can be filled with any type of tile. If empty when needed, draw a random tile from the Black Market and place it face down.",
             rulesS2Title: "2. Tile Effects",
@@ -904,20 +931,20 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
             depotCenter1: "Main",
             depotCenter2: "Board",
             close: "Close",
-            scoreTitle: "🏁 Final Scoring",
+            scoreTitle: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 3v18\"/><path d=\"M5 4h13l-3 4 3 4H5\"/></svg> Final Scoring",
             scoreInstruction: "Consult the physical board and fill in the fields:",
             scoreReserve: "Tiles in reserve",
             scoreIncomplete: "Tiles on incomplete cards",
             scoreMonastery: "Monasteries in duchy (outside reserve)",
             scoreCoins: "Silverlings",
             scoreGoods: "Unsold Goods",
-            newGame: "🔄 New Game",
-            creditsText: 'AutoDuque developed with ❤️ by <a href="https://boardgamegeek.com/profile/RandomObfuscation" target="_blank" rel="noopener">LENS</a> and Thiago Colletes.',
+            newGame: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M21 12a9 9 0 1 1-2.64-6.36\"/><path d=\"M21 3v6h-6\"/></svg> New Game",
+            creditsText: 'AutoDuque developed with <svg class="icon-inline" viewBox="0 0 24 24" width="14" height="14" fill="currentColor" stroke="none"><path d="M12 21s-7.5-4.6-10-9.3C.5 8.2 2.4 4 6.2 4c2 0 3.6 1.1 4.3 2.7C11.2 5.1 12.8 4 14.8 4c3.8 0 5.7 4.2 4.2 7.7C19.5 16.4 12 21 12 21Z"/></svg> by <a href="https://boardgamegeek.com/profile/RandomObfuscation" target="_blank" rel="noopener">LENS</a> and Thiago Colletes.',
             backHome: "Back to Home",
             alertCompleted: "All cards have been completed!",
             confirmComplete: "Did you complete card {id}? It is worth {vp} VP ({diff}).",
             confirmNew: "Start new game? Progress will be lost.",
-            copied: "✅ Copied!",
+            copied: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M20 6 9 17l-5-5\"/></svg> Copied!",
             colorPrefix: "{color} Die:",
             deckStats: "Cards in deck: {deck} | Discard: {discard}",
             summaryStep1: "White die = <strong>{whiteVal}</strong> → chosen estate card: <strong>{cardStr}</strong> (highlighted).",
@@ -927,12 +954,12 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
             summaryStep5: "If still not found, use the <strong>wildcard tile</strong> (black hex) from the reserve.",
             summaryStep6: "If the wildcard space is empty: take a random tile from the <strong>Black Market</strong> and place it <em>face down</em> on the wildcard space.",
             summaryStep7: "If none of this is possible, AutoDuque gains <strong>+2 silverlings</strong>.",
-            summaryEnd: "<strong>⚡ At the end of turn:</strong> If AutoDuque ends with 2 or more silverlings, it spends 2 to buy 1 tile from the Black Market (prioritize missing color in reserve).",
+            summaryEnd: "<strong><svg class=\"icon-inline\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"currentColor\" stroke=\"none\"><path d=\"M13 2 3 14h7l-1 8 11-14h-7l1-6Z\"/></svg> At the end of turn:</strong> If AutoDuque ends with 2 or more silverlings, it spends 2 to buy 1 tile from the Black Market (prioritize missing color in reserve).",
             botDecision: "<strong>AutoDuque Decision:</strong><br><br>",
             leftCardName: "LEFT ESTATE CARD (1–4)",
             rightCardName: "RIGHT ESTATE CARD (5–6)",
-            silverlingTitle: "🪙 Silverlings",
-            autoBuyPrompt: "⚡ 2+ silverlings! Spend 2 to buy 1 tile from the Black Market (prioritize missing color in reserve).",
+            silverlingTitle: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 7v10M9 9.5c0-1 1-1.7 3-1.7s3 .8 3 1.8-1 1.4-3 1.9-3 .9-3 1.9 1.3 1.8 3 1.8 3-.7 3-1.7\"/></svg> Silverlings",
+            autoBuyPrompt: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"currentColor\" stroke=\"none\"><path d=\"M13 2 3 14h7l-1 8 11-14h-7l1-6Z\"/></svg> 2+ silverlings! Spend 2 to buy 1 tile from the Black Market (prioritize missing color in reserve).",
             scoringCompletedHeader: "Completed Cards",
             scoringVPLabel: "VP",
             scoringTotalLabel: "Total Cards",
@@ -1051,23 +1078,10 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
     async function initDiceBox() {
         if (diceBox) return;
         try {
-            const { default: DiceBox } = await import('https://unpkg.com/@3d-dice/dice-box@1.1.3/dist/dice-box.es.min.js');
-            diceBox = new DiceBox({
-                container: '#dice-box',
-                assetPath: 'assets/',
-                origin: 'https://unpkg.com/@3d-dice/dice-box@1.1.3/dist/',
-                theme: 'default',
-                scale: 18,
-                gravity: 2.5,
-                friction: 0.8,
-                restitution: 0.5
-            });
-            
-            await Promise.race([
-                diceBox.init().then(() => logEvent('diceBox.init() RESOLVED')),
-                new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 10000))
-            ]);
-    
+            const { loadDiceBox } = await import('../assets/dice-roller.js');
+            diceBox = await loadDiceBox({ theme: 'wooden', scale: 18, gravity: 2.5, friction: 0.8, restitution: 0.5, timeoutMs: 10000 });
+            logEvent('diceBox.init() RESOLVED');
+
             diceBoxReady = true;
             diceBox.onRollComplete = (results) => {
                 isRolling = false;

@@ -38,7 +38,11 @@ body{
       var(--pitch-dark) 0px, var(--pitch-dark) 64px, 
       var(--pitch-light) 64px, var(--pitch-light) 128px
     ),
-    url("data:image/svg+xml,%3Csvg width='120' height='120' viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='grass'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23grass)' opacity='0.15'/%3E%3C/svg%3E");
+    url("data:image/svg+xml,%3Csvg width='120' height='120' viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='grass'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23grass)' opacity='0.15'/%3E%3C/svg%3E"),
+    url('../assets/textures/stadium-grass.jpg');
+  background-size: auto, 128px 100%, auto, 300px 300px;
+  background-repeat: no-repeat, repeat, repeat, repeat;
+  background-blend-mode: normal, multiply, normal, normal;
   background-attachment:fixed;
   color:var(--text);
   max-width:1400px; margin:0 auto; padding:20px 18px;
@@ -665,11 +669,65 @@ select:focus, input:focus { outline: none; border-color: #1b5e20; }
   flex-shrink: 0 !important;
   vertical-align: middle !important;
 }
+
+/* Ambient stadium atmosphere: floodlight flicker + drifting dust/chalk motes */
+.floodlight-glow{
+  position: fixed; inset: 0; pointer-events: none; z-index: -1;
+  background:
+    radial-gradient(ellipse 55% 30% at 8% 0%, rgba(255,255,255,0.16) 0%, transparent 65%),
+    radial-gradient(ellipse 55% 30% at 92% 0%, rgba(255,255,255,0.14) 0%, transparent 65%);
+}
+@media (prefers-reduced-motion: no-preference){
+  .floodlight-glow{ animation: floodFlicker 7s ease-in-out infinite; }
+}
+@keyframes floodFlicker{
+  0%, 100% { opacity: 0.85; }
+  48% { opacity: 1; }
+  50% { opacity: 0.6; }
+  52% { opacity: 1; }
+  75% { opacity: 0.9; }
+}
+.dust-layer{
+  position: fixed; inset: 0; pointer-events: none; z-index: -1; overflow: hidden;
+}
+.dust-mote{
+  position: absolute; bottom: -12px; width: 4px; height: 4px; border-radius: 50%;
+  background: rgba(255,255,255,0.55);
+  box-shadow: 0 0 4px rgba(255,255,255,0.5);
+  opacity: 0;
+}
+@media (prefers-reduced-motion: no-preference){
+  .dust-mote{ animation: motesRise linear infinite; }
+}
+@keyframes motesRise{
+  0% { transform: translateY(0) translateX(0); opacity: 0; }
+  10% { opacity: 0.75; }
+  90% { opacity: 0.35; }
+  100% { transform: translateY(-100vh) translateX(20px); opacity: 0; }
+}
+.dust-mote:nth-child(1){ left: 6%; animation-duration: 14s; animation-delay: -1s; }
+.dust-mote:nth-child(2){ left: 16%; animation-duration: 18s; animation-delay: -6s; }
+.dust-mote:nth-child(3){ left: 27%; animation-duration: 12s; animation-delay: -3s; }
+.dust-mote:nth-child(4){ left: 38%; animation-duration: 20s; animation-delay: -9s; }
+.dust-mote:nth-child(5){ left: 49%; animation-duration: 15s; animation-delay: -2s; }
+.dust-mote:nth-child(6){ left: 60%; animation-duration: 17s; animation-delay: -11s; }
+.dust-mote:nth-child(7){ left: 71%; animation-duration: 13s; animation-delay: -5s; }
+.dust-mote:nth-child(8){ left: 82%; animation-duration: 19s; animation-delay: -8s; }
+.dust-mote:nth-child(9){ left: 91%; animation-duration: 16s; animation-delay: -4s; }
+.dust-mote:nth-child(10){ left: 47%; animation-duration: 22s; animation-delay: -14s; }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="../assets/logger.js"></script>
 </head>
 <body>
+
+<div class="floodlight-glow" aria-hidden="true"></div>
+<div class="dust-layer" aria-hidden="true">
+  <span class="dust-mote"></span><span class="dust-mote"></span><span class="dust-mote"></span>
+  <span class="dust-mote"></span><span class="dust-mote"></span><span class="dust-mote"></span>
+  <span class="dust-mote"></span><span class="dust-mote"></span><span class="dust-mote"></span>
+  <span class="dust-mote"></span>
+</div>
 
 <div class="lang-switch">
   <button id="btnPt" onclick="setLang('pt')">PT</button>

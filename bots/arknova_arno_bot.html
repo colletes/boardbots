@@ -1042,23 +1042,11 @@ let diceBoxReady = false;
 
 async function initDiceBox() {
   try {
-    const loadPromise = (async () => {
-      const { default: DiceBox } = await import('https://unpkg.com/@3d-dice/dice-box@1.1.3/dist/dice-box.es.min.js');
-      diceBox = new DiceBox({
-        container: '#dice-box',
-        assetPath: 'assets/',
-        origin: 'https://unpkg.com/@3d-dice/dice-box@1.1.3/dist/',
-        theme: 'default',
-        themeColor: '#246a4e',
-        scale: 27
-      });
-      await diceBox.init();
-      diceBoxReady = true;
-      const tray = document.getElementById('dice-tray');
-      if (tray) tray.classList.add('has-3d');
-    })();
-    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Dice timeout')), 3000));
-    await Promise.race([loadPromise, timeoutPromise]);
+    const { loadDiceBox } = await import('../assets/dice-roller.js');
+    diceBox = await loadDiceBox({ theme: 'smooth', themeColor: '#246a4e', scale: 27, timeoutMs: 6000 });
+    diceBoxReady = true;
+    const tray = document.getElementById('dice-tray');
+    if (tray) tray.classList.add('has-3d');
   } catch (e) {
     diceBoxReady = false;
   }
@@ -1066,11 +1054,9 @@ async function initDiceBox() {
 initDiceBox();
 
 // Physics engine can occasionally never settle (silent hang); guard every roll with a timeout.
-function rollDiceBoxSafe(notation, timeoutMs = 5000) {
-  return Promise.race([
-    diceBox.roll(notation),
-    new Promise((_, reject) => setTimeout(() => reject(new Error('DiceBox roll timeout')), timeoutMs))
-  ]);
+async function rollDiceBoxSafe(notation, timeoutMs = 5000) {
+  const { rollDiceSafe } = await import('../assets/dice-roller.js');
+  return rollDiceSafe(diceBox, notation, timeoutMs);
 }
 
 async function rollDice(){
