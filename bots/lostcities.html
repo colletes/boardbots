@@ -898,7 +898,7 @@ Object.assign(window.I18N.pt, {
   lc_res_reserve_desc: "O bot não pode jogar agora, mas guardou esta carta na sua reserva para jogar assim que possível!",
   lc_reserve_title: "🃏 Mão Virtual do Automa (Reserva)",
   lc_reserve_empty: "Vazia (até 2 cartas guardadas)",
-  lc_log_reserve_play: "Jogou da Reserva:",
+  lc_log_reserve_play: "Resgata da reserva:",
   lc_ok: "Entendido",
   
   wantedPanelText: "O Automa compra do <strong>BARALHO</strong>, exceto se o <strong>DESCARTE</strong> tiver:",
@@ -974,7 +974,7 @@ Object.assign(window.I18N.en, {
   lc_res_reserve_desc: "The bot cannot play this now, but kept it in its reserve to play as soon as possible!",
   lc_reserve_title: "🃏 Automa Virtual Hand (Reserve)",
   lc_reserve_empty: "Empty (up to 2 cards held)",
-  lc_log_reserve_play: "Played from Reserve:",
+  lc_log_reserve_play: "Recovers from reserve:",
   lc_ok: "Got it",
   
   wantedPanelText: "The Automa draws from the <strong>DECK</strong>, unless the <strong>DISCARD</strong> pile has:",
@@ -1041,12 +1041,15 @@ function setRounds(r) {
 
 function showScreen(screenId) {
     const screens = ['setupScreen', 'gameScreen', 'calcScreen', 'summaryScreen'];
+    // calc/summary screens default to display:none in their own CSS class, so they need an explicit
+    // 'block' value here instead of '' (unlike setup/game, whose classes are visible by default).
+    const blockScreens = ['calcScreen', 'summaryScreen'];
     screens.forEach(id => {
         const el = document.getElementById(id);
         if (el) {
             if (id === screenId) {
                 el.classList.remove('hidden');
-                el.style.display = '';
+                el.style.display = blockScreens.includes(id) ? 'block' : '';
             } else {
                 el.classList.add('hidden');
                 el.style.display = 'none';
@@ -1088,7 +1091,7 @@ function endAutomaRound() {
 }
 
 function openCalculator() {
-    document.getElementById('calcScreen').style.display = 'block';
+    showScreen('calcScreen');
     document.getElementById('calcRoundText').innerText = currentRound + " / " + maxRounds;
     
     let pName = "";
@@ -1169,8 +1172,7 @@ function confirmCalculator() {
 }
 
 function showRoundSummary() {
-    document.getElementById('calcScreen').style.display = 'none';
-    document.getElementById('summaryScreen').style.display = 'block';
+    showScreen('summaryScreen');
     
     if (gameMode === 'automa') {
         document.getElementById('sumPlayer1Name').innerText = i18n('lc_player') + " (Você)";
@@ -1260,9 +1262,13 @@ function logAction(action, color, value) {
     
     let msg = "";
     if (action === 'PLAY') {
-        msg = lang === 'pt' ? `Jogou ${valText} no ${cName}.` : `Played ${valText} on ${cName}.`;
+        msg = lang === 'pt' ? `A expedição ${cName} avança com uma carta de valor ${valText}.` : `The ${cName} expedition advances with a card of value ${valText}.`;
+    } else if (action === 'REPLACE') {
+        msg = lang === 'pt' ? `A expedição ${cName} recalcula a rota, trocando pela carta ${valText}.` : `The ${cName} expedition reroutes, swapping in card ${valText}.`;
+    } else if (action === 'RESERVE') {
+        msg = lang === 'pt' ? `Guarda a carta ${valText} de ${cName} nas provisões para depois.` : `Stashes the ${valText} card from ${cName} in the supplies for later.`;
     } else {
-        msg = lang === 'pt' ? `Descartou ${valText} do ${cName}.` : `Discarded ${valText} from ${cName}.`;
+        msg = lang === 'pt' ? `Abandona a carta ${valText} de ${cName} no acampamento.` : `Abandons the ${valText} card from ${cName} at camp.`;
     }
     
     if (difficulty === 'gods' && action === 'PLAY') {
@@ -1450,7 +1456,7 @@ function checkReservePlays() {
       const valText = card.value === 'H' ? '🤝' : card.value;
       const lang = localStorage.getItem('boardbots_lang') || 'pt';
       const cName = window.I18N[lang] && window.I18N[lang]['c_' + card.color] ? window.I18N[lang]['c_' + card.color] : card.color;
-      const reservePrefix = window.I18N[lang] && window.I18N[lang].lc_log_reserve_play ? window.I18N[lang].lc_log_reserve_play : "Jogou da Reserva:";
+      const reservePrefix = window.I18N[lang] && window.I18N[lang].lc_log_reserve_play ? window.I18N[lang].lc_log_reserve_play : "Resgata da reserva:";
       
       gameLog.unshift(`[${new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit', second:'2-digit'})}] 📥 ${reservePrefix} ${cName} ${valText} (${action})`);
       if (gameLog.length > 30) gameLog.pop();

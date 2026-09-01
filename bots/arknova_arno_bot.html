@@ -29,7 +29,11 @@ body{
   background-color: var(--bg-cork);
   background-image: 
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.4' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.15'/%3E%3C/svg%3E"),
+    linear-gradient(rgba(140,103,75,0.86), rgba(140,103,75,0.86)),
+    url("../assets/textures/cork-board.jpg"),
     repeating-linear-gradient(45deg, rgba(0,0,0,0.02) 0px, rgba(0,0,0,0.02) 2px, transparent 2px, transparent 4px);
+  background-size: auto, auto, 340px 340px, auto;
+  background-repeat: no-repeat, no-repeat, repeat, repeat;
   color:var(--text);
   margin:0 auto;
   padding-bottom:max(30px, env(safe-area-inset-bottom));
@@ -116,26 +120,35 @@ body{
   position: relative;
   border-radius: 10px;
   overflow: hidden;
-  height: 150px;
+  height: 170px;
   display: flex;
   align-items: center;
   border: 3px solid var(--wood);
   box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-  background: #000;
+  background: linear-gradient(135deg, var(--wood-light), var(--wood));
 }
+/* object-fit:cover across a wide/short banner crops portrait box art to an unreadable sliver — show it as a fully-visible contained card instead. */
 .hero-bg {
   position: absolute;
-  top: 0; left: 0; width: 100%; height: 100%;
-  object-fit: cover;
-  object-position: center 20%;
-  filter: brightness(0.38) saturate(1.1);
+  top: 10px; right: 14px; bottom: 10px; left: auto;
+  width: auto; height: calc(100% - 20px);
+  object-fit: contain;
+  object-position: center;
+  border-radius: 6px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.55);
+  filter: none;
 }
 .hero-content {
   position: relative;
   z-index: 2;
   padding: 20px;
+  padding-right: 150px;
   width: 100%;
-  background: linear-gradient(90deg, rgba(36,29,21,0.92) 0%, rgba(36,29,21,0.6) 60%, rgba(36,29,21,0.1) 100%);
+  background: linear-gradient(90deg, rgba(36,29,21,0.92) 0%, rgba(36,29,21,0.75) 55%, rgba(36,29,21,0) 100%);
+}
+@media (max-width: 600px) {
+  .hero-bg { display: none; }
+  .hero-content { padding-right: 20px; }
 }
 .hero-badge {
   display: inline-block;
@@ -350,6 +363,17 @@ input:checked + .slider::before{ transform:translateX(20px); }
 .die-face.settled{ animation:popIn .35s ease; border-color:var(--accent); color: var(--accent); }
 @keyframes dieSpin{ 0%{transform:rotate(-10deg) scale(1);} 50%{transform:rotate(10deg) scale(1.1);} 100%{transform:rotate(-10deg) scale(1);} }
 .reroll-flash{ color:var(--blue); font-weight:900; font-size:0.95em; min-height:1.2em; margin-bottom:8px; text-transform: uppercase; }
+
+/* 3D Dice Tray & Box */
+.dice-tray-container{
+  width:100%; height:160px; background:rgba(0,0,0,0.4); border:2px solid var(--wood);
+  border-radius:8px; position:relative; overflow:hidden; margin:12px 0;
+  box-shadow: inset 0 3px 12px rgba(0,0,0,0.7); display:flex; align-items:center; justify-content:center;
+}
+#dice-box{ width:100%; height:100%; position:absolute; top:0; left:0; z-index:2; }
+#dice-box canvas{ width:100% !important; height:100% !important; display:block; }
+.dice-tray-container .die-wrap{ margin:0; z-index:1; }
+.dice-tray-container.has-3d .die-wrap{ display:none; }
 .manual-roll{ margin-top:16px; text-align:left; background: rgba(0,0,0,0.05); padding: 8px 12px; border-radius: 6px; }
 .manual-roll summary{ cursor:pointer; color:var(--wood); font-size:0.85em; text-align:center; list-style:none; font-weight: bold; }
 .manual-roll summary::-webkit-details-marker{ display:none; }
@@ -364,6 +388,8 @@ input:checked + .slider::before{ transform:translateX(20px); }
 .history-item .h-head b{ color:var(--wood); }
 .history-item .h-lines{ color:var(--text); font-weight: 600; line-height: 1.35; }
 .history-empty{ color:var(--text-dim); font-size:0.85em; text-align:center; padding:16px 0; font-style: italic; }
+.zoo-log-line{ font-style: italic; color: var(--text-dim); font-size: 0.85em; margin-bottom: 6px; }
+.history-item .zoo-log-line{ margin-bottom: 4px; }
 
 .credits-block{ display:flex; align-items:center; gap:12px; font-size:0.85em; }
 .credits-block img{ width:50px; height:50px; border-radius:8px; object-fit:cover; border: 2px solid var(--wood); }
@@ -412,11 +438,49 @@ input:checked + .slider::before{ transform:translateX(20px); }
   flex-shrink: 0 !important;
   vertical-align: middle !important;
 }
+
+/* Ambient thematic flavor: fireflies + canopy-glow flicker (Ark Nova zoo/nature theme) */
+@media (prefers-reduced-motion: no-preference) {
+  .canopy-glow{ position:fixed; inset:0; pointer-events:none; z-index:-1;
+    background: radial-gradient(ellipse at 20% 10%, rgba(36,106,78,0.25), transparent 55%),
+                radial-gradient(ellipse at 85% 85%, rgba(45,92,168,0.18), transparent 60%);
+    animation: canopyFlicker 6s ease-in-out infinite alternate; }
+  @keyframes canopyFlicker { 0%{opacity:0.7;} 50%{opacity:1;} 100%{opacity:0.85;} }
+
+  .firefly-layer{ position:fixed; inset:0; pointer-events:none; z-index:-1; overflow:hidden; }
+  .firefly{ position:absolute; bottom:-10px; width:6px; height:6px; border-radius:50%;
+    background: radial-gradient(circle, rgba(210,255,190,0.95), rgba(210,255,190,0) 70%);
+    box-shadow: 0 0 8px 3px rgba(180,255,150,0.55);
+    animation: fireflyRise linear infinite; }
+  @keyframes fireflyRise {
+    0%{ transform:translate(0,0); opacity:0; }
+    10%{ opacity:0.9; }
+    50%{ transform:translate(18px,-50vh); opacity:0.5; }
+    90%{ opacity:0.8; }
+    100%{ transform:translate(-14px,-100vh); opacity:0; }
+  }
+  .firefly:nth-child(1){ left:6%; animation-duration:13s; animation-delay:-2s; }
+  .firefly:nth-child(2){ left:16%; animation-duration:10s; animation-delay:-6s; }
+  .firefly:nth-child(3){ left:27%; animation-duration:15s; animation-delay:-1s; }
+  .firefly:nth-child(4){ left:38%; animation-duration:11s; animation-delay:-9s; }
+  .firefly:nth-child(5){ left:49%; animation-duration:14s; animation-delay:-4s; }
+  .firefly:nth-child(6){ left:58%; animation-duration:9s; animation-delay:-7s; }
+  .firefly:nth-child(7){ left:68%; animation-duration:16s; animation-delay:-3s; }
+  .firefly:nth-child(8){ left:77%; animation-duration:12s; animation-delay:-10s; }
+  .firefly:nth-child(9){ left:86%; animation-duration:13.5s; animation-delay:-5s; }
+  .firefly:nth-child(10){ left:93%; animation-duration:10.5s; animation-delay:-8s; }
+}
 </style>
 
     <script src="../assets/logger.js"></script>
 </head>
 <body>
+
+<div class="canopy-glow" aria-hidden="true"></div>
+<div class="firefly-layer" aria-hidden="true">
+  <span class="firefly"></span><span class="firefly"></span><span class="firefly"></span><span class="firefly"></span><span class="firefly"></span>
+  <span class="firefly"></span><span class="firefly"></span><span class="firefly"></span><span class="firefly"></span><span class="firefly"></span>
+</div>
 
 <!-- Top Sticky Navigation -->
 <nav class="top-nav">
@@ -515,7 +579,10 @@ input:checked + .slider::before{ transform:translateX(20px); }
     <h2 data-i18n="rollTitle">Turno do ARNO</h2>
     <p class="round-indicator"><span data-i18n="lblRound">Rodada</span> <b id="roundNo">1</b></p>
     <p class="eff-note" id="dieHint" style="color:var(--text-dim);"></p>
-    <div class="die-wrap"><div class="die-face" id="dieFace">?</div></div>
+    <div id="dice-tray" class="dice-tray-container">
+      <div id="dice-box"></div>
+      <div class="die-wrap"><div class="die-face" id="dieFace">?</div></div>
+    </div>
     <div class="reroll-flash" id="rerollFlash"></div>
     <button class="btn btn-primary btn-block" id="btnRoll" onclick="rollDice()" data-i18n="btnRoll">🎲 Rolar Dado</button>
     <details class="manual-roll">
@@ -740,6 +807,34 @@ const ACTION_LABEL = {
   en: { animals:'Animals', cards:'Cards', build:'Build', sponsors:'Sponsors', association:'Association' }
 };
 
+// Short in-character "zoo field log" flavor line per action type — narrator voice only, never touches the numeric readout.
+const ZOO_LOG = {
+  animals: {
+    pt: 'Uma nova espécie chega ao recinto e já atrai visitantes ao portão.',
+    en: 'A new species arrives at the enclosure and already draws visitors to the gate.'
+  },
+  cards: {
+    pt: 'A equipe de planejamento arquiva mais uma carta de expansão no plano diretor.',
+    en: 'The planning team files another expansion card into the master plan.'
+  },
+    build: {
+    pt: 'As obras avançam mais um pouco no mapa do zoológico.',
+    en: 'Construction crews make a little more progress on the zoo map.'
+  },
+  sponsors: {
+    pt: 'Um novo patrocinador assina o contrato e a diretoria respira aliviada.',
+    en: 'A new sponsor signs the contract, and the board breathes a little easier.'
+  },
+  association: {
+    pt: 'Mais um associado veste o colete e sai para o turno de trabalho.',
+    en: 'Another volunteer puts on the vest and heads out for their shift.'
+  }
+};
+function zooLogLine(actionKey, L){
+  const e = ZOO_LOG[actionKey];
+  return e ? e[L] : '';
+}
+
 // Simple flat-line icon set (inline SVG, single-color) rendered on each action-card tile.
 const ACTION_ICON = {
   animals: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="6" r="1.6"/><circle cx="12" cy="4.6" r="1.6"/><circle cx="17" cy="6" r="1.6"/><circle cx="19" cy="10.5" r="1.5"/><path d="M12 10c-2.8 0-5.4 1.9-6.4 4.6-.8 2.1.5 4.4 2.7 4.4.9 0 1.7-.3 2.6-.7.4-.2.7-.3 1.1-.3s.7.1 1.1.3c.9.4 1.7.7 2.6.7 2.2 0 3.5-2.3 2.7-4.4C17.4 11.9 14.8 10 12 10z"/></svg>',
@@ -954,11 +1049,13 @@ async function initDiceBox() {
         assetPath: 'assets/',
         origin: 'https://unpkg.com/@3d-dice/dice-box@1.1.3/dist/',
         theme: 'default',
-        themeColor: '#e11d48',
+        themeColor: '#246a4e',
         scale: 27
       });
       await diceBox.init();
       diceBoxReady = true;
+      const tray = document.getElementById('dice-tray');
+      if (tray) tray.classList.add('has-3d');
     })();
     const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Dice timeout')), 3000));
     await Promise.race([loadPromise, timeoutPromise]);
@@ -1230,7 +1327,9 @@ function renderRollOut(){
   if(!out || !state || !state.lastTurn) return;
   const turn = state.lastTurn;
   const lines = getTurnLines(turn, lang);
+  const logLine = zooLogLine(turn.actionKey, lang);
   out.innerHTML = `<div class="effect-box">
+      ${logLine ? `<div class="zoo-log-line">${logLine}</div>` : ''}
       <div class="eff-line"><b>${t('rolledPosition')}</b><span>#${turn.pos}${turn.rolledValue!=null?` (d${state.die}=${turn.rolledValue})`:''}</span></div>
       ${lines.map(l=>`<div class="eff-line"><span>${l.label}</span><span>${l.text}</span></div>`).join('')}
     </div>`;
@@ -1247,9 +1346,11 @@ function renderHistory(){
   el.innerHTML = state.history.map(h=>{
     const lines = getTurnLines(h, lang);
     const actName = actMap[h.actionKey] || h.actionKey;
+    const logLine = zooLogLine(h.actionKey, lang);
     return `
       <div class="history-item">
         <div class="h-head"><b>${t('roundLabel')} ${h.round}</b><span>#${h.pos} · ${actName} (${h.side})</span></div>
+        ${logLine ? `<div class="zoo-log-line">${logLine}</div>` : ''}
         <div class="h-lines">${lines.map(l=>`${l.label}: ${l.text}`).join(' · ')}</div>
       </div>`;
   }).join('');
@@ -1273,10 +1374,6 @@ applyI18n();
 </script>
 <script type="module" src="../assets/analytics.js"></script>
 <script type="module" src="../assets/bot-view.js"></script>
-
-<div id="dice-tray" style="position:fixed; bottom:20px; left:20px; width:160px; height:160px; z-index:9999; pointer-events:none;">
-  <div id="dice-box" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none;"></div>
-</div>
 
 </body>
 </html>

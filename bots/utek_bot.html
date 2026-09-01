@@ -41,7 +41,11 @@ body{
       rgba(0,0,0,0.2) 0px, rgba(0,0,0,0.2) 1px, 
       transparent 1px, transparent 30px
     ),
+    linear-gradient(rgba(30,19,11,0.82), rgba(30,19,11,0.82)),
+    url('../assets/textures/old-parchment.jpg'),
     url('data:image/svg+xml;utf8,<svg viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg"><filter id="wood"><feTurbulence type="fractalNoise" baseFrequency="0.04 0.005" numOctaves="4" result="noise"/><feColorMatrix type="matrix" values="0.8 0 0 0 0.12  0 0.7 0 0 0.08  0 0 0.6 0 0.05  0 0 0 0.35 0"/></filter><rect width="100%" height="100%" filter="url(%23wood)"/></svg>');
+  background-size: auto, auto, auto, 340px 340px, auto;
+  background-repeat: no-repeat, no-repeat, no-repeat, repeat, repeat;
   background-attachment: fixed;
   color: var(--ink);
   padding: 20px 16px;
@@ -405,10 +409,46 @@ select:focus, input[type=text]:focus{ outline: none; border-color: var(--crimson
   flex-shrink: 0 !important;
   vertical-align: middle !important;
 }
+
+/* Ambient thematic flavor: flickering torchlight glow + rising embers (war-table candlelight) */
+@media (prefers-reduced-motion: no-preference) {
+  .torch-glow{ position:fixed; inset:0; pointer-events:none; z-index:-1;
+    background: radial-gradient(ellipse at 15% 20%, rgba(255,175,75,0.10), transparent 55%),
+                radial-gradient(ellipse at 88% 75%, rgba(207,161,58,0.08), transparent 60%);
+    animation: torchFlicker 5s ease-in-out infinite alternate; }
+  @keyframes torchFlicker { 0%{opacity:0.65;} 30%{opacity:1;} 55%{opacity:0.8;} 100%{opacity:0.9;} }
+
+  .ember-layer{ position:fixed; inset:0; pointer-events:none; z-index:-1; overflow:hidden; }
+  .ember{ position:absolute; bottom:-10px; width:4px; height:4px; border-radius:50%;
+    background: radial-gradient(circle, #ffd27a, #cfa13a 60%, transparent 100%);
+    box-shadow: 0 0 6px 2px rgba(207,161,58,0.55);
+    animation: emberRise linear infinite; }
+  @keyframes emberRise {
+    0%{ transform:translate(0,0) scale(0.6); opacity:0; }
+    10%{ opacity:0.9; }
+    60%{ transform:translate(10px,-60vh) scale(1); opacity:0.6; }
+    100%{ transform:translate(-6px,-100vh) scale(0.4); opacity:0; }
+  }
+  .ember:nth-child(1){ left:5%; animation-duration:9s; animation-delay:-2s; }
+  .ember:nth-child(2){ left:16%; animation-duration:12s; animation-delay:-6s; }
+  .ember:nth-child(3){ left:28%; animation-duration:8s; animation-delay:-1s; }
+  .ember:nth-child(4){ left:41%; animation-duration:11s; animation-delay:-8s; }
+  .ember:nth-child(5){ left:55%; animation-duration:10s; animation-delay:-3s; }
+  .ember:nth-child(6){ left:68%; animation-duration:9.5s; animation-delay:-5s; }
+  .ember:nth-child(7){ left:80%; animation-duration:13s; animation-delay:-7s; }
+  .ember:nth-child(8){ left:92%; animation-duration:8.5s; animation-delay:-4s; }
+  .ember:nth-child(9){ left:36%; animation-duration:14s; animation-delay:-9s; }
+  .ember:nth-child(10){ left:74%; animation-duration:11.5s; animation-delay:-2.5s; }
+}
 </style>
     <script src="../assets/logger.js"></script>
 </head>
 <body class="mode-gjj">
+<div class="torch-glow" aria-hidden="true"></div>
+<div class="ember-layer" aria-hidden="true">
+  <span class="ember"></span><span class="ember"></span><span class="ember"></span><span class="ember"></span><span class="ember"></span>
+  <span class="ember"></span><span class="ember"></span><span class="ember"></span><span class="ember"></span><span class="ember"></span>
+</div>
 <div class="main-interface">
 <div class="lang-switch">
   <button class="lang-btn" id="langPt" onclick="setLang('pt')">PT-BR</button>
@@ -1029,16 +1069,16 @@ function pickAiTurn(){
         ? (pt ? ' ('+ACTION_NAMES[COMPASS_ACTION_BY_NUMBER[startRoll]]+' já usada — avançou no sentido horário para '+result.roll+')' : ' ('+ACTION_NAMES[COMPASS_ACTION_BY_NUMBER[startRoll]]+' already taken — advanced clockwise to '+result.roll+')')
         : '';
       logMsg(pt
-        ? '🧭 Rolagem da Bússola: '+startRoll+advancedNote+'. O Bot seleciona '+ACTION_NAMES[result.action]+'.'
-        : '🧭 Compass roll: '+startRoll+advancedNote+'. Dummy selects '+ACTION_NAMES[result.action]+'.');
+        ? '🧭 Meu senhor, a Bússola girou e marcou '+startRoll+advancedNote+'. O Bot segue o desígnio e escolhe '+ACTION_NAMES[result.action]+'.'
+        : '🧭 My lord, the Compass has turned and marked '+startRoll+advancedNote+'. The Dummy heeds its call and chooses '+ACTION_NAMES[result.action]+'.');
     } else {
       state.currentAction = null;
       state.currentActionBy = 'ai-collect';
       state.lastCompassRoll = startRoll;
       state.lastCompassStartRoll = startRoll;
       logMsg(pt
-        ? '🧭 Rolagem da Bússola: '+startRoll+' — nenhuma ação disponível restante nesta rodada, o Bot coleta recursos.'
-        : '🧭 Compass roll: '+startRoll+' — no untaken action left this round, Dummy collects resources.');
+        ? '🧭 Meu senhor, a Bússola marcou '+startRoll+', mas nenhum caminho resta livre nesta rodada — o Bot recolhe o que os campos oferecem.'
+        : '🧭 My lord, the Compass marked '+startRoll+', but no path remains open this round — the Dummy gathers what the land provides.');
     }
     state.turnLocked = true;
     return;
@@ -1048,11 +1088,11 @@ function pickAiTurn(){
     state.actions[action] = 'ai';
     state.currentAction = action;
     state.currentActionBy = 'ai';
-    logMsg(pt ? 'O Bot seleciona '+ACTION_NAMES[action]+' (maior prioridade disponível).' : 'Dummy selects '+ACTION_NAMES[action]+' (highest priority available).');
+    logMsg(pt ? 'Meu senhor, o Bot ergue seu estandarte sobre '+ACTION_NAMES[action]+' — sua prioridade mais alta ainda livre.' : 'My lord, the Dummy raises its banner over '+ACTION_NAMES[action]+' — its highest remaining priority.');
   } else {
     state.currentAction = null;
     state.currentActionBy = 'ai-collect';
-    logMsg(pt ? 'O Bot não tem ação prioritária disponível — ele coleta recursos.' : 'Dummy has no priority action available — it collects resources.');
+    logMsg(pt ? 'Meu senhor, nenhuma ação prioritária resta ao Bot — ele recolhe recursos para fortalecer seu reino.' : 'My lord, no priority action remains for the Dummy — it gathers resources to strengthen its realm.');
   }
   state.turnLocked = true;
 }
@@ -1083,8 +1123,8 @@ function startGame(){
     log:[]
   };
   logMsg(lang==='pt'
-    ? 'Partida iniciada. '+yourFaction+' vs '+aiFaction+'. O Bot lidera a Rodada 1 (rodadas ímpares); você lidera as rodadas pares.'
-    : 'Game started. '+yourFaction+' vs '+aiFaction+'. Dummy leads Round 1 (odd rounds); you lead even rounds.');
+    ? 'Meu senhor, a corte se reúne: '+yourFaction+' contra '+aiFaction+'. O Bot toma o trono na Rodada 1 (rodadas ímpares); a vossa liderança reina nas rodadas pares.'
+    : 'My lord, the court convenes: '+yourFaction+' versus '+aiFaction+'. The Dummy takes the throne in Round 1 (odd rounds); your rule reigns on even rounds.');
   document.getElementById('setup').classList.add('hidden');
   document.getElementById('game').classList.remove('hidden');
   savedState = null;
@@ -1123,19 +1163,19 @@ function toggleChip(key){
     state.currentAction = null;
     state.currentActionBy = null;
     state.turnLocked = false;
-    logMsg(lang==='pt' ? 'Ação "'+ACTION_NAMES[key]+'" desmarcada.' : 'Cleared "'+ACTION_NAMES[key]+'".');
+    logMsg(lang==='pt' ? 'Meu senhor, a ordem de "'+ACTION_NAMES[key]+'" foi retirada.' : 'My lord, the order for "'+ACTION_NAMES[key]+'" has been withdrawn.');
   } else if(cur === null){
     state.actions[key] = side;
     state.currentAction = key;
     state.currentActionBy = side;
     state.turnLocked = true;
-    logMsg(state.you.faction+(lang==='pt' ? ' seleciona ' : ' selects ')+ACTION_NAMES[key]+'.');
+    logMsg(state.you.faction+(lang==='pt' ? ' avança para ' : ' marches toward ')+ACTION_NAMES[key]+'.');
     if(state.mode==='official'){
       // the Dummy still needs a Compass roll to resolve army/region selection when it's just following your action
       // (this reuses the raw roll verbatim as a movement direction — the clockwise "already taken" advance only applies to picking an action, not to this)
       state.lastCompassRoll = rollCompassDie();
       state.lastCompassStartRoll = state.lastCompassRoll;
-      logMsg(lang==='pt' ? '🧭 Rolagem da Bússola para a resolução do Bot: '+state.lastCompassRoll+'.' : '🧭 Compass roll for the Dummy\'s resolution: '+state.lastCompassRoll+'.');
+      logMsg(lang==='pt' ? '🧭 Meu senhor, a Bússola gira mais uma vez para guiar o Bot: '+state.lastCompassRoll+'.' : '🧭 My lord, the Compass turns once more to guide the Dummy: '+state.lastCompassRoll+'.');
     }
   } else {
     return;
@@ -1154,14 +1194,14 @@ function startNewRound(){
     const wasDay = state.compassPhase!=='night';
     state.compassPhase = wasDay ? 'night' : 'day';
     logMsg(lang==='pt'
-      ? '🧭 A carta de Ação se esgota — a Bússola vira para '+(wasDay?'Noite 🌙':'Dia ☀️')+'.'+(wasDay ? ' O Bot ganha 1 Minério, 1 Mana e 1 Comida (aplique isso no seu tabuleiro físico).' : '')
-      : '🧭 The Action card clears — the Compass flips to '+(wasDay?'Night 🌙':'Day ☀️')+'.'+(wasDay ? ' The Dummy gains 1 Ore, 1 Mana and 1 Food (apply this on your physical board).' : ''));
+      ? '🧭 Meu senhor, a carta de Ação se esgota — a Bússola vira para '+(wasDay?'Noite 🌙':'Dia ☀️')+'.'+(wasDay ? ' O Bot recebe a dádiva noturna: 1 Minério, 1 Mana e 1 Comida (aplique isso no seu tabuleiro físico).' : '')
+      : '🧭 My lord, the Action card runs dry — the Compass turns to '+(wasDay?'Night 🌙':'Day ☀️')+'.'+(wasDay ? ' The Dummy receives the night\'s boon: 1 Ore, 1 Mana and 1 Food (apply this on your physical board).' : ''));
   }
   state.round++;
   state.activeSide = leaderForRound(state.round);
   logMsg(lang==='pt'
-    ? '— Rodada '+state.round+' começa — líder: '+(state.activeSide==='you'?state.you.faction:state.ai.faction)
-    : '— Round '+state.round+' begins — lead: '+(state.activeSide==='you'?state.you.faction:state.ai.faction));
+    ? '— Meu senhor, a Rodada '+state.round+' se abre — quem lidera agora: '+(state.activeSide==='you'?state.you.faction:state.ai.faction)
+    : '— My lord, Round '+state.round+' begins — who leads now: '+(state.activeSide==='you'?state.you.faction:state.ai.faction));
   if(state.activeSide==='ai') pickAiTurn();
   save(); render();
 }

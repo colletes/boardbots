@@ -343,6 +343,7 @@
         .action-box li { margin-bottom: 6px; }
         .action-box li:last-child { margin-bottom: 0; }
         .action-box li.li-vp strong { color: var(--accent-gold); }
+        .action-box .nemesis-flavor { font-style: italic; color: #7a92a8; font-size: 0.9em; margin-bottom: 10px; display: block; }
 
         .btn-row { display: flex; gap: 10px; }
         .btn-row .main-btn { flex: 1; }
@@ -996,6 +997,13 @@ function undoTurn() {
 
 // Builds the instruction list HTML for a track entry without mutating any
 // game state (safe to call repeatedly, e.g. when just re-rendering).
+const NEMESIS_FLAVOR = {
+    vp: { pt: 'O Nêmesis absorve a energia vital do vale, crescendo mais forte.', en: 'The Nemesis absorbs the vale\'s vital energy, growing stronger.' },
+    vale: { pt: 'Raízes corrompidas sufocam uma carta de Vale ainda jovem.', en: 'Corrupted roots choke a young Vale card.' },
+    adv: { pt: 'A corrupção se espalha, transformando crescimento em decadência.', en: 'Corruption spreads, twisting growth into decay.' },
+    none: { pt: 'O vale prende a respiração — nada muda neste turno.', en: 'The vale holds its breath — nothing changes this turn.' }
+};
+
 function buildActionHTML(acao) {
     const s = strings[currentLang];
     let instrucoes = [];
@@ -1024,7 +1032,10 @@ function buildActionHTML(acao) {
         instrucoes.push({ html: s.noAction, vp: false });
     }
 
-    return "<ul>" + instrucoes.map(i => `<li class="${i.vp ? 'li-vp' : ''}">${i.html}</li>`).join('') + "</ul>";
+    const flavorKey = acao.vp > 0 ? 'vp' : (acao.vale ? 'vale' : (acao.adv ? 'adv' : 'none'));
+    const flavor = `<span class="nemesis-flavor">${NEMESIS_FLAVOR[flavorKey][currentLang]}</span>`;
+
+    return flavor + "<ul>" + instrucoes.map(i => `<li class="${i.vp ? 'li-vp' : ''}">${i.html}</li>`).join('') + "</ul>";
 }
 
 function renderAction(acao) {

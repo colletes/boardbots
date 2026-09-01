@@ -29,7 +29,11 @@ body {
     background-color: var(--bg-0);
     background-image: 
         radial-gradient(circle at 50% 50%, rgba(219, 154, 70, 0.08) 0%, transparent 60%),
+        linear-gradient(rgba(22, 17, 13, 0.88), rgba(22, 17, 13, 0.88)),
+        url('../assets/textures/cave-ground.jpg'),
         url('data:image/svg+xml;utf8,<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><filter id="noiseFilter"><feTurbulence type="fractalNoise" baseFrequency="0.6" numOctaves="4" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23noiseFilter)" opacity="0.08"/></svg>');
+    background-size: auto, auto, 340px 340px, auto;
+    background-repeat: no-repeat, no-repeat, repeat, repeat;
     background-attachment:fixed;
     color:var(--text);
     margin:0 auto;
@@ -133,26 +137,34 @@ body {
     position: relative;
     border-radius: 10px;
     overflow: hidden;
-    height: 150px;
+    height: 170px;
     display: flex;
     align-items: center;
     border: 3px solid var(--border);
     box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-    background: #000;
+    background: linear-gradient(135deg, var(--bg-1), var(--bg-0));
 }
+/* object-fit:cover across a wide/short banner would crop portrait box art down to a ~40px sliver, cutting off the title logo — show it as a fully-visible contained card instead. */
 .hero-bg {
     position: absolute;
-    top: 0; left: 0; width: 100%; height: 100%;
-    object-fit: cover;
-    object-position: center 30%;
-    filter: brightness(0.4) sepia(0.3);
+    top: 10px; right: 14px; bottom: 10px; left: auto;
+    width: auto; height: calc(100% - 20px);
+    object-fit: contain;
+    object-position: center;
+    border-radius: 6px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.55);
 }
 .hero-content {
     position: relative;
     z-index: 2;
     padding: 20px;
+    padding-right: 150px;
     width: 100%;
-    background: linear-gradient(90deg, rgba(22,17,13,0.92) 0%, rgba(22,17,13,0.6) 60%, rgba(22,17,13,0.1) 100%);
+    background: linear-gradient(90deg, rgba(22,17,13,0.92) 0%, rgba(22,17,13,0.75) 55%, rgba(22,17,13,0) 100%);
+}
+@media (max-width: 600px) {
+    .hero-bg { display: none; }
+    .hero-content { padding-right: 20px; }
 }
 .hero-badge {
     display: inline-block;
@@ -232,6 +244,42 @@ body.mode-official .automa-only { display: none !important; }
 button, select { touch-action:manipulation; }
 @keyframes fadeSlideUp{ from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);} }
 @keyframes popIn{ 0%{transform:scale(0.88); opacity:0;} 100%{transform:scale(1); opacity:1;} }
+
+/* Ambient campfire flavor: embers + firelight flicker, decorative only */
+@media (prefers-reduced-motion: no-preference) {
+.firelight-pulse {
+    position:fixed; inset:0; pointer-events:none; z-index:-1;
+    background: radial-gradient(circle at 50% 10%, rgba(230,161,71,0.12) 0%, transparent 55%);
+    animation: firelightFlicker 5s ease-in-out infinite alternate;
+}
+.ember-layer { position:fixed; inset:0; pointer-events:none; z-index:-1; overflow:hidden; }
+.ember {
+    position:absolute; bottom:-12px; width:3px; height:3px; border-radius:50%;
+    background: radial-gradient(circle, #ffcb7d 0%, #e6a147 45%, transparent 75%);
+    box-shadow: 0 0 6px 2px rgba(230,161,71,0.55);
+    opacity:0; animation: emberRise linear infinite;
+}
+.ember:nth-child(1){ left:4%;  animation-duration:12s; animation-delay:-1s; }
+.ember:nth-child(2){ left:12%; animation-duration:9s;  animation-delay:-6s; }
+.ember:nth-child(3){ left:21%; animation-duration:14s; animation-delay:-3s; }
+.ember:nth-child(4){ left:29%; animation-duration:10s; animation-delay:-8s; }
+.ember:nth-child(5){ left:38%; animation-duration:13s; animation-delay:-2s; }
+.ember:nth-child(6){ left:47%; animation-duration:8s;  animation-delay:-5s; }
+.ember:nth-child(7){ left:56%; animation-duration:15s; animation-delay:-10s; }
+.ember:nth-child(8){ left:64%; animation-duration:11s; animation-delay:-4s; }
+.ember:nth-child(9){ left:73%; animation-duration:9s;  animation-delay:-7s; }
+.ember:nth-child(10){ left:81%; animation-duration:12s; animation-delay:-9s; }
+.ember:nth-child(11){ left:89%; animation-duration:10s; animation-delay:-2s; }
+.ember:nth-child(12){ left:95%; animation-duration:14s; animation-delay:-11s; }
+@keyframes emberRise {
+    0%   { transform: translate(0, 0) scale(0.8); opacity: 0; }
+    10%  { opacity: 0.9; }
+    50%  { transform: translate(14px, -55vh) scale(1); }
+    90%  { opacity: 0.25; }
+    100% { transform: translate(-10px, -100vh) scale(0.5); opacity: 0; }
+}
+@keyframes firelightFlicker { 0%{opacity:0.7;} 50%{opacity:1;} 100%{opacity:0.85;} }
+}
 
 h2 {
     font-family: var(--font-display);
@@ -906,6 +954,15 @@ details .setup-list li {
     <script src="../assets/logger.js"></script>
 </head>
 <body class="mode-automa">
+
+<!-- Ambient campfire flavor layer: purely decorative, behind all content -->
+<div class="firelight-pulse" aria-hidden="true"></div>
+<div class="ember-layer" aria-hidden="true">
+    <span class="ember"></span><span class="ember"></span><span class="ember"></span>
+    <span class="ember"></span><span class="ember"></span><span class="ember"></span>
+    <span class="ember"></span><span class="ember"></span><span class="ember"></span>
+    <span class="ember"></span><span class="ember"></span><span class="ember"></span>
+</div>
 
 <!-- Top Sticky Navigation -->
 <nav class="top-nav">

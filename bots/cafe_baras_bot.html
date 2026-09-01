@@ -29,7 +29,11 @@
         background-image: 
             linear-gradient(90deg, rgba(0,0,0,0.4) 0%, transparent 5%, transparent 95%, rgba(0,0,0,0.4) 100%),
             repeating-linear-gradient(0deg, transparent, transparent 100px, rgba(0,0,0,0.2) 100px, rgba(0,0,0,0.2) 102px),
+            linear-gradient(rgba(62,39,35,0.82), rgba(62,39,35,0.82)),
+            url("../assets/textures/dark-walnut.jpg"),
             linear-gradient(90deg, #4e342e, #3e2723, #4e342e);
+        background-size: auto, auto, auto, 300px 300px, auto;
+        background-repeat: no-repeat, repeat, no-repeat, repeat, no-repeat;
         color:var(--chalk);
         max-width:1200px;
         margin:0 auto;
@@ -265,10 +269,45 @@
   flex-shrink: 0 !important;
   vertical-align: middle !important;
 }
+
+/* Ambient thematic flavor: rising coffee steam wisps + warm amber glow flicker (cozy cafe) */
+@media (prefers-reduced-motion: no-preference) {
+  .cafe-glow{ position:fixed; inset:0; pointer-events:none; z-index:-1;
+    background: radial-gradient(ellipse at 20% 85%, rgba(255,183,77,0.10), transparent 55%),
+                radial-gradient(ellipse at 85% 10%, rgba(255,183,77,0.07), transparent 60%);
+    animation: cafeFlicker 6s ease-in-out infinite alternate; }
+  @keyframes cafeFlicker { 0%{opacity:0.7;} 50%{opacity:1;} 100%{opacity:0.85;} }
+
+  .steam-layer{ position:fixed; inset:0; pointer-events:none; z-index:-1; overflow:hidden; }
+  .steam{ position:absolute; bottom:-20px; width:14px; height:14px; border-radius:50%;
+    background: radial-gradient(circle, rgba(244,240,236,0.35), rgba(244,240,236,0) 70%);
+    filter: blur(1px);
+    animation: steamRise linear infinite; }
+  @keyframes steamRise {
+    0%{ transform:translate(0,0) scale(0.6); opacity:0; }
+    12%{ opacity:0.5; }
+    50%{ transform:translate(12px,-50vh) scale(1.3); opacity:0.3; }
+    100%{ transform:translate(-8px,-100vh) scale(1.8); opacity:0; }
+  }
+  .steam:nth-child(1){ left:8%; animation-duration:14s; animation-delay:-3s; }
+  .steam:nth-child(2){ left:20%; animation-duration:11s; animation-delay:-7s; }
+  .steam:nth-child(3){ left:33%; animation-duration:16s; animation-delay:-1s; }
+  .steam:nth-child(4){ left:46%; animation-duration:12s; animation-delay:-9s; }
+  .steam:nth-child(5){ left:60%; animation-duration:15s; animation-delay:-4s; }
+  .steam:nth-child(6){ left:73%; animation-duration:10s; animation-delay:-6s; }
+  .steam:nth-child(7){ left:86%; animation-duration:13.5s; animation-delay:-2s; }
+  .steam:nth-child(8){ left:94%; animation-duration:11.5s; animation-delay:-8s; }
+}
 </style>
     <script src="../assets/logger.js"></script>
 </head>
 <body>
+
+<div class="cafe-glow" aria-hidden="true"></div>
+<div class="steam-layer" aria-hidden="true">
+  <span class="steam"></span><span class="steam"></span><span class="steam"></span><span class="steam"></span>
+  <span class="steam"></span><span class="steam"></span><span class="steam"></span><span class="steam"></span>
+</div>
 
 <button class="btn-help-float" onclick="openHelp('help')" aria-label="Help">?</button>
 <button class="btn-reset-float hidden" id="btnResetGame" onclick="resetGame()" data-i18n="resetBtn">🔄 Nova Partida</button>
@@ -526,11 +565,11 @@ const I18N = {
         tabHelp: 'Como Usar o App', tabRules: 'Regras Rápidas',
         specialPointsPlaceholder: 'Pontos',
         specialLabel: (n) => `Cliente Especial #${n}`,
-        logStart: (coins, counter) => `Partida iniciada. Capybot começa com ${coins} moedas e Balcão de ${TYPE_LABEL[counter].pt}.`,
-        logAdd: (turn, cost, type, coinsBefore, coinsAfter, ability) => `Turno ${turn}: Capybot ADICIONOU uma carta de ${TYPE_LABEL[type].pt} (custo ${cost}). Moedas ${coinsBefore}→${coinsAfter}.${ability ? ' [Ação contínua: '+ability+']' : ''}`,
-        logServe: (turn, coinsGained, coinsBefore, coinsAfter, becameRegular, regularsCount) => `Turno ${turn}: Capybot SERVIU um cliente, ganhando ${coinsGained} moeda(s). Moedas ${coinsBefore}→${coinsAfter}.${becameRegular ? ' Virou Regular! (Regulares: '+regularsCount+')' : ''}`,
-        logUndo: (turn) => `Turno ${turn} desfeito.`,
-        endGameTriggered: (regulars) => `⚠️ O Capybot conquistou seu ${regulars}º Regular — fim de jogo acionado! Cada jogador (incluindo você) joga mais 1 turno completo, depois a partida termina.`,
+        logStart: (coins, counter) => `O Capybot amarra o avental, conta ${coins} moedas na gaveta e pendura o Balcão de ${TYPE_LABEL[counter].pt} — o café está aberto.`,
+        logAdd: (turn, cost, type, coinsBefore, coinsAfter, ability) => `Turno ${turn}: o Capybot arruma uma nova carta de ${TYPE_LABEL[type].pt} na prateleira (custo ${cost}). Moedas ${coinsBefore}→${coinsAfter}.${ability ? ' [Ação contínua: '+ability+']' : ''}`,
+        logServe: (turn, coinsGained, coinsBefore, coinsAfter, becameRegular, regularsCount) => `Turno ${turn}: o Capybot atende um cliente no balcão, faturando ${coinsGained} moeda(s). Moedas ${coinsBefore}→${coinsAfter}.${becameRegular ? ' Um novo Regular se acomoda na mesa de sempre! (Regulares: '+regularsCount+')' : ''}`,
+        logUndo: (turn) => `O Capybot resmunga e desfaz o turno ${turn}.`,
+        endGameTriggered: (regulars) => `⚠️ O Capybot vira a placa para "fechando em breve" — conquistou seu ${regulars}º Regular! Cada jogador (incluindo você) joga mais 1 turno completo, depois o café encerra o expediente.`,
         helpBody: `<h2 data-i18n="tabHelp">❓ Como Usar o App</h2>
             <p>Este app conduz o Capybot, um oponente automático para o modo solo de <em>Café Baras</em>, usando uma árvore de decisão (como as automas de David Turczi) em vez de apenas "sempre pegue a carta mais à direita".</p>
             <h3>Preparação</h3>
@@ -597,11 +636,11 @@ const I18N = {
         tabHelp: 'How to Use the App', tabRules: 'Quick Rules',
         specialPointsPlaceholder: 'Points',
         specialLabel: (n) => `Special Customer #${n}`,
-        logStart: (coins, counter) => `Match started. Capybot begins with ${coins} coins and a ${TYPE_LABEL[counter].en} Counter card.`,
-        logAdd: (turn, cost, type, coinsBefore, coinsAfter, ability) => `Turn ${turn}: Capybot ADDED a ${TYPE_LABEL[type].en} card (cost ${cost}). Coins ${coinsBefore}→${coinsAfter}.${ability ? ' [Continuous action: '+ability+']' : ''}`,
-        logServe: (turn, coinsGained, coinsBefore, coinsAfter, becameRegular, regularsCount) => `Turn ${turn}: Capybot SERVED a customer, gaining ${coinsGained} coin(s). Coins ${coinsBefore}→${coinsAfter}.${becameRegular ? ' Became a Regular! (Regulars: '+regularsCount+')' : ''}`,
-        logUndo: (turn) => `Turn ${turn} undone.`,
-        endGameTriggered: (regulars) => `⚠️ The Capybot got its ${regulars}${regulars===1?'st':(regulars===2?'nd':(regulars===3?'rd':'th'))} Regular — end game triggered! Every player (including you) takes one more full turn, then the match ends.`,
+        logStart: (coins, counter) => `The Capybot ties on its apron, counts ${coins} coins in the till, and hangs up the ${TYPE_LABEL[counter].en} Counter sign — the café is open.`,
+        logAdd: (turn, cost, type, coinsBefore, coinsAfter, ability) => `Turn ${turn}: the Capybot tucks a new ${TYPE_LABEL[type].en} card onto the shelf (cost ${cost}). Coins ${coinsBefore}→${coinsAfter}.${ability ? ' [Continuous action: '+ability+']' : ''}`,
+        logServe: (turn, coinsGained, coinsBefore, coinsAfter, becameRegular, regularsCount) => `Turn ${turn}: the Capybot serves a customer at the counter, earning ${coinsGained} coin(s). Coins ${coinsBefore}→${coinsAfter}.${becameRegular ? ' A new Regular settles into their usual seat! (Regulars: '+regularsCount+')' : ''}`,
+        logUndo: (turn) => `The Capybot grumbles and undoes turn ${turn}.`,
+        endGameTriggered: (regulars) => `⚠️ The Capybot flips the sign to "closing soon" — it just earned its ${regulars}${regulars===1?'st':(regulars===2?'nd':(regulars===3?'rd':'th'))} Regular! Every player (including you) takes one more full turn, then the café calls it a day.`,
         helpBody: `<h2 data-i18n="tabHelp">❓ How to Use the App</h2>
             <p>This app drives the Capybot, an automated opponent for <em>Café Baras</em>'s solo mode, using a decision tree (in the style of David Turczi's automas) instead of just "always take the rightmost card".</p>
             <h3>Setup</h3>
