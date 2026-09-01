@@ -33,7 +33,10 @@ body {
   background-image: 
     url('data:image/svg+xml;utf8,<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><filter id="noiseFilter"><feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23noiseFilter)" opacity="0.15"/></svg>'),
     radial-gradient(circle at center, rgba(145,100,50,0.1) 0%, rgba(20,15,10,0.8) 100%),
-    repeating-linear-gradient(45deg, rgba(60,40,20,0.1) 0px, rgba(60,40,20,0.1) 2px, transparent 2px, transparent 4px);
+    repeating-linear-gradient(45deg, rgba(60,40,20,0.1) 0px, rgba(60,40,20,0.1) 2px, transparent 2px, transparent 4px),
+    url('../assets/textures/old-parchment.jpg');
+  background-size: 200px 200px, auto, auto, 340px 340px;
+  background-repeat: repeat, no-repeat, repeat, repeat;
   color: var(--text-main);
   font-family: 'Inter', sans-serif;
   margin: 0;
@@ -358,6 +361,26 @@ h1, h2 { text-transform: uppercase; letter-spacing: 2px; border-bottom: 2px soli
 .result-icon { font-size: 3rem; margin-bottom: 15px; display: block; }
 .result-title { font-family: 'Poppins', sans-serif; font-size: 1.5rem; margin-bottom: 10px; color: var(--accent); }
 .result-desc { color: var(--text-main); margin-bottom: 20px; }
+.result-extra {
+  text-align: left;
+  border-top: 1px dashed rgba(0,0,0,0.25);
+  margin: -6px 0 20px;
+  padding-top: 12px;
+}
+.result-extra:empty { display: none; margin: 0; padding: 0; border: none; }
+.result-extra-title {
+  font-weight: bold;
+  font-size: 0.85em;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 8px 0 4px;
+}
+.result-extra-item {
+  font-size: 0.9em;
+  color: var(--text-muted);
+  padding: 2px 0;
+}
 .result-btn {
   background: var(--accent);
   color: #f4e8d1;
@@ -615,9 +638,32 @@ h1, h2 { text-transform: uppercase; letter-spacing: 2px; border-bottom: 2px soli
   flex-shrink: 0 !important;
   vertical-align: middle !important;
 }
+
+@media (prefers-reduced-motion: no-preference) {
+  .lantern-glow { position: fixed; inset: 0; pointer-events: none; z-index: -1; background: radial-gradient(circle at 85% 90%, rgba(220,163,49,0.16) 0%, transparent 45%), radial-gradient(circle at 10% 10%, rgba(161,61,51,0.1) 0%, transparent 40%); animation: lanternFlicker 6s ease-in-out infinite alternate; }
+  @keyframes lanternFlicker { 0% { opacity: 0.72; } 50% { opacity: 1; } 100% { opacity: 0.86; } }
+  .sand-layer { position: fixed; inset: 0; pointer-events: none; z-index: -1; }
+  .sand-mote { position: absolute; bottom: -10px; width: 3px; height: 3px; border-radius: 50%; background: rgba(244,232,209,0.75); box-shadow: 0 0 3px 1px rgba(244,232,209,0.35); animation: motesRise 16s linear infinite; }
+  @keyframes motesRise { 0% { transform: translate(0,0); opacity: 0; } 15% { opacity: 0.85; } 85% { opacity: 0.6; } 100% { transform: translate(var(--tx, 20px), -100vh); opacity: 0; } }
+  .sand-mote:nth-child(1) { left: 4%; --tx: 24px; animation-duration: 15s; animation-delay: -3s; }
+  .sand-mote:nth-child(2) { left: 14%; --tx: -18px; animation-duration: 19s; animation-delay: -8s; }
+  .sand-mote:nth-child(3) { left: 24%; --tx: 15px; animation-duration: 13s; animation-delay: -11s; }
+  .sand-mote:nth-child(4) { left: 36%; --tx: -28px; animation-duration: 21s; animation-delay: -5s; }
+  .sand-mote:nth-child(5) { left: 48%; --tx: 20px; animation-duration: 14s; animation-delay: -13s; }
+  .sand-mote:nth-child(6) { left: 60%; --tx: -15px; animation-duration: 17s; animation-delay: -6s; }
+  .sand-mote:nth-child(7) { left: 70%; --tx: 17px; animation-duration: 15s; animation-delay: -9s; }
+  .sand-mote:nth-child(8) { left: 80%; --tx: -22px; animation-duration: 20s; animation-delay: -12s; }
+  .sand-mote:nth-child(9) { left: 89%; --tx: 11px; animation-duration: 16s; animation-delay: -2s; }
+  .sand-mote:nth-child(10) { left: 95%; --tx: -13px; animation-duration: 18s; animation-delay: -10s; }
+}
 </style>
-</head>
 <body>
+
+    <div class="lantern-glow" aria-hidden="true"></div>
+    <div class="sand-layer" aria-hidden="true">
+      <span class="sand-mote"></span><span class="sand-mote"></span><span class="sand-mote"></span><span class="sand-mote"></span><span class="sand-mote"></span>
+      <span class="sand-mote"></span><span class="sand-mote"></span><span class="sand-mote"></span><span class="sand-mote"></span><span class="sand-mote"></span>
+    </div>
 
     <button class="btn-help-float" onclick="document.getElementById('helpModal').style.display='flex'" aria-label="Help">?</button>
     <button class="btn-reset-float hidden" id="btnResetGame" onclick="resetGame()" data-i18n="resetBtn">🔄 Nova Partida</button>
@@ -797,6 +843,7 @@ h1, h2 { text-transform: uppercase; letter-spacing: 2px; border-bottom: 2px soli
     <span class="result-icon" id="resIcon">✅</span>
     <h3 class="result-title" id="resTitle">Play to Expedition</h3>
     <p class="result-desc" id="resDesc">Place the Green 7 on the bot's expedition.</p>
+    <div class="result-extra" id="resExtra"></div>
     <button class="result-btn" onclick="closeResult()" data-i18n="lc_ok">OK</button>
   </div>
 </div>
@@ -892,6 +939,9 @@ Object.assign(window.I18N.pt, {
   lc_res_play_desc: "Coloque a carta na expedição do bot.",
   lc_res_discard_title: "DESCARTAR",
   lc_res_discard_desc: "O bot não quer essa carta. Coloque-a no descarte.",
+  lc_res_discard_full_desc: "O bot não pode jogar essa carta agora e sua reserva já está cheia (2 cartas guardadas). Coloque-a no descarte.",
+  lc_res_discard_dead_title: "CARTA MORTA — DESCARTAR",
+  lc_res_discard_dead_desc: "Essa carta nunca mais poderá ser jogada nesta trilha (ex: aperto de mão após números já jogados, ou expedição tarde demais para começar). O bot descarta na hora, sem gastar espaço na reserva.",
   lc_res_replace_title: "SUBSTITUIR CARTA",
   lc_res_replace_desc: "Descarte a carta mais alta e coloque a nova na expedição no lugar dela!",
   lc_res_reserve_title: "GUARDAR NA RESERVA",
@@ -899,6 +949,9 @@ Object.assign(window.I18N.pt, {
   lc_reserve_title: "🃏 Mão Virtual do Automa (Reserva)",
   lc_reserve_empty: "Vazia (até 2 cartas guardadas)",
   lc_log_reserve_play: "Resgata da reserva:",
+  lc_log_reserve_purge: "Descarta da reserva (carta morta, nunca mais jogável):",
+  lc_res_extra_reserve_plays_title: "📥 Além disso, resgatou da reserva:",
+  lc_res_extra_reserve_purge_title: "🗑️ Além disso, descartou da reserva (carta morta):",
   lc_ok: "Entendido",
   
   wantedPanelText: "O Automa compra do <strong>BARALHO</strong>, exceto se o <strong>DESCARTE</strong> tiver:",
@@ -968,6 +1021,9 @@ Object.assign(window.I18N.en, {
   lc_res_play_desc: "Place the card on the bot's expedition.",
   lc_res_discard_title: "DISCARD",
   lc_res_discard_desc: "The bot doesn't want this card. Discard it.",
+  lc_res_discard_full_desc: "The bot can't play this card right now and its reserve is already full (2 cards held). Discard it.",
+  lc_res_discard_dead_title: "DEAD CARD — DISCARD",
+  lc_res_discard_dead_desc: "This card can never be played to this expedition again (e.g. a wager after numbers were already played, or an expedition that's too late to start). The bot discards it right away instead of wasting a reserve slot.",
   lc_res_replace_title: "REPLACE CARD",
   lc_res_replace_desc: "Discard the highest card and play this new one in its place!",
   lc_res_reserve_title: "HOLD IN RESERVE",
@@ -975,6 +1031,9 @@ Object.assign(window.I18N.en, {
   lc_reserve_title: "🃏 Automa Virtual Hand (Reserve)",
   lc_reserve_empty: "Empty (up to 2 cards held)",
   lc_log_reserve_play: "Recovers from reserve:",
+  lc_log_reserve_purge: "Discards from reserve (dead card, can never be played):",
+  lc_res_extra_reserve_plays_title: "📥 Also recovered from reserve:",
+  lc_res_extra_reserve_purge_title: "🗑️ Also discarded from reserve (dead card):",
   lc_ok: "Got it",
   
   wantedPanelText: "The Automa draws from the <strong>DECK</strong>, unless the <strong>DISCARD</strong> pile has:",
@@ -1253,7 +1312,7 @@ function checkReady() {
 }
 
 
-function logAction(action, color, value) {
+function logAction(action, color, value, reason) {
     const valText = value === 'H' ? '🤝' : value;
     const colorNamesPt = { yellow: 'Amarelo', blue: 'Azul', white: 'Branco', green: 'Verde', red: 'Vermelho' };
     const colorNamesEn = { yellow: 'Yellow', blue: 'Blue', white: 'White', green: 'Green', red: 'Red' };
@@ -1267,8 +1326,10 @@ function logAction(action, color, value) {
         msg = lang === 'pt' ? `A expedição ${cName} recalcula a rota, trocando pela carta ${valText}.` : `The ${cName} expedition reroutes, swapping in card ${valText}.`;
     } else if (action === 'RESERVE') {
         msg = lang === 'pt' ? `Guarda a carta ${valText} de ${cName} nas provisões para depois.` : `Stashes the ${valText} card from ${cName} in the supplies for later.`;
+    } else if (reason === 'dead') {
+        msg = lang === 'pt' ? `Descarta na hora a carta ${valText} de ${cName}: ela nunca mais poderia ser jogada nessa trilha.` : `Immediately discards the ${valText} card from ${cName}: it could never be played to this expedition again.`;
     } else {
-        msg = lang === 'pt' ? `Abandona a carta ${valText} de ${cName} no acampamento.` : `Abandons the ${valText} card from ${cName} at camp.`;
+        msg = lang === 'pt' ? `Abandona a carta ${valText} de ${cName} no acampamento (reserva cheia).` : `Abandons the ${valText} card from ${cName} at camp (reserve is full).`;
     }
     
     if (difficulty === 'gods' && action === 'PLAY') {
@@ -1291,8 +1352,10 @@ function renderLog() {
 function calculateScore(colArray, isAutoma = false) {
   if (colArray.length === 0) return 0;
   
-  // Retracao de Expedicao Fracassada (Expedition Retraction for Automa): 1 card = abandoned (0 pts)
-  if (isAutoma && colArray.length === 1) return 0;
+  // Retracao de Expedicao Fracassada (Expedition Retraction for Automa): a single card, or
+  // any number of wagers with NO numbered card ever played, counts as abandoned (0 pts)
+  // instead of the harsh -20 (or worse) a wager multiplier would otherwise lock in.
+  if (isAutoma && (colArray.length === 1 || !colArray.some(v => v !== 'H'))) return 0;
   
   let mult = 1;
   let sum = 0;
@@ -1405,8 +1468,11 @@ function tryPlayCard(color, val) {
           COLORS.forEach(c => totalCards += expeditions[c].length);
           if (totalCards >= 15) {
             return null; // Late game, don't start new expeditions
-          } else if ((difficulty === 'medium' || difficulty === 'hard') && val > 5) {
-            return null; // Too high to start early
+          } else if (val > 5) {
+            // Too high to start: ascending-only play means a high starter forfeits
+            // every lower card of this color for the rest of the round (Easy has no
+            // replace mechanism at all, so this matters even more there).
+            return null;
           } else {
             col.push(val);
             return "PLAY";
@@ -1446,7 +1512,69 @@ function tryPlayCard(color, val) {
   }
 }
 
+// A card is permanently dead when NO future draw can ever make it playable again to its
+// expedition this round (numbered cards can, in rare cases, still be freed up by later
+// REPLACE actions lowering the column's top value, so only the provably-permanent cases
+// below are treated as dead: wager-after-numbers, 3 wagers already placed, and a
+// still-unstarted column once the "too late to start new expeditions" threshold is crossed).
+function isPermanentlyDead(color, val) {
+  const col = expeditions[color];
+
+  if (val === 'H') {
+    if (difficulty === 'gods') return col.filter(x => x === 'H').length >= 3;
+    const hasNumbers = col.some(v => v !== 'H');
+    if (hasNumbers) return true; // wagers must precede all numbers; numbers are never removed
+    return col.filter(x => x === 'H').length >= 3; // max 3 wagers; count never decreases
+  }
+
+  if (difficulty === 'gods') {
+    return col.includes(val); // duplicate value can never be played again; values never removed
+  }
+
+  const numbers = col.filter(v => v !== 'H');
+  if (numbers.length === 0) {
+    let totalCards = 0;
+    COLORS.forEach(c => totalCards += expeditions[c].length);
+    // totalCards only ever grows, so once the late-game threshold is crossed this
+    // still-empty column can never be started by ANY card again this round.
+    return totalCards >= 15;
+  }
+
+  // Easy mode has no replace/insert mechanism at all, so its expedition's top value
+  // never decreases (unlike medium/hard) - any blocked numbered card is dead forever.
+  if (difficulty === 'easy') {
+    const highest = numbers[numbers.length - 1];
+    return val <= highest;
+  }
+
+  return false;
+}
+
+function purgeDeadReserveCards() {
+  const purged = [];
+  for (let i = botReserve.length - 1; i >= 0; i--) {
+    const card = botReserve[i];
+    if (isPermanentlyDead(card.color, card.value)) {
+      purged.push(card);
+      botReserve.splice(i, 1);
+    }
+  }
+  if (purged.length > 0) {
+    const lang = localStorage.getItem('boardbots_lang') || 'pt';
+    const purgePrefix = window.I18N[lang] && window.I18N[lang].lc_log_reserve_purge ? window.I18N[lang].lc_log_reserve_purge : "Descarta da reserva (carta morta, nunca mais jogável):";
+    purged.forEach(card => {
+      const valText = card.value === 'H' ? '🤝' : card.value;
+      const cName = window.I18N[lang] && window.I18N[lang]['c_' + card.color] ? window.I18N[lang]['c_' + card.color] : card.color;
+      gameLog.unshift(`[${new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit', second:'2-digit'})}] 🗑️ ${purgePrefix} ${cName} ${valText}`);
+    });
+    if (gameLog.length > 30) gameLog.length = 30;
+    renderLog();
+  }
+  return purged;
+}
+
 function checkReservePlays() {
+  let played = [];
   let playedAny = false;
   for (let i = 0; i < botReserve.length; i++) {
     const card = botReserve[i];
@@ -1462,37 +1590,51 @@ function checkReservePlays() {
       if (gameLog.length > 30) gameLog.pop();
       renderLog();
       
+      played.push({ color: card.color, value: card.value, action });
       playedAny = true;
       break; // Restart loop after modification
     }
   }
   if (playedAny) {
-    checkReservePlays();
+    played = played.concat(checkReservePlays());
   }
+  return played;
 }
 
 function processCard() {
   if (!selColor || !selVal) return;
   
   let result = tryPlayCard(selColor, selVal);
+  let discardReason = null;
   
   if (!result) {
-    // Cannot play immediately, check reserve
-    if (botReserve.length < 2) {
+    // Cannot play immediately: a permanently dead card is discarded right away
+    // instead of wasting one of the bot's 2 precious reserve slots on it.
+    if (isPermanentlyDead(selColor, selVal)) {
+      result = "DISCARD";
+      discardReason = 'dead';
+    } else if (botReserve.length < 2) {
       botReserve.push({ color: selColor, value: selVal });
       result = "RESERVE";
     } else {
       result = "DISCARD";
+      discardReason = 'full';
     }
   }
   
-  showResult(result, selColor, selVal);
-  logAction(result, selColor, selVal);
+  logAction(result, selColor, selVal, discardReason);
   
   // If a card was played, see if any reserve card can now be chained
+  let reservePlays = [];
   if (result === "PLAY" || result === "REPLACE") {
-    checkReservePlays();
+    reservePlays = checkReservePlays();
   }
+  
+  // Any expedition change can also make an already-held reserve card permanently
+  // dead (e.g. a stashed wager whose column just got started by another draw).
+  const reservePurges = purgeDeadReserveCards();
+  
+  showResult(result, selColor, selVal, discardReason, reservePlays, reservePurges);
   
   selColor = null; selVal = null;
   document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
@@ -1502,11 +1644,14 @@ function processCard() {
   renderTableau();
 }
 
-function showResult(action, color, value) {
+function showResult(action, color, value, discardReason, reservePlays, reservePurges) {
   const modal = document.getElementById('resultModal');
   const icon = document.getElementById('resIcon');
   const title = document.getElementById('resTitle');
   const desc = document.getElementById('resDesc');
+  const extra = document.getElementById('resExtra');
+  const lang = localStorage.getItem('boardbots_lang') || 'pt';
+  const colorEmoji = { yellow: '🟨', blue: '🟦', white: '⬜', green: '🟩', red: '🟥' };
   
   if (action === 'PLAY') {
     icon.innerText = '🟢';
@@ -1514,8 +1659,16 @@ function showResult(action, color, value) {
     desc.innerText = i18n('lc_res_play_desc');
   } else if (action === 'DISCARD') {
     icon.innerText = '🗑️';
-    title.innerText = i18n('lc_res_discard_title');
-    desc.innerText = i18n('lc_res_discard_desc');
+    if (discardReason === 'dead') {
+      title.innerText = i18n('lc_res_discard_dead_title');
+      desc.innerText = i18n('lc_res_discard_dead_desc');
+    } else if (discardReason === 'full') {
+      title.innerText = i18n('lc_res_discard_title');
+      desc.innerText = i18n('lc_res_discard_full_desc');
+    } else {
+      title.innerText = i18n('lc_res_discard_title');
+      desc.innerText = i18n('lc_res_discard_desc');
+    }
   } else if (action === 'REPLACE') {
     icon.innerText = '🔄';
     title.innerText = i18n('lc_res_replace_title');
@@ -1526,8 +1679,30 @@ function showResult(action, color, value) {
     desc.innerText = i18n('lc_res_reserve_desc');
   }
   
+  // Surface any automatic side-effects (reserve chain-plays, dead-card purges) right
+  // here in the same modal, instead of leaving them only visible in the action log.
+  let extraHtml = '';
+  if (reservePlays && reservePlays.length > 0) {
+    extraHtml += `<div class="result-extra-title">${i18n('lc_res_extra_reserve_plays_title')}</div>`;
+    reservePlays.forEach(c => {
+      const valText = c.value === 'H' ? '🤝' : c.value;
+      const cName = window.I18N[lang] && window.I18N[lang]['c_' + c.color] ? window.I18N[lang]['c_' + c.color] : c.color;
+      extraHtml += `<div class="result-extra-item">${colorEmoji[c.color]} ${cName} ${valText} (${c.action})</div>`;
+    });
+  }
+  if (reservePurges && reservePurges.length > 0) {
+    extraHtml += `<div class="result-extra-title">${i18n('lc_res_extra_reserve_purge_title')}</div>`;
+    reservePurges.forEach(c => {
+      const valText = c.value === 'H' ? '🤝' : c.value;
+      const cName = window.I18N[lang] && window.I18N[lang]['c_' + c.color] ? window.I18N[lang]['c_' + c.color] : c.color;
+      extraHtml += `<div class="result-extra-item">${colorEmoji[c.color]} ${cName} ${valText}</div>`;
+    });
+  }
+  extra.innerHTML = extraHtml;
+  
   modal.style.display = 'flex';
 }
+
 
 function closeResult() {
   document.getElementById('resultModal').style.display = 'none';
