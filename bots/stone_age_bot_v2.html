@@ -4,312 +4,942 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Automa — Stone Age Solo (v2)</title>
+    <link rel="icon" href="../assets/mascot-trimmed.png" type="image/png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Rye&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/site.css?v=7">
     <style>
-        :root{
-            /* Shared "house style": black / white / gray / blue, one thematic accent per bot */
-            --bg-0:#0b0e12;
-            --bg-1:#12161c;
-            --surface:#181d25;
-            --surface-2:#20262f;
-            --border:#2b323d;
-            --text:#eef1f5;
-            --text-dim:#9aa4b2;
-            --blue:#4f8cff;
-            --blue-soft:#274168;
-            --blue-glow:rgba(79,140,255,0.35);
-            --accent:#c9971f; /* Stone Age nod: amber/ochre like the game's cave-painting art */
-            --accent-dim:#8a6a2e;
-            --wood:#a97c50; --clay:#c1683f; --stone:#8a8f98; --gold:#e0b23c;
-            --font-display:'Rye','Segoe UI',serif;
-            --font-body:'Inter','Segoe UI',Tahoma,Geneva,Verdana,sans-serif;
-            --radius:14px;
-        }
-        *{box-sizing:border-box;}
-        html{-webkit-text-size-adjust:100%;}
-        body{
-            font-family:var(--font-body);
-            background:
-                radial-gradient(circle at 15% 0%, rgba(79,140,255,0.08), transparent 55%),
-                radial-gradient(circle at 85% 100%, rgba(201,151,31,0.06), transparent 50%),
-                linear-gradient(180deg, var(--bg-0), var(--bg-1));
-            background-attachment:fixed;
-            color:var(--text);
-            max-width:720px;
-            margin:0 auto;
-            padding:18px;
-            padding-left:max(18px, env(safe-area-inset-left));
-            padding-right:max(18px, env(safe-area-inset-right));
-            padding-bottom:max(18px, env(safe-area-inset-bottom));
-            -webkit-tap-highlight-color:transparent;
-        }
-        button, select, .loc-cell{ touch-action:manipulation; }
+:root{
+    --bg-0:#241d16; --bg-1:#16110d;
+    --surface:rgba(48, 37, 27, 0.92); --surface-2:rgba(68, 52, 38, 0.85);
+    --border:#8c6946; --text:#f5ede1; --text-dim:#cfba99;
+    --blue:#c7623a; --blue-glow:rgba(199, 98, 58, 0.6);
+    --accent:#e6a147; --accent-dim:#b0742a;
+    --font-display:'Caveat', cursive, serif;
+    --font-body:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --radius:6px;
+}
+* { box-sizing:border-box; margin: 0; padding: 0; }
+html { -webkit-text-size-adjust:100%; }
+body {
+    font-family:var(--font-body);
+    font-size: 1rem;
+    line-height: 1.5;
+    background-color: var(--bg-0);
+    background-image: 
+        radial-gradient(circle at 50% 50%, rgba(219, 154, 70, 0.08) 0%, transparent 60%),
+        url('data:image/svg+xml;utf8,<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><filter id="noiseFilter"><feTurbulence type="fractalNoise" baseFrequency="0.6" numOctaves="4" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23noiseFilter)" opacity="0.08"/></svg>');
+    background-attachment:fixed;
+    color:var(--text);
+    margin:0 auto;
+    padding-bottom:max(30px, env(safe-area-inset-bottom));
+    -webkit-tap-highlight-color:transparent;
+    min-height: 100vh;
+}
+.hidden { display: none !important; }
 
-        @keyframes fadeSlideUp{ from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);} }
-        @keyframes softGlow{ 0%,100%{box-shadow:0 0 0 rgba(79,140,255,0);} 50%{box-shadow:0 0 16px var(--blue-glow);} }
-        @keyframes popIn{ 0%{transform:scale(0.85); opacity:0;} 60%{transform:scale(1.04);} 100%{transform:scale(1); opacity:1;} }
+/* Top Sticky Navigation */
+.top-nav {
+    width: 100%;
+    max-width: 1300px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 16px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    background: rgba(36, 29, 22, 0.94);
+    border-bottom: 2px solid var(--border);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+}
+.nav-brand {
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+}
+.nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.nav-btn {
+    background: var(--surface-2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 6px 12px;
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.15s;
+}
+.nav-btn:hover {
+    background: var(--accent);
+    color: #000;
+    border-color: var(--accent);
+}
+.top-nav .lang-switch {
+    position: static !important;
+    display: inline-flex !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 4px !important;
+    overflow: hidden !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    background: transparent !important;
+    z-index: auto !important;
+}
+.top-nav .lang-btn {
+    position: static !important;
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 6px 10px !important;
+    background: var(--surface-2) !important;
+    color: var(--text) !important;
+    font-family: var(--font-body) !important;
+    font-size: 0.82rem !important;
+    font-weight: 700 !important;
+    cursor: pointer !important;
+    transition: all 0.15s !important;
+}
+.top-nav .lang-btn.active {
+    background: var(--accent) !important;
+    color: #000 !important;
+    font-weight: 800 !important;
+}
 
-        /* --- Header / hero banner --- */
-        .hero{
-            position:relative;
-            border-radius:var(--radius);
-            overflow:hidden;
-            margin-bottom:18px;
-            border:1px solid var(--border);
-            animation:fadeSlideUp 0.5s ease both;
-        }
-        .hero img{ width:100%; height:150px; object-fit:cover; display:block; filter:saturate(0.85) brightness(0.65); }
-        .hero::after{ content:''; position:absolute; inset:0; background:linear-gradient(180deg, rgba(11,14,18,0.15), rgba(11,14,18,0.92)); }
-        .hero-content{ position:absolute; inset:0; display:flex; flex-direction:column; justify-content:flex-end; padding:14px 18px; }
-        h1{
-            font-family:var(--font-display);
-            font-weight:normal;
-            letter-spacing:1px;
-            margin:0;
-            font-size:2em;
-            color:#fff;
-            text-shadow:0 2px 10px rgba(0,0,0,0.6);
-        }
-        .subtitle{ color:var(--accent); font-size:0.9em; letter-spacing:0.5px; margin-top:2px; font-weight:600; }
+/* Hero Banner */
+.hero-wrapper {
+    width: 100%;
+    max-width: 1300px;
+    margin: 14px auto 18px;
+    padding: 0 16px;
+}
+.hero {
+    position: relative;
+    border-radius: 10px;
+    overflow: hidden;
+    height: 150px;
+    display: flex;
+    align-items: center;
+    border: 3px solid var(--border);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    background: #000;
+}
+.hero-bg {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    object-fit: cover;
+    object-position: center 30%;
+    filter: brightness(0.4) sepia(0.3);
+}
+.hero-content {
+    position: relative;
+    z-index: 2;
+    padding: 20px;
+    width: 100%;
+    background: linear-gradient(90deg, rgba(22,17,13,0.92) 0%, rgba(22,17,13,0.6) 60%, rgba(22,17,13,0.1) 100%);
+}
+.hero-badge {
+    display: inline-block;
+    background: var(--blue);
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    padding: 3px 8px;
+    border-radius: 3px;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+}
+.hero-title {
+    font-family: var(--font-display);
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0;
+    text-shadow: 2px 2px 4px #000;
+    line-height: 1.1;
+}
+.hero-subtitle {
+    color: var(--accent);
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin-top: 2px;
+    letter-spacing: 1px;
+}
 
-        h2{
-            font-family:var(--font-display);
-            font-weight:normal;
-            letter-spacing:0.5px;
-            color:var(--accent);
-            margin:0 0 14px;
-            display:flex;
-            align-items:center;
-            gap:10px;
-            font-size:1.35em;
-        }
-        h2 svg{ width:26px; height:26px; flex-shrink:0; }
-        h3{ color:var(--text); font-family:var(--font-body); font-size:1em; margin:16px 0 8px; }
+.main-interface {
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 0 16px;
+}
 
-        .card{
-            background:var(--surface);
-            padding:20px;
-            border-radius:var(--radius);
-            border:1px solid var(--border);
-            box-shadow:0 6px 18px rgba(0,0,0,0.35);
-            margin-bottom:18px;
-            animation:fadeSlideUp 0.45s ease both;
-            transition:border-color 0.25s, box-shadow 0.25s;
-        }
-        .card:hover{ border-color:#374050; }
+/* Mode Visibility */
+body.mode-automa .official-only { display: none !important; }
+body.mode-official .automa-only { display: none !important; }
 
-        .icon{ width:1.5em; height:1.5em; vertical-align:middle; flex-shrink:0; }
-        .icon-lg{ width:2.4em; height:2.4em; }
+#setup-screen {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 18px;
+}
+@media (min-width: 900px) {
+    #setup-screen {
+        grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+    }
+}
 
-        .dice-container{ display:flex; justify-content:center; gap:16px; margin-bottom:20px; }
-        .die{
-            width:64px; height:64px;
-            background:linear-gradient(145deg,#232a34,#171b21);
-            border:2px solid var(--border);
-            border-radius:12px;
-            display:flex; align-items:center; justify-content:center;
-            font-family:var(--font-display);
-            font-size:32px;
-            color:var(--blue);
-            box-shadow:inset 0 -4px 0 rgba(0,0,0,0.35), 0 3px 8px rgba(0,0,0,0.4);
-            transition:transform 0.25s ease;
-        }
-        .die.rolled{ animation:popIn 0.35s ease; }
+.game-view-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    width: 100%;
+}
+.game-col-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+.game-col-main {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+@media (min-width: 900px) {
+    .game-view-grid {
+        display: grid;
+        grid-template-columns: 380px 1fr;
+        gap: 20px;
+        align-items: start;
+    }
+}
 
-        button{
-            width:100%;
-            padding:14px;
-            background:linear-gradient(180deg,#2a3442,#1c232c);
-            color:var(--text);
-            border:1px solid var(--border);
-            border-radius:10px;
-            font-family:var(--font-body);
-            font-weight:600;
-            letter-spacing:0.3px;
-            font-size:16px;
-            cursor:pointer;
-            transition:background 0.2s, transform 0.1s, box-shadow 0.2s, border-color 0.2s;
-            margin-top:8px;
-        }
-        button.primary{ background:linear-gradient(180deg, var(--blue), #2f63c9); border-color:#3f6fd6; color:#fff; }
-        button:active{ transform:translateY(1px) scale(0.995); }
-        button:disabled{ background:#20262f; color:#5b6472; border-color:var(--border); cursor:not-allowed; box-shadow:none; }
-        button.btn-small{ width:auto; padding:9px 14px; font-size:14px; margin:4px; }
-        @media (hover:hover) and (pointer:fine){
-            button:not(:disabled):hover{ border-color:var(--blue); box-shadow:0 0 0 3px var(--blue-soft); }
-            button.primary:not(:disabled):hover{ box-shadow:0 0 14px var(--blue-glow); }
-        }
-        button.btn-secondary{ background:linear-gradient(180deg,#3a2f20,#241c12); border-color:var(--accent-dim); }
+button, select { touch-action:manipulation; }
+@keyframes fadeSlideUp{ from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);} }
+@keyframes popIn{ 0%{transform:scale(0.88); opacity:0;} 100%{transform:scale(1); opacity:1;} }
 
-        .result-title{ font-size:1.05em; text-align:center; margin-top:18px; color:var(--text-dim); }
-        .result-location{
-            font-size:1.3em; font-weight:700; text-align:center; color:var(--accent);
-            margin:10px 0; padding:12px; background:var(--surface-2);
-            border:1px solid var(--border); border-radius:10px;
-            transition:all 0.25s ease;
-        }
-        .result-effect{ text-align:center; font-size:1.05em; padding:8px; color:#5fd68a; font-weight:600; }
-        .fallback{ font-size:0.9em; color:var(--text-dim); text-align:center; line-height:1.5; padding:10px; border-top:1px dashed var(--border); }
+h2 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    color: var(--accent);
+    margin: 0 0 12px;
+    padding-bottom: 6px;
+    font-size: 1.6rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 2px dashed var(--border);
+}
+h3 {
+    color: var(--accent);
+    font-size: 1.3rem;
+    margin: 14px 0 6px;
+    font-family: var(--font-display);
+    font-weight: 700;
+}
 
-        .rules-list li{ margin-bottom:10px; line-height:1.5; color:var(--text-dim); }
-        .rules-list li strong{ color:var(--text); }
-        .setup-list li{ margin-bottom:12px; line-height:1.55; }
+/* Card container */
+.card {
+    background: var(--surface);
+    padding: 18px;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.4);
+    margin-bottom: 18px;
+    animation: fadeSlideUp 0.3s ease both;
+    position: relative;
+    word-break: break-word;
+}
 
-        .status-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:10px; text-align:center; }
-        .status-box{
-            background:var(--surface-2); border:1px solid var(--border); border-radius:12px; padding:12px 6px;
-            transition:box-shadow 0.3s;
-        }
-        .status-box .label{ font-size:0.72em; text-transform:uppercase; color:var(--text-dim); display:flex; align-items:center; justify-content:center; gap:5px; letter-spacing:0.5px; }
-        .status-box .value{ font-size:1.7em; font-weight:800; color:var(--blue); margin:4px 0; }
-        .adjust-row{ display:flex; justify-content:center; gap:8px; margin-top:2px; }
-        .adjust-row button{ width:42px; height:38px; padding:0; font-size:18px; margin:0; }
+label { display:block; margin:8px 0 4px; font-size:0.9rem; color:var(--text-dim); font-weight: 600; }
+select, input[type=number] {
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 1rem;
+    background: rgba(0,0,0,0.4);
+    color: var(--text);
+    border: 1.5px solid var(--border);
+    border-radius: 6px;
+    font-family: var(--font-body);
+}
+select:focus, input:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+.small {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    margin-top: 4px;
+    line-height: 1.4;
+}
 
-        .loc-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(90px,1fr)); gap:9px; margin:15px 0; }
-        .loc-cell{
-            border:2px solid var(--border); background:var(--surface-2); border-radius:10px;
-            padding:10px 6px; min-height:52px; text-align:center; font-size:0.76em;
-            cursor:pointer; user-select:none; color:var(--text-dim);
-            display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
-            transition:transform 0.15s, border-color 0.15s, background 0.15s;
-        }
-        .loc-cell:active{ transform:scale(0.96); }
-        .loc-cell .num{ font-weight:800; font-size:1.25em; font-family:var(--font-display); color:var(--text); }
-        .loc-cell.resource-wood{ border-color:var(--wood); }
-        .loc-cell.resource-clay{ border-color:var(--clay); }
-        .loc-cell.resource-stone{ border-color:var(--stone); }
-        .loc-cell.resource-gold{ border-color:var(--gold); }
-        .loc-cell.occupied{ background:#2a1f1f; opacity:0.65; text-decoration:line-through; border-color:#5a3a3a; }
-        .loc-icon{ width:22px; height:22px; }
+/* Buttons */
+.btn, button.primary, .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 18px;
+    border-radius: 6px;
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-decoration: none;
+}
+button.primary, .btn-primary {
+    background: var(--blue);
+    border: 2px solid #823315;
+    color: #fff;
+    width: 100%;
+    margin-top: 10px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+button.primary:hover {
+    filter: brightness(1.15);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px rgba(0,0,0,0.4);
+}
+button.primary:active {
+    transform: translateY(2px);
+    box-shadow: none;
+}
+button.primary:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    transform: none;
+}
+.btn-secondary {
+    background: var(--surface-2);
+    border: 1.5px solid var(--border);
+    color: var(--text);
+    width: 100%;
+    margin-top: 10px;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.25);
+}
+.btn-secondary:hover {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+}
 
-        .log-panel{
-            max-height:170px; overflow-y:auto; -webkit-overflow-scrolling:touch; font-size:0.86em;
-            background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:8px 12px;
-        }
-        .log-panel div{ padding:5px 0; border-bottom:1px dashed var(--border); color:var(--text-dim); }
-        .log-panel div:first-child{ color:var(--text); font-weight:600; }
+/* Status Grid & Boxes (+- Buttons) */
+.status-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+    margin: 12px 0;
+    width: 100%;
+}
+.status-box {
+    background: rgba(0,0,0,0.35);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 8px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.25);
+    min-height: 105px;
+}
+.status-box .label {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    line-height: 1.2;
+}
+.status-box .value {
+    font-size: 1.8rem;
+    font-weight: 900;
+    color: var(--accent);
+    margin: 2px 0;
+    line-height: 1;
+    font-family: var(--font-display);
+    text-shadow: 1px 1px 2px #000;
+}
+.adjust-row {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    width: 100%;
+    margin-top: 4px;
+}
+.btn-adjust {
+    width: 34px;
+    height: 30px;
+    font-size: 1.2rem;
+    font-weight: 900;
+    line-height: 1;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    transition: all 0.12s;
+    font-family: var(--font-body);
+}
+.btn-adjust:hover {
+    background: var(--accent);
+    color: #000;
+    border-color: var(--accent);
+}
+.btn-adjust:active {
+    transform: translateY(1px);
+    box-shadow: none;
+}
 
-        .pending-form{ background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:14px; margin-top:10px; animation:fadeSlideUp 0.3s ease both; }
-        .pending-form label{ display:block; margin:10px 0 4px; font-weight:600; font-size:0.9em; color:var(--text-dim); }
-        .pending-form select, .pending-form input{ width:100%; padding:10px; border-radius:8px; border:1px solid var(--border); box-sizing:border-box; font-size:16px; background:var(--bg-1); color:var(--text); }
-        .hidden{ display:none !important; }
+.btn-small {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    line-height: 1.2;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    transition: all 0.12s;
+    font-family: var(--font-body);
+}
+.btn-small:hover {
+    background: var(--accent);
+    color: #000;
+    border-color: var(--accent);
+}
+.btn-small:active {
+    transform: translateY(1px);
+    box-shadow: none;
+}
 
-        table{ width:100%; border-collapse:collapse; margin:10px 0 16px; font-size:0.9em; }
-        th,td{ padding:8px; border:1px solid var(--border); }
-        th{ background:var(--surface-2); text-align:left; color:var(--text); }
-        td{ color:var(--text-dim); }
-        td .res-cell{ display:flex; align-items:center; gap:8px; color:var(--text); }
+/* Pending Form & Action Resolution Buttons */
+.pending-form {
+    background: rgba(0, 0, 0, 0.45);
+    border: 2px solid var(--accent);
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin: 16px 0;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+}
+.pending-form strong {
+    color: var(--accent);
+    display: block;
+    font-size: 1.05rem;
+    margin-bottom: 10px;
+    font-family: var(--font-display);
+}
+.pending-form label {
+    margin-top: 10px;
+    margin-bottom: 4px;
+    color: var(--text-dim);
+    font-size: 0.88rem;
+    display: block;
+}
+.pending-form .btn-action {
+    background: var(--surface-2);
+    border: 1.5px solid var(--accent);
+    color: #fff;
+    padding: 8px 14px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    white-space: normal;
+    line-height: 1.3;
+    width: 100%;
+}
+.pending-form .btn-action:hover {
+    background: var(--accent);
+    color: #000;
+}
+.pending-form .btn-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+}
+.pending-form .btn-row .btn-action {
+    flex: 1;
+    min-width: 100px;
+    margin-top: 0;
+}
 
-        .small{ font-size:0.85em; color:var(--text-dim); }
-        label.field-label{ display:block; font-weight:600; margin:8px 0 4px; color:var(--text-dim); }
-        input[type=number]{ width:100%; padding:10px; margin:6px 0; border-radius:8px; border:1px solid var(--border); box-sizing:border-box; font-size:16px; background:var(--bg-1); color:var(--text); }
+/* SVG Icons Standardization (Fixed Too Large Icons) */
+.icon {
+    width: 20px !important;
+    height: 20px !important;
+    max-width: 20px !important;
+    max-height: 20px !important;
+    min-width: 20px !important;
+    min-height: 20px !important;
+    vertical-align: middle;
+    display: inline-block;
+    stroke-width: 2;
+    flex-shrink: 0;
+}
+h2 .icon {
+    width: 24px !important;
+    height: 24px !important;
+    max-width: 24px !important;
+    max-height: 24px !important;
+    min-width: 24px !important;
+    min-height: 24px !important;
+}
+.status-box .label .icon {
+    width: 16px !important;
+    height: 16px !important;
+    max-width: 16px !important;
+    max-height: 16px !important;
+    min-width: 16px !important;
+    min-height: 16px !important;
+}
+.loc-icon {
+    width: 16px !important;
+    height: 16px !important;
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 4px;
+    flex-shrink: 0;
+}
 
-        /* --- Credits footer (shared component across all bots) --- */
-        .credits{
-            display:flex; align-items:center; gap:14px;
-            background:var(--surface);
-            border:1px solid var(--border);
-            border-radius:var(--radius);
-            padding:14px 16px;
-            margin-top:8px;
-            animation:fadeSlideUp 0.5s ease both;
-        }
-        .credits img{ width:52px; height:52px; object-fit:cover; border-radius:8px; border:1px solid var(--border); flex-shrink:0; }
-        .credits-text{ font-size:0.85em; color:var(--text-dim); line-height:1.5; }
-        .credits-text strong{ color:var(--text); }
-        .credits-text a{ color:var(--blue); text-decoration:none; }
-        .credits-text a:hover{ text-decoration:underline; }
+/* Location Grid & Cells (Compact Chips) */
+.loc-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 6px;
+    margin: 10px 0;
+}
+.loc-cell {
+    background: rgba(0,0,0,0.35);
+    border: 1.5px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 8px;
+    text-align: left;
+    cursor: pointer;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 38px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    transition: all 0.15s;
+    position: relative;
+    line-height: 1.2;
+}
+.loc-cell:hover {
+    border-color: var(--accent);
+    background: rgba(219, 154, 70, 0.12);
+}
+.loc-cell .num {
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: var(--accent);
+    background: rgba(0,0,0,0.4);
+    border-radius: 3px;
+    padding: 1px 4px;
+    flex-shrink: 0;
+}
+.loc-cell.occupied {
+    border-color: #ef4444;
+    background: rgba(239, 68, 68, 0.25);
+    opacity: 0.65;
+    text-decoration: line-through;
+}
+.loc-cell.resource-wood { border-left: 4px solid #8d6e63; }
+.loc-cell.resource-clay { border-left: 4px solid #d87d4a; }
+.loc-cell.resource-stone { border-left: 4px solid #9e9e9e; }
+.loc-cell.resource-gold { border-left: 4px solid #fbbf24; }
 
-        /* Widescreen: distribui os cards lado a lado em vez de empilhar tudo na vertical.
-           Baseado em min-width (não em aspect-ratio) para reagir corretamente a qualquer rotação
-           de tela (celular retrato/paisagem, tablet, desktop). */
-        @media (min-width:700px){
-            #game-area{ display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:20px; align-items:start; }
-            #game-area .card{ margin-bottom:0; height:100%; }
-        }
-        @media (min-width:900px){
-            body{ max-width:1300px; }
-        }
+/* 3D Dice Tray & Box */
+.dice-tray-container {
+    width: 100%;
+    height: 160px;
+    background: rgba(0, 0, 0, 0.4);
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    position: relative;
+    overflow: hidden;
+    margin: 8px 0 14px;
+    box-shadow: inset 0 3px 12px rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+#dice-box {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 2;
+}
+#dice-box canvas {
+    width: 100% !important;
+    height: 100% !important;
+    display: block;
+}
+.dice-container {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    z-index: 1;
+}
+.dice-tray-container.has-3d .dice-container {
+    display: none;
+}
+.die {
+    width: 54px;
+    height: 54px;
+    background: linear-gradient(135deg, #f7f1dc, #ded5b8);
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    font-size: 1.8rem;
+    font-weight: 900;
+    color: var(--bg-0);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.35);
+    font-family: var(--font-body);
+}
+.result-title {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 700;
+    margin-top: 8px;
+}
+.result-location {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--accent);
+    margin: 2px 0;
+    font-family: var(--font-display);
+}
+.result-effect {
+    font-size: 0.95rem;
+    color: var(--text);
+    margin: 2px 0 6px;
+    font-weight: 600;
+}
+.fallback {
+    font-size: 0.85rem;
+    color: #f59e0b;
+    font-style: italic;
+    margin-bottom: 6px;
+}
 
-        /* --- Floating help button & language switch (shared pattern across all bots) --- */
-        .btn-help-float{
-            position:fixed; bottom:18px; right:18px; z-index:60;
-            width:48px; height:48px; border-radius:50%;
-            background:linear-gradient(180deg, var(--blue), #2f63c9);
-            color:#fff; border:1px solid #3f6fd6; font-weight:800; font-size:1.3em;
-            display:flex; align-items:center; justify-content:center;
-            box-shadow:0 4px 14px rgba(0,0,0,0.45);
-            cursor:pointer; transition:transform 0.15s, box-shadow 0.2s; margin:0; padding:0;
-        }
-        .btn-help-float:active{ transform:scale(0.92); }
-        @media (hover:hover) and (pointer:fine){ .btn-help-float:hover{ box-shadow:0 0 16px var(--blue-glow); } }
+/* History Log */
+.log-panel {
+    background: rgba(0,0,0,0.35);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 10px;
+    max-height: 220px;
+    overflow-y: auto;
+    font-size: 0.88rem;
+    line-height: 1.4;
+}
+.log-panel div {
+    margin-bottom: 6px;
+    border-bottom: 1px dashed rgba(255,255,255,0.08);
+    padding-bottom: 4px;
+}
+.log-panel div:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
 
-        .btn-reset-float{
-            position:fixed; bottom:18px; left:18px; z-index:60;
-            width:auto; margin:0; padding:10px 16px; border-radius:999px;
-            background:var(--surface); color:var(--text-dim); border:1px solid var(--border);
-            font-weight:700; font-size:0.8em; box-shadow:0 4px 14px rgba(0,0,0,0.35);
-        }
-        .btn-reset-float:active{ transform:scale(0.96); }
+/* Mode Selection */
+.mode-select-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px;
+    border: 2px solid var(--border);
+    background: rgba(0,0,0,0.25);
+    border-radius: 8px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.mode-select-row:hover { background: rgba(255,255,255,0.05); }
+.mode-select-row input[type=radio] {
+    width: 20px;
+    height: 20px;
+    margin-top: 2px;
+    accent-color: var(--blue);
+    flex-shrink: 0;
+}
+.mode-select-row strong {
+    color: var(--accent);
+    display: block;
+    margin-bottom: 2px;
+    font-size: 1.05rem;
+    font-family: var(--font-body);
+}
 
-        .bmc-inline{ display:flex; justify-content:center; margin-top:14px; }
-        .bmc-inline a{ display:inline-flex; align-items:center; gap:8px; background:#FFDD00; color:#000; font-weight:700; font-size:0.85em; padding:9px 16px; border-radius:8px; text-decoration:none; box-shadow:0 4px 14px rgba(0,0,0,0.35); transition:transform 0.15s; }
-        .bmc-inline a:hover{ transform:scale(1.05); }
-        .bmc-inline svg{ width:18px; height:18px; flex-shrink:0; }
+details > summary {
+    cursor: pointer;
+    font-weight: 700;
+    color: var(--accent);
+    padding: 8px 0;
+    font-size: 1rem;
+}
+details .setup-list {
+    margin: 6px 0 10px 18px;
+    font-size: 0.9rem;
+}
+details .setup-list li {
+    margin-bottom: 4px;
+}
 
-        .lang-switch{ position:fixed; top:14px; right:14px; z-index:60; display:flex; gap:2px; background:var(--surface); border:1px solid var(--border); border-radius:999px; padding:4px; box-shadow:0 4px 14px rgba(0,0,0,0.35); }
-        .lang-btn{ width:auto; margin:0; padding:6px 12px; font-size:0.78em; border-radius:999px; border:none; background:transparent; color:var(--text-dim); font-weight:700; }
-        .lang-btn.active{ background:var(--blue); color:#fff; }
+.end-banner {
+    padding: 14px;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 1.2rem;
+    font-weight: 800;
+    margin-bottom: 12px;
+    font-family: var(--font-display);
+}
+.end-banner.win {
+    background: rgba(34, 197, 94, 0.2);
+    border: 2px solid #22c55e;
+    color: #4ade80;
+}
+.end-banner.lose {
+    background: rgba(239, 68, 68, 0.2);
+    border: 2px solid #ef4444;
+    color: #f87171;
+}
+.exhaustion-value.warn {
+    color: #ef4444 !important;
+}
 
-        /* --- Help modal (shared pattern) --- */
-        .modal-overlay{ display:none; position:fixed; inset:0; background:rgba(5,7,10,0.75); z-index:100; padding:20px 14px; overflow-y:auto; -webkit-overflow-scrolling:touch; }
-        .modal-overlay.open{ display:block; animation:fadeSlideUp 0.2s ease both; }
-        .modal-content{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); max-width:640px; margin:20px auto; padding:24px; position:relative; }
-        .modal-close{ position:absolute; top:14px; right:14px; width:36px; height:36px; margin:0; padding:0; border-radius:50%; font-size:1.1em; }
-        .modal-content h3{ color:var(--accent); margin:20px 0 8px; }
-        .modal-content h3:first-of-type{ margin-top:4px; }
-        .modal-content p{ color:var(--text-dim); line-height:1.55; }
+/* Modal Overlay & Help Dialog */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 1000;
+    padding: 16px;
+    overflow-y: auto;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    align-items: center;
+    justify-content: center;
+}
+.modal-overlay.open {
+    display: flex !important;
+    animation: fadeSlideUp 0.25s ease both;
+}
+.modal-content {
+    background: #30251b;
+    border: 3px solid var(--border);
+    border-radius: 12px;
+    max-width: 680px;
+    width: 100%;
+    max-height: 85vh;
+    overflow-y: auto;
+    padding: 24px 20px;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+    color: #f5ede1;
+    font-family: var(--font-body);
+    font-size: 0.92rem;
+    line-height: 1.6;
+}
+.modal-content h2 {
+    font-family: var(--font-display);
+    font-size: 1.8rem;
+    color: var(--accent);
+    margin-bottom: 12px;
+}
+.modal-content h3 {
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    color: var(--accent);
+    margin: 14px 0 6px;
+}
+.modal-content p {
+    margin-bottom: 10px;
+}
+.modal-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0;
+    font-size: 0.9rem;
+}
+.modal-content th, .modal-content td {
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+}
+.modal-content th {
+    background: rgba(0,0,0,0.3);
+    color: var(--accent);
+}
+.modal-content .rules-list {
+    margin: 6px 0 12px 18px;
+}
+.modal-content .rules-list li {
+    margin-bottom: 6px;
+}
+.modal-close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    font-size: 1.1rem;
+    font-weight: bold;
+    background: var(--surface-2);
+    border: 1.5px solid var(--border);
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 20;
+    transition: all 0.15s;
+}
+.modal-close:hover {
+    background: #b91c1c;
+    border-color: #ef4444;
+}
 
-        details{ margin-bottom:6px; }
-        details > summary{ cursor:pointer; font-weight:700; color:var(--text); padding:10px 0; list-style:none; display:flex; align-items:center; gap:8px; font-family:var(--font-body); }
-        details > summary::-webkit-details-marker{ display:none; }
-        details > summary::before{ content:'▸'; color:var(--blue); transition:transform 0.2s; display:inline-block; }
-        details[open] > summary::before{ transform:rotate(90deg); }
-        details .setup-list{ margin-top:2px; }
+.credits {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.85rem;
+    margin-top: 16px;
+}
+.credits img {
+    width: 54px;
+    height: 54px;
+    border-radius: 8px;
+    object-fit: cover;
+    border: 2px solid var(--border);
+}
+.credits a { color: var(--accent); text-decoration: none; font-weight: bold; }
 
-        /* --- Solo mode picker (Automa vs Official survival mode) --- */
-        body.mode-official .automa-only{ display:none !important; }
-        body.mode-automa .official-only{ display:none !important; }
-        .mode-select-row{ display:flex; align-items:flex-start; gap:12px; padding:12px; border:1px solid var(--border); background:var(--surface-2); border-radius:10px; margin-bottom:10px; cursor:pointer; transition:border-color 0.2s; }
-        .mode-select-row:hover{ border-color:var(--blue); }
-        .mode-select-row input[type=radio]{ width:20px; height:20px; margin-top:2px; accent-color:var(--blue); flex-shrink:0; }
-        .mode-select-row strong{ color:var(--text); display:block; margin-bottom:3px; }
-        .mode-select-row p{ margin:0; }
-        .exhaustion-value.warn{ color:#e05555 !important; }
-        .end-banner{ text-align:center; padding:18px; border-radius:10px; font-family:var(--font-display); font-size:1.4em; margin-bottom:14px; animation:fadeSlideUp 0.4s ease both; }
-        .end-banner.lose{ background:#3a1f1f; color:#ff8080; border:1px solid #5a3a3a; }
-        .end-banner.win{ background:#1f3a24; color:#7fe89a; border:1px solid #3a5a3f; }
-    </style>
+/* Standard Buy Me a Coffee Button */
+.bmc-btn, .bmc-inline, .bmc-float {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  background: #FFDD00 !important;
+  color: #000000 !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+  font-weight: 700 !important;
+  font-size: 0.92rem !important;
+  padding: 10px 18px !important;
+  border-radius: 8px !important;
+  border: 1px solid rgba(0,0,0,0.15) !important;
+  text-decoration: none !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25) !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+  cursor: pointer !important;
+  margin: 16px auto !important;
+  width: max-content !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+}
+.bmc-btn:hover, .bmc-inline:hover, .bmc-float:hover {
+  transform: translateY(-2px) scale(1.02) !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35) !important;
+  background: #FFE433 !important;
+  color: #000000 !important;
+}
+.bmc-btn svg, .bmc-inline svg, .bmc-float svg {
+  width: 20px !important;
+  height: 20px !important;
+  stroke: #000000 !important;
+  fill: none !important;
+  flex-shrink: 0 !important;
+  vertical-align: middle !important;
+}
+</style>
     <script src="../assets/logger.js"></script>
 </head>
 <body class="mode-automa">
 
-    <button class="btn-help-float" onclick="openHelp()" aria-label="Help">?</button>
-    <button class="btn-reset-float hidden" id="btnResetGame" onclick="resetGame()" data-i18n="resetBtn">🔄 Nova Partida</button>
+<!-- Top Sticky Navigation -->
+<nav class="top-nav">
+  <a class="nav-brand" href="../index.html">
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
+    <span>Stone Age</span>
+  </a>
+  <div class="nav-actions">
+    <button class="nav-btn" onclick="openHelp()">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9.3 9.2a2.7 2.7 0 0 1 5.1 1.2c0 1.8-2.4 2-2.4 3.6"/><circle cx="12" cy="17" r="0.6" fill="currentColor"/></svg>
+      <span data-i18n="helpNavBtn">REGRAS / AJUDA</span>
+    </button>
     <div class="lang-switch">
-        <button class="lang-btn" id="langBtnPt" onclick="setLang('pt')">PT</button>
-        <button class="lang-btn" id="langBtnEn" onclick="setLang('en')">EN</button>
+      <button class="lang-btn" id="langBtnPt" onclick="setLang('pt')">PT</button>
+      <button class="lang-btn" id="langBtnEn" onclick="setLang('en')">EN</button>
     </div>
+  </div>
+</nav>
 
-    <div class="hero">
-        <img src="../assets/art/stoneage.webp" alt="Stone Age box art">
-        <div class="hero-content">
-            <h1><span data-i18n="heroTitle">Assistente Automa</span></h1>
-            <div class="subtitle">STONE AGE — SOLO</div>
-        </div>
+<!-- Hero Banner -->
+<div class="hero-wrapper">
+  <div class="hero">
+    <img src="../assets/art/stoneage.webp" alt="Stone Age box art" class="hero-bg">
+    <div class="hero-content">
+      <div class="hero-badge">SOLO COMPANION</div>
+      <h1 class="hero-title"><span data-i18n="heroTitle">Assistente Automa</span></h1>
+      <div class="hero-subtitle">STONE AGE — SOLO</div>
     </div>
+  </div>
+</div>
+
+<div class="main-interface">
+
+    <button class="btn-secondary hidden" id="btnResetGame" onclick="resetGame()" data-i18n="resetBtn" style="margin-bottom:14px; border-color:#ef4444; color:#f87171;">🔄 Nova Partida</button>
 
     <div id="setup-screen">
     <div class="card">
@@ -394,138 +1024,159 @@
     </div>
 
     <div id="game-area" class="hidden">
-        <div class="card automa-only">
-            <h2>
-                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-6 8-6s8 2 8 6"/></svg>
-                <span data-i18n="statusTitle">Status do Automa</span> <span id="roundLabel" style="margin-left:auto; font-size:0.55em; color:var(--text-dim);"></span>
-            </h2>
-            <div class="status-grid">
-                <div class="status-box">
-                    <div class="label"><svg class="icon" style="width:1.1em;height:1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 21h8M12 17v4M7 4h10v3a5 5 0 0 1-10 0V4Z"/><path d="M17 5h2a2 2 0 0 1 2 2c0 2-2 3-4 3M7 5H5a2 2 0 0 0-2 2c0 2 2 3 4 3"/></svg><span data-i18n="statScoreLabel">Pontos</span></div>
-                    <div class="value" id="statScore">0</div>
-                    <div class="adjust-row"><button class="btn-small" onclick="adjust('score',-1)">−</button><button class="btn-small" onclick="adjust('score',1)">+</button></div>
+        <!-- Automa Mode Layout -->
+        <div class="game-view-grid automa-only">
+            <div class="game-col-sidebar">
+                <div class="card">
+                    <h2>
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-6 8-6s8 2 8 6"/></svg>
+                        <span data-i18n="statusTitle">Status do Automa</span> <span id="roundLabel" style="margin-left:auto; font-size:0.55em; color:var(--text-dim);"></span>
+                    </h2>
+                    <div class="status-grid">
+                        <div class="status-box">
+                            <div class="label"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 21h8M12 17v4M7 4h10v3a5 5 0 0 1-10 0V4Z"/><path d="M17 5h2a2 2 0 0 1 2 2c0 2-2 3-4 3M7 5H5a2 2 0 0 0-2 2c0 2 2 3 4 3"/></svg><span data-i18n="statScoreLabel">Pontos</span></div>
+                            <div class="value" id="statScore">0</div>
+                            <div class="adjust-row"><button class="btn-adjust" onclick="adjust('score',-1)">−</button><button class="btn-adjust" onclick="adjust('score',1)">+</button></div>
+                        </div>
+                        <div class="status-box">
+                            <div class="label"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="3"/><path d="M2 21c0-3.5 3-5 7-5s7 1.5 7 5"/><circle cx="17" cy="8" r="2.4"/><path d="M15.5 21c.2-2.6 1.8-4 4-4.3"/></svg><span data-i18n="statWorkersLabel">Trabalhadores</span></div>
+                            <div class="value" id="statWorkers">5</div>
+                            <div class="adjust-row"><button class="btn-adjust" onclick="adjust('workers',-1)">−</button><button class="btn-adjust" onclick="adjust('workers',1)">+</button></div>
+                        </div>
+                        <div class="status-box">
+                            <div class="label"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 3.5 20.5 9.5 9.5 20.5 3.5 14.5Z"/><path d="M3.5 14.5 7 18"/></svg><span data-i18n="statToolsLabel">Ferramentas</span></div>
+                            <div class="value" id="statTools">0</div>
+                            <div class="adjust-row"><button class="btn-adjust" onclick="adjust('tools',-1)">−</button><button class="btn-adjust" onclick="adjust('tools',1)">+</button></div>
+                        </div>
+                        <div class="status-box">
+                            <div class="label"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21c0-6 3-9 3-9s3 3 3 9M12 21c0-6-3-9-3-9s-3 3-3 9M12 3v6"/></svg><span data-i18n="statAgriLabel">Agricultura</span></div>
+                            <div class="value" id="statAgri">0</div>
+                            <div class="adjust-row"><button class="btn-adjust" onclick="adjust('agriculture',-1)">−</button><button class="btn-adjust" onclick="adjust('agriculture',1)">+</button></div>
+                        </div>
+                    </div>
                 </div>
-                <div class="status-box">
-                    <div class="label"><svg class="icon" style="width:1.1em;height:1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="3"/><path d="M2 21c0-3.5 3-5 7-5s7 1.5 7 5"/><circle cx="17" cy="8" r="2.4"/><path d="M15.5 21c.2-2.6 1.8-4 4-4.3"/></svg><span data-i18n="statWorkersLabel">Trabalhadores</span></div>
-                    <div class="value" id="statWorkers">5</div>
-                    <div class="adjust-row"><button class="btn-small" onclick="adjust('workers',-1)">−</button><button class="btn-small" onclick="adjust('workers',1)">+</button></div>
+
+                <div class="card">
+                    <h2><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/></svg><span data-i18n="logTitle">Histórico</span></h2>
+                    <div class="log-panel" id="logPanel"></div>
                 </div>
-                <div class="status-box">
-                    <div class="label"><svg class="icon" style="width:1.1em;height:1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 3.5 20.5 9.5 9.5 20.5 3.5 14.5Z"/><path d="M3.5 14.5 7 18"/></svg><span data-i18n="statToolsLabel">Ferramentas</span></div>
-                    <div class="value" id="statTools">0</div>
-                    <div class="adjust-row"><button class="btn-small" onclick="adjust('tools',-1)">−</button><button class="btn-small" onclick="adjust('tools',1)">+</button></div>
-                </div>
-                <div class="status-box">
-                    <div class="label"><svg class="icon" style="width:1.1em;height:1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21c0-6 3-9 3-9s3 3 3 9M12 21c0-6-3-9-3-9s-3 3-3 9M12 3v6"/></svg><span data-i18n="statAgriLabel">Agricultura</span></div>
-                    <div class="value" id="statAgri">0</div>
-                    <div class="adjust-row"><button class="btn-small" onclick="adjust('agriculture',-1)">−</button><button class="btn-small" onclick="adjust('agriculture',1)">+</button></div>
+            </div>
+
+            <div class="game-col-main">
+                <div class="card">
+                    <h2><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12h18M3 6h18M3 18h18"/></svg><span data-i18n="roundCardTitle">Rodada</span></h2>
+                    
+                    <div id="dice-tray" class="dice-tray-container">
+                        <div id="dice-box"></div>
+                        <div class="dice-container" id="fallbackDice">
+                            <div class="die" id="die1">-</div>
+                            <div class="die" id="die2">-</div>
+                        </div>
+                    </div>
+
+                    <button class="primary" id="btnRoll" onclick="rollAutoma()" data-i18n="rollBtn" style="margin-bottom:12px;">Rolar Alocação do Automato (2d6)</button>
+                    <div class="result-title" data-i18n="locationResultLabel">Local do Automato:</div>
+                    <div class="result-location" id="location" data-i18n="waitingRoll">Aguardando rolagem...</div>
+                    <div class="result-effect" id="effect"></div>
+                    <div class="fallback" id="fallback"></div>
+
+                    <div id="pendingPanel"></div>
+
+                    <div style="border-top: 1.5px dashed var(--border); margin-top: 16px; padding-top: 14px;">
+                        <label style="display:flex; align-items:center; gap:10px; font-size:0.95em; font-weight:normal; color:var(--text);">
+                            <input type="checkbox" id="soloHasWorkers" checked onchange="onSoloToggle()" style="width:20px;height:20px;accent-color:var(--blue);">
+                            <span data-i18n="soloCheckboxLabel">Jogador solo ainda tem trabalhadores não alocados</span>
+                        </label>
+                        <p class="small" style="margin:6px 0 8px;" data-i18n="soloCheckboxHint">O automa só aloca enquanto esta caixa estiver marcada. Toque em um local abaixo para marcá-lo como ocupado pelo jogador solo (bloqueia o automa).</p>
+                        <div class="loc-grid" id="locGrid"></div>
+                    </div>
+
+                    <button class="btn-secondary" onclick="newRound()" data-i18n="endRoundBtn" style="margin-top:14px;">Encerrar Rodada / Nova Rodada</button>
                 </div>
             </div>
         </div>
 
-        <div class="card automa-only">
-            <h2><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12h18M3 6h18M3 18h18"/></svg><span data-i18n="roundCardTitle">Rodada</span></h2>
-            <label style="display:flex; align-items:center; gap:10px; font-size:0.95em; font-weight:normal; color:var(--text);">
-                <input type="checkbox" id="soloHasWorkers" checked onchange="onSoloToggle()" style="width:20px;height:20px;accent-color:var(--blue);">
-                <span data-i18n="soloCheckboxLabel">Jogador solo ainda tem trabalhadores não alocados</span>
-            </label>
-            <p class="small" style="margin:6px 0 0;" data-i18n="soloCheckboxHint">O automa só aloca enquanto esta caixa estiver marcada. Toque em um local abaixo para marcá-lo como ocupado pelo jogador solo (bloqueia o automa).</p>
-            <div class="loc-grid" id="locGrid"></div>
-
-            <button class="primary" id="btnRoll" onclick="rollAutoma()" data-i18n="rollBtn">Rolar Alocação do Automato (2d6)</button>
-            <div class="dice-container">
-                <div class="die" id="die1">-</div>
-                <div class="die" id="die2">-</div>
-            </div>
-            <div class="result-title" data-i18n="locationResultLabel">Local do Automato:</div>
-            <div class="result-location" id="location" data-i18n="waitingRoll">Aguardando rolagem...</div>
-            <div class="result-effect" id="effect"></div>
-            <div class="fallback" id="fallback"></div>
-
-            <div id="pendingPanel"></div>
-
-            <button class="btn-secondary" onclick="newRound()" data-i18n="endRoundBtn">Encerrar Rodada / Nova Rodada</button>
-        </div>
-
-        <div class="card automa-only">
-            <h2><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/></svg><span data-i18n="logTitle">Histórico</span></h2>
-            <div class="log-panel" id="logPanel"></div>
-        </div>
-
-        <div class="card official-only" id="officialEndBannerWrap" style="display:none;"></div>
-
-        <div class="card official-only">
-            <h2>
-                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-6 8-6s8 2 8 6"/></svg>
-                <span data-i18n="officialStatusTitle">Status da Sobrevivência</span> <span id="officialRoundLabel" style="margin-left:auto; font-size:0.55em; color:var(--text-dim);"></span>
-            </h2>
-            <div class="status-grid">
-                <div class="status-box">
-                    <div class="label"><svg class="icon" style="width:1.1em;height:1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21c0-6 3-9 3-9s3 3 3 9M12 21c0-6-3-9-3-9s-3 3-3 9M12 3v6"/></svg><span data-i18n="officialFoodLabel">Comida</span></div>
-                    <div class="value" id="officialFood">20</div>
-                    <div class="adjust-row"><button class="btn-small" onclick="officialAdjust('food',-1)">−</button><button class="btn-small" onclick="officialAdjust('food',1)">+</button></div>
+        <!-- Official Mode Layout -->
+        <div class="game-view-grid official-only">
+            <div class="card" id="officialEndBannerWrap" style="display:none; grid-column: 1 / -1; margin-bottom: 0;"></div>
+            
+            <div class="game-col-sidebar">
+                <div class="card">
+                    <h2>
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-6 8-6s8 2 8 6"/></svg>
+                        <span data-i18n="officialStatusTitle">Status da Sobrevivência</span> <span id="officialRoundLabel" style="margin-left:auto; font-size:0.55em; color:var(--text-dim);"></span>
+                    </h2>
+                    <div class="status-grid">
+                        <div class="status-box">
+                            <div class="label"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21c0-6 3-9 3-9s3 3 3 9M12 21c0-6-3-9-3-9s-3 3-3 9M12 3v6"/></svg><span data-i18n="officialFoodLabel">Comida</span></div>
+                            <div class="value" id="officialFood">20</div>
+                            <div class="adjust-row"><button class="btn-adjust" onclick="officialAdjust('food',-1)">−</button><button class="btn-adjust" onclick="officialAdjust('food',1)">+</button></div>
+                        </div>
+                        <div class="status-box">
+                            <div class="label"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 3.5 20.5 9.5 9.5 20.5 3.5 14.5Z"/><path d="M3.5 14.5 7 18"/></svg><span data-i18n="officialExhaustionLabel">Exaustão</span></div>
+                            <div class="value exhaustion-value" id="officialExhaustion">15</div>
+                            <div class="adjust-row"><button class="btn-adjust" onclick="officialAdjust('exhaustion',-1)">−</button><button class="btn-adjust" onclick="officialAdjust('exhaustion',1)">+</button></div>
+                        </div>
+                        <div class="status-box">
+                            <div class="label"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21c0-6 3-9 3-9s3 3 3 9M12 21c0-6-3-9-3-9s-3 3-3 9M12 3v6"/></svg><span data-i18n="officialAgriLabel">Agricultura</span></div>
+                            <div class="value" id="officialAgri">0</div>
+                            <div class="adjust-row"><button class="btn-adjust" onclick="officialAdjust('agriculture',-1)">−</button><button class="btn-adjust" onclick="officialAdjust('agriculture',1)">+</button></div>
+                        </div>
+                        <div class="status-box">
+                            <div class="label"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="3"/><path d="M2 21c0-3.5 3-5 7-5s7 1.5 7 5"/><circle cx="17" cy="8" r="2.4"/><path d="M15.5 21c.2-2.6 1.8-4 4-4.3"/></svg><span data-i18n="officialFiguresLabel">Figuras no Tabuleiro</span></div>
+                            <div class="value" id="officialFigures">8</div>
+                            <div class="adjust-row"><button class="btn-adjust" onclick="officialAdjust('totalFigures',-1)">−</button><button class="btn-adjust" onclick="officialAdjust('totalFigures',1)">+</button></div>
+                        </div>
+                        <div class="status-box">
+                            <div class="label"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 21h8M12 17v4M7 4h10v3a5 5 0 0 1-10 0V4Z"/><path d="M17 5h2a2 2 0 0 1 2 2c0 2-2 3-4 3M7 5H5a2 2 0 0 0-2 2c0 2 2 3 4 3"/></svg><span data-i18n="officialFoodPerFigureLabel">Comida/Figura</span></div>
+                            <div class="value" id="officialFoodPerFigure">1</div>
+                            <div class="adjust-row"><button class="btn-adjust" onclick="officialAdjust('foodPerFigure',-1)">−</button><button class="btn-adjust" onclick="officialAdjust('foodPerFigure',1)">+</button></div>
+                        </div>
+                        <div class="status-box">
+                            <div class="label"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21V8l9-5 9 5v13"/><path d="M9 21v-6h6v6"/></svg><span data-i18n="officialBuildingsPileLabel">Construções Descartadas</span></div>
+                            <div class="value" id="officialBuildingsPile">0</div>
+                            <div class="adjust-row"><button class="btn-adjust" onclick="officialAdjust('buildingsPile',-1)">−</button><button class="btn-adjust" onclick="officialAdjust('buildingsPile',1)">+</button></div>
+                        </div>
+                    </div>
                 </div>
-                <div class="status-box">
-                    <div class="label"><svg class="icon" style="width:1.1em;height:1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 3.5 20.5 9.5 9.5 20.5 3.5 14.5Z"/><path d="M3.5 14.5 7 18"/></svg><span data-i18n="officialExhaustionLabel">Exaustão</span></div>
-                    <div class="value exhaustion-value" id="officialExhaustion">15</div>
-                    <div class="adjust-row"><button class="btn-small" onclick="officialAdjust('exhaustion',-1)">−</button><button class="btn-small" onclick="officialAdjust('exhaustion',1)">+</button></div>
-                </div>
-                <div class="status-box">
-                    <div class="label"><svg class="icon" style="width:1.1em;height:1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21c0-6 3-9 3-9s3 3 3 9M12 21c0-6-3-9-3-9s-3 3-3 9M12 3v6"/></svg><span data-i18n="officialAgriLabel">Agricultura</span></div>
-                    <div class="value" id="officialAgri">0</div>
-                    <div class="adjust-row"><button class="btn-small" onclick="officialAdjust('agriculture',-1)">−</button><button class="btn-small" onclick="officialAdjust('agriculture',1)">+</button></div>
-                </div>
-                <div class="status-box">
-                    <div class="label"><svg class="icon" style="width:1.1em;height:1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="3"/><path d="M2 21c0-3.5 3-5 7-5s7 1.5 7 5"/><circle cx="17" cy="8" r="2.4"/><path d="M15.5 21c.2-2.6 1.8-4 4-4.3"/></svg><span data-i18n="officialFiguresLabel">Figuras no Tabuleiro</span></div>
-                    <div class="value" id="officialFigures">8</div>
-                    <div class="adjust-row"><button class="btn-small" onclick="officialAdjust('totalFigures',-1)">−</button><button class="btn-small" onclick="officialAdjust('totalFigures',1)">+</button></div>
-                </div>
-                <div class="status-box">
-                    <div class="label"><svg class="icon" style="width:1.1em;height:1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 21h8M12 17v4M7 4h10v3a5 5 0 0 1-10 0V4Z"/><path d="M17 5h2a2 2 0 0 1 2 2c0 2-2 3-4 3M7 5H5a2 2 0 0 0-2 2c0 2 2 3 4 3"/></svg><span data-i18n="officialFoodPerFigureLabel">Comida/Figura</span></div>
-                    <div class="value" id="officialFoodPerFigure">1</div>
-                    <div class="adjust-row"><button class="btn-small" onclick="officialAdjust('foodPerFigure',-1)">−</button><button class="btn-small" onclick="officialAdjust('foodPerFigure',1)">+</button></div>
-                </div>
-                <div class="status-box">
-                    <div class="label"><svg class="icon" style="width:1.1em;height:1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21V8l9-5 9 5v13"/><path d="M9 21v-6h6v6"/></svg><span data-i18n="officialBuildingsPileLabel">Construções Descartadas</span></div>
-                    <div class="value" id="officialBuildingsPile">0</div>
-                    <div class="adjust-row"><button class="btn-small" onclick="officialAdjust('buildingsPile',-1)">−</button><button class="btn-small" onclick="officialAdjust('buildingsPile',1)">+</button></div>
+
+                <div class="card">
+                    <h2><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/></svg><span data-i18n="logTitle">Histórico</span></h2>
+                    <div class="log-panel" id="officialLogPanel"></div>
                 </div>
             </div>
-        </div>
 
-        <div class="card official-only">
-            <h2><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21c0-6 3-9 3-9s3 3 3 9M12 21c0-6-3-9-3-9s-3 3-3 9M12 3v6"/></svg><span data-i18n="officialFeedingTitle">Fase de Alimentação</span></h2>
-            <p class="small" data-i18n="officialFeedingIntro">Selecione o tipo da carta coberta no espaço de custo 4 para calcular a comida extra devida nesta rodada.</p>
-            <label class="field-label" for="officialCost4Type" data-i18n="officialCost4TypeLabel">Tipo da Carta (espaço de custo 4)</label>
-            <select id="officialCost4Type" onchange="onOfficialCost4TypeChange()">
-                <option value="green" data-i18n="officialCardGreen">Verde (+4 Comida fixo)</option>
-                <option value="sorcerer" data-i18n="officialCardSorcerer">Feiticeiro (1/figura da cor com mais figuras)</option>
-                <option value="builder" data-i18n="officialCardBuilder">Construtor (1/construção descartada)</option>
-                <option value="farmer" data-i18n="officialCardFarmer">Fazendeiro (1/marcador de Agricultura)</option>
-                <option value="toolsmith" data-i18n="officialCardToolsmith">Ferramenteiro (1/ferramenta)</option>
-            </select>
-            <div id="officialCost4ValueWrap">
-                <label class="field-label" for="officialCost4Value" id="officialCost4ValueLabel"></label>
-                <input type="number" id="officialCost4Value" value="0" min="0" oninput="onOfficialCost4ValueInput()">
+            <div class="game-col-main">
+                <div class="card">
+                    <h2><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21c0-6 3-9 3-9s3 3 3 9M12 21c0-6-3-9-3-9s-3 3-3 9M12 3v6"/></svg><span data-i18n="officialFeedingTitle">Fase de Alimentação</span></h2>
+                    <p class="small" data-i18n="officialFeedingIntro">Selecione o tipo da carta coberta no espaço de custo 4 para calcular a comida extra devida nesta rodada.</p>
+                    <label class="field-label" for="officialCost4Type" data-i18n="officialCost4TypeLabel">Tipo da Carta (espaço de custo 4)</label>
+                    <select id="officialCost4Type" onchange="onOfficialCost4TypeChange()">
+                        <option value="green" data-i18n="officialCardGreen">Verde (+4 Comida fixo)</option>
+                        <option value="sorcerer" data-i18n="officialCardSorcerer">Feiticeiro (1/figura da cor com mais figuras)</option>
+                        <option value="builder" data-i18n="officialCardBuilder">Construtor (1/construção descartada)</option>
+                        <option value="farmer" data-i18n="officialCardFarmer">Fazendeiro (1/marcador de Agricultura)</option>
+                        <option value="toolsmith" data-i18n="officialCardToolsmith">Ferramenteiro (1/ferramenta)</option>
+                    </select>
+                    <div id="officialCost4ValueWrap">
+                        <label class="field-label" for="officialCost4Value" id="officialCost4ValueLabel"></label>
+                        <input type="number" id="officialCost4Value" value="0" min="0" oninput="onOfficialCost4ValueInput()">
+                    </div>
+                    <p class="small" id="officialFeedingBreakdown" style="margin-top:10px;"></p>
+                    <button class="primary" onclick="applyFeeding()" data-i18n="officialApplyFeedingBtn">Aplicar Alimentação</button>
+                </div>
+
+                <div class="card">
+                    <h2><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 21V8l9-5 9 5v13"/><path d="M9 21v-6h6v6"/></svg><span data-i18n="officialRoundCardTitle">Rodada</span></h2>
+                    <div data-i18n-html="officialRoundReminders"></div>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;">
+                        <button class="btn-secondary" style="flex:1; margin-top:0; font-size:1rem;" onclick="discardBuilding()" data-i18n="officialDiscardBuildingBtn">Descartei a(s) Construção(ões)</button>
+                        <button class="btn-secondary" style="flex:1; margin-top:0; font-size:1rem; border-color:#ef4444;" onclick="cantDiscardBuilding()" data-i18n="officialCantDiscardBtn">Não Consegui Descartar (−3 Exaustão)</button>
+                    </div>
+                    <button class="btn-secondary" onclick="newRoundOfficial()" data-i18n="officialEndRoundBtn">Encerrar Rodada / Nova Rodada</button>
+                    <button class="btn-secondary" style="border-color:#22c55e; color:#4ade80;" onclick="markOfficialWin()" data-i18n="officialMarkWinBtn">Fiquei sem Cartas de Civilização (Vitória!)</button>
+                </div>
             </div>
-            <p class="small" id="officialFeedingBreakdown" style="margin-top:10px;"></p>
-            <button class="primary" onclick="applyFeeding()" data-i18n="officialApplyFeedingBtn">Aplicar Alimentação</button>
-        </div>
-
-        <div class="card official-only">
-            <h2><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 21V8l9-5 9 5v13"/><path d="M9 21v-6h6v6"/></svg><span data-i18n="officialRoundCardTitle">Rodada</span></h2>
-            <div data-i18n-html="officialRoundReminders"></div>
-            <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                <button class="btn-small" style="flex:1;" onclick="discardBuilding()" data-i18n="officialDiscardBuildingBtn">Descartei a(s) Construção(ões)</button>
-                <button class="btn-small" style="flex:1;" onclick="cantDiscardBuilding()" data-i18n="officialCantDiscardBtn">Não Consegui Descartar (−3 Exaustão)</button>
-            </div>
-            <button class="btn-secondary" onclick="newRoundOfficial()" data-i18n="officialEndRoundBtn">Encerrar Rodada / Nova Rodada</button>
-            <button onclick="markOfficialWin()" data-i18n="officialMarkWinBtn">Fiquei sem Cartas de Civilização (Vitória!)</button>
-        </div>
-
-        <div class="card official-only">
-            <h2><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/></svg><span data-i18n="logTitle">Histórico</span></h2>
-            <div class="log-panel" id="officialLogPanel"></div>
         </div>
     </div>
 
@@ -535,17 +1186,21 @@
         <div class="credits-text official-only" data-i18n-html="creditsTextOfficial"></div>
     </div>
 
-    <a class="bmc-inline" href="https://www.buymeacoffee.com/colletes" target="_blank" rel="noopener" aria-label="Buy me a coffee"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h13a2 2 0 0 1 2 2v1a3 3 0 0 1-3 3h-1"/><path d="M4 8h13v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V8Z"/><path d="M8 3c-.6 1 .5 1.6 0 3M12 3c-.6 1 .5 1.6 0 3"/></svg><span data-i18n="bmcBtn">Me pague um café</span></a>
-
-    <!-- Help Modal -->
-    <div id="helpModal" class="modal-overlay">
-        <div class="modal-content">
-            <button class="modal-close" onclick="closeHelp()">✕</button>
-            <h2 data-i18n="helpTitle">❓ Como funciona este assistente</h2>
-            <div class="automa-only" data-i18n-html="helpBody"></div>
-            <div class="official-only" data-i18n-html="helpBodyOfficial"></div>
-        </div>
+    <div style="text-align:center; margin:16px 0;">
+        <a class="bmc-inline" href="https://www.buymeacoffee.com/colletes" target="_blank" rel="noopener" aria-label="Buy me a coffee"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h13a2 2 0 0 1 2 2v1a3 3 0 0 1-3 3h-1"/><path d="M4 8h13v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V8Z"/><path d="M8 3c-.6 1 .5 1.6 0 3M12 3c-.6 1 .5 1.6 0 3"/></svg><span data-i18n="bmcBtn">Me pague um café</span></a>
     </div>
+
+</div>
+
+<!-- Help Modal -->
+<div id="helpModal" class="modal-overlay" onclick="if(event.target===this)closeHelp()">
+    <div class="modal-content">
+        <button class="modal-close" onclick="closeHelp()">✕</button>
+        <h2 data-i18n="helpTitle">❓ Como funciona este assistente</h2>
+        <div class="automa-only" data-i18n-html="helpBody"></div>
+        <div class="official-only" data-i18n-html="helpBodyOfficial"></div>
+    </div>
+</div>
 
     <script>
         // Forces iOS Safari to treat the first tap as a click instead of only "hovering" (WebKit quirk).
@@ -582,6 +1237,7 @@
 
         const I18N = {
             pt: {
+                helpNavBtn: "REGRAS / AJUDA",
                 heroTitle: "Assistente Automa",
                 setupTitle: "Componentes Físicos (Setup)",
                 setupIntro: "Transcrito da variante solo original — prepare a mesa assim antes de iniciar:",
@@ -840,6 +1496,7 @@
                 creditsTextOfficial: `Feito por <strong>Thiago Colletes de Carvalho</strong> (<a href="mailto:colletes@gmail.com">colletes@gmail.com</a>) — Modo Solo Oficial de Stone Age, tradução de <strong>Raphael Gurian</strong>. Stone Age © 2020 Hans im Glück Verlags-GmbH. Uso pessoal, sem fins comerciais.`
             },
             en: {
+                helpNavBtn: "RULES / HELP",
                 heroTitle: "Automa Assistant",
                 setupTitle: "Physical Components (Setup)",
                 setupIntro: "Transcribed from the original solo variant — set up the table like this before starting:",
@@ -1190,6 +1847,7 @@
             } else {
                 const initial = parseInt(document.getElementById('initialScore').value) || 0;
                 state = defaultState(initial);
+                initDiceBox();
             }
             save();
             document.getElementById('setup-screen').classList.add('hidden');
@@ -1238,6 +1896,51 @@
             render();
         }
 
+        let diceBox = null;
+        let diceBoxReady = false;
+
+        async function initDiceBox() {
+            if (diceBox) return;
+            try {
+                const { default: DiceBox } = await import('https://unpkg.com/@3d-dice/dice-box@1.1.3/dist/dice-box.es.min.js');
+                diceBox = new DiceBox({
+                    container: '#dice-box',
+                    assetPath: 'assets/',
+                    origin: 'https://unpkg.com/@3d-dice/dice-box@1.1.3/dist/',
+                    theme: 'default',
+                    themeColor: '#d97706',
+                    scale: 18,
+                    gravity: 2.5,
+                    friction: 0.8,
+                    restitution: 0.5
+                });
+                
+                await Promise.race([
+                    diceBox.init(),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('DiceBox timeout')), 8000))
+                ]);
+                
+                diceBoxReady = true;
+                const tray = document.getElementById('dice-tray');
+                if (tray) tray.classList.add('has-3d');
+            } catch(err) {
+                console.warn("DiceBox 3D fallback:", err);
+                diceBoxReady = false;
+            }
+        }
+
+        // Physics engine can occasionally never settle (silent hang); guard every roll with a timeout.
+        function rollDiceBoxSafe(notation, timeoutMs = 5000) {
+            return Promise.race([
+                diceBox.roll(notation),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('DiceBox roll timeout')), timeoutMs))
+            ]);
+        }
+        // Physics engine can also resolve with a bad face read (colliderFaceMap error) instead of hanging; guard against NaN/undefined.
+        function sanitizeDie(v) {
+            return (Number.isInteger(v) && v >= 1 && v <= 6) ? v : (Math.floor(Math.random() * 6) + 1);
+        }
+
         function findLanding(sum) {
             let pos = sum;
             while (state.occupied.includes(pos)) {
@@ -1247,7 +1950,7 @@
             return pos;
         }
 
-        function rollAutoma() {
+        async function rollAutoma() {
             if (!state.soloHasWorkers) {
                 alert(S().alertNoWorkers);
                 return;
@@ -1256,16 +1959,43 @@
                 alert(S().alertPendingFirst);
                 return;
             }
-            const d1 = Math.floor(Math.random() * 6) + 1;
-            const d2 = Math.floor(Math.random() * 6) + 1;
-            const sum = d1 + d2;
-            const die1El = document.getElementById('die1');
-            const die2El = document.getElementById('die2');
-            die1El.innerText = d1;
-            die2El.innerText = d2;
-            die1El.classList.remove('rolled'); void die1El.offsetWidth; die1El.classList.add('rolled');
-            die2El.classList.remove('rolled'); void die2El.offsetWidth; die2El.classList.add('rolled');
 
+            const btnRoll = document.getElementById('btnRoll');
+            if (btnRoll) btnRoll.disabled = true;
+
+            let d1 = 1, d2 = 1;
+
+            if (diceBoxReady && diceBox) {
+                try {
+                    const results = await rollDiceBoxSafe('2d6');
+                    if (results && results.length >= 2) {
+                        d1 = sanitizeDie(results[0].value);
+                        d2 = sanitizeDie(results[1].value);
+                    } else if (results && results[0] && results[0].rolls && results[0].rolls.length >= 2) {
+                        d1 = sanitizeDie(results[0].rolls[0].value);
+                        d2 = sanitizeDie(results[0].rolls[1].value);
+                    } else {
+                        d1 = Math.floor(Math.random() * 6) + 1;
+                        d2 = Math.floor(Math.random() * 6) + 1;
+                    }
+                } catch(e) {
+                    d1 = Math.floor(Math.random() * 6) + 1;
+                    d2 = Math.floor(Math.random() * 6) + 1;
+                }
+            } else {
+                d1 = Math.floor(Math.random() * 6) + 1;
+                d2 = Math.floor(Math.random() * 6) + 1;
+                const die1El = document.getElementById('die1');
+                const die2El = document.getElementById('die2');
+                if (die1El && die2El) {
+                    die1El.innerText = d1;
+                    die2El.innerText = d2;
+                    die1El.classList.remove('rolled'); void die1El.offsetWidth; die1El.classList.add('rolled');
+                    die2El.classList.remove('rolled'); void die2El.offsetWidth; die2El.classList.add('rolled');
+                }
+            }
+
+            const sum = d1 + d2;
             const landed = findLanding(sum);
             const loc = LOCATIONS[landed];
             const locName = tr(loc.name);
@@ -1341,9 +2071,17 @@
             logMsg(S().logCivTool(tr(state.pending.name), state.tools));
             clearPending();
         }
-        function resolveCivMixedRoll() {
-            const d1 = Math.floor(Math.random() * 6) + 1;
-            const d2 = Math.floor(Math.random() * 6) + 1;
+        async function resolveCivMixedRoll() {
+            let d1 = Math.floor(Math.random() * 6) + 1;
+            let d2 = Math.floor(Math.random() * 6) + 1;
+            if (diceBoxReady && diceBox) {
+                try {
+                    const results = await rollDiceBoxSafe('2d6');
+                    if (results && results.length >= 2) {
+                        d1 = sanitizeDie(results[0].value); d2 = sanitizeDie(results[1].value);
+                    }
+                } catch(e) {}
+            }
             document.getElementById('civMixedResult').innerText = S().mixedRollResult(d1, d2);
         }
         function resolveCivMixedConfirm() {
@@ -1363,10 +2101,21 @@
             logMsg(S().logBuildingFixed(tr(state.pending.name), pts));
             clearPending();
         }
-        function resolveBuildingDice() {
+        async function resolveBuildingDice() {
             const n = parseInt(document.getElementById('buildingDiceCount').value) || 4;
             let sum = 0, rolls = [];
-            for (let i = 0; i < n; i++) { const r = Math.floor(Math.random() * 6) + 1; rolls.push(r); sum += r; }
+            if (diceBoxReady && diceBox) {
+                try {
+                    const results = await rollDiceBoxSafe(`${n}d6`);
+                    if (results && results.length > 0) {
+                        rolls = results.map(r => sanitizeDie(r.value));
+                        sum = rolls.reduce((a, b) => a + b, 0);
+                    }
+                } catch(e) {}
+            }
+            if (rolls.length === 0) {
+                for (let i = 0; i < n; i++) { const r = Math.floor(Math.random() * 6) + 1; rolls.push(r); sum += r; }
+            }
             state.score += sum;
             logMsg(S().logBuildingDice(tr(state.pending.name), n, rolls, sum));
             clearPending();
@@ -1383,6 +2132,9 @@
             state.occupied = [];
             state.soloHasWorkers = true;
             state.pending = null;
+            if (diceBox && typeof diceBox.clear === 'function') {
+                try { diceBox.clear(); } catch(e) {}
+            }
             document.getElementById('die1').innerText = "-";
             document.getElementById('die2').innerText = "-";
             document.getElementById('location').innerText = S().waitingRoll;
@@ -1401,52 +2153,69 @@
                 panel.innerHTML = `
                     <div class="pending-form">
                         <strong>${S().civFormTitle}${name}</strong>
+                        
                         <label>${S().civPointsLabel}</label>
-                        <input type="number" id="civPointsInput" value="1" min="0">
-                        <button class="btn-small" onclick="resolveCivPoints()">${S().applyPointsBtn}</button>
+                        <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
+                            <input type="number" id="civPointsInput" value="1" min="0" style="flex:1;">
+                            <button class="btn-action" style="flex:2; margin-top:0;" onclick="resolveCivPoints()">${S().applyPointsBtn}</button>
+                        </div>
 
                         <label>${S().civResourceLabel}</label>
-                        <select id="civResourceSelect">
-                            <option value="gold">${tr(RESOURCE_LABEL.gold)} (4 pts/un.)</option>
-                            <option value="stone">${tr(RESOURCE_LABEL.stone)} (3 pts/un.)</option>
-                            <option value="clay">${tr(RESOURCE_LABEL.clay)} (2 pts/un.)</option>
-                            <option value="wood">${tr(RESOURCE_LABEL.wood)} (1 pt/un.)</option>
-                        </select>
-                        <input type="number" id="civResourceQty" value="1" min="1" placeholder="${S().qtyPlaceholder}">
-                        <button class="btn-small" onclick="resolveCivResource()">${S().applyResourceBtn}</button>
+                        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px;">
+                            <select id="civResourceSelect" style="flex:2; min-width:140px;">
+                                <option value="gold">${tr(RESOURCE_LABEL.gold)} (4 pts/un.)</option>
+                                <option value="stone">${tr(RESOURCE_LABEL.stone)} (3 pts/un.)</option>
+                                <option value="clay">${tr(RESOURCE_LABEL.clay)} (2 pts/un.)</option>
+                                <option value="wood">${tr(RESOURCE_LABEL.wood)} (1 pt/un.)</option>
+                            </select>
+                            <input type="number" id="civResourceQty" value="1" min="1" placeholder="${S().qtyPlaceholder}" style="flex:1; min-width:60px;">
+                            <button class="btn-action" style="flex:2; min-width:140px; margin-top:0;" onclick="resolveCivResource()">${S().applyResourceBtn}</button>
+                        </div>
 
                         <label>${S().civMixedLabel}</label>
-                        <button class="btn-small" onclick="resolveCivMixedRoll()">${S().rollTwoDiceBtn}</button>
-                        <div id="civMixedResult" style="font-size:0.85em; margin:4px 0; color:var(--text-dim);"></div>
-                        <select id="civMixedResourceSelect">
-                            <option value="gold">${tr(RESOURCE_LABEL.gold)} (4 pts)</option>
-                            <option value="stone">${tr(RESOURCE_LABEL.stone)} (3 pts)</option>
-                            <option value="clay">${tr(RESOURCE_LABEL.clay)} (2 pts)</option>
-                            <option value="wood">${tr(RESOURCE_LABEL.wood)} (1 pt)</option>
-                        </select>
-                        <button class="btn-small" onclick="resolveCivMixedConfirm()">${S().applyIndicatedResourceBtn}</button>
+                        <div style="display:flex; gap:8px; align-items:center; margin-bottom:6px;">
+                            <button class="btn-action" style="flex:1; margin-top:0;" onclick="resolveCivMixedRoll()">${S().rollTwoDiceBtn}</button>
+                            <div id="civMixedResult" style="flex:1; font-size:0.85em; font-weight:700; color:var(--accent);"></div>
+                        </div>
+                        <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
+                            <select id="civMixedResourceSelect" style="flex:2;">
+                                <option value="gold">${tr(RESOURCE_LABEL.gold)} (4 pts)</option>
+                                <option value="stone">${tr(RESOURCE_LABEL.stone)} (3 pts)</option>
+                                <option value="clay">${tr(RESOURCE_LABEL.clay)} (2 pts)</option>
+                                <option value="wood">${tr(RESOURCE_LABEL.wood)} (1 pt)</option>
+                            </select>
+                            <button class="btn-action" style="flex:2; margin-top:0;" onclick="resolveCivMixedConfirm()">${S().applyIndicatedResourceBtn}</button>
+                        </div>
 
                         <label>${S().civFoodLabel}</label>
-                        <input type="number" id="civFoodQty" value="1" min="0">
-                        <button class="btn-small" onclick="resolveCivFood()">${S().applyFoodBtn}</button>
+                        <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
+                            <input type="number" id="civFoodQty" value="1" min="0" style="flex:1;">
+                            <button class="btn-action" style="flex:2; margin-top:0;" onclick="resolveCivFood()">${S().applyFoodBtn}</button>
+                        </div>
 
-                        <div style="margin-top:8px;">
-                            <button class="btn-small" onclick="resolveCivAgri()">${S().civAgriBtn}</button>
-                            <button class="btn-small" onclick="resolveCivTool()">${S().civToolBtn}</button>
-                            <button class="btn-small" onclick="resolveCivDraw()">${S().civDrawBtn}</button>
+                        <label style="margin-top:12px;">${lang === 'pt' ? 'Outros Efeitos / Símbolos:' : 'Other Effects / Symbols:'}</label>
+                        <div class="btn-row">
+                            <button class="btn-action" onclick="resolveCivAgri()">${S().civAgriBtn}</button>
+                            <button class="btn-action" onclick="resolveCivTool()">${S().civToolBtn}</button>
+                            <button class="btn-action" onclick="resolveCivDraw()">${S().civDrawBtn}</button>
                         </div>
                     </div>`;
             } else if (state.pending.kind === "building") {
                 panel.innerHTML = `
                     <div class="pending-form">
                         <strong>${S().buildingFormTitle}${name}</strong>
+                        
                         <label>${S().buildingFixedLabel}</label>
-                        <input type="number" id="buildingFixedInput" value="1" min="0">
-                        <button class="btn-small" onclick="resolveBuildingFixed()">${S().applyFixedPointsBtn}</button>
+                        <div style="display:flex; gap:8px; align-items:center; margin-bottom:12px;">
+                            <input type="number" id="buildingFixedInput" value="1" min="0" style="flex:1;">
+                            <button class="btn-action" style="flex:2; margin-top:0;" onclick="resolveBuildingFixed()">${S().applyFixedPointsBtn}</button>
+                        </div>
 
                         <label>${S().buildingDiceLabel}</label>
-                        <input type="number" id="buildingDiceCount" value="4" min="1" max="7" placeholder="${S().diceCountPlaceholder}">
-                        <button class="btn-small" onclick="resolveBuildingDice()">${S().rollApplyBtn}</button>
+                        <div style="display:flex; gap:8px; align-items:center;">
+                            <input type="number" id="buildingDiceCount" value="4" min="1" max="7" placeholder="${S().diceCountPlaceholder}" style="flex:1;">
+                            <button class="btn-action" style="flex:2; margin-top:0;" onclick="resolveBuildingDice()">${S().rollApplyBtn}</button>
+                        </div>
                     </div>`;
             }
         }
@@ -1621,22 +2390,19 @@
                 document.getElementById('setup-screen').classList.add('hidden');
                 document.getElementById('game-area').classList.remove('hidden');
                 document.getElementById('btnResetGame').classList.remove('hidden');
+                if (state.mode !== 'official') initDiceBox();
                 render();
             } else {
                 syncModeUI(pendingMode);
+                if (pendingMode !== 'official') initDiceBox();
             }
         })();
     </script>
 <script type="module" src="../assets/analytics.js"></script>
 <script type="module" src="../assets/bot-view.js"></script>
 
-<!-- Botão Voltar para a Home -->
-<style>
-.btn-home{ display:inline-flex; align-items:center; gap:8px; background:linear-gradient(145deg, var(--accent), var(--accent-dim)); border:1px solid var(--accent-dim); color:#241a06; border-radius:10px; padding:12px 26px; font-weight:700; font-size:16px; text-decoration:none; box-shadow:0 4px 14px rgba(0,0,0,0.35); transition:transform 0.15s; }
-.btn-home:hover{ transform:translateY(-2px); box-shadow:0 6px 18px rgba(0,0,0,0.45); }
-</style>
 <div style="text-align: center; margin: 40px auto 20px auto; width: 100%;">
-    <a href="../index.html" class="btn-home">
+    <a href="../index.html" class="btn-home" style="display:inline-flex; align-items:center; gap:8px; background:rgba(55,42,30,0.85); color:#f2eadc; border:2px solid #8c6946; border-radius:4px; padding:12px 28px; font-family:'Caveat', cursive; font-size:1.2rem; font-weight:bold; text-decoration:none; box-shadow:0 4px 12px rgba(0,0,0,0.4); transition:transform 0.15s;">
         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9 21v-6h6v6"/></svg>
         ← Home
     </a>
@@ -1644,4 +2410,3 @@
 
 </body>
 </html>
-
