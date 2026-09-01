@@ -676,12 +676,20 @@
   }
   initDiceBox();
 
+  // Physics engine can occasionally never settle (silent hang); guard every roll with a timeout.
+  function rollDiceBoxSafe(notation, timeoutMs = 5000) {
+    return Promise.race([
+      diceBox.roll(notation),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('DiceBox roll timeout')), timeoutMs))
+    ]);
+  }
+
   function rolarD20Fallback() { return Math.floor(Math.random() * 20) + 1; }
 
   async function rolarD20() {
     if (diceBoxReady && diceBox) {
       try {
-        const rollResult = await diceBox.roll('1d20');
+        const rollResult = await rollDiceBoxSafe('1d20');
         if (rollResult && rollResult.length > 0 && rollResult[0].value) {
           return rollResult[0].value;
         }
@@ -748,7 +756,7 @@
 
     if (diceBoxReady && diceBox) {
       try {
-        const rollResult = await diceBox.roll('3d20');
+        const rollResult = await rollDiceBoxSafe('3d20');
         if (rollResult && rollResult.length >= 3) {
           diceResults = rollResult.map(r => r.value);
         }

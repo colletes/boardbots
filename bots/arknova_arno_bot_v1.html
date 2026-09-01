@@ -968,6 +968,14 @@ async function initDiceBox() {
 }
 initDiceBox();
 
+// Physics engine can occasionally never settle (silent hang); guard every roll with a timeout.
+function rollDiceBoxSafe(notation, timeoutMs = 5000) {
+  return Promise.race([
+    diceBox.roll(notation),
+    new Promise((_, reject) => setTimeout(() => reject(new Error('DiceBox roll timeout')), timeoutMs))
+  ]);
+}
+
 async function rollDice(){
   if(!state) return;
   await performPendingCycle();
@@ -981,7 +989,7 @@ async function rollDice(){
   do {
     if (diceBoxReady && diceBox) {
       try {
-        const rollRes = await diceBox.roll(`1d${state.die}`);
+        const rollRes = await rollDiceBoxSafe(`1d${state.die}`);
         if (rollRes && rollRes.length > 0 && rollRes[0].value) {
           value = rollRes[0].value;
         } else {

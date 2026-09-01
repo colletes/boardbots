@@ -1929,6 +1929,14 @@ details .setup-list li {
             }
         }
 
+        // Physics engine can occasionally never settle (silent hang); guard every roll with a timeout.
+        function rollDiceBoxSafe(notation, timeoutMs = 5000) {
+            return Promise.race([
+                diceBox.roll(notation),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('DiceBox roll timeout')), timeoutMs))
+            ]);
+        }
+
         function findLanding(sum) {
             let pos = sum;
             while (state.occupied.includes(pos)) {
@@ -1955,7 +1963,7 @@ details .setup-list li {
 
             if (diceBoxReady && diceBox) {
                 try {
-                    const results = await diceBox.roll('2d6');
+                    const results = await rollDiceBoxSafe('2d6');
                     if (results && results.length >= 2) {
                         d1 = results[0].value;
                         d2 = results[1].value;
@@ -2064,7 +2072,7 @@ details .setup-list li {
             let d2 = Math.floor(Math.random() * 6) + 1;
             if (diceBoxReady && diceBox) {
                 try {
-                    const results = await diceBox.roll('2d6');
+                    const results = await rollDiceBoxSafe('2d6');
                     if (results && results.length >= 2) {
                         d1 = results[0].value; d2 = results[1].value;
                     }
@@ -2094,7 +2102,7 @@ details .setup-list li {
             let sum = 0, rolls = [];
             if (diceBoxReady && diceBox) {
                 try {
-                    const results = await diceBox.roll(`${n}d6`);
+                    const results = await rollDiceBoxSafe(`${n}d6`);
                     if (results && results.length > 0) {
                         rolls = results.map(r => r.value);
                         sum = rolls.reduce((a, b) => a + b, 0);

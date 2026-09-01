@@ -1504,6 +1504,14 @@ async function initDiceBox() {
     }
 }
 
+// Physics engine can occasionally never settle (silent hang); guard every roll with a timeout.
+function rollDiceBoxSafe(notation, timeoutMs = 5000) {
+    return Promise.race([
+        diceBoxInstance.roll(notation),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('DiceBox roll timeout')), timeoutMs))
+    ]);
+}
+
 function initApp() {
     initAshCanvas();
     applyLanguage();
@@ -1767,7 +1775,7 @@ async function roll3dDie() {
 
     if (diceBoxInstance) {
         try {
-            const result = await diceBoxInstance.roll('1d6');
+            const result = await rollDiceBoxSafe('1d6');
             const val = result[0].value;
             badge.textContent = val;
             const msg = currentLang === 'pt' ? `🎲 Dado 3D rolado: Resultado <strong>${val}</strong>!` : `🎲 3D Die rolled: Result <strong>${val}</strong>!`;

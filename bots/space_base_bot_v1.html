@@ -1032,25 +1032,42 @@ html, body {
         }
     }
 
+    function rollFallbackDice() {
+        const d1 = Math.floor(Math.random() * 6) + 1;
+        const d2 = Math.floor(Math.random() * 6) + 1;
+        const txt = document.getElementById('diceResultText');
+        txt.style.display = 'block';
+        txt.innerText = `🎲 ${d1} | ${d2}  (${currentLang === 'en' ? 'Sum' : 'Soma'}: ${d1+d2})`;
+        addGameLog(`🎲 ${currentLang === 'en' ? 'Dice Rolled' : 'Dados Rolados'}: [${d1}, ${d2}] ➔ ${currentLang === 'en' ? 'Sum' : 'Soma'} ${d1+d2}`);
+    }
+
+    let diceRollToken = 0;
+
     function rollVirtualDice() {
         if (diceMode !== 'virtual') return;
         if (!diceBoxReady) {
-            const d1 = Math.floor(Math.random() * 6) + 1;
-            const d2 = Math.floor(Math.random() * 6) + 1;
-            const txt = document.getElementById('diceResultText');
-            txt.style.display = 'block';
-            txt.innerText = `🎲 ${d1} | ${d2}  (${currentLang === 'en' ? 'Sum' : 'Soma'}: ${d1+d2})`;
-            addGameLog(`🎲 ${currentLang === 'en' ? 'Dice Rolled' : 'Dados Rolados'}: [${d1}, ${d2}] ➔ ${currentLang === 'en' ? 'Sum' : 'Soma'} ${d1+d2}`);
+            rollFallbackDice();
             return;
         }
-        
+
+        const token = ++diceRollToken;
+        // Physics engine can occasionally never settle (silent hang); fall back if onRollComplete never fires.
+        const hangGuard = setTimeout(() => {
+            if (token !== diceRollToken) return;
+            diceBoxReady = false;
+            rollFallbackDice();
+        }, 5000);
+
         try {
             document.getElementById('diceResultText').style.display = 'none';
-            diceBox.roll('2d6').catch(() => {
+            diceBox.roll('2d6').then(() => { clearTimeout(hangGuard); }).catch(() => {
+                clearTimeout(hangGuard);
+                if (token !== diceRollToken) return;
                 diceBoxReady = false;
                 rollVirtualDice();
             });
         } catch(err) {
+            clearTimeout(hangGuard);
             diceBoxReady = false;
             rollVirtualDice();
         }
