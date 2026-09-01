@@ -1,649 +1,45 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title id="page-title">TRV9000 - Comando Multi-Bot</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --rust: #d4202f; 
-            --yellow: #ffcc00; 
-            --bg: #0a0a0a;
-            --smoke: #ff3333;
-            --card-bg: rgba(16, 16, 16, 0.95);
-            --metal: #2b2b28;
-            --blood: #8a0303;
-            --bigrig: #c81e2c;
-            --chrome: #9fb0b8;
-            --font-display: 'Anton', 'Oswald', 'Courier New', sans-serif;
-            --font-body: 'Oswald', 'Courier New', monospace;
-        }
-        
-        body {
-            background-color: var(--bg);
-            color: var(--yellow);
-            font-family: var(--font-body);
-            margin: 0;
-            overflow-x: hidden;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-            position: relative;
-            overscroll-behavior-y: none;
-        }
 
-        /* Faixa de perigo (amarelo/preto) usada como acento em bordas Mad Max */
-        .hazard-stripes { background-image: repeating-linear-gradient(135deg, #000 0, #000 10px, var(--yellow) 10px, var(--yellow) 20px); }
+let document = {
+    getElementById: (id) => ({
+        classList: { add:()=>{}, remove:()=>{}, contains:()=>false, toggle:()=>{} },
+        addEventListener: ()=>{},
+        innerHTML: '',
+        innerText: '',
+        value: '',
+        style: {},
+        appendChild: ()=>{}
+    }),
+    querySelectorAll: (sel) => [],
+    querySelector: (sel) => null,
+    createElement: (tag) => ({ classList: { add:()=>{}, remove:()=>{} }, style:{}, appendChild:()=>{} }),
+    body: { appendChild: ()=>{} },
+    documentElement: { lang: 'pt-BR' }
+};
+let window = {
+    AudioContext: function() {},
+    webkitAudioContext: function() {},
+    addEventListener: ()=>{},
+    scrollTo: ()=>{},
+    location: { reload: ()=>{} }
+};
+let localStorage = {
+    getItem: (k) => null,
+    setItem: (k, v) => {}
+};
+let confirm = () => true;
+let alert = () => {};
 
-        /* Camada da Imagem de Fundo (Para todas as telas) */
-        body::before {
-            content: "";
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background-image: url('image_df155c.jpg');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            opacity: 0.25; 
-            filter: grayscale(20%);
-            z-index: -2; 
-            pointer-events: none;
-        }
 
-        /* Scanlines - DESATIVADAS NO MOBILE PARA EVITAR BUGS DE TOQUE NO IOS */
-        body::after {
-            content: " ";
-            position: fixed;
-            top: 0; left: 0; bottom: 0; right: 0;
-            background: linear-gradient(rgba(217, 92, 20, 0.03) 50%, rgba(0, 0, 0, 0.1) 50%);
-            background-size: 100% 4px;
-            pointer-events: none;
-            z-index: 100;
-            opacity: 0.5;
-            display: none; /* Padrão: Escondido no celular */
-        }
-
-        /* ESTRUTURA GERAL (MOBILE FIRST) */
-        .main-interface { display: flex; flex-direction: column; align-items: center; padding: 15px; flex: 1; position: relative; z-index: 1; }
-        
-        .screen-panel {
-            border: 2px solid var(--rust);
-            background: rgba(10, 10, 10, 0.6); 
-            width: 100%; max-width: 1600px; padding: 15px; box-sizing: border-box;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.8), 0 0 10px rgba(217, 92, 20, 0.2);
-            border-radius: 8px; display: flex; flex-direction: column; min-height: 85vh;
-            backdrop-filter: blur(4px); 
-            -webkit-backdrop-filter: blur(4px);
-            position: relative;
-        }
-        /* Sucata/ferrugem: buracos de bala e manchas de fuligem sobre o painel principal */
-        .screen-panel::before {
-            content: '';
-            position: absolute; inset: 0; z-index: 0; border-radius: 8px; pointer-events: none;
-            background-image:
-                radial-gradient(circle at 10% 18%, rgba(0,0,0,0.6) 0 3px, transparent 5px),
-                radial-gradient(circle at 85% 12%, rgba(0,0,0,0.55) 0 4px, transparent 6px),
-                radial-gradient(circle at 68% 90%, rgba(0,0,0,0.55) 0 3px, transparent 5px),
-                radial-gradient(circle at 28% 94%, rgba(0,0,0,0.5) 0 2px, transparent 4px),
-                radial-gradient(ellipse at 92% 55%, rgba(255,90,0,0.12) 0%, transparent 55%),
-                radial-gradient(ellipse at 5% 70%, rgba(139,0,0,0.15) 0%, transparent 50%);
-        }
-        .screen-panel > * { position: relative; z-index: 1; }
-        .screen-panel.boom { animation: screen-shake 0.4s; }
-        .screen-panel.boom::after {
-            content: '';
-            position: absolute; inset: 0; z-index: 5; border-radius: 8px; pointer-events: none;
-            background: radial-gradient(circle, rgba(255,180,60,0.55) 0%, rgba(255,90,0,0.25) 40%, transparent 70%);
-            animation: explosion-fade 0.5s ease-out forwards;
-        }
-        @keyframes screen-shake { 0%,100% { transform: translate(0,0); } 20% { transform: translate(-3px,2px); } 40% { transform: translate(3px,-2px); } 60% { transform: translate(-2px,-2px); } 80% { transform: translate(2px,2px); } }
-        @keyframes explosion-fade { from { opacity: 1; } to { opacity: 0; } }
-
-        h1 { text-align: center; margin: 0 0 15px 0; letter-spacing: 3px; font-size: 1.6em; font-family: var(--font-display); font-weight: normal; border-bottom: 4px solid var(--rust); padding-bottom: 12px; text-shadow: 0 0 10px var(--rust), 2px 2px 0 #000; position: relative; }
-        .icon-h1 { width: 0.55em; height: 0.55em; vertical-align: middle; margin: 0 10px; color: var(--rust); filter: drop-shadow(0 0 4px var(--rust)); }
-        .wasteland-tagline { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; font-family: var(--font-body); font-size: 0.7em; letter-spacing: 2px; color: var(--yellow); opacity: 0.85; margin: -8px 0 15px; text-transform: uppercase; text-shadow: 0 0 6px rgba(255,204,0,0.4); }
-        .icon-tagline { width: 0.9em; height: 0.9em; flex-shrink: 0; }
-        .lang-switch { display: flex; gap: 8px; justify-content: center; margin-bottom: 12px; }
-        .lang-btn { background: #111; border: 2px solid #555; color: #888; padding: 6px 14px; font-size: 0.75em; font-weight: bold; letter-spacing: 1px; cursor: pointer; border-radius: 4px; width: auto; }
-        .lang-btn.active { border-color: var(--yellow); color: var(--yellow); background: rgba(255,204,0,0.1); box-shadow: 0 0 8px rgba(255,204,0,0.4); }
-
-        .setup-container { display: flex; flex-direction: column; align-items: center; gap: 15px; width: 100%; max-width: 600px; margin: 0 auto; }
-        .bot-setup-row { display: flex; flex-direction: column; gap: 8px; width: 100%; background: rgba(0,0,0,0.8); padding: 15px; border: 1px solid #444; border-radius: 4px; box-sizing: border-box; }
-        
-        /* Ajustes de clique vitais para iOS */
-        select, input, button {
-            touch-action: manipulation;
-            -webkit-appearance: none;
-            border-radius: 4px;
-            position: relative;
-            z-index: 50; /* Força os elementos clicáveis pra frente */
-        }
-        
-        .bot-setup-row select { width: 100%; background: #000; color: var(--yellow); border: 1px solid var(--rust); padding: 12px; font-family: inherit; font-size: 1em; }
-        .bot-setup-row input { width: 100%; background: #000; color: #fff; border: 1px solid var(--rust); padding: 12px; text-align: center; font-size: 1.2em; }
-
-        .play-area { display: grid; grid-template-columns: 1fr; gap: 20px; width: 100%; margin-top: 20px; }
-        .card-wrapper { display: flex; flex-direction: column; align-items: center; width: 100%; max-width: 100%; transition: 0.3s; margin: 0 auto;}
-        /* Marcas de pneu queimado sob cada carro/bot, como se tivesse derrapado na estrada da sucata */
-        .card-wrapper::after {
-            content: '';
-            display: block; width: 92%; height: 6px; margin: -2px auto 10px;
-            background-image: repeating-linear-gradient(90deg, rgba(0,0,0,0.55) 0 6px, transparent 6px 14px);
-            opacity: 0.5; border-radius: 2px;
-        }
-        
-        .bot-name-badge { width: 100%; text-align: center; font-weight: normal; font-family: var(--font-display); padding: 10px; border-radius: 8px 8px 0 0; font-size: 1.1em; letter-spacing: 1px; box-sizing: border-box; text-transform: uppercase; border: 2px solid transparent; border-bottom: none; text-shadow: 1px 1px 0 rgba(0,0,0,0.5);}
-        
-        /* Painel de Habilidades */
-        .bot-abilities-panel { width: 100%; background: rgba(0,0,0,0.9); border-left: 2px solid; border-right: 2px solid; box-sizing: border-box; }
-        .bot-abilities-panel summary { padding: 12px 8px; cursor: pointer; font-weight: bold; color: #fff; text-align: center; font-size: 0.85em; background: rgba(255,255,255,0.1); text-transform: uppercase; border-bottom: 1px solid rgba(255,255,255,0.1); outline: none; touch-action: manipulation; -webkit-tap-highlight-color: transparent; position: relative; z-index: 50; }
-        .bot-abilities-panel ul { margin: 0; padding: 15px; font-size: 0.8em; color: #ccc; }
-        .bot-abilities-panel li { margin-bottom: 8px; line-height: 1.3; }
-        .ability-basic { opacity: 0.7; list-style-type: none; border-left: 2px solid var(--rust); padding-left: 8px; margin-bottom: 12px; }
-        .ability-advanced { color: #fff; text-shadow: 0 0 5px rgba(255,255,255,0.5); list-style-type: none; margin-bottom: 12px;}
-
-        .card {
-            width: 100%; min-height: 400px; box-sizing: border-box;
-            background-color: var(--card-bg);
-            border: 2px solid; border-top: none; border-radius: 0 0 8px 8px;
-            position: relative; padding: 15px; font-size: 0.85em;
-            display: flex; flex-direction: column;
-            background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255, 255, 255, 0.02) 10px, rgba(255, 255, 255, 0.02) 20px);
-            box-shadow: inset 0 0 40px rgba(0,0,0,0.6);
-        }
-        .card::before {
-            content: ''; position: absolute; top: 8px; left: 8px; width: 6px; height: 6px; border-radius: 50%;
-            background: #555; box-shadow: 6px 0 0 #555, 0 0 0 1px #000 inset, calc(100% - 20px) 0 0 #555, calc(100% - 14px) 0 0 #555;
-            opacity: 0.6;
-        }
-        
-        .priority-badge { background: repeating-linear-gradient(135deg, #1a1a1a 0, #1a1a1a 8px, #000 8px, #000 16px); border: 2px solid var(--yellow); color: var(--yellow); font-weight: bold; padding: 9px; font-size: 0.9em; text-align: center; margin-bottom: 10px; border-radius: 4px; text-transform: uppercase; letter-spacing: 1px; box-shadow: inset 0 0 10px rgba(0,0,0,0.8); }
-        .priority-badge .priority-arrow { font-size: 1.3em; margin-left: 6px; text-shadow: 0 0 6px var(--yellow); }
-        .card-header { font-weight: normal; font-family: var(--font-display); letter-spacing: 1px; border-bottom: 2px solid var(--rust); margin-bottom: 10px; padding-bottom: 8px; font-size: 1.3em; color: #fff; text-shadow: 0 0 5px var(--rust); text-align: center; }
-        .card-special { background: rgba(0,0,0,0.6); color: #eee; line-height: 1.4; font-size: 0.9em; border: 1px dashed #666; padding: 12px; margin-bottom: 15px; min-height: 60px; }
-        .special-title { color: var(--rust); font-weight: bold; margin-bottom: 5px; display: block; text-transform: uppercase;}
-
-        .vehicle-row { display: flex; align-items: center; background: rgba(0,0,0,0.7); border: 1px solid #444; margin-bottom: 10px; padding: 12px 10px; border-radius: 4px; transition: opacity 0.3s; min-height: 50px; }
-        .vehicle-size { font-size: 1.4em; font-weight: bold; color: var(--rust); width: 35px; text-align: center; border-right: 1px solid #555; margin-right: 10px; text-shadow: 0 0 5px var(--rust); }
-        .vehicle-moves { display: flex; gap: 8px; flex-wrap: wrap; flex: 1; align-items: center; justify-content: center;}
-        .move-block { display: flex; align-items: center; background: #eee; color: #000; padding: 4px 8px; border-radius: 4px; font-weight: bold; border: 1px solid #fff; box-shadow: 1px 1px 3px rgba(0,0,0,0.5); }
-        .move-die { font-size: 1.2em; margin-right: 4px; }
-        .move-dir { font-size: 1.4em; font-weight: bold; }
-        .move-block.move-block-sdbr { background: #3a0a0a; color: var(--smoke); border: 1px solid var(--smoke); box-shadow: 0 0 6px rgba(255,51,51,0.6); }
-        .move-block.move-block-sdbr .move-die::before { content: '🎲'; margin-right: 3px; filter: grayscale(1) brightness(0.6) sepia(1) hue-rotate(-50deg) saturate(6); }
-        .move-block.move-block-sdbr .move-dir { color: var(--smoke); text-shadow: 0 0 5px var(--smoke); }
-
-        /* Roda de Prioridade do SDBR — sentido horário/anti-horário ao redor do Big Rig */
-        .sdbr-priority-wheel { width: 42px; height: 42px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; position: relative; background: radial-gradient(circle, #2a0000 0%, #000 75%); border: 2px solid var(--smoke); box-shadow: 0 0 10px rgba(255,51,51,0.5), inset 0 0 8px rgba(0,0,0,0.9); }
-        .sdbr-priority-wheel::before { content: ''; position: absolute; inset: -6px; border-radius: 50%; border: 2px dashed rgba(255,51,51,0.4); animation: sdbr-spin 6s linear infinite; }
-        .sdbr-priority-wheel.ccw::before { animation-direction: reverse; }
-        .sdbr-priority-wheel .wheel-arrow { font-size: 1.5em; color: var(--smoke); text-shadow: 0 0 6px var(--smoke); line-height: 1; }
-        @keyframes sdbr-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-
-        /* Indicador de tipo de espaço que aciona a mudança de faixa única do SDBR (vermelho = ficha de perigo; marrom = outro terreno) */
-        .sdbr-hazard-flag { display: inline-block; width: 0; height: 0; margin-left: 2px; border-left: 7px solid transparent; border-right: 7px solid transparent; border-bottom: 11px solid; cursor: help; }
-        .sdbr-hazard-flag.red { border-bottom-color: #e62e00; filter: drop-shadow(0 0 4px rgba(230,46,0,0.8)); }
-        .sdbr-hazard-flag.brown { border-bottom-color: #9c6b30; filter: drop-shadow(0 0 4px rgba(156,107,48,0.8)); }
-        .sdbr-skip-arrow { display: inline-flex; align-items: center; justify-content: center; min-width: 30px; height: 30px; margin-left: 6px; padding: 0 8px; border: 2px solid var(--smoke); border-radius: 4px; font-weight: bold; font-size: 1.6em; line-height: 1; color: var(--smoke); text-shadow: 0 0 6px var(--smoke); box-shadow: 0 0 6px rgba(255,51,51,0.5); cursor: help; }
-        /* Botões de ação principal (Iniciar Corrida / Comprar Cartas) pulsam como uma granada armada */
-        .btn-explosive { position: relative; overflow: hidden; animation: grenade-pulse 1.8s ease-in-out infinite; }
-        .btn-explosive:disabled { animation: none; }
-        @keyframes grenade-pulse { 0%,100% { box-shadow: 0 0 6px rgba(255,90,0,0.5); } 50% { box-shadow: 0 0 22px rgba(255,140,0,0.9), 0 0 40px rgba(255,60,0,0.5); } }
-
-        .sdbr-field { font-size: 0.85em; color: var(--smoke); text-transform: uppercase; letter-spacing: 0.5px; }
-        .sdbr-field strong { color: #fff; margin-right: 2px; }
-        
-        .icon-fire { display: inline-block; width: 14px; height: 14px; background: #e62e00; border-radius: 50%; position: relative; margin-right: 6px; border: 1px solid #000; box-shadow: 0 0 5px #e62e00; }
-        .icon-fire::after { content: ''; position: absolute; top: 3px; left: 3px; width: 6px; height: 6px; background: var(--yellow); border-radius: 50%; }
-        .icon-extinguish { display: inline-block; position: relative; width: 18px; height: 18px; background: #00d2ff; border-radius: 50%; margin-right: 6px; border: 1px solid #fff; box-shadow: 0 0 5px #00d2ff; }
-        .icon-extinguish::after { content: ''; position: absolute; top: 4px; left: 6px; width: 6px; height: 9px; background: #fff; border-radius: 50% 50% 50% 0; transform: rotate(45deg); }
-        .icon-ignite { display: inline-block; position: relative; width: 18px; height: 18px; background: #e62e00; border-radius: 50%; margin-right: 6px; border: 1px solid #000; box-shadow: 0 0 5px #e62e00; }
-        .icon-ignite::after { content: ''; position: absolute; top: 4px; left: 6px; width: 6px; height: 9px; background: var(--yellow); border-radius: 50% 50% 50% 0; transform: rotate(-135deg); }
-
-        .sdff-row { display: flex; align-items: center; gap: 10px; }
-        .sdff-marks { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 40px; flex-shrink: 0; }
-        .sdff-mark { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; background: var(--yellow); color: #000; font-weight: bold; font-size: 0.9em; border: 1px solid #000; }
-        .sdff-mark.is-command { background: #fff; color: var(--rust); box-shadow: 0 0 6px var(--yellow); }
-        .sdff-mark-sep { color: #888; font-size: 0.7em; }
-
-        .deck-status { font-size: 0.8em; color: #aaa; text-align: center; margin-top: auto; border-top: 1px solid #444; padding-top: 8px; background: rgba(0,0,0,0.4); }
-
-        .initial-placement-box { width: 100%; background: rgba(0,0,0,0.6); border: 1px dashed #666; border-radius: 4px; padding: 10px; margin: 10px 0; box-sizing: border-box; }
-        .initial-placement-title { color: var(--rust); font-weight: bold; text-transform: uppercase; font-size: 0.8em; text-align: center; margin-bottom: 8px; letter-spacing: 0.5px; }
-        .initial-placement-row { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 4px 0; font-size: 0.9em; }
-        .initial-placement-size { font-weight: bold; color: var(--rust); width: 22px; text-align: center; border-right: 1px solid #555; }
-        .initial-placement-space { color: #eee; }
-
-        .expansion-toggle {
-            display: flex; align-items: center; gap: 12px; width: 100%; background: #111; border: 2px solid #444;
-            color: #999; padding: 14px; border-radius: 4px; cursor: pointer; text-align: left; font-family: var(--font-body);
-            font-size: 1em; text-transform: uppercase; letter-spacing: 0.5px; transition: 0.2s; box-shadow: none; margin-bottom: 10px;
-        }
-        .expansion-toggle .exp-icon { font-size: 1.6em; flex-shrink: 0; filter: grayscale(1) brightness(0.8); }
-        .expansion-toggle .exp-label { flex: 1; font-weight: bold; }
-        .expansion-toggle .exp-check { width: 26px; height: 26px; border: 2px solid #555; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 0.9em; }
-        .expansion-toggle.active { border-color: var(--rust); color: #fff; background: rgba(217, 92, 20, 0.15); box-shadow: 0 0 15px rgba(217,92,20,0.35); }
-        .expansion-toggle.active .exp-icon { filter: none; }
-        .expansion-toggle.active .exp-check { background: var(--rust); border-color: var(--rust); color: #000; }
-        .expansion-toggle.active .exp-check::after { content: '✓'; }
-
-        .controls-global { display: flex; flex-direction: column; gap: 15px; width: 100%; margin-top: 30px; border-top: 1px solid #555; padding-top: 20px; position: relative; z-index: 10; }
-        
-        button { 
-            background: rgba(0,0,0,0.9); color: var(--yellow); border: 2px solid var(--rust); 
-            padding: 18px 20px; cursor: pointer; text-transform: uppercase; font-weight: bold; 
-            font-family: var(--font-body); letter-spacing: 1px; width: 100%; font-size: 1.1em; transition: 0.2s; 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.05); 
-        }
-        button:active:not(:disabled) { background: var(--rust); color: #fff; transform: scale(0.98); }
-        button:disabled { border-color: #444; color: #666; cursor: not-allowed; box-shadow: none; opacity: 0.7; }
-
-        .btn-help-float {
-            position: fixed; bottom: 20px; right: 20px; width: 55px; height: 55px;
-            border-radius: 50%; background: rgba(0,0,0,0.9); border: 2px solid var(--yellow);
-            color: var(--yellow); font-size: 24px; font-weight: bold; cursor: pointer;
-            z-index: 900; box-shadow: 0 0 15px rgba(255, 204, 0, 0.4);
-            display: flex; align-items: center; justify-content: center; padding: 0;
-        }
-        
-        
-        
-        
-
-        /* Banner de destaque (arte da caixa do jogo) */
-        .hero {
-            position: relative; width: 100%; height: 150px; border-radius: 6px; overflow: hidden;
-            margin-bottom: 15px; border: 2px solid var(--rust);
-            box-shadow: 0 4px 16px rgba(0,0,0,0.7);
-            animation: heroFadeIn 0.5s ease both;
-        }
-        .hero img { width: 100%; height: 100%; object-fit: cover; display: block; filter: saturate(1.1) contrast(1.05); }
-        .hero::after {
-            content: ''; position: absolute; inset: 0;
-            background: linear-gradient(180deg, rgba(10,10,10,0.1) 0%, rgba(10,10,10,0.5) 65%, rgba(10,10,10,0.95) 100%);
-        }
-        @keyframes heroFadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* Créditos (componente padrão da casa) */
-        .credits {
-            display: flex; align-items: center; gap: 12px;
-            background: rgba(0,0,0,0.75); border: 1px solid #333; border-radius: 6px;
-            padding: 10px 14px; margin-top: 20px; font-size: 0.75em;
-        }
-        .credits img { width: 44px; height: 44px; object-fit: cover; border-radius: 6px; border: 1px solid var(--rust); flex-shrink: 0; }
-        .credits-text { line-height: 1.4; letter-spacing: 0.3px; color: #aaa; }
-        .credits-text a { color: var(--yellow); text-decoration: none; }
-        .credits-text a:hover { text-decoration: underline; }
-
-        /* Icones inline (substituem emojis em títulos/botões) */
-        .icon-inline-title { width: 1.1em; height: 1.1em; vertical-align: -0.15em; margin-right: 8px; flex-shrink: 0; }
-        .btn-icon { width: 1.3em; height: 1.3em; vertical-align: -0.25em; margin-right: 8px; flex-shrink: 0; }
-        .exp-icon svg { width: 1.6em; height: 1.6em; display: block; }
-        .clickable-name { cursor: pointer; text-decoration: underline; color: var(--rust); font-weight: bold; }
-
-        /* MODAIS */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); padding: 10px; box-sizing: border-box;}
-        .config-panel { width: 100%; max-width: 1200px; height: 95vh; background: #0a0a0a; border: 2px solid var(--yellow); border-radius: 8px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 0 30px rgba(0,0,0,1); }
-        
-        .help-panel { max-width: 800px; height: auto; max-height: 90vh; padding: 20px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
-
-        .config-sidebar { width: 100%; background: #141414; border-bottom: 2px solid #333; display: flex; flex-direction: column; max-height: 40vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
-        .file-controls { padding: 15px; border-bottom: 2px solid #444; background: #000; display: flex; flex-direction: column; gap: 10px; }
-        .btn-file { padding: 12px; font-size: 0.9em; border-width: 1px; background: #1a1a1a; color: #ccc; border-color: #555;}
-        .deck-tab.active { background: var(--rust); color: #fff; border-color: var(--rust); font-weight: bold; }
-        
-        .config-list-btn { background: transparent; border: none; border-bottom: 1px solid #333; color: #aaa; text-align: left; padding: 15px; width: 100%; font-size: 1em; cursor: pointer; }
-        .config-list-btn.active { background: var(--rust); color: #fff; font-weight: bold;}
-        
-        .config-editor { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; background: rgba(16,16,16,0.5); -webkit-overflow-scrolling: touch; }
-        .editor-form-group { display: flex; flex-direction: column; gap: 5px; width: 100%;}
-        .editor-form-group label { color: var(--yellow); font-weight: bold; font-size: 0.85em; text-transform: uppercase; }
-        .editor-form-group input, .editor-form-group select, .editor-form-group textarea { background: #000; border: 1px solid #555; color: #fff; padding: 12px; font-family: inherit; font-size: 1em; }
-        
-        .editor-row-container { background: rgba(255,255,255,0.03); border: 1px solid #444; padding: 15px; border-radius: 4px; margin-bottom: 10px; }
-        .move-edit-row { display: flex; gap: 10px; align-items: center; margin-bottom: 8px; background: rgba(0,0,0,0.6); padding: 10px; border-radius: 4px; border: 1px solid #333; flex-wrap: wrap; }
-        .move-edit-row select, .move-edit-row input { flex: 1; min-width: 80px;}
-        .btn-small { padding: 12px; font-size: 0.9em; border-color: #666; width: 100%; color: #ccc; background: #222;}
-
-        .hidden { display: none !important; }
-        .invisible { opacity: 0; visibility: hidden; }
-
-        /* ==================================================
-           MEDIA QUERIES - MODO DESKTOP (PC/MAC/TABLET GRANDE)
-           ================================================== */
-        @media (min-width: 768px) {
-            /* Restaura as scanlines no PC */
-            body::after { display: block; }
-            
-            .screen-panel { border-width: 3px; padding: 25px; }
-            h1 { font-size: 1.5em; letter-spacing: 5px; margin-bottom: 20px;}
-            
-            .bot-setup-row { flex-direction: row; }
-            .bot-setup-row select, .bot-setup-row input { width: auto; }
-            
-            /* Controles globais lado a lado no PC */
-            .controls-global { flex-direction: row; }
-            button { width: auto; flex: 1; max-width: 250px; }
-            
-            /* Modal vira layout de colunas no PC */
-            .config-panel { flex-direction: row; }
-            .config-sidebar { width: 250px; border-right: 2px solid #333; border-bottom: none; max-height: none; }
-            .config-editor { padding: 25px; }
-            .editor-form-group { width: auto; }
-            
-            .btn-small { width: auto; }
-            .play-area { grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); }
-            .card-wrapper { max-width: 360px; }
-            
-            .bot-abilities-panel summary:hover { background: rgba(255,255,255,0.2); }
-            .btn-file:hover { background: #333; color: #fff; border-color: #999;}
-            .config-list-btn:hover { background: #222; color: var(--yellow); }
-            .btn-small:hover { background: #444; color: #fff; border-color: #aaa;}
-            button:hover:not(:disabled) { background: var(--rust); color: #fff; box-shadow: 0 0 20px var(--rust); }
-            .btn-help-float:hover { background: var(--yellow); color: #000; transform: scale(1.1); box-shadow: 0 0 25px var(--yellow); }
-            .clickable-name:hover { color: var(--yellow); text-shadow: 0 0 10px var(--yellow); }
-            .expansion-toggle:hover { border-color: #999; color: #ccc; }
-            .expansion-toggle.active:hover { border-color: var(--yellow); }
-            .lang-btn:hover { border-color: #999; color: #ccc; }
-        }
-
-        ::-webkit-scrollbar { width: 8px; background: #0a0a0a; }
-        ::-webkit-scrollbar-thumb { background: #333; border: 1px solid #0a0a0a; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--rust); }
-    
-/* Standard Buy Me a Coffee Button */
-.bmc-btn, .bmc-inline, .bmc-float {
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 8px !important;
-  background: #FFDD00 !important;
-  color: #000000 !important;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
-  font-weight: 700 !important;
-  font-size: 0.92rem !important;
-  padding: 10px 18px !important;
-  border-radius: 8px !important;
-  border: 1px solid rgba(0,0,0,0.15) !important;
-  text-decoration: none !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25) !important;
-  transition: transform 0.15s ease, box-shadow 0.15s ease !important;
-  cursor: pointer !important;
-  margin: 16px auto !important;
-  width: max-content !important;
-  text-transform: none !important;
-  letter-spacing: normal !important;
-}
-.bmc-btn:hover, .bmc-inline:hover, .bmc-float:hover {
-  transform: translateY(-2px) scale(1.02) !important;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35) !important;
-  background: #FFE433 !important;
-  color: #000000 !important;
-}
-.bmc-btn svg, .bmc-inline svg, .bmc-float svg {
-  width: 20px !important;
-  height: 20px !important;
-  min-width: 20px !important;
-  min-height: 20px !important;
-  max-width: 20px !important;
-  max-height: 20px !important;
-  stroke: #000000 !important;
-  fill: none !important;
-  flex-shrink: 0 !important;
-  vertical-align: middle !important;
-}
-</style>
-    <script src="../assets/logger.js"></script>
-</head>
-<body>
-    <input type="file" id="file-import" accept=".json" class="hidden" onchange="importDeck(event)">
-
-    <button class="btn-help-float" onclick="openHelpModal()">?</button>
-
-    <div id="help-modal" class="modal-overlay hidden">
-        <div class="config-panel help-panel">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--rust); padding-bottom: 15px; margin-bottom: 20px; flex-wrap:wrap; gap:10px;">
-                <h2 style="margin:0; color:var(--rust); letter-spacing: 2px; text-transform: uppercase; font-size: 1.2em;"><svg class="icon-inline-title" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg><span data-i18n="helpModalTitle">Manuais: TRV-9000</span></h2>
-                <button onclick="closeHelpModal()" class="btn-small" style="border-color: #ff3333; color: #ff3333; background: rgba(255,0,0,0.1); font-weight:bold;" data-i18n="btnClose">FECHAR X</button>
-            </div>
-            
-            <div id="help-content" style="font-size: 0.95em; line-height: 1.6; color: #ddd;"></div>
-        </div>
-    </div>
-
-    <div id="config-modal" class="modal-overlay hidden">
-        <div class="config-panel">
-            <div class="config-sidebar">
-                <div class="file-controls" style="margin-bottom:10px;">
-                    <button class="btn-file deck-tab active" data-tab="official" onclick="switchDeckTab('official')"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 13l1.5-4.5A2 2 0 0 1 6.4 7h11.2a2 2 0 0 1 1.9 1.5L21 13"/><rect x="2" y="13" width="20" height="5" rx="1.5"/><circle cx="7" cy="18" r="1.5"/><circle cx="17" cy="18" r="1.5"/></svg><span data-i18n="tabOfficial">TRV9000 (Base)</span></button>
-                    <button class="btn-file deck-tab" data-tab="sdbr" onclick="switchDeckTab('sdbr')"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 8h11v8H2z"/><path d="M13 11h4l3 3v2h-7z"/><circle cx="6" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/></svg><span data-i18n="tabSdbr">SDBR (Big Rig)</span></button>
-                    <button class="btn-file deck-tab" data-tab="sdff" onclick="switchDeckTab('sdff')"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5.5" cy="17.5" r="2.5"/><circle cx="18.5" cy="17.5" r="2.5"/><path d="M8 17.5h7l-2-6h-4l-1-3H5"/><path d="M13 11.5h4.5l1.5 2.5"/></svg><span data-i18n="tabSdff">SDFF (Final Five)</span></button>
-                </div>
-                <div class="file-controls" id="official-file-controls">
-                    <div style="font-size:0.8em; color:#888; text-align:center; margin-bottom:5px; text-transform:uppercase; font-weight:bold;" data-i18n="backupLabel">Backup de Deck</div>
-                    <button class="btn-file" onclick="exportDeck()"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg><span data-i18n="btnSaveFile">SALVAR ARQUIVO</span></button>
-                    <button class="btn-file" onclick="triggerImport()"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/></svg><span data-i18n="btnLoadFile">CARREGAR ARQUIVO</span></button>
-                </div>
-                <div id="config-sidebar-list"></div>
-            </div>
-            
-            <div class="config-editor" id="config-editor-area">
-                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--rust); padding-bottom: 15px; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
-                    <h2 style="margin:0; text-transform:uppercase; letter-spacing:1px; text-shadow: 0 0 10px var(--rust); font-size:1.2em;" id="editor-title" data-i18n="editorTitleDefault">Editor de Deck Oficial</h2>
-                    <button onclick="closeConfigModal()" class="btn-small" style="border-color: #ff3333; color: #ff3333; background: rgba(255,0,0,0.1); font-weight:bold; width: auto;" data-i18n="btnClose">FECHAR X</button>
-                </div>
-                
-                <div id="editor-instructions" style="text-align:center; color:#888; padding: 30px 0;">
-                    <p data-i18n="editorInstructionsP">As alterações são salvas automaticamente na cache do navegador.</p>
-                    <h3 style="color:var(--yellow); margin-top:20px;" data-i18n="editorInstructionsH3">Selecione uma carta na lista para começar.</h3>
-                </div>
-
-                <div id="editor-fields" class="hidden">
-                    <div style="display: flex; gap: 15px; background: rgba(217, 92, 20, 0.1); padding: 15px; border: 1px solid var(--rust); border-radius: 4px; margin-bottom: 15px; flex-wrap: wrap;">
-                        <div class="editor-form-group" style="flex: 1; min-width: 150px;">
-                            <label data-i18n="labelPriority">Prioridade Tiro/Embalo</label>
-                            <select id="edit-priority">
-                                <option value="↓ (Cima para Baixo)">↓ (Cima para Baixo)</option>
-                                <option value="↑ (Baixo para Cima)">↑ (Baixo para Cima)</option>
-                            </select>
-                        </div>
-                        <div class="editor-form-group" style="flex: 1; min-width: 150px;">
-                            <label data-i18n="labelActionType">Tipo de Ação</label>
-                            <select id="edit-action-type" onchange="handleActionTypeChange()">
-                                <option value="airstrike" data-i18n="optAirstrike">Airstrike</option>
-                                <option value="reparo" data-i18n="optReparo">Reparo</option>
-                                <option value="drift" data-i18n="optDrift">Drift</option>
-                                <option value="custom" data-i18n="optCustom">Personalizado</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="editor-form-group">
-                        <label data-i18n="labelHeaderTitle">Título do Cabeçalho</label>
-                        <input type="text" id="edit-action-header" disabled>
-                    </div>
-                    
-                    <div class="editor-form-group" style="margin-bottom: 15px;">
-                        <label data-i18n="labelSpecialDesc">Descrição Especial</label>
-                        <textarea id="edit-special-text" rows="3" disabled></textarea>
-                    </div>
-
-                    <div style="display: flex; gap: 10px; padding: 15px; background: #000; border: 1px solid #444; border-radius: 4px; margin-bottom: 15px; flex-wrap: wrap;">
-                        <div class="editor-form-group" style="flex:1; min-width:80px;">
-                            <label data-i18n="label1st">1º a Ativar</label>
-                            <select id="edit-order-0" class="sel-order" onchange="enforceUniqueOrder(0)"><option value="S" data-i18n="sizeS">S (Pequeno)</option><option value="M" data-i18n="sizeM">M (Médio)</option><option value="L" data-i18n="sizeL">L (Grande)</option></select>
-                        </div>
-                        <div class="editor-form-group" style="flex:1; min-width:80px;">
-                            <label data-i18n="label2nd">2º a Ativar</label>
-                            <select id="edit-order-1" class="sel-order" onchange="enforceUniqueOrder(1)"><option value="S">S</option><option value="M" selected>M</option><option value="L">L</option></select>
-                        </div>
-                        <div class="editor-form-group" style="flex:1; min-width:80px;">
-                            <label data-i18n="label3rd">3º a Ativar</label>
-                            <select id="edit-order-2" class="sel-order" onchange="enforceUniqueOrder(2)"><option value="S">S</option><option value="M">M</option><option value="L" selected>L</option></select>
-                        </div>
-                    </div>
-
-                    <div id="moves-wrappers-container">
-                        <div class="editor-row-container" id="wrap-edit-S">
-                            <h3 style="color:var(--rust); margin:0 0 10px 0; font-size:1em;" data-i18n="movesHeaderS">Movimentos S (Pequeno)</h3>
-                            <div id="edit-moves-S"></div>
-                            <button class="btn-small" onclick="addMoveBlock('S')" data-i18n="btnAddCommandS">+ ADICIONAR COMANDO (S)</button>
-                        </div>
-
-                        <div class="editor-row-container" id="wrap-edit-M">
-                            <h3 style="color:var(--rust); margin:0 0 10px 0; font-size:1em;" data-i18n="movesHeaderM">Movimentos M (Médio)</h3>
-                            <div id="edit-moves-M"></div>
-                            <button class="btn-small" onclick="addMoveBlock('M')" data-i18n="btnAddCommandM">+ ADICIONAR COMANDO (M)</button>
-                        </div>
-
-                        <div class="editor-row-container" id="wrap-edit-L">
-                            <h3 style="color:var(--rust); margin:0 0 10px 0; font-size:1em;" data-i18n="movesHeaderL">Movimentos L (Grande)</h3>
-                            <div id="edit-moves-L"></div>
-                            <button class="btn-small" onclick="addMoveBlock('L')" data-i18n="btnAddCommandL">+ ADICIONAR COMANDO (L)</button>
-                        </div>
-                    </div>
-
-                    <div style="margin-top:10px; padding-top:15px; border-top: 1px solid #444;">
-                        <button onclick="saveCardEdit(false)" style="background:var(--rust); color:#fff; width: 100%; max-width: none; font-size:1.1em;"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg><span data-i18n="btnSaveChanges">SALVAR MUDANÇAS</span></button>
-                    </div>
-                </div>
-
-                <div id="editor-fields-sdbr" class="hidden">
-                    <div class="editor-form-group" style="margin-bottom: 15px;">
-                        <label data-i18n="labelPriority">Prioridade Tiro/Embalo</label>
-                        <select id="edit-sdbr-priority">
-                            <option value="↻ (Sentido Horário)">↻ (Sentido Horário / Clockwise)</option>
-                            <option value="↺ (Sentido Anti-Horário)">↺ (Sentido Anti-Horário / Counter-clockwise)</option>
-                        </select>
-                    </div>
-                    <div style="display: flex; gap: 10px; padding: 15px; background: #000; border: 1px solid #444; border-radius: 4px; margin-bottom: 15px; flex-wrap: wrap;">
-                        <div class="editor-form-group" style="flex:1; min-width:100px;">
-                            <label data-i18n="label1st">1º a Ativar</label>
-                            <select id="edit-sdbr-order-0" class="sel-sdbr-order" onchange="enforceUniqueSdbrOrder(0)"><option value="FRENTE">FRENTE</option><option value="MEIO">MEIO</option><option value="TRAS">TRAS</option></select>
-                        </div>
-                        <div class="editor-form-group" style="flex:1; min-width:100px;">
-                            <label data-i18n="label2nd">2º a Ativar</label>
-                            <select id="edit-sdbr-order-1" class="sel-sdbr-order" onchange="enforceUniqueSdbrOrder(1)"><option value="FRENTE">FRENTE</option><option value="MEIO" selected>MEIO</option><option value="TRAS">TRAS</option></select>
-                        </div>
-                        <div class="editor-form-group" style="flex:1; min-width:100px;">
-                            <label data-i18n="label3rd">3º a Ativar</label>
-                            <select id="edit-sdbr-order-2" class="sel-sdbr-order" onchange="enforceUniqueSdbrOrder(2)"><option value="FRENTE">FRENTE</option><option value="MEIO">MEIO</option><option value="TRAS" selected>TRAS</option></select>
-                        </div>
-                    </div>
-                    <div id="sdbr-sections-container"></div>
-                    <div style="margin-top:10px; padding-top:15px; border-top: 1px solid #444;">
-                        <button onclick="saveSdbrCardEdit(false)" style="background:var(--rust); color:#fff; width: 100%; max-width: none; font-size:1.1em;"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg><span data-i18n="btnSaveChanges">SALVAR MUDANÇAS</span></button>
-                    </div>
-                </div>
-
-                <div id="editor-fields-sdff" class="hidden">
-                    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:15px;">
-                        <div class="editor-form-group" style="flex:1; min-width:120px;">
-                            <label data-i18n="labelPriority">Prioridade Tiro/Embalo</label>
-                            <select id="edit-sdff-priority">
-                                <option value="↘">↘</option>
-                                <option value="↖">↖</option>
-                            </select>
-                        </div>
-                        <div class="editor-form-group" style="flex:1; min-width:120px;">
-                            <label data-i18n="labelCmd">Comando</label>
-                            <select id="edit-sdff-cmd">
-                                <option value="repair" data-i18n="cmdRepair">Reparo</option>
-                                <option value="airstrike" data-i18n="cmdAirstrike">Ataque Aéreo</option>
-                                <option value="respawn" data-i18n="cmdRespawn">Renascer</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div id="sdff-rows-container"></div>
-                    <div style="margin-top:10px; padding-top:15px; border-top: 1px solid #444;">
-                        <button onclick="saveSdffCardEdit(false)" style="background:var(--rust); color:#fff; width: 100%; max-width: none; font-size:1.1em;"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg><span data-i18n="btnSaveChanges">SALVAR MUDANÇAS</span></button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="main-interface">
-        <div class="screen-panel" id="screen-panel">
-            <div class="hero">
-                <img src="../assets/art/thunderroadvendetta.webp" alt="Thunder Road: Vendetta box art">
-            </div>
-            <h1><svg class="icon-h1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="7"/><line x1="12" y1="1" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="1" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="23" y2="12"/></svg> TRV-9000 SYSTEM <svg class="icon-h1" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 L14 9 L21 7 L16 12 L21 17 L14 15 L12 22 L10 15 L3 17 L8 12 L3 7 L10 9 Z"/></svg></h1>
-            <div class="wasteland-tagline">
-                <svg class="icon-tagline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="7"/><line x1="12" y1="1" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="1" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="23" y2="12"/></svg>
-                <span data-i18n="wastelandTagline">ARMORED CONVOY ON THE HIGHWAY OF DEATH</span>
-                <svg class="icon-tagline" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 L14 9 L21 7 L16 12 L21 17 L14 15 L12 22 L10 15 L3 17 L8 12 L3 7 L10 9 Z"/></svg>
-            </div>
-
-            <div class="lang-switch">
-                <button type="button" class="lang-btn" data-lang="pt" onclick="setLang('pt')">PT-BR</button>
-                <button type="button" class="lang-btn" data-lang="en" onclick="setLang('en')">EN</button>
-            </div>
-            
-            <div id="view-setup" class="setup-container">
-                <details style="background:rgba(0,0,0,0.5); border:1px solid #333; border-radius:4px; width: 100%; box-sizing: border-box;">
-                    <summary style="padding: 12px 15px; cursor:pointer; font-weight:bold; color:#fff; text-transform:uppercase; letter-spacing:1px; font-size:0.9em; outline:none;" data-i18n="physicalSetupTitle">Configuração Física do Jogo (faça isso na sua mesa primeiro)</summary>
-                    <div style="padding: 5px 20px 18px;" data-i18n="physicalSetupBodyHtml"></div>
-                </details>
-
-                <div style="background:rgba(0,0,0,0.5); border:1px solid #333; padding:20px; border-radius:4px; text-align:center; width: 100%; box-sizing: border-box;">
-                    <p style="text-align: center; opacity: 0.8; margin-top: 0; margin-bottom: 15px; text-transform:uppercase; letter-spacing:1px; color:#aaa; font-size:0.9em;" data-i18n="setupBotCount">Quantidade de Bots Inimigos</p>
-                    <div style="display: flex; gap: 15px; justify-content:center; align-items:center; margin-bottom: 5px;">
-                        <button onclick="adjustBots(-1)" style="width: 60px; min-width:0; padding:12px; font-size:1.4em;">-</button>
-                        <input type="text" id="bot-count" value="1" readonly style="width: 80px; text-align: center; font-size: 1.5em; background: #000; color: #fff; border: 2px solid var(--rust); padding:10px;">
-                        <button onclick="adjustBots(1)" style="width: 60px; min-width:0; padding:12px; font-size:1.4em;">+</button>
-                    </div>
-                </div>
-
-                <div id="bot-configs" style="width: 100%; display: flex; flex-direction: column; gap: 10px;"></div>
-
-                <div style="background:rgba(0,0,0,0.5); border:1px solid #333; padding:15px; border-radius:4px; width:100%; box-sizing:border-box; margin-top:10px;">
-                    <div class="expansion-toggle" id="sdbr-enabled" onclick="toggleExpansion('sdbr-enabled')">
-                        <span class="exp-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 8h11v8H2z"/><path d="M13 11h4l3 3v2h-7z"/><circle cx="6" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/></svg></span>
-                        <span class="exp-label" data-i18n="sdbrToggleLabel">Adicionar SDBR (Big Rig Autônomo)</span>
-                        <span class="exp-check"></span>
-                    </div>
-                    <div class="expansion-toggle" id="sdff-enabled" onclick="toggleExpansion('sdff-enabled')">
-                        <span class="exp-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5.5" cy="17.5" r="2.5"/><circle cx="18.5" cy="17.5" r="2.5"/><path d="M8 17.5h7l-2-6h-4l-1-3H5"/><path d="M13 11.5h4.5l1.5 2.5"/></svg></span>
-                        <span class="exp-label" data-i18n="sdffToggleLabel">Adicionar SDFF (Final Five Autônomo)</span>
-                        <span class="exp-check"></span>
-                    </div>
-                </div>
-
-                <div style="display: flex; flex-direction: column; gap: 15px; width: 100%; margin-top: 15px; border-top: 1px solid #444; padding-top:20px;">
-                    <button onclick="startGame()" class="btn-explosive" style="width: 100%; max-width:100%; font-size:1.1em; padding:20px;"><svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c1 3-2 4-2 7a4 4 0 0 0 8 0c0-1-.3-2-1-3 .6 2-.5 3-1.5 3 .8-2-.3-4-1.5-5 .3 1.5-.5 2.5-2 2 .5-1.5 0-3-2-4z"/></svg><span data-i18n="btnStartGame">INICIAR CORRIDA</span></button>
-                    <button onclick="openConfigModal()" style="width: 100%; max-width:100%; border-color:#555; color:#aaa; background:rgba(255,255,255,0.05); font-size:0.9em; padding:15px;"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span data-i18n="btnEditDeck">EDITAR DECK OFICIAL</span></button>
-                </div>
-            </div>
-
-            <div id="view-game" class="hidden" style="display: flex; flex-direction: column; height: 100%; width: 100%;">
-                <div class="play-area" id="bots-board"></div>
-                <div class="controls-global">
-                    <button id="btn-draw" class="btn-explosive" onclick="drawCardsGlobal()"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="7" y="3" width="12" height="16" rx="2" transform="rotate(8 13 11)"/><rect x="3" y="6" width="12" height="16" rx="2"/></svg><span data-i18n="btnDrawCards">COMPRAR CARTAS</span></button>
-                    <button id="btn-step" onclick="nextStepGlobal()" disabled><svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M4 4l8 8-8 8V4z"/><path d="M13 4l8 8-8 8V4z"/></svg><span data-i18n="btnNextStep">PRÓXIMO PASSO</span></button>
-                    <button onclick="location.reload()" style="background: transparent; border-color: #555; color: #888; font-size:0.8em;"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 21V4"/><path d="M4 4h13l-2 4 2 4H4"/></svg><span data-i18n="btnAbandon">ABANDONAR</span></button>
-                </div>
-            </div>
-
-            <footer class="credits">
-                <img src="../assets/art/thunderroadvendetta.webp" alt="Thunder Road: Vendetta">
-                <div class="credits-text" id="creditsText"></div>
-            </footer>
-
-            <a class="bmc-inline" href="https://www.buymeacoffee.com/colletes" target="_blank" rel="noopener" aria-label="Buy me a coffee"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h13a2 2 0 0 1 2 2v1a3 3 0 0 1-3 3h-1"/><path d="M4 8h13v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V8Z"/><path d="M8 3c-.6 1 .5 1.6 0 3M12 3c-.6 1 .5 1.6 0 3"/></svg><span data-i18n="bmcBtn">Me pague um café</span></a>
-        </div>
-    </div>
-
-<script>
     // --- I18N: SISTEMA DE IDIOMA (PT-BR / EN) ---
     const I18N = {
         pt: {
-            pageTitle: "TRV9000 - Comando Multi-Bot",
+            pageTitle: "TRV-9000",
+            heroTitle: "TRV-9000",
+            heroSubtitle: "COMBOIO BLINDADO NA ESTRADA DA MORTE",
             wastelandTagline: "COMBOIO BLINDADO NA ESTRADA DA MORTE",
             signaturePrefix: "Feito por",
+            btnResetShort: "NOVO",
+            btnHelpShort: "AJUDA",
             helpModalTitle: "Manuais: TRV-9000",
             btnClose: "FECHAR X",
             backupLabel: "Backup de Deck",
@@ -722,13 +118,15 @@
             sdbrBadgeName: "🚛 SDBR: BIG RIG AUTÔNOMO",
             sdbrDetailsSummary: "Ver Comandos por Seção",
             sdbrAbility1: "Direção Hidráulica (cabine): pode mudar de faixa nas vezes indicadas pelo valor de movimento da seção FRENTE nesta carta.",
-            sdbrAbility2: "Em cada seção, o dado de ativação é sempre 3 (prioriza Reparo). A seta indica para qual lado pular se o comando estiver danificado demais no tabuleiro físico.",
+            sdbrAbility2: "Comandos de Seção: O Big Rig sempre tenta ativar a Coluna 3 (Reparo). Se a Coluna 3 desta seção já estiver destruída/inutilizada no tabuleiro físico, pule para a próxima coluna na direção da seta [→ / ←].",
             sdbrHazardTitle: (color) => color === 'red' ? "Muda de faixa (uma única vez) ao encontrar o 1º espaço com ficha de perigo; senão anda reto." : "Muda de faixa (uma única vez) ao encontrar o 1º espaço do terreno indicado; senão anda reto.",
             sdbrTravelLabel: "Mov.",
             sdbrActivationLabel: "Ativação",
             sdbrHazardRed: "Perigo (vermelho)",
             sdbrHazardBrown: "Terreno (marrom)",
-            sdbrSkipTitle: "O dado desta caixa é sempre 3 (prioriza Reparo). Se o comando desta seção estiver danificado demais no tabuleiro físico, pule para o próximo comando nesta direção.",
+            sdbrHazardRedShort: "Perigo",
+            sdbrHazardBrownShort: "Terreno",
+            sdbrSkipTitle: "Dado padrão: 3 (Reparo). Se o comando desta seção estiver destruído no tabuleiro físico, pule para a próxima coluna nesta direção.",
             sdffCardAction: "SDFF: 2 MOTOS OU COMANDO + 1 MOTO POR TURNO",
             sdffBadgeName: "🏍️ SDFF: FINAL FIVE AUTÔNOMO",
             sdffDetailsSummary: "Ver Legenda das Motos",
@@ -757,9 +155,13 @@
             bmcBtn: 'Me pague um café'
         },
         en: {
-            pageTitle: "TRV9000 - Multi-Bot Command",
-            wastelandTagline: "ARMORED CONVOY ON THE HIGHWAY OF DEATH",
+            pageTitle: "TRV-9000",
+            heroTitle: "TRV-9000",
+            heroSubtitle: "ARMORED CONVOY ON THE WASTELAND HIGHWAY",
+            wastelandTagline: "ARMORED CONVOY ON THE WASTELAND HIGHWAY",
             signaturePrefix: "Made by",
+            btnResetShort: "NEW",
+            btnHelpShort: "HELP",
             helpModalTitle: "Manuals: TRV-9000",
             btnClose: "CLOSE X",
             backupLabel: "Deck Backup",
@@ -844,13 +246,15 @@
             sdbrBadgeName: "🚛 SDBR: AUTONOMOUS BIG RIG",
             sdbrDetailsSummary: "View Commands by Section",
             sdbrAbility1: "Hydraulic Steering (cab): may change lanes as many times as the movement value of the FRONT section on this card.",
-            sdbrAbility2: "In each section, the activation die is always 3 (prioritizes Repair). The arrow shows which side to skip to if that command is too damaged on the physical board.",
+            sdbrAbility2: "Section Commands: The Big Rig always attempts to activate Column 3 (Repair). If Column 3 in this section is already wrecked/unusable on the physical board, skip to the neighboring column in the direction of the arrow [→ / ←].",
             sdbrHazardTitle: (color) => color === 'red' ? "Changes lane (once) upon reaching the 1st space with a hazard token; otherwise moves straight." : "Changes lane (once) upon reaching the 1st space of the indicated terrain; otherwise moves straight.",
             sdbrTravelLabel: "Move",
             sdbrActivationLabel: "Activation",
             sdbrHazardRed: "Hazard (red)",
             sdbrHazardBrown: "Terrain (brown)",
-            sdbrSkipTitle: "This box's die is always 3 (prioritizes Repair). If this section's command is too damaged on the physical board, skip to the next command in this direction.",
+            sdbrHazardRedShort: "Hazard",
+            sdbrHazardBrownShort: "Terrain",
+            sdbrSkipTitle: "Default die: 3 (Repair). If this section's command is wrecked on the physical board, skip to the neighboring column in this direction.",
             sdffCardAction: "SDFF: 2 BIKES OR COMMAND + 1 BIKE PER TURN",
             sdffBadgeName: "🏍️ SDFF: AUTONOMOUS FINAL FIVE",
             sdffDetailsSummary: "View Bike Legend",
@@ -909,11 +313,21 @@
         applyI18n();
     }
 
+    function toggleLang() {
+        setLang(lang === 'pt' ? 'en' : 'pt');
+    }
+
     function applyI18n() {
         document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
         document.querySelectorAll('[data-i18n]').forEach(el => { el.innerHTML = t(el.getAttribute('data-i18n')); });
-        document.getElementById('page-title').textContent = t('pageTitle');
-        document.getElementById('creditsText').innerHTML = t('creditsHtml');
+        const pageTitleEl = document.getElementById('page-title');
+        if (pageTitleEl) pageTitleEl.textContent = t('pageTitle');
+        const pageTitleBanner = document.getElementById('page-title-banner');
+        if (pageTitleBanner) pageTitleBanner.textContent = t('heroTitle');
+        const taglineBanner = document.getElementById('tagline-banner');
+        if (taglineBanner) taglineBanner.textContent = t('heroSubtitle');
+        const creditsText = document.getElementById('creditsText');
+        if (creditsText) creditsText.innerHTML = t('creditsHtml');
         renderHelpContent();
         renderBotSetup();
         updateExpansionToggleLabels();
@@ -921,9 +335,52 @@
         if (!document.getElementById('config-modal').classList.contains('hidden')) { renderSidebar(); }
     }
 
-    // --- CONTROLES DOS MODAIS ---
+    // --- CONTROLES DOS MODAIS E NAVEGAÇÃO ---
     function openHelpModal() { document.getElementById('help-modal').classList.remove('hidden'); }
     function closeHelpModal() { document.getElementById('help-modal').classList.add('hidden'); }
+    function toggleHelp() {
+        const modal = document.getElementById('help-modal');
+        if (!modal) return;
+        if (modal.classList.contains('hidden')) {
+            openHelpModal();
+        } else {
+            closeHelpModal();
+        }
+    }
+
+    function handleNavReset() {
+        const isGameActive = !document.getElementById('view-game').classList.contains('hidden');
+        if (isGameActive) {
+            const msg = lang === 'pt'
+                ? 'Deseja abandonar a corrida atual e voltar para o menu de configuração?'
+                : 'Do you want to abandon the current race and return to the setup screen?';
+            if (confirm(msg)) {
+                document.getElementById('view-game').classList.add('hidden');
+                document.getElementById('view-setup').classList.remove('hidden');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        } else {
+            window.location.reload();
+        }
+    }
+
+    function showInfoToast(msg) {
+        if (!msg) return;
+        let toast = document.getElementById('info-toast');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'info-toast';
+            toast.className = 'info-toast';
+            toast.onclick = () => toast.classList.remove('show');
+            document.body.appendChild(toast);
+        }
+        toast.textContent = msg;
+        toast.classList.add('show');
+        clearTimeout(toast._timer);
+        toast._timer = setTimeout(() => {
+            toast.classList.remove('show');
+        }, 4500);
+    }
 
     // --- EFEITO SONORO DO MOTOR ---
     function engineSound() {
@@ -2234,33 +1691,45 @@
                 </div>`;
         } else {
             const c = sdbr.currentCard;
+            const secNameMap = {
+                'FRENTE': { pt: 'FRENTE', en: 'FRONT' },
+                'MEIO': { pt: 'MEIO', en: 'MID' },
+                'TRAS': { pt: 'TRÁS', en: 'REAR' },
+                'TRÁS': { pt: 'TRÁS', en: 'REAR' }
+            };
             let rowsHtml = '';
             c.order.forEach((sectionKey, index) => {
                 let isVisible = globalStep >= (index + 1);
-                let sectionData = c[sectionKey];
-                // A caixa esquerda sempre mostra dado=3 (fixo): a seção sempre prioriza Reparo.
-                // A seta só indica para qual lado pular (dano no tabuleiro físico, não rastreado aqui).
+                let sectionData = c[sectionKey] || {};
                 let activationDir = sectionData.dir || '→';
                 let travel = sectionData.travel || { val: 1, dir: '↗', hazard: 'red' };
                 let movesHtml = renderVehicleMoves([travel], isVisible, 'sdbr');
+                let displaySecName = (secNameMap[sectionKey.toUpperCase()] && secNameMap[sectionKey.toUpperCase()][lang]) || sectionKey;
+                let hazardText = travel.hazard === 'red' ? t('sdbrHazardRedShort') : t('sdbrHazardBrownShort');
+                let hazardRule = typeof t('sdbrHazardTitle') === 'function' ? t('sdbrHazardTitle')(travel.hazard) : t('sdbrHazardTitle');
                 let hazardHtml = isVisible
-                    ? `<span class="sdbr-hazard-flag ${travel.hazard}" title="${t('sdbrHazardTitle')(travel.hazard)}"></span>`
+                    ? `<span class="sdbr-hazard-chip ${travel.hazard}" title="${hazardRule}" data-toast="${hazardRule}" onclick="showInfoToast(this.getAttribute('data-toast'))">
+                         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3L2 21h20L12 3z"/></svg>
+                         <span>${hazardText}</span>
+                       </span>`
                     : '';
-                let activationHtml = isVisible
-                    ? `<span class="sdbr-field"><strong>${t('sdbrActivationLabel')}:</strong> <span class="sdbr-skip-arrow" title="${t('sdbrSkipTitle')}">${activationDir}</span></span>`
-                    : '';
-                let movementLabelHtml = isVisible
-                    ? `<span class="sdbr-field"><strong>${t('sdbrTravelLabel')}:</strong></span>`
-                    : '';
+                let skipRule = t('sdbrSkipTitle');
+                let actAndTravelHtml = isVisible
+                    ? `<div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; flex:1;">
+                         <div class="sdbr-act-chip" title="${skipRule}" data-toast="${skipRule}" onclick="showInfoToast(this.getAttribute('data-toast'))">
+                           <span>🎲 3 (${lang === 'pt' ? 'Reparo' : 'Repair'})</span>
+                           <span class="sdbr-skip-chip">${lang === 'pt' ? 'Pular:' : 'Skip:'} <span class="sdbr-skip-arrow-badge">${activationDir}</span></span>
+                         </div>
+                         <div style="display:inline-flex; align-items:center; gap:6px;">
+                           ${movesHtml}
+                           ${hazardHtml}
+                         </div>
+                       </div>`
+                    : `<div class="vehicle-moves" style="color: #666; font-style: italic; font-size:0.8em;">${t('inactivePhase')}</div>`;
                 rowsHtml += `
-                    <div class="vehicle-row" style="flex-direction:column; align-items:flex-start;">
-                        <div style="display:flex; width:100%; align-items:center; gap:10px; flex-wrap:wrap;">
-                            <div class="vehicle-size">${sectionKey}</div>
-                            ${activationHtml}
-                            ${movementLabelHtml}
-                            ${movesHtml}
-                            ${hazardHtml}
-                        </div>
+                    <div class="vehicle-row" style="display:flex; align-items:center; gap:10px;">
+                        <div class="sdbr-section-badge">${displaySecName}</div>
+                        ${actAndTravelHtml}
                     </div>
                 `;
             });
@@ -2367,21 +1836,26 @@
             </div>
         `;
     }
-</script>
-<script type="module" src="../assets/analytics.js"></script>
-<script type="module" src="../assets/bot-view.js"></script>
 
-<!-- Botão Voltar para a Home -->
-<style>
-.btn-home{ display:inline-flex; align-items:center; gap:8px; background:rgba(0,0,0,0.9); color:var(--yellow); border:2px solid var(--rust); text-transform:uppercase; font-weight:bold; font-family:var(--font-body); letter-spacing:1px; border-radius:4px; padding:14px 26px; font-size:16px; text-decoration:none; transition:0.2s; }
-.btn-home:hover{ background:var(--rust); color:#fff; }
-</style>
-<div style="text-align: center; margin: 40px auto 20px auto; width: 100%;">
-    <a href="../index.html" class="btn-home">
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9 21v-6h6v6"/></svg>
-        ← Home
-    </a>
-</div>
-
-</body>
-</html>
+// Initialize sdbr mock
+sdbr = {
+    enabled: true,
+    deck: [],
+    discard: [],
+    currentCard: {
+        id: 'SDBR-01',
+        priority: '↓ (Cima para Baixo)',
+        order: ['FRENTE', 'MEIO', 'TRAS'],
+        FRENTE: { dir: '→', travel: { val: 2, dir: '↗', hazard: 'red' } },
+        MEIO: { dir: '←', travel: { val: 1, dir: '↘', hazard: 'brown' } },
+        TRAS: { dir: '→', travel: { val: 3, dir: '↗', hazard: 'red' } }
+    },
+    initialPlacement: { lead: 'MID', rear: 'LEFT' }
+};
+globalStep = 3;
+lang = 'pt';
+renderSdbr();
+console.log('SDBR Rendered PT SUCCESS!');
+lang = 'en';
+renderSdbr();
+console.log('SDBR Rendered EN SUCCESS!');

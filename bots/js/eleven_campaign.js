@@ -872,7 +872,7 @@ function renderCampaign(lang) {
     container.innerHTML = html;
 }
 
-// Called from setLang() in eleven_bot_v1.html whenever the UI language
+// Called from setLang() in eleven_bot.html whenever the UI language
 // toggles — re-renders an already-generated campaign in the new language
 // (cached picks + cached bilingual team facts, no re-roll, no refetch).
 function onLanguageChanged(lang) {
@@ -898,7 +898,7 @@ function exportPDF() {
 }
 
 // Populate the team dropdown on initial load (applyI18n() in
-// eleven_bot_v1.html calls populateTeamSelect(true) again on every language
+// eleven_bot.html calls populateTeamSelect(true) again on every language
 // switch, to refresh translated labels while preserving the selection).
 document.addEventListener('DOMContentLoaded', () => populateTeamSelect(false));
 

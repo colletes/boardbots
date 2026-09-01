@@ -31,14 +31,14 @@ Se preferir não depender de internet durante o jogo (ex: mesa sem Wi-Fi), baixe
 
 | Jogo | Arquivo | Descrição |
 |---|---|---|
-| **Stone Age** | [`stone_age_bot_v2.html`](bots/stone_age_bot_v2.html) | Automa com dois modos: variante solo comunitária (César Augusto Borja) e Modo Solo Oficial (sobrevivência). |
-| **Star Wars: Legion — Battle of Hoth** | [`Colletes-hoth_bot_RC3.html`](bots/Colletes-hoth_bot_RC3.html) | Assistente de decisão tática ("Holocron Commander") para conduzir um oponente automático nos cenários da Batalha de Hoth. |
-| **Heroscape** | [`Heroscape_bot_v2.html`](bots/Heroscape_bot_v2.html) | Implementação do Automated Battle Analyzer (sistema solo criado por Scott Campbell) para batalhas solo. |
-| **Mystic Vale** | [`Mystic_Vale_bot_v02.html`](bots/Mystic_Vale_bot_v02.html) | Modo solo oficial "Nemesis" (criado por John D. Clair / AEG). |
-| **Rock Hard: 1977** | [`mick_bot_RC2.html`](bots/mick_bot_RC2.html) | Adaptação da variante solo não-oficial de Mick "baseballbuzz" para o modo de uma pessoa. |
-| **Thunder Road: Vendetta** (+ expansões Big Rig e Final Five) | [`Colletes-bot-trv-RC2.html`](bots/Colletes-bot-trv-RC2.html) | Bot para os veículos adversários controlados por IA na corrida, incluindo as expansões SDBR e SDFF. |
-| **Ultra Tiny Epic Kingdoms** | [`utek_bot_v2.html`](bots/utek_bot_v2.html) | Dois modos: variante solo comunitária e Modo Solo Oficial do manual (com a "Bússola" de ações). |
-| **Café Baras** | [`cafe_baras_bot_v1.html`](bots/cafe_baras_bot_v1.html) | "Capybot" — adversário automático com árvore de decisão própria, mais estratégico que a variante solo comunitária simples ("Capybot" original). |
+| **Stone Age** | [`stone_age_bot.html`](bots/stone_age_bot.html) | Automa com dois modos: variante solo comunitária (César Augusto Borja) e Modo Solo Oficial (sobrevivência). |
+| **Star Wars: Legion — Battle of Hoth** | [`hoth_bot.html`](bots/hoth_bot.html) | Assistente de decisão tática ("Holocron Commander") para conduzir um oponente automático nos cenários da Batalha de Hoth. |
+| **Heroscape** | [`Heroscape_bot.html`](bots/Heroscape_bot.html) | Implementação do Automated Battle Analyzer (sistema solo criado por Scott Campbell) para batalhas solo. |
+| **Mystic Vale** | [`Mystic_Vale_bot.html`](bots/Mystic_Vale_bot.html) | Modo solo oficial "Nemesis" (criado por John D. Clair / AEG). |
+| **Rock Hard: 1977** | [`mick_bot.html`](bots/mick_bot.html) | Adaptação da variante solo não-oficial de Mick "baseballbuzz" para o modo de uma pessoa. |
+| **Thunder Road: Vendetta** (+ expansões Big Rig e Final Five) | [`thunder_road_vendetta_bot.html`](bots/thunder_road_vendetta_bot.html) | Bot para os veículos adversários controlados por IA na corrida, incluindo as expansões SDBR e SDFF. |
+| **Ultra Tiny Epic Kingdoms** | [`utek_bot.html`](bots/utek_bot.html) | Dois modos: variante solo comunitária e Modo Solo Oficial do manual (com a "Bússola" de ações). |
+| **Café Baras** | [`cafe_baras_bot.html`](bots/cafe_baras_bot.html) | "Capybot" — adversário automático com árvore de decisão própria, mais estratégico que a variante solo comunitária simples ("Capybot" original). |
 
 ### ⚖️ Direitos autorais e uso
 
@@ -82,14 +82,14 @@ If you'd rather not depend on internet access while playing (e.g. a table with n
 
 | Game | File | Description |
 |---|---|---|
-| **Stone Age** | [`stone_age_bot_v2.html`](bots/stone_age_bot_v2.html) | Automa with two modes: community solo variant (César Augusto Borja) and Official Solo Mode (survival). |
-| **Star Wars: Legion — Battle of Hoth** | [`Colletes-hoth_bot_RC3.html`](bots/Colletes-hoth_bot_RC3.html) | Tactical decision assistant ("Holocron Commander") to run an automated opponent in Battle of Hoth scenarios. |
-| **Heroscape** | [`Heroscape_bot_v2.html`](bots/Heroscape_bot_v2.html) | Implementation of the Automated Battle Analyzer (solo system created by Scott Campbell) for solo battles. |
-| **Mystic Vale** | [`Mystic_Vale_bot_v02.html`](bots/Mystic_Vale_bot_v02.html) | Official "Nemesis" solo mode (created by John D. Clair / AEG). |
-| **Rock Hard: 1977** | [`mick_bot_RC2.html`](bots/mick_bot_RC2.html) | Adaptation of Mick "baseballbuzz"'s unofficial solo variant for one-player mode. |
-| **Thunder Road: Vendetta** (+ Big Rig and Final Five expansions) | [`Colletes-bot-trv-RC2.html`](bots/Colletes-bot-trv-RC2.html) | Bot for AI-controlled rival vehicles in the race, including the SDBR and SDFF expansions. |
-| **Ultra Tiny Epic Kingdoms** | [`utek_bot_v2.html`](bots/utek_bot_v2.html) | Two modes: community solo variant and the rulebook's Official Solo Mode (with the action "Compass"). |
-| **Café Baras** | [`cafe_baras_bot_v1.html`](bots/cafe_baras_bot_v1.html) | "Capybot" — automated opponent with its own decision tree, more strategic than the simple community "Capybot" solo variant. |
+| **Stone Age** | [`stone_age_bot.html`](bots/stone_age_bot.html) | Automa with two modes: community solo variant (César Augusto Borja) and Official Solo Mode (survival). |
+| **Star Wars: Legion — Battle of Hoth** | [`hoth_bot.html`](bots/hoth_bot.html) | Tactical decision assistant ("Holocron Commander") to run an automated opponent in Battle of Hoth scenarios. |
+| **Heroscape** | [`Heroscape_bot.html`](bots/Heroscape_bot.html) | Implementation of the Automated Battle Analyzer (solo system created by Scott Campbell) for solo battles. |
+| **Mystic Vale** | [`Mystic_Vale_bot.html`](bots/Mystic_Vale_bot.html) | Official "Nemesis" solo mode (created by John D. Clair / AEG). |
+| **Rock Hard: 1977** | [`mick_bot.html`](bots/mick_bot.html) | Adaptation of Mick "baseballbuzz"'s unofficial solo variant for one-player mode. |
+| **Thunder Road: Vendetta** (+ Big Rig and Final Five expansions) | [`thunder_road_vendetta_bot.html`](bots/thunder_road_vendetta_bot.html) | Bot for AI-controlled rival vehicles in the race, including the SDBR and SDFF expansions. |
+| **Ultra Tiny Epic Kingdoms** | [`utek_bot.html`](bots/utek_bot.html) | Two modes: community solo variant and the rulebook's Official Solo Mode (with the action "Compass"). |
+| **Café Baras** | [`cafe_baras_bot.html`](bots/cafe_baras_bot.html) | "Capybot" — automated opponent with its own decision tree, more strategic than the simple community "Capybot" solo variant. |
 
 ### ⚖️ Copyright and usage
 

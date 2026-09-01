@@ -44,7 +44,7 @@ Quando o jogo tem P&P (Print & Play) com imagens de cartas:
 ## 4. UI/UX e Estrutura Comum (Padrão Boardbots)
 
 O projeto Boardbots mantém um padrão visual rigoroso para garantir que todos os bots pareçam fazer parte do mesmo app.
-Ao criar o HTML do bot, **você DEVE copiar e utilizar os seguintes elementos padrão** presentes nos bots mais recentes (ex: `stone_age_bot_v2.html`):
+Ao criar o HTML do bot, **você DEVE copiar e utilizar os seguintes elementos padrão** presentes nos bots mais recentes (ex: `stone_age_bot.html`):
 
 1. **Botões Flutuantes e Idioma (Início do body):**
    Inclua o botão de ajuda (`btn-help-float`), botão de reiniciar partida (`btn-reset-float`) e o seletor de idioma (`lang-switch`) fixos na tela.
@@ -290,4 +290,24 @@ Para evitar incidentes em produção, o projeto adota um fluxo estrito de dois a
    - Após o push em `staging`, forneça imediatamente ao usuário o link de staging para testes em dispositivos reais: `https://colletes.github.io/boardbots/staging/` (ou caminho direto do bot em staging).
 3. **Deploy em Produção (Somente com a skill `deploy-to-prod`)**:
    - Apenas promova código para `main` quando o usuário testar e autorizar expressamente a publicação em produção, utilizando a skill dedicada `deploy-to-prod`.
+
+## 14. Kit de Tema Compartilhado e Regressão Visual (Obrigatório)
+
+Para evitar os bugs recorrentes de "o redesign quebrou o layout de novo" (botões gigantes, ícones estourados, CSS duplicado sobrescrevendo o tema), qualquer agente de IA que crie ou atualize um bot **DEVE**:
+
+1. **Usar o kit de tema compartilhado em vez de duplicar CSS/JS por bot:**
+   - `assets/theme-kit.css` — contém apenas o que é genuinamente idêntico entre bots hoje: keyframes `fadeSlideUp`/`popIn`, a classe utilitária `.icon-inline` (ícone dimensionado em `em`, relativo ao texto ao redor), e o componente "credits row" (`.credits`/`.credits img`/`.credits-text`, miniatura da capa + texto de créditos). Cores/tamanhos são ajustáveis via variáveis CSS (`--tk-credits-*`) definidas no `:root` do próprio bot — nunca reescreva essas regras localmente uma vez que o bot já linka o arquivo.
+   - `assets/theme-kit.js` — expõe `window.ThemeKit.setAmbientIcon(active, labelText)`, o helper de troca de ícone/label do botão de som ambiente (a lógica de áudio em si — osciladores, frequências — continua no próprio bot, pois varia por tema).
+   - **Nota importante**: `.hero`, `.lang-switch` e `.btn-help-float` NÃO foram unificados — o catálogo hoje usa pelo menos 3 famílias de layout de navegação diferentes e deliberadas (barra superior fixa com lang-switch inline, botões flutuantes circulares, botões de topo simples). Não force um bot a mudar de família de layout só para "usar o kit" — isso é um redesign visual, não uma extração de CSS duplicado, e deve ser tratado (e validado) como tal.
+   - Link no `<head>`, **antes** do `<style>` inline do bot: `<link rel="stylesheet" href="../assets/theme-kit.css">` e, se for usar o helper de ambiente, `<script src="../assets/theme-kit.js"></script>` antes do `<script>` inline do bot.
+   - O `<style>` de cada bot deve conter **apenas** o tema específico daquele jogo — nunca recopie `.credits`/`.icon-inline`/os keyframes acima uma vez que o bot já linka o kit.
+   - Bots já shipados **não precisam ser migrados de uma vez** — a migração é incremental, feita a cada pass de redesign daquele bot específico (ver `bots/mick_bot.html` como exemplo de migração já validada).
+2. **Rodar o script de regressão visual antes de qualquer deploy para staging:**
+   - `npm run visual-check [arquivo1.html arquivo2.html ...]` — compara screenshots atuais (desktop 1440px e mobile 390px) contra as baselines commitadas em `tools/visual-baselines/`; sem argumentos, roda em todos os bots. Diferenças acima do limiar (~0.2% dos pixels, ou mudança de altura de página) geram imagens em `tools/visual-diffs/` (não commitadas) para inspeção.
+   - Após confirmar visualmente que uma mudança é intencional, atualize a baseline: `npm run visual-update [arquivo.html ...]` e commit as novas imagens em `tools/visual-baselines/`.
+   - Script: `tools/visual-regression.mjs` (Playwright + pixelmatch, depende de `npm install` prévio — já configurado em `package.json`).
+   - **Falsos positivos conhecidos**: `arknova_arno_bot.html` e `sanctuary_bot.html` sorteiam aleatoriamente a ordem das cartas de ação já na tela inicial (antes de qualquer clique) — um `CHANGED` nesses dois bots, sem relação com o arquivo que você editou, é normal; confirme visualmente via o `.diff.png` gerado (se o conteúdo aleatório é o único diferente, ignore/atualize a baseline mesmo assim).
+   - Isso substitui o ciclo manual de "usuário reporta botão quebrado → corrige → usuário reporta de novo" observado em passes anteriores (Tiny Epic Kingdoms, Hoth).
+
+
 

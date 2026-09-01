@@ -14,7 +14,7 @@
  * part of the source data (always 0) — assigned sequentially at load time.
  * Match-resolution pooling of these 9 Zones into the 5 resolution Sections
  * (Left/Right Wing + 3 Central zones) happens at solve time — see
- * eleven_bot_v1.html buildTeamObj() and eleven_tactics.js header comment.
+ * eleven_bot.html buildTeamObj() and eleven_tactics.js header comment.
  *
  * CORRECTED 2026-08-05: the source .asset data for OP001-OP032 stores the
  * Attack-row and Defense-row fields (al/ac/ar vs dl/dc/dr) swapped, and for

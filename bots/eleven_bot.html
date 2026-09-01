@@ -3,268 +3,1396 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Eleven - Campaign & Match Solver</title>
+<title>Eleven — Gerador de Campanha &amp; Resolvedor de Partidas (v1)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../assets/site.css?v=7">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-.hidden { display: none !important; }
+:root{
+  --pitch-dark: #164e1b;
+  --pitch-light: #236e29;
+  --chalk-line: rgba(255, 255, 255, 0.88);
+  --chalk-glow: rgba(255, 255, 255, 0.4);
+  --surface: #ffffff;
+  --surface-pitch: #f9fbf9;
+  --border: #b0bec5;
+  --text: #1e293b;
+  --text-dim: #546e7a;
+  --card-yellow: #ffd600;
+  --card-yellow-glow: rgba(255, 214, 0, 0.55);
+  --card-red: #d50000;
+  --card-red-glow: rgba(213, 0, 0, 0.55);
+  --gold: #ffb300;
+  --font-display: 'Anton', 'Impact', sans-serif;
+  --font-body: 'Inter', 'Segoe UI', sans-serif;
+  --radius: 12px;
+}
+*{box-sizing:border-box;}
+html{-webkit-text-size-adjust:100%;}
+body{
+  font-family:var(--font-body);
+  background-color: var(--pitch-dark);
+  background-image: 
+    radial-gradient(circle at 50% 15%, rgba(255, 255, 255, 0.18) 0%, transparent 65%),
+    repeating-linear-gradient(90deg, 
+      var(--pitch-dark) 0px, var(--pitch-dark) 64px, 
+      var(--pitch-light) 64px, var(--pitch-light) 128px
+    ),
+    url("data:image/svg+xml,%3Csvg width='120' height='120' viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='grass'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23grass)' opacity='0.15'/%3E%3C/svg%3E");
+  background-attachment:fixed;
+  color:var(--text);
+  max-width:1400px; margin:0 auto; padding:20px 18px;
+  padding-left:max(18px, env(safe-area-inset-left));
+  padding-right:max(18px, env(safe-area-inset-right));
+  padding-bottom:max(20px, env(safe-area-inset-bottom));
+  -webkit-tap-highlight-color:transparent;
+}
+button, select, input{ touch-action:manipulation; font-family:inherit; }
+.hidden{ display:none !important; }
+@keyframes fadeSlideUp{ from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);} }
+@keyframes popIn{ 0%{transform:scale(0.85); opacity:0;} 60%{transform:scale(1.04);} 100%{transform:scale(1); opacity:1;} }
+@keyframes spin{ to{ transform:rotate(360deg); } }
 
-    :root {
-        --eleven-green: #116827;
-        --eleven-dark: #0a3d16;
-        --eleven-gold: #f1c40f;
-        --bg-card: #ffffff;
-        --text-main: #333333;
-        --accent: var(--eleven-green);
-    }
-    body { background-color: #f4f6f8; color: var(--text-main); }
-    .hero { background: var(--eleven-dark); padding: 40px 20px; text-align: center; color: white; }
-    .hero h1 { color: var(--eleven-gold); font-size: 2.5rem; margin-bottom: 10px; }
-    .hero p { opacity: 0.9; }
+/* Hero Banner (Stadium Floodlights + Chalk Lines) */
+.hero{ 
+  position:relative; border-radius:var(--radius); overflow:hidden; margin-bottom:16px; 
+  border:3px solid var(--chalk-line); 
+  box-shadow: 0 0 14px var(--chalk-glow), 0 12px 28px rgba(0,0,0,0.5);
+  animation:fadeSlideUp 0.5s ease both; 
+  height: 200px;
+  background: #123816;
+}
+.hero img{ width:100%; height:100%; object-fit:cover; object-position:center 35%; display:block; filter:saturate(1.15) brightness(0.75); }
+.hero::after{ 
+  content:""; position:absolute; inset:0; 
+  background:linear-gradient(180deg, rgba(18, 56, 22, 0.2) 0%, rgba(10, 36, 14, 0.85) 100%); 
+  pointer-events:none;
+}
+.hero-content{ position:absolute; inset:0; display:flex; flex-direction:column; justify-content:flex-end; padding:18px 24px; z-index:5; pointer-events:none; }
+h1{ font-family:var(--font-display); font-weight:normal; letter-spacing:3px; margin:0; font-size:3.2em; color:#ffffff; text-shadow:3px 3px 0px #000, 0 0 20px rgba(0,0,0,0.8); text-transform: uppercase; line-height: 1; }
+.subtitle{ color:var(--card-yellow); font-size:0.95em; letter-spacing:1px; margin-top:6px; font-weight:800; text-shadow: 1px 1px 3px #000; text-transform: uppercase; line-height: 1.3; }
 
-    .tabs { display: flex; justify-content: center; margin: 20px 0; gap: 10px; flex-wrap: wrap; }
-    .tab-btn {
-        background: #e0e0e0; border: none; padding: 10px 20px; font-size: 16px; 
-        font-family: 'Poppins', sans-serif; cursor: pointer; border-radius: 8px; color: #333;
-    }
-    .tab-btn.active { background: var(--eleven-green); color: white; }
+/* Tactile Referee Penalty Cards in Header */
+.referee-cards-pocket{
+  position:absolute; top:14px; right:18px; display:flex; gap:6px; z-index:10;
+  filter:drop-shadow(0 6px 12px rgba(0,0,0,0.6));
+}
+.ref-card{
+  width:32px; height:48px; border-radius:4px; cursor:pointer;
+  box-shadow:0 4px 10px rgba(0,0,0,0.4), inset 0 1px 2px rgba(255,255,255,0.8);
+  transition:transform 0.2s ease, box-shadow 0.2s ease;
+}
+.ref-card.yellow-card{
+  background:linear-gradient(135deg, #fff176 0%, #fbc02d 100%);
+  border:1px solid #f57f17; transform:rotate(-10deg);
+}
+.ref-card.red-card{
+  background:linear-gradient(135deg, #ef5350 0%, #c62828 100%);
+  border:1px solid #b71c1c; transform:rotate(12deg) translateY(2px);
+}
+.ref-card:hover{
+  transform:translateY(-6px) scale(1.15) !important;
+  box-shadow:0 8px 18px rgba(0,0,0,0.6);
+}
 
-    .tab-content { display: none; background: white; padding: 20px; border-radius: 12px; max-width: 800px; margin: 0 auto 40px auto; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-    .tab-content.active { display: block; }
+/* Chalk Line Pitch Mark Divider */
+.pitch-divider{ 
+  height:6px; border-radius:3px; margin-bottom:20px; 
+  background: repeating-linear-gradient(90deg, #fff 0 40px, transparent 40px 52px); 
+  box-shadow: 0 0 10px var(--chalk-glow), 0 2px 4px rgba(0,0,0,0.3);
+}
 
-    .form-group { margin-bottom: 15px; }
-    .form-group label { display: block; font-weight: 600; margin-bottom: 5px; }
-    .form-group select, .form-group input[type="text"], .form-group input[type="number"] {
-        width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px;
-    }
-    .checkbox-group { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
-    .btn-generate { background: var(--eleven-green); color: white; border: none; padding: 12px 20px; font-size: 18px; font-weight: bold; border-radius: 8px; cursor: pointer; width: 100%; margin-top: 10px; }
-    .btn-generate:hover { background: var(--eleven-dark); }
+/* Card Panels with Chalk-Made Borders */
+.card{ 
+  background: var(--surface); 
+  padding:24px 26px; border-radius:10px; 
+  border:3px dashed rgba(255, 255, 255, 0.9); 
+  box-shadow: 0 0 0 3px rgba(22, 78, 27, 0.8), 0 12px 28px rgba(0,0,0,0.45); 
+  margin-bottom:20px; 
+  animation:fadeSlideUp 0.45s ease both; 
+  position: relative; 
+}
+.card::before { 
+  content: ''; position: absolute; top: -10px; left: 50%; transform: translateX(-50%); 
+  width: 70px; height: 14px; background: #607d8b; border-radius: 4px; 
+  box-shadow: inset 0 2px 4px rgba(255,255,255,0.4), 0 2px 4px rgba(0,0,0,0.3); 
+}
 
-    /* Match solver styles */
-    .solver-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-    .team-panel { background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #eee; }
-    .team-panel h3 { margin-top: 0; color: var(--eleven-green); text-align: center; border-bottom: 2px solid var(--eleven-gold); padding-bottom: 10px; }
-    .area-group { margin-bottom: 15px; background: white; padding: 10px; border-radius: 6px; border: 1px solid #ddd; }
-    .area-group h4 { margin: 0 0 10px 0; font-size: 14px; text-transform: uppercase; color: #666; }
-    
-    .player-entry { display: flex; gap: 10px; margin-bottom: 5px; align-items: center; }
-    .player-entry input[type="number"] { width: 60px; padding: 5px; }
-    .player-entry select { padding: 5px; flex: 1; }
-    .player-entry button { background: #ff4757; color: white; border: none; border-radius: 4px; padding: 5px 10px; cursor: pointer; }
-    .add-player-btn { background: #2ed573; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-top: 5px; }
+h2{ font-family:var(--font-display); font-weight:normal; letter-spacing:1px; color:#144919; margin:0 0 16px; font-size:1.35em; position:relative; padding-bottom:10px; border-bottom: 2px solid #cfd8dc; }
+h3{ color:#1b5e20; font-size:1.05em; font-weight: 700; margin:14px 0 8px; }
+p.intro{ color:var(--text-dim); font-size:0.92em; margin:0 0 16px; }
 
-    #match-result-box { margin-top: 20px; padding: 20px; background: #e0f2e9; border-radius: 8px; text-align: center; font-weight: bold; font-size: 20px; display: none; }
-    .btn-solve { background: var(--eleven-gold); color: #333; border: none; padding: 15px 20px; font-size: 18px; font-weight: bold; border-radius: 8px; cursor: pointer; width: 100%; margin-top: 20px; }
+label{ display:block; margin:10px 0 6px; font-size:0.9em; font-weight: 600; color:#37474f; }
+select, input[type=number], input[type=text]{ 
+  width:100%; padding:12px 14px; font-size:16px; 
+  background:#ffffff; color:#1e293b; border:2px solid #b0bec5; border-radius:6px; 
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.08);
+}
+select:focus, input:focus { outline: none; border-color: #1b5e20; }
 
-    /* Campaign Result */
-    #campaign-output { display: none; margin-top: 20px; border-top: 2px solid #eee; padding-top: 20px; }
-    .pdf-preview { background: white; padding: 40px; box-shadow: 0 0 10px rgba(0,0,0,0.1); font-family: 'Inter', sans-serif; color: #333; margin-bottom: 20px; }
-    .pdf-preview h1 { color: #c0392b; font-size: 40px; margin-bottom: 5px; text-transform: uppercase; }
-    .pdf-preview .season-info { font-size: 18px; font-weight: bold; color: #333; margin-bottom: 20px; }
-    .pdf-preview .flavor-text { background: #8e44ad; color: white; padding: 15px; font-size: 14px; margin-bottom: 20px; border-radius: 4px; }
-    .pdf-box { border: 2px solid #2980b9; border-radius: 8px; padding: 15px; margin-bottom: 20px; background: #ebf5fb; }
-    .pdf-box.goals { border-color: #27ae60; background: #e8f8f5; }
-    .pdf-box h3 { background: #2980b9; color: white; margin: -15px -15px 15px -15px; padding: 10px; text-align: center; border-radius: 6px 6px 0 0; }
-    .pdf-box.goals h3 { background: #27ae60; }
-    .btn-export { background: #e74c3c; color: white; border: none; padding: 10px 20px; font-weight: bold; border-radius: 6px; cursor: pointer; }
+.checkbox-group{ display:flex; align-items:center; gap:10px; margin-top:14px; }
+.checkbox-group label{ margin:0; color:var(--text); font-weight: 600; }
+.label-row{ display:flex; align-items:center; gap:6px; margin:10px 0 6px; }
+.label-row label{ margin:0; }
+.info-icon-btn{ display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:50%; border:1px solid #90a4ae; background:#eceff1; color:#455a64; cursor:pointer; padding:0; flex-shrink:0; }
+.info-icon-btn:hover, .info-icon-btn:focus-visible{ color:#fff; border-color:#1b5e20; background:#1b5e20; }
+.info-icon-btn svg{ width:12px; height:12px; }
+.diff-help-text{ background:#eceff1; border:1px solid #cfd8dc; border-radius:6px; padding:10px 12px; margin:-2px 0 12px; font-size:0.85em; color:#455a64; }
+.critical-flag{ color:var(--card-red) !important; font-weight:800; }
+
+/* Buttons Styled like Referee Cards & Tactile Pegs */
+.btn{ 
+  display:inline-flex; align-items:center; justify-content:center; gap:8px; 
+  padding:14px 20px; border-radius:6px; border:2px solid #78909c; 
+  background:#ffffff; color:#263238; font-weight:800; font-size:0.95em; 
+  cursor:pointer; min-height:46px; 
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15), inset 0 1px 0 #ffffff; 
+  transition: transform 0.12s, box-shadow 0.12s; text-transform: uppercase; letter-spacing: 0.8px; 
+}
+.btn:active{ transform:translateY(2px); box-shadow: 0 2px 4px rgba(0,0,0,0.15); }
+.btn-primary{ 
+  background:linear-gradient(140deg, #d32f2f, #b71c1c); 
+  border-color:#b71c1c; color:#ffffff; width:100%; margin-top:14px; 
+  box-shadow: 0 6px 14px var(--card-red-glow), inset 0 1px 2px rgba(255,255,255,0.4); 
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5); 
+}
+.btn-primary:hover{ filter:brightness(1.1); }
+.btn-block{ width:100%; margin-top:8px; }
+
+/* Tab buttons */
+.tabs{ 
+  display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; 
+  background: rgba(0,0,0,0.3); padding:8px; border-radius:10px; border:2px solid var(--chalk-line); 
+}
+.tab-btn{ 
+  flex:1; min-width:140px; border-radius:6px; 
+  background: rgba(255,255,255,0.9); border-color: #cfd8dc; 
+}
+.tab-btn.active{ 
+  background:linear-gradient(140deg, #ffd600, #f57f17); 
+  border-color:#f57f17; color:#1a100c; font-weight: 900; 
+  box-shadow: 0 4px 12px var(--card-yellow-glow); 
+}
+.tab-content{ display:none; }
+.tab-content.active{ display:block; }
+
+.loader-box{ text-align:center; margin-top:16px; color:#ffffff; font-size:0.9em; }
+.loader-spin{ width:34px; height:34px; margin:0 auto 10px; border-radius:50%; border:3px solid rgba(255,255,255,0.3); border-top-color:var(--card-yellow); animation:spin 0.9s linear infinite; }
+
+#campaign-output{ display:none; margin-top:20px; border-top:2px dashed var(--chalk-line); padding-top:18px; }
+.pdf-preview{ background:#fdfbf7; padding:0 0 24px; box-shadow:0 8px 24px rgba(0,0,0,0.4); font-family:'Inter',sans-serif; color:#2b2b2b; margin-bottom:24px; border-radius:10px; overflow:hidden; border: 2px solid #b0bec5; }
+.pdf-header{ display:flex; flex-wrap:wrap; }
+.pdf-header .title-block{ flex:1 1 240px; background:linear-gradient(135deg,#1b5e20,#0d3811); color:#fff; padding:22px 24px; border-bottom: 3px solid var(--card-yellow); }
+.pdf-header .title-block h1{ font-family:var(--font-display); font-weight:normal; letter-spacing:1px; margin:0; font-size:2.8em; color:#fff; text-shadow:2px 2px 0px #000; text-transform: uppercase; }
+.pdf-header .subtitle-arc{ font-size:13.5px; color:#ffe082; margin-top:6px; font-weight:700; font-style:italic; }
+.pdf-header .meta-block{ background:linear-gradient(135deg,#0d3811,#051a07); color:#fff; padding:18px 22px; text-align:center; min-width:150px; display:flex; flex-direction:column; justify-content:center; gap:4px; border-left:3px solid var(--card-yellow); }
+.pdf-header .meta-block .team-crest{ width:46px; height:46px; border-radius:50%; object-fit:cover; margin:0 auto 8px; border:2px solid var(--card-yellow); }
+.pdf-header .meta-block .chapter-badge{ font-size:18px; font-weight:800; color:var(--card-yellow); letter-spacing:0.5px; }
+.pdf-header .meta-block .meta-line{ font-size:11.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:#b0bec5; }
+.pdf-preview .pdf-narrative{ background:linear-gradient(135deg,#e8f5e9,#c8e6c9); color:#1b5e20; border-left: 4px solid #1b5e20; padding:16px 24px; font-size:14px; font-style:italic; line-height:1.55; margin:20px 24px; border-radius:6px; }
+.pdf-field{ position:relative; margin:0 24px 18px; padding:20px 20px 4px; border-radius:10px; overflow:hidden; background:repeating-linear-gradient(135deg, #1b5e20 0px, #1b5e20 34px, #144919 34px, #144919 68px); box-shadow:inset 0 0 0 2px rgba(255,255,255,0.4); }
+.pdf-field::before{ content:''; position:absolute; left:50%; top:0; bottom:0; width:2px; background:rgba(255,255,255,0.4); transform:translateX(-50%); pointer-events:none; }
+.pdf-field::after{ content:''; position:absolute; left:50%; top:50%; width:84px; height:84px; margin:-42px 0 0 -42px; border:2px solid rgba(255,255,255,0.4); border-radius:50%; pointer-events:none; }
+.pdf-field .ribbon-row{ position:relative; z-index:1; margin:0 0 18px; }
+.pdf-field .pdf-result{ position:relative; z-index:1; margin:0 0 4px; }
+.ribbon-row{ display:grid; grid-template-columns:1fr 1fr; gap:18px; margin:0 24px 18px; }
+@media (max-width:560px){ .ribbon-row{ grid-template-columns:1fr; } }
+
+/* Match Solver Tactical UI */
+.solver-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+  min-width: 0;
+  width: 100%;
+}
+@media (min-width: 1100px) {
+  .solver-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+}
+
+.team-panel {
+  background: #fdfdfd;
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+.team-panel h3 {
+  margin: 0 0 12px 0;
+  color: #1b5e20;
+  font-family: var(--font-display);
+  font-size: 1.35em;
+  letter-spacing: 1px;
+  text-align: center;
+  border-bottom: 2px solid #cfd8dc;
+  padding-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.tactic-picker { margin-bottom: 12px; }
+.formation-row { display: flex; align-items: center; gap: 8px; margin-top: 6px; font-size: 0.85em; color: var(--text-dim); }
+.formation-row select { width: auto; flex: 1; min-width: 0; }
+.btn-auto-arrange {
+  background: #37474f;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 0.78em;
+  font-weight: 700;
+  cursor: pointer;
+  text-transform: uppercase;
+  min-height: 38px;
+  flex-shrink: 0;
+}
+.btn-auto-arrange:hover { background: #263238; }
+.tactic-card {
+  background: #eceff1;
+  border: 1px dashed #b0bec5;
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin-top: 8px;
+  font-size: 0.82em;
+  color: #37474f;
+  line-height: 1.4;
+}
+
+.opponent-card-hint { margin: 6px 0 0; font-size: 0.78em; color: var(--text-dim); }
+
+.area-group {
+  background: #f1f8e9;
+  border: 1px solid #c5e1a5;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+}
+.area-group h4 {
+  margin: 0 0 8px 0;
+  font-size: 0.82em;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #2e7d32;
+  font-weight: 800;
+}
+.gk-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.gk-row input {
+  width: 60px !important;
+  padding: 6px 8px !important;
+  text-align: center;
+  font-weight: 700;
+}
+
+/* 3x3 Soccer Tactical Pitch Grid */
+.setup-pitch {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: 8px;
+  background: repeating-linear-gradient(135deg, #1b5e20 0px, #1b5e20 28px, #144919 28px, #144919 56px);
+  padding: 8px;
+  border-radius: 8px;
+  border: 2px solid #ffffff;
+  box-shadow: inset 0 0 15px rgba(0,0,0,0.35);
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+.setup-zone {
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px dashed #81c784;
+  border-radius: 6px;
+  padding: 6px 4px;
+  min-height: 110px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: background 0.15s ease, border-color 0.15s ease;
+  min-width: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+.setup-zone.drag-over {
+  background: #e8f5e9;
+  border-color: #2e7d32;
+}
+.setup-zone-label {
+  font-size: 0.68em;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: #1b5e20;
+  text-align: center;
+  margin-bottom: 5px;
+  border-bottom: 1px solid #e0e0e0;
+  padding-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.setup-zone-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Player Tactical Card Strip */
+.player-entry {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  background: #ffffff;
+  border: 1px solid #cfd8dc;
+  border-left: 4px solid #1e88e5;
+  border-radius: 4px;
+  padding: 4px;
+  font-size: 0.72em;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  cursor: grab;
+  min-width: 0;
+  box-sizing: border-box;
+}
+.player-entry.type-att {
+  border-left-color: #e53935;
+}
+.player-entry.dragging {
+  opacity: 0.4;
+}
+.player-entry .p-row-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 3px;
+}
+.player-entry .p-row-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 3px;
+}
+.player-entry .p-field {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-weight: 700;
+  color: #455a64;
+}
+.drag-handle {
+  cursor: grab;
+  color: #90a4ae;
+  font-size: 1.1em;
+  user-select: none;
+  flex-shrink: 0;
+}
+.player-entry select.p-type {
+  padding: 2px 3px !important;
+  font-size: 11px !important;
+  font-weight: 700;
+  border-radius: 3px;
+  border: 1px solid #b0bec5;
+  flex: 1;
+  min-width: 0;
+}
+.player-entry input.p-pow, .player-entry input.p-shirt {
+  width: 30px !important;
+  padding: 2px 3px !important;
+  font-size: 11px !important;
+  text-align: center;
+  font-weight: 700;
+  border-radius: 3px;
+  border: 1px solid #b0bec5;
+}
+.player-entry select.p-zone {
+  display: none;
+}
+.player-entry .p-btn-del {
+  background: #ef5350;
+  color: #fff;
+  border: none;
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+  flex-shrink: 0;
+  line-height: 1.2;
+}
+.add-player-btn {
+  background: #2e7d32;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 5px 6px;
+  font-size: 0.7em;
+  font-weight: 700;
+  cursor: pointer;
+  width: 100%;
+  margin-top: 5px;
+  text-transform: uppercase;
+  transition: background 0.15s ease;
+}
+.add-player-btn:hover {
+  background: #1b5e20;
+}
+
+.btn-solve {
+  background: linear-gradient(140deg, #ffd600, #f57f17);
+  border-color: #f57f17;
+  color: #1a100c;
+  font-weight: 900;
+  font-size: 1.15em;
+  width: 100%;
+  margin-top: 20px;
+  padding: 16px 24px;
+  border-radius: 8px;
+  box-shadow: 0 6px 16px var(--card-yellow-glow);
+}
+.btn-solve:hover { filter: brightness(1.08); }
+
+/* Scoreboard & Match Commentary Results */
+#match-result-box {
+  display: none;
+  margin-top: 24px;
+  animation: fadeSlideUp 0.4s ease both;
+}
+.scoreboard {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  background: #123816;
+  border: 3px solid var(--chalk-line);
+  border-radius: 10px;
+  padding: 18px 24px;
+  color: #fff;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+  margin-bottom: 16px;
+}
+.scoreboard .side {
+  flex: 1;
+  text-align: center;
+}
+.scoreboard .team-name {
+  font-family: var(--font-display);
+  font-size: 1.1em;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #cfd8dc;
+}
+.scoreboard .score-num {
+  font-family: var(--font-display);
+  font-size: 3.2em;
+  line-height: 1;
+  margin-top: 4px;
+}
+.scoreboard .score-num.you { color: var(--card-yellow); }
+.scoreboard .score-num.opp { color: #ef5350; }
+.scoreboard .vs {
+  font-family: var(--font-display);
+  font-size: 1.8em;
+  color: #90a4ae;
+}
+
+.pitch { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+.pitch-zone {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: linear-gradient(90deg, rgba(46, 125, 50, 0.15), rgba(46, 125, 50, 0.02) 50%, rgba(229, 57, 53, 0.15));
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  min-height: 40px;
+}
+.pitch-zone .zone-label {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.72em;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-dim);
+  pointer-events: none;
+  white-space: nowrap;
+  font-weight: 700;
+}
+.zone-side { display: flex; gap: 5px; flex-wrap: wrap; min-width: 60px; z-index: 1; }
+.zone-side.right { justify-content: flex-end; }
+.shirt-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  font-size: 0.75em;
+  font-weight: 800;
+  color: #fff;
+  background: #78909c;
+  animation: popIn 0.35s ease;
+  flex-shrink: 0;
+}
+.shirt-chip.goal { background: linear-gradient(145deg, #ffd600, #f57f17); color: #221a02; box-shadow: 0 0 10px rgba(255, 214, 0, 0.7); }
+.shirt-chip.save { background: #546e7a; }
+.shirt-chip.blocked { background: #37474f; opacity: 0.7; }
+
+.commentary-feed {
+  background: #ffffff;
+  border: 2px solid #cfd8dc;
+  border-radius: 8px;
+  padding: 14px 18px;
+  max-height: 260px;
+  overflow-y: auto;
+  font-size: 0.9em;
+  line-height: 1.5;
+  text-align: left;
+}
+.commentary-feed p {
+  margin: 0 0 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed #eceff1;
+}
+.commentary-feed p:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+.commentary-feed .tag-goal { color: #2e7d32; font-weight: 800; }
+.commentary-feed .tag-save { color: #1565c0; font-weight: 700; }
+.commentary-feed .tag-header { color: #c62828; font-weight: 800; text-transform: uppercase; }
+
+.final-summary {
+  margin-top: 16px;
+  text-align: center;
+  background: #f1f8e9;
+  border: 1px solid #c5e1a5;
+  border-radius: 8px;
+  padding: 14px;
+}
+.final-summary .ft-badge {
+  display: inline-block;
+  background: #2e7d32;
+  color: #fff;
+  padding: 4px 14px;
+  border-radius: 20px;
+  font-size: 0.75em;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+.btn-skip { width: auto; margin: 10px auto 0; display: block; font-size: 0.82em; padding: 8px 16px; }
+
+.lang-switch{ position:fixed; top:14px; right:14px; z-index:60; display:flex; gap:4px; background:rgba(0,0,0,0.6); border:2px solid var(--chalk-line); border-radius:20px; padding:4px; }
+.lang-switch button{ border:none; background:transparent; color:#fff; padding:5px 12px; border-radius:16px; font-size:0.85em; font-weight:800; }
+.lang-switch button.active{ background:var(--card-yellow); color:#000; }
+
+.credits { 
+  background: rgba(255,255,255,0.92); 
+  border: 2px solid var(--border); 
+  border-radius: 8px; 
+  padding: 16px; 
+  color: #37474f; 
+  margin: 24px auto 16px auto; 
+  text-align: center; 
+  font-size: 0.9em;
+  line-height: 1.5;
+  max-width: 800px;
+}
+.credits::before { display: none; }
+
+
+
+
+
+/* Responsive Widescreen */
+@media (min-width: 900px) {
+  .main-interface { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
+}
+
+/* Standard Buy Me a Coffee Button */
+.bmc-btn, .bmc-inline, .bmc-float {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  background: #FFDD00 !important;
+  color: #000000 !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+  font-weight: 700 !important;
+  font-size: 0.92rem !important;
+  padding: 10px 18px !important;
+  border-radius: 8px !important;
+  border: 1px solid rgba(0,0,0,0.15) !important;
+  text-decoration: none !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25) !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+  cursor: pointer !important;
+  margin: 16px auto !important;
+  width: max-content !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+}
+.bmc-btn:hover, .bmc-inline:hover, .bmc-float:hover {
+  transform: translateY(-2px) scale(1.02) !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35) !important;
+  background: #FFE433 !important;
+  color: #000000 !important;
+}
+.bmc-btn svg, .bmc-inline svg, .bmc-float svg {
+  width: 20px !important;
+  height: 20px !important;
+  min-width: 20px !important;
+  min-height: 20px !important;
+  max-width: 20px !important;
+  max-height: 20px !important;
+  stroke: #000000 !important;
+  fill: none !important;
+  flex-shrink: 0 !important;
+  vertical-align: middle !important;
+}
 </style>
-<!-- Include html2pdf library -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="../assets/logger.js"></script>
 </head>
 <body>
 
-<div class="hero">
-    <h1>ELEVEN</h1>
-    <p>Procedural Campaign Generator & Match Solver</p>
+<div class="lang-switch">
+  <button id="btnPt" onclick="setLang('pt')">PT</button>
+  <button id="btnEn" onclick="setLang('en')">EN</button>
 </div>
 
+<div class="hero">
+  <div class="referee-cards-pocket" title="Cartões de Arbitragem / Referee Cards">
+    <div class="ref-card yellow-card" title="Cartão Amarelo / Yellow Card"></div>
+    <div class="ref-card red-card" title="Cartão Vermelho / Red Card"></div>
+  </div>
+  <img src="../assets/art/eleven.webp" alt="Eleven">
+  <div class="hero-content">
+    <h1>ELEVEN</h1>
+    <div class="subtitle" data-i18n="subtitle"></div>
+  </div>
+</div>
+
+<div class="pitch-divider"></div>
+
 <div class="tabs">
-    <button class="tab-btn active" onclick="switchTab('campaign')">Gerador de Campanhas</button>
-    <button class="tab-btn" onclick="switchTab('solver')">Resolvedor de Partidas</button>
+  <button class="btn tab-btn active" id="tabBtnCampaign" onclick="switchTab('campaign')" data-i18n="tabCampaign"></button>
+  <button class="btn tab-btn" id="tabBtnSolver" onclick="switchTab('solver')" data-i18n="tabSolver"></button>
 </div>
 
 <!-- CAMPAIGN TAB -->
-<div id="campaign" class="tab-content active">
-    <h2>Criar Nova Campanha</h2>
-    <p style="color:#666; margin-bottom:20px;">Gere uma campanha solo com história procedural baseada em dados reais.</p>
-    
-    <div class="form-group">
-        <label>Liga</label>
-        <select id="camp-league">
-            <option value="england">Inglaterra (Premier League/EFL)</option>
-            <option value="spain">Espanha (La Liga)</option>
-            <option value="france">França (Ligue 1)</option>
-            <option value="brazil">Brasil (Brasileirão)</option>
-        </select>
-    </div>
-    <div class="form-group">
-        <label>Time</label>
-        <input type="text" id="camp-team" placeholder="Ex: Santos, Everton, Saint-Étienne...">
-    </div>
-    <div class="form-group">
-        <label>Divisão Atual do Time</label>
-        <select id="camp-division">
-            <option value="3">3ª Divisão</option>
-            <option value="2">2ª Divisão</option>
-            <option value="1">1ª Divisão</option>
-        </select>
-    </div>
-    <div class="form-group">
-        <label>Nível de Dificuldade</label>
-        <select id="camp-difficulty">
-            <option value="easy">Fácil</option>
-            <option value="medium" selected>Médio</option>
-            <option value="hard">Difícil</option>
-        </select>
-    </div>
-    <div class="form-group">
-        <label>Capítulos da Campanha</label>
-        <select id="camp-chapters">
-            <option value="1">1 Capítulo (Curta)</option>
-            <option value="2">2 Capítulos (Média)</option>
-            <option value="3" selected>3 Capítulos (Longa)</option>
-        </select>
-    </div>
-    <div class="checkbox-group">
-        <input type="checkbox" id="camp-promotion" checked>
-        <label for="camp-promotion">Permitir subida de divisão entre capítulos?</label>
-    </div>
-    
-    <button class="btn-generate" onclick="generateCampaign()">Gerar Campanha com IA</button>
+<div id="campaign" class="tab-content active card">
+  <h2 data-i18n="campTitle"></h2>
+  <p class="intro" data-i18n="campIntro"></p>
 
-    <div id="campaign-loader" style="display:none; text-align:center; margin-top:20px;">
-        <img src="../assets/loader.svg" alt="Loading..." style="width:40px;height:40px; animation:spin 1s linear infinite;">
-        <p>Buscando dados na Wikipedia e gerando história...</p>
-    </div>
+  <label data-i18n="lblLeague"></label>
+  <select id="camp-league" onchange="onLeagueOrDivisionChange()">
+    <option value="england" data-i18n="optEngland"></option>
+    <option value="spain" data-i18n="optSpain"></option>
+    <option value="france" data-i18n="optFrance"></option>
+    <option value="brazil" data-i18n="optBrazil"></option>
+  </select>
 
-    <div id="campaign-output">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-            <h3>Visualização da Campanha</h3>
-            <button class="btn-export" onclick="exportPDF()">Salvar como PDF</button>
-        </div>
-        <div id="pdf-container">
-            <!-- Rendered pages go here -->
-        </div>
+  <label data-i18n="lblDivision"></label>
+  <select id="camp-division" onchange="onLeagueOrDivisionChange()">
+    <option value="3" data-i18n="opt3rd"></option>
+    <option value="2" data-i18n="opt2nd"></option>
+    <option value="1" data-i18n="opt1st"></option>
+  </select>
+
+  <label data-i18n="lblTeam"></label>
+  <select id="camp-team-select" onchange="onTeamSelectChange()"></select>
+  <input type="text" id="camp-team" data-i18n-placeholder="placeholderTeam" class="hidden" style="margin-top:8px;">
+  <p class="intro hidden" id="camp-custom-hint" style="margin:6px 0 0; font-size:0.8em;" data-i18n="customTeamHint"></p>
+
+  <div class="label-row">
+    <label data-i18n="lblDifficulty"></label>
+    <button type="button" class="info-icon-btn" onclick="document.getElementById('difficulty-help-text').classList.toggle('hidden')" data-i18n-aria="difficultyHelpAria" aria-label="Difficulty info">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="11" x2="12" y2="16"/><circle cx="12" cy="7.5" r="0.6" fill="currentColor" stroke="none"/></svg>
+    </button>
+  </div>
+  <select id="camp-difficulty">
+    <option value="easy" data-i18n="optEasy"></option>
+    <option value="medium" selected data-i18n="optMedium"></option>
+    <option value="hard" data-i18n="optHard"></option>
+  </select>
+  <p class="diff-help-text hidden" id="difficulty-help-text" data-i18n="difficultyHelpText"></p>
+
+  <label data-i18n="lblChapters"></label>
+  <select id="camp-chapters">
+    <option value="1" data-i18n="opt1ch"></option>
+    <option value="2" data-i18n="opt2ch"></option>
+    <option value="3" selected data-i18n="opt3ch"></option>
+    <option value="4" data-i18n="opt4ch"></option>
+    <option value="5" data-i18n="opt5ch"></option>
+  </select>
+
+  <div class="checkbox-group">
+    <input type="checkbox" id="camp-promotion" checked>
+    <label for="camp-promotion" data-i18n="chkPromotion"></label>
+  </div>
+
+  <button class="btn btn-primary" onclick="generateCampaign()" data-i18n="btnGenerate"></button>
+
+  <div id="campaign-loader" class="loader-box hidden">
+    <div class="loader-spin"></div>
+    <p data-i18n="loaderText"></p>
+  </div>
+
+  <div id="campaign-output">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px;">
+      <h3 data-i18n="campaignPreviewTitle" style="margin:0;"></h3>
+      <button class="btn" onclick="exportPDF()" data-i18n="btnExportPdf"></button>
     </div>
+    <div id="pdf-container"></div>
+  </div>
 </div>
 
 <!-- SOLVER TAB -->
-<div id="solver" class="tab-content">
-    <h2>Resolvedor de Partidas</h2>
-    <p style="color:#666; margin-bottom:20px;">Insira os dados do seu time e do oponente para resolver o confronto.</p>
-    
-    <div class="solver-grid">
-        <!-- PLAYER TEAM -->
-        <div class="team-panel" id="panel-player">
-            <h3>Seu Time</h3>
-            <div class="area-group">
-                <h4>Goleiro</h4>
-                <div class="player-entry">
-                    Força: <input type="number" id="pl-gk-pow" value="1" min="0">
-                    Luvas: <input type="number" id="pl-gk-gloves" value="1" min="0">
-                </div>
-            </div>
-            <div id="pl-areas"></div>
-        </div>
+<div id="solver" class="tab-content card">
+  <h2 data-i18n="solverTitle"></h2>
+  <p class="intro" data-i18n="solverIntro"></p>
 
-        <!-- NPC TEAM -->
-        <div class="team-panel" id="panel-npc">
-            <h3>Adversário</h3>
-            <div class="area-group">
-                <h4>Goleiro</h4>
-                <div class="player-entry">
-                    Força: <input type="number" id="npc-gk-pow" value="1" min="0">
-                    Luvas: <input type="number" id="npc-gk-gloves" value="0" min="0">
-                </div>
-            </div>
-            <div id="npc-areas"></div>
+  <div class="solver-grid">
+    <div class="team-panel" id="panel-player">
+      <h3 data-i18n="yourTeam"></h3>
+
+      <div class="area-group tactic-picker">
+        <h4 data-i18n="lblTactic"></h4>
+        <select id="pl-tactic" onchange="onTacticChange()"></select>
+        <div id="pl-formation-row" class="formation-row hidden">
+          <span data-i18n="lblFormation"></span>
+          <select id="pl-formation" onchange="renderTacticCard()"></select>
+          <button class="btn-auto-arrange" onclick="autoArrangeFormation()" data-i18n="btnAutoArrange"></button>
         </div>
+        <div id="pl-tactic-card" class="tactic-card hidden">
+          <p id="pl-tactic-ability"></p>
+          <label id="pl-opp-above-row" class="opp-above-row hidden">
+            <input type="checkbox" id="pl-opp-above-league"> <span data-i18n="chkOppAboveLeague"></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="area-group">
+        <h4 data-i18n="lblGK"></h4>
+        <div class="gk-row">
+          <span data-i18n="lblPower"></span> <input type="number" id="pl-gk-pow" value="1" min="0">
+          <span data-i18n="lblGloves"></span> <input type="number" id="pl-gk-gloves" value="1" min="0">
+        </div>
+      </div>
+      <div id="pl-areas"></div>
     </div>
 
-    <button class="btn-solve" onclick="solveMatch()">Calcular Resultado</button>
+    <div class="team-panel" id="panel-npc">
+      <h3 data-i18n="opponent"></h3>
 
-    <div id="match-result-box"></div>
+      <div class="area-group opponent-card-picker">
+        <h4 data-i18n="lblOpponentCard"></h4>
+        <div class="formation-row">
+          <select id="npc-card-select"></select>
+          <button class="btn-auto-arrange" onclick="loadOpponentCard()" data-i18n="btnLoadCard"></button>
+        </div>
+        <p class="opponent-card-hint" data-i18n="opponentCardHint"></p>
+      </div>
+
+      <div class="area-group">
+        <h4 data-i18n="lblGK"></h4>
+        <div class="gk-row">
+          <span data-i18n="lblPower"></span> <input type="number" id="npc-gk-pow" value="1" min="0">
+          <span data-i18n="lblGloves"></span> <input type="number" id="npc-gk-gloves" value="0" min="0">
+        </div>
+      </div>
+      <div id="npc-areas"></div>
+    </div>
+  </div>
+
+  <button class="btn btn-solve" onclick="solveMatch()" data-i18n="btnSolve"></button>
+
+  <div id="match-result-box"></div>
+</div>
+
+<div class="card credits">
+  <div>
+    <div data-i18n="creditsLine1"></div>
+    <div data-i18n="creditsLine2"></div>
+    <div style="margin-top:6px;"><a href="mailto:colletes@gmail.com" style="color:var(--pitch-dark); font-weight:bold; text-decoration:none;">colletes@gmail.com</a></div>
+  </div>
+</div>
+
+<a class="bmc-inline" href="https://www.buymeacoffee.com/colletes" target="_blank" rel="noopener" aria-label="Buy me a coffee"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h13a2 2 0 0 1 2 2v1a3 3 0 0 1-3 3h-1"/><path d="M4 8h13v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V8Z"/><path d="M8 3c-.6 1 .5 1.6 0 3M12 3c-.6 1 .5 1.6 0 3"/></svg><span data-i18n="bmcBtn">Me pague um café</span></a>
+
+<button class="btn-help-float" onclick="document.getElementById('helpModal').classList.remove('hidden')">?</button>
+<div id="helpModal" class="modal-overlay hidden">
+  <div class="modal">
+    <button class="btn modal-close" onclick="document.getElementById('helpModal').classList.add('hidden')" data-i18n="btnClose"></button>
+    <h3 data-i18n="helpTitle"></h3>
+    <div data-i18n-html="helpBody"></div>
+  </div>
 </div>
 
 <script src="js/eleven_solver.js"></script>
+<script src="js/eleven_tactics.js"></script>
 <script src="js/eleven_campaign.js"></script>
+<script src="js/eleven_opponents.js"></script>
 <script>
-    function switchTab(tabId) {
-        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
-        document.getElementById(tabId).classList.add('active');
-        event.currentTarget.classList.add('active');
+document.addEventListener('touchstart', function(){}, {passive:true});
+
+const LANG_KEY = 'boardbots_lang';
+
+const I18N = {
+  pt:{
+    subtitle:'Gerador de Campanha Procedural & Resolvedor de Partidas — ferramenta em fase alpha',
+    tabCampaign:'Gerador de Campanhas', tabSolver:'Resolvedor de Partidas',
+    campTitle:'Criar Nova Campanha',
+    campIntro:'Gere uma campanha solo com história procedural baseada em dados reais de um time à sua escolha.',
+    lblLeague:'Liga',
+    optEngland:'Inglaterra (Premier League/EFL)', optSpain:'Espanha (La Liga)', optFrance:'França (Ligue 1)', optBrazil:'Brasil (Brasileirão)',
+    lblTeam:'Time', placeholderTeam:'Ex: Santos, Everton, Saint-Étienne...',
+    optCustomTeam:'Time personalizado...', customTeamHint:'Time fictício/personalizado: os capítulos usarão cenários genéricos baseados na sua divisão e dificuldade, sem notícias reais de um clube específico.',
+    lblDivision:'Divisão Atual do Time', opt3rd:'3ª Divisão', opt2nd:'2ª Divisão', opt1st:'1ª Divisão',
+    lblDifficulty:'Nível de Dificuldade', optEasy:'Fácil', optMedium:'Médio', optHard:'Difícil',
+    difficultyHelpAria:'O que é o nível de dificuldade?',
+    difficultyHelpText:'O nível escolhido ajusta as metas numéricas dos objetivos (ex: pontos na Tabela da Liga, Novatos a treinar) — Fácil pede menos, Difícil pede mais. Além disso, dentro da mesma campanha os objetivos ficam progressivamente mais difíceis a cada capítulo. Falhar não te demite automaticamente: normalmente você continua no comando, mas o próximo capítulo fica ainda mais exigente. Só capítulos decisivos (marcados com ⚠) — como o desfecho da campanha ou o risco de rebaixamento — resultam em demissão.',
+    lblChapters:'Capítulos da Campanha', opt1ch:'1 Capítulo (Curta)', opt2ch:'2 Capítulos (Média)', opt3ch:'3 Capítulos (Longa)', opt4ch:'4 Capítulos (Extensa)', opt5ch:'5 Capítulos (Épica)',
+    chkPromotion:'Permitir subida de divisão entre capítulos?',
+    btnGenerate:'Gerar Campanha',
+    loaderText:'Buscando dados na Wikipedia e gerando história...',
+    campaignPreviewTitle:'Visualização da Campanha', btnExportPdf:'Salvar como PDF',
+    solverTitle:'Resolvedor de Partidas',
+    solverIntro:'Insira os jogadores do seu time e do adversário por área do campo para calcular o resultado do confronto.',
+    yourTeam:'Seu Time', opponent:'Adversário',
+    lblGK:'Goleiro', lblPower:'Força:', lblGloves:'Luvas:',
+    lblOpponentCard:'Carta de Adversário', btnLoadCard:'Carregar Carta',
+    opponentCardHint:'Escolha uma das 64 cartas de adversário oficiais (OP001–OP064) para montar o time automaticamente — depois ajuste livremente se quiser.',
+    lblCardPower:'Força total:',
+    lblTactic:'Carta de Tática', optNoTactic:'Sem tática (montagem manual)',
+    lblFormation:'Formação:', btnAutoArrange:'Montar automaticamente',
+    chkOppAboveLeague:'Adversário está acima de você na tabela da Liga',
+    zoneAl:'Ponta Esquerda', zoneAc:'Centroavante', zoneAr:'Ponta Direita',
+    zoneMl:'Meio Esquerdo', zoneMc:'Meio Central', zoneMr:'Meio Direito',
+    zoneDl:'Zagueiro Esquerdo', zoneDc:'Zagueiro Central', zoneDr:'Zagueiro Direito',
+    areaLeft:'Ala Esquerda', areaRight:'Ala Direita', areaAttack:'Ataque Central', areaMid:'Meio Central', areaDefense:'Defesa Central',
+    addPlayerBtn:'+ Adicionar Jogador',
+    lblPow:'F:', lblType:'T:', optAttacker:'Atacante', optDefender:'Defensor', lblShirt:'Nº:', lblZone:'Zona:',
+    btnSolve:'Calcular Resultado',
+    resultYourTeam:'Seu Time', resultOpponent:'Adversário',
+    resultScorers:'Gols Marcados pelos Jogadores (Camisas):', resultNone:'Nenhum',
+    resultFullTime:'Resultado Final', btnSkipNarration:'Pular narração ⏭',
+    creditsLine1:'Bot criado para uso pessoal — Colletes bots.',
+    creditsLine2:'Eleven é um jogo de tabuleiro © Portal Games. Ferramenta de apoio não-oficial, sem fins comerciais.',
+    bmcBtn:'Me pague um café',
+    btnClose:'Fechar',
+    helpTitle:'Como Usar',
+    helpBody:`<p>Este é um app de apoio <strong>não-oficial</strong> ainda em fase alpha para o jogo de tabuleiro <strong>Eleven</strong>, com duas ferramentas independentes:</p>
+      <p><strong>Gerador de Campanhas:</strong> escolha uma liga, um time real e algumas opções, e o app monta uma mini-campanha solo com capítulos, objetivos da temporada e mudanças de setup — usando um resumo real do time (via Wikipedia) e histórias geradas proceduralmente. Você pode exportar a visualização como PDF para imprimir ou consultar durante a partida.</p>
+      <p><strong>Resolvedor de Partidas:</strong> monte seu time e o time adversário informando o goleiro (força e luvas) e os jogadores de cada uma das 9 Zonas físicas do campo, exatamente como aparecem nas cartas e no tabuleiro (grade 3x3: Ataque/Meio/Defesa × Esquerda/Centro/Direita), marcando cada um como Atacante ou Defensor e sua força. Para a resolução da partida, as 3 Zonas de cada lado (Ponta, Meio e Zagueiro Esquerdo ou Direito) formam juntas uma única Ala, que enfrenta a Ala espelhada do adversário; já as 3 Zonas centrais (Ataque, Meio e Defesa Central) resolvem cada uma sozinha contra a Zona central espelhada do adversário — e os defensores mais fracos o suficiente para bloquear cada atacante são escalados de forma otimizada. O app mostra o placar e os artilheiros. Você também pode escolher uma Carta de Tática para o seu time: ela sugere uma Formação (você pode montar automaticamente uma sugestão de escalação por Zona, e depois mover qualquer jogador para outra Zona livremente) e, para as táticas com efeito automático, aplica o bônus da carta ao resultado.</p>
+      <p style="color:var(--text-dim); font-size:0.85em;">Como esta é uma ferramenta em fase inicial, alguns detalhes visuais e de conveniência ainda podem mudar.</p>`,
+  },
+  en:{
+    subtitle:'Procedural Campaign Generator & Match Solver — alpha-stage tool',
+    tabCampaign:'Campaign Generator', tabSolver:'Match Solver',
+    campTitle:'Create New Campaign',
+    campIntro:'Generate a solo campaign with a procedural story based on real data for a team of your choice.',
+    lblLeague:'League',
+    optEngland:'England (Premier League/EFL)', optSpain:'Spain (La Liga)', optFrance:'France (Ligue 1)', optBrazil:'Brazil (Brasileirão)',
+    lblTeam:'Team', placeholderTeam:'E.g.: Santos, Everton, Saint-Étienne...',
+    optCustomTeam:'Custom team...', customTeamHint:'Fictional/custom team: chapters will use generic scenarios based on your division and difficulty, without real news for a specific club.',
+    lblDivision:'Team\'s Current Division', opt3rd:'3rd Division', opt2nd:'2nd Division', opt1st:'1st Division',
+    lblDifficulty:'Difficulty Level', optEasy:'Easy', optMedium:'Medium', optHard:'Hard',
+    difficultyHelpAria:'What does the difficulty level do?',
+    difficultyHelpText:'The chosen level adjusts the numeric objective targets (e.g. League Table points, Youngsters to promote) — Easy asks for less, Hard asks for more. On top of that, objectives get progressively harder each chapter within the same campaign. Failing doesn\'t get you fired automatically: you usually stay in charge, but the next chapter becomes even more demanding. Only decisive chapters (marked with ⚠) — like the campaign\'s finale or a relegation risk — result in getting fired.',
+    lblChapters:'Campaign Chapters', opt1ch:'1 Chapter (Short)', opt2ch:'2 Chapters (Medium)', opt3ch:'3 Chapters (Long)', opt4ch:'4 Chapters (Extended)', opt5ch:'5 Chapters (Epic)',
+    chkPromotion:'Allow moving up a division between chapters?',
+    btnGenerate:'Generate Campaign',
+    loaderText:'Fetching Wikipedia data and generating the story...',
+    campaignPreviewTitle:'Campaign Preview', btnExportPdf:'Save as PDF',
+    solverTitle:'Match Solver',
+    solverIntro:'Enter your team\'s and the opponent\'s players by field area to calculate the outcome of the match.',
+    yourTeam:'Your Team', opponent:'Opponent',
+    lblGK:'Goalkeeper', lblPower:'Power:', lblGloves:'Gloves:',
+    lblOpponentCard:'Opponent Card', btnLoadCard:'Load Card',
+    opponentCardHint:'Pick one of the 64 official opponent cards (OP001–OP064) to auto-build the team — then freely tweak it afterward if you like.',
+    lblCardPower:'Total power:',
+    lblTactic:'Tactic Card', optNoTactic:'No tactic (manual setup)',
+    lblFormation:'Formation:', btnAutoArrange:'Auto-arrange',
+    chkOppAboveLeague:'Opponent is above you on the League table',
+    zoneAl:'Left Forward', zoneAc:'Center Forward', zoneAr:'Right Forward',
+    zoneMl:'Left Midfielder', zoneMc:'Central Midfielder', zoneMr:'Right Midfielder',
+    zoneDl:'Left Defender', zoneDc:'Central Defender', zoneDr:'Right Defender',
+    areaLeft:'Left Wing', areaRight:'Right Wing', areaAttack:'Central Attack', areaMid:'Central Midfield', areaDefense:'Central Defense',
+    addPlayerBtn:'+ Add Player',
+    lblPow:'Pw:', lblType:'Ty:', optAttacker:'Attacker', optDefender:'Defender', lblShirt:'No.:', lblZone:'Zone:',
+    btnSolve:'Calculate Result',
+    resultYourTeam:'Your Team', resultOpponent:'Opponent',
+    resultScorers:'Goals Scored by Players (shirt numbers):', resultNone:'None',
+    resultFullTime:'Final Result', btnSkipNarration:'Skip commentary ⏭',
+    creditsLine1:'Bot built for personal use — Colletes bots.',
+    creditsLine2:'Eleven is a board game © Portal Games. Unofficial support tool, not for commercial use.',
+    bmcBtn:'Buy me a coffee',
+    btnClose:'Close',
+    helpTitle:'How to Use',
+    helpBody:`<p>This is an <strong>unofficial</strong> support app, still in alpha stage, for the board game <strong>Eleven</strong>, with two independent tools:</p>
+      <p><strong>Campaign Generator:</strong> pick a league, a real team, and a few options, and the app builds a mini solo campaign with chapters, season objectives, and setup changes — using a real summary of the team (via Wikipedia) and procedurally generated stories. You can export the preview as a PDF to print or consult during play.</p>
+      <p><strong>Match Solver:</strong> build your team and the opposing team by entering the goalkeeper (power and gloves) and the players in each of the 9 physical field Zones, exactly as printed on the cards and board (a 3x3 grid: Attack/Mid/Defense × Left/Center/Right), marking each as Attacker or Defender along with their power. For match resolution, the 3 Zones on each side (Forward, Midfielder and Left/Right Defender) combine into a single Wing, which faces the opponent's mirrored Wing; the 3 central Zones (Central Attack, Central Midfield, Central Defense) each resolve on their own against the opponent's mirrored central Zone — and the weakest defenders strong enough to block each attacker are assigned optimally. The app shows the score and the scorers. You can also pick a Tactic card for your team: it suggests a Formation (auto-arrange a suggested lineup by Zone, then freely move any player to another Zone) and, for tactics with an automatic effect, applies the card's bonus to the result.</p>
+      <p style="color:var(--text-dim); font-size:0.85em;">Since this is an early-stage tool, some visual and convenience details may still change.</p>`,
+  }
+};
+
+let lang = localStorage.getItem(LANG_KEY) || 'pt';
+function t(k){ return I18N[lang][k] || k; }
+function applyI18n(){
+  document.querySelectorAll('[data-i18n]').forEach(el=>{ el.textContent = t(el.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-html]').forEach(el=>{ el.innerHTML = t(el.dataset.i18nHtml); });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el=>{ el.placeholder = t(el.dataset.i18nPlaceholder); });
+  document.querySelectorAll('[data-i18n-aria]').forEach(el=>{ el.setAttribute('aria-label', t(el.dataset.i18nAria)); });
+  document.getElementById('btnPt').classList.toggle('active', lang==='pt');
+  document.getElementById('btnEn').classList.toggle('active', lang==='en');
+  document.documentElement.lang = lang==='en' ? 'en' : 'pt-BR';
+  document.title = lang==='pt' ? 'Eleven — Gerador de Campanha & Resolvedor de Partidas (v1)' : 'Eleven — Campaign Generator & Match Solver (v1)';
+  if (typeof populateTeamSelect === 'function') populateTeamSelect(true);
+  if (typeof populateTacticSelect === 'function') populateTacticSelect();
+  if (typeof populateOpponentCardSelect === 'function') populateOpponentCardSelect();
+}
+function setLang(l){ lang=l; localStorage.setItem(LANG_KEY,l); applyI18n(); if (typeof onLanguageChanged === 'function') onLanguageChanged(l); }
+
+function switchTab(tabId){
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(tabId).classList.add('active');
+  document.getElementById(tabId==='campaign' ? 'tabBtnCampaign' : 'tabBtnSolver').classList.add('active');
+}
+
+// ---- Solver UI ----
+// The Pitch is a 3x3 grid of 9 independent Zones (see eleven_solver.js
+// header): Attack row (al/ac/ar), Mid row (ml/mc/mr), Defense row (dl/dc/dr).
+// Each Zone is resolved on its own against its diagonally mirrored Zone.
+const areas = ['al', 'ac', 'ar', 'ml', 'mc', 'mr', 'dl', 'dc', 'dr'];
+const AREA_I18N_KEY = { al:'zoneAl', ac:'zoneAc', ar:'zoneAr', ml:'zoneMl', mc:'zoneMc', mr:'zoneMr', dl:'zoneDl', dc:'zoneDc', dr:'zoneDr' };
+
+// Historical squad numbering: shirt 1 is reserved for the Goalkeeper (not
+// shown as a shirt input, GK has no Zone), outfield shirts are ascending
+// Defense -> Mid -> Attack, left to right within each row, starting at 2.
+const SHIRT_NUMBERING_ORDER = ['dl', 'dc', 'dr', 'ml', 'mc', 'mr', 'al', 'ac', 'ar'];
+
+function renumberShirts(prefix){
+  let shirt = 2;
+  SHIRT_NUMBERING_ORDER.forEach(area=>{
+    document.querySelectorAll(`#${prefix}-${area}-list .player-entry .p-shirt`).forEach(input=>{ input.value = shirt++; });
+  });
+}
+
+function createAreaUI(containerId, prefix){
+  const container = document.getElementById(containerId);
+  container.classList.add('setup-pitch');
+  areas.forEach(area=>{
+    const zone = document.createElement('div');
+    zone.className = `setup-zone ${area}`;
+    zone.ondragover = (e)=>{ e.preventDefault(); zone.classList.add('drag-over'); };
+    zone.ondragleave = ()=> zone.classList.remove('drag-over');
+    zone.ondrop = (e)=>{ e.preventDefault(); zone.classList.remove('drag-over'); handleZoneDrop(prefix, area); };
+    zone.innerHTML = `<div class="setup-zone-label" data-i18n="${AREA_I18N_KEY[area]}"></div><div class="setup-zone-list" id="${prefix}-${area}-list"></div><button class="add-player-btn" data-i18n="addPlayerBtn" onclick="addPlayer('${prefix}', '${area}')"></button>`;
+    container.appendChild(zone);
+  });
+}
+
+// Drag-and-drop state for moving a player entry between pitch zones — the
+// per-entry zone <select> (see addPlayer) remains as an accessible/mobile
+// fallback for the exact same move, both paths funnel through moveEntryToZone.
+let draggedPlayerEntry = null;
+
+function handleZoneDrop(prefix, area){
+  if(!draggedPlayerEntry || draggedPlayerEntry.prefix !== prefix) return;
+  moveEntryToZone(draggedPlayerEntry.el, prefix, area);
+  draggedPlayerEntry = null;
+}
+
+function addPlayer(prefix, area, opts){
+  opts = opts || {};
+  const list = document.getElementById(`${prefix}-${area}-list`);
+  const div = document.createElement('div');
+  div.className = 'player-entry';
+  div.draggable = true;
+  div.innerHTML = `
+    <div class="p-row-top">
+      <span class="drag-handle" title="Arrastar / Drag">☷</span>
+      <select class="p-type"><option value="att" data-i18n="optAttacker"></option><option value="def" data-i18n="optDefender"></option></select>
+      <select class="p-zone">${areas.map(a=>`<option value="${a}" data-i18n="${AREA_I18N_KEY[a]}"></option>`).join('')}</select>
+      <button class="p-btn-del" onclick="removePlayerEntry(this, '${prefix}')" title="Remover">✕</button>
+    </div>
+    <div class="p-row-bottom">
+      <div class="p-field"><span data-i18n="lblPow"></span><input type="number" value="1" min="0" class="p-pow"></div>
+      <div class="p-field"><span data-i18n="lblShirt"></span><input type="number" value="1" min="1" max="99" class="p-shirt"></div>
+    </div>
+  `;
+  list.appendChild(div);
+  div.querySelector('.p-zone').value = area;
+  div.querySelector('.p-zone').onchange = function(){ moveEntryToZone(div, prefix, this.value); };
+  div.querySelector('.p-type').onchange = function(){ div.classList.toggle('type-att', this.value === 'att'); };
+  div.ondragstart = ()=>{ draggedPlayerEntry = { el: div, prefix }; div.classList.add('dragging'); };
+  div.ondragend = ()=> div.classList.remove('dragging');
+  if (opts.isAttacker === false) {
+    div.querySelector('.p-type').value = 'def';
+  } else {
+    div.classList.add('type-att');
+  }
+  applyI18n();
+  renumberShirts(prefix);
+}
+
+function removePlayerEntry(btn, prefix){
+  const entry = btn.closest('.player-entry');
+  if(entry) entry.remove();
+  renumberShirts(prefix);
+}
+
+function moveEntryToZone(entryEl, prefix, newArea){
+  document.getElementById(`${prefix}-${newArea}-list`).appendChild(entryEl);
+  const zoneSelect = entryEl.querySelector('.p-zone');
+  if(zoneSelect) zoneSelect.value = newArea;
+  applyI18n();
+  renumberShirts(prefix);
+}
+
+createAreaUI('pl-areas', 'pl');
+createAreaUI('npc-areas', 'npc');
+
+// ---- Opponent Card picker (OP001-OP064, ported from the official card data) ----
+function populateOpponentCardSelect(){
+  const sel = document.getElementById('npc-card-select');
+  const prev = sel.value;
+  sel.innerHTML = Object.keys(NPC_CARDS).map(id =>
+    `<option value="${id}">${id} (${t('lblCardPower')} ${NPC_CARDS[id].tp})</option>`
+  ).join('');
+  sel.value = (prev && NPC_CARDS[prev]) ? prev : Object.keys(NPC_CARDS)[0];
+}
+
+function loadOpponentCard(){
+  const card = NPC_CARDS[document.getElementById('npc-card-select').value];
+  if(!card) return;
+  document.getElementById('npc-gk-pow').value = card.gk.p;
+  document.getElementById('npc-gk-gloves').value = card.gk.g;
+  areas.forEach(area=>{
+    const list = document.getElementById(`npc-${area}-list`);
+    list.innerHTML = '';
+    (card[area] || []).forEach(p=>{
+      addPlayer('npc', area, { isAttacker: p.a });
+      const entry = list.lastElementChild;
+      entry.querySelector('.p-pow').value = p.p;
+    });
+  });
+}
+
+populateOpponentCardSelect();
+loadOpponentCard();
+
+// ---- Tactic card / Formation UI (player team only) ----
+function populateTacticSelect(){
+  const sel = document.getElementById('pl-tactic');
+  const prev = sel.value;
+  sel.innerHTML = `<option value="">${t('optNoTactic')}</option>` +
+    TACTICS.map(tc => `<option value="${tc.id}">${tc.name[lang] || tc.name.pt}</option>`).join('');
+  sel.value = prev || '';
+  onTacticChange();
+}
+
+function onTacticChange(){
+  const tactic = getTactic(document.getElementById('pl-tactic').value);
+  const formationRow = document.getElementById('pl-formation-row');
+  const cardBox = document.getElementById('pl-tactic-card');
+  const oppRow = document.getElementById('pl-opp-above-row');
+  if(!tactic){
+    formationRow.classList.add('hidden');
+    cardBox.classList.add('hidden');
+    return;
+  }
+  formationRow.classList.remove('hidden');
+  cardBox.classList.remove('hidden');
+  document.getElementById('pl-formation').innerHTML = tactic.formations.map(f => `<option value="${f}">${f}</option>`).join('');
+  document.getElementById('pl-tactic-ability').textContent = tactic.ability[lang] || tactic.ability.pt;
+  oppRow.classList.toggle('hidden', tactic.needsInput !== 'oppAboveLeague');
+}
+
+// Formation choice itself has no separate rendering step beyond the ability
+// text already shown by onTacticChange() — kept as a named function since
+// it's wired to the formation <select>'s onchange in the HTML.
+function renderTacticCard(){}
+
+function autoArrangeFormation(){
+  const tactic = getTactic(document.getElementById('pl-tactic').value);
+  if(!tactic) return;
+  const formationKey = document.getElementById('pl-formation').value;
+  if(!FORMATIONS[formationKey]) return;
+  const layout = suggestZoneLayout(formationKey);
+  areas.forEach(area=>{
+    document.getElementById(`pl-${area}-list`).innerHTML = '';
+    (layout[area] || []).forEach((posType, idx) => addPlayer('pl', area, { isAttacker: defaultIsAttacker(posType, idx) }));
+  });
+}
+
+populateTacticSelect();
+
+// Match resolution only cares about 5 Sections (see eleven_solver.js) —
+// the 3 Zones on each side pool into one Wing, central Zones stay solo.
+const RESULT_AREAS = ['Left', 'Right', 'Attack', 'Mid', 'Defense'];
+const RESULT_AREA_I18N_KEY = { Left:'areaLeft', Right:'areaRight', Attack:'areaAttack', Mid:'areaMid', Defense:'areaDefense' };
+
+function buildTeamObj(prefix){
+  let team = {
+    GK: { power: parseInt(document.getElementById(`${prefix}-gk-pow`).value) || 0, gloves: parseInt(document.getElementById(`${prefix}-gk-gloves`).value) || 0 }
+  };
+  const raw = {};
+  areas.forEach(area=>{
+    raw[area] = [];
+    document.querySelectorAll(`#${prefix}-${area}-list .player-entry`).forEach(el=>{
+      raw[area].push({
+        power: parseInt(el.querySelector('.p-pow').value) || 0,
+        isAttacker: el.querySelector('.p-type').value === 'att',
+        shirt: parseInt(el.querySelector('.p-shirt').value) || 0
+      });
+    });
+  });
+  team.Left = [...raw.al, ...raw.ml, ...raw.dl];
+  team.Right = [...raw.ar, ...raw.mr, ...raw.dr];
+  team.Attack = raw.ac;
+  team.Mid = raw.mc;
+  team.Defense = raw.dc;
+  return team;
+}
+
+// ---- Broadcast / narrated match resolution ----
+const COMMENTARY = {
+  pt:{
+    kickoff:['Apito inicial! A bola rola em busca de gols.','Tudo pronto! É hora de decidir esta partida.','O árbitro dá o pontapé de saída. Vamos ao jogo!'],
+    zone:['A jogada se desenrola pela {area}...','Duelo tático na {area}.','Ação disputada na {area}.'],
+    blocked:['Camisa {shirt} tenta pela {area}, mas é bem travado pela marcação!','Belo desarme! A zaga aborta a investida do Camisa {shirt}.','Camisa {shirt} esbarra na defesa adversária e perde a bola.','Interceptação segura! O Camisa {shirt} nem viu a bola passar.'],
+    actHeaderPlayer:['Agora é a vez do seu time atacar!','Sua equipe parte para cima em busca do gol.','Pressão do seu time lá na frente!'],
+    actHeaderNpc:['Contra-ataque do adversário!','Agora o rival parte para cima.','O adversário responde com perigo!'],
+    goal:['GOOOOL! Camisa {shirt} não desperdiça e balança as redes pela {area}!','É GOL! Estourou a rede, Camisa {shirt}!','Que finalização! Camisa {shirt} marca um golaço pela {area}!','Sem chances para o goleiro! Camisa {shirt} confirma o gol.'],
+    save:['DEFESAAA fantástica! O goleiro evita o gol de Camisa {shirt}!','Que milagre! Encaixou a bola e negou o gol do Camisa {shirt}.','O goleiro se estica todo e espalma a finalização de Camisa {shirt}!','Segurou bonito! O arqueiro nega o gol certo de Camisa {shirt}.'],
+    fulltime:['Apito final! Fim de jogo.','Está encerrada a partida!','E é o apito final do árbitro!'],
+    injuryTime:['⏱ Já nos acréscimos...','Estamos nos minutos finais da partida...','Faltam só os acréscimos para o apito final...'],
+    tacticBonusFlavor:['Um contra-ataque incrível nos acréscimos! A tática {tactic} vira o placar!','Direto do banco de táticas: {tactic} entra em ação e decide a partida nos minutos finais!','Que virada nos acréscimos! A tática {tactic} garante mais um gol para o seu time!','Nos instantes finais, a tática {tactic} rouba a cena e sela o resultado!']
+  },
+  en:{
+    kickoff:['Kickoff! The match is under way.','Everything is set! Time to decide this match.','The referee blows the whistle. Let\'s get started!'],
+    zone:['Play develops down the {area}...','A tactical duel in the {area}.','Contested action in the {area}.'],
+    blocked:['Shirt {shirt} tries down the {area}, but is well shut down by the marking!','Great tackle! The defense stops shirt {shirt}\'s run.','Shirt {shirt} runs into the defense and loses the ball.','Solid interception! Shirt {shirt} never saw it coming.'],
+    actHeaderPlayer:['Now it\'s your team\'s turn to attack!','Your side pushes forward looking for the goal.','Your team is piling on the pressure!'],
+    actHeaderNpc:['The opponent counter-attacks!','Now the rival pushes forward.','The opponent responds dangerously!'],
+    goal:['GOAAAL! Shirt {shirt} makes no mistake down the {area}!','It\'s a GOAL! The net bulges, shirt {shirt}!','What a finish! Shirt {shirt} scores a beauty down the {area}!','No chance for the keeper! Shirt {shirt} confirms the goal.'],
+    save:['WHAT A SAVE! The keeper denies shirt {shirt}!','Unbelievable stop! The keeper keeps out shirt {shirt}\'s effort.','The keeper stretches out to palm away shirt {shirt}\'s shot!','Superbly held! The keeper denies a certain goal from shirt {shirt}.'],
+    fulltime:['Full time! The match is over.','That\'s the final whistle!','And there goes the referee\'s final whistle!'],
+    injuryTime:['⏱ Deep into injury time...','We\'re in the dying minutes of the match...','Only stoppage time remains before the final whistle...'],
+    tacticBonusFlavor:['An amazing last-minute counterattack! The {tactic} tactic turns the match around!','Straight from the tactics bench: {tactic} kicks in and decides the match in the final minutes!','What a turnaround in injury time! The {tactic} tactic secures one more goal for your side!','In the dying seconds, the {tactic} tactic steals the show and seals the result!']
+  }
+};
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function fill(str, vars){ return str.replace(/\{(\w+)\}/g, (_,k)=> vars[k] !== undefined ? vars[k] : ''); }
+
+let broadcastTimer = null;
+
+function buildBeats(res, tacticBonusInfo){
+  const beats = [];
+  beats.push({kind:'kickoff'});
+  res.chances.forEach(c=>{
+    if(!c.blocked.length) return;
+    beats.push({kind:'zone', area:c.area});
+    c.blocked.forEach(p=> beats.push({kind:'blocked', side:c.side, shirt:p.shirt, area:c.area}));
+  });
+  if(res.finish.player.length){
+    beats.push({kind:'actHeader', side:'player'});
+    res.finish.player.forEach(f=> beats.push({kind:f.result, side:'player', shirt:f.shot.shirt, area:f.shot.area}));
+  }
+  if(res.finish.npc.length){
+    beats.push({kind:'actHeader', side:'npc'});
+    res.finish.npc.forEach(f=> beats.push({kind:f.result, side:'npc', shirt:f.shot.shirt, area:f.shot.area}));
+  }
+  if(tacticBonusInfo){
+    beats.push({kind:'injuryTime'});
+    beats.push({kind:'tacticBonus', tactic:tacticBonusInfo.tactic});
+  }
+  beats.push({kind:'fulltime'});
+  return beats;
+}
+
+function beatToLine(beat){
+  const c = COMMENTARY[lang] || COMMENTARY.pt;
+  const areaLabel = beat.area ? t(RESULT_AREA_I18N_KEY[beat.area]) : '';
+  switch(beat.kind){
+    case 'kickoff': return { html: pick(c.kickoff), cls:'' };
+    case 'zone': return { html: fill(pick(c.zone), {area:areaLabel}), cls:'tag-header' };
+    case 'blocked': return { html: fill(pick(c.blocked), {shirt:beat.shirt, area:areaLabel}), cls:'' };
+    case 'actHeader': return { html: pick(beat.side==='player' ? c.actHeaderPlayer : c.actHeaderNpc), cls:'tag-header' };
+    case 'goal': return { html: `<span class="tag-goal">${fill(pick(c.goal), {shirt:beat.shirt, area:areaLabel})}</span>`, cls:'' };
+    case 'save': return { html: `<span class="tag-save">${fill(pick(c.save), {shirt:beat.shirt, area:areaLabel})}</span>`, cls:'' };
+    case 'fulltime': return { html: `<strong>${pick(c.fulltime)}</strong>`, cls:'' };
+    case 'injuryTime': return { html: pick(c.injuryTime), cls:'tag-header' };
+    case 'tacticBonus': return { html: `<span class="tag-goal">${fill(pick(c.tacticBonusFlavor), {tactic:beat.tactic})}</span>`, cls:'' };
+  }
+  return { html:'', cls:'' };
+}
+
+function renderPitchShell(){
+  return `<div class="pitch">${RESULT_AREAS.map(a=>`
+    <div class="pitch-zone" id="zone-${a}">
+      <div class="zone-side left" id="zone-${a}-player"></div>
+      <div class="zone-label">${t(RESULT_AREA_I18N_KEY[a])}</div>
+      <div class="zone-side right" id="zone-${a}-npc"></div>
+    </div>`).join('')}</div>`;
+}
+
+function addChip(area, side, cls, shirt){
+  const holder = document.getElementById(`zone-${area}-${side}`);
+  if(!holder) return;
+  const chip = document.createElement('span');
+  chip.className = `shirt-chip ${cls}`;
+  chip.textContent = shirt;
+  holder.appendChild(chip);
+  const zone = document.getElementById(`zone-${area}`);
+  if(zone){ zone.classList.remove('flash'); void zone.offsetWidth; zone.classList.add('flash'); }
+}
+
+function bumpScore(side){
+  const el = document.getElementById(side==='player' ? 'score-you' : 'score-opp');
+  if(!el) return;
+  el.textContent = (parseInt(el.textContent)||0) + 1;
+  el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump');
+}
+
+function playBeats(beats, res){
+  let i = 0;
+  const feed = document.getElementById('commentary-feed');
+  const skipBtn = document.getElementById('btn-skip-broadcast');
+
+  function step(){
+    if(i >= beats.length){
+      if(skipBtn) skipBtn.classList.add('hidden');
+      renderFinalSummary(res);
+      return;
     }
+    const beat = beats[i];
+    const line = beatToLine(beat);
+    const p = document.createElement('p');
+    p.className = line.cls;
+    p.innerHTML = line.html;
+    feed.appendChild(p);
+    feed.scrollTop = feed.scrollHeight;
 
-    // Initialize Solver UI
-    const areas = ['Left', 'Right', 'Attack', 'Mid', 'Defense'];
-    const areaNames = { 'Left': 'Ponta Esquerda', 'Right': 'Ponta Direita', 'Attack': 'Ataque Central', 'Mid': 'Meio Central', 'Defense': 'Defesa Central' };
+    if(beat.kind === 'blocked') addChip(beat.area, beat.side, 'blocked', beat.shirt);
+    if(beat.kind === 'goal'){ addChip(beat.area, beat.side, 'goal', beat.shirt); bumpScore(beat.side); }
+    if(beat.kind === 'save'){ addChip(beat.area, beat.side==='player' ? 'npc' : 'player', 'save', beat.shirt); }
+    if(beat.kind === 'tacticBonus'){ bumpScore('player'); }
 
-    function createAreaUI(containerId, prefix) {
-        const container = document.getElementById(containerId);
-        areas.forEach(area => {
-            const group = document.createElement('div');
-            group.className = 'area-group';
-            group.innerHTML = `<h4>${areaNames[area]}</h4><div id="${prefix}-${area}-list"></div><button class="add-player-btn" onclick="addPlayer('${prefix}', '${area}')">+ Adicionar Jogador</button>`;
-            container.appendChild(group);
-        });
-    }
+    i++;
+    broadcastTimer = setTimeout(step, 700);
+  }
+  step();
+}
 
-    function addPlayer(prefix, area) {
-        const list = document.getElementById(`${prefix}-${area}-list`);
-        const div = document.createElement('div');
-        div.className = 'player-entry';
-        div.innerHTML = `
-            F: <input type="number" value="1" min="0" class="p-pow">
-            T: <select class="p-type"><option value="att">Atacante ⚽️</option><option value="def">Defensor 🛡️</option></select>
-            Nº: <input type="number" value="1" min="1" max="99" class="p-shirt">
-            <button onclick="this.parentElement.remove()">X</button>
-        `;
-        list.appendChild(div);
-    }
+function skipBroadcast(beats, res){
+  clearTimeout(broadcastTimer);
+  const feed = document.getElementById('commentary-feed');
+  feed.innerHTML = '';
+  RESULT_AREAS.forEach(a=>{
+    document.getElementById(`zone-${a}-player`).innerHTML = '';
+    document.getElementById(`zone-${a}-npc`).innerHTML = '';
+  });
+  beats.forEach(beat=>{
+    const line = beatToLine(beat);
+    const p = document.createElement('p');
+    p.className = line.cls;
+    p.innerHTML = line.html;
+    feed.appendChild(p);
+    if(beat.kind === 'blocked') addChip(beat.area, beat.side, 'blocked', beat.shirt);
+    if(beat.kind === 'goal'){ addChip(beat.area, beat.side, 'goal', beat.shirt); }
+    if(beat.kind === 'save'){ addChip(beat.area, beat.side==='player' ? 'npc' : 'player', 'save', beat.shirt); }
+  });
+  feed.scrollTop = feed.scrollHeight;
+  document.getElementById('score-you').textContent = res.TeamGoals;
+  document.getElementById('score-opp').textContent = res.NPCGoals;
+  document.getElementById('btn-skip-broadcast').classList.add('hidden');
+  renderFinalSummary(res);
+}
 
-    createAreaUI('pl-areas', 'pl');
-    createAreaUI('npc-areas', 'npc');
+function renderFinalSummary(res){
+  const wrap = document.getElementById('final-summary');
+  if(!wrap) return;
+  const chips = res.TeamScorers.length
+    ? res.TeamScorers.map(s=>`<span class="shirt-chip goal">${s}</span>`).join('')
+    : `<span style="color:var(--text-dim); font-size:0.85em;">${t('resultNone')}</span>`;
+  wrap.innerHTML = `
+    <div class="ft-badge">${t('resultFullTime')}</div>
+    <div style="font-size:0.85em; color:var(--text-dim);">${t('resultScorers')}</div>
+    <div class="scorers-row">${chips}</div>
+  `;
+}
 
-    function buildTeamObj(prefix) {
-        let team = {
-            GK: { power: parseInt(document.getElementById(`${prefix}-gk-pow`).value) || 0, gloves: parseInt(document.getElementById(`${prefix}-gk-gloves`).value) || 0 }
-        };
-        areas.forEach(area => {
-            team[area] = [];
-            document.querySelectorAll(`#${prefix}-${area}-list .player-entry`).forEach(el => {
-                team[area].push({
-                    power: parseInt(el.querySelector('.p-pow').value) || 0,
-                    isAttacker: el.querySelector('.p-type').value === 'att',
-                    shirt: parseInt(el.querySelector('.p-shirt').value) || 0
-                });
-            });
-        });
-        return team;
-    }
+function solveMatch(){
+  const playerTeam = buildTeamObj('pl');
+  const npcTeam = buildTeamObj('npc');
 
-    function solveMatch() {
-        const playerTeam = buildTeamObj('pl');
-        const npcTeam = buildTeamObj('npc');
-        const res = ElevenSolver.checkMatch(playerTeam, npcTeam);
-        
-        const box = document.getElementById('match-result-box');
-        box.style.display = 'block';
-        box.innerHTML = `
-            <div style="font-size:30px; margin-bottom:10px;">
-                Seu Time <span style="color:#27ae60">${res.TeamGoals}</span> x <span style="color:#c0392b">${res.NPCGoals}</span> Adversário
-            </div>
-            <p style="font-size:14px; font-weight:normal;">Gols Marcados pelos Jogadores (Camisas): ${res.TeamScorers.join(', ') || 'Nenhum'}</p>
-        `;
-    }
+  const tactic = getTactic(document.getElementById('pl-tactic').value);
+  const effectiveTeam = (tactic && tactic.preEffect) ? tactic.preEffect(playerTeam) : playerTeam;
+
+  const res = ElevenSolver.resolveMatch(effectiveTeam, npcTeam);
+
+  let tacticBonus = 0;
+  if(tactic && tactic.autoResolvable && tactic.postEffect){
+    const oppAboveEl = document.getElementById('pl-opp-above-league');
+    const extra = { oppAboveLeague: oppAboveEl ? oppAboveEl.checked : false };
+    tacticBonus = tactic.postEffect(effectiveTeam, npcTeam, res, extra) || 0;
+  }
+  if(tacticBonus > 0) res.TeamGoals += tacticBonus;
+
+  const beats = buildBeats(res, tacticBonus > 0 ? { tactic: tactic.name[lang] || tactic.name.pt } : null);
+
+  const box = document.getElementById('match-result-box');
+  box.style.display = 'block';
+  box.innerHTML = `
+    <div class="scoreboard">
+      <div class="side"><div class="team-name">${t('resultYourTeam')}</div><div class="score-num you" id="score-you">0</div></div>
+      <div class="vs">×</div>
+      <div class="side"><div class="team-name">${t('resultOpponent')}</div><div class="score-num opp" id="score-opp">0</div></div>
+    </div>
+    ${renderPitchShell()}
+    <div class="commentary-feed" id="commentary-feed"></div>
+    <button class="btn btn-skip" id="btn-skip-broadcast" data-i18n="btnSkipNarration">${t('btnSkipNarration')}</button>
+    <div class="final-summary" id="final-summary"></div>
+  `;
+  document.getElementById('btn-skip-broadcast').onclick = ()=> skipBroadcast(beats, res);
+  box.scrollIntoView({ behavior:'smooth', block:'nearest' });
+  playBeats(beats, res);
+}
+
+applyI18n();
 </script>
 
+<script type="module" src="../assets/analytics.js"></script>
+<script type="module" src="../assets/bot-view.js"></script>
+
 <!-- Botão Voltar para a Home -->
+<style>
+.btn-home{ display:inline-flex; align-items:center; gap:8px; background:linear-gradient(145deg, var(--accent), var(--accent-dim)); border:1px solid var(--accent-dim); color:#fff; border-radius:10px; padding:12px 26px; font-weight:700; font-size:16px; text-decoration:none; box-shadow:0 4px 14px rgba(0,0,0,0.35); transition:transform 0.15s, box-shadow 0.15s; }
+.btn-home:hover{ transform:translateY(-2px); box-shadow:0 6px 18px rgba(0,0,0,0.45); }
+</style>
 <div style="text-align: center; margin: 40px auto 20px auto; width: 100%;">
-    <a href="../index.html" style="display: inline-block; padding: 12px 24px; font-family: 'Poppins', sans-serif; font-size: 16px; font-weight: bold; text-decoration: none; border-radius: 8px; border: 2px solid rgba(150,150,150,0.3); color: inherit; background-color: rgba(255,255,255,0.9); box-shadow: 0 4px 6px rgba(0,0,0,0.1); backdrop-filter: blur(4px);">
+    <a href="../index.html" class="btn-home">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9 21v-6h6v6"/></svg>
         ← Home
     </a>
 </div>

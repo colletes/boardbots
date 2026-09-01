@@ -2,7 +2,7 @@
 
 ## Diagnóstico
 
-A interface atual de `bots/utek_bot_v2.html` está estruturalmente quebrada, não apenas pouco refinada:
+A interface atual de `bots/utek_bot.html` está estruturalmente quebrada, não apenas pouco refinada:
 
 - O HTML usa classes essenciais que não possuem regras no CSS principal: `.container`, `.row`, `.small`, `.badge`, `.btn-icon`, `.icon-inline`, `.two-col`, `.wide-grid`, `.forest`, `.secondary`, `.danger`, `.checkbox-row`, `.guidance` e `.log-list`.
 - Sem `.btn-icon` e `.icon-inline`, os SVGs ficam com dimensões intrínsecas ou sem escala controlada. Isso explica os ícones gigantes e os botões visualmente desproporcionais na captura.
@@ -17,7 +17,7 @@ Transformar o bot em uma interface legível e intencional, inspirada em um paine
 
 ## Plano de Implementação
 
-1. Fazer backup lógico criando o próximo arquivo somente se isso for solicitado; por padrão, editar `bots/utek_bot_v2.html` em lugar, conforme a convenção atual desta tarefa.
+1. Fazer backup lógico criando o próximo arquivo somente se isso for solicitado; por padrão, editar `bots/utek_bot.html` em lugar, conforme a convenção atual desta tarefa.
 2. Consolidar o CSS em um único bloco no `<head>`:
    - remover o bloco duplicado de estilos do final do documento;
    - manter o botão Home no local correto, sem estilos soltos depois do JavaScript;
@@ -57,7 +57,7 @@ Transformar o bot em uma interface legível e intencional, inspirada em um paine
 
 ## Validação
 
-- Executar `node --check` no script inline extraído de `bots/utek_bot_v2.html`.
+- Executar `node --check` no script inline extraído de `bots/utek_bot.html`.
 - Abrir o bot em servidor local e verificar, no setup inicial, que apenas o setup aparece.
 - Medir via navegador os SVGs `.icon-inline` e `.btn-icon`; nenhum deve exceder o tamanho definido pelo CSS.
 - Verificar que os botões principais mantêm alturas semelhantes, texto dentro do botão e alvos de toque utilizáveis.
@@ -77,7 +77,7 @@ Transformar o bot em uma interface legível e intencional, inspirada em um paine
 
 ## Status da Implementação
 
-Implementado em `bots/utek_bot_v2.html`:
+Implementado em `bots/utek_bot.html`:
 
 - Restauradas as primitivas de layout ausentes: container, rows, grids, badges, textos auxiliares, guidance e log.
 - Restauradas dimensões explícitas para ícones inline e ícones de botões.
