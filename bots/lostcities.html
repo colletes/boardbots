@@ -948,6 +948,8 @@ Object.assign(window.I18N.pt, {
   lc_res_reserve_desc: "O bot não pode jogar agora, mas guardou esta carta na sua reserva para jogar assim que possível!",
   lc_res_reserve_swap_title: "TROCA NA RESERVA",
   lc_res_reserve_swap_desc: "A reserva já estava cheia, mas esta carta é mais flexível (mais cartas futuras podem seguir ela) do que uma das já guardadas — o bot troca, mantendo esta e descartando a menos útil.",
+  lc_res_reserve_deferred_title: "AGUARDA UMA CARTA MELHOR",
+  lc_res_reserve_deferred_desc: "Essa carta já poderia ser jogada, mas o salto é grande demais (descartaria vários valores intermediários para sempre). O bot guarda na reserva na esperança de uma carta mais próxima chegar primeiro.",
   lc_reserve_title: "🃏 Mão Virtual do Automa (Reserva)",
   lc_reserve_empty: "Vazia (até 2 cartas guardadas)",
   lc_log_reserve_play: "Resgata da reserva:",
@@ -1034,6 +1036,8 @@ Object.assign(window.I18N.en, {
   lc_res_reserve_desc: "The bot cannot play this now, but kept it in its reserve to play as soon as possible!",
   lc_res_reserve_swap_title: "RESERVE SWAP",
   lc_res_reserve_swap_desc: "The reserve was already full, but this card is more flexible (more future cards could still follow it) than one already held — the bot swaps, keeping this one and discarding the less useful one.",
+  lc_res_reserve_deferred_title: "WAITING FOR A BETTER CARD",
+  lc_res_reserve_deferred_desc: "This card could already be played, but the jump is too big (it would permanently skip several in-between values). The bot holds it in reserve, hoping a closer card arrives first.",
   lc_reserve_title: "🃏 Automa Virtual Hand (Reserve)",
   lc_reserve_empty: "Empty (up to 2 cards held)",
   lc_log_reserve_play: "Recovers from reserve:",
@@ -1593,11 +1597,14 @@ function logReserveEviction(card) {
   renderLog();
 }
 
-function checkReservePlays() {
+function checkReservePlays(triggerColor) {
   let played = [];
   let playedAny = false;
   for (let i = 0; i < botReserve.length; i++) {
     const card = botReserve[i];
+    // A color's legality never depends on any other color's expedition, so only a new
+    // card of the SAME color can possibly unlock (or newly justify committing) this one.
+    if (triggerColor && card.color !== triggerColor) continue;
     const action = tryPlayCard(card.color, card.value);
     if (action) {
       botReserve.splice(i, 1);
@@ -1616,15 +1623,27 @@ function checkReservePlays() {
     }
   }
   if (playedAny) {
-    played = played.concat(checkReservePlays());
+    played = played.concat(checkReservePlays(triggerColor));
   }
   return played;
+}
+
+// A big ascending jump forfeits every skipped value forever (once past a number, this
+// variant's rules never let it come back). Worth waiting one card to see if a smaller,
+// less wasteful follow-up shows up first, instead of always committing immediately.
+function shouldDeferBigJump(color, val) {
+  if (difficulty === 'gods' || val === 'H') return false;
+  const numbers = expeditions[color].filter(v => v !== 'H');
+  if (numbers.length === 0) return false; // starting fresh is handled by the existing start-up cap
+  const highest = numbers[numbers.length - 1];
+  return (val - highest) >= 4; // skips 3+ still-possible values
 }
 
 function processCard() {
   if (!selColor || !selVal) return;
   
-  let result = tryPlayCard(selColor, selVal);
+  const deferred = shouldDeferBigJump(selColor, selVal);
+  let result = deferred ? null : tryPlayCard(selColor, selVal);
   let discardReason = null;
   let reserveEvicted = null;
   
@@ -1637,6 +1656,7 @@ function processCard() {
     } else if (botReserve.length < 2) {
       botReserve.push({ color: selColor, value: selVal });
       result = "RESERVE";
+      if (deferred) discardReason = 'deferred';
     } else {
       // Reserve is full: don't always sacrifice the new card. Keep whichever of the
       // 3 candidates (new + 2 reserved) has the most future flexibility - a lower
@@ -1666,7 +1686,7 @@ function processCard() {
   // If a card was played, see if any reserve card can now be chained
   let reservePlays = [];
   if (result === "PLAY" || result === "REPLACE") {
-    reservePlays = checkReservePlays();
+    reservePlays = checkReservePlays(selColor);
   }
   
   // Any expedition change can also make an already-held reserve card permanently
@@ -1717,6 +1737,9 @@ function showResult(action, color, value, discardReason, reservePlays, reservePu
     if (discardReason === 'full_swap') {
       title.innerText = i18n('lc_res_reserve_swap_title');
       desc.innerText = i18n('lc_res_reserve_swap_desc');
+    } else if (discardReason === 'deferred') {
+      title.innerText = i18n('lc_res_reserve_deferred_title');
+      desc.innerText = i18n('lc_res_reserve_deferred_desc');
     } else {
       title.innerText = i18n('lc_res_reserve_title');
       desc.innerText = i18n('lc_res_reserve_desc');
