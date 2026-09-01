@@ -946,12 +946,16 @@ Object.assign(window.I18N.pt, {
   lc_res_replace_desc: "Descarte a carta mais alta e coloque a nova na expedição no lugar dela!",
   lc_res_reserve_title: "GUARDAR NA RESERVA",
   lc_res_reserve_desc: "O bot não pode jogar agora, mas guardou esta carta na sua reserva para jogar assim que possível!",
+  lc_res_reserve_swap_title: "TROCA NA RESERVA",
+  lc_res_reserve_swap_desc: "A reserva já estava cheia, mas esta carta é mais flexível (mais cartas futuras podem seguir ela) do que uma das já guardadas — o bot troca, mantendo esta e descartando a menos útil.",
   lc_reserve_title: "🃏 Mão Virtual do Automa (Reserva)",
   lc_reserve_empty: "Vazia (até 2 cartas guardadas)",
   lc_log_reserve_play: "Resgata da reserva:",
   lc_log_reserve_purge: "Descarta da reserva (carta morta, nunca mais jogável):",
+  lc_log_reserve_evict: "Troca na reserva — descarta por ser menos flexível:",
   lc_res_extra_reserve_plays_title: "📥 Além disso, resgatou da reserva:",
   lc_res_extra_reserve_purge_title: "🗑️ Além disso, descartou da reserva (carta morta):",
+  lc_res_extra_reserve_evicted_title: "🔄 Além disso, descartou da reserva (menos flexível):",
   lc_ok: "Entendido",
   
   wantedPanelText: "O Automa compra do <strong>BARALHO</strong>, exceto se o <strong>DESCARTE</strong> tiver:",
@@ -1028,12 +1032,16 @@ Object.assign(window.I18N.en, {
   lc_res_replace_desc: "Discard the highest card and play this new one in its place!",
   lc_res_reserve_title: "HOLD IN RESERVE",
   lc_res_reserve_desc: "The bot cannot play this now, but kept it in its reserve to play as soon as possible!",
+  lc_res_reserve_swap_title: "RESERVE SWAP",
+  lc_res_reserve_swap_desc: "The reserve was already full, but this card is more flexible (more future cards could still follow it) than one already held — the bot swaps, keeping this one and discarding the less useful one.",
   lc_reserve_title: "🃏 Automa Virtual Hand (Reserve)",
   lc_reserve_empty: "Empty (up to 2 cards held)",
   lc_log_reserve_play: "Recovers from reserve:",
   lc_log_reserve_purge: "Discards from reserve (dead card, can never be played):",
+  lc_log_reserve_evict: "Reserve swap — discards as less flexible:",
   lc_res_extra_reserve_plays_title: "📥 Also recovered from reserve:",
   lc_res_extra_reserve_purge_title: "🗑️ Also discarded from reserve (dead card):",
+  lc_res_extra_reserve_evicted_title: "🔄 Also discarded from reserve (less flexible):",
   lc_ok: "Got it",
   
   wantedPanelText: "The Automa draws from the <strong>DECK</strong>, unless the <strong>DISCARD</strong> pile has:",
@@ -1575,6 +1583,16 @@ function purgeDeadReserveCards() {
   return purged;
 }
 
+function logReserveEviction(card) {
+  const lang = localStorage.getItem('boardbots_lang') || 'pt';
+  const valText = card.value === 'H' ? '🤝' : card.value;
+  const cName = window.I18N[lang] && window.I18N[lang]['c_' + card.color] ? window.I18N[lang]['c_' + card.color] : card.color;
+  const prefix = window.I18N[lang] && window.I18N[lang].lc_log_reserve_evict ? window.I18N[lang].lc_log_reserve_evict : "Troca na reserva — descarta por ser menos flexível:";
+  gameLog.unshift(`[${new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit', second:'2-digit'})}] 🔄 ${prefix} ${cName} ${valText}`);
+  if (gameLog.length > 30) gameLog.pop();
+  renderLog();
+}
+
 function checkReservePlays() {
   let played = [];
   let playedAny = false;
@@ -1608,6 +1626,7 @@ function processCard() {
   
   let result = tryPlayCard(selColor, selVal);
   let discardReason = null;
+  let reserveEvicted = null;
   
   if (!result) {
     // Cannot play immediately: a permanently dead card is discarded right away
@@ -1619,12 +1638,30 @@ function processCard() {
       botReserve.push({ color: selColor, value: selVal });
       result = "RESERVE";
     } else {
-      result = "DISCARD";
-      discardReason = 'full';
+      // Reserve is full: don't always sacrifice the new card. Keep whichever of the
+      // 3 candidates (new + 2 reserved) has the most future flexibility - a lower
+      // number can still be followed by more remaining higher cards, so it's more
+      // likely to eventually score, while a wager (not yet dead) is the most
+      // valuable to protect since it multiplies the whole expedition.
+      const disposability = c => c.value === 'H' ? -1 : c.value;
+      const newCard = { color: selColor, value: selVal };
+      const candidates = [newCard, botReserve[0], botReserve[1]];
+      candidates.sort((a, b) => disposability(b) - disposability(a));
+      const toDiscard = candidates[0];
+      botReserve = candidates.slice(1);
+      if (toDiscard === newCard) {
+        result = "DISCARD";
+        discardReason = 'full';
+      } else {
+        result = "RESERVE";
+        discardReason = 'full_swap';
+        reserveEvicted = toDiscard;
+      }
     }
   }
   
   logAction(result, selColor, selVal, discardReason);
+  if (reserveEvicted) logReserveEviction(reserveEvicted);
   
   // If a card was played, see if any reserve card can now be chained
   let reservePlays = [];
@@ -1636,7 +1673,7 @@ function processCard() {
   // dead (e.g. a stashed wager whose column just got started by another draw).
   const reservePurges = purgeDeadReserveCards();
   
-  showResult(result, selColor, selVal, discardReason, reservePlays, reservePurges);
+  showResult(result, selColor, selVal, discardReason, reservePlays, reservePurges, reserveEvicted);
   
   selColor = null; selVal = null;
   document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
@@ -1646,7 +1683,7 @@ function processCard() {
   renderTableau();
 }
 
-function showResult(action, color, value, discardReason, reservePlays, reservePurges) {
+function showResult(action, color, value, discardReason, reservePlays, reservePurges, reserveEvicted) {
   const modal = document.getElementById('resultModal');
   const icon = document.getElementById('resIcon');
   const title = document.getElementById('resTitle');
@@ -1677,8 +1714,13 @@ function showResult(action, color, value, discardReason, reservePlays, reservePu
     desc.innerText = i18n('lc_res_replace_desc');
   } else if (action === 'RESERVE') {
     icon.innerText = '📥';
-    title.innerText = i18n('lc_res_reserve_title');
-    desc.innerText = i18n('lc_res_reserve_desc');
+    if (discardReason === 'full_swap') {
+      title.innerText = i18n('lc_res_reserve_swap_title');
+      desc.innerText = i18n('lc_res_reserve_swap_desc');
+    } else {
+      title.innerText = i18n('lc_res_reserve_title');
+      desc.innerText = i18n('lc_res_reserve_desc');
+    }
   }
   
   // Surface any automatic side-effects (reserve chain-plays, dead-card purges) right
@@ -1699,6 +1741,12 @@ function showResult(action, color, value, discardReason, reservePlays, reservePu
       const cName = window.I18N[lang] && window.I18N[lang]['c_' + c.color] ? window.I18N[lang]['c_' + c.color] : c.color;
       extraHtml += `<div class="result-extra-item">${colorEmoji[c.color]} ${cName} ${valText}</div>`;
     });
+  }
+  if (reserveEvicted) {
+    extraHtml += `<div class="result-extra-title">${i18n('lc_res_extra_reserve_evicted_title')}</div>`;
+    const valText = reserveEvicted.value === 'H' ? '🤝' : reserveEvicted.value;
+    const cName = window.I18N[lang] && window.I18N[lang]['c_' + reserveEvicted.color] ? window.I18N[lang]['c_' + reserveEvicted.color] : reserveEvicted.color;
+    extraHtml += `<div class="result-extra-item">${colorEmoji[reserveEvicted.color]} ${cName} ${valText}</div>`;
   }
   extra.innerHTML = extraHtml;
   
