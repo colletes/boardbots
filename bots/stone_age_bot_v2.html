@@ -1936,6 +1936,10 @@ details .setup-list li {
                 new Promise((_, reject) => setTimeout(() => reject(new Error('DiceBox roll timeout')), timeoutMs))
             ]);
         }
+        // Physics engine can also resolve with a bad face read (colliderFaceMap error) instead of hanging; guard against NaN/undefined.
+        function sanitizeDie(v) {
+            return (Number.isInteger(v) && v >= 1 && v <= 6) ? v : (Math.floor(Math.random() * 6) + 1);
+        }
 
         function findLanding(sum) {
             let pos = sum;
@@ -1965,11 +1969,11 @@ details .setup-list li {
                 try {
                     const results = await rollDiceBoxSafe('2d6');
                     if (results && results.length >= 2) {
-                        d1 = results[0].value;
-                        d2 = results[1].value;
+                        d1 = sanitizeDie(results[0].value);
+                        d2 = sanitizeDie(results[1].value);
                     } else if (results && results[0] && results[0].rolls && results[0].rolls.length >= 2) {
-                        d1 = results[0].rolls[0].value;
-                        d2 = results[0].rolls[1].value;
+                        d1 = sanitizeDie(results[0].rolls[0].value);
+                        d2 = sanitizeDie(results[0].rolls[1].value);
                     } else {
                         d1 = Math.floor(Math.random() * 6) + 1;
                         d2 = Math.floor(Math.random() * 6) + 1;
@@ -2074,7 +2078,7 @@ details .setup-list li {
                 try {
                     const results = await rollDiceBoxSafe('2d6');
                     if (results && results.length >= 2) {
-                        d1 = results[0].value; d2 = results[1].value;
+                        d1 = sanitizeDie(results[0].value); d2 = sanitizeDie(results[1].value);
                     }
                 } catch(e) {}
             }
@@ -2104,7 +2108,7 @@ details .setup-list li {
                 try {
                     const results = await rollDiceBoxSafe(`${n}d6`);
                     if (results && results.length > 0) {
-                        rolls = results.map(r => r.value);
+                        rolls = results.map(r => sanitizeDie(r.value));
                         sum = rolls.reduce((a, b) => a + b, 0);
                     }
                 } catch(e) {}

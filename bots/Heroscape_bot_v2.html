@@ -758,7 +758,8 @@
       try {
         const rollResult = await rollDiceBoxSafe('3d20');
         if (rollResult && rollResult.length >= 3) {
-          diceResults = rollResult.map(r => r.value);
+          // Physics engine can resolve with a bad face read (colliderFaceMap error) instead of hanging; guard against NaN/undefined.
+          diceResults = rollResult.map(r => (Number.isInteger(r.value) && r.value >= 1 && r.value <= 20) ? r.value : rolarD20Fallback());
         }
       } catch (err) {
         console.warn('Dice roll error, using fallback', err);

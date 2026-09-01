@@ -1776,7 +1776,9 @@ async function roll3dDie() {
     if (diceBoxInstance) {
         try {
             const result = await rollDiceBoxSafe('1d6');
-            const val = result[0].value;
+            const raw = result[0].value;
+            // Physics engine can resolve with a bad face read (colliderFaceMap error) instead of hanging; guard against NaN/undefined.
+            const val = (Number.isInteger(raw) && raw >= 1 && raw <= 6) ? raw : (Math.floor(Math.random() * 6) + 1);
             badge.textContent = val;
             const msg = currentLang === 'pt' ? `🎲 Dado 3D rolado: Resultado <strong>${val}</strong>!` : `🎲 3D Die rolled: Result <strong>${val}</strong>!`;
             addLog(msg);
