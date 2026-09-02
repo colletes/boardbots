@@ -355,9 +355,9 @@
         /* MODAIS */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); padding: 10px; box-sizing: border-box;}
         .config-panel { width: 100%; max-width: 1200px; height: 95vh; background: #0a0a0a; border: 2px solid var(--yellow); border-radius: 8px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 0 30px rgba(0,0,0,1); }
-        .dice-intro-panel { width: 100%; max-width: 420px; background: #0a0a0a; border: 2px solid var(--rust); border-radius: 8px; padding: 20px; box-shadow: 0 0 30px rgba(0,0,0,1); text-align: center; }
+        .dice-intro-panel { width: 100%; max-width: 560px; background: #0a0a0a; border: 2px solid var(--rust); border-radius: 8px; padding: 20px; box-shadow: 0 0 30px rgba(0,0,0,1); text-align: center; }
         .dice-intro-panel h3 { margin: 0 0 14px; color: var(--rust); text-transform: uppercase; letter-spacing: 2px; font-size: 1em; text-shadow: 0 0 6px rgba(212,32,47,0.5); }
-        .dice-tray-container { width: 100%; height: 200px; background: rgba(0,0,0,0.6); border: 2px solid var(--metal); border-radius: 8px; position: relative; overflow: hidden; box-shadow: inset 0 3px 12px rgba(0,0,0,0.8); }
+        .dice-tray-container { width: 100%; height: 280px; background: rgba(0,0,0,0.6); border: 2px solid var(--metal); border-radius: 8px; position: relative; overflow: hidden; box-shadow: inset 0 3px 12px rgba(0,0,0,0.8); }
         #dice-box { width:100%; height:100%; position:absolute; top:0; left:0; z-index:2; }
         #dice-box canvas { width:100% !important; height:100% !important; display:block; }
         
@@ -2398,7 +2398,7 @@
         diceBoxInitPromise = (async () => {
             try {
                 const { loadDiceBox } = await import('../assets/dice-roller.js');
-                diceBox = await loadDiceBox({ theme: 'rust', themeColor: '#d4202f', scale: 27, timeoutMs: 8000 });
+                diceBox = await loadDiceBox({ theme: 'rust', themeColor: '#d4202f', scale: 20, timeoutMs: 8000 });
                 diceBoxReady = true;
                 const tray = document.getElementById('dice-tray');
                 if (tray) tray.classList.add('has-3d');
@@ -2411,18 +2411,25 @@
 
     // Puramente decorativo: os valores já foram decididos (Math.random) antes desta chamada.
     // A animação apenas visualiza esses valores já fixados via a notação de resultado forçado do dice-box ('NdN@v1,v2,...').
+    // Cada grupo (um por bot/SDBR/SDFF) rola separadamente para poder trocar a cor dos dados por grupo.
     // Nunca bloqueia o início do jogo: qualquer falha/timeout apenas pula a animação silenciosamente.
-    async function playInitialPlacementRollAnimation(values) {
-        if (!values || !values.length) return;
+    async function playInitialPlacementRollAnimation(groups) {
+        if (!groups || !groups.length) return;
         const overlay = document.getElementById('dice-intro-overlay');
         try {
             if (overlay) overlay.classList.remove('hidden');
             await initDiceBox();
             if (!diceBoxReady || !diceBox) return;
             const { rollDiceSafe } = await import('../assets/dice-roller.js');
-            const notation = `${values.length}d6@${values.join(',')}`;
-            await rollDiceSafe(diceBox, notation, 8000);
-            await new Promise(resolve => setTimeout(resolve, 700));
+            for (let i = 0; i < groups.length; i++) {
+                const group = groups[i];
+                if (!group.values || !group.values.length) continue;
+                if (typeof diceBox.clear === 'function') diceBox.clear();
+                await diceBox.updateConfig({ themeColor: group.color || '#d4202f' });
+                const notation = `${group.values.length}d6@${group.values.join(',')}`;
+                await rollDiceSafe(diceBox, notation, 8000);
+                await new Promise(resolve => setTimeout(resolve, i === groups.length - 1 ? 700 : 450));
+            }
         } catch (e) {
             // decorativo apenas; ignora falhas silenciosamente
         } finally {
@@ -2478,13 +2485,17 @@
         }
 
         // Coleta os valores já decididos acima apenas para tocar a animação de dado (decorativa, não afeta o resultado real).
-        const initialPlacementValues = [];
+        // Um grupo por bot (na cor do carro do bot) + um grupo para o SDBR + um grupo para o SDFF.
+        const rollGroups = [];
         bots.forEach(bot => {
-            initialPlacementValues.push(bot.initialPlacement.S.space, bot.initialPlacement.M.space, bot.initialPlacement.L.space);
+            rollGroups.push({
+                color: bot.color ? bot.color.hex : null,
+                values: [bot.initialPlacement.S.space, bot.initialPlacement.M.space, bot.initialPlacement.L.space]
+            });
         });
-        if (sdbr) initialPlacementValues.push(sdbr.initialPlacement.space);
-        if (sdff) SDFF_BIKE_MARK_KEYS.forEach(mk => initialPlacementValues.push(sdff.initialPlacement[SDFF_MARKS[mk].sym].space));
-        await playInitialPlacementRollAnimation(initialPlacementValues);
+        if (sdbr) rollGroups.push({ color: '#d4202f', values: [sdbr.initialPlacement.space] });
+        if (sdff) rollGroups.push({ color: '#d4202f', values: SDFF_BIKE_MARK_KEYS.map(mk => sdff.initialPlacement[SDFF_MARKS[mk].sym].space) });
+        await playInitialPlacementRollAnimation(rollGroups);
 
         document.getElementById('view-setup').classList.add('hidden');
         document.getElementById('view-game').classList.remove('hidden');
