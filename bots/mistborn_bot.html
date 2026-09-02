@@ -499,6 +499,27 @@
             padding: 14px;
             border: 1px solid var(--border-card);
         }
+        .dom-steps-wrap {
+            position: relative;
+        }
+        .dom-steps-wrap::before,
+        .dom-steps-wrap::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            bottom: 6px;
+            width: 22px;
+            pointer-events: none;
+            z-index: 2;
+        }
+        .dom-steps-wrap::before {
+            left: 0;
+            background: linear-gradient(to right, var(--bg-surface-2), transparent);
+        }
+        .dom-steps-wrap::after {
+            right: 0;
+            background: linear-gradient(to left, var(--bg-surface-2), transparent);
+        }
         .dom-steps {
             display: flex;
             gap: 8px;
@@ -1051,15 +1072,20 @@
 
             <!-- Dominance Track Indicator -->
             <div class="dom-track-container">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                    <span style="font-weight:700; font-size:0.85rem; text-transform:uppercase;" data-i18n="label_dominance">Trilha de Dominância</span>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; gap:8px; flex-wrap:wrap;">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="font-weight:700; font-size:0.85rem; text-transform:uppercase;" data-i18n="label_dominance">Trilha de Dominância</span>
+                        <span class="hero-badge" id="domXBadge" title="X = nível de dominância atual (usado em efeitos das cartas físicas)">X = 1</span>
+                    </div>
                     <div style="display:flex; gap:6px;">
                         <button class="btn-sm" onclick="stepDominance(-1)">◀</button>
                         <button class="btn-sm btn-primary" onclick="stepDominance(1)">▶ <span data-i18n="btn_dom_advance">Avançar</span></button>
                     </div>
                 </div>
-                <div class="dom-steps" id="domStepsRow">
-                    <!-- Populated by JS -->
+                <div class="dom-steps-wrap">
+                    <div class="dom-steps" id="domStepsRow">
+                        <!-- Populated by JS -->
+                    </div>
                 </div>
                 <div class="dom-active-banner" id="domActiveBanner">
                     <!-- Text of current dominance effect -->
@@ -1413,8 +1439,8 @@ let diceBoxInstance = null;
 // Lord Ruler's 6 generic difficulty Dominance tracks (front+back merged into one
 // continuous track each, per official Print & Play difficulty cards). Step 0 is
 // always the first printed effect (some tracks, like Extreme, start above "no
-// effect"); "X=" labels printed on the physical cards are a separate escalation
-// counter used only by other mechanics and are intentionally not modeled here.
+// effect"). "X=" (the escalation counter printed on physical cards) is derived
+// from gameState.domIndex + 1 and shown live in the #domXBadge UI element.
 const LORD_RULER_TRACKS = {
     intro: [
         { effect: { pt: 'Nenhum efeito.', en: 'No effect.' } },
@@ -2166,11 +2192,15 @@ function renderDominanceTrack(v) {
             <div class="dom-step-title">${s.label || idx}</div>
         </div>
     `).join('');
+    const activeEl = row.querySelector('.dom-step.active');
+    if (activeEl) activeEl.scrollIntoView({ behavior: 'auto', inline: 'center', block: 'nearest' });
 
     const activeStep = v.domSteps[gameState.domIndex] || v.domSteps[0];
     const effectText = typeof activeStep.effect === 'object' ? (activeStep.effect[currentLang] || activeStep.effect.pt) : activeStep.effect;
     const titleDom = currentLang === 'pt' ? 'Dominância Atual' : 'Current Dominance';
     document.getElementById('domActiveBanner').innerHTML = `<strong>${titleDom} (${activeStep.label || gameState.domIndex}):</strong> ${effectText}`;
+    // X = dominance level printed on the physical cards, used by escalating-effect text (e.g. Cett's Assassination table)
+    document.getElementById('domXBadge').textContent = `X = ${gameState.domIndex + 1}`;
 }
 
 function stepDominance(delta) {
