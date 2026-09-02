@@ -608,7 +608,6 @@
         }
         .mini-cell-gate { border-color: #7c5cff; border-width: 2px; }
         .mini-cell-reward { border-color: #4caf50; }
-        .mini-cell-hazard { border-color: var(--danger); }
         .mini-cell-end { border-color: gold; border-width: 2px; }
         .mini-marker {
             position: absolute;
@@ -2361,6 +2360,7 @@ function stepDominance(delta) {
         ? `📈 O poder do vilão cresce: Dominância avança para <strong>${stepLabel}</strong>: ${eff}`
         : `📈 The villain's power grows: Dominance advances to <strong>${stepLabel}</strong>: ${eff}`;
     addLog(msg, 'danger');
+    showToast(msg, 'danger');
     playSound('hit');
 }
 
@@ -2373,6 +2373,7 @@ function setDominance(idx) {
         ? `📍 Dominância recalibrada para <strong>${stepLabel}</strong>.`
         : `📍 Dominance recalibrated to <strong>${stepLabel}</strong>.`;
     addLog(msg);
+    showToast(msg);
 }
 
 function adjustGauge(type, delta) {
@@ -2713,18 +2714,26 @@ function applyKolossEdictHeal() {
 // --- Ruin's "End of Ruin" 33-spot (0-32) race track: Ruin's black cube (edict-driven, ignores gates)
 // races a player-moved character cube (moved via normal mission actions, blocked by gates at 0/11/22
 // until 1/2/3 missions are completed) toward spot 32. Whoever gets there first wins/loses the game.
-// Reward spots (3,7,14,18,23,26,30) and hazard spots (multiples of 4) trigger for EITHER cube, per the
-// physical card ("Ruin also earns rewards when it reaches its icon").
+// All reward spots (3,7,14,18,23,26,30 plus every multiple of 4) trigger for EITHER cube, per the
+// physical card ("Ruin also earns rewards when it reaches its icon"). Multiples of 4 grant a one-time
+// +4 damage bonus against Ruin/adversaries — they are NOT a hazard that damages the active player.
 const RUIN_TRACK_EFFECTS = {
     3: { pt: 'Jogadores ganham 3 boxings (apenas o jogador que contribuiu para a missão neste turno).', en: 'Players gain 3 boxings (only the player who actually contributed to the mission this turn).' },
+    4: { pt: '1 jogador adiciona +4 ao dano contra a Ruína/adversários (uso único).', en: '1 player adds +4 to damage against Ruin/adversaries (one-time use).' },
     7: { pt: '1 jogador adiciona 4 ao dano (uso único).', en: '1 player adds 4 to damage (one-time use).' },
+    8: { pt: '1 jogador adiciona +4 ao dano contra a Ruína/adversários (uso único).', en: '1 player adds +4 to damage against Ruin/adversaries (one-time use).' },
+    12: { pt: '1 jogador adiciona +4 ao dano contra a Ruína/adversários (uso único).', en: '1 player adds +4 to damage against Ruin/adversaries (one-time use).' },
     14: { pt: '1 jogador pode desqueimar (unflare) 3 metais.', en: '1 player may unflare 3 metals.' },
+    16: { pt: '1 jogador adiciona +4 ao dano contra a Ruína/adversários (uso único).', en: '1 player adds +4 to damage against Ruin/adversaries (one-time use).' },
     18: { pt: '1 jogador adiciona +2 níveis de treinamento.', en: '1 player adds +2 training levels.' },
+    20: { pt: '1 jogador adiciona +4 ao dano contra a Ruína/adversários (uso único).', en: '1 player adds +4 to damage against Ruin/adversaries (one-time use).' },
     23: { pt: '1 jogador cura 6.', en: '1 player heals 6.' },
+    24: { pt: '1 jogador adiciona +4 ao dano contra a Ruína/adversários (uso único).', en: '1 player adds +4 to damage against Ruin/adversaries (one-time use).' },
     26: { pt: '1 jogador ganha +1 Atium.', en: '1 player gains +1 Atium.' },
-    30: { pt: '1 jogador compra 3 cartas.', en: '1 player draws 3 cards.' }
+    28: { pt: '1 jogador adiciona +4 ao dano contra a Ruína/adversários (uso único).', en: '1 player adds +4 to damage against Ruin/adversaries (one-time use).' },
+    30: { pt: '1 jogador compra 3 cartas.', en: '1 player draws 3 cards.' },
+    32: { pt: '1 jogador adiciona +4 ao dano contra a Ruína/adversários (uso único).', en: '1 player adds +4 to damage against Ruin/adversaries (one-time use).' }
 };
-const RUIN_HAZARD_SPOTS = [4, 8, 12, 16, 20, 24, 28, 32];
 const RUIN_GATE_SPOTS = { 0: 1, 11: 2, 22: 3 }; // spot -> missions completed required to move PAST it
 
 function applyRuinEdictMove() {
@@ -2742,40 +2751,16 @@ function applyRuinEdictMove() {
     renderVillainMechanics();
 }
 
-// Fires reward/hazard spots crossed between oldPos (exclusive) and newPos (inclusive), for either cube.
+// Fires reward spots crossed between oldPos (exclusive) and newPos (inclusive), for either cube.
 function checkRuinSpotEffects(oldPos, newPos, who) {
     for (let s = oldPos + 1; s <= newPos; s++) {
         if (RUIN_TRACK_EFFECTS[s]) {
             const eff = RUIN_TRACK_EFFECTS[s][currentLang] || RUIN_TRACK_EFFECTS[s].pt;
-            addLog(`🎯 ${who} ${currentLang === 'pt' ? 'alcança o espaço' : 'reaches spot'} <strong>${s}</strong>: ${eff}`, 'accent');
-        }
-        if (RUIN_HAZARD_SPOTS.includes(s)) {
-            rollRuinHazard(s, who);
+            const msg = `🎯 ${who} ${currentLang === 'pt' ? 'alcança o espaço' : 'reaches spot'} <strong>${s}</strong>: ${eff}`;
+            addLog(msg, 'accent');
+            showToast(msg);
         }
     }
-}
-
-// Hazard spots: roll 2d6 three times (escalating tiers 1/2/3 Basic or 3/4/5 Advanced); each individual
-// die (not the pair as a whole) showing 1 or 2 deals that round's damage tier to the active player.
-function rollRuinHazard(spot, who) {
-    const tiers = gameState.villainMode === 'advanced' ? [3, 4, 5] : [1, 2, 3];
-    let total = 0;
-    const parts = [];
-    for (let round = 0; round < 3; round++) {
-        const d1 = Math.floor(Math.random() * 6) + 1;
-        const d2 = Math.floor(Math.random() * 6) + 1;
-        let roundDmg = 0;
-        if (d1 <= 2) roundDmg += tiers[round];
-        if (d2 <= 2) roundDmg += tiers[round];
-        total += roundDmg;
-        parts.push(`(${d1},${d2})→${roundDmg}`);
-    }
-    const msg = currentLang === 'pt'
-        ? `☠️ Perigo em ${spot} (${who}): rola 2d6 x3 ${parts.join(' ')} = <strong>${total}</strong> de dano ao jogador ativo.`
-        : `☠️ Hazard at ${spot} (${who}): rolls 2d6 x3 ${parts.join(' ')} = <strong>${total}</strong> damage to the active player.`;
-    addLog(msg, 'danger');
-    showToast(msg, 'danger');
-    playSound('hit');
 }
 
 // The player's character cube: moved manually via normal mission actions (1 space per action). Ruin's
@@ -2818,7 +2803,6 @@ function renderRuinTrackHtml() {
         const classes = ['mini-cell'];
         if (RUIN_GATE_SPOTS[i] !== undefined) classes.push('mini-cell-gate');
         if (RUIN_TRACK_EFFECTS[i]) classes.push('mini-cell-reward');
-        if (RUIN_HAZARD_SPOTS.includes(i)) classes.push('mini-cell-hazard');
         if (i === 32) classes.push('mini-cell-end');
         let markers = '';
         if (i === ruinPos) markers += '<span class="mini-marker mini-marker-ruin">☠</span>';
