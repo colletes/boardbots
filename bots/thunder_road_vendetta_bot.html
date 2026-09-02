@@ -2388,28 +2388,37 @@
 
     let diceBox = null;
     let diceBoxReady = false;
+    let diceBoxInitPromise = null;
 
-    async function initDiceBox() {
-        try {
-            const { loadDiceBox } = await import('../assets/dice-roller.js');
-            diceBox = await loadDiceBox({ theme: 'rust', themeColor: '#d4202f', scale: 27, timeoutMs: 8000 });
-            diceBoxReady = true;
-            const tray = document.getElementById('dice-tray');
-            if (tray) tray.classList.add('has-3d');
-        } catch (e) {
-            diceBoxReady = false;
-        }
+    // Init é adiado até a hora do roll: o tray fica dentro do overlay (display:none até então),
+    // e o dice-box cria seu canvas WebGL com as dimensões do container NO MOMENTO do load — se
+    // o container estiver oculto (0x0) nesse instante, os dados nunca aparecem visualmente depois.
+    function initDiceBox() {
+        if (diceBoxInitPromise) return diceBoxInitPromise;
+        diceBoxInitPromise = (async () => {
+            try {
+                const { loadDiceBox } = await import('../assets/dice-roller.js');
+                diceBox = await loadDiceBox({ theme: 'rust', themeColor: '#d4202f', scale: 27, timeoutMs: 8000 });
+                diceBoxReady = true;
+                const tray = document.getElementById('dice-tray');
+                if (tray) tray.classList.add('has-3d');
+            } catch (e) {
+                diceBoxReady = false;
+            }
+        })();
+        return diceBoxInitPromise;
     }
-    initDiceBox();
 
     // Puramente decorativo: os valores já foram decididos (Math.random) antes desta chamada.
     // A animação apenas visualiza esses valores já fixados via a notação de resultado forçado do dice-box ('NdN@v1,v2,...').
     // Nunca bloqueia o início do jogo: qualquer falha/timeout apenas pula a animação silenciosamente.
     async function playInitialPlacementRollAnimation(values) {
-        if (!diceBoxReady || !diceBox || !values || !values.length) return;
+        if (!values || !values.length) return;
         const overlay = document.getElementById('dice-intro-overlay');
         try {
             if (overlay) overlay.classList.remove('hidden');
+            await initDiceBox();
+            if (!diceBoxReady || !diceBox) return;
             const { rollDiceSafe } = await import('../assets/dice-roller.js');
             const notation = `${values.length}d6@${values.join(',')}`;
             await rollDiceSafe(diceBox, notation, 8000);
