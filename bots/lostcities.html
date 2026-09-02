@@ -1465,7 +1465,11 @@ function tryPlayCard(color, val) {
     }
   } else {
     if (val === 'H') {
-      if (col.length === 0 || (col.length > 0 && col[col.length-1] === 'H' && col.length < 3)) {
+      if (col.length === 0) {
+        if (activeColumnCount() >= FOCUS_CAP) return null; // stay focused instead of spreading across every color
+        col.push('H');
+        return "PLAY";
+      } else if (col[col.length-1] === 'H' && col.length < 3) {
         col.push('H');
         return "PLAY";
       }
@@ -1483,6 +1487,8 @@ function tryPlayCard(color, val) {
           COLORS.forEach(c => totalCards += expeditions[c].length);
           if (totalCards >= 15) {
             return null; // Late game, don't start new expeditions
+          } else if (col.length === 0 && activeColumnCount() >= FOCUS_CAP) {
+            return null; // stay focused instead of spreading across every color
           } else if (val > 5) {
             // Too high to start: ascending-only play means a high starter forfeits
             // every lower card of this color for the rest of the round (Easy has no
@@ -1539,6 +1545,9 @@ function isPermanentlyDead(color, val) {
     if (difficulty === 'gods') return col.filter(x => x === 'H').length >= 3;
     const hasNumbers = col.some(v => v !== 'H');
     if (hasNumbers) return true; // wagers must precede all numbers; numbers are never removed
+    // Active column count never decreases mid-round, so once the focus cap is reached
+    // a still-untouched color can never open again this round either.
+    if (col.length === 0 && activeColumnCount() >= FOCUS_CAP) return true;
     return col.filter(x => x === 'H').length >= 3; // max 3 wagers; count never decreases
   }
 
@@ -1552,7 +1561,10 @@ function isPermanentlyDead(color, val) {
     COLORS.forEach(c => totalCards += expeditions[c].length);
     // totalCards only ever grows, so once the late-game threshold is crossed this
     // still-empty column can never be started by ANY card again this round.
-    return totalCards >= 15;
+    if (totalCards >= 15) return true;
+    // Same logic for the focus cap: active column count never decreases mid-round.
+    if (col.length === 0 && activeColumnCount() >= FOCUS_CAP) return true;
+    return false;
   }
 
   // Easy mode has no replace/insert mechanism at all, so its expedition's top value
@@ -1668,6 +1680,14 @@ function getReserveCap() {
   if (difficulty === 'medium') return 4;
   if (difficulty === 'hard' || difficulty === 'gods') return 6;
   return 2;
+}
+
+// Classic Lost Cities strategy: commit to a handful of expeditions instead of spreading
+// across all 5 colors, since each unbuilt column risks never reaching its 20-point
+// break-even. Gods mode ignores this (it cheats and sorts everything perfectly anyway).
+const FOCUS_CAP = 3;
+function activeColumnCount() {
+  return COLORS.filter(c => expeditions[c].length > 0).length;
 }
 
 function processCard() {
