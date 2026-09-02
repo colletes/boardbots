@@ -1477,7 +1477,8 @@ function tryPlayCard(color, val) {
     } else {
       const numbers = col.filter(v => v !== 'H');
       const highest = numbers.length > 0 ? numbers[numbers.length - 1] : 0;
-      const secondHighest = numbers.length > 1 ? numbers[numbers.length - 2] : 0;
+      // A wager sitting below the lone number counts as an implicit '1' for replace math.
+      const secondHighest = numbers.length > 1 ? numbers[numbers.length - 2] : (numbers.length === 1 && col[0] === 'H' ? 1 : 0);
       
       if (val > highest) {
         // Use "no numbers yet" (not "no cards yet") so pre-placed wagers can't bypass
@@ -1584,7 +1585,8 @@ function isPermanentlyDead(color, val) {
   if (difficulty === 'medium' || difficulty === 'hard') {
     const highest = numbers[numbers.length - 1];
     if (val <= highest) {
-      const secondHighest = numbers.length > 1 ? numbers[numbers.length - 2] : 0;
+      // A wager sitting below the lone number counts as an implicit '1' for replace math.
+      const secondHighest = numbers.length > 1 ? numbers[numbers.length - 2] : (numbers.length === 1 && col[0] === 'H' ? 1 : 0);
       if (highest - secondHighest <= 1) {
         const addEscape = difficulty === 'hard' && val === highest - 2 && !numbers.includes(val);
         if (!addEscape) return true;
