@@ -313,15 +313,17 @@
             box-shadow: 0 0 18px var(--atium-glow);
         }
         .select-card img {
-            width: 62px;
-            height: 62px;
+            width: 60px;
+            height: 92px;
             border-radius: var(--radius-sm);
-            object-fit: cover;
+            object-fit: contain;
+            background: var(--bg-surface);
             border: 1px solid var(--border-card);
             transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s ease;
             position: relative;
             z-index: 2;
             transform-origin: left center;
+            flex-shrink: 0;
         }
         .select-card img:hover {
             transform: scale(3.2);
@@ -826,6 +828,15 @@
                 <!-- Populated via JS -->
             </div>
 
+            <!-- Basic/Advanced Mode Toggle (all villains except Lord Ruler) -->
+            <div id="boxVillainMode" style="margin-top:16px; max-width:420px;">
+                <label data-i18n="label_villain_mode">Modo do Vilão</label>
+                <div style="display:flex; gap:8px;">
+                    <button type="button" class="btn-sm" id="btnModeBasic" onclick="setVillainMode('basic')" data-i18n="mode_basic">Básico</button>
+                    <button type="button" class="btn-sm" id="btnModeAdvanced" onclick="setVillainMode('advanced')" data-i18n="mode_advanced">Avançado</button>
+                </div>
+            </div>
+
             <!-- Physical Setup Checklist -->
             <details style="margin-top:24px;">
                 <summary><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 2h6a1 1 0 011 1v2H8V3a1 1 0 011-1z"/><rect x="5" y="5" width="14" height="16" rx="1"/><path d="M9 12h6M9 16h6"/></svg> <span data-i18n="setup_checklist_title">Checklist de Preparação na Mesa</span></summary>
@@ -1153,7 +1164,7 @@
                         <li><strong>Lord Ruler:</strong> segue o rulebook <em>oficial</em> (não usa as regras do card fanmade "RULES Lord Ruler" da expansão Solo/Co-op). Configuração oficial: ajuste o dial de vida do Lord Ruler para 48 e escolha a dificuldade da trilha de Dominância (Intro / Standard A-B / Hard A-B / Extreme) no aplicativo.</li>
                         <li><strong>Steel Ministry</strong> (Vilão de Exército): 48 de vida (Básico) / 56 (Avançado). Use a carta "War Front Lines": 4 missões aleatórias em vez de 3, cada uma com uma Manobra Tática; ao completar uma missão, o exército avança causando 10 de dano à cidade refém de Tathingdwen, além de acionar a manobra tática.</li>
                         <li><strong>Jastes Lekal:</strong> não possui vida de combate padrão — vitória é comprar todas as cartas do Baralho de Moedas Falsas. Configuração: embaralhe as 2 cartas de mercado mais caras viradas para cima no card de Esquema de Moedas Falsas (Básico) ou as 2 mais caras + 2 mais baratas (Avançado); cubo preto começa na casa "Start".</li>
-                        <li><strong>Ashweather Cett:</strong> vida inicial 8 (Básico) / 10 (Avançado) — muda conforme a Trilha de Assassinato avança (veja os números na própria carta do vilão). Básico = "Não é Mistborn" (o vilão age a cada 2 turnos de jogador, use só 2 cartas de missão). Avançado adiciona 2 adversários aleatórios em jogo, posiciona o dado de assassinato na 3ª posição a partir de baixo, e cada Retaliação causa +5 de dano a todos.</li>
+                        <li><strong>Ashweather Cett:</strong> vida inicial 8 (Básico) / 10 (Avançado) — muda conforme a Trilha de Assassinato avança (veja os números na própria carta do vilão). Básico = "Não é Mistborn" (o vilão age a cada 2 turnos de jogador, use só 2 cartas de missão). Avançado adiciona 1 adversário aleatório em jogo, posiciona o dado de assassinato na 3ª posição a partir de baixo, e cada Retaliação causa +5 de dano a todos.</li>
                         <li><strong>Ruin:</strong> vida 10 (Básico) / 12 (Avançado). Vire a carta de Ruin como uma 4ª missão. Cubo preto de Ruína começa no canto inferior esquerdo da trilha de missão e avança a cada Édito comprado — se Ruína chegar ao fim antes dos jogadores, é derrota.</li>
                         <li><strong>Zane Venture:</strong> vida 16 / Defesa inicial 2 (Básico) ou vida 22 / Defesa inicial 4 (Avançado). Use 6 missões aleatórias (em vez de 3); role o dado para posicionar Zane em uma missão — só é possível atacá-lo avançando na missão onde ele está.</li>
                         <li><strong>Straff Venture:</strong> vida = 8 + 1d6 (Básico) ou 12 + 1d6 (Avançado) — role o dado fisicamente na configuração. Vire a carta de regras atrás da carta de Dominância; role o dado duas vezes para definir os limites das pilhas de Adversário Morto e Édito Jogado.</li>
@@ -1289,6 +1300,9 @@ const I18N = {
         opt_p3: "3 Jogadores (Co-op)",
         opt_p4: "4 Jogadores (Co-op)",
         label_select_villain: "Selecione o Vilão (Inimigo)",
+        label_villain_mode: "Modo do Vilão",
+        mode_basic: "Básico",
+        mode_advanced: "Avançado",
         setup_checklist_title: "Checklist de Preparação na Mesa",
         check_1: "Coloque as cartas de Missão na mesa conforme o manual.",
         check_2: "Embaralhe o Baralho do Mercado e abra 5 cartas.",
@@ -1315,7 +1329,7 @@ const I18N = {
         help_sec_dom_title: "Regras de Dominância (!)",
         help_sec_dom_html: "<p>Ao avançar a trilha de Dominância, execute <strong>apenas</strong> a seção onde você parou. A exceção são seções com ponto de exclamação (<strong>!</strong>): essas sempre devem ser executadas mesmo se você passar direto por elas!</p>",
         help_sec_setup_title: "Configuração Física & do Bot",
-        help_sec_setup_html: "<p><strong>Materiais gerais:</strong> 1 dado de 6 lados e 7 cubos por jogador/personagem, além do material padrão do jogo base (missões, mercado, baralhos de personagem). Consulte o manual do Mistborn para a montagem padrão.</p><p><strong>Ordem do turno (Solo/Co-op):</strong></p><ul><li><strong>Turno do Jogador:</strong> avance 1 espaço no treinamento → em qualquer ordem: pague cartas, queime/acenda metais, use carta como metal, descarte para reacender, ative habilidades, avance em missões, compre cartas/boxings → ataque adversários e o vilão → resolva efeitos de fim de turno dos adversários (esq. à dir.) → descarte cartas em jogo e na mão → compre 5 cartas novas (embaralhe se o baralho acabar).</li><li><strong>Turno do Vilão:</strong> compre a carta do topo do baralho do vilão → se for Adversário, coloque em campo (mais antigo à esquerda, mais novo à direita) → se for Édito, execute o efeito (cada vilão é diferente) e avance a trilha de Dominância.</li></ul><p><strong>Regras atualizadas:</strong> Matar Aliado — em vez de perder um aliado, você pode optar por cobrir 1 escudo de um adversário. Cura — ao curar, distribua livremente entre qualquer jogador. Cartas de Édito 'O Lord Ruler cura' são substituídas pelo efeito próprio de cada vilão (exceto o próprio Lord Ruler).</p><p><strong>Configuração por vilão (Básico / Avançado):</strong></p><ul><li><strong>Lord Ruler:</strong> segue o rulebook <em>oficial</em> (não usa as regras do card fanmade 'RULES Lord Ruler' da expansão Solo/Co-op). Configuração oficial: ajuste o dial de vida do Lord Ruler para 48 e escolha a dificuldade da trilha de Dominância (Intro / Standard A-B / Hard A-B / Extreme) no aplicativo.</li><li><strong>Steel Ministry</strong> (Vilão de Exército): 48 de vida (Básico) / 56 (Avançado). Use a carta 'War Front Lines': 4 missões aleatórias em vez de 3, cada uma com uma Manobra Tática; ao completar uma missão, o exército avança causando 10 de dano à cidade refém de Tathingdwen, além de acionar a manobra tática.</li><li><strong>Jastes Lekal:</strong> não possui vida de combate padrão — vitória é comprar todas as cartas do Baralho de Moedas Falsas. Configuração: embaralhe as 2 cartas de mercado mais caras viradas para cima no card de Esquema de Moedas Falsas (Básico) ou as 2 mais caras + 2 mais baratas (Avançado); cubo preto começa na casa 'Start'.</li><li><strong>Ashweather Cett:</strong> vida inicial 8 (Básico) / 10 (Avançado) — muda conforme a Trilha de Assassinato avança (veja os números na própria carta do vilão). Básico = 'Não é Mistborn' (o vilão age a cada 2 turnos de jogador, use só 2 cartas de missão). Avançado adiciona 2 adversários aleatórios em jogo, posiciona o dado de assassinato na 3ª posição a partir de baixo, e cada Retaliação causa +5 de dano a todos.</li><li><strong>Ruin:</strong> vida 10 (Básico) / 12 (Avançado). Vire a carta de Ruin como uma 4ª missão. Cubo preto de Ruína começa no canto inferior esquerdo da trilha de missão e avança a cada Édito comprado — se Ruína chegar ao fim antes dos jogadores, é derrota.</li><li><strong>Zane Venture:</strong> vida 16 / Defesa inicial 2 (Básico) ou vida 22 / Defesa inicial 4 (Avançado). Use 6 missões aleatórias (em vez de 3); role o dado para posicionar Zane em uma missão — só é possível atacá-lo avançando na missão onde ele está.</li><li><strong>Straff Venture:</strong> vida = 8 + 1d6 (Básico) ou 12 + 1d6 (Avançado) — role o dado fisicamente na configuração. Vire a carta de regras atrás da carta de Dominância; role o dado duas vezes para definir os limites das pilhas de Adversário Morto e Édito Jogado.</li><li><strong>Koloss</strong> (Vilão de Exército): escudo 12 (Básico) / 20 (Avançado), mas a 'Vida de Vitória' total é 70 — Koloss pode curar além da vida inicial, então acompanhe o dano total acumulado, não só o escudo atual. Usa 'War Front Lines' como o Steel Ministry, mas o Avanço do Exército causa dano ao próprio Koloss, não a uma cidade.</li></ul>",
+        help_sec_setup_html: "<p><strong>Materiais gerais:</strong> 1 dado de 6 lados e 7 cubos por jogador/personagem, além do material padrão do jogo base (missões, mercado, baralhos de personagem). Consulte o manual do Mistborn para a montagem padrão.</p><p><strong>Ordem do turno (Solo/Co-op):</strong></p><ul><li><strong>Turno do Jogador:</strong> avance 1 espaço no treinamento → em qualquer ordem: pague cartas, queime/acenda metais, use carta como metal, descarte para reacender, ative habilidades, avance em missões, compre cartas/boxings → ataque adversários e o vilão → resolva efeitos de fim de turno dos adversários (esq. à dir.) → descarte cartas em jogo e na mão → compre 5 cartas novas (embaralhe se o baralho acabar).</li><li><strong>Turno do Vilão:</strong> compre a carta do topo do baralho do vilão → se for Adversário, coloque em campo (mais antigo à esquerda, mais novo à direita) → se for Édito, execute o efeito (cada vilão é diferente) e avance a trilha de Dominância.</li></ul><p><strong>Regras atualizadas:</strong> Matar Aliado — em vez de perder um aliado, você pode optar por cobrir 1 escudo de um adversário. Cura — ao curar, distribua livremente entre qualquer jogador. Cartas de Édito 'O Lord Ruler cura' são substituídas pelo efeito próprio de cada vilão (exceto o próprio Lord Ruler).</p><p><strong>Configuração por vilão (Básico / Avançado):</strong></p><ul><li><strong>Lord Ruler:</strong> segue o rulebook <em>oficial</em> (não usa as regras do card fanmade 'RULES Lord Ruler' da expansão Solo/Co-op). Configuração oficial: ajuste o dial de vida do Lord Ruler para 48 e escolha a dificuldade da trilha de Dominância (Intro / Standard A-B / Hard A-B / Extreme) no aplicativo.</li><li><strong>Steel Ministry</strong> (Vilão de Exército): 48 de vida (Básico) / 56 (Avançado). Use a carta 'War Front Lines': 4 missões aleatórias em vez de 3, cada uma com uma Manobra Tática; ao completar uma missão, o exército avança causando 10 de dano à cidade refém de Tathingdwen, além de acionar a manobra tática.</li><li><strong>Jastes Lekal:</strong> não possui vida de combate padrão — vitória é comprar todas as cartas do Baralho de Moedas Falsas. Configuração: embaralhe as 2 cartas de mercado mais caras viradas para cima no card de Esquema de Moedas Falsas (Básico) ou as 2 mais caras + 2 mais baratas (Avançado); cubo preto começa na casa 'Start'.</li><li><strong>Ashweather Cett:</strong> vida inicial 8 (Básico) / 10 (Avançado) — muda conforme a Trilha de Assassinato avança (veja os números na própria carta do vilão). Básico = 'Não é Mistborn' (o vilão age a cada 2 turnos de jogador, use só 2 cartas de missão). Avançado adiciona 1 adversário aleatório em jogo, posiciona o dado de assassinato na 3ª posição a partir de baixo, e cada Retaliação causa +5 de dano a todos.</li><li><strong>Ruin:</strong> vida 10 (Básico) / 12 (Avançado). Vire a carta de Ruin como uma 4ª missão. Cubo preto de Ruína começa no canto inferior esquerdo da trilha de missão e avança a cada Édito comprado — se Ruína chegar ao fim antes dos jogadores, é derrota.</li><li><strong>Zane Venture:</strong> vida 16 / Defesa inicial 2 (Básico) ou vida 22 / Defesa inicial 4 (Avançado). Use 6 missões aleatórias (em vez de 3); role o dado para posicionar Zane em uma missão — só é possível atacá-lo avançando na missão onde ele está.</li><li><strong>Straff Venture:</strong> vida = 8 + 1d6 (Básico) ou 12 + 1d6 (Avançado) — role o dado fisicamente na configuração. Vire a carta de regras atrás da carta de Dominância; role o dado duas vezes para definir os limites das pilhas de Adversário Morto e Édito Jogado.</li><li><strong>Koloss</strong> (Vilão de Exército): escudo 12 (Básico) / 20 (Avançado), mas a 'Vida de Vitória' total é 70 — Koloss pode curar além da vida inicial, então acompanhe o dano total acumulado, não só o escudo atual. Usa 'War Front Lines' como o Steel Ministry, mas o Avanço do Exército causa dano ao próprio Koloss, não a uma cidade.</li></ul>",
         help_sec_villains_title: "Visão Geral dos 8 Vilões",
         help_sec_villains_html: "<ul><li><strong>Lord Ruler:</strong> O Senhor Soberano clássico.</li><li><strong>Steel Ministry:</strong> Vilão de exército! A cidade de Tathingdwen possui um marcador de 10 de vida. Se a cidade cair, derrota!</li><li><strong>Jastes Lekal:</strong> Moedas falsas! Os jogadores vencem comprando todo o baralho de Moedas Falsas.</li><li><strong>Ashweather Cett:</strong> Múltiplos escudos e trilha de assassinato com dado D6.</li><li><strong>Ruin:</strong> Ruína cósmica! Exige gastar combate para reduzir a trilha de Ruína antes que a névoa engula tudo.</li><li><strong>Zane Venture:</strong> Defesa dinâmica e movimento contínuo entre as 6 cartas de missão com o D6.</li><li><strong>Straff Venture:</strong> Contrata brumas (Mistings) com poderes passivos.</li><li><strong>Koloss:</strong> Força bruta e expurgo contínuo de cartas de Zinco e Latão do mercado.</li></ul>",
         add_adv_title: "Novo Adversário",
@@ -1343,6 +1357,9 @@ const I18N = {
         opt_p3: "3 Players (Co-op)",
         opt_p4: "4 Players (Co-op)",
         label_select_villain: "Select Villain",
+        label_villain_mode: "Villain Mode",
+        mode_basic: "Basic",
+        mode_advanced: "Advanced",
         setup_checklist_title: "Table Setup Checklist",
         check_1: "Place the Mission cards on the table per the rulebook.",
         check_2: "Shuffle Market deck and reveal 5 cards.",
@@ -1369,7 +1386,7 @@ const I18N = {
         help_sec_dom_title: "Dominance Rules (!)",
         help_sec_dom_html: "<p>When advancing the Dominance track, only execute the section where you landed. Sections with exclamation points (<strong>!</strong>) must always be executed even if you move past them!</p>",
         help_sec_setup_title: "Physical & Bot Setup",
-        help_sec_setup_html: "<p><strong>General materials:</strong> 1 six-sided die and 7 cubes per player/character, plus the standard base-game components (missions, market, character decks). See the Mistborn rulebook for the standard setup.</p><p><strong>Turn order (Solo/Co-op):</strong></p><ul><li><strong>Player Turn:</strong> move 1 space on the Training track → in any order: pay cards from hand, burn/flare metals, use a card as a metal, discard to refresh a flared metal, activate abilities, move up on Mission tracks, buy cards/boxings from the market → attack adversaries and the villain → resolve adversary end-of-turn effects (left to right) → discard cards in play and in hand → draw 5 new cards (shuffle if the deck runs out).</li><li><strong>Villain Turn:</strong> draw the top card from the villain deck → if Adversary, play it to the field (oldest on the left, newest on the right) → if Edict, carry it out (each villain does something different) and advance the Dominance track.</li></ul><p><strong>Updated rules:</strong> Kill Ally — instead of losing an ally, you may cover 1 shield on an adversary instead. Healing — when healing, you may split it freely among any players. Edict cards that say 'The Lord Ruler heals' are replaced by each villain's own effect (except the Lord Ruler himself).</p><p><strong>Per-villain setup (Basic / Advanced):</strong></p><ul><li><strong>Lord Ruler:</strong> follows the <em>official</em> rulebook (does not use the fanmade 'RULES Lord Ruler' card from the Solo/Co-op expansion). Official setup: set the Lord Ruler's health dial to 48 and pick the Dominance track difficulty (Intro / Standard A-B / Hard A-B / Extreme) in the app.</li><li><strong>Steel Ministry</strong> (Army villain): 48 HP (Basic) / 56 (Advanced). Use the 'War Front Lines' card: 4 random missions instead of 3, each with a Tactical Maneuver; completing a mission advances the army, dealing 10 damage to the hostage city of Tathingdwen plus triggering the tactical maneuver.</li><li><strong>Jastes Lekal:</strong> has no standard combat HP — win by buying out the entire Fake Coin deck. Setup: shuffle the 2 highest-value market cards face up onto the Fake Coin Scheme card (Basic) or the 2 highest + 2 lowest (Advanced); black cube starts on the 'Start' shield.</li><li><strong>Ashweather Cett:</strong> starting HP 8 (Basic) / 10 (Advanced) — changes as the Assassination Track advances (see the values printed on his own card). Basic = 'Not Mistborn' (he acts every 2 player turns, use only 2 mission cards). Advanced adds 2 random adversaries into play, sets the assassination die to the 3rd slot from the bottom, and each Retaliation deals +5 damage to everyone.</li><li><strong>Ruin:</strong> HP 10 (Basic) / 12 (Advanced). Flip Ruin's card as a 4th mission. Ruin's black cube starts at the bottom-left of the mission track and advances with every Edict drawn — if Ruin reaches the end before the players, it's a loss.</li><li><strong>Zane Venture:</strong> HP 16 / Defense starts at 2 (Basic) or HP 22 / Defense starts at 4 (Advanced). Setup uses 6 random missions (instead of 3); roll the die to place Zane on a mission — he can only be attacked by first moving on the mission where he's located.</li><li><strong>Straff Venture:</strong> HP = 8 + 1d6 (Basic) or 12 + 1d6 (Advanced) — roll physically during setup. Flip his rules card behind the Dominance card; roll the die twice to set the Killed Adversary and Played Edict pile thresholds.</li><li><strong>Koloss</strong> (Army villain): shield 12 (Basic) / 20 (Advanced), but the total 'Win Life' is 70 — Koloss can heal past its starting shield, so track total cumulative damage, not just the current shield. Uses 'War Front Lines' like Steel Ministry, but the Army Advance damages Koloss itself instead of a city.</li></ul>",
+        help_sec_setup_html: "<p><strong>General materials:</strong> 1 six-sided die and 7 cubes per player/character, plus the standard base-game components (missions, market, character decks). See the Mistborn rulebook for the standard setup.</p><p><strong>Turn order (Solo/Co-op):</strong></p><ul><li><strong>Player Turn:</strong> move 1 space on the Training track → in any order: pay cards from hand, burn/flare metals, use a card as a metal, discard to refresh a flared metal, activate abilities, move up on Mission tracks, buy cards/boxings from the market → attack adversaries and the villain → resolve adversary end-of-turn effects (left to right) → discard cards in play and in hand → draw 5 new cards (shuffle if the deck runs out).</li><li><strong>Villain Turn:</strong> draw the top card from the villain deck → if Adversary, play it to the field (oldest on the left, newest on the right) → if Edict, carry it out (each villain does something different) and advance the Dominance track.</li></ul><p><strong>Updated rules:</strong> Kill Ally — instead of losing an ally, you may cover 1 shield on an adversary instead. Healing — when healing, you may split it freely among any players. Edict cards that say 'The Lord Ruler heals' are replaced by each villain's own effect (except the Lord Ruler himself).</p><p><strong>Per-villain setup (Basic / Advanced):</strong></p><ul><li><strong>Lord Ruler:</strong> follows the <em>official</em> rulebook (does not use the fanmade 'RULES Lord Ruler' card from the Solo/Co-op expansion). Official setup: set the Lord Ruler's health dial to 48 and pick the Dominance track difficulty (Intro / Standard A-B / Hard A-B / Extreme) in the app.</li><li><strong>Steel Ministry</strong> (Army villain): 48 HP (Basic) / 56 (Advanced). Use the 'War Front Lines' card: 4 random missions instead of 3, each with a Tactical Maneuver; completing a mission advances the army, dealing 10 damage to the hostage city of Tathingdwen plus triggering the tactical maneuver.</li><li><strong>Jastes Lekal:</strong> has no standard combat HP — win by buying out the entire Fake Coin deck. Setup: shuffle the 2 highest-value market cards face up onto the Fake Coin Scheme card (Basic) or the 2 highest + 2 lowest (Advanced); black cube starts on the 'Start' shield.</li><li><strong>Ashweather Cett:</strong> starting HP 8 (Basic) / 10 (Advanced) — changes as the Assassination Track advances (see the values printed on his own card). Basic = 'Not Mistborn' (he acts every 2 player turns, use only 2 mission cards). Advanced adds 1 random adversary into play, sets the assassination die to the 3rd slot from the bottom, and each Retaliation deals +5 damage to everyone.</li><li><strong>Ruin:</strong> HP 10 (Basic) / 12 (Advanced). Flip Ruin's card as a 4th mission. Ruin's black cube starts at the bottom-left of the mission track and advances with every Edict drawn — if Ruin reaches the end before the players, it's a loss.</li><li><strong>Zane Venture:</strong> HP 16 / Defense starts at 2 (Basic) or HP 22 / Defense starts at 4 (Advanced). Setup uses 6 random missions (instead of 3); roll the die to place Zane on a mission — he can only be attacked by first moving on the mission where he's located.</li><li><strong>Straff Venture:</strong> HP = 8 + 1d6 (Basic) or 12 + 1d6 (Advanced) — roll physically during setup. Flip his rules card behind the Dominance card; roll the die twice to set the Killed Adversary and Played Edict pile thresholds.</li><li><strong>Koloss</strong> (Army villain): shield 12 (Basic) / 20 (Advanced), but the total 'Win Life' is 70 — Koloss can heal past its starting shield, so track total cumulative damage, not just the current shield. Uses 'War Front Lines' like Steel Ministry, but the Army Advance damages Koloss itself instead of a city.</li></ul>",
         help_sec_villains_title: "Overview of the 8 Villains",
         help_sec_villains_html: "<ul><li><strong>Lord Ruler:</strong> The classic Sovereign God.</li><li><strong>Steel Ministry:</strong> Army villain! Tathingdwen City has 10 HP. If the city falls, you lose!</li><li><strong>Jastes Lekal:</strong> Fake coins! Win by buying out the entire Fake Coin deck.</li><li><strong>Ashweather Cett:</strong> Sequential black shields and D6 assassination track.</li><li><strong>Ruin:</strong> Cosmic decay! Spend combat to lower Ruin before the mists consume everything.</li><li><strong>Zane Venture:</strong> Dynamic Defense and mobile roaming across missions with D6.</li><li><strong>Straff Venture:</strong> Hires Mistings with passive powers.</li><li><strong>Koloss:</strong> Brute swarm purging Zinc and Brass from the market.</li></ul>",
         add_adv_title: "New Adversary",
@@ -1525,7 +1542,7 @@ const VILLAINS = [
         id: 'steel_ministry',
         name: 'Steel Ministry',
         title: { pt: 'Vilão de Exército', en: 'Army Villain' },
-        hp: 48,
+        hp: { basic: 48, advanced: 56 },
         cityHp: 10,
         usesDice: false,
         img: '../assets/art/mistborn/villains/steel_ministry.webp',
@@ -1593,7 +1610,7 @@ const VILLAINS = [
         id: 'ashweather_cett',
         name: 'Ashweather Cett',
         title: { pt: 'Senhor da Guerra de Fadrex', en: 'Warlord of Fadrex' },
-        hp: 8,
+        shields: { basic: [6, 8, 5, 10, 9, 4, 3, 7, 11], advanced: [8, 10, 11, 6, 12, 9, 5, 7, 13] },
         usesDice: true,
         dicePurpose: { pt: 'Dado de Assassinato (D6)', en: 'Assassination Die (D6)' },
         extraGauge: { name: { pt: 'Trilha de Retaliação', en: 'Retaliation Track' }, initial: 1 },
@@ -1628,7 +1645,9 @@ const VILLAINS = [
         id: 'ruin',
         name: 'Ruin',
         title: { pt: 'Força Cósmica da Decadência', en: 'Cosmic Force of Decay' },
-        hp: 10,
+        hp: { basic: 10, advanced: 12 },
+        resetDelta: { basic: -3, advanced: -2 },
+        edictBase: { basic: 3, advanced: 4 },
         usesDice: false,
         extraGauge: { name: { pt: 'Escalação da Ruína', en: 'Ruin Escalation' }, initial: 0 },
         img: '../assets/art/mistborn/villains/ruin.webp',
@@ -1662,10 +1681,10 @@ const VILLAINS = [
         id: 'zane_venture',
         name: 'Zane Venture',
         title: { pt: 'Assassino Mortal', en: 'Deadly Assassin' },
-        hp: 16,
+        hp: { basic: 16, advanced: 22 },
         usesDice: true,
         dicePurpose: { pt: 'Movimento de Zane entre as Missões (D6)', en: 'Zane Movement across Missions (D6)' },
-        extraGauge: { name: { pt: 'Defesa de Zane', en: 'Zane Defense' }, initial: 2 },
+        extraGauge: { name: { pt: 'Defesa de Zane', en: 'Zane Defense' }, initial: { basic: 2, advanced: 4 } },
         img: '../assets/art/mistborn/villains/zane_venture.webp',
         desc: {
             pt: 'Zane salta entre as 6 cartas de missão com o D6. É obrigatório avançar na missão onde Zane está!',
@@ -1697,7 +1716,8 @@ const VILLAINS = [
         id: 'straff_venture',
         name: 'Straff Venture',
         title: { pt: 'Lorde de Luthadel', en: 'Lord of Luthadel' },
-        hp: 8,
+        hp: { basic: 8, advanced: 12 },
+        resetDiscard: { basic: 3, advanced: 2 },
         usesDice: false,
         extraGauge: { name: { pt: 'Mistings Contratados', en: 'Hired Mistings' }, initial: 1 },
         img: '../assets/art/mistborn/villains/straff_venture.webp',
@@ -1731,8 +1751,9 @@ const VILLAINS = [
         id: 'koloss',
         name: 'Koloss Horde',
         title: { pt: 'Horda Brutal', en: 'Brute Swarm' },
-        hp: 12,
+        hp: { basic: 12, advanced: 20 },
         usesDice: false,
+        extraGauge: { name: { pt: 'Vida de Vitória (Kolass)', en: 'Win Life (Kolass Army)' }, initial: 70 },
         img: '../assets/art/mistborn/villains/koloss.webp',
         desc: {
             pt: 'Horda implacável! Expurga cartas de Zinco e Latão do mercado.',
@@ -1765,14 +1786,28 @@ const VILLAINS = [
 let gameState = {
     selectedVillain: 'lord_ruler',
     playerCount: 1,
+    villainMode: 'advanced',
     villainHp: 48,
     cityHp: 10,
     extraGauge: 0,
     domIndex: 0,
     missionsCompleted: 0,
+    cettShields: [],
+    warFrontLines: [false, false, false, false],
+    warFrontLinesFinal: false,
     adversaries: [],
     logs: []
 };
+
+// Resolves a villain's HP for the currently selected Basic/Advanced mode.
+// Ashweather Cett has no flat HP — his life is the sum of his current shield sequence.
+function getVillainHp(v) {
+    if (v.shields) {
+        const arr = (gameState.cettShields && gameState.cettShields.length) ? gameState.cettShields : v.shields[gameState.villainMode];
+        return arr.reduce((a, b) => a + b, 0);
+    }
+    return (typeof v.hp === 'object') ? v.hp[gameState.villainMode] : v.hp;
+}
 
 function playSound(type) {
     if (!soundEnabled) return;
@@ -1889,6 +1924,7 @@ function setupEventListeners() {
 }
 
 function renderSetupSelectors() {
+    updateVillainModeUI();
     const vGrid = document.getElementById('villainGrid');
     vGrid.innerHTML = VILLAINS.map(v => {
         const descText = typeof v.desc === 'object' ? (v.desc[currentLang] || v.desc.pt) : v.desc;
@@ -1911,6 +1947,24 @@ function selectVillain(id) {
     playSound('flare');
 }
 
+// Basic/Advanced mode: Lord Ruler has no such distinction (follows the official rulebook instead),
+// so the toggle only makes sense for the other 7 villains.
+function updateVillainModeUI() {
+    const box = document.getElementById('boxVillainMode');
+    if (!box) return;
+    box.classList.toggle('hidden', gameState.selectedVillain === 'lord_ruler');
+    const btnBasic = document.getElementById('btnModeBasic');
+    const btnAdvanced = document.getElementById('btnModeAdvanced');
+    if (btnBasic) btnBasic.classList.toggle('btn-primary', gameState.villainMode === 'basic');
+    if (btnAdvanced) btnAdvanced.classList.toggle('btn-primary', gameState.villainMode === 'advanced');
+}
+
+function setVillainMode(mode) {
+    gameState.villainMode = mode;
+    updateVillainModeUI();
+    playSound('flare');
+}
+
 function closeHelpModal() {
     document.getElementById('helpModal').classList.remove('open');
 }
@@ -1918,12 +1972,21 @@ function closeHelpModal() {
 function startGame() {
     gameState.playerCount = parseInt(document.getElementById('setupPlayerCount').value);
     const v = VILLAINS.find(x => x.id === gameState.selectedVillain);
-    
-    gameState.villainHp = v.hp;
+
+    if (v.shields) {
+        gameState.cettShields = [...v.shields[gameState.villainMode]];
+    } else {
+        gameState.cettShields = [];
+    }
+    gameState.villainHp = getVillainHp(v);
     if (v.cityHp) gameState.cityHp = v.cityHp;
-    if (v.extraGauge) gameState.extraGauge = v.extraGauge.initial;
+    if (v.extraGauge) {
+        gameState.extraGauge = (typeof v.extraGauge.initial === 'object') ? v.extraGauge.initial[gameState.villainMode] : v.extraGauge.initial;
+    }
     gameState.missionsCompleted = 0;
     gameState.jastesCube = 0;
+    gameState.warFrontLines = [false, false, false, false];
+    gameState.warFrontLinesFinal = false;
 
     document.getElementById('setupScreen').classList.add('hidden');
     document.getElementById('gameScreen').classList.remove('hidden');
@@ -2138,6 +2201,10 @@ function setDominance(idx) {
 function adjustGauge(type, delta) {
     if (type === 'villainHp') {
         const v = VILLAINS.find(x => x.id === gameState.selectedVillain);
+        if (v.shields) {
+            applyCettDamage(v, delta);
+            return;
+        }
         gameState.villainHp = Math.max(0, gameState.villainHp + delta);
         updateVillainHealthDial(delta);
         const msg = currentLang === 'pt'
@@ -2148,19 +2215,22 @@ function adjustGauge(type, delta) {
         if (gameState.villainHp === 0) {
             // Ruin & Straff Venture don't die at 0 HP per their physical cards: they RESET instead.
             if (v.id === 'ruin' || v.id === 'straff_venture') {
-                gameState.villainHp = v.hp;
+                const resetHp = getVillainHp(v);
+                gameState.villainHp = resetHp;
                 updateVillainHealthDial();
                 if (v.id === 'ruin') {
-                    gameState.extraGauge = Math.max(0, gameState.extraGauge - 2);
+                    const resetDelta = v.resetDelta[gameState.villainMode];
+                    gameState.extraGauge = Math.max(0, gameState.extraGauge + resetDelta);
                     document.getElementById('valExtraGauge').textContent = gameState.extraGauge;
                     const resetMsg = currentLang === 'pt'
-                        ? `🔥 A vida de Ruína chegou a 0! (Carta física: "After health is gone, reset it & lower Ruin on his mission -2".) Vida restaurada para <strong>${v.hp}</strong> e a Escalação da Ruína recua 2 (agora em <strong>${gameState.extraGauge}</strong>).`
-                        : `🔥 Ruin's health hit 0! (Physical card: "After health is gone, reset it & lower Ruin on his mission -2".) Health reset to <strong>${v.hp}</strong> and Ruin Escalation moves back 2 (now at <strong>${gameState.extraGauge}</strong>).`;
+                        ? `🔥 A vida de Ruína chegou a 0! (Carta física: "After health is gone, reset it & lower Ruin on his mission".) Vida restaurada para <strong>${resetHp}</strong> e a Escalação da Ruína recua ${-resetDelta} (agora em <strong>${gameState.extraGauge}</strong>).`
+                        : `🔥 Ruin's health hit 0! (Physical card: "After health is gone, reset it & lower Ruin on his mission".) Health reset to <strong>${resetHp}</strong> and Ruin Escalation moves back ${-resetDelta} (now at <strong>${gameState.extraGauge}</strong>).`;
                     addLog(resetMsg, 'accent');
                 } else {
+                    const discardN = v.resetDiscard[gameState.villainMode];
                     const resetMsg = currentLang === 'pt'
-                        ? `🔥 A vida de Straff Venture chegou a 0! (Carta física: "After health is gone, reset it & discard 2 cards from villain deck".) Vida restaurada para <strong>${v.hp}</strong> — descarte 2 cartas do baralho do vilão.`
-                        : `🔥 Straff Venture's health hit 0! (Physical card: "After health is gone, reset it & discard 2 cards from villain deck".) Health reset to <strong>${v.hp}</strong> — discard 2 cards from the villain deck.`;
+                        ? `🔥 A vida de Straff Venture chegou a 0! (Carta física: "After health is gone, reset it & discard cards from villain deck".) Vida restaurada para <strong>${resetHp}</strong> — descarte ${discardN} cartas do baralho do vilão.`
+                        : `🔥 Straff Venture's health hit 0! (Physical card: "After health is gone, reset it & discard cards from villain deck".) Health reset to <strong>${resetHp}</strong> — discard ${discardN} cards from the villain deck.`;
                     addLog(resetMsg, 'accent');
                 }
                 playSound('flare');
@@ -2191,6 +2261,48 @@ function adjustGauge(type, delta) {
             : `Special marker changed to <strong>${gameState.extraGauge}</strong>.`;
         addLog(msg);
         playSound('flare');
+    }
+}
+
+// Ashweather Cett has no flat HP: damage depletes his shields left-to-right (the "active" shield
+// is always shields[0]). Destroying a shield triggers the Retaliation die roll on the physical card.
+function applyCettDamage(v, delta) {
+    if (!gameState.cettShields) gameState.cettShields = [...v.shields[gameState.villainMode]];
+    if (delta < 0) {
+        let dmg = -delta;
+        let shieldsBroken = 0;
+        while (dmg > 0 && gameState.cettShields.length > 0) {
+            if (dmg >= gameState.cettShields[0]) {
+                dmg -= gameState.cettShields[0];
+                gameState.cettShields.shift();
+                shieldsBroken++;
+            } else {
+                gameState.cettShields[0] -= dmg;
+                dmg = 0;
+            }
+        }
+        if (shieldsBroken > 0) {
+            const brokenMsg = currentLang === 'pt'
+                ? `🛡️ ${shieldsBroken} escudo(s) de Ashweather Cett foram destruídos! Role a Retaliação e avance o dado de assassinato.`
+                : `🛡️ ${shieldsBroken} of Ashweather Cett's shield(s) were destroyed! Roll Retaliation and advance the assassination die.`;
+            addLog(brokenMsg, 'danger');
+        }
+    } else if (delta > 0) {
+        if (gameState.cettShields.length === 0) gameState.cettShields.push(0);
+        gameState.cettShields[0] += delta;
+    }
+    gameState.villainHp = getVillainHp(v);
+    updateVillainHealthDial(delta);
+    renderVillainMechanics();
+    const msg = currentLang === 'pt'
+        ? `A vida do vilão vacila: alterada para <strong>${gameState.villainHp}</strong> (${delta > 0 ? '+' : ''}${delta}). Escudos restantes: <strong>${gameState.cettShields.join(' - ') || '0'}</strong>.`
+        : `The villain's life wavers: changed to <strong>${gameState.villainHp}</strong> (${delta > 0 ? '+' : ''}${delta}). Shields remaining: <strong>${gameState.cettShields.join(' - ') || '0'}</strong>.`;
+    addLog(msg);
+    playSound('hit');
+    if (gameState.villainHp === 0) {
+        const winMsg = currentLang === 'pt' ? `🎉 VILÃO DERROTADO! Vitória dos Mistborns!` : `🎉 VILLAIN DEFEATED! Victory for the Mistborns!`;
+        addLog(winMsg, 'accent');
+        alert(winMsg);
     }
 }
 
@@ -2303,8 +2415,59 @@ function applyKolossEdictHeal() {
 }
 
 function applyRuinEdictMove() {
-    const move = Math.max(1, 4 - gameState.missionsCompleted);
+    const v = VILLAINS.find(x => x.id === gameState.selectedVillain);
+    const base = (v && v.edictBase) ? v.edictBase[gameState.villainMode] : 4;
+    const move = Math.max(1, base - gameState.missionsCompleted);
     adjustGauge('extra', move);
+}
+
+function applyZaneBasicHeal() {
+    const cost = parseInt(document.getElementById('zaneBasicCost').value) || 0;
+    adjustGauge('villainHp', cost);
+    const msg = currentLang === 'pt'
+        ? `💊 Zane descarta a carta do mercado abaixo dele e cura <strong>${cost}</strong> (custo da carta).`
+        : `💊 Zane discards the market card below him and heals <strong>${cost}</strong> (the card's cost).`;
+    addLog(msg);
+}
+
+// Shared "War Front Lines" Basic-mode mini-game used by Steel Ministry (damages the city) and
+// Koloss (damages Koloss itself instead). 4 extra missions, each advancing the army for 10 damage;
+// once all 4 are done, a final army advance also deals 10 damage.
+function renderWarFrontLines(targetType) {
+    if (!gameState.warFrontLines) gameState.warFrontLines = [false, false, false, false];
+    const wfl = gameState.warFrontLines;
+    const allDone = wfl.every(Boolean);
+    const t = (pt, en) => (currentLang === 'pt' ? pt : en);
+    const btns = wfl.map((done, i) => `
+        <button class="btn-sm ${done ? 'btn-primary' : ''}" style="margin:2px 4px 2px 0;" onclick="completeWarFrontMission(${i}, '${targetType}')" ${done ? 'disabled' : ''}>
+            ${t('Missão', 'Mission')} ${i + 1}${done ? ' ✓' : ''}
+        </button>
+    `).join('');
+    const finalBtn = (allDone && !gameState.warFrontLinesFinal)
+        ? `<button class="btn-sm btn-primary" style="width:100%; margin-top:6px;" onclick="completeWarFrontFinal('${targetType}')">${t('Avanço Final do Exército (-10)', 'Final Army Advance (-10)')}</button>`
+        : '';
+    return `
+        <p style="font-size:0.8rem; color:var(--text-dim); margin:8px 0 4px;">${t(
+            `<strong>Básico:</strong> use a carta física "War Front Lines" — 4 missões extras, cada uma com sua própria Manobra Tática (consulte a carta). Completar cada missão avança o exército, causando 10 de dano.`,
+            `<strong>Basic:</strong> use the physical "War Front Lines" card — 4 extra missions, each with its own Tactical Maneuver (check the card). Completing each mission advances the army, dealing 10 damage.`
+        )}</p>
+        <div>${btns}</div>
+        ${finalBtn}
+    `;
+}
+
+function completeWarFrontMission(idx, targetType) {
+    if (!gameState.warFrontLines) gameState.warFrontLines = [false, false, false, false];
+    if (gameState.warFrontLines[idx]) return;
+    gameState.warFrontLines[idx] = true;
+    adjustGauge(targetType, -10);
+    renderVillainMechanics();
+}
+
+function completeWarFrontFinal(targetType) {
+    gameState.warFrontLinesFinal = true;
+    adjustGauge(targetType, -10);
+    renderVillainMechanics();
 }
 
 function applyZaneEdict() {
@@ -2385,25 +2548,34 @@ function getMechanicsHtml(v) {
     switch (v.id) {
         case 'steel_ministry': {
             const cityDmg = Math.max(0, 5 - mc);
-            return `
+            const baseHtml = `
                 <p style="font-size:0.85rem; margin-bottom:8px;">${t(
                     `<strong>Édito (substitui a cura do Lord Ruler):</strong> Tathingdwen sofre <strong>${cityDmg}</strong> de dano (base 5, -1 por missão completa).`,
                     `<strong>Edict (replaces Lord Ruler healing):</strong> Tathingdwen takes <strong>${cityDmg}</strong> damage (base 5, -1 per completed mission).`
                 )}
                 <button class="btn-sm" style="margin-left:6px;" onclick="adjustGauge('cityHp', -${cityDmg})">${t('Aplicar', 'Apply')}</button></p>
+            `;
+            if (gameState.villainMode === 'basic') {
+                return baseHtml + renderWarFrontLines('cityHp');
+            }
+            return baseHtml + `
                 <p style="font-size:0.8rem; color:var(--text-dim); margin-bottom:8px;">${t('Somente Avançado:', 'Advanced only:')} ${t('carta pede para rolar D6 e colocar na missão correspondente ou no vilão.', 'card asks to roll a D6 and place it on the matching mission or on the villain.')}</p>
                 <button class="btn-sm btn-primary" style="width:100%;" onclick="rollMechanicDie('steel_edict')"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="8" r="1.3" fill="currentColor"/><circle cx="16" cy="8" r="1.3" fill="currentColor"/><circle cx="8" cy="16" r="1.3" fill="currentColor"/><circle cx="16" cy="16" r="1.3" fill="currentColor"/><circle cx="12" cy="12" r="1.3" fill="currentColor"/></svg> ${t('Rolar D6 do Édito (Avançado)', 'Roll Edict D6 (Advanced)')}</button>
             `;
         }
         case 'jastes_lekal': {
-            const surcharge = Math.max(0, 6 - 2 * mc);
+            const advancedBonus = gameState.villainMode === 'advanced' ? 2 : 0;
+            const surcharge = Math.max(0, 6 - 2 * mc) + advancedBonus;
             const cube = gameState.jastesCube || 0;
+            const setupNote = gameState.villainMode === 'basic'
+                ? t('Preparação (Básico): embaralhe as 2 cartas de mercado mais caras viradas para cima no Esquema de Moeda Falsa.', 'Setup (Basic): shuffle the 2 most expensive market cards face up into the Fake Coin Scheme.')
+                : t('Preparação (Avançado): embaralhe as 2 cartas mais caras + as 2 mais baratas no Esquema de Moeda Falsa, e remova "Confrontation" do baralho do mercado.', 'Setup (Advanced): shuffle the 2 most expensive + 2 cheapest cards into the Fake Coin Scheme, and remove "Confrontation" from the market deck.');
             return `
                 <p style="font-size:0.85rem; margin-bottom:8px;">${t(
-                    `<strong>Custo de Moeda Falsa:</strong> +${surcharge} moedas (base 6, -2 por missão completa; Avançado: +2 adicional).`,
-                    `<strong>Fake Coin cost:</strong> +${surcharge} coins (base 6, -2 per completed mission; Advanced: +2 more).`
+                    `<strong>Custo de Moeda Falsa:</strong> +${surcharge} moedas (base 6, -2 por missão completa${advancedBonus ? '; +2 Avançado' : ''}).`,
+                    `<strong>Fake Coin cost:</strong> +${surcharge} coins (base 6, -2 per completed mission${advancedBonus ? '; +2 Advanced' : ''}).`
                 )}</p>
-                <p style="font-size:0.8rem; color:var(--text-dim); margin-bottom:6px;">${t('Regra em ambos os modos: remova "Confrontation" do baralho do mercado na preparação.', 'Rule in both modes: remove "Confrontation" from the market deck at setup.')}</p>
+                <p style="font-size:0.8rem; color:var(--text-dim); margin-bottom:6px;">${setupNote}</p>
                 <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
                     <span style="font-size:0.8rem;">${t('Cubo do Esquema (0-5):', 'Scheme cube (0-5):')} <strong>${cube}</strong>/5</span>
                     <button class="btn-sm btn-primary" onclick="advanceJastesCube()">+1</button>
@@ -2411,49 +2583,106 @@ function getMechanicsHtml(v) {
             `;
         }
         case 'ashweather_cett': {
+            const shields = gameState.cettShields || v.shields[gameState.villainMode];
+            const shieldsStr = shields.join(' - ') || (t('nenhum', 'none'));
+            const setupNote = gameState.villainMode === 'basic'
+                ? t('Preparação (Básico): Ashweather Cett age a cada 2 turnos de jogador ("Não é Mistborn") — use apenas 2 cartas de Missão.', "Setup (Basic): Ashweather Cett is 'Not Mistborn' — he only acts every 2 player turns; use only 2 Mission cards.")
+                : t('Preparação (Avançado): adicione 1 adversário aleatório em jogo e posicione o dado de assassinato na 3ª posição a partir de baixo.', 'Setup (Advanced): add 1 random adversary into play and place the assassination die on the 3rd slot from the bottom.');
+            const retaliationBonus = gameState.villainMode === 'advanced'
+                ? `<p style="font-size:0.75rem; color:var(--text-dim);">${t('Avançado: cada Retaliação causa +5 de dano a todos.', 'Advanced: each Retaliation deals +5 damage to everyone.')}</p>`
+                : '';
             return `
+                <p style="font-size:0.85rem; margin-bottom:6px;">${t(
+                    `<strong>Escudos restantes (na ordem, o primeiro é o ativo):</strong> ${shieldsStr}`,
+                    `<strong>Shields remaining (in order, first one is active):</strong> ${shieldsStr}`
+                )}</p>
+                <p style="font-size:0.8rem; color:var(--text-dim); margin-bottom:6px;">${setupNote}</p>
                 <p style="font-size:0.8rem; color:var(--text-dim); margin-bottom:8px;">${t('Ao destruir um escudo, role Retaliação. O Dado do Destino acima resolve a trilha de Assassinato automaticamente com a interpretação da carta física.', "When you destroy a shield, roll Retaliation. The Fate Die above auto-resolves the Assassination table with the physical card's text.")}</p>
                 <button class="btn-sm btn-primary" style="width:100%; margin-bottom:6px;" onclick="rollMechanicDie('cett_retaliation')"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="8" r="1.3" fill="currentColor"/><circle cx="16" cy="8" r="1.3" fill="currentColor"/><circle cx="8" cy="16" r="1.3" fill="currentColor"/><circle cx="16" cy="16" r="1.3" fill="currentColor"/><circle cx="12" cy="12" r="1.3" fill="currentColor"/></svg> ${t('Rolar Retaliação (D6)', 'Roll Retaliation (D6)')}</button>
+                ${retaliationBonus}
                 <p style="font-size:0.75rem; color:var(--text-dim);">${t('Quando o baralho do vilão esvaziar: embaralhe, descarte cerca de metade, e reinicie.', "When the villain deck empties: reshuffle, discard about half, then restart.")}</p>
             `;
         }
         case 'ruin': {
-            const move = Math.max(1, 4 - mc);
+            const base = v.edictBase[gameState.villainMode];
+            const move = Math.max(1, base - mc);
+            const resetDelta = -v.resetDelta[gameState.villainMode];
             return `
                 <p style="font-size:0.85rem; margin-bottom:8px;">${t(
-                    `<strong>Édito:</strong> avance a Escalação da Ruína <strong>${move}</strong> espaços (base 4, -1 por missão completa).`,
-                    `<strong>Edict:</strong> move Ruin Escalation up <strong>${move}</strong> spaces (base 4, -1 per completed mission).`
+                    `<strong>Édito:</strong> avance a Escalação da Ruína <strong>${move}</strong> espaços (base ${base}, -1 por missão completa).`,
+                    `<strong>Edict:</strong> move Ruin Escalation up <strong>${move}</strong> spaces (base ${base}, -1 per completed mission).`
                 )}
                 <button class="btn-sm" style="margin-left:6px;" onclick="applyRuinEdictMove()">${t('Aplicar', 'Apply')}</button></p>
-                <p style="font-size:0.75rem; color:var(--text-dim);">${t('Ao chegar a 0 de vida: reinicia automaticamente e recua 2 na Escalação (já tratado pelo dial de vida).', 'At 0 HP: automatically resets and moves back 2 on Escalation (already handled by the HP dial).')}</p>
+                <p style="font-size:0.75rem; color:var(--text-dim);">${t(
+                    `Ao chegar a 0 de vida: reinicia automaticamente e recua ${resetDelta} na Escalação (já tratado pelo dial de vida).`,
+                    `At 0 HP: automatically resets and moves back ${resetDelta} on Escalation (already handled by the HP dial).`
+                )}</p>
             `;
         }
         case 'zane_venture': {
-            return `
-                <p style="font-size:0.85rem; margin-bottom:8px;">${t(
-                    'Ao completar uma missão, a Defesa de Zane já cai automaticamente em 2 (veja o contador de Missões Completas acima).',
-                    "Completing a mission already auto-lowers Zane's Defense by 2 (see the Missions Completed counter above)."
+            const missionNote = `<p style="font-size:0.85rem; margin-bottom:8px;">${t(
+                'Ao completar uma missão, a Defesa de Zane já cai automaticamente em 2 (veja o contador de Missões Completas acima).',
+                "Completing a mission already auto-lowers Zane's Defense by 2 (see the Missions Completed counter above)."
+            )}</p>`;
+            const edictBtn = `<button class="btn-sm btn-primary" style="width:100%; margin-bottom:10px;" onclick="applyZaneEdict()"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" fill="currentColor"/></svg> ${t('Édito de Zane (Defesa +1, sorteia Missão)', "Zane's Edict (Defense +1, roll Mission)")}</button>`;
+            if (gameState.villainMode === 'basic') {
+                return missionNote + edictBtn + `
+                    <p style="font-size:0.8rem; color:var(--text-dim); margin-bottom:6px;">${t(
+                        "Habilidade (Básico): descarte a carta do mercado abaixo da localização de Zane — Zane cura o valor de custo da carta descartada.",
+                        "Ability (Basic): discard the market card below Zane's location — Zane heals equal to the discarded card's cost."
+                    )}</p>
+                    <div style="display:flex; gap:6px; align-items:center;">
+                        <label style="font-size:0.8rem;">${t('Custo da carta descartada:', 'Discarded card cost:')}</label>
+                        <input type="number" id="zaneBasicCost" min="0" value="0" style="width:60px;">
+                        <button class="btn-sm" onclick="applyZaneBasicHeal()">${t('Aplicar cura', 'Apply heal')}</button>
+                    </div>
+                `;
+            }
+            return missionNote + edictBtn + `
+                <p style="font-size:0.8rem; color:var(--text-dim); margin-bottom:6px;">${t(
+                    'Habilidade (Avançado): realize a ação do topo da carta de mercado abaixo da localização de Zane:',
+                    "Ability (Advanced): perform the top ability of the market card below Zane's location:"
                 )}</p>
-                <button class="btn-sm btn-primary" style="width:100%;" onclick="applyZaneEdict()"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" fill="currentColor"/></svg> ${t('Édito de Zane (Defesa +1, sorteia Missão)', "Zane's Edict (Defense +1, roll Mission)")}</button>
+                <ul style="font-size:0.75rem; color:var(--text-dim); margin:0 0 6px 18px; padding:0;">
+                    <li>${t('Moedas: cada 2 aumenta a Defesa em 1', 'Coins: each 2 raises Defense by 1')}</li>
+                    <li>${t('X (combate): dano dobrado e ataca 1 jogador', 'X (attack): damage doubled and attacks 1 player')}</li>
+                    <li>${t('Ícone de missão: reduz um jogador em uma missão', 'Mission icon: lowers a player on a mission')}</li>
+                    <li>${t('Ícone de treinamento: reduz o treinamento em 1', 'Training icon: lowers training by 1')}</li>
+                    <li>${t('Cura: cura dobrada e cura Zane', 'Healing: heal doubled and heals Zane')}</li>
+                    <li>${t('Se nenhum ícone acima estiver na carta, descarte-a sem efeito.', 'If none of the above icons are on the card, discard it with no effect.')}</li>
+                </ul>
             `;
         }
         case 'straff_venture': {
+            const discardN = v.resetDiscard[gameState.villainMode];
+            const setupNote = gameState.villainMode === 'basic'
+                ? t('Preparação (Básico): Straff Venture NÃO é Mistborn — ele age a cada 2 turnos de jogador, use apenas 2 cartas de Missão.', "Setup (Basic): Straff Venture is NOT Mistborn — he acts every 2 player turns; use only 2 Mission cards.")
+                : t('Preparação (Avançado): comece com 1 Nascido-da-bruma (Misting) já contratado e 1 adversário aleatório em jogo.', 'Setup (Advanced): start with 1 Misting already hired and 1 random adversary already in play.');
             return `
-                <p style="font-size:0.85rem;">${t(
-                    'Ao chegar a 0 de vida: reinicia automaticamente e pede para descartar 2 cartas do baralho do vilão (já tratado pelo dial de vida).',
-                    'At 0 HP: automatically resets and prompts to discard 2 cards from the villain deck (already handled by the HP dial).'
+                <p style="font-size:0.85rem;">${setupNote}</p>
+                <p style="font-size:0.85rem; margin-top:6px;">${t(
+                    `Ao chegar a 0 de vida: reinicia automaticamente e pede para descartar ${discardN} cartas do baralho do vilão (já tratado pelo dial de vida).`,
+                    `At 0 HP: automatically resets and prompts to discard ${discardN} cards from the villain deck (already handled by the HP dial).`
                 )}</p>
                 <p style="font-size:0.75rem; color:var(--text-dim); margin-top:6px;">${t('A carta de referência "Dominance Card Above Straff Venture" tem tabelas adicionais de Adversários Mortos/Éditos Jogados — consulte a carta física para esses detalhes.', 'The "Dominance Card Above Straff Venture" reference card has additional Adversaries Killed/Edicts Played tables — consult the physical card for those details.')}</p>
             `;
         }
         case 'koloss': {
             const heal = Math.max(0, 8 - 2 * mc);
-            return `
+            const baseHtml = `
                 <p style="font-size:0.85rem; margin-bottom:8px;">${t(
                     `<strong>Édito:</strong> Koloss cura <strong>${heal}</strong> (base 8, -2 por missão completa).`,
                     `<strong>Edict:</strong> Koloss heals <strong>${heal}</strong> (base 8, -2 per completed mission).`
                 )}
                 <button class="btn-sm" style="margin-left:6px;" onclick="applyKolossEdictHeal()">${t('Aplicar', 'Apply')}</button></p>
+                <p style="font-size:0.75rem; color:var(--text-dim); margin-bottom:8px;">${t('A "Vida de Vitória" do Exército Kolass é 70 — acompanhe o marcador especial acima para o dano total acumulado (Koloss pode curar além do escudo inicial).', "The Kolass Army's \"Win Life\" is 70 — track the special marker above for total accumulated damage (Koloss can heal past his starting shield).")}</p>
+            `;
+            if (gameState.villainMode === 'basic') {
+                return baseHtml + renderWarFrontLines('villainHp') + `
+                    <p style="font-size:0.75rem; color:var(--text-dim); margin-top:6px;">${t('Básico: o Avanço do Exército (War Front Lines) causa dano ao próprio Koloss, não a uma cidade.', "Basic: the Army Advance (War Front Lines) damages Koloss himself, not a city.")}</p>
+                `;
+            }
+            return baseHtml + `
                 <p style="font-size:0.8rem; color:var(--text-dim); margin-bottom:6px;">${t('Somente Avançado: role para ver qual(is) metal(is) custam 2 de dano por uso este turno.', 'Advanced only: roll to see which metal(s) cost 2 damage per use this turn.')}</p>
                 <button class="btn-sm btn-primary" style="width:100%;" onclick="rollMechanicDie('koloss_metal')"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="8" r="1.3" fill="currentColor"/><circle cx="16" cy="8" r="1.3" fill="currentColor"/><circle cx="8" cy="16" r="1.3" fill="currentColor"/><circle cx="16" cy="16" r="1.3" fill="currentColor"/><circle cx="12" cy="12" r="1.3" fill="currentColor"/></svg> ${t('Rolar Dado dos Metais (Avançado)', 'Roll Metal Die (Advanced)')}</button>
             `;
