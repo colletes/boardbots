@@ -834,6 +834,8 @@
 
         .icon-inline { display: inline-flex; vertical-align: -0.15em; }
         .icon-inline svg, svg.icon-inline { width: 1.1em; height: 1.1em; }
+        /* .btn-float has a small 14px font-size (for the PT/? text buttons), which made the sound icon tiny */
+        .btn-float svg.icon-inline { width: 20px; height: 20px; }
 
         details {
             background: var(--bg-surface-2);
@@ -2854,26 +2856,36 @@ function applyZaneBasicHeal() {
     addLog(msg);
 }
 
-// Shared "War Front Lines" Basic-mode mini-game used by Steel Ministry (damages the city) and
-// Koloss (damages Koloss itself instead). 4 extra missions, each advancing the army for 10 damage;
-// once all 4 are done, a final army advance also deals 10 damage.
+// Shared "War Front Lines" Basic-mode mini-game used by Army-type villains (Steel Ministry and
+// Koloss) — both damage the villain itself. 4 extra missions, each advancing the army for 10
+// damage; once all 4 are done, a final army advance also deals 10 damage. Each mission's reward
+// section also triggers that mission's own Tactical Maneuver (see WAR_FRONT_TACTICAL_MANEUVERS).
+const WAR_FRONT_TACTICAL_MANEUVERS = [
+    ['Compre 2 cartas a menos no próximo turno.', 'Draw 2 fewer cards next turn.'],
+    ['Descarte 1 carta que ainda custe moedas.', 'Discard 1 card that still costs coins.'],
+    ['Não ganhe as demais recompensas — ainda ganha o 1º lugar e a recompensa principal.', "Don't gain the other rewards — you still gain the 1st-place bonus & the top reward."],
+    ['Cure o adversário em 1 (cubo) ou mate um aliado.', 'Heal the adversary 1 (cube) or kill an ally.']
+];
 function renderWarFrontLines(targetType) {
     if (!gameState.warFrontLines) gameState.warFrontLines = [false, false, false, false];
     const wfl = gameState.warFrontLines;
     const allDone = wfl.every(Boolean);
     const t = (pt, en) => (currentLang === 'pt' ? pt : en);
     const btns = wfl.map((done, i) => `
-        <button class="btn-sm ${done ? 'btn-primary' : ''}" style="margin:2px 4px 2px 0;" onclick="completeWarFrontMission(${i}, '${targetType}')" ${done ? 'disabled' : ''}>
-            ${t('Missão', 'Mission')} ${i + 1}${done ? ' ✓' : ''}
-        </button>
+        <div style="margin:4px 0; display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+            <button class="btn-sm ${done ? 'btn-primary' : ''}" style="margin:2px 4px 2px 0;" onclick="completeWarFrontMission(${i}, '${targetType}')" ${done ? 'disabled' : ''}>
+                ${t('Missão', 'Mission')} ${i + 1}${done ? ' ✓' : ''}
+            </button>
+            <span style="font-size:0.75rem; color:var(--text-dim);">${t('Manobra Tática:', 'Tactical Maneuver:')} ${t(WAR_FRONT_TACTICAL_MANEUVERS[i][0], WAR_FRONT_TACTICAL_MANEUVERS[i][1])}</span>
+        </div>
     `).join('');
     const finalBtn = (allDone && !gameState.warFrontLinesFinal)
         ? `<button class="btn-sm btn-primary" style="width:100%; margin-top:6px;" onclick="completeWarFrontFinal('${targetType}')">${t('Avanço Final do Exército (-10)', 'Final Army Advance (-10)')}</button>`
         : '';
     return `
         <p style="font-size:0.8rem; color:var(--text-dim); margin:8px 0 4px;">${t(
-            `<strong>Básico:</strong> use a carta física "War Front Lines" — 4 missões extras, cada uma com sua própria Manobra Tática (consulte a carta). Completar cada missão avança o exército, causando 10 de dano.`,
-            `<strong>Basic:</strong> use the physical "War Front Lines" card — 4 extra missions, each with its own Tactical Maneuver (check the card). Completing each mission advances the army, dealing 10 damage.`
+            `<strong>Básico:</strong> use a carta "War Front Lines" — 4 missões extras, cada uma com sua própria Manobra Tática ao alcançar a recompensa. Completar cada missão avança o exército, causando 10 de dano ao vilão.`,
+            `<strong>Basic:</strong> use the "War Front Lines" card — 4 extra missions, each with its own Tactical Maneuver when its reward is reached. Completing each mission advances the army, dealing 10 damage to the villain.`
         )}</p>
         <div>${btns}</div>
         ${finalBtn}
@@ -3013,7 +3025,7 @@ function getMechanicsHtml(v) {
                 <button class="btn-sm" style="margin-left:6px;" onclick="adjustGauge('cityHp', -${cityDmg})">${t('Aplicar', 'Apply')}</button></p>
             `;
             if (gameState.villainMode === 'basic') {
-                return baseHtml + renderWarFrontLines('cityHp');
+                return baseHtml + renderWarFrontLines('villainHp');
             }
             return baseHtml + `
                 <p style="font-size:0.8rem; color:var(--text-dim); margin-bottom:8px;">${t('Somente Avançado:', 'Advanced only:')} ${t('carta pede para rolar D6 e colocar na missão correspondente ou no vilão.', 'card asks to roll a D6 and place it on the matching mission or on the villain.')}</p>
