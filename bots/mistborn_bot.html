@@ -573,6 +573,52 @@
             font-weight: 600;
         }
 
+        /* Mini track strips: Ruin's 33-spot race, Cett's Assassination track, Zane's Defense track */
+        .mini-track-wrap {
+            overflow-x: auto;
+            padding-bottom: 6px;
+            margin: 4px 0 10px;
+            scrollbar-width: thin;
+        }
+        .mini-track {
+            display: flex;
+            gap: 3px;
+            min-width: max-content;
+        }
+        .mini-cell {
+            position: relative;
+            min-width: 26px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-surface-3);
+            border: 1px solid var(--border-card);
+            border-radius: 4px;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            flex-shrink: 0;
+        }
+        .mini-cell-active {
+            border-color: var(--danger);
+            background: rgba(255, 71, 87, 0.2);
+            color: #fff;
+            font-weight: 700;
+        }
+        .mini-cell-gate { border-color: #7c5cff; border-width: 2px; }
+        .mini-cell-reward { border-color: #4caf50; }
+        .mini-cell-hazard { border-color: var(--danger); }
+        .mini-cell-end { border-color: gold; border-width: 2px; }
+        .mini-marker {
+            position: absolute;
+            top: -11px;
+            font-size: 0.85rem;
+            line-height: 1;
+        }
+        .mini-marker-ruin { color: var(--danger); left: 1px; }
+        .mini-marker-player { color: #4fc3f7; right: 1px; }
+        .mini-legend { display:flex; gap:12px; flex-wrap:wrap; font-size:0.7rem; color:var(--text-dim); margin-bottom:4px; }
+
         /* 3D Dice Box Section */
         .dice-section {
             background: var(--bg-surface-2);
@@ -1617,7 +1663,9 @@ const VILLAINS = [
         id: 'ashweather_cett',
         name: 'Ashweather Cett',
         title: { pt: 'Senhor da Guerra de Fadrex', en: 'Warlord of Fadrex' },
-        shields: { basic: [6, 8, 5, 10, 9, 4, 3, 7, 11], advanced: [8, 10, 11, 6, 12, 9, 5, 7, 13] },
+        // Reading order confirmed against the physical card: the active shield is the TOP-RIGHT one
+        // (per the general Solo/Coop rules card: "villain's health is typically on a shield in the top right").
+        shields: { basic: [8, 6, 10, 5, 4, 9, 7, 3, 11], advanced: [10, 8, 6, 11, 9, 12, 7, 5, 13] },
         usesDice: false,
         extraGauge: { name: { pt: 'Cubo de Retaliação (1-6)', en: 'Retaliation Cube (1-6)' }, initial: 1 },
         img: '../assets/art/mistborn/villains/ashweather_cett.webp',
@@ -1656,7 +1704,9 @@ const VILLAINS = [
         resetDelta: { basic: -3, advanced: -2 },
         edictBase: { basic: 3, advanced: 4 },
         usesDice: false,
+        // Ruin Escalation is Ruin's own black cube on the 33-spot (0-32) race track ("The End of Ruin").
         extraGauge: { name: { pt: 'Escalação da Ruína', en: 'Ruin Escalation' }, initial: 0 },
+        extraGaugeMax: 32,
         img: '../assets/art/mistborn/villains/ruin.webp',
         desc: {
             pt: 'A força da destruição. Os jogadores podem gastar combate para reduzir a Ruína.',
@@ -1692,7 +1742,9 @@ const VILLAINS = [
         hp: { basic: 16, advanced: 22 },
         usesDice: true,
         dicePurpose: { pt: 'Movimento de Zane entre as Missões (D6)', en: 'Zane Movement across Missions (D6)' },
-        extraGauge: { name: { pt: 'Defesa de Zane', en: 'Zane Defense' }, initial: { basic: 2, advanced: 4 } },
+        // Defense starts at its max (6, the rightmost shield) per the physical "Zane Venture's Defense" card.
+        extraGauge: { name: { pt: 'Defesa de Zane', en: 'Zane Defense' }, initial: 6 },
+        extraGaugeMax: 6,
         img: '../assets/art/mistborn/villains/zane_venture.webp',
         desc: {
             pt: 'Zane salta entre as 6 cartas de missão com o D6. É obrigatório avançar na missão onde Zane está!',
@@ -1806,17 +1858,19 @@ let gameState = {
     cettShields: [],
     cettAssassinValue: null,
     cettAssassinPos: 0,
+    ruinPlayerPos: 0,
     warFrontLines: [false, false, false, false],
     warFrontLinesFinal: false,
     logs: []
 };
 
 // Resolves a villain's HP for the currently selected Basic/Advanced mode.
-// Ashweather Cett has no flat HP — his life is the sum of his current shield sequence.
+// Ashweather Cett has no flat HP — the dial only ever shows his current ACTIVE shield's remaining value
+// (shields[0]); breaking it moves on to the next shield's full value, it never sums the whole sequence.
 function getVillainHp(v) {
     if (v.shields) {
         const arr = (gameState.cettShields && gameState.cettShields.length) ? gameState.cettShields : v.shields[gameState.villainMode];
-        return arr.reduce((a, b) => a + b, 0);
+        return arr[0] || 0;
     }
     return (typeof v.hp === 'object') ? v.hp[gameState.villainMode] : v.hp;
 }
@@ -1858,14 +1912,24 @@ function playSound(type) {
     } catch(e) {}
 }
 
-async function initDiceBox() {
-    try {
-        const { loadDiceBox } = await import('../assets/dice-roller.js');
-        diceBoxInstance = await loadDiceBox({ theme: 'allomantic', themeUrl: new URL('../assets/dice-box/themes/allomantic', window.location.href).href, scale: 24, timeoutMs: 6000 });
-    } catch(err) {
-        console.warn('3D Dice Box CDN fallback to internal roller:', err);
-        diceBoxInstance = null;
-    }
+// Lazily initialized on the FIRST roll (not at page load): @3d-dice/dice-box measures its container's
+// size at init() time, and #dice-box sits inside the hidden #gameScreen until a match starts, which
+// used to silently produce a zero-size canvas (dice physically never appeared). Initializing on first
+// roll guarantees the container is visible and correctly sized. Cached in a promise so repeat rolls
+// don't re-init.
+let diceBoxInitPromise = null;
+function initDiceBox() {
+    if (diceBoxInitPromise) return diceBoxInitPromise;
+    diceBoxInitPromise = (async () => {
+        try {
+            const { loadDiceBox } = await import('../assets/dice-roller.js');
+            diceBoxInstance = await loadDiceBox({ theme: 'allomantic', themeUrl: new URL('../assets/dice-box/themes/allomantic', window.location.href).href, scale: 24, timeoutMs: 6000 });
+        } catch(err) {
+            console.warn('3D Dice Box CDN fallback to internal roller:', err);
+            diceBoxInstance = null;
+        }
+    })();
+    return diceBoxInitPromise;
 }
 
 // Physics engine can occasionally never settle (silent hang); guard every roll with a timeout.
@@ -1878,7 +1942,6 @@ function initApp() {
     initAshCanvas();
     applyLanguage();
     setupEventListeners();
-    initDiceBox();
 }
 
 function applyLanguage() {
@@ -2015,6 +2078,7 @@ function startGame() {
     gameState.straffKilled = 0;
     gameState.straffEdicts = 0;
     gameState.steelHealedSteps = [];
+    gameState.ruinPlayerPos = 0;
     gameState.warFrontLines = [false, false, false, false];
     gameState.warFrontLinesFinal = false;
 
@@ -2059,15 +2123,14 @@ function setupGameDashboard() {
         extraBox.classList.add('hidden');
     }
 
-    // 3D Dice Box Visibility
+    // 3D Dice Box: available for every villain (general-purpose roller), not just the ones with a
+    // specific wired-in die mechanic. Villains with a specific purpose show it; others get a generic label.
     const diceBox = document.getElementById('boxDiceRoller');
-    if (v.usesDice) {
-        diceBox.classList.remove('hidden');
-        const purposeText = v.dicePurpose ? (v.dicePurpose[currentLang] || v.dicePurpose.pt) : 'D6 Roll';
-        document.getElementById('lblDicePurpose').textContent = purposeText;
-    } else {
-        diceBox.classList.add('hidden');
-    }
+    diceBox.classList.remove('hidden');
+    const purposeText = v.dicePurpose
+        ? (v.dicePurpose[currentLang] || v.dicePurpose.pt)
+        : (currentLang === 'pt' ? 'Rolagem Geral (D6)' : 'General Roll (D6)');
+    document.getElementById('lblDicePurpose').textContent = purposeText;
 
     // Lord Ruler difficulty selector
     const lrBox = document.getElementById('boxLordRulerDifficulty');
@@ -2323,7 +2386,9 @@ function adjustGauge(type, delta) {
             alert(loseMsg);
         }
     } else if (type === 'extra') {
-        gameState.extraGauge = Math.max(0, gameState.extraGauge + delta);
+        const v = VILLAINS.find(x => x.id === gameState.selectedVillain);
+        const max = (v && v.extraGaugeMax != null) ? v.extraGaugeMax : Infinity;
+        gameState.extraGauge = Math.max(0, Math.min(max, gameState.extraGauge + delta));
         document.getElementById('valExtraGauge').textContent = gameState.extraGauge;
         const msg = currentLang === 'pt'
             ? `Marcador especial alterado para <strong>${gameState.extraGauge}</strong>.`
@@ -2469,6 +2534,7 @@ async function roll3dDie() {
     playSound('dice');
     const badge = document.getElementById('diceResultBadge');
     badge.textContent = '...';
+    await initDiceBox();
 
     if (diceBoxInstance) {
         try {
@@ -2564,11 +2630,152 @@ function applyKolossEdictHeal() {
     adjustGauge('villainHp', heal);
 }
 
+// --- Ruin's "End of Ruin" 33-spot (0-32) race track: Ruin's black cube (edict-driven, ignores gates)
+// races a player-moved character cube (moved via normal mission actions, blocked by gates at 0/11/22
+// until 1/2/3 missions are completed) toward spot 32. Whoever gets there first wins/loses the game.
+// Reward spots (3,7,14,18,23,26,30) and hazard spots (multiples of 4) trigger for EITHER cube, per the
+// physical card ("Ruin also earns rewards when it reaches its icon").
+const RUIN_TRACK_EFFECTS = {
+    3: { pt: 'Jogadores ganham 3 boxings (apenas o jogador que contribuiu para a missão neste turno).', en: 'Players gain 3 boxings (only the player who actually contributed to the mission this turn).' },
+    7: { pt: '1 jogador adiciona 4 ao dano (uso único).', en: '1 player adds 4 to damage (one-time use).' },
+    14: { pt: '1 jogador pode desqueimar (unflare) 3 metais.', en: '1 player may unflare 3 metals.' },
+    18: { pt: '1 jogador adiciona +2 níveis de treinamento.', en: '1 player adds +2 training levels.' },
+    23: { pt: '1 jogador cura 6.', en: '1 player heals 6.' },
+    26: { pt: '1 jogador ganha +1 Atium.', en: '1 player gains +1 Atium.' },
+    30: { pt: '1 jogador compra 3 cartas.', en: '1 player draws 3 cards.' }
+};
+const RUIN_HAZARD_SPOTS = [4, 8, 12, 16, 20, 24, 28, 32];
+const RUIN_GATE_SPOTS = { 0: 1, 11: 2, 22: 3 }; // spot -> missions completed required to move PAST it
+
 function applyRuinEdictMove() {
     const v = VILLAINS.find(x => x.id === gameState.selectedVillain);
     const base = (v && v.edictBase) ? v.edictBase[gameState.villainMode] : 4;
     const move = Math.max(1, base - gameState.missionsCompleted);
+    const oldPos = gameState.extraGauge || 0;
     adjustGauge('extra', move);
+    checkRuinSpotEffects(oldPos, gameState.extraGauge, currentLang === 'pt' ? 'A Ruína' : 'Ruin');
+    if (gameState.extraGauge >= 32) {
+        const loseMsg = currentLang === 'pt' ? `💀 A Ruína chegou ao fim da trilha (32)! Derrota!` : `💀 Ruin reached the end of the track (32)! Defeat!`;
+        addLog(loseMsg, 'danger');
+        alert(loseMsg);
+    }
+    renderVillainMechanics();
+}
+
+// Fires reward/hazard spots crossed between oldPos (exclusive) and newPos (inclusive), for either cube.
+function checkRuinSpotEffects(oldPos, newPos, who) {
+    for (let s = oldPos + 1; s <= newPos; s++) {
+        if (RUIN_TRACK_EFFECTS[s]) {
+            const eff = RUIN_TRACK_EFFECTS[s][currentLang] || RUIN_TRACK_EFFECTS[s].pt;
+            addLog(`🎯 ${who} ${currentLang === 'pt' ? 'alcança o espaço' : 'reaches spot'} <strong>${s}</strong>: ${eff}`, 'accent');
+        }
+        if (RUIN_HAZARD_SPOTS.includes(s)) {
+            rollRuinHazard(s, who);
+        }
+    }
+}
+
+// Hazard spots: roll 2d6 three times (escalating tiers 1/2/3 Basic or 3/4/5 Advanced); each individual
+// die (not the pair as a whole) showing 1 or 2 deals that round's damage tier to the active player.
+function rollRuinHazard(spot, who) {
+    const tiers = gameState.villainMode === 'advanced' ? [3, 4, 5] : [1, 2, 3];
+    let total = 0;
+    const parts = [];
+    for (let round = 0; round < 3; round++) {
+        const d1 = Math.floor(Math.random() * 6) + 1;
+        const d2 = Math.floor(Math.random() * 6) + 1;
+        let roundDmg = 0;
+        if (d1 <= 2) roundDmg += tiers[round];
+        if (d2 <= 2) roundDmg += tiers[round];
+        total += roundDmg;
+        parts.push(`(${d1},${d2})→${roundDmg}`);
+    }
+    const msg = currentLang === 'pt'
+        ? `☠️ Perigo em ${spot} (${who}): rola 2d6 x3 ${parts.join(' ')} = <strong>${total}</strong> de dano ao jogador ativo.`
+        : `☠️ Hazard at ${spot} (${who}): rolls 2d6 x3 ${parts.join(' ')} = <strong>${total}</strong> damage to the active player.`;
+    addLog(msg, 'danger');
+    playSound('hit');
+}
+
+// The player's character cube: moved manually via normal mission actions (1 space per action). Ruin's
+// own cube ignores the gates at 0/11/22, but this cube is blocked from moving PAST them without the
+// matching number of completed missions.
+function advanceRuinPlayerCube(delta) {
+    let pos = gameState.ruinPlayerPos || 0;
+    const oldPos = pos;
+    if (delta < 0) {
+        pos = Math.max(0, pos + delta);
+    } else {
+        for (let i = 0; i < delta; i++) {
+            const req = RUIN_GATE_SPOTS[pos];
+            if (req !== undefined && gameState.missionsCompleted < req) {
+                const blockMsg = currentLang === 'pt'
+                    ? `🚧 O cubo dos jogadores está bloqueado no espaço <strong>${pos}</strong> — precisa de <strong>${req}</strong> missão(ões) completa(s) para passar.`
+                    : `🚧 The players' cube is blocked at spot <strong>${pos}</strong> — needs <strong>${req}</strong> completed mission(s) to move past.`;
+                addLog(blockMsg, 'danger');
+                break;
+            }
+            pos = Math.min(32, pos + 1);
+        }
+    }
+    gameState.ruinPlayerPos = pos;
+    checkRuinSpotEffects(oldPos, pos, currentLang === 'pt' ? 'O cubo dos jogadores' : "The players' cube");
+    if (pos >= 32) {
+        const winMsg = currentLang === 'pt' ? `🎉 Os jogadores alcançaram o fim da trilha (32) primeiro! Vitória!` : `🎉 Players reached the end of the track (32) first! Victory!`;
+        addLog(winMsg, 'accent');
+        alert(winMsg);
+    }
+    renderVillainMechanics();
+}
+
+// Renders the shared 33-cell (0-32) race track with both cubes, gates, reward and hazard markers.
+function renderRuinTrackHtml() {
+    const ruinPos = gameState.extraGauge || 0;
+    const playerPos = gameState.ruinPlayerPos || 0;
+    let cells = '';
+    for (let i = 0; i <= 32; i++) {
+        const classes = ['mini-cell'];
+        if (RUIN_GATE_SPOTS[i] !== undefined) classes.push('mini-cell-gate');
+        if (RUIN_TRACK_EFFECTS[i]) classes.push('mini-cell-reward');
+        if (RUIN_HAZARD_SPOTS.includes(i)) classes.push('mini-cell-hazard');
+        if (i === 32) classes.push('mini-cell-end');
+        let markers = '';
+        if (i === ruinPos) markers += '<span class="mini-marker mini-marker-ruin">☠</span>';
+        if (i === playerPos) markers += '<span class="mini-marker mini-marker-player">●</span>';
+        cells += `<div class="${classes.join(' ')}"><span class="mini-cell-num">${i}</span>${markers}</div>`;
+    }
+    return `<div class="mini-track-wrap"><div class="mini-track">${cells}</div></div>`;
+}
+
+// Renders Ashweather Cett's 7-space Assassination die track (1..7 from bottom).
+function renderCettAssassinTrackHtml() {
+    const pos = gameState.cettAssassinPos || 0;
+    let cells = '';
+    for (let i = 1; i <= 7; i++) {
+        const active = i === pos;
+        cells += `<div class="mini-cell ${active ? 'mini-cell-active' : ''}"><span class="mini-cell-num">${i}</span>${active ? '<span class="mini-marker mini-marker-ruin">☠</span>' : ''}</div>`;
+    }
+    return `<div class="mini-track-wrap"><div class="mini-track" style="justify-content:center;">${cells}</div></div>`;
+}
+
+// Renders Zane Venture's printed 12-shield Defense track (0 1 1 2 2 3 3 4 4 5 5 6); highlights every
+// shield matching the current defense value (the printed duplicates are the same stopping value).
+const ZANE_DEFENSE_TRACK_CELLS = [0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6];
+function renderZaneDefenseTrackHtml() {
+    const val = gameState.extraGauge || 0;
+    const cells = ZANE_DEFENSE_TRACK_CELLS.map(n => `<div class="mini-cell ${n === val ? 'mini-cell-active' : ''}"><span class="mini-cell-num">${n}</span></div>`).join('');
+    return `<div class="mini-track-wrap"><div class="mini-track" style="justify-content:center;">${cells}</div></div>`;
+}
+
+// "It costs 2 coins to lower Zane's defense by 1" — a manual player action available any time.
+function payLowerZaneDefense() {
+    gameState.extraGauge = Math.max(0, (gameState.extraGauge || 0) - 1);
+    document.getElementById('valExtraGauge').textContent = gameState.extraGauge;
+    const msg = currentLang === 'pt'
+        ? `💰 Pago 2 moedas: Defesa de Zane -1 (agora <strong>${gameState.extraGauge}</strong>).`
+        : `💰 Paid 2 coins: Zane's Defense -1 (now <strong>${gameState.extraGauge}</strong>).`;
+    addLog(msg);
+    renderVillainMechanics();
 }
 
 function applyZaneBasicHeal() {
@@ -2750,11 +2957,15 @@ function getMechanicsHtml(v) {
                 ? t('Ainda não posicionado.', 'Not placed yet.')
                 : t(`Valor <strong>${assassinValue}</strong>, posição <strong>${assassinPos}</strong>/7.`, `Value <strong>${assassinValue}</strong>, position <strong>${assassinPos}</strong>/7.`);
             return `
-                <p style="font-size:0.85rem; margin-bottom:6px;">${t(
+                <p style="font-size:0.85rem; margin-bottom:2px;">${t(
                     `<strong>Escudos restantes (na ordem, o primeiro é o ativo):</strong> ${shieldsStr}`,
                     `<strong>Shields remaining (in order, first one is active):</strong> ${shieldsStr}`
                 )}</p>
-                <p style="font-size:0.75rem; color:var(--text-dim); margin-bottom:8px;">${t('Só o escudo ativo pode ser atacado; dano excedente ao destruí-lo é perdido (não passa para o próximo).', "Only the active shield can be attacked; damage beyond what's needed to destroy it is lost (doesn't carry to the next shield).")}</p>
+                ${(() => {
+                    const cells = shields.map((val, i) => `<div class="mini-cell ${i === 0 ? 'mini-cell-active' : ''}" style="min-width:34px;"><span class="mini-cell-num">${val}</span></div>`).join('');
+                    return `<div class="mini-track-wrap"><div class="mini-track">${cells}</div></div>`;
+                })()}
+                <p style="font-size:0.75rem; color:var(--text-dim); margin-bottom:8px;">${t('Só o escudo ativo (destacado) pode ser atacado; dano excedente ao destruí-lo é perdido (não passa para o próximo).', "Only the active (highlighted) shield can be attacked; damage beyond what's needed to destroy it is lost (doesn't carry to the next shield).")}</p>
                 <p style="font-size:0.8rem; color:var(--text-dim); margin-bottom:8px;">${setupNote}</p>
 
                 <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:2px;">
@@ -2769,6 +2980,7 @@ function getMechanicsHtml(v) {
                     <span style="font-size:0.8rem;">${t('Dado de Assassinato:', 'Assassination die:')} ${assassinStr}</span>
                     <button class="btn-sm btn-primary" onclick="advanceCettAssassinTrack()">${t('Édito', 'Edict')}</button>
                 </div>
+                ${renderCettAssassinTrackHtml()}
                 <p style="font-size:0.7rem; color:var(--text-dim); margin-bottom:8px;">${t('Ao invés do Lord Ruler curar, o dado avança 3 (-1 por missão completa) espaços na trilha de 7. Ao sair do topo, resolve a tabela de Assassinato com o valor do próprio dado (X = nível de dominância atual).', "Instead of the Lord Ruler healing, the die advances 3 (-1 per completed mission) spaces on the 7-space track. When it exits the top, it resolves the Assassination table using the die's own value (X = current dominance level).")}</p>
 
                 <p style="font-size:0.75rem; color:var(--text-dim);">${t('Quando o baralho do vilão esvaziar: embaralhe, descarte cerca de metade, e reinicie.', "When the villain deck empties: reshuffle, discard about half, then restart.")}</p>
@@ -2778,23 +2990,45 @@ function getMechanicsHtml(v) {
             const base = v.edictBase[gameState.villainMode];
             const move = Math.max(1, base - mc);
             const resetDelta = -v.resetDelta[gameState.villainMode];
+            const playerPos = gameState.ruinPlayerPos || 0;
             return `
                 <p style="font-size:0.85rem; margin-bottom:8px;">${t(
                     `<strong>Édito:</strong> avance a Escalação da Ruína <strong>${move}</strong> espaços (base ${base}, -1 por missão completa).`,
                     `<strong>Edict:</strong> move Ruin Escalation up <strong>${move}</strong> spaces (base ${base}, -1 per completed mission).`
                 )}
                 <button class="btn-sm" style="margin-left:6px;" onclick="applyRuinEdictMove()">${t('Aplicar', 'Apply')}</button></p>
-                <p style="font-size:0.75rem; color:var(--text-dim);">${t(
+                <p style="font-size:0.75rem; color:var(--text-dim); margin-bottom:8px;">${t(
                     `Ao chegar a 0 de vida: reinicia automaticamente e recua ${resetDelta} na Escalação (já tratado pelo dial de vida).`,
                     `At 0 HP: automatically resets and moves back ${resetDelta} on Escalation (already handled by the HP dial).`
+                )}</p>
+                <div class="mini-legend">
+                    <span>☠ ${t('Cubo da Ruína', "Ruin's cube")}</span>
+                    <span>● ${t('Cubo dos jogadores', "Players' cube")}</span>
+                    <span style="color:#7c5cff;">▢ ${t('Portão (missões necessárias)', 'Gate (missions required)')}</span>
+                    <span style="color:#4caf50;">▢ ${t('Recompensa', 'Reward')}</span>
+                    <span style="color:var(--danger);">▢ ${t('Perigo (2d6 x3)', 'Hazard (2d6 x3)')}</span>
+                </div>
+                ${renderRuinTrackHtml()}
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:4px;">
+                    <span style="font-size:0.8rem;">${t('Cubo dos jogadores:', "Players' cube:")} <strong>${playerPos}</strong>/32</span>
+                    <div style="display:flex; gap:6px;">
+                        <button class="btn-sm" onclick="advanceRuinPlayerCube(-1)">-1</button>
+                        <button class="btn-sm btn-primary" onclick="advanceRuinPlayerCube(1)">+1</button>
+                    </div>
+                </div>
+                <p style="font-size:0.7rem; color:var(--text-dim); margin-top:6px;">${t(
+                    'O cubo dos jogadores avança com ações normais de missão e é bloqueado nos espaços 0/11/22 sem 1/2/3 missões completas; o cubo da Ruína ignora esses portões. Se qualquer cubo alcançar o espaço 32 primeiro, o jogo termina (vitória para os jogadores, derrota se for a Ruína).',
+                    "The players' cube advances via normal mission actions and is blocked at spots 0/11/22 without 1/2/3 completed missions; Ruin's cube ignores those gates. Whichever cube reaches spot 32 first ends the game (victory for players, defeat if it's Ruin)."
                 )}</p>
             `;
         }
         case 'zane_venture': {
-            const missionNote = `<p style="font-size:0.85rem; margin-bottom:8px;">${t(
-                'Ao completar uma missão, a Defesa de Zane já cai automaticamente em 2 (veja o contador de Missões Completas acima).',
-                "Completing a mission already auto-lowers Zane's Defense by 2 (see the Missions Completed counter above)."
-            )}</p>`;
+            const missionNote = `<p style="font-size:0.85rem; margin-bottom:4px;">${t(
+                'Ao completar uma missão, a Defesa de Zane já cai automaticamente em 2 (veja o contador de Missões Completas acima). Se essa missão é onde Zane está localizado, você pode atacá-lo diretamente, sem precisar avançar na missão de novo.',
+                "Completing a mission already auto-lowers Zane's Defense by 2 (see the Missions Completed counter above). If that mission is where Zane is located, you may attack him directly, without needing to move up on it again."
+            )}</p>` + renderZaneDefenseTrackHtml() + `<div style="display:flex; justify-content:flex-end; margin-bottom:8px;">
+                <button class="btn-sm" onclick="payLowerZaneDefense()">${t('Pagar 2 moedas: Defesa -1', 'Pay 2 coins: Defense -1')}</button>
+            </div>`;
             const edictBtn = `<button class="btn-sm btn-primary" style="width:100%; margin-bottom:10px;" onclick="applyZaneEdict()"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" fill="currentColor"/></svg> ${t('Édito de Zane (Defesa +1, sorteia Missão)', "Zane's Edict (Defense +1, roll Mission)")}</button>`;
             if (gameState.villainMode === 'basic') {
                 return missionNote + edictBtn + `
