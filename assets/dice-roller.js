@@ -77,14 +77,38 @@ export function triggerHaptic(pattern = [25]) {
 }
 
 /**
+ * Plays a sound effect via ThemeKit if present, or direct Audio fallback.
+ */
+export function playDiceSfx(name, volume = 0.65) {
+  try {
+    if (typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
+      window.ThemeKit.playSfx(name, { volume });
+      return;
+    }
+    if (typeof Audio !== 'undefined') {
+      if (typeof localStorage !== 'undefined' && localStorage.getItem('boardbots_sfx_muted') === 'true') return;
+      const sfxBase = new URL('sfx/shared/', import.meta.url).href;
+      const audio = new Audio(sfxBase + name + '.mp3');
+      audio.volume = Math.max(0, Math.min(1, volume));
+      audio.play().catch(() => {});
+    }
+  } catch (_) {}
+}
+
+/**
  * Rolls dice on an already-initialized DiceBox instance, guarded by a timeout
  * (the physics engine can occasionally never settle and silently hang).
- * Triggers haptic pulse on start and settle when supported.
+ * Triggers haptic pulse and sampled audio on start and settle when supported.
  */
 export function rollDiceSafe(diceBox, notation, timeoutMs = 5000) {
   triggerHaptic([25]);
+  const notationStr = String(notation);
+  const isMulti = notationStr.match(/^([2-9]|\d{2,})d/) || notationStr.includes(',');
+  playDiceSfx(isMulti ? 'dice-tray' : 'dice-roll', 0.7);
+
   const rollPromise = diceBox.roll(notation).then(results => {
     triggerHaptic([15, 30, 20]);
+    playDiceSfx('token-place', 0.35);
     return results;
   });
 

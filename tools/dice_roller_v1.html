@@ -380,6 +380,7 @@ body {
   <button class="close-result-btn" onclick="closeResults()" data-i18n="continueBtn">Continuar</button>
 </div>
 
+<script src="../assets/theme-kit.js"></script>
 <script type="module">
   import DiceBox from 'https://unpkg.com/@3d-dice/dice-box@1.1.3/dist/dice-box.es.min.js';
 
@@ -836,6 +837,12 @@ body {
   }
 
   function playRealDiceSound(count) {
+    if (window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
+      const sfxKey = count > 2 ? 'dice-tray' : 'dice-roll';
+      const played = window.ThemeKit.playSfx(sfxKey, { volume: 0.75 });
+      if (played) return;
+    }
+
     const ctx = getAudioCtx();
     if (!ctx) return;
     if (!noiseBuffer) noiseBuffer = createNoiseBuffer(ctx);
@@ -901,6 +908,11 @@ body {
     document.getElementById('sidebar').classList.add('hidden-ui');
     document.getElementById('result-panel').classList.remove('show');
     
+    // Haptic buzz on throw
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator && typeof navigator.vibrate === 'function') {
+      try { navigator.vibrate([25]); } catch (_) {}
+    }
+
     if (state.sfx === 'robot') {
       playRobotActivate();
     } else if (state.sfx === 'realistic') {
@@ -951,6 +963,14 @@ body {
       </div>
     `).join('');
 
+    // Haptic settle pattern + audio landing feedback
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator && typeof navigator.vibrate === 'function') {
+      try { navigator.vibrate([15, 30, 20]); } catch (_) {}
+    }
+    if (window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
+      window.ThemeKit.playSfx('token-place', { volume: 0.35 });
+    }
+
     document.getElementById('result-panel').classList.add('show');
   }
 
@@ -962,6 +982,10 @@ body {
   syncUIWithState();
   renderPresets();
   initDiceBox();
+
+  if (window.ThemeKit && typeof window.ThemeKit.preloadSfx === 'function') {
+    window.ThemeKit.preloadSfx(['dice-roll', 'dice-tray', 'token-place', 'ui-click']);
+  }
 
 </script>
 </body>
