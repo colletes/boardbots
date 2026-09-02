@@ -576,7 +576,8 @@
         /* Mini track strips: Ruin's 33-spot race, Cett's Assassination track, Zane's Defense track */
         .mini-track-wrap {
             overflow-x: auto;
-            padding-bottom: 6px;
+            overflow-y: visible;
+            padding: 16px 2px 6px;
             margin: 4px 0 10px;
             scrollbar-width: thin;
         }
@@ -611,13 +612,56 @@
         .mini-cell-end { border-color: gold; border-width: 2px; }
         .mini-marker {
             position: absolute;
-            top: -11px;
-            font-size: 0.85rem;
+            top: -18px;
+            font-size: 1.1rem;
             line-height: 1;
+            filter: drop-shadow(0 0 2px #000) drop-shadow(0 0 2px #000);
         }
-        .mini-marker-ruin { color: var(--danger); left: 1px; }
-        .mini-marker-player { color: #4fc3f7; right: 1px; }
+        .mini-marker-ruin { color: #ff4757; left: 50%; transform: translateX(-90%); }
+        .mini-marker-player { color: #4fc3f7; left: 50%; transform: translateX(-10%); }
         .mini-legend { display:flex; gap:12px; flex-wrap:wrap; font-size:0.7rem; color:var(--text-dim); margin-bottom:4px; }
+
+        /* Persistent "last dice-roll result" callout shown inside the Special Mechanic box */
+        .mechanic-last-roll {
+            margin: 6px 0 10px;
+            padding: 8px 10px;
+            background: var(--bg-surface-3);
+            border-left: 3px solid var(--atium);
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+        .mechanic-last-roll.danger { border-left-color: var(--danger); }
+
+        /* Non-blocking toast notifications (dice results, etc.) */
+        #toastContainer {
+            position: fixed;
+            top: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            align-items: center;
+            pointer-events: none;
+            width: min(92vw, 460px);
+        }
+        .app-toast {
+            background: var(--bg-surface-2);
+            color: #fff;
+            padding: 10px 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border-card);
+            border-left: 4px solid var(--atium);
+            box-shadow: 0 6px 20px rgba(0,0,0,.45);
+            font-size: 0.85rem;
+            text-align: center;
+            opacity: 0;
+            transform: translateY(-14px);
+            transition: opacity .25s ease, transform .25s ease;
+        }
+        .app-toast.show { opacity: 1; transform: translateY(0); }
+        .app-toast.danger { border-left-color: var(--danger); }
 
         /* 3D Dice Box Section */
         .dice-section {
@@ -1023,6 +1067,12 @@
                 </div>
             </div>
 
+            <!-- Villain-specific special mechanics, transcribed from the physical villain cards -->
+            <div id="boxVillainMechanics" class="hidden" style="margin-bottom:16px; background:var(--bg-surface-2); border:1px solid var(--gold); border-radius:var(--radius); padding:12px;">
+                <div style="font-weight:700; font-size:0.85rem; text-transform:uppercase; color:var(--gold); margin-bottom:8px;"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2h9l5 5v13a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2z"/><path d="M15 2v5h5"/><path d="M8 12h8M8 16h5"/></svg> <span data-i18n="label_mechanics">Mecânica Especial (Carta Física)</span></div>
+                <div id="mechanicsContent"></div>
+            </div>
+
             <!-- Steel Ministry Hostage City Dial (Tathingdwen) -->
             <div id="boxCityDial" class="dial-component-wrap hidden">
                 <div class="dial-label-heading" style="color:var(--gold);">
@@ -1168,12 +1218,6 @@
                     <button class="btn-sm" onclick="adjustMissionsCompleted(-1)">-1</button>
                     <button class="btn-sm btn-primary" onclick="adjustMissionsCompleted(1)">+1</button>
                 </div>
-            </div>
-
-            <!-- Villain-specific special mechanics, transcribed from the physical villain cards -->
-            <div id="boxVillainMechanics" class="hidden" style="margin-bottom:16px; background:var(--bg-surface-2); border:1px solid var(--gold); border-radius:var(--radius); padding:12px;">
-                <div style="font-weight:700; font-size:0.85rem; text-transform:uppercase; color:var(--gold); margin-bottom:8px;"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2h9l5 5v13a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2z"/><path d="M15 2v5h5"/><path d="M8 12h8M8 16h5"/></svg> <span data-i18n="label_mechanics">Mecânica Especial (Carta Física)</span></div>
-                <div id="mechanicsContent"></div>
             </div>
         </div>
 
@@ -1573,6 +1617,19 @@ const LORD_RULER_DIFFICULTY_LABELS = {
     hardA: 'Hard A', hardB: 'Hard B', extreme: 'Extreme'
 };
 
+// Zane Venture's dominance-track "special" note: the actual ability text from his physical card,
+// which differs between Basic (discard-and-heal) and Advanced (icon-matching market ability).
+const ZANE_MARKET_ABILITY = {
+    basic: {
+        pt: 'Habilidade (Básico): descarte a carta de mercado abaixo da localização atual de Zane — ele cura o valor de custo da carta descartada.',
+        en: "Ability (Basic): discard the market card below Zane's current location — he heals equal to the discarded card's cost."
+    },
+    advanced: {
+        pt: 'Habilidade (Avançado): realize a ação do topo da carta de mercado abaixo da localização atual de Zane — Moedas: cada 2 aumenta a Defesa em 1 · X (combate): dano dobrado e ataca 1 jogador · Ícone de missão: reduz um jogador em uma missão · Ícone de treinamento: reduz o treinamento em 1 · Cura: cura dobrada e cura Zane · Se nenhum desses ícones estiver na carta, descarte-a sem efeito.',
+        en: "Ability (Advanced): perform the top ability of the market card below Zane's current location — Coins: each 2 raises Defense by 1 · X (attack): damage doubled and attacks 1 player · Mission icon: lowers a player on a mission · Training icon: lowers training by 1 · Healing: heal doubled and heals Zane · If none of these icons are on the card, discard it with no effect."
+    }
+};
+
 const VILLAINS = [
     {
         id: 'lord_ruler',
@@ -1595,7 +1652,8 @@ const VILLAINS = [
         cityHp: 48,
         cityHealSteps: [36, 24, 12],
         cityHealAmount: 10,
-        usesDice: false,
+        usesDice: true,
+        dicePurpose: { pt: 'Édito do Avançado: colocar na missão ou no vilão (D6)', en: 'Advanced Edict: place on mission or villain (D6)' },
         img: '../assets/art/mistborn/villains/steel_ministry.webp',
         desc: {
             pt: 'Vilão de Exército. Ataques danificam a cidade refém de Tathingdwen (48 de vida).',
@@ -1753,23 +1811,23 @@ const VILLAINS = [
         domSteps: [
             { x: 1, effect: { pt: 'Sem efeito.', en: 'No effect.' } },
             { x: 1, effect: { pt: 'Sem efeito.', en: 'No effect.' } },
-            { x: 1, effect: { pt: 'Cada jogador queima (flare) 1 metal ou sofre 2 de dano.', en: 'Each player flares 1 metal or takes 2 damage.' } , special: { pt: 'Realize a ação do topo da carta de mercado acima da localização atual de Zane.', en: "Perform the top action on the market card above Zane's current location." } },
+            { x: 1, effect: { pt: 'Cada jogador queima (flare) 1 metal ou sofre 2 de dano.', en: 'Each player flares 1 metal or takes 2 damage.' } , special: ZANE_MARKET_ABILITY },
             { x: 1, effect: { pt: "Remova 1 cubo preto do escudo de 1 adversário. Se não for possível, um jogador sofre 2 de dano.", en: "Remove 1 black cube off 1 adversary's shield. If unable a player takes 2 damage." } },
             { x: 2, effect: { pt: 'Aumente a defesa de Zane em 1, ou um jogador deve queimar 2 metais.', en: "Increase Zane's defense by 1 or a player must flare 2 metals." } },
-            { x: 2, effect: { pt: 'Enquanto esta for a seção de dominância no topo desta trilha, Zane tem +2 de Defesa extra.', en: 'While this is the top dominance section on this track, Zane has an extra +2 Defense.' } , special: { pt: 'Realize a ação do topo da carta de mercado acima da localização atual de Zane.', en: "Perform the top action on the market card above Zane's current location." } },
+            { x: 2, effect: { pt: 'Enquanto esta for a seção de dominância no topo desta trilha, Zane tem +2 de Defesa extra.', en: 'While this is the top dominance section on this track, Zane has an extra +2 Defense.' } , special: ZANE_MARKET_ABILITY },
             { x: 2, effect: { pt: 'Enquanto esta for a seção de dominância no topo, os jogadores podem queimar 1 metal para curar 2.', en: 'While this is the top dominance section, players may flare 1 metal to heal 2.' } },
-            { x: 2, effect: { pt: "Aumente a defesa de Zane em +2 e remova 1 cubo preto do escudo de 1 Adversário.", en: "Increase Zane's defense by +2 and remove 1 black cube off 1 Adversary's shield." } , special: { pt: 'Realize a ação do topo da carta de mercado acima da localização atual de Zane.', en: "Perform the top action on the market card above Zane's current location." } },
+            { x: 2, effect: { pt: "Aumente a defesa de Zane em +2 e remova 1 cubo preto do escudo de 1 Adversário.", en: "Increase Zane's defense by +2 and remove 1 black cube off 1 Adversary's shield." } , special: ZANE_MARKET_ABILITY },
             { x: 3, label: 'Mists Loom!', effect: { pt: 'As Brumas Pairam! Cada jogador restaura 2 metais.', en: 'The Mists Loom! Each player refreshes 2 metals.' } },
             { x: 3, effect: { pt: 'Cada jogador sofre 5 de dano e queima 1 metal.', en: 'Each player takes 5 damage, and flares 1 metal.' } },
             { x: 3, effect: { pt: "Enquanto esta for a seção de dominância no topo desta trilha, custa 4 moedas para reduzir a defesa de Zane em -1.", en: "While this is the top dominance section on this track, it cost 4 in order to lower Zane's defense by -1." } },
-            { x: 3, effect: { pt: 'Enquanto esta for a seção de dominância no topo, os jogadores podem queimar 2 metais para curar 4.', en: 'While this is the top dominance section, players may flare 2 metals to heal 4.' } , special: { pt: 'Realize a ação do topo da carta de mercado acima da localização atual de Zane.', en: "Perform the top action on the market card above Zane's current location." } },
+            { x: 3, effect: { pt: 'Enquanto esta for a seção de dominância no topo, os jogadores podem queimar 2 metais para curar 4.', en: 'While this is the top dominance section, players may flare 2 metals to heal 4.' } , special: ZANE_MARKET_ABILITY },
             { x: 4, effect: { pt: 'Para cada adversário que tenha 3 escudos, remova todos os cubos pretos desses adversários, se houver.', en: 'For each adversary that has 3 shields, remove all black cubes off those adversaries, if any.' } },
-            { x: 4, effect: { pt: 'Cada jogador pode queimar 3 metais. Se o fizer, ganha 1 Atium.', en: 'Each player may flare 3 metals. If they do, they gain 1 Atium.' } , special: { pt: 'Realize a ação do topo da carta de mercado acima da localização atual de Zane.', en: "Perform the top action on the market card above Zane's current location." } },
+            { x: 4, effect: { pt: 'Cada jogador pode queimar 3 metais. Se o fizer, ganha 1 Atium.', en: 'Each player may flare 3 metals. If they do, they gain 1 Atium.' } , special: ZANE_MARKET_ABILITY },
             { x: 4, effect: { pt: 'Enquanto esta for a seção de dominância no topo desta trilha, Zane tem +4 de Defesa extra.', en: 'While this is the top dominance section on this track, Zane has an extra +4 defense.' } },
-            { x: 4, effect: { pt: 'Os jogadores queimam coletivamente X metais, onde X é o número de jogadores vezes 2.', en: 'Players collectively flare X amount of metals where X is the number of players times 2.' } , special: { pt: 'Realize a ação do topo da carta de mercado acima da localização atual de Zane.', en: "Perform the top action on the market card above Zane's current location." } },
+            { x: 4, effect: { pt: 'Os jogadores queimam coletivamente X metais, onde X é o número de jogadores vezes 2.', en: 'Players collectively flare X amount of metals where X is the number of players times 2.' } , special: ZANE_MARKET_ABILITY },
             { x: 5, effect: { pt: "Aumente a defesa de Zane em 3 e cada jogador deve queimar 2 metais.", en: "Increase Zane's defense by 3 and each player must flare 2 metals." } },
             { x: 5, effect: { pt: 'Cada jogador sofre 3 de dano, queima 1 metal, remove 1 cubo preto de um adversário e então ganha 1 Atium.', en: 'Each player takes 3 damage, flares 1 metal, removes 1 black cube on an adversary, then gains an Atium.' } },
-            { x: 5, label: 'Mists Rise!', effect: { pt: 'As Brumas Se Erguem! Cada jogador restaura todos os metais.', en: 'The Mists Rise! Each player refreshes all metals.' } , special: { pt: 'Realize a ação do topo da carta de mercado acima da localização atual de Zane.', en: "Perform the top action on the market card above Zane's current location." } },
+            { x: 5, label: 'Mists Rise!', effect: { pt: 'As Brumas Se Erguem! Cada jogador restaura todos os metais.', en: 'The Mists Rise! Each player refreshes all metals.' } , special: ZANE_MARKET_ABILITY },
             { x: 5, effect: { pt: 'Cada jogador sofre 5 de dano. Dominância adicional: cada jogador queima 2 metais e sofre 2 de dano.', en: 'Each player takes 5 damage. Additional dominance: each player flares 2 metals and takes 2 damage.' } }
         ]
     },
@@ -1779,7 +1837,8 @@ const VILLAINS = [
         title: { pt: 'Lorde de Luthadel', en: 'Lord of Luthadel' },
         hp: { basic: 8, advanced: 12 },
         resetDiscard: { basic: 3, advanced: 2 },
-        usesDice: false,
+        usesDice: true,
+        dicePurpose: { pt: 'Adversários Mortos / Éditos Jogados (D6)', en: 'Killed Adversaries / Played Edicts (D6)' },
         extraGauge: { name: { pt: 'Mistings Contratados', en: 'Hired Mistings' }, initial: 1 },
         img: '../assets/art/mistborn/villains/straff_venture.webp',
         desc: {
@@ -1815,7 +1874,8 @@ const VILLAINS = [
         title: { pt: 'Horda Brutal', en: 'Brute Swarm' },
         hp: { basic: 12, advanced: 20 },
         winThreshold: 70,
-        usesDice: false,
+        usesDice: true,
+        dicePurpose: { pt: 'Metal do Édito do Avançado (D6)', en: 'Advanced Edict Metal (D6)' },
         img: '../assets/art/mistborn/villains/koloss.webp',
         desc: {
             pt: 'Horda implacável! Expurga cartas de Zinco e Latão do mercado.',
@@ -1859,6 +1919,7 @@ let gameState = {
     cettAssassinValue: null,
     cettAssassinPos: 0,
     ruinPlayerPos: 0,
+    zaneDefenseIdx: 11,
     warFrontLines: [false, false, false, false],
     warFrontLinesFinal: false,
     logs: []
@@ -2072,6 +2133,9 @@ function startGame() {
         if (v.extraGauge) {
             gameState.extraGauge = (typeof v.extraGauge.initial === 'object') ? v.extraGauge.initial[gameState.villainMode] : v.extraGauge.initial;
         }
+        if (v.id === 'zane_venture') {
+            gameState.zaneDefenseIdx = ZANE_DEFENSE_TRACK_CELLS.length - 1; // rightmost shield (value 6)
+        }
     }
     gameState.missionsCompleted = 0;
     gameState.jastesCube = 0;
@@ -2123,14 +2187,17 @@ function setupGameDashboard() {
         extraBox.classList.add('hidden');
     }
 
-    // 3D Dice Box: available for every villain (general-purpose roller), not just the ones with a
-    // specific wired-in die mechanic. Villains with a specific purpose show it; others get a generic label.
+    // 3D Dice Box: only shown for villains that actually have a dice mechanic (usesDice).
     const diceBox = document.getElementById('boxDiceRoller');
-    diceBox.classList.remove('hidden');
-    const purposeText = v.dicePurpose
-        ? (v.dicePurpose[currentLang] || v.dicePurpose.pt)
-        : (currentLang === 'pt' ? 'Rolagem Geral (D6)' : 'General Roll (D6)');
-    document.getElementById('lblDicePurpose').textContent = purposeText;
+    if (v.usesDice) {
+        diceBox.classList.remove('hidden');
+        const purposeText = v.dicePurpose ? (v.dicePurpose[currentLang] || v.dicePurpose.pt) : (currentLang === 'pt' ? 'Rolagem Geral (D6)' : 'General Roll (D6)');
+        document.getElementById('lblDicePurpose').textContent = purposeText;
+        // Only Zane's Edict uses the generic "Roll Fate Die" button; other dice villains roll via their own mechanic buttons below.
+        document.getElementById('btnRoll3dDie').classList.toggle('hidden', v.id !== 'zane_venture');
+    } else {
+        diceBox.classList.add('hidden');
+    }
 
     // Lord Ruler difficulty selector
     const lrBox = document.getElementById('boxLordRulerDifficulty');
@@ -2267,7 +2334,8 @@ function renderDominanceTrack(v) {
     const titleDom = currentLang === 'pt' ? 'Dominância Atual' : 'Current Dominance';
     let bannerHtml = `<strong>${titleDom} (${activeStep.label || gameState.domIndex}):</strong> ${effectText}`;
     if (activeStep.special) {
-        const specialText = activeStep.special[currentLang] || activeStep.special.pt;
+        const spByMode = activeStep.special[gameState.villainMode] || activeStep.special;
+        const specialText = spByMode[currentLang] || spByMode.pt;
         bannerHtml += `<div class="dom-special-note">⭐ ${specialText}</div>`;
     }
     document.getElementById('domActiveBanner').innerHTML = bannerHtml;
@@ -2387,14 +2455,23 @@ function adjustGauge(type, delta) {
         }
     } else if (type === 'extra') {
         const v = VILLAINS.find(x => x.id === gameState.selectedVillain);
-        const max = (v && v.extraGaugeMax != null) ? v.extraGaugeMax : Infinity;
-        gameState.extraGauge = Math.max(0, Math.min(max, gameState.extraGauge + delta));
+        if (v && v.id === 'zane_venture') {
+            // Zane's Defense is a 12-shield printed track (with duplicate values); track the actual
+            // shield INDEX, not the printed value, so +/-1 always moves one physical step.
+            const maxIdx = ZANE_DEFENSE_TRACK_CELLS.length - 1;
+            gameState.zaneDefenseIdx = Math.max(0, Math.min(maxIdx, (gameState.zaneDefenseIdx || 0) + delta));
+            gameState.extraGauge = ZANE_DEFENSE_TRACK_CELLS[gameState.zaneDefenseIdx];
+        } else {
+            const max = (v && v.extraGaugeMax != null) ? v.extraGaugeMax : Infinity;
+            gameState.extraGauge = Math.max(0, Math.min(max, gameState.extraGauge + delta));
+        }
         document.getElementById('valExtraGauge').textContent = gameState.extraGauge;
         const msg = currentLang === 'pt'
             ? `Marcador especial alterado para <strong>${gameState.extraGauge}</strong>.`
             : `Special marker changed to <strong>${gameState.extraGauge}</strong>.`;
         addLog(msg);
         playSound('flare');
+        renderVillainMechanics();
     }
 }
 
@@ -2545,6 +2622,7 @@ async function roll3dDie() {
             badge.textContent = val;
             const msg = currentLang === 'pt' ? `🎲 O dado do Destino rolou: Resultado <strong>${val}</strong>!` : `🎲 The die of Fate rolled: Result <strong>${val}</strong>!`;
             addLog(msg);
+            showToast(msg);
             handleVillainDieResult(val);
             return;
         } catch(e) {
@@ -2558,6 +2636,7 @@ async function roll3dDie() {
         badge.textContent = val;
         const msg = currentLang === 'pt' ? `🎲 O dado do Destino rolou: Resultado <strong>${val}</strong>!` : `🎲 The die of Fate rolled: Result <strong>${val}</strong>!`;
         addLog(msg);
+        showToast(msg);
         handleVillainDieResult(val);
     }, 250);
 }
@@ -2585,7 +2664,8 @@ function adjustMissionsCompleted(delta) {
 
     // Zane Venture: "When you complete a mission, also lower Zane's Defense by 2." (only fires when advancing, id-gated)
     if (delta > 0 && gameState.selectedVillain === 'zane_venture') {
-        gameState.extraGauge = Math.max(0, gameState.extraGauge - 2);
+        gameState.zaneDefenseIdx = Math.max(0, (gameState.zaneDefenseIdx || 0) - 2);
+        gameState.extraGauge = ZANE_DEFENSE_TRACK_CELLS[gameState.zaneDefenseIdx];
         document.getElementById('valExtraGauge').textContent = gameState.extraGauge;
         const zMsg = currentLang === 'pt'
             ? `⚔️ Missão completa: Defesa de Zane reduzida em 2 (agora <strong>${gameState.extraGauge}</strong>).`
@@ -2694,6 +2774,7 @@ function rollRuinHazard(spot, who) {
         ? `☠️ Perigo em ${spot} (${who}): rola 2d6 x3 ${parts.join(' ')} = <strong>${total}</strong> de dano ao jogador ativo.`
         : `☠️ Hazard at ${spot} (${who}): rolls 2d6 x3 ${parts.join(' ')} = <strong>${total}</strong> damage to the active player.`;
     addLog(msg, 'danger');
+    showToast(msg, 'danger');
     playSound('hit');
 }
 
@@ -2758,18 +2839,20 @@ function renderCettAssassinTrackHtml() {
     return `<div class="mini-track-wrap"><div class="mini-track" style="justify-content:center;">${cells}</div></div>`;
 }
 
-// Renders Zane Venture's printed 12-shield Defense track (0 1 1 2 2 3 3 4 4 5 5 6); highlights every
-// shield matching the current defense value (the printed duplicates are the same stopping value).
+// Renders Zane Venture's printed 12-shield Defense track (0 1 1 2 2 3 3 4 4 5 5 6). Tracks the shield
+// INDEX (gameState.zaneDefenseIdx), not just the printed value, so duplicate-value shields (e.g. the
+// two 5s) are distinct steps and highlighting always advances by exactly one physical shield.
 const ZANE_DEFENSE_TRACK_CELLS = [0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6];
 function renderZaneDefenseTrackHtml() {
-    const val = gameState.extraGauge || 0;
-    const cells = ZANE_DEFENSE_TRACK_CELLS.map(n => `<div class="mini-cell ${n === val ? 'mini-cell-active' : ''}"><span class="mini-cell-num">${n}</span></div>`).join('');
+    const idx = (gameState.zaneDefenseIdx != null) ? gameState.zaneDefenseIdx : ZANE_DEFENSE_TRACK_CELLS.length - 1;
+    const cells = ZANE_DEFENSE_TRACK_CELLS.map((n, i) => `<div class="mini-cell ${i === idx ? 'mini-cell-active' : ''}"><span class="mini-cell-num">${n}</span></div>`).join('');
     return `<div class="mini-track-wrap"><div class="mini-track" style="justify-content:center;">${cells}</div></div>`;
 }
 
 // "It costs 2 coins to lower Zane's defense by 1" — a manual player action available any time.
 function payLowerZaneDefense() {
-    gameState.extraGauge = Math.max(0, (gameState.extraGauge || 0) - 1);
+    gameState.zaneDefenseIdx = Math.max(0, (gameState.zaneDefenseIdx || 0) - 1);
+    gameState.extraGauge = ZANE_DEFENSE_TRACK_CELLS[gameState.zaneDefenseIdx];
     document.getElementById('valExtraGauge').textContent = gameState.extraGauge;
     const msg = currentLang === 'pt'
         ? `💰 Pago 2 moedas: Defesa de Zane -1 (agora <strong>${gameState.extraGauge}</strong>).`
@@ -2828,34 +2911,57 @@ function completeWarFrontFinal(targetType) {
 }
 
 function applyZaneEdict() {
-    if (gameState.extraGauge >= 6) {
+    const maxIdx = ZANE_DEFENSE_TRACK_CELLS.length - 1;
+    if ((gameState.zaneDefenseIdx || 0) >= maxIdx) {
         const msg = currentLang === 'pt'
             ? `⚡ Édito de Zane: a Defesa já está no máximo (6) e não pode aumentar — o jogador ativo sofre 4 de dano!`
             : `⚡ Zane's Edict: Defense is already maxed (6) and can't increase — the active player takes 4 damage!`;
         addLog(msg, 'danger');
     } else {
-        gameState.extraGauge = Math.min(6, gameState.extraGauge + 1);
+        gameState.zaneDefenseIdx = Math.min(maxIdx, (gameState.zaneDefenseIdx || 0) + 1);
+        gameState.extraGauge = ZANE_DEFENSE_TRACK_CELLS[gameState.zaneDefenseIdx];
         document.getElementById('valExtraGauge').textContent = gameState.extraGauge;
         const msg = currentLang === 'pt'
             ? `⚡ Édito de Zane: Defesa +1 (agora <strong>${gameState.extraGauge}</strong>).`
             : `⚡ Zane's Edict: Defense +1 (now <strong>${gameState.extraGauge}</strong>).`;
         addLog(msg);
     }
+    renderVillainMechanics();
     roll3dDie();
 }
 
-function rollMechanicDie(kind) {
-    const val = Math.floor(Math.random() * 6) + 1;
+// Rolls the shared 3D dice box (same physical die as the Fate Die button) for a specific mechanic,
+// so players always see the die actually roll instead of only reading a number in the log.
+async function rollMechanicDie(kind) {
+    playSound('dice');
+    const badge = document.getElementById('diceResultBadge');
+    if (badge) badge.textContent = '...';
+    await initDiceBox();
+
+    let val = null;
+    if (diceBoxInstance) {
+        try {
+            const result = await rollDiceBoxSafe('1d6');
+            const raw = result[0].value;
+            val = (Number.isInteger(raw) && raw >= 1 && raw <= 6) ? raw : (Math.floor(Math.random() * 6) + 1);
+        } catch (e) {
+            console.warn('3D roll error, fallback:', e);
+        }
+    }
+    if (val == null) val = Math.floor(Math.random() * 6) + 1;
+    if (badge) badge.textContent = val;
+
+    let msg = '', isDanger = false;
     if (kind === 'steel_edict') {
         const isVillain = val >= 5;
-        const msg = isVillain
+        isDanger = isVillain;
+        msg = isVillain
             ? (currentLang === 'pt'
                 ? `🎲 Édito (Avançado, rolou ${val}): coloque o dado no VILÃO. Quando ele atacar, o jogador ativo sofre 2 de dano extra.`
                 : `🎲 Edict (Advanced, rolled ${val}): place the die on the VILLAIN. When it attacks, the active player takes 2 extra damage.`)
             : (currentLang === 'pt'
                 ? `🎲 Édito (Avançado, rolou ${val}): coloque o dado na Missão ${val} — essa missão sofre -1.`
                 : `🎲 Edict (Advanced, rolled ${val}): place the die on Mission ${val} — that mission gets -1.`);
-        addLog(msg, isVillain ? 'danger' : '');
     } else if (kind === 'koloss_metal') {
         const swatches = {
             1: ['#c0392b', '#c0392b'],
@@ -2869,10 +2975,9 @@ function rollMechanicDie(kind) {
         const dots = colors.map(c => `<span style="display:inline-block; width:14px; height:14px; border-radius:50%; background:${c}; margin:0 2px; vertical-align:middle; border:1px solid #000;"></span>`).join('');
         const line6 = currentLang === 'pt' ? 'Flaring Metals (queimar metais)' : 'Flaring Metals';
         const desc = val === 6 ? `<strong>${line6}</strong>` : dots;
-        const msg = currentLang === 'pt'
+        msg = currentLang === 'pt'
             ? `🎲 Metal do Édito (Avançado, linha ${val}): ${desc} — usar esse(s) metal(is) causa 2 de dano por uso. Confira o ícone exato na carta física.`
             : `🎲 Edict Metal (Advanced, row ${val}): ${desc} — using that metal(s) costs 2 damage per use. Check the exact icon on the physical card.`;
-        addLog(msg);
     } else if (kind === 'straff_killed' || kind === 'straff_edicts') {
         const isKilled = kind === 'straff_killed';
         const label = isKilled
@@ -2886,14 +2991,27 @@ function rollMechanicDie(kind) {
         } else {
             heal = 1; bonus = currentLang === 'pt' ? ' + todos os jogadores sofrem 2 de dano' : ' + all players take 2 damage';
         }
-        const msg = currentLang === 'pt'
+        msg = currentLang === 'pt'
             ? `🎲 ${label} (${val}): Straff Venture cura <strong>${heal}</strong>${bonus}.`
             : `🎲 ${label} (${val}): Straff Venture heals <strong>${heal}</strong>${bonus}.`;
-        addLog(msg);
         adjustGauge('villainHp', heal);
         gameState[isKilled ? 'straffKilled' : 'straffEdicts'] = 0;
     }
+
+    if (msg) {
+        addLog(msg, isDanger ? 'danger' : '');
+        showToast(msg, isDanger ? 'danger' : '');
+        if (!gameState.lastMechanicResults) gameState.lastMechanicResults = {};
+        gameState.lastMechanicResults[kind] = msg;
+    }
     renderVillainMechanics();
+}
+
+// Renders the persisted text of the last roll for a given mechanic kind, so the result stays fully
+// visible inside the Special Mechanic box (not just in the toast/log) until the next roll.
+function lastMechanicResultHtml(kind) {
+    const html = gameState.lastMechanicResults && gameState.lastMechanicResults[kind];
+    return html ? `<p class="mechanic-last-roll">${html}</p>` : '';
 }
 
 function getMechanicsHtml(v) {
@@ -2916,6 +3034,7 @@ function getMechanicsHtml(v) {
             return baseHtml + `
                 <p style="font-size:0.8rem; color:var(--text-dim); margin-bottom:8px;">${t('Somente Avançado:', 'Advanced only:')} ${t('carta pede para rolar D6 e colocar na missão correspondente ou no vilão.', 'card asks to roll a D6 and place it on the matching mission or on the villain.')}</p>
                 <button class="btn-sm btn-primary" style="width:100%;" onclick="rollMechanicDie('steel_edict')"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="8" r="1.3" fill="currentColor"/><circle cx="16" cy="8" r="1.3" fill="currentColor"/><circle cx="8" cy="16" r="1.3" fill="currentColor"/><circle cx="16" cy="16" r="1.3" fill="currentColor"/><circle cx="12" cy="12" r="1.3" fill="currentColor"/></svg> ${t('Rolar D6 do Édito (Avançado)', 'Roll Edict D6 (Advanced)')}</button>
+                ${lastMechanicResultHtml('steel_edict')}
             `;
         }
         case 'jastes_lekal': {
@@ -3090,6 +3209,7 @@ function getMechanicsHtml(v) {
                         <button class="btn-sm btn-primary" onclick="rollMechanicDie('straff_killed')">${diceIcon} ${t('Rolar', 'Roll')}</button>
                     </div>
                 </div>
+                ${lastMechanicResultHtml('straff_killed')}
                 <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px;">
                     <span style="font-size:0.8rem;">${t('Éditos Jogados:', 'Played Edicts:')} <strong>${edictCount}</strong></span>
                     <div style="display:flex; gap:6px;">
@@ -3097,6 +3217,7 @@ function getMechanicsHtml(v) {
                         <button class="btn-sm btn-primary" onclick="rollMechanicDie('straff_edicts')">${diceIcon} ${t('Rolar', 'Roll')}</button>
                     </div>
                 </div>
+                ${lastMechanicResultHtml('straff_edicts')}
                 <p style="font-size:0.75rem; color:var(--text-dim); margin-bottom:8px;">${t(
                     'A carta "Dominance Card Above Straff Venture" pede para rolar quando essas trilhas atingem os limiares 2/3/4 (consulte a carta física para o limiar exato). O dado acima já resolve o resultado: 1-2 cura 6, 3-4 cura 3 + jogue a próxima carta de vilão, 5-6 cura 1 + todos sofrem 2 de dano.',
                     'The "Dominance Card Above Straff Venture" reference card asks you to roll when these tracks hit the 2/3/4 thresholds (check the physical card for the exact threshold). The die button above already resolves the outcome: 1-2 heals 6, 3-4 heals 3 + play the next villain card, 5-6 heals 1 + everyone takes 2 damage.'
@@ -3150,6 +3271,7 @@ function getMechanicsHtml(v) {
             return baseHtml + `
                 <p style="font-size:0.8rem; color:var(--text-dim); margin-bottom:6px;">${t('Somente Avançado: role para ver qual(is) metal(is) custam 2 de dano por uso este turno.', 'Advanced only: roll to see which metal(s) cost 2 damage per use this turn.')}</p>
                 <button class="btn-sm btn-primary" style="width:100%;" onclick="rollMechanicDie('koloss_metal')"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="8" r="1.3" fill="currentColor"/><circle cx="16" cy="8" r="1.3" fill="currentColor"/><circle cx="8" cy="16" r="1.3" fill="currentColor"/><circle cx="16" cy="16" r="1.3" fill="currentColor"/><circle cx="12" cy="12" r="1.3" fill="currentColor"/></svg> ${t('Rolar Dado dos Metais (Avançado)', 'Roll Metal Die (Advanced)')}</button>
+                ${lastMechanicResultHtml('koloss_metal')}
             `;
         }
         default:
@@ -3170,6 +3292,26 @@ function renderVillainMechanics() {
     }
     box.classList.remove('hidden');
     content.innerHTML = html;
+}
+
+// Non-blocking on-screen alert for dice results (and other transient notices) so players don't have
+// to rely solely on the scrolling log panel to notice what just happened.
+function showToast(html, type = '') {
+    let container = document.getElementById('toastContainer');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toastContainer';
+        document.body.appendChild(container);
+    }
+    const el = document.createElement('div');
+    el.className = `app-toast${type ? ' ' + type : ''}`;
+    el.innerHTML = html;
+    container.appendChild(el);
+    requestAnimationFrame(() => el.classList.add('show'));
+    setTimeout(() => {
+        el.classList.remove('show');
+        setTimeout(() => el.remove(), 300);
+    }, 4000);
 }
 
 function addLog(text, type = '') {
