@@ -416,8 +416,6 @@ body {
   BOT_THEMES.forEach(name => { EXTERNAL_THEMES[name] = `${BOT_THEMES_BASE}${name}`; });
   // Themes whose material is a fixed texture ("standard" type) ignore themeColor.
   const NON_RECOLORABLE_THEMES = ['blueGreenMetal', 'gemstoneMarble', 'wooden', ...BOT_THEMES];
-  // Bot themes only ship a d6 mesh/texture — other die types are hidden while one is active.
-  const ONLY_D6_THEMES = BOT_THEMES;
   // Legacy theme values saved before this update no longer point anywhere valid.
   const THEME_MIGRATION = { wood: 'wooden', smoothPip: 'smooth-pip' };
 
@@ -455,7 +453,6 @@ body {
       themeHallowed: '🕯️ Consagrado (Sanctuary)',
       themePrimeval: '🪨 Pedra Primeva (Stone Age)',
       themeWasteland: '☢️ Terra Devastada (TRV-9000)',
-      diceRestrictedNote: 'Este tema é feito à mão só para d6 — os outros dados foram ocultados.',
       colorLabel: 'Cor Principal',
       colorNote: 'Esta textura já tem cor/padrão próprio — a cor escolhida não se aplica.',
       numberColorLabel: 'Cor dos Números (Apenas UI)',
@@ -510,7 +507,6 @@ body {
       themeHallowed: '🕯️ Hallowed (Sanctuary)',
       themePrimeval: '🪨 Primeval Stone (Stone Age)',
       themeWasteland: '☢️ Wasteland (TRV-9000)',
-      diceRestrictedNote: 'This hand-made theme only supports d6 — other dice are hidden.',
       colorLabel: 'Main Color',
       colorNote: "This texture already has its own color/pattern — the chosen color won't apply.",
       numberColorLabel: 'Number Color (UI Only)',
@@ -599,14 +595,6 @@ body {
     }, 200);
   });
 
-  // Bot themes only have a d6 mesh — zero out any other die counts saved/loaded for them.
-  function sanitizeCounts(s) {
-    if (ONLY_D6_THEMES.includes(s.theme)) {
-      DICE_TYPES.forEach(type => { if (type !== 6) s.counts[type] = 0; });
-    }
-    return s;
-  }
-
   function loadState() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -616,7 +604,7 @@ body {
         if (!parsed.sfx) parsed.sfx = 'none';
         if (!parsed.numberColor) parsed.numberColor = DEFAULT_STATE.numberColor;
         if (!parsed.numberFont) parsed.numberFont = DEFAULT_STATE.numberFont;
-        return sanitizeCounts(parsed);
+        return parsed;
       }
     } catch(e) {}
     return JSON.parse(JSON.stringify(DEFAULT_STATE));
@@ -661,7 +649,6 @@ body {
     if (!state.sfx) state.sfx = 'none';
     if (!state.numberColor) state.numberColor = DEFAULT_STATE.numberColor;
     if (!state.numberFont) state.numberFont = DEFAULT_STATE.numberFont;
-    sanitizeCounts(state);
     saveState();
     syncUIWithState();
     if (diceBox) {
@@ -716,7 +703,6 @@ body {
     document.getElementById('global-number-color-hex').textContent = state.numberColor;
     state.numberFont = document.getElementById('global-number-font').value;
     state.sfx = document.getElementById('global-sfx').value;
-    sanitizeCounts(state);
     saveState();
     updateColorPickerAvailability();
     applyNumberStyle();
@@ -732,9 +718,7 @@ body {
 
   function renderDiceList() {
     const list = document.getElementById('dice-list');
-    const restricted = ONLY_D6_THEMES.includes(state.theme);
-    const types = restricted ? [6] : DICE_TYPES;
-    list.innerHTML = types.map(type => {
+    list.innerHTML = DICE_TYPES.map(type => {
       const count = state.counts[type] || 0;
       return `
         <div class="die-row">
@@ -746,7 +730,7 @@ body {
           </div>
         </div>
       `;
-    }).join('') + (restricted ? `<p style="margin-top:10px; color: var(--text-dim); font-size: 0.75em;">${S().diceRestrictedNote}</p>` : '');
+    }).join('');
   }
 
   window.incDie = function(type, delta) {
