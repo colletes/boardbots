@@ -834,8 +834,14 @@ function renderCampaign(lang) {
 
                 <div class="pdf-field">
                     <div class="ribbon-row">
+                        <div class="ribbon-box setup">
+                            <div class="ribbon-title"><span>${ui.setupTitle}</span><span class="ribbon-stars">★ ★ ★</span></div>
+                            <div class="ribbon-body">
+                                <ul>${setup.map(g => `<li>${g}</li>`).join('')}</ul>
+                            </div>
+                        </div>
                         <div class="ribbon-box goals">
-                            <div class="ribbon-title">${ui.goalsTitle}<span class="ribbon-stars">★ ★ ★</span></div>
+                            <div class="ribbon-title"><span>${ui.goalsTitle}</span><span class="ribbon-stars">★ ★ ★</span></div>
                             <div class="ribbon-body">
                                 <h4>${ui.directive}</h4>
                                 <ul>${goals.map(g => `<li>${g}</li>`).join('')}</ul>
@@ -843,18 +849,14 @@ function renderCampaign(lang) {
                                 <ul>${extraGoals.map(g => `<li>${g}</li>`).join('')}</ul>
                             </div>
                         </div>
-                        <div class="ribbon-box setup">
-                            <div class="ribbon-title">${ui.setupTitle}<span class="ribbon-stars">★ ★ ★</span></div>
-                            <div class="ribbon-body">
-                                <ul>${setup.map(g => `<li>${g}</li>`).join('')}</ul>
-                            </div>
-                        </div>
                     </div>
 
                     <div class="pdf-result">
                         <span class="result-tab">${ui.resultTitle}</span>
-                        <p>${ui.resultComplete} ${canPromote && i < chapters && currentDiv > 1 ? ui.resultPromote + ' ' + (currentDiv - 1) + '.' : ''}</p>
-                        <p>${isCritical ? ui.resultFail : ui.resultFailSoft}${failPenaltyText ? ` <strong>${ui.failPenaltyLabel}:</strong> ${failPenaltyText}` : ''}</p>
+                        <div class="pdf-result-body">
+                            <p>${ui.resultComplete} ${canPromote && i < chapters && currentDiv > 1 ? ui.resultPromote + ' ' + (currentDiv - 1) + '.' : ''}</p>
+                            <p>${isCritical ? ui.resultFail : ui.resultFailSoft}${failPenaltyText ? ` <strong>${ui.failPenaltyLabel}:</strong> ${failPenaltyText}` : ''}</p>
+                        </div>
                     </div>
                 </div>
 
