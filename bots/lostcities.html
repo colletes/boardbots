@@ -1562,6 +1562,24 @@ function isPermanentlyDead(color, val) {
     return val <= highest;
   }
 
+  // Medium/hard REPLACE only ever succeeds when the incoming value beats the column's
+  // second-highest card, and each successful replace lowers the ceiling by exactly 1.
+  // Once the top two values are already consecutive, that condition can never be met
+  // again this round, so the ceiling is frozen for good - any value at or below it
+  // (which, by the time this is checked, has already failed to play right now) is dead.
+  // Hard's ADD keeps exactly one escape hatch open even after freezing: a card worth
+  // precisely highest-2 can still slot in below, as long as that value isn't taken yet.
+  if (difficulty === 'medium' || difficulty === 'hard') {
+    const highest = numbers[numbers.length - 1];
+    if (val <= highest) {
+      const secondHighest = numbers.length > 1 ? numbers[numbers.length - 2] : 0;
+      if (highest - secondHighest <= 1) {
+        const addEscape = difficulty === 'hard' && val === highest - 2 && !numbers.includes(val);
+        if (!addEscape) return true;
+      }
+    }
+  }
+
   return false;
 }
 
