@@ -56,9 +56,10 @@ Ao criar o HTML do bot, **você DEVE copiar e utilizar os seguintes elementos pa
    É OBRIGATÓRIO incluir o Modal de Regras (`#helpModal`) para explicar como o automa toma decisões, condições de vitória, e regras de desempate. Nunca assuma que as regras são simples demais para dispensar o modal.
 5. **Footer (Fim do body):**
    Sempre inclua os créditos do autor (`.credits`), o botão Buy Me a Coffee (`.bmc-inline`) e o botão Home para voltar (`.btn-home`).
-6. **Theming, Personalidade e UI Diegética (Padrão V2):**
+6. **Theming, Personalidade e UI Diegética (Padrão Completo):**
    O bot DEVE ter uma interface altamente imersiva e diegética (in-world). A interface deve se parecer com um componente físico ou um elemento dentro do universo do jogo (ex: interface de jornais de guerra da 2ª Guerra Mundial, um mapa de pergaminho de fantasia, blocos de mármore esculpidos ou marcadores de papelão/vitral estilo dial).
-   - Use texturas densas (noise SVG, degradês complexos), e pseudo-elementos (`::before`, `::after`) para compor cenários de fundo 3D (como mesas de madeira, ardósia, feltro ou pilares de pedra).
+   - **Texturas Reais CC0 Obrigatórias (`assets/textures/`):** Todo bot DEVE utilizar uma textura seamless CC0 real (ex: `dark-walnut.jpg`, `old-parchment.jpg`, `stone-slab.jpg`, `felt-weave.jpg`, `rusted-metal.jpg`, `cave-ground.jpg`, obtidas em ambientCG, 512x512, q72) combinada no stack de background do `body` ou contêiner de backdrop via blend modes (`multiply`, `overlay`, etc.). Nunca rely apenas em CSS puro ou gradientes planos.
+   - **Camada Atmosférica e Partículas Leves:** Inclua elementos sutis de ambiência temáticos (fagulhas/embers, poeira suspensa/dust, névoa, vapor, flocos de neve). Devem possuir `pointer-events: none`, `z-index: -1` e OBRIGATORIAMENTE ser envolvidos por `@media (prefers-reduced-motion: no-preference)`.
    - **Componentes Diegéticos Físicos:** Prefira sempre componentes diegéticos estilizados como objetos reais de mesa:
      - **Diais Físicos de Rodízio Duplo (Dual-Wheel Dials):** Marcadores de vida/pontos em formato de disco de papelão prensado com duas janelas recortadas (dezenas e unidades), rebites metálicos e acabamento temático (ex: Vitral/Obsidiana ou Ouro/Bronze).
      - **Tokens de Escudo/Marcadores:** Tokens de resina, metal ou madeira com feedback tátil de toque.
@@ -69,8 +70,12 @@ Ao criar o HTML do bot, **você DEVE copiar e utilizar os seguintes elementos pa
    - **Papel do Companion (Mesa Física vs Simulação Virtual):**
      - Quando o jogo físico possui cartas na caixa que o jogador compra na mesa, o bot NÃO deve simular a compra aleatória de cartas fictícias. O bot serve como assistente de estado de jogo (gerenciando escudos, dominância, dano, retaliações e gatilhos da mesa).
    - **Widescreen Layouts:** NUNCA confine a tela inteira em um `max-width: 500px` genérico no centro da tela para desktops. Em telas maiores (`min-width: 900px`), o layout deve se expandir utilizando CSS Grid ou Flexbox (ex: uma coluna lateral para status e uma coluna principal maior), aproveitando todo o espaço horizontal sem deixar enormes áreas pretas nas laterais.
-7. **Painel de Histórico (Log):**
-   É OBRIGATÓRIO incluir um painel de histórico de ações (log) na tela do jogo. O log deve registrar todas as ações e decisões do bot, para que o jogador possa auditar o que aconteceu caso clique rápido demais. O HTML deve conter um container (ex: `<div id="logPanel" class="log-panel"></div>`) e o JS deve alimentar esse painel com mensagens descritivas a cada jogada.
+   - **Nomenclatura Sem Sufixos de Versão:** NUNCA crie ou renomeie arquivos com sufixos de versão (`_v2`, `_RC2`). Os arquivos de bot residem diretamente como `bots/<nome_do_jogo>_bot.html` (ou nome consolidado) e são editados in-place. O histórico git e o ambiente de `staging` fornecem a segurança necessária.
+7. **Painel de Histórico (Log) com Voz em Personagem:**
+   É OBRIGATÓRIO incluir um painel de histórico de ações (log) na tela do jogo (`<div id="logPanel" class="log-panel"></div>`).
+   - O log deve registrar todas as ações e decisões do bot de forma descritiva e clara.
+   - **Voz Diegética (In-Character Voice):** O texto narrativo do log deve adotar a voz e a temática do jogo (ex: crônica tribal para Stone Age, conselheiro real para Tiny Epic Kingdoms, relatório de rádio de campanha para Memoir '44, diário de campo zoológico para Ark Nova, análise tática militar para Heroscape).
+   - **Preservação de Dados Mecânicos:** Nunca sacrifique a precisão dos dados em favor da narrativa. Mantenha os números, bônus, cartas descartadas e resultados de dados legíveis e auditáveis pelo jogador.
 ## 4.1 Internacionalização (i18n)
 
 
@@ -187,31 +192,42 @@ assets/art/7wd/leaders/bilkis.webp
 assets/art/7wd/decision_cards/dc_01.webp … dc_12.webp
 ```
 
-## 11. Conhecimento Específico: 3D Dice Box
+## 11. Conhecimento Específico: 3D Dice Box via Módulo Centralizado (`assets/dice-roller.js`)
 
-Ao integrar o `@3d-dice/dice-box` para rolagem física de dados:
+Ao integrar rolagem física 3D de dados em qualquer bot:
 
-1. **Evite Bugs de CORS/Web Worker:** Sempre use CDN com configuração exata para `assetPath` e `origin`. O worker precisa ser carregado do root do `dist/`.
-2. **Setup do Objeto:**
+1. **Utilize SEMPRE o Módulo Centralizado:** NUNCA copie código de inicialização do CDN `@3d-dice/dice-box` no inline script do bot. Use o helper compartilhado `assets/dice-roller.js`:
    ```javascript
-   const { default: DiceBox } = await import('https://unpkg.com/@3d-dice/dice-box@1.1.3/dist/dice-box.es.min.js');
-   diceBox = new DiceBox({
-     container: '#dice-box',
-     assetPath: 'assets/', 
-     origin: 'https://unpkg.com/@3d-dice/dice-box@1.1.3/dist/',
-     theme: 'default', themeColor: '#475569', scale: 9
-   });
+   const { loadDiceBox, rollDiceSafe, sanitizeDie } = await import('../assets/dice-roller.js');
    ```
-3. **Failsafe Global Rigoroso:** Para evitar congelamento infinito da UI caso o CDN caia ou o CSP bloqueie o import, enrole o `initDiceBox()` inteiro em um `Promise.race` de 3 segundos dentro de um bloco `try/catch`. Se falhar, ative um fallback imediato para `Math.random()`.
-4. **Mecânica de "Dice Tray" Estático (Altamente Recomendado):**
-   - Não mova o contêiner do dado (`#dice-box`) dinamicamente no DOM com `appendChild`, pois isso pode causar bugs em UIs reativas ou quando combinado com limpezas de `textContent`.
-   - Crie um "Tray" fixo e invisível no canto da tela e insira o `#dice-box` permanentemente dentro dele:
-     ```html
-     <div id="dice-tray" style="position:fixed; bottom:20px; left:20px; width:180px; height:180px; z-index:9999; pointer-events:none;">
-       <div id="dice-box" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none;"></div>
-     </div>
+2. **Temas Customizados (Bespoke Themes):** Escolha um tema diegético do pacote `@3d-dice/dice-themes` condizente com a arte do jogo em vez do cinza padrão:
+   - Temas disponíveis: `wooden` (madeira), `rust` (ferrugem pós-apocalíptica/militar), `gemstone` / `gemstoneMarble` (fantasia/joia), `blueGreenMetal` (fantasia medieval/alquimia), `smooth` (moderno clean, aceita `themeColor`), etc.
+   - Exemplo de setup:
+     ```javascript
+     diceBox = await loadDiceBox({
+       container: '#dice-box',
+       theme: 'wooden',
+       scale: 27,
+       timeoutMs: 5000
+     });
      ```
-   - Assim o dado rolará sempre no mesmo local, livre de bugs de renderização.
+3. **Execução Segura com `rollDiceSafe` + `sanitizeDie`:**
+   ```javascript
+   try {
+     const rollResult = await rollDiceSafe(diceBox, '1d6');
+     const dieVal = sanitizeDie(rollResult[0].value, 6);
+     // continuar lógica com dieVal...
+   } catch (err) {
+     console.warn("DiceBox timeout/falha, usando fallback:", err);
+     const dieVal = Math.floor(Math.random() * 6) + 1;
+   }
+   ```
+4. **Regra Crítica: Inicialização Lazy em Modais / Overlays (Bug Post-Ship Previsto):**
+   - Se o `#dice-box` residir dentro de um contêiner inicialmente oculto (`display: none`, classe `.hidden` ou modal fechada), **NUNCA inicialize o DiceBox no carregamento da página**.
+   - O WebGL colapsa para uma caixa `0x0`, resultando em tela preta sólida.
+   - A inicialização DEVE ser lazy e memoizada por Promise, chamada **imediatamente após** a remoção da classe de ocultação (`overlay.classList.remove('hidden')`), quando o elemento já tiver dimensões de layout reais.
+5. **Validação Obrigatória com Screenshot dos Dados Renderizados:**
+   - Ao testar ou validar bots com dados 3D via scripts Playwright, **não valide apenas flags booleanas ou variáveis de estado**. É mandatório capturar um screenshot dos dados efetivamente renderizados na tela durante a rolagem para confirmar ausência de bugs visuais (como o bug da tela preta).
 
 ## 12. Lições Críticas de Implementação e Boas Práticas (Aprendizados Recentes)
 

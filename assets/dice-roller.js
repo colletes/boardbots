@@ -63,12 +63,33 @@ export async function loadDiceBox(opts = {}) {
 }
 
 /**
+ * Triggers mobile haptic feedback safely if supported.
+ * @param {number|number[]} pattern - vibration duration in ms, or array of durations/pauses
+ */
+export function triggerHaptic(pattern = [25]) {
+  try {
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator && typeof navigator.vibrate === 'function') {
+      navigator.vibrate(pattern);
+    }
+  } catch (_) {
+    // Silently ignore in unsupported or security-restricted environments
+  }
+}
+
+/**
  * Rolls dice on an already-initialized DiceBox instance, guarded by a timeout
  * (the physics engine can occasionally never settle and silently hang).
+ * Triggers haptic pulse on start and settle when supported.
  */
 export function rollDiceSafe(diceBox, notation, timeoutMs = 5000) {
+  triggerHaptic([25]);
+  const rollPromise = diceBox.roll(notation).then(results => {
+    triggerHaptic([15, 30, 20]);
+    return results;
+  });
+
   return Promise.race([
-    diceBox.roll(notation),
+    rollPromise,
     new Promise((_, reject) => setTimeout(() => reject(new Error('DiceBox roll timeout')), timeoutMs))
   ]);
 }

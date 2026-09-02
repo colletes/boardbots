@@ -735,7 +735,7 @@ h1, h2 { text-transform: uppercase; letter-spacing: 2px; border-bottom: 2px soli
     <h3 data-i18n="lc_setup_head">Setup</h3>
     <ul style="color:var(--text-muted); line-height:1.6; margin-top:10px; padding-left:20px;">
       <li data-i18n="lc_setup_1">Shuffle the 60 cards. Deal 8 cards to yourself.</li>
-      <li data-i18n="lc_setup_2">The bot has NO physical hand. It draws from the deck.</li>
+      <li data-i18n="lc_setup_2">The bot starts with starting cards in its reserve. Deal 8 cards to yourself and draw starting cards for the bot.</li>
       <li data-i18n="lc_setup_3">When the bot draws a card (or snatches one from the discard), input it here to see what the bot does!</li>
     </ul>
   </div>
@@ -773,7 +773,7 @@ h1, h2 { text-transform: uppercase; letter-spacing: 2px; border-bottom: 2px soli
         <div class="total-score"><span data-i18n="lc_total">Total Score:</span> <span id="totalScoreText">0</span></div>
       </header>
       <div class="input-panel">
-        <div style="font-weight:bold; margin-bottom:10px;" data-i18n="lc_input_card">Show card to bot:</div>
+        <div id="inputPromptText" style="font-weight:bold; margin-bottom:10px;" data-i18n="lc_input_card">Show card to bot:</div>
         <div class="color-selector">
           <button class="color-btn c-yellow" data-color="yellow" onclick="selectColor('yellow')"></button>
           <button class="color-btn c-blue" data-color="blue" onclick="selectColor('blue')"></button>
@@ -918,18 +918,19 @@ Object.assign(window.I18N.pt, {
   lc_subtitle: "Lost Cities — Automa",
   lc_setup_head: "Preparação",
   lc_setup_1: "Embaralhe as 60 cartas. Dê 8 para você.",
-  lc_setup_2: "O bot NÃO tem mão. Ele compra direto do baralho.",
+  lc_setup_2: "O bot começa com {init} cartas em sua reserva. Dê 8 para você e compre {init} cartas para o bot.",
   lc_setup_3: "Quando o bot comprar uma carta (ou pegar do descarte), informe a carta aqui para ver o que ele faz!",
+  lc_setup_cards_prompt: "Preparação do Bot: Informe a carta {curr} de {total}",
   lc_diff_head: "Dificuldade",
   
   lc_diff_easy: "Fácil",
-  lc_diff_easy_desc: "Joga de forma inteligente, mas sem regra de substituir/adicionar.",
+  lc_diff_easy_desc: "2 cartas iniciais. Joga de forma inteligente, em ordem estritamente crescente.",
   lc_diff_medium: "Médio",
-  lc_diff_medium_desc: "Substitui a carta se a nova for exatamente 1 valor menor (Regra Variante).",
+  lc_diff_medium_desc: "3 cartas iniciais. Encaixa cartas de até 2 valores abaixo (-1 e -2) sem descartar.",
   lc_diff_hard: "Difícil",
-  lc_diff_hard_desc: "Substitui se for -1, adiciona sem substituir se for -2.",
+  lc_diff_hard_desc: "4 cartas iniciais. Encaixa cartas de até 3 valores abaixo (-1, -2 e -3) sem descartar.",
   lc_diff_gods: "Desafio dos Deuses",
-  lc_diff_gods_desc: "Trapaceia: joga toda carta recebida fora de ordem.",
+  lc_diff_gods_desc: "4 cartas iniciais. Trapaceia: joga toda carta recebida fora de ordem.",
   
   lc_start: "Iniciar Partida",
   lc_mode_title: "Modo de Jogo",
@@ -959,6 +960,8 @@ Object.assign(window.I18N.pt, {
   
   lc_res_play_title: "JOGAR NA EXPEDIÇÃO",
   lc_res_play_desc: "Coloque a carta na expedição do bot.",
+  lc_res_slot_title: "ENCAIXAR NA EXPEDIÇÃO",
+  lc_res_slot_desc: "O bot encontrou uma rota intermediária e encaixou esta carta em ordem na expedição!",
   lc_res_discard_title: "DESCARTAR",
   lc_res_discard_desc: "O bot não quer essa carta. Coloque-a no descarte.",
   lc_res_discard_full_desc: "O bot não pode jogar essa carta agora e sua reserva já está cheia ({cap} cartas guardadas). Coloque-a no descarte.",
@@ -969,7 +972,7 @@ Object.assign(window.I18N.pt, {
   lc_res_reserve_title: "GUARDAR NA RESERVA",
   lc_res_reserve_desc: "O bot não pode jogar agora, mas guardou esta carta na sua reserva para jogar assim que possível!",
   lc_res_reserve_swap_title: "TROCA NA RESERVA",
-  lc_res_reserve_swap_desc: "A reserva já estava cheia, mas esta carta é mais flexível (mais cartas futuras podem seguir ela) do que uma das já guardadas — o bot troca, mantendo esta e descartando a menos útil.",
+  lc_res_reserve_swap_desc: "A reserva já estava cheia, mas esta carta é mais valiosa ou flexível do que uma das já guardadas — o bot troca, mantendo esta e descartando a menos útil.",
   lc_res_reserve_deferred_title: "AGUARDA UMA CARTA MELHOR",
   lc_res_reserve_deferred_desc: "Essa carta já poderia ser jogada, mas o salto é grande demais (descartaria vários valores intermediários para sempre). O bot guarda na reserva na esperança de uma carta mais próxima chegar primeiro.",
   lc_reserve_title: "Mão Virtual do Automa (Reserva)",
@@ -994,9 +997,9 @@ Object.assign(window.I18N.pt, {
   helpRulesTitle: "Regras do Automa",
   helpRulesIntro: "Na vez do automa, ele recebe uma carta. Você deve comprá-la e apresentá-la ao app usando os botões abaixo.",
   helpDrawTitle: "Compra (Deck vs Descarte)",
-  helpDrawText: "O automa sempre compra do <strong>baralho</strong>, EXCETO se o <strong>descarte</strong> tiver uma das cartas indicadas no painel abaixo do tabuleiro. No nível Difícil ou Deuses, ele também tentará pegar cartas menores para preencher buracos em suas expedições!",
-  helpDecisionsTitle: "Decisões (Jogar, Substituir, Descartar)",
-  helpDecisionsList: "<li><strong>Fácil:</strong> Joga de forma inteligente, mas não utiliza regras avançadas.</li><li><strong>Médio:</strong> Utiliza a regra variante: substitui a carta mais alta se a comprada for exatamente 1 valor menor.</li><li><strong>Difícil:</strong> Substitui a carta mais alta se a nova for -1. Mantém a carta e adiciona a nova se for -2.</li><li><strong>Deuses Antigos:</strong> O Automa trapaceia! Ele joga todas as cartas que recebe, inserindo-as fora de ordem na expedição.</li><li><strong>Seguro de Aperto de Mão:</strong> O multiplicador de <svg class='icon-inline' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M3 12h5l2.5-2.5L13 12h5'/><circle cx='12' cy='12' r='2.2'/></svg> só aumenta pontuações positivas; o bot não multiplica pontuações negativas em expedições com prejuízo.</li><li><strong>Retração de Expedição:</strong> Expedições com apenas 1 carta no final do jogo são consideradas abandonadas e pontuam 0 em vez de -20.</li><li><strong>Reserva do Automa:</strong> O bot guarda até 2 cartas na mão virtual e as joga automaticamente quando uma jogada futura desbloquear a coluna.</li>",
+  helpDrawText: "O automa sempre compra do <strong>baralho</strong>, EXCETO se o <strong>descarte</strong> tiver uma das cartas indicadas no painel abaixo do tabuleiro. No nível Médio, Difícil ou Deuses, ele também tentará pegar cartas menores para preencher buracos em suas expedições!",
+  helpDecisionsTitle: "Decisões (Jogar, Encaixar, Descartar)",
+  helpDecisionsList: "<li><strong>Fácil:</strong> 2 cartas iniciais. Joga em ordem estritamente crescente, sem encaixes reversos.</li><li><strong>Médio:</strong> 3 cartas iniciais. Regra de Encaixe: se a carta comprada for até 2 valores menor (-1 ou -2) que o topo da expedição, ela é encaixada em ordem sem descartar a maior.</li><li><strong>Difícil:</strong> 4 cartas iniciais. Encaixa cartas de até 3 valores menores (-1, -2 ou -3) sem descartar a maior.</li><li><strong>Deuses Antigos:</strong> 4 cartas iniciais. O Automa trapaceia! Ele joga todas as cartas que recebe, ordenando-as magicamente fora de ordem.</li><li><strong>Seguro de Aperto de Mão:</strong> O multiplicador de <svg class='icon-inline' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M3 12h5l2.5-2.5L13 12h5'/><circle cx='12' cy='12' r='2.2'/></svg> só aumenta pontuações positivas; o bot não multiplica pontuações negativas em expedições com prejuízo.</li><li><strong>Retração de Expedição Fracassada:</strong> Expedições com até 2 cartas cuja soma não alcance 20 pontos são consideradas abandonadas e pontuam 0 em vez de prejuízo negativo.</li><li><strong>Reserva do Automa:</strong> O bot guarda cartas na sua reserva e as joga automaticamente quando uma jogada futura desbloquear a coluna. Cartas de valor alto (8, 9, 10) e Apertos de Mão são protegidos contra descarte.</li>",
   creditsText: "Criado por <strong>Thiago Colletes de Carvalho</strong> (<a href='mailto:colletes@gmail.com'>colletes@gmail.com</a>) — regras da variante originais. Lost Cities criado por Reiner Knizia, © KOSMOS. Uso pessoal e não comercial.",
   c_yellow: "Amarelo", c_blue: "Azul", c_white: "Branco", c_green: "Verde", c_red: "Vermelho"
 });
@@ -1006,18 +1009,19 @@ Object.assign(window.I18N.en, {
   lc_subtitle: "Lost Cities — Automa",
   lc_setup_head: "Setup",
   lc_setup_1: "Shuffle the 60 cards. Deal 8 cards to yourself.",
-  lc_setup_2: "The bot has NO physical hand. It draws from the deck.",
+  lc_setup_2: "The bot starts with {init} cards in its reserve. Deal 8 cards to yourself and draw {init} cards for the bot.",
   lc_setup_3: "When the bot draws a card (or snatches one from the discard), input it here to see what the bot does!",
+  lc_setup_cards_prompt: "Bot Setup: Input starting card {curr} of {total}",
   lc_diff_head: "Difficulty",
   
   lc_diff_easy: "Easy",
-  lc_diff_easy_desc: "Plays smartly, without replacing cards.",
+  lc_diff_easy_desc: "2 starting cards. Plays smartly, in strictly ascending order.",
   lc_diff_medium: "Medium",
-  lc_diff_medium_desc: "Replaces if the card is exactly 1 value lower (Variant Rule).",
+  lc_diff_medium_desc: "3 starting cards. Slots in cards up to 2 values lower (-1 and -2) without discarding.",
   lc_diff_hard: "Hard",
-  lc_diff_hard_desc: "Replaces if -1, adds without replacing if -2.",
+  lc_diff_hard_desc: "4 starting cards. Slots in cards up to 3 values lower (-1, -2 and -3) without discarding.",
   lc_diff_gods: "Challenge of the Gods",
-  lc_diff_gods_desc: "The Automa cheats and magically sorts all cards.",
+  lc_diff_gods_desc: "4 starting cards. The Automa cheats and magically sorts all cards.",
   
   lc_start: "Start Game",
   lc_mode_title: "Game Mode",
@@ -1047,6 +1051,8 @@ Object.assign(window.I18N.en, {
   
   lc_res_play_title: "PLAY ON EXPEDITION",
   lc_res_play_desc: "Place the card on the bot's expedition.",
+  lc_res_slot_title: "SLOT INTO EXPEDITION",
+  lc_res_slot_desc: "The bot found an in-between route and slotted this card in order into the expedition!",
   lc_res_discard_title: "DISCARD",
   lc_res_discard_desc: "The bot doesn't want this card. Discard it.",
   lc_res_discard_full_desc: "The bot can't play this card right now and its reserve is already full ({cap} cards held). Discard it.",
@@ -1057,7 +1063,7 @@ Object.assign(window.I18N.en, {
   lc_res_reserve_title: "HOLD IN RESERVE",
   lc_res_reserve_desc: "The bot cannot play this now, but kept it in its reserve to play as soon as possible!",
   lc_res_reserve_swap_title: "RESERVE SWAP",
-  lc_res_reserve_swap_desc: "The reserve was already full, but this card is more flexible (more future cards could still follow it) than one already held — the bot swaps, keeping this one and discarding the less useful one.",
+  lc_res_reserve_swap_desc: "The reserve was already full, but this card is more valuable or flexible than one already held — the bot swaps, keeping this one and discarding the less useful one.",
   lc_res_reserve_deferred_title: "WAITING FOR A BETTER CARD",
   lc_res_reserve_deferred_desc: "This card could already be played, but the jump is too big (it would permanently skip several in-between values). The bot holds it in reserve, hoping a closer card arrives first.",
   lc_reserve_title: "Automa Virtual Hand (Reserve)",
@@ -1082,9 +1088,9 @@ Object.assign(window.I18N.en, {
   helpRulesTitle: "Automa Rules",
   helpRulesIntro: "On the automa's turn, it receives a card. You must draw it and present it to the app using the buttons below.",
   helpDrawTitle: "Drawing (Deck vs Discard)",
-  helpDrawText: "The automa always draws from the <strong>deck</strong>, UNLESS the <strong>discard pile</strong> has one of the specific cards listed in the panel below the board. On Hard or Gods difficulty, it will also try to snipe slightly lower cards to fill gaps in its expeditions!",
-  helpDecisionsTitle: "Decisions (Play, Replace, Discard)",
-  helpDecisionsList: "<li><strong>Easy:</strong> Plays smartly but does not use advanced rules.</li><li><strong>Medium:</strong> Uses the variant rule: replaces the highest card if the drawn one is exactly 1 value lower.</li><li><strong>Hard:</strong> Replaces the highest card if the new one is -1. Keeps the card and adds the new one if it is -2.</li><li><strong>Ancient Gods:</strong> The Automa cheats! It plays every card it receives, magically sorting them out of order into its expedition!</li><li><strong>Handshake Insurance:</strong> <svg class='icon-inline' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M3 12h5l2.5-2.5L13 12h5'/><circle cx='12' cy='12' r='2.2'/></svg> multipliers only boost positive scores; negative expedition scores are not multiplied.</li><li><strong>Expedition Retraction:</strong> Expeditions with only 1 card at the end of the round are considered abandoned and score 0 instead of -20.</li><li><strong>Automa Reserve:</strong> The bot holds up to 2 cards in its virtual hand and automatically deploys them when a future play opens up the column.</li>",
+  helpDrawText: "The automa always draws from the <strong>deck</strong>, UNLESS the <strong>discard pile</strong> has one of the specific cards listed in the panel below the board. On Medium, Hard or Gods difficulty, it will also try to snipe slightly lower cards to fill gaps in its expeditions!",
+  helpDecisionsTitle: "Decisions (Play, Slot, Discard)",
+  helpDecisionsList: "<li><strong>Easy:</strong> 2 starting cards. Plays in strictly ascending order, without reverse slotting.</li><li><strong>Medium:</strong> 3 starting cards. Slotting rule: if the drawn card is up to 2 values lower (-1 or -2) than the column's top, it is slotted into the expedition without discarding the higher card.</li><li><strong>Hard:</strong> 4 starting cards. Slots in cards up to 3 values lower (-1, -2 or -3) without discarding the higher card.</li><li><strong>Ancient Gods:</strong> 4 starting cards. The Automa cheats! It plays every card it receives, magically sorting them out of order into its expedition.</li><li><strong>Handshake Insurance:</strong> <svg class='icon-inline' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M3 12h5l2.5-2.5L13 12h5'/><circle cx='12' cy='12' r='2.2'/></svg> multipliers only boost positive scores; negative expedition scores are not multiplied.</li><li><strong>Expedition Retraction:</strong> Expeditions with up to 2 cards that fail to reach 20 points are considered abandoned and score 0 instead of negative penalties.</li><li><strong>Automa Reserve:</strong> The bot holds cards in its reserve and automatically deploys them when a future play opens up the column. High cards (8, 9, 10) and Wagers are protected against eviction.</li>",
   creditsText: "Made by <strong>Thiago Colletes de Carvalho</strong> (<a href='mailto:colletes@gmail.com'>colletes@gmail.com</a>) — original variant rules. Lost Cities designed by Reiner Knizia, © KOSMOS. Personal, non-commercial use.",
   c_yellow: "Yellow", c_blue: "Blue", c_white: "White", c_green: "Green", c_red: "Red"
 });
@@ -1098,9 +1104,32 @@ Object.assign(window.I18N.en, {
 let difficulty = 'medium';
 let expeditions = { yellow: [], blue: [], white: [], green: [], red: [] };
 let botReserve = [];
-        let gameLog = []; renderLog();
+let gameLog = []; renderLog();
 let selColor = null;
 let selVal = null;
+let initialCardsNeeded = 3;
+let initialCardsGiven = 0;
+
+function getInitialCardsCount() {
+  if (difficulty === 'easy') return 2;
+  if (difficulty === 'medium') return 3;
+  if (difficulty === 'hard') return 4;
+  if (difficulty === 'gods') return 4;
+  return 3;
+}
+
+function updateInputPrompt() {
+  const promptEl = document.getElementById('inputPromptText');
+  if (!promptEl) return;
+  const lang = localStorage.getItem('boardbots_lang') || 'pt';
+  if (initialCardsGiven < initialCardsNeeded) {
+    const tpl = (window.I18N[lang] && window.I18N[lang].lc_setup_cards_prompt) || 
+      "Preparação do Bot: Informe a carta {curr} de {total}";
+    promptEl.innerHTML = `<span style="color:var(--accent); font-weight:bold;">${tpl.replace('{curr}', initialCardsGiven + 1).replace('{total}', initialCardsNeeded)}</span>`;
+  } else {
+    promptEl.innerText = (window.I18N[lang] && window.I18N[lang].lc_input_card) || "Mostrar carta ao bot:";
+  }
+}
 
 const COLORS = ['yellow', 'blue', 'white', 'green', 'red'];
 
@@ -1119,6 +1148,8 @@ function setDifficulty(d, btn) {
   difficulty = d;
   document.querySelectorAll('#diffOptionsContainer .diff-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
+  initialCardsNeeded = getInitialCardsCount();
+  applyI18n();
   renderTableau();
 }
 
@@ -1175,7 +1206,11 @@ function startRound() {
     if (gameMode === 'automa') {
         showScreen('gameScreen');
         expeditions = { yellow: [], blue: [], white: [], green: [], red: [] };
+        botReserve = [];
         gameLog = []; renderLog();
+        initialCardsNeeded = getInitialCardsCount();
+        initialCardsGiven = 0;
+        updateInputPrompt();
         renderTableau();
     } else {
         calcCurrentPlayer = 1;
@@ -1333,6 +1368,9 @@ function resetGameForced() {
     scoresP1 = []; scoresP2 = []; currentRound = 1;
     expeditions = { yellow:[], blue:[], white:[], green:[], red:[] };
     botReserve = [];
+    initialCardsNeeded = getInitialCardsCount();
+    initialCardsGiven = 0;
+    updateInputPrompt();
     renderTableau();
 }
 
@@ -1367,6 +1405,8 @@ function logAction(action, color, value, reason) {
     let msg = "";
     if (action === 'PLAY') {
         msg = lang === 'pt' ? `A expedição ${cName} avança com uma carta de valor ${valText}.` : `The ${cName} expedition advances with a card of value ${valText}.`;
+    } else if (action === 'SLOT') {
+        msg = lang === 'pt' ? `A expedição ${cName} ganha reforço, encaixando a carta ${valText}.` : `The ${cName} expedition is reinforced, slotting in card ${valText}.`;
     } else if (action === 'REPLACE') {
         msg = lang === 'pt' ? `A expedição ${cName} recalcula a rota, trocando pela carta ${valText}.` : `The ${cName} expedition reroutes, swapping in card ${valText}.`;
     } else if (action === 'RESERVE') {
@@ -1397,34 +1437,38 @@ function renderLog() {
 function calculateScore(colArray, isAutoma = false) {
   if (colArray.length === 0) return 0;
   
-  // Retracao de Expedicao Fracassada (Expedition Retraction for Automa): a single card, or
-  // any number of wagers with NO numbered card ever played, counts as abandoned (0 pts)
-  // instead of the harsh -20 (or worse) a wager multiplier would otherwise lock in.
-  if (isAutoma && (colArray.length === 1 || !colArray.some(v => v !== 'H'))) return 0;
-  
   let mult = 1;
   let sum = 0;
+  let hasNumbers = false;
   for (let v of colArray) {
     if (v === 'H') mult++;
-    else sum += v;
+    else {
+      sum += v;
+      hasNumbers = true;
+    }
   }
   
   let base = sum - 20;
-  let score = 0;
   
   if (isAutoma) {
-    // Seguro de Aperto de Mao (Handshake Insurance for Automa): negative scores not multiplied
+    // Retracao de Expedicao Fracassada ampliada para o Automa: qualquer expedicao sem numeros,
+    // ou com ate 2 cartas cuja soma nao alcance 20 pontos, e considerada abandonada (0 pts)
+    // em vez do prejuizo negativo que causaria sangria no placar do bot.
+    if (!hasNumbers || (colArray.length <= 2 && base < 0)) return 0;
+    
+    // Seguro de Aperto de Mao (Handshake Insurance for Automa): pontuacoes negativas nao sao multiplicadas
     if (base < 0) {
-      score = base;
+      return base;
     } else {
-      score = base * mult;
+      let score = base * mult;
+      if (colArray.length >= 8) score += 20;
+      return score;
     }
   } else {
-    score = base * mult;
+    let score = base * mult;
+    if (colArray.length >= 8) score += 20;
+    return score;
   }
-  
-  if (colArray.length >= 8) score += 20;
-  return score;
 }
 
 function renderReserve() {
@@ -1478,6 +1522,7 @@ function renderTableau() {
 
 function tryPlayCard(color, val) {
   const col = expeditions[color];
+  const focusCap = getFocusCap();
   
   if (difficulty === 'gods') {
     if (val === 'H') {
@@ -1499,7 +1544,7 @@ function tryPlayCard(color, val) {
   } else {
     if (val === 'H') {
       if (col.length === 0) {
-        if (activeColumnCount() >= FOCUS_CAP) return null; // stay focused instead of spreading across every color
+        if (activeColumnCount() >= focusCap) return null; // stay focused instead of spreading across every color
         col.push('H');
         return "PLAY";
       } else if (col[col.length-1] === 'H' && col.length < 3) {
@@ -1510,8 +1555,6 @@ function tryPlayCard(color, val) {
     } else {
       const numbers = col.filter(v => v !== 'H');
       const highest = numbers.length > 0 ? numbers[numbers.length - 1] : 0;
-      // A wager sitting below the lone number counts as an implicit '1' for replace math.
-      const secondHighest = numbers.length > 1 ? numbers[numbers.length - 2] : (numbers.length === 1 && col[0] === 'H' ? 1 : 0);
       
       if (val > highest) {
         // Use "no numbers yet" (not "no cards yet") so pre-placed wagers can't bypass
@@ -1521,12 +1564,11 @@ function tryPlayCard(color, val) {
           COLORS.forEach(c => totalCards += expeditions[c].length);
           if (totalCards >= 15) {
             return null; // Late game, don't start new expeditions
-          } else if (col.length === 0 && activeColumnCount() >= FOCUS_CAP) {
+          } else if (col.length === 0 && activeColumnCount() >= focusCap) {
             return null; // stay focused instead of spreading across every color
           } else if (val > 5) {
             // Too high to start: ascending-only play means a high starter forfeits
-            // every lower card of this color for the rest of the round (Easy has no
-            // replace mechanism at all, so this matters even more there).
+            // every lower card of this color for the rest of the round.
             return null;
           } else {
             col.push(val);
@@ -1538,27 +1580,15 @@ function tryPlayCard(color, val) {
         }
       } else {
         const diff = highest - val;
-        if (difficulty === 'hard') {
-          // Hard Mode Hybrid: Replace on 1, Add on 2
-          if (diff === 1 && val > secondHighest) {
-            col[col.length - 1] = val;
-            return "REPLACE";
-          } else if (diff === 2 && !col.includes(val)) {
-            col.push(val);
-            let hArr = col.filter(x => x === 'H');
-            let numArr = col.filter(x => x !== 'H').sort((a,b) => a - b);
-            expeditions[color] = hArr.concat(numArr);
-            return "PLAY";
-          } else {
-            return null;
-          }
-        } else if (difficulty === 'medium') {
-          if (diff === 1 && val > secondHighest) {
-            col[col.length - 1] = val;
-            return "REPLACE";
-          } else {
-            return null;
-          }
+        const maxSlotDiff = (difficulty === 'hard') ? 3 : (difficulty === 'medium' ? 2 : 0);
+        // Regra de Encaixe (Gap Slotting): se a carta for menor que o topo por uma margem aceitavel
+        // e ainda nao constar na coluna, o bot mantem a carta maior e insere a nova em ordem!
+        if (maxSlotDiff > 0 && diff <= maxSlotDiff && !col.includes(val)) {
+          col.push(val);
+          let hArr = col.filter(x => x === 'H');
+          let numArr = col.filter(x => x !== 'H').sort((a,b) => a - b);
+          expeditions[color] = hArr.concat(numArr);
+          return "SLOT";
         } else {
           return null;
         }
@@ -1568,20 +1598,17 @@ function tryPlayCard(color, val) {
 }
 
 // A card is permanently dead when NO future draw can ever make it playable again to its
-// expedition this round (numbered cards can, in rare cases, still be freed up by later
-// REPLACE actions lowering the column's top value, so only the provably-permanent cases
-// below are treated as dead: wager-after-numbers, 3 wagers already placed, and a
-// still-unstarted column once the "too late to start new expeditions" threshold is crossed).
+// expedition this round (wager-after-numbers, 3 wagers already placed, unstarted column past focus cap,
+// or a numbered card that is already below highest by more than maxSlotDiff).
 function isPermanentlyDead(color, val) {
   const col = expeditions[color];
+  const focusCap = getFocusCap();
 
   if (val === 'H') {
     if (difficulty === 'gods') return col.filter(x => x === 'H').length >= 3;
     const hasNumbers = col.some(v => v !== 'H');
     if (hasNumbers) return true; // wagers must precede all numbers; numbers are never removed
-    // Active column count never decreases mid-round, so once the focus cap is reached
-    // a still-untouched color can never open again this round either.
-    if (col.length === 0 && activeColumnCount() >= FOCUS_CAP) return true;
+    if (col.length === 0 && activeColumnCount() >= focusCap) return true;
     return col.filter(x => x === 'H').length >= 3; // max 3 wagers; count never decreases
   }
 
@@ -1593,37 +1620,19 @@ function isPermanentlyDead(color, val) {
   if (numbers.length === 0) {
     let totalCards = 0;
     COLORS.forEach(c => totalCards += expeditions[c].length);
-    // totalCards only ever grows, so once the late-game threshold is crossed this
-    // still-empty column can never be started by ANY card again this round.
     if (totalCards >= 15) return true;
-    // Same logic for the focus cap: active column count never decreases mid-round.
-    if (col.length === 0 && activeColumnCount() >= FOCUS_CAP) return true;
+    if (col.length === 0 && activeColumnCount() >= focusCap) return true;
     return false;
   }
 
-  // Easy mode has no replace/insert mechanism at all, so its expedition's top value
-  // never decreases (unlike medium/hard) - any blocked numbered card is dead forever.
-  if (difficulty === 'easy') {
-    const highest = numbers[numbers.length - 1];
-    return val <= highest;
-  }
-
-  // Medium/hard REPLACE only ever succeeds when the incoming value beats the column's
-  // second-highest card, and each successful replace lowers the ceiling by exactly 1.
-  // Once the top two values are already consecutive, that condition can never be met
-  // again this round, so the ceiling is frozen for good - any value at or below it
-  // (which, by the time this is checked, has already failed to play right now) is dead.
-  // Hard's ADD keeps exactly one escape hatch open even after freezing: a card worth
-  // precisely highest-2 can still slot in below, as long as that value isn't taken yet.
-  if (difficulty === 'medium' || difficulty === 'hard') {
-    const highest = numbers[numbers.length - 1];
-    if (val <= highest) {
-      // A wager sitting below the lone number counts as an implicit '1' for replace math.
-      const secondHighest = numbers.length > 1 ? numbers[numbers.length - 2] : (numbers.length === 1 && col[0] === 'H' ? 1 : 0);
-      if (highest - secondHighest <= 1) {
-        const addEscape = difficulty === 'hard' && val === highest - 2 && !numbers.includes(val);
-        if (!addEscape) return true;
-      }
+  const highest = numbers[numbers.length - 1];
+  if (val <= highest) {
+    if (numbers.includes(val)) return true;
+    const maxSlotDiff = (difficulty === 'hard') ? 3 : (difficulty === 'medium' ? 2 : 0);
+    // Como a carta mais alta nao e mais descartada, o topo nunca regride.
+    // Qualquer carta cujo salto para baixo seja maior que maxSlotDiff nunca mais podera entrar.
+    if (maxSlotDiff === 0 || (highest - val) > maxSlotDiff) {
+      return true;
     }
   }
 
@@ -1700,27 +1709,32 @@ function checkReservePlays(triggerColor) {
 // A big ascending jump forfeits every skipped value forever (once past a number, this
 // variant's rules never let it come back). Worth waiting one card to see if a smaller,
 // less wasteful follow-up shows up first, instead of always committing immediately.
+// Nao posterga se a partida ja estiver avancada ou se a reserva estiver perto de encher.
 function shouldDeferBigJump(color, val) {
   if (difficulty === 'gods' || val === 'H') return false;
   const numbers = expeditions[color].filter(v => v !== 'H');
   if (numbers.length === 0) return false; // starting fresh is handled by the existing start-up cap
+  let totalCards = 0;
+  COLORS.forEach(c => totalCards += expeditions[c].length);
+  if (totalCards >= 10 || botReserve.length >= getReserveCap() - 1) return false;
   const highest = numbers[numbers.length - 1];
   return (val - highest) >= 4; // skips 3+ still-possible values
 }
 
-// Harder difficulties already juggle more possibilities (replace/add-and-resort), so they
-// get more "virtual hand" slots to hold cards for while waiting on a better follow-up.
+// Harder difficulties already juggle more possibilities, so they get more "virtual hand" slots.
 function getReserveCap() {
-  if (difficulty === 'easy') return 2;
-  if (difficulty === 'medium') return 4;
+  if (difficulty === 'easy') return 3;
+  if (difficulty === 'medium') return 5;
   if (difficulty === 'hard' || difficulty === 'gods') return 6;
-  return 2;
+  return 4;
 }
 
-// Classic Lost Cities strategy: commit to a handful of expeditions instead of spreading
-// across all 5 colors, since each unbuilt column risks never reaching its 20-point
-// break-even. Gods mode ignores this (it cheats and sorts everything perfectly anyway).
-const FOCUS_CAP = 3;
+function getFocusCap() {
+  if (difficulty === 'easy' || difficulty === 'medium') return 3;
+  if (difficulty === 'hard') return 4;
+  return 5;
+}
+
 function activeColumnCount() {
   return COLORS.filter(c => expeditions[c].length > 0).length;
 }
@@ -1735,7 +1749,7 @@ function processCard() {
   
   if (!result) {
     // Cannot play immediately: a permanently dead card is discarded right away
-    // instead of wasting one of the bot's 2 precious reserve slots on it.
+    // instead of wasting one of the bot's precious reserve slots on it.
     if (isPermanentlyDead(selColor, selVal)) {
       result = "DISCARD";
       discardReason = 'dead';
@@ -1744,12 +1758,19 @@ function processCard() {
       result = "RESERVE";
       if (deferred) discardReason = 'deferred';
     } else {
-      // Reserve is full: don't always sacrifice the new card. Keep whichever of the
-      // candidates (new + all reserved) has the most future flexibility - a lower
-      // number can still be followed by more remaining higher cards, so it's more
-      // likely to eventually score, while a wager (not yet dead) is the most
-      // valuable to protect since it multiplies the whole expedition.
-      const disposability = c => c.value === 'H' ? -1 : c.value;
+      // Smart eviction: Protege cartas de pontuacao alta (8, 9, 10) e Apertos de Mao ('H')!
+      // Candidatos sao classificados pelo grau de descartabilidade (maior pontuacao = descartado primeiro):
+      // 1. Cartas de cores que ainda nao foram iniciadas se o limite de foco ja foi atingido (100).
+      // 2. Numeros baixos redundantes (2, 3, 4...) que nao jogaram (20 - val).
+      // 3. Numeros altos (8, 9, 10) sao protegidos (-val).
+      // 4. Apertos de Mao ('H') sao altamente protegidos (-50).
+      const disposability = c => {
+        const isStarted = expeditions[c.color].length > 0;
+        if (!isStarted && activeColumnCount() >= getFocusCap()) return 100;
+        if (c.value === 'H') return -50;
+        if (c.value >= 8) return -c.value;
+        return 20 - c.value;
+      };
       const newCard = { color: selColor, value: selVal };
       const candidates = [newCard, ...botReserve];
       candidates.sort((a, b) => disposability(b) - disposability(a));
@@ -1769,15 +1790,26 @@ function processCard() {
   logAction(result, selColor, selVal, discardReason);
   if (reserveEvicted) logReserveEviction(reserveEvicted);
   
-  // If a card was played, see if any reserve card can now be chained
+  // If a card was played or slotted, see if any reserve card can now be chained
   let reservePlays = [];
-  if (result === "PLAY" || result === "REPLACE") {
+  if (result === "PLAY" || result === "SLOT" || result === "REPLACE") {
     reservePlays = checkReservePlays(selColor);
   }
   
-  // Any expedition change can also make an already-held reserve card permanently
-  // dead (e.g. a stashed wager whose column just got started by another draw).
+  // Any expedition change can also make an already-held reserve card permanently dead.
   const reservePurges = purgeDeadReserveCards();
+  
+  // Track initial starting cards progression
+  if (initialCardsGiven < initialCardsNeeded) {
+    initialCardsGiven++;
+    updateInputPrompt();
+    if (initialCardsGiven === initialCardsNeeded) {
+      const lang = localStorage.getItem('boardbots_lang') || 'pt';
+      const doneMsg = lang === 'pt' ? "🎒 Preparação inicial concluída! O Rival Explorer está pronto para a partida." : "🎒 Initial setup complete! The Rival Explorer is ready for the game.";
+      gameLog.unshift(`[${new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit', second:'2-digit'})}] ${doneMsg}`);
+      renderLog();
+    }
+  }
   
   showResult(result, selColor, selVal, discardReason, reservePlays, reservePurges, reserveEvicted);
   
@@ -1802,6 +1834,10 @@ function showResult(action, color, value, discardReason, reservePlays, reservePu
     icon.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>';
     title.innerText = i18n('lc_res_play_title');
     desc.innerText = i18n('lc_res_play_desc');
+  } else if (action === 'SLOT') {
+    icon.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>';
+    title.innerText = i18n('lc_res_slot_title');
+    desc.innerText = i18n('lc_res_slot_desc');
   } else if (action === 'DISCARD') {
     icon.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16"/><path d="M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/><path d="M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13"/><path d="M10 11v6M14 11v6"/></svg>';
     if (discardReason === 'dead') {
@@ -1880,23 +1916,32 @@ function updateWantedCards() {
   badgesContainer.innerHTML = '';
   
   let hasWanted = false;
+  const maxSlotDiff = (difficulty === 'hard') ? 3 : (difficulty === 'medium' ? 2 : 0);
   
   COLORS.forEach(c => {
       const arr = expeditions[c];
       let wanted = [];
       if (arr.length === 0) {
-          wanted.push(HANDSHAKE_ICON + ', 2');
+          if (activeColumnCount() < getFocusCap()) {
+              wanted.push(HANDSHAKE_ICON + ', 2-5');
+          }
       } else {
-          const last = arr[arr.length - 1];
-          if (last === 'H') {
-              if (arr.length < 3) wanted.push(HANDSHAKE_ICON + ', 2');
-              else wanted.push('2');
+          const numbers = arr.filter(v => v !== 'H');
+          const lastNum = numbers.length > 0 ? numbers[numbers.length - 1] : null;
+          if (lastNum === null) {
+              if (arr.length < 3) wanted.push(HANDSHAKE_ICON + ', 2-5');
+              else wanted.push('2-5');
           } else {
-              if (last < 10) wanted.push((last + 1).toString());
+              if (lastNum < 10) wanted.push((lastNum + 1).toString());
               
-              if (difficulty === 'hard' || difficulty === 'gods') {
-                  if (last - 1 >= 2 && !arr.includes(last - 1)) wanted.push((last - 1).toString());
-                  if (last - 2 >= 2 && !arr.includes(last - 2)) wanted.push((last - 2).toString());
+              if (maxSlotDiff > 0 || difficulty === 'gods') {
+                  const limit = (difficulty === 'gods') ? 8 : maxSlotDiff;
+                  for (let d = 1; d <= limit; d++) {
+                      const candidate = lastNum - d;
+                      if (candidate >= 2 && !arr.includes(candidate)) {
+                          wanted.push(candidate.toString());
+                      }
+                  }
               }
           }
       }
@@ -1922,12 +1967,19 @@ function applyI18n() {
   document.documentElement.lang = lang === 'pt' ? 'pt-BR' : 'en';
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const k = el.getAttribute('data-i18n');
-    if (window.I18N[lang][k] !== undefined) el.textContent = window.I18N[lang][k];
+    if (window.I18N[lang][k] !== undefined) {
+      let val = window.I18N[lang][k];
+      if (k === 'lc_setup_2') {
+        val = val.replace(/\{init\}/g, getInitialCardsCount());
+      }
+      el.textContent = val;
+    }
   });
   document.querySelectorAll('[data-i18n-html]').forEach(el => {
     const k = el.getAttribute('data-i18n-html');
     if (window.I18N[lang][k] !== undefined) el.innerHTML = window.I18N[lang][k];
   });
+  if (typeof updateInputPrompt === 'function') updateInputPrompt();
 }
 
 
