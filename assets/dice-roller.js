@@ -64,12 +64,24 @@ export async function loadDiceBox(opts = {}) {
 
 /**
  * Triggers mobile haptic feedback safely if supported.
+ * Falls back to iOS Safari switch toggle trick (Safari 17.4+ / iOS 18) when navigator.vibrate is unavailable.
  * @param {number|number[]} pattern - vibration duration in ms, or array of durations/pauses
  */
 export function triggerHaptic(pattern = [25]) {
   try {
     if (typeof navigator !== 'undefined' && 'vibrate' in navigator && typeof navigator.vibrate === 'function') {
       navigator.vibrate(pattern);
+      return;
+    }
+    // iOS Safari workaround via native switch input element (Safari 17.4+ / iOS 18)
+    if (typeof document !== 'undefined' && document.body) {
+      const sw = document.createElement('input');
+      sw.type = 'checkbox';
+      sw.setAttribute('switch', '');
+      sw.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0.001;pointer-events:none;';
+      document.body.appendChild(sw);
+      sw.click();
+      setTimeout(() => { try { sw.remove(); } catch (_) {} }, 100);
     }
   } catch (_) {
     // Silently ignore in unsupported or security-restricted environments
