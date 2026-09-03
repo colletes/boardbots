@@ -617,7 +617,34 @@ body {
   cursor: pointer;
   z-index: 5;
 }
-.game-tile:hover .tile-remove-btn {
+.tile-remove-btn:hover {
+  background: #dc2626;
+  border-color: #fff;
+}
+.tile-edit-btn {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  background: rgba(15, 23, 42, 0.85);
+  color: var(--brass-bright);
+  border: 1px solid var(--brass);
+  border-radius: 50%;
+  font-size: 10px;
+  line-height: 1;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 5;
+}
+.tile-edit-btn:hover {
+  background: var(--brass-bright);
+  color: #0f172a;
+}
+.game-tile:hover .tile-remove-btn,
+.game-tile:hover .tile-edit-btn {
   display: flex;
 }
 .tile-remove-btn:hover {
@@ -1085,6 +1112,44 @@ footer {
   </div>
 </div>
 
+<!-- Modal: Edit Game Details & Cover (Local Only) -->
+<div id="editGameModal" class="modal-overlay">
+  <div class="modal-card">
+    <button class="modal-close-btn" onclick="closeModal('editGameModal')">&times;</button>
+    <h2>
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+      <span data-i18n="modal_edit_title">Editar Jogo</span>
+    </h2>
+    <div class="form-group">
+      <label data-i18n="label_game_name">Nome do Jogo *</label>
+      <input type="text" id="editGameName" class="form-input" placeholder="Nome do jogo...">
+    </div>
+    <div class="form-group">
+      <label data-i18n="label_game_link">Link da Ludopedia ou BGG (Opcional)</label>
+      <div style="display:flex; gap:8px;">
+        <input type="url" id="editGameLink" class="form-input" placeholder="https://ludopedia.com.br/jogo/... ou https://boardgamegeek.com/boardgame/..." oninput="handleEditLinkInputDebounced(this.value)" onpaste="setTimeout(handleEditLinkExtraction, 80)" onchange="handleEditLinkExtraction()">
+        <button type="button" class="tool-btn" onclick="handleEditLinkExtraction()" style="white-space:nowrap;" data-i18n="btn_extract_link">Extrair Dados</button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label data-i18n="label_game_img_url">URL da Imagem da Capa</label>
+      <input type="url" id="editGameUrl" class="form-input" placeholder="https://exemplo.com/capa.jpg" oninput="previewEditImage(this.value)">
+    </div>
+    <div class="form-group">
+      <label data-i18n="label_upload_file">Ou Enviar Arquivo de Imagem</label>
+      <input type="file" id="editGameFile" class="form-input" accept="image/*" onchange="handleEditImageUpload(event)">
+    </div>
+    <!-- Preview Box -->
+    <div id="editImagePreview" style="display:none; margin-bottom:14px; text-align:center;">
+      <img id="editPreviewImg" src="" style="width:72px; height:72px; object-fit:cover; border-radius:6px; border:1px solid var(--brass);">
+    </div>
+    <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
+      <button class="tool-btn" onclick="closeModal('editGameModal')" data-i18n="btn_cancel">Cancelar</button>
+      <button class="tool-btn primary" onclick="saveEditedGame()" data-i18n="btn_save_changes">Salvar Alterações</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal: Export & Share -->
 <div id="exportModal" class="modal-overlay">
   <div class="modal-card" style="max-width:620px;">
@@ -1218,6 +1283,10 @@ const I18N = {
     source_bgg: 'BGG',
     source_custom: 'Manual',
     modal_custom_title: 'Adicionar Jogo Manual',
+    modal_edit_title: 'Editar Jogo',
+    btn_save_changes: 'Salvar Alterações',
+    btn_edit_game: 'Editar Jogo',
+    tap_edit_game: '✏️ Editar Jogo (Nome / Capa)',
     label_game_name: 'Nome do Jogo *',
     label_game_img_url: 'URL da Imagem da Capa (Opcional)',
     label_upload_file: 'Ou Enviar Arquivo de Imagem',
@@ -1251,6 +1320,7 @@ const I18N = {
     toast_link_error: 'Não foi possível extrair dados automaticamente deste link.',
     toast_json_saved: 'Lista da Tierlist salva com sucesso!',
     toast_json_loaded: 'Lista carregada com sucesso!',
+    toast_game_edited: 'Informações do jogo atualizadas!',
     toast_added: '"{name}" adicionado a Não Jogado!',
     toast_exported: 'Imagem exportada com sucesso!',
     toast_recalculated: 'Cores dos Tiers recalculadas no gradiente!',
@@ -1277,6 +1347,10 @@ const I18N = {
     source_bgg: 'BGG',
     source_custom: 'Custom',
     modal_custom_title: 'Add Custom Game',
+    modal_edit_title: 'Edit Game',
+    btn_save_changes: 'Save Changes',
+    btn_edit_game: 'Edit Game',
+    tap_edit_game: '✏️ Edit Game (Title / Cover)',
     label_game_link: 'Ludopedia or BGG Link (Optional)',
     btn_extract_link: 'Extract Details',
     toast_link_extracted: 'Game details & cover extracted successfully!',
@@ -1307,6 +1381,7 @@ const I18N = {
     confirm_delete_tier: 'Delete this Tier? Its games will be moved back to "Unplayed".',
     toast_json_saved: 'Tierlist file saved successfully!',
     toast_json_loaded: 'Tierlist loaded successfully!',
+    toast_game_edited: 'Game details updated successfully!',
     toast_added: '"{name}" added to Unplayed!',
     toast_exported: 'Image exported successfully!',
     toast_recalculated: 'Tier colors recalculated along the gradient spectrum!',
@@ -1577,6 +1652,17 @@ function createGameTileElement(item, currentTierId) {
   };
   tile.appendChild(removeBtn);
 
+  // Edit Button
+  const editBtn = document.createElement('button');
+  editBtn.className = 'tile-edit-btn';
+  editBtn.innerHTML = '<svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
+  editBtn.title = 'Editar jogo e capa';
+  editBtn.onclick = (e) => {
+    e.stopPropagation();
+    openEditGameModal(item, currentTierId);
+  };
+  tile.appendChild(editBtn);
+
   // Tooltip
   const tooltip = document.createElement('div');
   tooltip.className = 'tile-tooltip';
@@ -1602,7 +1688,7 @@ function createGameTileElement(item, currentTierId) {
 
   // Mobile Tap Menu Support
   tile.addEventListener('click', (e) => {
-    if (e.target.classList.contains('tile-remove-btn')) return;
+    if (e.target.closest('.tile-remove-btn') || e.target.closest('.tile-edit-btn')) return;
     openTapModal(item, currentTierId);
   });
 
@@ -2383,6 +2469,121 @@ async function submitCustomGame() {
 }
 
 /* =======================================================
+   EDIT GAME DETAILS & COVER (LOCAL ONLY)
+   ======================================================= */
+let activeEditingItem = null;
+let activeEditingTierId = null;
+let editUploadedBase64Image = '';
+
+function previewEditImage(url) {
+  const box = document.getElementById('editImagePreview');
+  const img = document.getElementById('editPreviewImg');
+  if (!box || !img) return;
+  if (url) {
+    img.src = url;
+    box.style.display = 'block';
+  } else {
+    box.style.display = 'none';
+  }
+}
+
+function handleEditImageUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (event) => {
+    editUploadedBase64Image = event.target.result;
+    previewEditImage(editUploadedBase64Image);
+  };
+  reader.readAsDataURL(file);
+}
+
+let editLinkDebounceTimer = null;
+function handleEditLinkInputDebounced(val) {
+  clearTimeout(editLinkDebounceTimer);
+  const v = (val || '').trim();
+  if (v.startsWith('http://') || v.startsWith('https://') || v.includes('ludopedia.') || v.includes('boardgamegeek.')) {
+    editLinkDebounceTimer = setTimeout(() => {
+      handleEditLinkExtraction();
+    }, 400);
+  }
+}
+
+async function handleEditLinkExtraction() {
+  const linkInput = document.getElementById('editGameLink');
+  const nameInput = document.getElementById('editGameName');
+  const urlInput = document.getElementById('editGameUrl');
+  const rawUrl = linkInput ? linkInput.value.trim() : '';
+  if (!rawUrl) return;
+
+  showToast('Extraindo capa e dados do link...');
+  try {
+    const extracted = await extractGameFromLink(rawUrl);
+    if (extracted && (extracted.title || extracted.image)) {
+      if (extracted.title && !nameInput.value.trim()) {
+        nameInput.value = extracted.title;
+      }
+      if (extracted.image) {
+        urlInput.value = extracted.image;
+        previewEditImage(extracted.image);
+      }
+      showToast(t('toast_link_extracted'));
+    } else {
+      showToast(t('toast_link_error'));
+    }
+  } catch(e) {
+    showToast(t('toast_link_error'));
+  }
+}
+
+function openEditGameModal(item, tierId) {
+  activeEditingItem = item;
+  activeEditingTierId = tierId;
+  editUploadedBase64Image = '';
+
+  const nameInput = document.getElementById('editGameName');
+  const linkInput = document.getElementById('editGameLink');
+  const urlInput = document.getElementById('editGameUrl');
+  const fileInput = document.getElementById('editGameFile');
+
+  if (nameInput) nameInput.value = item.title || '';
+  if (linkInput) linkInput.value = item.link || '';
+  if (urlInput) urlInput.value = item.image && !item.image.startsWith('data:') ? item.image : '';
+  if (fileInput) fileInput.value = '';
+
+  previewEditImage(item.image || '');
+  openModal('editGameModal');
+}
+
+function saveEditedGame() {
+  if (!activeEditingItem || !activeEditingTierId) return;
+
+  const nameInput = document.getElementById('editGameName');
+  const linkInput = document.getElementById('editGameLink');
+  const urlInput = document.getElementById('editGameUrl');
+  const newTitle = nameInput.value.trim();
+
+  if (!newTitle) {
+    alert(t('label_game_name'));
+    return;
+  }
+
+  const newImage = editUploadedBase64Image || urlInput.value.trim() || activeEditingItem.image || '';
+  const newLink = linkInput ? linkInput.value.trim() : '';
+
+  // Update item properties locally
+  activeEditingItem.title = newTitle;
+  activeEditingItem.image = newImage;
+  if (newLink) activeEditingItem.link = newLink;
+
+  // Save to local storage only (DO NOT persist to Firestore community DB)
+  saveState();
+  renderBoard();
+  closeModal('editGameModal');
+  showToast(t('toast_game_edited'));
+}
+
+/* =======================================================
    MOBILE TAP TO MOVE MODAL
    ======================================================= */
 function openTapModal(item, currentTierId) {
@@ -2393,6 +2594,21 @@ function openTapModal(item, currentTierId) {
 
   titleEl.textContent = item.title;
   container.innerHTML = '';
+
+  // 1. Edit Option at top
+  const editOpt = document.createElement('div');
+  editOpt.className = 'tap-action-option';
+  editOpt.style.background = 'rgba(233, 200, 117, 0.12)';
+  editOpt.style.border = '1px solid var(--brass)';
+  editOpt.innerHTML = `
+    <div class="tap-action-badge" style="background:var(--brass); color:#0f172a;">✏️</div>
+    <span style="font-weight:700; color:var(--brass-bright);">${t('tap_edit_game')}</span>
+  `;
+  editOpt.onclick = () => {
+    closeModal('tapActionModal');
+    openEditGameModal(item, currentTierId);
+  };
+  container.appendChild(editOpt);
 
   state.tiers.forEach(tier => {
     if (tier.id === currentTierId) return;
