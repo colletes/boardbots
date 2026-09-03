@@ -998,6 +998,15 @@ footer {
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 4.24 4.24"/><path d="m14.83 9.17 4.24-4.24"/><path d="m14.83 14.83 4.24 4.24"/><path d="m9.17 14.83-4.24 4.24"/></svg>
           <span data-i18n="btn_recalc_colors">Auto-Gradiente</span>
         </button>
+        <button class="tool-btn" onclick="saveTierlistJson()" title="Salvar lista em arquivo .json">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          <span data-i18n="btn_save_json">Salvar JSON</span>
+        </button>
+        <button class="tool-btn" onclick="document.getElementById('importJsonInput').click()" title="Carregar lista de um arquivo .json">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <span data-i18n="btn_load_json">Carregar JSON</span>
+        </button>
+        <input type="file" id="importJsonInput" accept=".json,application/json" style="display:none;" onchange="importTierlistJson(event)">
       </div>
 
       <div class="toolbar-right">
@@ -1132,6 +1141,10 @@ footer {
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
           <span>PDF (Documento)</span>
         </button>
+        <button class="tool-btn" onclick="saveTierlistJson()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          <span>JSON (Lista)</span>
+        </button>
       </div>
     </div>
   </div>
@@ -1217,6 +1230,10 @@ const I18N = {
     help_step4_d: 'Exporte em PNG, JPG ou PDF, ou gere nos formatos especiais Feed (1:1) e Story (9:16) prontos para postar no Instagram, WhatsApp e Telegram!',
     confirm_reset: 'Tem certeza que deseja reiniciar a Tierlist e remover todos os jogos?',
     confirm_delete_tier: 'Excluir este Tier? Todos os jogos nele voltarão para "Não jogado".',
+    btn_save_json: 'Salvar JSON',
+    btn_load_json: 'Carregar JSON',
+    toast_json_saved: 'Arquivo JSON da Tierlist salvo!',
+    toast_json_loaded: 'Tierlist carregada com sucesso do JSON!',
     toast_added: '"{name}" adicionado a Não Jogado!',
     toast_exported: 'Imagem exportada com sucesso!',
     toast_recalculated: 'Cores dos Tiers recalculadas no gradiente!',
@@ -1229,6 +1246,8 @@ const I18N = {
     btn_add_custom: 'Custom Game / Upload',
     btn_add_tier: '+ New Tier',
     btn_recalc_colors: 'Auto-Gradient',
+    btn_save_json: 'Save JSON',
+    btn_load_json: 'Load JSON',
     label_size: 'Tile:',
     btn_reset: 'Reset',
     footer_credits: 'Credits',
@@ -1265,6 +1284,8 @@ const I18N = {
     help_step4_d: 'Export to PNG, JPG, or PDF, or generate Feed (1:1) and Story (9:16) formats ready to post on Instagram, WhatsApp, and Telegram!',
     confirm_reset: 'Are you sure you want to reset the Tierlist and remove all games?',
     confirm_delete_tier: 'Delete this Tier? Its games will be moved back to "Unplayed".',
+    toast_json_saved: 'Tierlist JSON file saved successfully!',
+    toast_json_loaded: 'Tierlist loaded from JSON successfully!',
     toast_added: '"{name}" added to Unplayed!',
     toast_exported: 'Image exported successfully!',
     toast_recalculated: 'Tier colors recalculated along the gradient spectrum!',
@@ -2418,6 +2439,65 @@ async function downloadPDF() {
     printWindow.document.write(`<img src="${imgData}" style="max-width:100%;">`);
     printWindow.print();
   }
+}
+
+function saveTierlistJson() {
+  saveState();
+  const exportPayload = {
+    version: 2,
+    appName: 'BoardBots Tierlist Maker',
+    title: state.title || 'Minha Tierlist de Jogos de Tabuleiro',
+    tileSize: state.tileSize || 88,
+    tiers: state.tiers || [],
+    items: state.items || {},
+    exportedAt: new Date().toISOString()
+  };
+
+  const jsonStr = JSON.stringify(exportPayload, null, 2);
+  const blob = new Blob([jsonStr], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  const safeTitle = (state.title || 'tierlist').toLowerCase().replace(/[^a-z0-9_-]/gi, '_');
+  link.download = `tierlist-${safeTitle}-${Date.now()}.json`;
+  link.href = url;
+  link.click();
+  URL.revokeObjectURL(url);
+  showToast(t('toast_json_saved'));
+}
+
+function importTierlistJson(event) {
+  const file = event.target && event.target.files && event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (data && data.tiers && Array.isArray(data.tiers) && data.items && typeof data.items === 'object') {
+        state.title = data.title || 'Minha Tierlist de Jogos de Tabuleiro';
+        state.tileSize = data.tileSize || 88;
+        state.tiers = data.tiers;
+        state.items = data.items;
+
+        initItemSlots();
+        if (state.tileSize) {
+          updateTileSize(state.tileSize);
+        }
+        const titleInput = document.getElementById('tierlistCustomTitle');
+        if (titleInput) titleInput.value = state.title;
+
+        saveState();
+        renderBoard();
+        showToast(t('toast_json_loaded'));
+      } else {
+        alert('O arquivo selecionado não é um formato de Tierlist válido.');
+      }
+    } catch (err) {
+      alert('Erro ao carregar arquivo JSON: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
 }
 
 async function shareNative() {
