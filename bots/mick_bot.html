@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Rock Hard: 1977 - Mick Solo Bot</title>
     <link rel="stylesheet" href="../assets/theme-kit.css">
+    <script src="../assets/theme-kit.js"></script>
     <style>
 
         @import url('https://fonts.googleapis.com/css2?family=Teko:wght@400;600;700&family=Metal+Mania&display=swap');
@@ -710,7 +711,11 @@
                 document.getElementById('optLang').value = 'auto';
             }
             document.getElementById('optLayout').value = (saved && saved.layout) ? saved.layout : 'auto';
-            if (saved && saved.audio) document.getElementById('optAudio').value = saved.audio;
+            if (typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.isSfxMuted === 'function') {
+                document.getElementById('optAudio').value = window.ThemeKit.isSfxMuted() ? 'off' : 'on';
+            } else if (saved && saved.audio) {
+                document.getElementById('optAudio').value = saved.audio;
+            }
 
             applySettings(true);
 
@@ -805,6 +810,9 @@
 
             const audioSel = document.getElementById('optAudio').value;
             isMuted = (audioSel === 'off');
+            if (typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.setSfxMuted === 'function') {
+                window.ThemeKit.setSfxMuted(isMuted);
+            }
 
             if (!isInit) {
                 document.getElementById('optionsModal').style.display = 'none';
@@ -849,6 +857,9 @@
             currentFame += amount;
             if (currentFame < 0) currentFame = 0;
             document.getElementById('fameScore').innerText = currentFame;
+            if (typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
+                window.ThemeKit.playSfx('token-place', { volume: 0.4 });
+            }
             saveState();
         }
 
@@ -880,6 +891,9 @@
         function resetGame(fromBtn = false) {
             if(fromBtn) {
                 if(!confirm(i18n[currentLang].confirm_new_game)) return;
+            }
+            if (typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
+                window.ThemeKit.playSfx('card-shuffle', { volume: 0.6 });
             }
             // Zera Stats
             ampStats = { talento: 2, reputacao: 2, cancoes: 2 };
@@ -913,6 +927,9 @@
             currentPeriod = period;
             document.querySelectorAll('#periodGroup .btn-toggle').forEach(b => b.classList.remove('active'));
             btnElement.classList.add('active');
+            if (typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
+                window.ThemeKit.playSfx('turn-notify', { volume: 0.45 });
+            }
             checkFrenetic();
             saveState();
         }
@@ -921,6 +938,9 @@
             currentPhase = phase;
             document.querySelectorAll('#phaseGroup .btn-toggle').forEach(b => b.classList.remove('active'));
             btnElement.classList.add('active');
+            if (typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
+                window.ThemeKit.playSfx('turn-notify', { volume: 0.45 });
+            }
             saveState();
         }
 
@@ -951,6 +971,9 @@
                 showToast("toast_max");
             } else if (ampStats[statKey] < 0) ampStats[statKey] = 0;
             document.getElementById('val_' + statKey).innerText = ampStats[statKey];
+            if (typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
+                window.ThemeKit.playSfx('token-place', { volume: 0.4 });
+            }
             saveState();
         }
 
@@ -996,12 +1019,23 @@
             saveState();
         }
 
-        function discardAction() { activeIndex++; renderList(); saveState(); }
+        function discardAction() { 
+            activeIndex++; 
+            if (typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
+                window.ThemeKit.playSfx('card-draw', { volume: 0.5 });
+            }
+            renderList(); 
+            saveState(); 
+        }
 
         function confirmAction(actionName) {
             historyCount++;
             historyEntries.push({ turn: historyCount, periodKey: currentPeriod, phaseKey: currentPhase, action: actionName });
             renderHistory();
+
+            if (typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
+                window.ThemeKit.playSfx('card-flip', { volume: 0.55 });
+            }
 
             document.getElementById('actionList').innerHTML = `<div style="text-align: center; color: #32CD32; font-size: 1.5rem; margin-top: 40px;">${i18n[currentLang].action_confirmed}</div>`;
             
