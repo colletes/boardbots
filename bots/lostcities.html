@@ -1597,18 +1597,23 @@ function tryPlayCard(color, val) {
       const highest = numbers.length > 0 ? numbers[numbers.length - 1] : 0;
       
       if (val > highest) {
-        // Use "no numbers yet" (not "no cards yet") so pre-placed wagers can't bypass
-        // the start-up caps below - a wager alone is not real progress on this color.
         if (numbers.length === 0) {
+          // Se a expedição já possui cartas (ex: Apertos de Mão 'H'), ela JÁ ESTÁ ATIVA!
+          // Jamais bloqueie números: ela precisa desesperadamente de números para pontuar os multiplicadores!
+          if (col.length > 0) {
+            col.push(val);
+            return "PLAY";
+          }
+
+          // Caso contrário, col.length === 0 (coluna virgem, sem nenhuma carta):
           let totalCards = 0;
           COLORS.forEach(c => totalCards += expeditions[c].length);
           if (totalCards >= 15) {
-            return null; // Late game, don't start new expeditions
-          } else if (col.length === 0 && activeColumnCount() >= focusCap) {
-            return null; // stay focused instead of spreading across every color
-          } else if (val > 5) {
-            // Too high to start: ascending-only play means a high starter forfeits
-            // every lower card of this color for the rest of the round.
+            return null; // Fim de jogo, não abre novas expedições do zero
+          } else if (activeColumnCount() >= focusCap) {
+            return null; // Mantém foco no teto de colunas
+          } else if (val > 6) {
+            // Alto demais para começar do zero com uma única carta
             return null;
           } else {
             col.push(val);
@@ -1619,19 +1624,27 @@ function tryPlayCard(color, val) {
           return "PLAY";
         }
       } else {
-        const diff = highest - val;
+        if (col.includes(val)) return null;
         const maxSlotDiff = (difficulty === 'hard') ? 3 : (difficulty === 'medium' ? 2 : 0);
-        // Regra de Encaixe (Gap Slotting): se a carta for menor que o topo por uma margem aceitavel
-        // e ainda nao constar na coluna, o bot mantem a carta maior e insere a nova em ordem!
-        if (maxSlotDiff > 0 && diff <= maxSlotDiff && !col.includes(val)) {
-          col.push(val);
-          let hArr = col.filter(x => x === 'H');
-          let numArr = col.filter(x => x !== 'H').sort((a,b) => a - b);
-          expeditions[color] = hArr.concat(numArr);
-          return "SLOT";
-        } else {
-          return null;
+        // Regra de Encaixe (Gap Slotting):
+        // A carta é menor que a maior já jogada. Ela pode ser encaixada se:
+        // 1. For até maxSlotDiff menor que a menor carta atual (expande para baixo); OU
+        // 2. Preencher um buraco entre duas cartas já jogadas (ex: 8 entre 7 e 9); OU
+        // 3. Estiver a até maxSlotDiff da carta mais alta.
+        if (maxSlotDiff > 0) {
+          const lowest = numbers[0];
+          const diffBelow = lowest - val;
+          const diffHi = highest - val;
+          const isBetween = val > lowest && val < highest;
+          if ((diffBelow > 0 && diffBelow <= maxSlotDiff) || isBetween || diffHi <= maxSlotDiff) {
+            col.push(val);
+            let hArr = col.filter(x => x === 'H');
+            let numArr = col.filter(x => x !== 'H').sort((a,b) => a - b);
+            expeditions[color] = hArr.concat(numArr);
+            return "SLOT";
+          }
         }
+        return null;
       }
     }
   }
@@ -1658,22 +1671,27 @@ function isPermanentlyDead(color, val) {
 
   const numbers = col.filter(v => v !== 'H');
   if (numbers.length === 0) {
+    // Se a coluna já possui cartas (ex: Apertos de Mão 'H'), a expedição já foi iniciada!
+    // Cartas numéricas NUNCA estão mortas para ela - a expedição precisa de números!
+    if (col.length > 0) return false;
+
     let totalCards = 0;
     COLORS.forEach(c => totalCards += expeditions[c].length);
     if (totalCards >= 15) return true;
-    if (col.length === 0 && activeColumnCount() >= focusCap) return true;
+    if (activeColumnCount() >= focusCap) return true;
     return false;
   }
 
   const highest = numbers[numbers.length - 1];
+  const lowest = numbers[0];
   if (val <= highest) {
     if (numbers.includes(val)) return true;
     const maxSlotDiff = (difficulty === 'hard') ? 3 : (difficulty === 'medium' ? 2 : 0);
-    // Como a carta mais alta nao e mais descartada, o topo nunca regride.
-    // Qualquer carta cujo salto para baixo seja maior que maxSlotDiff nunca mais podera entrar.
-    if (maxSlotDiff === 0 || (highest - val) > maxSlotDiff) {
-      return true;
-    }
+    if (maxSlotDiff === 0) return true;
+    if (lowest - val <= maxSlotDiff) return false;
+    if (val > lowest && val < highest) return false;
+    if (highest - val <= maxSlotDiff) return false;
+    return true;
   }
 
   return false;
@@ -1963,23 +1981,31 @@ function updateWantedCards() {
       let wanted = [];
       if (arr.length === 0) {
           if (activeColumnCount() < getFocusCap()) {
-              wanted.push(HANDSHAKE_ICON + ', 2-5');
+              wanted.push(HANDSHAKE_ICON + ', 2-6');
           }
       } else {
           const numbers = arr.filter(v => v !== 'H');
           const lastNum = numbers.length > 0 ? numbers[numbers.length - 1] : null;
           if (lastNum === null) {
-              if (arr.length < 3) wanted.push(HANDSHAKE_ICON + ', 2-5');
-              else wanted.push('2-5');
+              if (arr.length < 3) wanted.push(HANDSHAKE_ICON + ', 2-10');
+              else wanted.push('2-10');
           } else {
               if (lastNum < 10) wanted.push((lastNum + 1).toString());
               
               if (maxSlotDiff > 0 || difficulty === 'gods') {
-                  const limit = (difficulty === 'gods') ? 8 : maxSlotDiff;
-                  for (let d = 1; d <= limit; d++) {
-                      const candidate = lastNum - d;
-                      if (candidate >= 2 && !arr.includes(candidate)) {
-                          wanted.push(candidate.toString());
+                  const lowestNum = numbers[0];
+                  for (let v = 2; v < lastNum; v++) {
+                      if (!arr.includes(v)) {
+                          if (difficulty === 'gods') {
+                              wanted.push(v.toString());
+                          } else {
+                              const diffBelow = lowestNum - v;
+                              const diffHi = lastNum - v;
+                              const isBetween = v > lowestNum && v < lastNum;
+                              if ((diffBelow > 0 && diffBelow <= maxSlotDiff) || isBetween || diffHi <= maxSlotDiff) {
+                                  wanted.push(v.toString());
+                              }
+                          }
                       }
                   }
               }
