@@ -7328,35 +7328,56 @@ const BOARD_GAMES_DATABASE = [
 
 const LUDOPEDIA_ACCESS_TOKEN = '4c19506c8a280672ca249db5fde7c092';
 
-async function searchLudopediaAPI(query) {
-  try {
-    const qClean = encodeURIComponent(query.trim());
-    const ludoUrl = `https://ludopedia.com.br/api/v1/jogos?search=${qClean}&rows=10&access_token=${LUDOPEDIA_ACCESS_TOKEN}`;
+// Multi-tier Proxy & Cache Client for Ludopedia API
+const LUDO_SEARCH_CACHE = new Map();
+const LUDO_GAME_CACHE = new Map();
 
-    let json = null;
+async function fetchFromLudopediaProxy(apiPath) {
+  // Try Proxy Endpoints (Worker / Serverless / Direct)
+  const endpoints = [
+    `https://ludoproxy.boardbots.workers.dev/api/v1${apiPath}`,
+    `https://ludopedia.com.br/api/v1${apiPath}`
+  ];
+
+  for (const ep of endpoints) {
     try {
-      const res = await fetch(ludoUrl, {
+      const res = await fetch(ep, {
         headers: {
           'Authorization': `Bearer ${LUDOPEDIA_ACCESS_TOKEN}`,
           'Accept': 'application/json'
         }
       });
       if (res.ok) {
-        json = await res.json();
+        return await res.json();
       }
-    } catch (netErr) {
-      console.warn('Ludopedia direct API fetch not available from client CORS:', netErr);
+    } catch (e) {
+      // Continue to next endpoint
     }
+  }
+  return null;
+}
+
+async function searchLudopediaAPI(query) {
+  const qClean = (query || '').trim();
+  if (!qClean) return [];
+
+  const cacheKey = qClean.toLowerCase();
+  if (LUDO_SEARCH_CACHE.has(cacheKey)) {
+    return LUDO_SEARCH_CACHE.get(cacheKey);
+  }
+
+  try {
+    const json = await fetchFromLudopediaProxy(`/jogos?search=${encodeURIComponent(qClean)}&rows=10`);
 
     if (json && json.jogos && Array.isArray(json.jogos)) {
-      return json.jogos.map(g => {
+      const results = json.jogos.map(g => {
         const slug = (g.link || '').replace(/^jogo\//, '').trim();
         const image = (g.thumb || '').replace(/_t\.jpg$/i, '_m.jpg');
         return {
           id: 'ludo_' + g.id_jogo,
           ludoId: g.id_jogo,
           title: g.nm_jogo,
-          alt: `${g.nm_original || ''} ${g.nm_jogo}`,
+          alt: `${g.nm_original || ''} ${g.nm_jogo} ${slug.replace(/-/g, ' ')}`,
           slug: slug,
           image: image,
           year: g.ano_publicacao ? String(g.ano_publicacao) : '',
@@ -7364,12 +7385,15 @@ async function searchLudopediaAPI(query) {
           link: 'https://ludopedia.com.br/' + (g.link || `jogo/${slug}`)
         };
       });
+
+      LUDO_SEARCH_CACHE.set(cacheKey, results);
+      return results;
     }
-    return [];
   } catch (e) {
     console.warn('Erro na busca Ludopedia API:', e);
-    return [];
   }
+
+  return [];
 }
 
 function searchCuratedDatabase(query) {
@@ -8143,20 +8167,13 @@ const gameDetailsCache = new Map();
 
 async function fetchGameDetails(ludoId) {
   if (!ludoId) return null;
-  if (gameDetailsCache.has(ludoId)) return gameDetailsCache.get(ludoId);
+  if (LUDO_GAME_CACHE.has(ludoId)) return LUDO_GAME_CACHE.get(ludoId);
 
   try {
-    const url = `https://ludopedia.com.br/api/v1/jogos/${ludoId}?access_token=${LUDOPEDIA_ACCESS_TOKEN}`;
-    const res = await fetch(url, {
-      headers: {
-        'Authorization': `Bearer ${LUDOPEDIA_ACCESS_TOKEN}`,
-        'Accept': 'application/json'
-      }
-    });
-    if (res.ok) {
-      const data = await res.json();
-      gameDetailsCache.set(ludoId, data);
-      return data;
+    const json = await fetchFromLudopediaProxy(`/jogos/${ludoId}`);
+    if (json) {
+      LUDO_GAME_CACHE.set(ludoId, json);
+      return json;
     }
   } catch (e) {
     console.warn('Erro ao carregar detalhes do jogo na Ludopedia:', e);
