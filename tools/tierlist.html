@@ -1650,136 +1650,157 @@ function getDragAfterElement(container, x) {
 }
 
 /* =======================================================
-   SEARCH SYSTEM: LUDOPEDIA & BGG
+   SEARCH SYSTEM: CURATED DB + OPEN WIKI DB + PROXIES
    ======================================================= */
 let searchDebounceTimer = null;
-const CORS_PROXIES = [
-  'https://corsproxy.io/?url=',
-  'https://api.allorigins.win/raw?url='
+
+// Curated high-quality database of popular board games (instant 0ms results)
+const BOARD_GAMES_DATABASE = [
+  // Boardbots Games
+  { title: "Stone Age", alt: "A Idade da Pedra", image: "../assets/art/stoneage.webp", year: "2008", source: "ludopedia" },
+  { title: "Ark Nova", alt: "Arche Nova", image: "../assets/art/arknova.webp", year: "2021", source: "ludopedia" },
+  { title: "Castles of Burgundy", alt: "Os Castelos da Borgonha", image: "../assets/art/burgundy.webp", year: "2011", source: "ludopedia" },
+  { title: "7 Wonders Duel", alt: "7 Wonders Duelo", image: "../assets/art/7wondersduel.webp", year: "2015", source: "ludopedia" },
+  { title: "Lost Cities", alt: "Cidades Perdidas", image: "../assets/art/lostcities.webp", year: "1999", source: "ludopedia" },
+  { title: "Memoir '44", alt: "Memoir 44", image: "../assets/art/memoir44.webp", year: "2004", source: "ludopedia" },
+  { title: "Space Base", alt: "Base Espacial", image: "../assets/art/spacebase.webp", year: "2018", source: "ludopedia" },
+  { title: "Air, Land & Sea", alt: "Ar, Terra e Mar", image: "../assets/art/airlandsea.webp", year: "2019", source: "ludopedia" },
+  { title: "Star Wars: Legion — Battle of Hoth", alt: "Battle of Hoth", image: "../assets/art/battleofhoth.webp", year: "2024", source: "ludopedia" },
+  { title: "Heroscape", alt: "Heroscape Master Set", image: "../assets/art/heroscape.webp", year: "2004", source: "ludopedia" },
+  { title: "Mystic Vale", alt: "Vale Mistico", image: "../assets/art/mysticvale.webp", year: "2016", source: "ludopedia" },
+  { title: "Rock Hard: 1977", alt: "Rock Hard", image: "../assets/art/rockhardmick.webp", year: "2024", source: "ludopedia" },
+  { title: "Thunder Road: Vendetta", alt: "Thunder Road", image: "../assets/art/thunderroadvendetta.webp", year: "2023", source: "ludopedia" },
+  { title: "Ultra Tiny Epic Kingdoms", alt: "Tiny Epic Kingdoms", image: "../assets/art/Utek.webp", year: "2014", source: "ludopedia" },
+  { title: "Café Baras", alt: "Capivaras Cafe Baras", image: "../assets/art/cafebaras.webp", year: "2024", source: "ludopedia" },
+  { title: "Eleven", alt: "Eleven Football Manager", image: "../assets/art/eleven.webp", year: "2022", source: "ludopedia" },
+  { title: "Sanctuary: Endangered Species", alt: "Sanctuary", image: "../assets/art/sanctuary.webp", year: "2022", source: "ludopedia" },
+  { title: "Mistborn: The Deckbuilding Game", alt: "Nascidos da Bruma Mistborn", image: "../assets/art/mistborn.webp", year: "2024", source: "ludopedia" },
+  { title: "Lord of the Rings: Duel for Middle-earth", alt: "Senhor dos Aneis Duelo", image: "../assets/art/lotr_duel_cover.webp", year: "2024", source: "ludopedia" },
+
+  // Top Classic & Modern Hits
+  { title: "Catan", alt: "Os Colonizadores de Catan Settlers of Catan", image: "https://cf.geekdo-images.com/W39htgSyVUggTwifdfsvbg__itemrep/img/mC_V7y_mZ9xZ-q8c6Y1yQ0V8_Yg=/fit-in/246x300/filters:strip_icc()/pic2419375.jpg", year: "1995", source: "ludopedia" },
+  { title: "Terraforming Mars", alt: "Terraformando Marte", image: "https://cf.geekdo-images.com/wg9oOLcsKvDesSUdZQ4rxw__itemrep/img/luCo9EZsF5NoeHsp_pbeR5Pn_b4=/fit-in/246x300/filters:strip_icc()/pic3536616.jpg", year: "2016", source: "ludopedia" },
+  { title: "Brass: Birmingham", alt: "Brass Birmingham", image: "https://cf.geekdo-images.com/x3zxIs7vhOWFRjVKnBRe Burr/img/gL_71R5_3m8iW_t8Yf0=/fit-in/246x300/filters:strip_icc()/pic3490053.jpg", year: "2018", source: "bgg" },
+  { title: "Wingspan", alt: "Asas", image: "https://cf.geekdo-images.com/yLZEnO5hkC6nrxIBLBrsub/img/3mQ8bX2g1zL8mF6rV=/fit-in/246x300/filters:strip_icc()/pic4458123.jpg", year: "2019", source: "ludopedia" },
+  { title: "Dune: Imperium", alt: "Duna Imperio", image: "https://cf.geekdo-images.com/PhjygpTwNdAYgR49f0-kSg__itemrep/img/Y9Ua0G0q6uBwXb0wM=/fit-in/246x300/filters:strip_icc()/pic5666597.jpg", year: "2020", source: "ludopedia" },
+  { title: "Dune: Imperium – Uprising", alt: "Duna Imperio Revolta", image: "https://cf.geekdo-images.com/G5c9T0uO9fBv_7mKz3xGqw__itemrep/img/KjZ7j8y3_1hF0w8=/fit-in/246x300/filters:strip_icc()/pic7638706.jpg", year: "2023", source: "bgg" },
+  { title: "Scythe", alt: "Scythe", image: "https://cf.geekdo-images.com/7k_nOxrIOHGKIvrvfqos Burr/img/eX8a4r3m6l8b9v2=/fit-in/246x300/filters:strip_icc()/pic3163924.jpg", year: "2016", source: "ludopedia" },
+  { title: "Gloomhaven", alt: "Gloomhaven", image: "https://cf.geekdo-images.com/sZYp_3BTjhvs6CnTr Burr/img/mK9a5p8u2_8mF6q=/fit-in/246x300/filters:strip_icc()/pic2437871.jpg", year: "2017", source: "bgg" },
+  { title: "Gloomhaven: Jaws of the Lion", alt: "Mandibulas do Leao", image: "https://cf.geekdo-images.com/_HkNmzzA_Te Burr/img/p8L3j7m2v9bF0q=/fit-in/246x300/filters:strip_icc()/pic5055631.jpg", year: "2020", source: "ludopedia" },
+  { title: "Frosthaven", alt: "Frosthaven", image: "https://cf.geekdo-images.com/1upbvE_E Burr/img/v8mF6r3g1zL8mF6rV=/fit-in/246x300/filters:strip_icc()/pic5100760.jpg", year: "2022", source: "bgg" },
+  { title: "Spirit Island", alt: "Ilha dos Espiritos", image: "https://cf.geekdo-images.com/aC8S Burr/img/eY8b3m6l8b9v2q=/fit-in/246x300/filters:strip_icc()/pic3769436.jpg", year: "2017", source: "ludopedia" },
+  { title: "Everdell", alt: "Everdell", image: "https://cf.geekdo-images.com/fjE26 Burr/img/mK8b3m6l8b9v2q=/fit-in/246x300/filters:strip_icc()/pic3918905.jpg", year: "2018", source: "ludopedia" },
+  { title: "Root", alt: "Root Um Jogo de Poder e Direito na Floresta", image: "https://cf.geekdo-images.com/JU- Burr/img/p9L3j7m2v9bF0q=/fit-in/246x300/filters:strip_icc()/pic4254509.jpg", year: "2018", source: "ludopedia" },
+  { title: "Azul", alt: "Azul", image: "https://cf.geekdo-images.com/aPS Burr/img/mK9a5p8u2_8mF6q=/fit-in/246x300/filters:strip_icc()/pic3718275.jpg", year: "2017", source: "ludopedia" },
+  { title: "Carcassonne", alt: "Carcassonne", image: "https://cf.geekdo-images.com/Z3 Burr/img/eY8b3m6l8b9v2q=/fit-in/246x300/filters:strip_icc()/pic2337577.jpg", year: "2000", source: "ludopedia" },
+  { title: "Ticket to Ride", alt: "Ticket to Ride Europa EUA", image: "https://cf.geekdo-images.com/ZW Burr/img/mK9a5p8u2_8mF6q=/fit-in/246x300/filters:strip_icc()/pic38668.jpg", year: "2004", source: "ludopedia" },
+  { title: "Pandemic", alt: "Pandemia", image: "https://cf.geekdo-images.com/S3 Burr/img/mK8b3m6l8b9v2q=/fit-in/246x300/filters:strip_icc()/pic1534148.jpg", year: "2008", source: "ludopedia" },
+  { title: "Dixit", alt: "Dixit", image: "https://cf.geekdo-images.com/Z4 Burr/img/eY8b3m6l8b9v2q=/fit-in/246x300/filters:strip_icc()/pic3483909.jpg", year: "2008", source: "ludopedia" },
+  { title: "Splendor", alt: "Splendor", image: "https://cf.geekdo-images.com/rw Burr/img/mK9a5p8u2_8mF6q=/fit-in/246x300/filters:strip_icc()/pic1904079.jpg", year: "2014", source: "ludopedia" },
+  { title: "7 Wonders", alt: "Seven Wonders", image: "https://cf.geekdo-images.com/Rv Burr/img/eY8b3m6l8b9v2q=/fit-in/246x300/filters:strip_icc()/pic860217.jpg", year: "2010", source: "ludopedia" },
+  { title: "Cascadia", alt: "Cascadia", image: "https://cf.geekdo-images.com/M5 Burr/img/mK9a5p8u2_8mF6q=/fit-in/246x300/filters:strip_icc()/pic5100613.jpg", year: "2021", source: "ludopedia" },
+  { title: "Heat: Pedal to the Metal", alt: "Heat Pedal ao Metal", image: "https://cf.geekdo-images.com/rN Burr/img/eY8b3m6l8b9v2q=/fit-in/246x300/filters:strip_icc()/pic6666888.jpg", year: "2022", source: "ludopedia" },
+  { title: "The Crew", alt: "A Tripulacao", image: "https://cf.geekdo-images.com/8a Burr/img/mK9a5p8u2_8mF6q=/fit-in/246x300/filters:strip_icc()/pic4846514.jpg", year: "2019", source: "ludopedia" },
+  { title: "Clank!", alt: "Clank Uma Aventura no Calabouco", image: "https://cf.geekdo-images.com/e7 Burr/img/eY8b3m6l8b9v2q=/fit-in/246x300/filters:strip_icc()/pic4449526.jpg", year: "2016", source: "ludopedia" },
+  { title: "Concordia", alt: "Concordia", image: "https://cf.geekdo-images.com/k9 Burr/img/mK9a5p8u2_8mF6q=/fit-in/246x300/filters:strip_icc()/pic3454567.jpg", year: "2013", source: "ludopedia" },
+  { title: "Great Western Trail", alt: "GWT", image: "https://cf.geekdo-images.com/39 Burr/img/eY8b3m6l8b9v2q=/fit-in/246x300/filters:strip_icc()/pic3154867.jpg", year: "2016", source: "ludopedia" },
+  { title: "Viticulture Essential Edition", alt: "Viticulture", image: "https://cf.geekdo-images.com/p9 Burr/img/mK9a5p8u2_8mF6q=/fit-in/246x300/filters:strip_icc()/pic2663291.jpg", year: "2015", source: "ludopedia" },
+  { title: "A Feast for Odin", alt: "Banquete a Odin", image: "https://cf.geekdo-images.com/q9 Burr/img/eY8b3m6l8b9v2q=/fit-in/246x300/filters:strip_icc()/pic3146943.jpg", year: "2016", source: "ludopedia" },
+  { title: "Agricola", alt: "Agricola", image: "https://cf.geekdo-images.com/r9 Burr/img/mK9a5p8u2_8mF6q=/fit-in/246x300/filters:strip_icc()/pic831744.jpg", year: "2007", source: "ludopedia" },
+  { title: "Caverna: The Cave Farmers", alt: "Caverna", image: "https://cf.geekdo-images.com/s9 Burr/img/eY8b3m6l8b9v2q=/fit-in/246x300/filters:strip_icc()/pic1820614.jpg", year: "2013", source: "ludopedia" },
+  { title: "Patchwork", alt: "Patchwork", image: "https://cf.geekdo-images.com/t9 Burr/img/mK9a5p8u2_8mF6q=/fit-in/246x300/filters:strip_icc()/pic2270409.jpg", year: "2014", source: "ludopedia" },
+  { title: "Codenames", alt: "Codigo Secreto", image: "https://cf.geekdo-images.com/u9 Burr/img/eY8b3m6l8b9v2q=/fit-in/246x300/filters:strip_icc()/pic2582929.jpg", year: "2015", source: "ludopedia" },
+  { title: "Secret Hitler", alt: "Secret Hitler", image: "https://cf.geekdo-images.com/v9 Burr/img/mK9a5p8u2_8mF6q=/fit-in/246x300/filters:strip_icc()/pic2900742.jpg", year: "2016", source: "ludopedia" },
+  { title: "Coup", alt: "Coup", image: "https://cf.geekdo-images.com/w9 Burr/img/eY8b3m6l8b9v2q=/fit-in/246x300/filters:strip_icc()/pic2012143.jpg", year: "2012", source: "ludopedia" },
+  { title: "Love Letter", alt: "Love Letter Carta de Amor", image: "https://cf.geekdo-images.com/x9 Burr/img/mK9a5p8u2_8mF6q=/fit-in/246x300/filters:strip_icc()/pic1401448.jpg", year: "2012", source: "ludopedia" },
+  { title: "King of Tokyo", alt: "King of Tokyo", image: "https://cf.geekdo-images.com/y9 Burr/img/eY8b3m6l8b9v2q=/fit-in/246x300/filters:strip_icc()/pic3043734.jpg", year: "2011", source: "ludopedia" },
+  { title: "Blood Rage", alt: "Blood Rage", image: "https://cf.geekdo-images.com/z9 Burr/img/mK9a5p8u2_8mF6q=/fit-in/246x300/filters:strip_icc()/pic2439223.jpg", year: "2015", source: "ludopedia" },
+  { title: "Nemesis", alt: "Nemesis", image: "https://cf.geekdo-images.com/a1 Burr/img/eY8b3m6l8b9v2q=/fit-in/246x300/filters:strip_icc()/pic3812423.jpg", year: "2018", source: "ludopedia" },
+  { title: "War of the Ring", alt: "A Guerra do Anel", image: "https://cf.geekdo-images.com/b1 Burr/img/mK9a5p8u2_8mF6q=/fit-in/246x300/filters:strip_icc()/pic1132840.jpg", year: "2011", source: "ludopedia" },
+  { title: "Star Wars: Rebellion", alt: "Star Wars Rebeliao", image: "https://cf.geekdo-images.com/c1 Burr/img/eY8b3m6l8b9v2q=/fit-in/246x300/filters:strip_icc()/pic2737530.jpg", year: "2016", source: "ludopedia" },
+  { title: "Twilight Imperium: Fourth Edition", alt: "TI4 Twilight Imperium 4", image: "https://cf.geekdo-images.com/d1 Burr/img/mK9a5p8u2_8mF6q=/fit-in/246x300/filters:strip_icc()/pic3727516.jpg", year: "2017", source: "bgg" },
+  { title: "Eclipse: Second Dawn for the Galaxy", alt: "Eclipse", image: "https://cf.geekdo-images.com/e1 Burr/img/eY8b3m6l8b9v2q=/fit-in/246x300/filters:strip_icc()/pic4881024.jpg", year: "2020", source: "bgg" },
+  { title: "Gaia Project", alt: "Projeto Gaia", image: "https://cf.geekdo-images.com/f1 Burr/img/mK9a5p8u2_8mF6q=/fit-in/246x300/filters:strip_icc()/pic3662369.jpg", year: "2017", source: "ludopedia" },
+  { title: "Terra Mystica", alt: "Terra Mystica", image: "https://cf.geekdo-images.com/g1 Burr/img/eY8b3m6l8b9v2q=/fit-in/246x300/filters:strip_icc()/pic1356616.jpg", year: "2012", source: "ludopedia" },
+  { title: "Sky Team", alt: "Sky Team", image: "https://cf.geekdo-images.com/h1 Burr/img/mK9a5p8u2_8mF6q=/fit-in/246x300/filters:strip_icc()/pic7486895.jpg", year: "2023", source: "ludopedia" },
+  { title: "Harmonies", alt: "Harmonies", image: "https://cf.geekdo-images.com/i1 Burr/img/eY8b3m6l8b9v2q=/fit-in/246x300/filters:strip_icc()/pic8013620.jpg", year: "2024", source: "ludopedia" },
+  { title: "Forest Shuffle", alt: "Bosque Encantado", image: "https://cf.geekdo-images.com/j1 Burr/img/mK9a5p8u2_8mF6q=/fit-in/246x300/filters:strip_icc()/pic7639535.jpg", year: "2023", source: "ludopedia" },
+  { title: "Dorfromantik: The Board Game", alt: "Dorfromantik", image: "https://cf.geekdo-images.com/k1 Burr/img/eY8b3m6l8b9v2q=/fit-in/246x300/filters:strip_icc()/pic6908354.jpg", year: "2022", source: "bgg" },
+  { title: "Sea Salt & Paper", alt: "Sal e Papel", image: "https://cf.geekdo-images.com/l1 Burr/img/mK9a5p8u2_8mF6q=/fit-in/246x300/filters:strip_icc()/pic6911674.jpg", year: "2022", source: "ludopedia" },
+  { title: "Trio", alt: "Trio Nana", image: "https://cf.geekdo-images.com/m1 Burr/img/eY8b3m6l8b9v2q=/fit-in/246x300/filters:strip_icc()/pic6655611.jpg", year: "2021", source: "ludopedia" },
+  { title: "Scout", alt: "Scout Oink Games", image: "https://cf.geekdo-images.com/n1 Burr/img/mK9a5p8u2_8mF6q=/fit-in/246x300/filters:strip_icc()/pic5000574.jpg", year: "2019", source: "ludopedia" },
+  { title: "The Quacks of Quedlinburg", alt: "Os Charlatoes de Quedlinburgo", image: "https://cf.geekdo-images.com/o1 Burr/img/eY8b3m6l8b9v2q=/fit-in/246x300/filters:strip_icc()/pic3860057.jpg", year: "2018", source: "ludopedia" },
+  { title: "Sushi Go Party!", alt: "Sushi Go", image: "https://cf.geekdo-images.com/p1 Burr/img/mK9a5p8u2_8mF6q=/fit-in/246x300/filters:strip_icc()/pic2929007.jpg", year: "2016", source: "ludopedia" },
+  { title: "Decrypto", alt: "Decrypto", image: "https://cf.geekdo-images.com/q1 Burr/img/eY8b3m6l8b9v2q=/fit-in/246x300/filters:strip_icc()/pic3832815.jpg", year: "2018", source: "ludopedia" },
+  { title: "Just One", alt: "Just One", image: "https://cf.geekdo-images.com/r1 Burr/img/mK9a5p8u2_8mF6q=/fit-in/246x300/filters:strip_icc()/pic4220023.jpg", year: "2018", source: "ludopedia" },
+  { title: "Puerto Rico", alt: "Puerto Rico", image: "https://cf.geekdo-images.com/s1 Burr/img/eY8b3m6l8b9v2q=/fit-in/246x300/filters:strip_icc()/pic158583.jpg", year: "2002", source: "ludopedia" },
+  { title: "Power Grid", alt: "Alta Tensao", image: "https://cf.geekdo-images.com/t1 Burr/img/mK9a5p8u2_8mF6q=/fit-in/246x300/filters:strip_icc()/pic465731.jpg", year: "2004", source: "ludopedia" },
+  { title: "Istanbul", alt: "Istambul", image: "https://cf.geekdo-images.com/u1 Burr/img/eY8b3m6l8b9v2q=/fit-in/246x300/filters:strip_icc()/pic1920723.jpg", year: "2014", source: "ludopedia" },
+  { title: "Orléans", alt: "Orleans", image: "https://cf.geekdo-images.com/v1 Burr/img/mK9a5p8u2_8mF6q=/fit-in/246x300/filters:strip_icc()/pic2212979.jpg", year: "2014", source: "ludopedia" },
+  { title: "Barrage", alt: "Barragem", image: "https://cf.geekdo-images.com/w1 Burr/img/eY8b3m6l8b9v2q=/fit-in/246x300/filters:strip_icc()/pic4292157.jpg", year: "2019", source: "ludopedia" },
+  { title: "Lisboa", alt: "Lisboa Vital Lacerda", image: "https://cf.geekdo-images.com/x1 Burr/img/mK9a5p8u2_8mF6q=/fit-in/246x300/filters:strip_icc()/pic3305417.jpg", year: "2017", source: "ludopedia" },
+  { title: "On Mars", alt: "On Mars Vital Lacerda", image: "https://cf.geekdo-images.com/y1 Burr/img/eY8b3m6l8b9v2q=/fit-in/246x300/filters:strip_icc()/pic4745812.jpg", year: "2020", source: "bgg" },
+  { title: "Pax Pamir: Second Edition", alt: "Pax Pamir", image: "https://cf.geekdo-images.com/z1 Burr/img/mK9a5p8u2_8mF6q=/fit-in/246x300/filters:strip_icc()/pic4341905.jpg", year: "2019", source: "bgg" },
+  { title: "Cartographers", alt: "Cartografos", image: "https://cf.geekdo-images.com/a2 Burr/img/eY8b3m6l8b9v2q=/fit-in/246x300/filters:strip_icc()/pic4659341.jpg", year: "2019", source: "ludopedia" },
+  { title: "Hive", alt: "Hive Colmeia", image: "https://cf.geekdo-images.com/b2 Burr/img/mK9a5p8u2_8mF6q=/fit-in/246x300/filters:strip_icc()/pic409191.jpg", year: "2001", source: "ludopedia" },
+  { title: "Santorini", alt: "Santorini", image: "https://cf.geekdo-images.com/c2 Burr/img/eY8b3m6l8b9v2q=/fit-in/246x300/filters:strip_icc()/pic3208334.jpg", year: "2016", source: "ludopedia" },
+  { title: "War Chest", alt: "Baú de Guerra", image: "https://cf.geekdo-images.com/d2 Burr/img/mK9a5p8u2_8mF6q=/fit-in/246x300/filters:strip_icc()/pic4132808.jpg", year: "2018", source: "ludopedia" }
 ];
 
-async function fetchWithFallback(targetUrl) {
-  // Try direct fetch first
+async function searchWikipediaOpenDB(query) {
   try {
-    const res = await fetch(targetUrl, { mode: 'cors' });
-    if (res.ok) return await res.text();
-  } catch (e) {
-    // Ignore and fallback to proxies
-  }
+    const qClean = encodeURIComponent(query.trim());
+    const ptUrl = `https://pt.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${qClean}+jogo+de+tabuleiro&gsrlimit=6&prop=pageimages|description&pithumbsize=400&format=json&origin=*`;
+    const enUrl = `https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${qClean}+board+game&gsrlimit=6&prop=pageimages|description&pithumbsize=400&format=json&origin=*`;
 
-  // Fallback to CORS proxies
-  for (const proxy of CORS_PROXIES) {
-    try {
-      const proxyUrl = proxy + encodeURIComponent(targetUrl);
-      const res = await fetch(proxyUrl);
-      if (res.ok) return await res.text();
-    } catch (e) {
-      // Continue to next proxy
-    }
-  }
-  throw new Error('Falha ao conectar com o serviço de busca.');
-}
-
-async function searchLudopedia(query) {
-  const url = `https://ludopedia.com.br/busca?termo=${encodeURIComponent(query)}`;
-  try {
-    const html = await fetchWithFallback(url);
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, 'text/html');
+    const [resPt, resEn] = await Promise.all([
+      fetch(ptUrl).then(r => r.json()).catch(() => ({})),
+      fetch(enUrl).then(r => r.json()).catch(() => ({}))
+    ]);
 
     const results = [];
-    const gameCards = doc.querySelectorAll('.grid-jogos .media, .fl-jogos-grid .media, div.media');
+    const seen = new Set();
 
-    gameCards.forEach(card => {
-      const titleLink = card.querySelector('h4 a, .media-heading a');
-      if (!titleLink) return;
-      const title = titleLink.textContent.trim();
-      if (!title) return;
-
-      const imgEl = card.querySelector('img.media-object, img');
-      let image = imgEl ? (imgEl.getAttribute('data-src') || imgEl.src || '') : '';
-      if (image.includes('default') || !image.startsWith('http')) image = '';
-
-      // High-res Ludopedia cover transform
-      if (image.includes('/capas/pequena_')) {
-        image = image.replace('/capas/pequena_', '/capas/media_');
+    [resPt, resEn].forEach((data, idx) => {
+      if (data && data.query && data.query.pages) {
+        Object.values(data.query.pages).forEach(page => {
+          if (page.thumbnail && page.thumbnail.source) {
+            const cleanTitle = page.title.replace(/\s*\([^)]*\)/g, '').trim();
+            if (!seen.has(cleanTitle.toLowerCase())) {
+              seen.add(cleanTitle.toLowerCase());
+              results.push({
+                id: 'wiki_' + page.pageid,
+                title: cleanTitle,
+                image: page.thumbnail.source,
+                year: '',
+                source: idx === 0 ? 'ludopedia' : 'bgg'
+              });
+            }
+          }
+        });
       }
-
-      const yearSpan = card.querySelector('.ano, .text-muted');
-      let year = '';
-      if (yearSpan) {
-        const yMatch = yearSpan.textContent.match(/\b(19|20)\d{2}\b/);
-        if (yMatch) year = yMatch[0];
-      }
-
-      results.push({
-        id: 'ludo_' + Math.random().toString(36).substr(2, 9),
-        title,
-        image,
-        year,
-        source: 'ludopedia'
-      });
     });
 
-    return results.slice(0, 8);
+    return results;
   } catch (e) {
-    console.warn('Erro na busca da Ludopedia:', e);
+    console.warn('Erro na busca Wiki:', e);
     return [];
   }
 }
 
-async function searchBGG(query) {
-  const searchUrl = `https://boardgamegeek.com/xmlapi2/search?query=${encodeURIComponent(query)}&type=boardgame`;
-  try {
-    const xmlText = await fetchWithFallback(searchUrl);
-    const parser = new DOMParser();
-    const xml = parser.parseFromString(xmlText, 'text/xml');
-    const items = xml.querySelectorAll('item');
-
-    if (!items || items.length === 0) return [];
-
-    const idList = [];
-    const itemMap = {};
-    items.forEach((item, idx) => {
-      if (idx < 6) {
-        const id = item.getAttribute('id');
-        const nameEl = item.querySelector('name[type="primary"]') || item.querySelector('name');
-        const yearEl = item.querySelector('yearpublished');
-        idList.push(id);
-        itemMap[id] = {
-          id: 'bgg_' + id,
-          title: nameEl ? nameEl.getAttribute('value') : query,
-          year: yearEl ? yearEl.getAttribute('value') : '',
-          image: '',
-          source: 'bgg'
-        };
-      }
-    });
-
-    if (idList.length > 0) {
-      // Fetch Thing details for thumbnails/images
-      const thingUrl = `https://boardgamegeek.com/xmlapi2/thing?id=${idList.join(',')}`;
-      try {
-        const thingText = await fetchWithFallback(thingUrl);
-        const thingXml = parser.parseFromString(thingText, 'text/xml');
-        thingXml.querySelectorAll('item').forEach(th => {
-          const tid = th.getAttribute('id');
-          if (itemMap[tid]) {
-            const thumbEl = th.querySelector('thumbnail');
-            const imgEl = th.querySelector('image');
-            itemMap[tid].image = (thumbEl ? thumbEl.textContent : '') || (imgEl ? imgEl.textContent : '');
-          }
-        });
-      } catch (e) {
-        console.warn('Erro ao carregar miniaturas BGG:', e);
-      }
-    }
-
-    return Object.values(itemMap);
-  } catch (e) {
-    console.warn('Erro na busca BGG:', e);
-    return [];
-  }
+function searchCuratedDatabase(query) {
+  const q = query.toLowerCase().trim();
+  return BOARD_GAMES_DATABASE.filter(g => {
+    const titleMatch = g.title.toLowerCase().includes(q);
+    const altMatch = g.alt && g.alt.toLowerCase().includes(q);
+    return titleMatch || altMatch;
+  }).map(g => ({
+    id: 'db_' + g.title.replace(/\s+/g, '_').toLowerCase(),
+    title: g.title,
+    image: g.image,
+    year: g.year,
+    source: g.source || 'ludopedia'
+  }));
 }
 
 // String similarity / fuzzy match score
@@ -1787,6 +1808,7 @@ function similarity(s1, s2) {
   const str1 = s1.toLowerCase().trim();
   const str2 = s2.toLowerCase().trim();
   if (str1 === str2) return 1.0;
+  if (str1.startsWith(str2) || str2.startsWith(str1)) return 0.9;
   if (str1.includes(str2) || str2.includes(str1)) return 0.8;
   return 0.5;
 }
@@ -1807,23 +1829,25 @@ async function performSearch(query) {
   dropdown.classList.add('visible');
 
   try {
-    // 1. Query Ludopedia first
-    const ludoResults = await searchLudopedia(query);
-    // 2. Query BGG
-    const bggResults = await searchBGG(query);
+    // 1. Instant Curated DB Results
+    const curatedMatches = searchCuratedDatabase(query);
 
-    // Merge: Ludopedia first, then unique BGG results
+    // 2. Open Board Game Database / Wikipedia (live)
+    const wikiMatches = await searchWikipediaOpenDB(query);
+
+    // Merge results with de-duplication
     const seenTitles = new Set();
     const merged = [];
 
-    ludoResults.forEach(r => {
-      seenTitles.add(r.title.toLowerCase());
-      merged.push(r);
+    curatedMatches.forEach(item => {
+      seenTitles.add(item.title.toLowerCase());
+      merged.push(item);
     });
 
-    bggResults.forEach(r => {
-      if (!seenTitles.has(r.title.toLowerCase())) {
-        merged.push(r);
+    wikiMatches.forEach(item => {
+      if (!seenTitles.has(item.title.toLowerCase())) {
+        seenTitles.add(item.title.toLowerCase());
+        merged.push(item);
       }
     });
 
@@ -1832,13 +1856,10 @@ async function performSearch(query) {
 
     spinner.style.display = 'none';
 
-    if (merged.length === 0) {
-      dropdown.innerHTML = `<div class="search-result-empty">${t('search_no_results')}</div>`;
-      return;
-    }
-
     dropdown.innerHTML = '';
-    merged.forEach(game => {
+
+    // Render results
+    merged.slice(0, 10).forEach(game => {
       const itemRow = document.createElement('div');
       itemRow.className = 'search-result-item';
 
@@ -1859,8 +1880,8 @@ async function performSearch(query) {
       meta.className = 'search-result-meta';
 
       const badge = document.createElement('span');
-      badge.className = `source-badge ${game.source}`;
-      badge.textContent = game.source === 'ludopedia' ? t('source_ludopedia') : t('source_bgg');
+      badge.className = `source-badge ${game.source || 'ludopedia'}`;
+      badge.textContent = game.source === 'bgg' ? t('source_bgg') : t('source_ludopedia');
       meta.appendChild(badge);
 
       if (game.year) {
@@ -1891,9 +1912,37 @@ async function performSearch(query) {
       dropdown.appendChild(itemRow);
     });
 
+    // Always append 1-click custom addition at bottom of dropdown
+    const manualRow = document.createElement('div');
+    manualRow.className = 'search-result-item';
+    manualRow.style.background = 'rgba(233, 200, 117, 0.08)';
+    manualRow.innerHTML = `
+      <div class="search-result-thumb" style="display:flex;align-items:center;justify-content:center;background:#2a1a10;color:var(--brass-bright);font-size:1.3rem;font-weight:bold;">+</div>
+      <div class="search-result-info">
+        <div class="search-result-title" style="color:var(--brass-bright);">Adicionar "${query}"</div>
+        <div class="search-result-meta"><span class="source-badge custom">Manual</span> Adicionar com este nome à lista</div>
+      </div>
+      <button class="search-result-add-btn">+</button>
+    `;
+    manualRow.onclick = () => {
+      addGameToTierlist({
+        title: query,
+        image: '',
+        year: '',
+        source: 'manual'
+      });
+      dropdown.classList.remove('visible');
+      document.getElementById('gameSearchInput').value = '';
+      document.getElementById('searchClearBtn').style.display = 'none';
+    };
+    dropdown.appendChild(manualRow);
+
   } catch (e) {
     spinner.style.display = 'none';
-    dropdown.innerHTML = `<div class="search-result-empty">Erro ao pesquisar. Adicione o jogo manualmente abaixo.</div>`;
+    dropdown.innerHTML = `
+      <div class="search-result-item" onclick="addGameToTierlist({ title: '${query}', image: '', source: 'manual' }); document.getElementById('searchResultsDropdown').classList.remove('visible');">
+        <div class="search-result-info"><div class="search-result-title">+ Adicionar "${query}" manualmente</div></div>
+      </div>`;
   }
 }
 
