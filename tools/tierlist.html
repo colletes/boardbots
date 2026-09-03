@@ -10329,6 +10329,14 @@ function addGameToTierlist(game) {
     title: game.title,
     image: game.image,
     year: game.year || '',
+    ludoId: game.ludoId || null,
+    designer: game.designer || '',
+    artist: game.artist || '',
+    players: game.players || '',
+    time: game.time || '',
+    plays: game.plays || 0,
+    slug: game.slug || '',
+    link: game.link || '',
     source: game.source || 'manual'
   });
 
@@ -10615,6 +10623,8 @@ function handleLinkInputDebounced(val) {
   }
 }
 
+let lastExtractedGame = null;
+
 async function handleLinkExtraction() {
   const linkInput = document.getElementById('customGameLink');
   const nameInput = document.getElementById('customGameName');
@@ -10627,6 +10637,7 @@ async function handleLinkExtraction() {
   try {
     const extracted = await extractGameFromLink(rawUrl);
     if (extracted && (extracted.title || extracted.image)) {
+      lastExtractedGame = extracted;
       if (extracted.title) {
         nameInput.value = extracted.title;
       }
@@ -10659,9 +10670,16 @@ async function submitCustomGame() {
   const gamePayload = {
     title,
     image,
-    year: '',
+    year: (lastExtractedGame && lastExtractedGame.year) || '',
+    ludoId: (lastExtractedGame && lastExtractedGame.ludoId) || null,
+    designer: (lastExtractedGame && lastExtractedGame.designer) || '',
+    artist: (lastExtractedGame && lastExtractedGame.artist) || '',
+    players: (lastExtractedGame && lastExtractedGame.players) || '',
+    time: (lastExtractedGame && lastExtractedGame.time) || '',
+    plays: (lastExtractedGame && lastExtractedGame.plays) || 0,
+    slug: (lastExtractedGame && lastExtractedGame.slug) || '',
     source: link.includes('ludopedia') ? 'ludopedia' : (link.includes('boardgamegeek') ? 'bgg' : 'custom'),
-    link
+    link: link || (lastExtractedGame && lastExtractedGame.link) || ''
   };
 
   addGameToTierlist(gamePayload);
@@ -10675,6 +10693,7 @@ async function submitCustomGame() {
   urlInput.value = '';
   if (linkInput) linkInput.value = '';
   uploadedBase64Image = '';
+  lastExtractedGame = null;
   document.getElementById('customGameFile').value = '';
   previewCustomImage('');
   closeModal('customGameModal');
