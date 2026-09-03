@@ -1375,7 +1375,7 @@ function calculateIndigoToRed(fraction) {
   return `hsl(${hue}, 82%, 48%)`;
 }
 
-function recalcGradientColors() {
+function recalcGradientColors(showNotification = true) {
   const letterTiers = state.tiers.filter(t => !t.isS && !t.isUnplayed);
   const count = letterTiers.length;
   if (count > 0) {
@@ -1387,7 +1387,9 @@ function recalcGradientColors() {
   }
   saveState();
   renderBoard();
-  showToast(t('toast_recalculated'));
+  if (showNotification) {
+    showToast(t('toast_recalculated'));
+  }
 }
 
 /* =======================================================
@@ -1948,8 +1950,8 @@ function deleteTier(tierId) {
   delete state.items[tierId];
   state.tiers = state.tiers.filter(t => t.id !== tierId);
 
-  saveState();
-  renderBoard();
+  // Automatically rebalance colors across remaining tiers from Indigo to Red
+  recalcGradientColors(false);
 }
 
 function addNewTier() {
