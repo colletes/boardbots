@@ -1275,12 +1275,11 @@ const I18N = {
     btn_reset: 'Reiniciar',
     footer_credits: 'Créditos',
     footer_kofi: 'Me pague um café ☕',
-    footer_note: 'Ferramenta de apoio não-oficial para jogos de tabuleiro. Capas e metadados via Ludopedia & BoardGameGeek.',
-    search_placeholder: 'Buscar jogo na Ludopedia & BGG (ex: Catan, Ark Nova, Stone Age)...',
-    search_loading: 'Buscando jogos na Ludopedia & BGG...',
+    footer_note: 'Ferramenta de apoio não-oficial para jogos de tabuleiro. Capas e metadados via Ludopedia.',
+    search_placeholder: 'Buscar jogo na Ludopedia ou colar link (ex: Catan, Massive Darkness, SETI)...',
+    search_loading: 'Buscando jogos na Ludopedia...',
     search_no_results: 'Nenhum jogo encontrado com esse nome. Tente outro termo ou adicione manualmente!',
     source_ludopedia: 'Ludopedia',
-    source_bgg: 'BGG',
     source_custom: 'Manual',
     modal_custom_title: 'Adicionar Jogo Manual',
     modal_edit_title: 'Editar Jogo',
@@ -1302,7 +1301,7 @@ const I18N = {
     btn_remove_game: 'Remover da Tierlist',
     help_title: 'Como usar o Criador de Tierlist',
     help_step1_t: '1. Busca Automática de Jogos:',
-    help_step1_d: 'Digite o nome de qualquer jogo na barra de busca. O sistema consulta primeiro a Ludopedia e depois o BoardGameGeek (BGG) com aproximação de título e capas quadradas.',
+    help_step1_d: 'Digite o nome de qualquer jogo na barra de busca. O sistema consulta a base da Ludopedia com capas oficiais e aproximação inteligente.',
     help_step2_t: '2. Arraste e Snap Magnético:',
     help_step2_d: 'Novos jogos caem no tier "Não jogado". Arraste e solte para posicioná-los em qualquer tier. No celular, você também pode tocar no jogo para escolher o tier rapidamente.',
     help_step3_t: '3. Personalização Total:',
@@ -1311,12 +1310,11 @@ const I18N = {
     help_step4_d: 'Exporte em PNG, JPG ou PDF, ou gere nos formatos especiais Feed (1:1) e Story (9:16) prontos para postar no Instagram, WhatsApp e Telegram!',
     confirm_reset: 'Tem certeza que deseja reiniciar a Tierlist e remover todos os jogos?',
     confirm_delete_tier: 'Excluir este Tier? Todos os jogos nele voltarão para "Não jogado".',
-    search_placeholder: 'Buscar jogo ou colar link da Ludopedia / BGG (ex: Catan, Ark Nova)...',
-    label_game_link: 'Link da Ludopedia ou BGG (Opcional)',
+    label_game_link: 'Link da Ludopedia (Opcional)',
     btn_extract_link: 'Extrair Dados',
     btn_save_json: 'Salvar lista',
     btn_load_json: 'Carregar lista',
-    toast_link_extracted: 'Capa e dados do jogo extraídos com sucesso!',
+    toast_link_extracted: 'Capa e dados do jogo extraídos com sucesso da Ludopedia!',
     toast_link_error: 'Não foi possível extrair dados automaticamente deste link.',
     toast_json_saved: 'Lista da Tierlist salva com sucesso!',
     toast_json_loaded: 'Lista carregada com sucesso!',
@@ -1339,21 +1337,20 @@ const I18N = {
     btn_reset: 'Reset',
     footer_credits: 'Credits',
     footer_kofi: 'Buy me a coffee ☕',
-    footer_note: 'Unofficial companion tool for board games. Box covers and metadata via Ludopedia & BoardGameGeek.',
-    search_placeholder: 'Search games or paste Ludopedia / BGG link (e.g. Catan, Ark Nova)...',
-    search_loading: 'Searching Ludopedia & BGG...',
+    footer_note: 'Unofficial companion tool for board games. Box covers and metadata via Ludopedia.',
+    search_placeholder: 'Search games on Ludopedia or paste link (e.g. Catan, Massive Darkness, SETI)...',
+    search_loading: 'Searching Ludopedia...',
     search_no_results: 'No games found with this title. Try another search or add a custom game!',
     source_ludopedia: 'Ludopedia',
-    source_bgg: 'BGG',
     source_custom: 'Custom',
     modal_custom_title: 'Add Custom Game',
     modal_edit_title: 'Edit Game',
     btn_save_changes: 'Save Changes',
     btn_edit_game: 'Edit Game',
     tap_edit_game: '✏️ Edit Game (Title / Cover)',
-    label_game_link: 'Ludopedia or BGG Link (Optional)',
+    label_game_link: 'Ludopedia Link (Optional)',
     btn_extract_link: 'Extract Details',
-    toast_link_extracted: 'Game details & cover extracted successfully!',
+    toast_link_extracted: 'Game details & cover extracted successfully from Ludopedia!',
     toast_link_error: 'Could not automatically extract details from this link.',
     label_game_name: 'Game Title *',
     label_game_img_url: 'Cover Image URL (Optional)',
@@ -1370,7 +1367,7 @@ const I18N = {
     btn_remove_game: 'Remove from Tierlist',
     help_title: 'How to Use Tierlist Maker',
     help_step1_t: '1. Automatic Game Search:',
-    help_step1_d: 'Type any game title in the search box or paste a link from Ludopedia/BGG. Searches databases with title matching and square covers.',
+    help_step1_d: 'Type any game title in the search box or paste a link from Ludopedia. Searches official database with title matching and square covers.',
     help_step2_t: '2. Drag & Drop with Magnetic Snap:',
     help_step2_d: 'New games appear in "Unplayed". Drag and drop to sort them into any tier. On mobile devices, tap any game for a quick action menu.',
     help_step3_t: '3. Full Customization:',
@@ -6754,92 +6751,73 @@ const BOARD_GAMES_DATABASE = [
   }
 ];
 
-async function searchWikipediaOpenDB(query) {
+const LUDOPEDIA_ACCESS_TOKEN = '4c19506c8a280672ca249db5fde7c092';
+
+async function searchLudopediaAPI(query) {
   try {
     const qClean = encodeURIComponent(query.trim());
-    const qWords = query.toLowerCase().split(/\s+/).filter(w => w.length > 1);
+    const ludoUrl = `https://ludopedia.com.br/api/v1/jogos?search=${qClean}&rows=10&access_token=${LUDOPEDIA_ACCESS_TOKEN}`;
 
-    const ptUrl = `https://pt.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${qClean}+"jogo+de+tabuleiro"&gsrlimit=8&prop=pageimages|description&pithumbsize=400&format=json&origin=*`;
-    const enUrl = `https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${qClean}+"board+game"&gsrlimit=8&prop=pageimages|description&pithumbsize=400&format=json&origin=*`;
-
-    const [resPt, resEn] = await Promise.all([
-      fetch(ptUrl).then(r => r.json()).catch(() => ({})),
-      fetch(enUrl).then(r => r.json()).catch(() => ({}))
-    ]);
-
-    const results = [];
-    const seen = new Set();
-
-    const ignoredKeywords = [
-      'list of', 'lista de', 'category:', 'categoria:', 'template:', 'portal:', 'index of', 'índice de',
-      'designer', 'autor', 'publisher', 'editora', 'award', 'prêmio', 'premio',
-      'spiel des jahres', 'boardgamegeek', 'ludopedia', 'convention', 'video game',
-      'filme', 'film', 'novel', 'livro', 'adaptação', 'adaptation', 'magazine', 'revista',
-      'products', 'produtos', 'accessories', 'acessórios', 'merchandise', 'pharaoh', 'faraó',
-      'astronomer', 'astronomy', 'scientist', 'scientology', 'institute', 'organization',
-      'carl sagan', 'biography', 'actor', 'director', 'cooperative board games', 'dungeon crawl'
-    ];
-
-    [resPt, resEn].forEach((data, idx) => {
-      if (data && data.query && data.query.pages) {
-        Object.values(data.query.pages).forEach(page => {
-          if (page.thumbnail && page.thumbnail.source) {
-            const rawTitle = page.title;
-            const titleLower = rawTitle.toLowerCase();
-            const descLower = (page.description || '').toLowerCase();
-
-            // 1. Strict anti-list and anti-meta filtering
-            if (titleLower.startsWith('list ') || titleLower.startsWith('lista ') || titleLower.startsWith('category:') || titleLower.startsWith('index of')) return;
-            const isIgnored = ignoredKeywords.some(kw => titleLower.includes(kw) || descLower.includes(kw));
-            if (isIgnored) return;
-
-            // 2. Title must actually contain the query terms
-            const hasQueryInTitle = qWords.some(w => titleLower.includes(w));
-            if (!hasQueryInTitle) return;
-
-            // 3. Must be a board game / tabletop game
-            const isGameTag = titleLower.includes('(board game)') || titleLower.includes('(jogo de tabuleiro)') || titleLower.includes('(game)') || titleLower.includes('(jogo)');
-            const isGameDesc = descLower.includes('board game') || descLower.includes('card game') || descLower.includes('tabletop') || descLower.includes('jogo de tabuleiro') || descLower.includes('jogo de cartas') || descLower.includes('eurogame') || descLower.includes('wargame');
-            
-            if (!isGameTag && !isGameDesc) return;
-
-            const cleanTitle = rawTitle.replace(/\s*\([^)]*\)/g, '').trim();
-            if (!cleanTitle || cleanTitle.length < 2) return;
-
-            if (!seen.has(cleanTitle.toLowerCase())) {
-              seen.add(cleanTitle.toLowerCase());
-              results.push({
-                id: 'wiki_' + page.pageid,
-                title: cleanTitle,
-                image: page.thumbnail.source,
-                year: '',
-                source: idx === 0 ? 'ludopedia' : 'bgg'
-              });
-            }
-          }
-        });
+    let json = null;
+    try {
+      const res = await fetch(ludoUrl, {
+        headers: {
+          'Authorization': `Bearer ${LUDOPEDIA_ACCESS_TOKEN}`,
+          'Accept': 'application/json'
+        }
+      });
+      if (res.ok) {
+        json = await res.json();
       }
-    });
+    } catch (netErr) {
+      console.warn('Ludopedia direct API fetch not available from client CORS:', netErr);
+    }
 
-    return results;
+    if (json && json.jogos && Array.isArray(json.jogos)) {
+      return json.jogos.map(g => {
+        const slug = (g.link || '').replace(/^jogo\//, '').trim();
+        const image = (g.thumb || '').replace(/_t\.jpg$/i, '_m.jpg');
+        return {
+          id: 'ludo_' + g.id_jogo,
+          ludoId: g.id_jogo,
+          title: g.nm_jogo,
+          alt: `${g.nm_original || ''} ${g.nm_jogo}`,
+          slug: slug,
+          image: image,
+          year: g.ano_publicacao ? String(g.ano_publicacao) : '',
+          source: 'ludopedia',
+          link: 'https://ludopedia.com.br/' + (g.link || `jogo/${slug}`)
+        };
+      });
+    }
+    return [];
   } catch (e) {
-    console.warn('Erro na busca Wiki:', e);
+    console.warn('Erro na busca Ludopedia API:', e);
     return [];
   }
 }
 
 function searchCuratedDatabase(query) {
   const q = query.toLowerCase().trim();
+  const qWords = q.split(/\s+/).filter(w => w.length > 1);
+
   return BOARD_GAMES_DATABASE.filter(g => {
-    const titleMatch = g.title.toLowerCase().includes(q);
-    const altMatch = g.alt && g.alt.toLowerCase().includes(q);
-    return titleMatch || altMatch;
+    const titleLower = g.title.toLowerCase();
+    const altLower = (g.alt || '').toLowerCase();
+    const slugLower = (g.slug || '').toLowerCase();
+
+    if (titleLower.includes(q) || altLower.includes(q) || slugLower.includes(q.replace(/\s+/g, '-'))) return true;
+    if (qWords.length > 1 && qWords.every(w => titleLower.includes(w) || altLower.includes(w))) return true;
+    return false;
   }).map(g => ({
-    id: 'db_' + g.title.replace(/\s+/g, '_').toLowerCase(),
+    id: 'db_' + (g.ludoId || g.title.replace(/\s+/g, '_').toLowerCase()),
+    ludoId: g.ludoId || null,
     title: g.title,
+    slug: g.slug || '',
     image: g.image,
     year: g.year,
-    source: g.source || 'ludopedia'
+    source: 'ludopedia',
+    link: g.link || (g.slug ? `https://ludopedia.com.br/jogo/${g.slug}` : '')
   }));
 }
 
@@ -6864,16 +6842,16 @@ async function performSearch(query) {
     return;
   }
 
-  // URL detected in search input (e.g. Ludopedia, BGG, or direct image)
-  const isUrl = query.startsWith('http://') || query.startsWith('https://') || query.includes('ludopedia.com.br') || query.includes('boardgamegeek.com');
+  // URL detected in search input (e.g. Ludopedia or direct image)
+  const isUrl = query.startsWith('http://') || query.startsWith('https://') || query.includes('ludopedia.com.br');
   if (isUrl) {
     spinner.style.display = 'none';
     dropdown.innerHTML = `
       <div class="search-result-item" style="background:rgba(99, 102, 241, 0.15); border-left:3px solid var(--accent-indigo);">
         <div class="search-result-thumb" style="display:flex;align-items:center;justify-content:center;background:#1e1b4b;color:#a5b4fc;font-size:1.3rem;">🔗</div>
         <div class="search-result-info">
-          <div class="search-result-title" style="color:#a5b4fc;">Extrair jogo do link</div>
-          <div class="search-result-meta"><span class="source-badge bgg">Link</span> Clique para extrair capa e salvar</div>
+          <div class="search-result-title" style="color:#a5b4fc;">Extrair jogo da Ludopedia</div>
+          <div class="search-result-meta"><span class="source-badge ludopedia">Ludopedia</span> Clique para extrair capa e salvar</div>
         </div>
         <button class="search-result-add-btn">+</button>
       </div>
@@ -6902,8 +6880,8 @@ async function performSearch(query) {
     // 1. Instant Curated DB Results
     const curatedMatches = searchCuratedDatabase(query);
 
-    // 2. Open Board Game Database / Wikipedia (live)
-    const wikiMatches = await searchWikipediaOpenDB(query);
+    // 2. Official Ludopedia API Search
+    const apiMatches = await searchLudopediaAPI(query);
 
     // Merge results with de-duplication
     const seenTitles = new Set();
@@ -6914,7 +6892,7 @@ async function performSearch(query) {
       merged.push(item);
     });
 
-    wikiMatches.forEach(item => {
+    apiMatches.forEach(item => {
       if (!seenTitles.has(item.title.toLowerCase())) {
         seenTitles.add(item.title.toLowerCase());
         merged.push(item);
@@ -6925,6 +6903,11 @@ async function performSearch(query) {
     merged.sort((a, b) => similarity(b.title, query) - similarity(a.title, query));
 
     spinner.style.display = 'none';
+
+    if (merged.length === 0) {
+      dropdown.innerHTML = `<div class="search-result-status">${t('search_no_results')}</div>`;
+      return;
+    }
 
     dropdown.innerHTML = '';
 
@@ -6951,7 +6934,7 @@ async function performSearch(query) {
 
       const badge = document.createElement('span');
       badge.className = `source-badge ${game.source || 'ludopedia'}`;
-      badge.textContent = game.source === 'bgg' ? t('source_bgg') : t('source_ludopedia');
+      badge.textContent = t('source_ludopedia');
       meta.appendChild(badge);
 
       if (game.year) {
