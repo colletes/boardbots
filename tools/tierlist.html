@@ -1056,7 +1056,8 @@ footer {
   .toolbar-actions { flex-direction: column; align-items: stretch; }
   .toolbar-left, .toolbar-right { justify-content: space-between; }
   .tier-label-box { width: 90px; min-width: 80px; padding: 6px 4px; }
-  .tier-name { font-size: 1.15rem; }
+  .tier-name { font-size: 1.15rem; overflow-wrap: break-word; hyphens: auto; }
+  .tier-unplayed-finish .tier-name { font-size: 0.8rem; letter-spacing: -0.2px; }
   :root { --tile-size: 74px; }
 }
 </style>
@@ -1278,6 +1279,22 @@ footer {
       </div>
     </div>
 
+    <!-- Icon Size / Tamanho dos Ícones -->
+    <div style="margin-bottom:12px;">
+      <label style="font-weight:700; font-size:0.85rem; color:var(--brass-bright);" data-i18n="label_icon_size">Tamanho dos Ícones:</label>
+      <div class="export-options-grid" style="margin-top:6px;">
+        <div id="iconSizeSmall" class="export-preset-card" onclick="setExportIconSize('small')">
+          <div class="export-preset-title" data-i18n="icon_size_small">Pequeno</div>
+        </div>
+        <div id="iconSizeMedium" class="export-preset-card active" onclick="setExportIconSize('medium')">
+          <div class="export-preset-title" data-i18n="icon_size_medium">Médio</div>
+        </div>
+        <div id="iconSizeLarge" class="export-preset-card" onclick="setExportIconSize('large')">
+          <div class="export-preset-title" data-i18n="icon_size_large">Grande</div>
+        </div>
+      </div>
+    </div>
+
     <!-- Direct Social Share Buttons -->
     <div style="margin-bottom:14px;">
       <label style="font-weight:700; font-size:0.85rem; color:var(--brass-bright);" data-i18n="label_share_social">Compartilhamento Direto:</label>
@@ -1320,6 +1337,10 @@ footer {
         <button class="tool-btn" onclick="saveTierlistJson()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
           <span>JSON (Lista)</span>
+        </button>
+        <button class="tool-btn" onclick="downloadTextList()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          <span data-i18n="btn_download_txt">TXT (Lista)</span>
         </button>
       </div>
     </div>
@@ -1452,6 +1473,10 @@ const I18N = {
     label_preset: 'Enquadramento:',
     preset_feed_desc: 'Ideal para Instagram Post, Twitter & Desktop',
     preset_story_desc: 'Vertical para Instagram Stories e WhatsApp Status',
+    label_icon_size: 'Tamanho dos Ícones:',
+    icon_size_small: 'Pequeno',
+    icon_size_medium: 'Médio',
+    icon_size_large: 'Grande',
     label_share_social: 'Compartilhamento Direto:',
     share_native: 'Compartilhar',
     label_download_format: 'Baixar Arquivo:',
@@ -1471,6 +1496,7 @@ const I18N = {
     btn_extract_link: 'Extrair Dados',
     btn_save_json: 'Salvar lista',
     btn_load_json: 'Carregar lista',
+    btn_download_txt: 'TXT (Lista)',
     toast_link_extracted: 'Capa e dados do jogo extraídos com sucesso da Ludopedia!',
     toast_link_error: 'Não foi possível extrair dados automaticamente deste link.',
     toast_json_saved: 'Lista da Tierlist salva com sucesso!',
@@ -1478,6 +1504,7 @@ const I18N = {
     toast_game_edited: 'Informações do jogo atualizadas!',
     toast_added: '"{name}" adicionado a Não Jogado!',
     toast_exported: 'Imagem exportada com sucesso!',
+    toast_txt_exported: 'Lista em texto exportada com sucesso!',
     toast_recalculated: 'Cores dos Tiers recalculadas no gradiente!',
     unplayed_name: 'Não jogado'
   },
@@ -1490,6 +1517,7 @@ const I18N = {
     btn_recalc_colors: 'Auto-Gradient',
     btn_save_json: 'Save List',
     btn_load_json: 'Load List',
+    btn_download_txt: 'TXT (List)',
     label_size: 'Tile:',
     btn_reset: 'Reset',
     footer_credits: 'Credits',
@@ -1519,6 +1547,10 @@ const I18N = {
     label_preset: 'Aspect Ratio / Preset:',
     preset_feed_desc: 'Square / Standard for Instagram Feed & Web',
     preset_story_desc: '9:16 Vertical for Instagram Stories & WhatsApp Status',
+    label_icon_size: 'Icon Size:',
+    icon_size_small: 'Small',
+    icon_size_medium: 'Medium',
+    icon_size_large: 'Large',
     label_share_social: 'Direct Social Share:',
     share_native: 'Share',
     label_download_format: 'Download File:',
@@ -1539,6 +1571,7 @@ const I18N = {
     toast_game_edited: 'Game details updated successfully!',
     toast_added: '"{name}" added to Unplayed!',
     toast_exported: 'Image exported successfully!',
+    toast_txt_exported: 'Text list exported successfully!',
     toast_recalculated: 'Tier colors recalculated along the gradient spectrum!',
     unplayed_name: 'Unplayed'
   }
@@ -3240,11 +3273,21 @@ function removeActiveTile() {
    CANVAS RENDERING & EXPORT ENGINE
    ======================================================= */
 let currentExportPreset = 'feed'; // 'feed' (1:1) or 'story' (9:16)
+let currentExportIconSize = 'medium'; // 'small' | 'medium' | 'large'
+const EXPORT_ICON_SIZES = { small: 60, medium: 90, large: 130 };
 
 function setExportPreset(preset) {
   currentExportPreset = preset;
   document.getElementById('presetFeed').classList.toggle('active', preset === 'feed');
   document.getElementById('presetStory').classList.toggle('active', preset === 'story');
+  generateExportCanvas();
+}
+
+function setExportIconSize(size) {
+  currentExportIconSize = size;
+  document.getElementById('iconSizeSmall').classList.toggle('active', size === 'small');
+  document.getElementById('iconSizeMedium').classList.toggle('active', size === 'medium');
+  document.getElementById('iconSizeLarge').classList.toggle('active', size === 'large');
   generateExportCanvas();
 }
 
@@ -3266,7 +3309,7 @@ async function generateExportCanvas() {
   // Measure height needed for all tiers
   const tierWidth = width - 80;
   const labelWidth = 140;
-  const tileSize = 90;
+  const tileSize = EXPORT_ICON_SIZES[currentExportIconSize] || 90;
   const tileGap = 8;
   const availableTilesWidth = tierWidth - labelWidth - 24;
   const tilesPerRow = Math.max(1, Math.floor(availableTilesWidth / (tileSize + tileGap)));
@@ -3525,6 +3568,28 @@ function saveTierlistJson() {
   link.click();
   URL.revokeObjectURL(url);
   showToast(t('toast_json_saved'));
+}
+
+function downloadTextList() {
+  saveState();
+  const lines = [];
+  (state.tiers || []).forEach(tier => {
+    const items = state.items[tier.id] || [];
+    if (items.length === 0) return;
+    lines.push(`${tier.name}:`);
+    items.forEach(item => lines.push(`- ${item.title}`));
+  });
+
+  const txtStr = lines.join('\n');
+  const blob = new Blob([txtStr], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  const safeTitle = (state.title || 'tierlist').toLowerCase().replace(/[^a-z0-9_-]/gi, '_');
+  link.download = `tierlist-${safeTitle}-${Date.now()}.txt`;
+  link.href = url;
+  link.click();
+  URL.revokeObjectURL(url);
+  showToast(t('toast_txt_exported'));
 }
 
 function importTierlistJson(event) {
