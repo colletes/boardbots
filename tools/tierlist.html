@@ -7816,21 +7816,43 @@ async function extractGameFromLink(rawUrl) {
     };
   }
 
-  // 2. Ludopedia Link: https://ludopedia.com.br/jogo/massive-darkness-2-hellscape
+  // 2. Ludopedia Link: https://ludopedia.com.br/jogo/tokyo-highway (or with query/trailing dash)
   const ludoMatch = url.match(/ludopedia\.com\.br\/jogo\/([a-zA-Z0-9\-_]+)/i);
   if (ludoMatch) {
-    const slug = ludoMatch[1].toLowerCase();
-    const slugWords = slug.split('-').filter(w => w.length > 2);
-    const prettyTitle = slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    const rawSlug = ludoMatch[1].toLowerCase().replace(/-+$/, '');
+    const cleanSearch = rawSlug.replace(/[-_]+/g, ' ').trim();
+    const prettyTitle = cleanSearch.split(/\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 
-    // Check match in database (slug exact, slug startsWith, slug includes, or title match)
-    const localMatch = BOARD_GAMES_DATABASE.find(g => {
-      if (g.slug) {
-        const s = g.slug.toLowerCase();
-        if (s === slug || slug.includes(s) || s.includes(slug)) return true;
+    // PRIORITY 1: Search Official Ludopedia API Live
+    try {
+      const apiResults = await searchLudopediaAPI(cleanSearch);
+      if (apiResults && apiResults.length > 0) {
+        const slugMatch = apiResults.find(r => r.slug === rawSlug || r.slug.includes(rawSlug) || rawSlug.includes(r.slug));
+        const best = slugMatch || apiResults[0];
+        if (best) {
+          return {
+            title: best.title,
+            image: best.image,
+            year: best.year || '',
+            ludoId: best.ludoId,
+            designer: best.designer || '',
+            artist: best.artist || '',
+            players: best.players || '',
+            time: best.time || '',
+            plays: best.plays || 0,
+            source: 'ludopedia',
+            link: best.link || url
+          };
+        }
       }
+    } catch (apiErr) {
+      console.warn('Ludopedia API search fallback:', apiErr);
+    }
+
+    // PRIORITY 2: Curated Database Fallback (Exact matches only)
+    const localMatch = BOARD_GAMES_DATABASE.find(g => {
+      if (g.slug && g.slug.toLowerCase() === rawSlug) return true;
       if (g.title && g.title.toLowerCase() === prettyTitle.toLowerCase()) return true;
-      if (g.alt && slugWords.length > 0 && slugWords.every(w => g.alt.toLowerCase().includes(w))) return true;
       return false;
     });
 
@@ -7839,11 +7861,18 @@ async function extractGameFromLink(rawUrl) {
         title: localMatch.title,
         image: localMatch.image,
         year: localMatch.year || '',
+        ludoId: localMatch.ludoId || null,
+        designer: localMatch.designer || '',
+        artist: localMatch.artist || '',
+        players: localMatch.players || '',
+        time: localMatch.time || '',
+        plays: localMatch.plays || 0,
         source: 'ludopedia',
         link: url
       };
     }
 
+    // Default formatting if not in API and not in DB
     return {
       title: prettyTitle,
       image: '',
@@ -7853,22 +7882,35 @@ async function extractGameFromLink(rawUrl) {
     };
   }
 
-  // 3. BGG Link: https://boardgamegeek.com/boardgame/314819/massive-darkness-2-hellscape
+  // 3. BGG Link fallback
   const bggMatch = url.match(/boardgamegeek\.com\/boardgame\/(\d+)(?:\/([a-zA-Z0-9\-_]+))?/i);
   if (bggMatch) {
     const id = bggMatch[1];
-    const slug = (bggMatch[2] || '').toLowerCase();
-    const slugWords = slug.split('-').filter(w => w.length > 2);
-    const prettyTitle = slug ? slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : `BGG #${id}`;
+    const rawSlug = (bggMatch[2] || '').toLowerCase();
+    const cleanSearch = rawSlug.replace(/[-_]+/g, ' ').trim();
+    const prettyTitle = cleanSearch ? cleanSearch.split(/\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : `BGG #${id}`;
+
+    // Try Ludopedia search with English title
+    if (cleanSearch) {
+      try {
+        const apiResults = await searchLudopediaAPI(cleanSearch);
+        if (apiResults && apiResults.length > 0) {
+          const best = apiResults[0];
+          return {
+            title: best.title,
+            image: best.image,
+            year: best.year || '',
+            ludoId: best.ludoId,
+            source: 'ludopedia',
+            link: url
+          };
+        }
+      } catch (e) {}
+    }
 
     const localMatch = BOARD_GAMES_DATABASE.find(g => {
       if (g.bggId && g.bggId === id) return true;
-      if (slug && g.slug) {
-        const s = g.slug.toLowerCase();
-        if (s === slug || slug.includes(s) || s.includes(slug)) return true;
-      }
-      if (g.title && g.title.toLowerCase() === prettyTitle.toLowerCase()) return true;
-      if (g.alt && slugWords.length > 0 && slugWords.every(w => g.alt.toLowerCase().includes(w))) return true;
+      if (g.slug && rawSlug && g.slug.toLowerCase() === rawSlug) return true;
       return false;
     });
 
@@ -7922,17 +7964,15 @@ async function handleLinkExtraction() {
 
   if (!rawUrl) return;
 
-  showToast('Extraindo capa e dados do link...');
+  showToast('Extraindo capa e dados da Ludopedia...');
   try {
     const extracted = await extractGameFromLink(rawUrl);
     if (extracted && (extracted.title || extracted.image)) {
-      if (extracted.title && !nameInput.value.trim()) {
+      if (extracted.title) {
         nameInput.value = extracted.title;
       }
-      if (extracted.image) {
-        urlInput.value = extracted.image;
-        previewCustomImage(extracted.image);
-      }
+      urlInput.value = extracted.image || '';
+      previewCustomImage(extracted.image || '');
       showToast(t('toast_link_extracted'));
     } else {
       showToast(t('toast_link_error'));
