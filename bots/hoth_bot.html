@@ -7,6 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+    <script src="../assets/theme-kit.js"></script>
     <style>
         :root {
             --reb-color: #00f2ff;
@@ -926,17 +927,34 @@
         return audioCtxShared;
     }
 
+    function playSfxSampleOrFallback(samplePath, fallbackFn, volume = 0.7) {
+        if (typeof window !== 'undefined' && window.ThemeKit && window.ThemeKit.isSfxMuted()) return;
+        try {
+            const audio = new Audio(samplePath);
+            audio.volume = volume;
+            audio.play().catch(() => {
+                if (typeof fallbackFn === 'function') fallbackFn();
+            });
+        } catch(e) {
+            if (typeof fallbackFn === 'function') fallbackFn();
+        }
+    }
+
     function playBlaster() {
+        playSfxSampleOrFallback('../assets/sfx/hoth/blaster.mp3', playBlasterSynth, 0.75);
+    }
+
+    function playBlasterSynth() {
+        if (typeof window !== 'undefined' && window.ThemeKit && window.ThemeKit.isSfxMuted()) return;
         const ctx = getAudioCtx();
         const t = ctx.currentTime;
         const master = ctx.createGain(); master.gain.value = 0.3; master.connect(ctx.destination);
-        // short slap-back echo gives it that sci-fi "laser bolt" tail
         const delay = ctx.createDelay(); delay.delayTime.value = 0.055;
         const feedback = ctx.createGain(); feedback.gain.value = 0.22;
         delay.connect(feedback); feedback.connect(delay); delay.connect(master);
 
         const o1 = ctx.createOscillator(), o2 = ctx.createOscillator(), g = ctx.createGain(), filt = ctx.createBiquadFilter();
-        o1.type = 'sawtooth'; o2.type = 'square'; o2.detune.value = -1200; // an octave down adds body/punch
+        o1.type = 'sawtooth'; o2.type = 'square'; o2.detune.value = -1200;
         o1.frequency.setValueAtTime(2200, t); o1.frequency.exponentialRampToValueAtTime(140, t + 0.14);
         o2.frequency.setValueAtTime(1100, t); o2.frequency.exponentialRampToValueAtTime(70, t + 0.14);
         filt.type = 'lowpass'; filt.frequency.setValueAtTime(6000, t); filt.frequency.exponentialRampToValueAtTime(500, t + 0.14);
@@ -946,6 +964,11 @@
     }
 
     function playLightsaber() {
+        playSfxSampleOrFallback('../assets/sfx/hoth/lightsaber.mp3', playLightsaberSynth, 0.85);
+    }
+
+    function playLightsaberSynth() {
+        if (typeof window !== 'undefined' && window.ThemeKit && window.ThemeKit.isSfxMuted()) return;
         const ctx = getAudioCtx();
         const duration = 0.6;
         const buffer = ctx.createBuffer(1, ctx.sampleRate * duration, ctx.sampleRate);
@@ -965,11 +988,15 @@
     }
 
     function playBeep() {
-        // R2-D2 style warbling chirps: randomized count/pitch/wobble each time, instead of fixed flat notes
+        playSfxSampleOrFallback('../assets/sfx/hoth/r2-beep.mp3', playBeepSynth, 0.7);
+    }
+
+    function playBeepSynth() {
+        if (typeof window !== 'undefined' && window.ThemeKit && window.ThemeKit.isSfxMuted()) return;
         const ctx = getAudioCtx();
         const t0 = ctx.currentTime;
         const master = ctx.createGain(); master.gain.value = 0.22; master.connect(ctx.destination);
-        const chirpCount = 3 + Math.floor(Math.random() * 3); // 3-5 chirps
+        const chirpCount = 3 + Math.floor(Math.random() * 3);
         let cursor = 0;
         for (let i = 0; i < chirpCount; i++) {
             const dur = 0.06 + Math.random() * 0.1;
@@ -1010,8 +1037,16 @@
         }
     }
 
+    let ambientAudioEl = null;
     function toggleAmbient() {
-        const ctx = getAudioCtx();
+        if (ambientAudioEl) {
+            ambientAudioEl.pause();
+            ambientAudioEl = null;
+            document.getElementById('ambient-label').innerText = S().btnAmbient;
+            document.getElementById('icon-ambient-off').classList.remove('hidden');
+            document.getElementById('icon-ambient-on').classList.add('hidden');
+            return;
+        }
         if (ambientNode) {
             ambientNode.osc1.stop(); ambientNode.osc2.stop();
             ambientNode = null;
@@ -1020,6 +1055,26 @@
             document.getElementById('icon-ambient-on').classList.add('hidden');
             return;
         }
+
+        try {
+            ambientAudioEl = new Audio('../assets/sfx/hoth/hoth-ambient.mp3');
+            ambientAudioEl.loop = true;
+            ambientAudioEl.volume = 0.35;
+            ambientAudioEl.play().then(() => {
+                document.getElementById('ambient-label').innerText = S().btnAmbientMute;
+                document.getElementById('icon-ambient-off').classList.add('hidden');
+                document.getElementById('icon-ambient-on').classList.remove('hidden');
+            }).catch(() => {
+                ambientAudioEl = null;
+                startAmbientSynthFallback();
+            });
+        } catch (e) {
+            startAmbientSynthFallback();
+        }
+    }
+
+    function startAmbientSynthFallback() {
+        const ctx = getAudioCtx();
         const osc1 = ctx.createOscillator(), osc2 = ctx.createOscillator();
         const g = ctx.createGain();
         osc1.type = 'sine'; osc1.frequency.setValueAtTime(55, ctx.currentTime);
@@ -1029,7 +1084,7 @@
         osc1.connect(g); osc2.connect(g); g.connect(ctx.destination);
         osc1.start(); osc2.start();
         ambientNode = { osc1, osc2 };
-        document.getElementById('ambient-label').innerText = S().btnAmbientOn;
+        document.getElementById('ambient-label').innerText = S().btnAmbientMute;
         document.getElementById('icon-ambient-off').classList.add('hidden');
         document.getElementById('icon-ambient-on').classList.remove('hidden');
     }
@@ -1604,6 +1659,9 @@
     }
 
     function shuffle(array) {
+        if (typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
+            window.ThemeKit.playSfx('card-shuffle', { volume: 0.6 });
+        }
         for (let i = array.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [array[i], array[j]] = [array[j], array[i]];
@@ -1611,9 +1669,14 @@
     }
 
     function drawToLimit() {
+        let drew = false;
         while(hand.length < maxHand && (deck.length > 0 || discard.length > 0)) {
             if(deck.length === 0) { deck = [...discard]; discard = []; shuffle(deck); }
             hand.push(deck.pop());
+            drew = true;
+        }
+        if (drew && typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
+            window.ThemeKit.playSfx('card-draw', { volume: 0.5 });
         }
     }
 
@@ -1817,11 +1880,14 @@
     }
 
     function handleDecision(isYes) {
+        if (typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
+            window.ThemeKit.playSfx('token-place', { volume: 0.4 });
+        }
         if (isYes) {
-            const card = activeSortedList[currentEvalIndex];
-            if (card.sectionPick && card.sectionPick < 3) {
+            const card = (activeSortedList && activeSortedList[currentEvalIndex]) ? activeSortedList[currentEvalIndex] : null;
+            if (card && card.sectionPick && card.sectionPick < 3) {
                 setControlState('section_choice', card);
-            } else {
+            } else if (card) {
                 executeCard(card);
             }
         } else {
@@ -1856,6 +1922,9 @@
 
     function executeCard(card) {
         playBlaster();
+        if (typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
+            window.ThemeKit.playSfx('card-flip', { volume: 0.55 });
+        }
         hand = hand.filter(c => c !== card);
         discard.push(card);
         drawToLimit();
@@ -1864,11 +1933,19 @@
     }
 
     function endTurn() {
+        if (typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
+            window.ThemeKit.playSfx('turn-notify', { volume: 0.55 });
+        }
         updateUI();
         setControlState('idle');
     }
 
     function vaderSound() {
+        playSfxSampleOrFallback('../assets/sfx/hoth/vader-breath.mp3', vaderSoundSynth, 0.9);
+    }
+
+    function vaderSoundSynth() {
+        if (typeof window !== 'undefined' && window.ThemeKit && window.ThemeKit.isSfxMuted()) return;
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         function breath(isInhale) {
             const duration = isInhale ? 1.1 : 1.6;

@@ -11,6 +11,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/site.css?v=7">
 <script src="../assets/logger.js"></script>
+<script src="../assets/theme-kit.js"></script>
 
 <style>
 .hidden { display: none !important; }
@@ -1089,6 +1090,9 @@ html, body {
             document.querySelectorAll('#die2Buttons .sb-die-btn').forEach((b, i) => b.classList.toggle('active-die2', i + 1 === value));
         }
         document.getElementById('manualDiceSum').textContent = manualD1 + manualD2;
+        if (typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
+            window.ThemeKit.playSfx('token-place', { volume: 0.35 });
+        }
         addGameLog(`🎲 ${currentLang === 'en' ? 'Manual Dice Set' : 'Dados Informados'}: [${manualD1}, ${manualD2}] ➔ ${currentLang === 'en' ? 'Sum' : 'Soma'} ${manualD1+manualD2}`);
     };
 
@@ -1132,6 +1136,10 @@ html, body {
         document.getElementById('setupOverlay').style.display = 'none';
         document.getElementById('mainContainer').style.display = 'grid';
         
+        if (typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
+            window.ThemeKit.playSfx('turn-notify', { volume: 0.6 });
+        }
+
         if (diceMode === 'virtual') {
             document.getElementById('dice-box').style.display = 'block';
             document.getElementById('manualDiceArea').style.display = 'none';
@@ -1181,6 +1189,9 @@ html, body {
     window.changeAutomaVP = function(delta) {
         automaVP = Math.max(0, automaVP + delta);
         updateAutomaTrackUI();
+        if (typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
+            window.ThemeKit.playSfx('token-place', { volume: 0.4 });
+        }
         addGameLog(`⭐ Automa VP ${delta > 0 ? '+' : ''}${delta} ➔ ${automaVP} VP`);
         saveState();
     };
@@ -1188,6 +1199,9 @@ html, body {
     window.setAutomaVP = function(val) {
         automaVP = Math.max(0, parseInt(val) || 0);
         updateAutomaTrackUI();
+        if (typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
+            window.ThemeKit.playSfx('token-place', { volume: 0.4 });
+        }
         addGameLog(`⭐ Automa VP ➔ ${automaVP} VP`);
         saveState();
     };
@@ -1195,6 +1209,9 @@ html, body {
     window.changeVP = function(delta) {
         playerVP = Math.max(0, playerVP + delta);
         document.getElementById('vpCounter').value = playerVP;
+        if (typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
+            window.ThemeKit.playSfx('token-place', { volume: 0.4 });
+        }
         addGameLog(`👤 ${currentLang === 'en' ? 'Player' : 'Jogador'} VP ${delta > 0 ? '+' : ''}${delta} ➔ ${playerVP} VP`);
         saveState();
     };
@@ -1202,6 +1219,9 @@ html, body {
     window.setPlayerVP = function(val) {
         playerVP = Math.max(0, parseInt(val) || 0);
         document.getElementById('vpCounter').value = playerVP;
+        if (typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
+            window.ThemeKit.playSfx('token-place', { volume: 0.4 });
+        }
         addGameLog(`👤 ${currentLang === 'en' ? 'Player' : 'Jogador'} VP ➔ ${playerVP} VP`);
         saveState();
     };
@@ -1217,7 +1237,6 @@ html, body {
         let rowNum = 1;
         if (automaVP < conf.t_income) {
             earned = cardData.r1.vp; // Active is Row 1 (Top / Tier 3)
-            rowNum = 1;
         } else if (automaVP < conf.t_coins) {
             earned = cardData.r2.vp; // Active is Row 2 (Middle / Tier 2)
             rowNum = 2;
@@ -1226,10 +1245,15 @@ html, body {
             rowNum = 3;
         }
 
-        automaVP += earned;
-        updateAutomaTrackUI();
-        addGameLog(`🎯 ${currentLang === 'en' ? 'Scored Card VP' : 'Pontuou VP da Carta'} (Linha ${rowNum}): +${earned} VP ➔ Total: ${automaVP} VP`);
-        saveState();
+        if (earned > 0) {
+            automaVP += earned;
+            updateAutomaTrackUI();
+            if (typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
+                window.ThemeKit.playSfx('token-place', { volume: 0.5 });
+            }
+            addGameLog(`⭐ ${currentLang === 'en' ? 'Scored Card VP' : 'Pontuou VP da Carta'} ➔ Linha ${rowNum} (+${earned} VP) ➔ ${automaVP} VP`);
+            saveState();
+        }
     };
 
     function updateAutomaTrackUI() {
@@ -1356,6 +1380,10 @@ html, body {
         const cardIndex = automaDeck.pop();
         automaDiscard.push(cardIndex);
         
+        if (typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
+            window.ThemeKit.playSfx('card-draw', { volume: 0.55 });
+        }
+
         renderJoannaCard(cardIndex);
         updateDeckStatusText();
         updateAutomaTrackUI();
@@ -1444,11 +1472,17 @@ html, body {
         document.getElementById('emptyLogState').style.display = 'none';
         
         let drawn = [];
+        if (typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
+            window.ThemeKit.playSfx('card-flip', { volume: 0.55 });
+        }
         for(let i=0; i<cardsToDraw; i++) {
             if(attackDeck.length === 0) {
                 attackDeck = [...attackDiscard];
                 attackDiscard = [];
                 shuffleArray(attackDeck);
+                if (typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
+                    window.ThemeKit.playSfx('card-shuffle', { volume: 0.65 });
+                }
                 addGameLog(`🔄 ${currentLang === 'en' ? 'Attack Deck Reshuffled' : 'Baralho de Ataque Reembaralhado'}`);
             }
             if(attackDeck.length > 0) {
@@ -1493,6 +1527,9 @@ html, body {
         attackDeck = attackDeck.concat(attackDiscard);
         attackDiscard = [];
         shuffleArray(attackDeck);
+        if (typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
+            window.ThemeKit.playSfx('card-shuffle', { volume: 0.65 });
+        }
         updateDeckStatusText();
         
         const log = document.getElementById('attackLogDisplay');

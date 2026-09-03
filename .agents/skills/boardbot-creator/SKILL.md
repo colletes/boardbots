@@ -70,7 +70,7 @@ Ao criar o HTML do bot, **você DEVE copiar e utilizar os seguintes elementos pa
    - **Papel do Companion (Mesa Física vs Simulação Virtual):**
      - Quando o jogo físico possui cartas na caixa que o jogador compra na mesa, o bot NÃO deve simular a compra aleatória de cartas fictícias. O bot serve como assistente de estado de jogo (gerenciando escudos, dominância, dano, retaliações e gatilhos da mesa).
    - **Widescreen Layouts:** NUNCA confine a tela inteira em um `max-width: 500px` genérico no centro da tela para desktops. Em telas maiores (`min-width: 900px`), o layout deve se expandir utilizando CSS Grid ou Flexbox (ex: uma coluna lateral para status e uma coluna principal maior), aproveitando todo o espaço horizontal sem deixar enormes áreas pretas nas laterais.
-   - **Nomenclatura Sem Sufixos de Versão:** NUNCA crie ou renomeie arquivos com sufixos de versão (`_v2`, `_RC2`). Os arquivos de bot residem diretamente como `bots/<nome_do_jogo>_bot.html` (ou nome consolidado) e são editados in-place. O histórico git e o ambiente de `staging` fornecem a segurança necessária.
+   - **Nomenclatura Sem Sufixos de Versão:** NUNCA crie ou renomeie arquivos com sufixos de versão (`_v1`, `_v2`, `_RC2`). Os arquivos de bots e ferramentas residem diretamente como `bots/<nome_do_jogo>_bot.html` ou `tools/<nome_ferramenta>.html` (ex: `tools/tierlist.html`) e são editados in-place. O histórico git e o ambiente de `staging` fornecem a segurança necessária.
 7. **Painel de Histórico (Log) com Voz em Personagem:**
    É OBRIGATÓRIO incluir um painel de histórico de ações (log) na tela do jogo (`<div id="logPanel" class="log-panel"></div>`).
    - O log deve registrar todas as ações e decisões do bot de forma descritiva e clara.

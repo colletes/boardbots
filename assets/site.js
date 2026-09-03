@@ -106,6 +106,8 @@ const SITE_I18N = {
     tool_dice_desc: 'Role múltiplos dados (d4 a d100) de uma vez.',
     tool_pointcounter_title: 'Contador de Pontos',
     tool_pointcounter_desc: 'Jogadores, critérios de pontuação, cronômetro de partida e sorteio do primeiro jogador.',
+    tool_tierlist_title: 'Criador de Tierlist',
+    tool_tierlist_desc: 'Crie tierlists de jogos buscando na Ludopedia e BGG, com tiers customizáveis e exportação de imagem.',
   },
   en: {
     site_title: 'Board Bots',
@@ -211,6 +213,8 @@ const SITE_I18N = {
     tool_dice_desc: 'Roll multiple dice (d4 to d100) at once.',
     tool_pointcounter_title: 'Point Counter',
     tool_pointcounter_desc: 'Players, scoring criteria, a play timer and a first-player picker.',
+    tool_tierlist_title: 'Tierlist Maker',
+    tool_tierlist_desc: 'Create board game tierlists by searching on Ludopedia & BGG, with custom tiers and image export.',
   }
 };
 
