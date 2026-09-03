@@ -7,6 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+    <script src="../assets/theme-kit.js"></script>
     <style>
         :root {
             --reb-color: #00f2ff;
@@ -927,6 +928,7 @@
     }
 
     function playBlaster() {
+        if (typeof window !== 'undefined' && window.ThemeKit && window.ThemeKit.isSfxMuted()) return;
         const ctx = getAudioCtx();
         const t = ctx.currentTime;
         const master = ctx.createGain(); master.gain.value = 0.3; master.connect(ctx.destination);
@@ -946,6 +948,7 @@
     }
 
     function playLightsaber() {
+        if (typeof window !== 'undefined' && window.ThemeKit && window.ThemeKit.isSfxMuted()) return;
         const ctx = getAudioCtx();
         const duration = 0.6;
         const buffer = ctx.createBuffer(1, ctx.sampleRate * duration, ctx.sampleRate);
@@ -965,6 +968,7 @@
     }
 
     function playBeep() {
+        if (typeof window !== 'undefined' && window.ThemeKit && window.ThemeKit.isSfxMuted()) return;
         // R2-D2 style warbling chirps: randomized count/pitch/wobble each time, instead of fixed flat notes
         const ctx = getAudioCtx();
         const t0 = ctx.currentTime;
@@ -1604,6 +1608,9 @@
     }
 
     function shuffle(array) {
+        if (typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
+            window.ThemeKit.playSfx('card-shuffle', { volume: 0.6 });
+        }
         for (let i = array.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [array[i], array[j]] = [array[j], array[i]];
@@ -1611,9 +1618,14 @@
     }
 
     function drawToLimit() {
+        let drew = false;
         while(hand.length < maxHand && (deck.length > 0 || discard.length > 0)) {
             if(deck.length === 0) { deck = [...discard]; discard = []; shuffle(deck); }
             hand.push(deck.pop());
+            drew = true;
+        }
+        if (drew && typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
+            window.ThemeKit.playSfx('card-draw', { volume: 0.5 });
         }
     }
 
@@ -1817,11 +1829,14 @@
     }
 
     function handleDecision(isYes) {
+        if (typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
+            window.ThemeKit.playSfx('token-place', { volume: 0.4 });
+        }
         if (isYes) {
-            const card = activeSortedList[currentEvalIndex];
-            if (card.sectionPick && card.sectionPick < 3) {
+            const card = (activeSortedList && activeSortedList[currentEvalIndex]) ? activeSortedList[currentEvalIndex] : null;
+            if (card && card.sectionPick && card.sectionPick < 3) {
                 setControlState('section_choice', card);
-            } else {
+            } else if (card) {
                 executeCard(card);
             }
         } else {
@@ -1856,6 +1871,9 @@
 
     function executeCard(card) {
         playBlaster();
+        if (typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
+            window.ThemeKit.playSfx('card-flip', { volume: 0.55 });
+        }
         hand = hand.filter(c => c !== card);
         discard.push(card);
         drawToLimit();
@@ -1864,11 +1882,15 @@
     }
 
     function endTurn() {
+        if (typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
+            window.ThemeKit.playSfx('turn-notify', { volume: 0.55 });
+        }
         updateUI();
         setControlState('idle');
     }
 
     function vaderSound() {
+        if (typeof window !== 'undefined' && window.ThemeKit && window.ThemeKit.isSfxMuted()) return;
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         function breath(isInhale) {
             const duration = isInhale ? 1.1 : 1.6;

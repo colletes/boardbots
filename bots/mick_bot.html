@@ -1157,7 +1157,19 @@
         }
         function playGuitarSolo() {
             pulseStrumButton();
-            if (isMuted) return;
+            if (isMuted || (typeof window !== 'undefined' && window.ThemeKit && window.ThemeKit.isSfxMuted())) return;
+            try {
+                const riffNum = Math.floor(Math.random() * 4) + 1;
+                const audio = new Audio(`../assets/sfx/mick/guitar-riff-${riffNum}.mp3`);
+                audio.volume = 0.85;
+                audio.play().catch(() => playSynthGuitarFallback());
+            } catch (e) {
+                playSynthGuitarFallback();
+            }
+        }
+
+        function playSynthGuitarFallback() {
+            if (isMuted || (typeof window !== 'undefined' && window.ThemeKit && window.ThemeKit.isSfxMuted())) return;
             if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             if (audioCtx.state === 'suspended') audioCtx.resume();
             const now = audioCtx.currentTime;
@@ -1165,7 +1177,6 @@
             const selectedRiff = riffs[Math.floor(Math.random() * riffs.length)]; let timeOffset = 0;
             const masterGain = audioCtx.createGain(); masterGain.gain.value = 0.3;
             const distortion = audioCtx.createWaveShaper(); distortion.curve = makeDistortionCurve(100); distortion.oversample = '4x';
-            // amp cabinet simulation: lowpass to tame fizzy highs + a presence peak, closer to a miked speaker cab than a plain bandpass
             const cabLow = audioCtx.createBiquadFilter(); cabLow.type = 'lowpass'; cabLow.frequency.value = 3200; cabLow.Q.value = 0.7;
             const cabPeak = audioCtx.createBiquadFilter(); cabPeak.type = 'peaking'; cabPeak.frequency.value = 900; cabPeak.Q.value = 1.2; cabPeak.gain.value = 5;
             distortion.connect(cabLow); cabLow.connect(cabPeak); cabPeak.connect(masterGain); masterGain.connect(audioCtx.destination);
