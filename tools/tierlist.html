@@ -1,0 +1,2482 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Criador de Tierlist — Board Bots Tools</title>
+<meta name="description" content="Crie tierlists de jogos de tabuleiro buscando capas na Ludopedia e BGG, com tiers customizáveis, snap magnético e exportação para redes sociais.">
+<link rel="icon" href="../assets/mascot-trimmed.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- jsPDF for direct PDF export -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+:root {
+  --desk-dark: #1e130c;
+  --desk-mid: #2e1c12;
+  --desk-light: #442a1b;
+  --brass: #c5a059;
+  --brass-bright: #e9c875;
+  --brass-dark: #7a5f27;
+  --text-main: #f8eedb;
+  --text-dim: #b8a68e;
+  --panel-bg: rgba(22, 13, 8, 0.88);
+  --panel-border: #4a3020;
+  --tile-size: 88px;
+  --font-display: 'Poppins', system-ui, -apple-system, sans-serif;
+  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  padding: 16px 12px 60px;
+  font-family: var(--font-body);
+  color: var(--text-main);
+  background-color: var(--desk-dark);
+  background-image: 
+    radial-gradient(circle at 50% 10%, rgba(229,178,110,0.12) 0%, transparent 60%),
+    radial-gradient(circle at 20% 80%, rgba(0,0,0,0.6) 0%, transparent 50%),
+    linear-gradient(90deg, #120a06 0%, var(--desk-dark) 50%, #120a06 100%),
+    url('../assets/textures/dark-walnut.jpg');
+  background-blend-mode: normal, normal, normal, multiply;
+  background-size: auto, auto, auto, 280px 280px;
+  background-repeat: no-repeat, no-repeat, no-repeat, repeat;
+  background-attachment: fixed;
+  min-height: 100vh;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .dust-layer { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+  .dust-mote {
+    position: absolute; bottom: -10px; width: 3px; height: 3px; border-radius: 50%;
+    background: rgba(229, 200, 117, 0.45); box-shadow: 0 0 4px 1px rgba(229, 200, 117, 0.3);
+    animation: motesRise linear infinite;
+  }
+  @keyframes motesRise {
+    0% { transform: translate(0, 0); opacity: 0; }
+    10% { opacity: 0.8; }
+    90% { opacity: 0.4; }
+    100% { transform: translate(25px, -100vh); opacity: 0; }
+  }
+  .dust-mote:nth-child(1) { left: 8%; animation-duration: 12s; animation-delay: -1s; }
+  .dust-mote:nth-child(2) { left: 24%; animation-duration: 15s; animation-delay: -5s; }
+  .dust-mote:nth-child(3) { left: 45%; animation-duration: 10s; animation-delay: -2s; }
+  .dust-mote:nth-child(4) { left: 68%; animation-duration: 14s; animation-delay: -7s; }
+  .dust-mote:nth-child(5) { left: 88%; animation-duration: 11s; animation-delay: -3s; }
+}
+
+.container {
+  max-width: 1160px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+/* Floating Navigation Controls */
+.top-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.btn-home {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(35, 20, 13, 0.9);
+  color: var(--brass-bright);
+  border: 1.5px solid var(--brass-dark);
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+}
+.btn-home:hover {
+  background: var(--brass-dark);
+  color: #fff;
+  border-color: var(--brass);
+}
+.lang-switch {
+  display: flex;
+  gap: 4px;
+  background: rgba(30, 18, 12, 0.92);
+  border: 1.5px solid var(--brass-dark);
+  border-radius: 8px;
+  padding: 4px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+}
+.lang-btn {
+  border: none;
+  background: transparent;
+  color: var(--brass);
+  font-weight: 700;
+  font-size: 0.8rem;
+  padding: 6px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.lang-btn.active {
+  background: linear-gradient(135deg, var(--brass), var(--brass-dark));
+  color: #120a06;
+}
+
+/* Hero Header */
+.hero-tier {
+  background: linear-gradient(135deg, rgba(68, 42, 27, 0.85), rgba(28, 16, 10, 0.95)), url('../assets/textures/dark-walnut.jpg');
+  background-blend-mode: multiply;
+  border: 2px solid var(--brass-dark);
+  border-radius: 14px;
+  padding: 20px 24px;
+  margin-bottom: 20px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.6), inset 0 0 20px rgba(0,0,0,0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.hero-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.hero-title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.8rem;
+  margin: 0;
+  color: var(--brass-bright);
+  text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.hero-title svg {
+  width: 28px;
+  height: 28px;
+  color: var(--brass);
+}
+.tierlist-title-input {
+  background: transparent;
+  border: none;
+  border-bottom: 2px dashed rgba(233, 200, 117, 0.4);
+  color: var(--brass-bright);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.5rem;
+  padding: 4px 6px;
+  width: 100%;
+  max-width: 500px;
+  transition: border-color 0.2s;
+}
+.tierlist-title-input:focus {
+  outline: none;
+  border-bottom-style: solid;
+  border-bottom-color: var(--brass-bright);
+}
+
+/* Main Control Toolbar */
+.toolbar {
+  background: var(--panel-bg);
+  border: 1.5px solid var(--panel-border);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 20px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Search Area */
+.search-box-wrapper {
+  position: relative;
+  width: 100%;
+}
+.search-input-group {
+  display: flex;
+  align-items: center;
+  background: rgba(10, 6, 4, 0.85);
+  border: 1.5px solid var(--brass-dark);
+  border-radius: 10px;
+  padding: 4px 12px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.search-input-group:focus-within {
+  border-color: var(--brass-bright);
+  box-shadow: 0 0 12px rgba(233, 200, 117, 0.25);
+}
+.search-icon {
+  width: 20px;
+  height: 20px;
+  color: var(--brass);
+  flex-shrink: 0;
+  margin-right: 8px;
+}
+.search-input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 1rem;
+  font-family: var(--font-body);
+  padding: 8px 0;
+}
+.search-input:focus {
+  outline: none;
+}
+.search-clear-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  padding: 4px;
+  font-size: 1.1rem;
+  display: none;
+}
+.search-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(233, 200, 117, 0.3);
+  border-top-color: var(--brass-bright);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  display: none;
+  margin-left: 6px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Search Results Autocomplete Dropdown */
+.search-results-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: #190f0a;
+  border: 1.5px solid var(--brass-dark);
+  border-radius: 10px;
+  box-shadow: 0 12px 36px rgba(0,0,0,0.85);
+  max-height: 380px;
+  overflow-y: auto;
+  z-index: 100;
+  display: none;
+}
+.search-results-dropdown.visible {
+  display: block;
+}
+.search-result-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.search-result-item:hover {
+  background: rgba(197, 160, 89, 0.18);
+}
+.search-result-thumb {
+  width: 48px;
+  height: 48px;
+  border-radius: 6px;
+  object-fit: cover;
+  background: #0d0705;
+  border: 1px solid var(--brass-dark);
+  flex-shrink: 0;
+}
+.search-result-info {
+  flex-grow: 1;
+  min-width: 0;
+}
+.search-result-title {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.search-result-meta {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+}
+.source-badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+.source-badge.ludopedia { background: #1b4332; color: #74c69d; }
+.source-badge.bgg { background: #5c1d11; color: #ff9b85; }
+.source-badge.custom { background: #3d2645; color: #d4a5ff; }
+
+.search-result-add-btn {
+  background: linear-gradient(135deg, var(--brass), var(--brass-dark));
+  color: #120a06;
+  border: none;
+  font-weight: 700;
+  font-size: 0.85rem;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.search-result-empty, .search-result-status {
+  padding: 16px;
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 0.9rem;
+}
+
+/* Secondary Tools Row */
+.toolbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+}
+.toolbar-left, .toolbar-right {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+/* Size Slider */
+.size-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(14, 8, 5, 0.7);
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--panel-border);
+}
+.size-control label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--brass-bright);
+}
+.size-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100px;
+  height: 6px;
+  background: #331f14;
+  border-radius: 4px;
+  outline: none;
+}
+.size-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--brass-bright);
+  cursor: pointer;
+  box-shadow: 0 0 6px rgba(0,0,0,0.6);
+}
+
+/* Buttons */
+.tool-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(38, 22, 14, 0.9);
+  color: var(--text-main);
+  border: 1.5px solid var(--brass-dark);
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+}
+.tool-btn:hover {
+  background: var(--brass-dark);
+  color: #fff;
+  border-color: var(--brass);
+}
+.tool-btn.primary {
+  background: linear-gradient(135deg, var(--brass), var(--brass-dark));
+  color: #120a06;
+  font-weight: 700;
+  border-color: var(--brass-bright);
+}
+.tool-btn.primary:hover {
+  background: linear-gradient(135deg, var(--brass-bright), var(--brass));
+}
+.tool-btn svg { width: 16px; height: 16px; }
+
+/* Tierlist Board */
+.tierlist-board {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 24px;
+  background: rgba(14, 8, 5, 0.75);
+  border: 2px solid var(--panel-border);
+  border-radius: 12px;
+  padding: 10px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.7);
+}
+
+/* Tier Row */
+.tier-row {
+  display: flex;
+  min-height: calc(var(--tile-size) + 16px);
+  background: rgba(26, 15, 10, 0.85);
+  border: 1px solid rgba(197, 160, 89, 0.15);
+  border-radius: 8px;
+  overflow: hidden;
+  transition: border-color 0.2s, background 0.2s;
+}
+.tier-row.drag-over {
+  border-color: var(--brass-bright);
+  background: rgba(197, 160, 89, 0.08);
+}
+
+/* Tier Label / Header */
+.tier-label-box {
+  width: 120px;
+  min-width: 100px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 8px;
+  position: relative;
+  user-select: none;
+  flex-shrink: 0;
+  text-align: center;
+  box-shadow: inset 0 0 14px rgba(0,0,0,0.4);
+}
+.tier-name {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.4rem;
+  line-height: 1.1;
+  word-break: break-word;
+  outline: none;
+  cursor: text;
+}
+.tier-actions {
+  display: flex;
+  gap: 4px;
+  margin-top: 6px;
+  opacity: 0.65;
+  transition: opacity 0.2s;
+}
+.tier-row:hover .tier-actions {
+  opacity: 1;
+}
+.tier-action-btn {
+  background: rgba(0,0,0,0.4);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: #fff;
+  border-radius: 4px;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+}
+.tier-action-btn:hover {
+  background: rgba(0,0,0,0.7);
+  border-color: #fff;
+}
+.tier-action-btn svg { width: 12px; height: 12px; }
+
+/* Special S-Tier Metallic Iridescent Platinum Finish */
+.tier-s-finish {
+  background: linear-gradient(135deg, #f8fafc 0%, #cbd5e1 20%, #e2e8f0 35%, #ddd6fe 55%, #bae6fd 75%, #ffffff 100%) !important;
+  color: #0f172a !important;
+  border-right: 2px solid #94a3b8;
+  box-shadow: inset 0 0 16px rgba(255, 255, 255, 0.8), 0 0 12px rgba(186, 230, 253, 0.4);
+  position: relative;
+  overflow: hidden;
+}
+.tier-s-finish::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(45deg, transparent 40%, rgba(255,255,255,0.8) 50%, transparent 60%);
+  animation: shine 4s infinite linear;
+  pointer-events: none;
+}
+@keyframes shine {
+  0% { transform: translateX(-100%) rotate(45deg); }
+  100% { transform: translateX(100%) rotate(45deg); }
+}
+
+/* Unplayed Gray Slate Finish */
+.tier-unplayed-finish {
+  background: linear-gradient(135deg, #475569 0%, #334155 100%) !important;
+  color: #f1f5f9 !important;
+  border-right: 2px solid #64748b;
+}
+
+/* Tier Dropzone / Tile Rack */
+.tier-dropzone {
+  flex-grow: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px;
+  align-items: center;
+  align-content: flex-start;
+  min-height: calc(var(--tile-size) + 16px);
+}
+
+/* Square Game Tile */
+.game-tile {
+  width: var(--tile-size);
+  height: var(--tile-size);
+  aspect-ratio: 1 / 1;
+  position: relative;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #0f0906;
+  border: 1.5px solid rgba(255,255,255,0.18);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.6);
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+  flex-shrink: 0;
+}
+.game-tile:hover {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 8px 18px rgba(0,0,0,0.8);
+  border-color: var(--brass-bright);
+  z-index: 10;
+}
+.game-tile.dragging {
+  opacity: 0.45;
+  transform: scale(0.95);
+  cursor: grabbing;
+}
+.game-tile img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  pointer-events: none;
+}
+.game-tile-fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, #2d180f, #150b07);
+}
+.tile-remove-btn {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 18px;
+  height: 18px;
+  background: rgba(0,0,0,0.75);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.4);
+  border-radius: 50%;
+  font-size: 11px;
+  line-height: 1;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 5;
+}
+.game-tile:hover .tile-remove-btn {
+  display: flex;
+}
+.tile-remove-btn:hover {
+  background: #dc2626;
+  border-color: #fff;
+}
+.tile-tooltip {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0,0,0,0.85);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 3px 4px;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0;
+  transition: opacity 0.15s;
+  pointer-events: none;
+}
+.game-tile:hover .tile-tooltip {
+  opacity: 1;
+}
+
+/* Ghost / Snap placeholder */
+.snap-placeholder {
+  width: var(--tile-size);
+  height: var(--tile-size);
+  border: 2px dashed var(--brass-bright);
+  border-radius: 6px;
+  background: rgba(233, 200, 117, 0.12);
+  flex-shrink: 0;
+}
+
+/* Modals */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.82);
+  backdrop-filter: blur(4px);
+  z-index: 200;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.modal-overlay.visible {
+  display: flex;
+}
+.modal-card {
+  background: #1e130c;
+  background-image: linear-gradient(135deg, rgba(50, 30, 19, 0.9), rgba(20, 11, 7, 0.95)), url('../assets/textures/dark-walnut.jpg');
+  background-blend-mode: multiply;
+  border: 2px solid var(--brass-dark);
+  border-radius: 14px;
+  padding: 24px;
+  max-width: 540px;
+  width: 100%;
+  box-shadow: 0 16px 50px rgba(0,0,0,0.9);
+  position: relative;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.modal-card h2 {
+  font-family: var(--font-display);
+  color: var(--brass-bright);
+  margin-top: 0;
+  margin-bottom: 16px;
+  font-size: 1.4rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.modal-close-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 4px;
+}
+.modal-close-btn:hover { color: #fff; }
+
+.form-group {
+  margin-bottom: 14px;
+}
+.form-group label {
+  display: block;
+  font-weight: 600;
+  font-size: 0.85rem;
+  margin-bottom: 6px;
+  color: var(--brass-bright);
+}
+.form-input {
+  width: 100%;
+  background: rgba(10, 6, 4, 0.9);
+  border: 1px solid var(--brass-dark);
+  border-radius: 8px;
+  color: #fff;
+  padding: 8px 12px;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+}
+.form-input:focus {
+  outline: none;
+  border-color: var(--brass-bright);
+}
+
+/* Export / Share Modal Styles */
+.export-preview-container {
+  background: #0d0705;
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  padding: 8px;
+  text-align: center;
+  margin-bottom: 16px;
+  max-height: 220px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.export-preview-canvas {
+  max-width: 100%;
+  max-height: 200px;
+  object-fit: contain;
+  border-radius: 4px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.6);
+}
+
+.export-options-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 10px;
+  margin-bottom: 18px;
+}
+.export-preset-card {
+  background: rgba(30, 18, 12, 0.8);
+  border: 1.5px solid var(--panel-border);
+  border-radius: 8px;
+  padding: 10px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s;
+}
+.export-preset-card.active, .export-preset-card:hover {
+  border-color: var(--brass-bright);
+  background: rgba(197, 160, 89, 0.15);
+}
+.export-preset-title {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--brass-bright);
+}
+.export-preset-desc {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+
+.share-buttons-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+.share-action-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px 8px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.12);
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: transform 0.15s, opacity 0.15s;
+  text-decoration: none;
+}
+.share-action-btn:hover {
+  transform: translateY(-2px);
+  opacity: 0.95;
+}
+.share-action-btn svg { width: 22px; height: 22px; }
+.share-btn-wa { background: #25d366; color: #fff; }
+.share-btn-tg { background: #229ed9; color: #fff; }
+.share-btn-ig { background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); color: #fff; }
+.share-btn-native { background: linear-gradient(135deg, var(--brass), var(--brass-dark)); color: #120a06; }
+.share-btn-dl { background: #374151; color: #f9fafb; }
+
+/* Help Float Button */
+.btn-help-float {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 60;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--brass), var(--brass-dark));
+  color: #120a06;
+  border: 2px solid var(--brass-bright);
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+.btn-help-float:hover {
+  transform: scale(1.08);
+}
+
+/* Toast */
+.toast-msg {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: #1e130c;
+  color: var(--brass-bright);
+  border: 1.5px solid var(--brass);
+  padding: 10px 20px;
+  border-radius: 30px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.7);
+  z-index: 300;
+  opacity: 0;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  pointer-events: none;
+}
+.toast-msg.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+
+/* Mobile Quick Action Modal for Tap-to-move */
+.tap-actions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+}
+.tap-action-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  padding: 10px 14px;
+  border-radius: 8px;
+  color: #fff;
+  cursor: pointer;
+  font-weight: 600;
+}
+.tap-action-option:hover {
+  background: rgba(197, 160, 89, 0.2);
+  border-color: var(--brass-bright);
+}
+.tap-action-badge {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.85rem;
+}
+
+/* Footer */
+footer {
+  margin-top: 40px;
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 0.82rem;
+}
+.footer-links {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 10px;
+}
+.footer-links a {
+  color: var(--brass-bright);
+  text-decoration: none;
+}
+.footer-links a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+  .hero-tier { padding: 14px; }
+  .hero-title { font-size: 1.4rem; }
+  .tierlist-title-input { font-size: 1.2rem; }
+  .toolbar-actions { flex-direction: column; align-items: stretch; }
+  .toolbar-left, .toolbar-right { justify-content: space-between; }
+  .tier-label-box { width: 90px; min-width: 80px; padding: 6px 4px; }
+  .tier-name { font-size: 1.15rem; }
+  :root { --tile-size: 74px; }
+}
+</style>
+</head>
+<body>
+
+<div class="dust-layer" aria-hidden="true">
+  <span class="dust-mote"></span><span class="dust-mote"></span><span class="dust-mote"></span>
+  <span class="dust-mote"></span><span class="dust-mote"></span>
+</div>
+
+<div class="container">
+  <!-- Top Navigation -->
+  <div class="top-nav">
+    <a href="../index.html" class="btn-home">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <span data-i18n="back_home">Board Bots</span>
+    </a>
+    <div class="lang-switch">
+      <button class="lang-btn" data-lang="pt" onclick="setLang('pt')">PT</button>
+      <button class="lang-btn" data-lang="en" onclick="setLang('en')">EN</button>
+    </div>
+  </div>
+
+  <!-- Hero Banner -->
+  <div class="hero-tier">
+    <div class="hero-title-row">
+      <h1 class="hero-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.45 1-1 1H7c-.55 0-1-.45-1-1v-2.34c0-.38.22-.73.57-.88L9 12.6V9a3 3 0 0 1 6 0v3.6l2.43 1.18c.35.15.57.5.57.88V17c0 .55-.45 1-1 1h-2c-.55 0-1-.45-1-1v-2.34"/></svg>
+        <span data-i18n="tier_maker_title">Criador de Tierlist</span>
+      </h1>
+      <button class="tool-btn primary" onclick="openExportModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+        <span data-i18n="btn_export_share">Exportar / Compartilhar</span>
+      </button>
+    </div>
+    <input type="text" id="tierlistCustomTitle" class="tierlist-title-input" value="Minha Tierlist de Jogos de Tabuleiro" placeholder="Título da sua Tierlist...">
+  </div>
+
+  <!-- Control Toolbar -->
+  <div class="toolbar">
+    <!-- Search Bar with Live Suggestions -->
+    <div class="search-box-wrapper">
+      <div class="search-input-group">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="text" id="gameSearchInput" class="search-input" placeholder="Buscar jogo na Ludopedia & BGG (ex: Catan, Ark Nova, Stone Age)..." autocomplete="off">
+        <button id="searchClearBtn" class="search-clear-btn" onclick="clearSearch()">&times;</button>
+        <div id="searchSpinner" class="search-spinner"></div>
+      </div>
+      <!-- Autocomplete Dropdown -->
+      <div id="searchResultsDropdown" class="search-results-dropdown"></div>
+    </div>
+
+    <!-- Actions Row -->
+    <div class="toolbar-actions">
+      <div class="toolbar-left">
+        <button class="tool-btn" onclick="openCustomGameModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span data-i18n="btn_add_custom">Jogo Manual / Upload</span>
+        </button>
+        <button class="tool-btn" onclick="addNewTier()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+          <span data-i18n="btn_add_tier">+ Novo Tier</span>
+        </button>
+        <button class="tool-btn" onclick="recalcGradientColors()" title="Recalcular cores da escala Índigo -> Vermelho">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 4.24 4.24"/><path d="m14.83 9.17 4.24-4.24"/><path d="m14.83 14.83 4.24 4.24"/><path d="m9.17 14.83-4.24 4.24"/></svg>
+          <span data-i18n="btn_recalc_colors">Auto-Gradiente</span>
+        </button>
+      </div>
+
+      <div class="toolbar-right">
+        <!-- Size Slider -->
+        <div class="size-control">
+          <label for="tileSizeSlider" data-i18n="label_size">Capa:</label>
+          <input type="range" id="tileSizeSlider" class="size-slider" min="50" max="140" value="88" oninput="updateTileSize(this.value)">
+          <span id="tileSizeVal" style="font-size:0.75rem; font-weight:700; color:var(--brass-bright); width:28px;">88px</span>
+        </div>
+        <button class="tool-btn" onclick="resetTierlist()" style="color:#f87171; border-color:#7f1d1d;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          <span data-i18n="btn_reset">Reiniciar</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tierlist Board -->
+  <div id="tierlistBoard" class="tierlist-board">
+    <!-- Dynamic Tiers rendered via JS -->
+  </div>
+
+  <!-- Help Floating Button -->
+  <button class="btn-help-float" onclick="openHelpModal()" aria-label="Ajuda">?</button>
+
+  <!-- Toast Notification -->
+  <div id="toastMsg" class="toast-msg"></div>
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-links">
+      <a href="../credits.html" data-i18n="footer_credits">Créditos</a>
+      <a href="https://github.com/colletes/boardbots" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://www.buymeacoffee.com/colletes" target="_blank" rel="noopener" data-i18n="footer_kofi">Me pague um café ☕</a>
+    </div>
+    <p data-i18n="footer_note">Ferramenta de apoio não-oficial para jogos de tabuleiro. Capas e metadados via Ludopedia & BoardGameGeek.</p>
+  </footer>
+</div>
+
+<!-- Modal: Add Custom Game / Upload -->
+<div id="customGameModal" class="modal-overlay">
+  <div class="modal-card">
+    <button class="modal-close-btn" onclick="closeModal('customGameModal')">&times;</button>
+    <h2>
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      <span data-i18n="modal_custom_title">Adicionar Jogo Manual</span>
+    </h2>
+    <div class="form-group">
+      <label data-i18n="label_game_name">Nome do Jogo *</label>
+      <input type="text" id="customGameName" class="form-input" placeholder="Ex: Protótipo Incrível, Jogo Caseiro...">
+    </div>
+    <div class="form-group">
+      <label data-i18n="label_game_img_url">URL da Imagem da Capa (Opcional)</label>
+      <input type="url" id="customGameUrl" class="form-input" placeholder="https://exemplo.com/capa.jpg">
+    </div>
+    <div class="form-group">
+      <label data-i18n="label_upload_file">Ou Enviar Arquivo de Imagem</label>
+      <input type="file" id="customGameFile" class="form-input" accept="image/*" onchange="handleImageUpload(event)">
+    </div>
+    <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
+      <button class="tool-btn" onclick="closeModal('customGameModal')" data-i18n="btn_cancel">Cancelar</button>
+      <button class="tool-btn primary" onclick="submitCustomGame()" data-i18n="btn_add_to_tierlist">Adicionar à Tierlist</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Export & Share -->
+<div id="exportModal" class="modal-overlay">
+  <div class="modal-card" style="max-width:620px;">
+    <button class="modal-close-btn" onclick="closeModal('exportModal')">&times;</button>
+    <h2>
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+      <span data-i18n="modal_export_title">Exportar & Compartilhar</span>
+    </h2>
+
+    <!-- Preview Canvas Area -->
+    <div class="export-preview-container">
+      <canvas id="exportCanvas" class="export-preview-canvas"></canvas>
+    </div>
+
+    <!-- Enquadramento / Preset -->
+    <div style="margin-bottom:12px;">
+      <label style="font-weight:700; font-size:0.85rem; color:var(--brass-bright);" data-i18n="label_preset">Enquadramento:</label>
+      <div class="export-options-grid" style="margin-top:6px;">
+        <div id="presetFeed" class="export-preset-card active" onclick="setExportPreset('feed')">
+          <div class="export-preset-title">Feed / 1:1</div>
+          <div class="export-preset-desc" data-i18n="preset_feed_desc">Ideal para Instagram Post, Twitter & Desktop</div>
+        </div>
+        <div id="presetStory" class="export-preset-card" onclick="setExportPreset('story')">
+          <div class="export-preset-title">Story / 9:16</div>
+          <div class="export-preset-desc" data-i18n="preset_story_desc">Vertical para Instagram Stories e WhatsApp Status</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Direct Social Share Buttons -->
+    <div style="margin-bottom:14px;">
+      <label style="font-weight:700; font-size:0.85rem; color:var(--brass-bright);" data-i18n="label_share_social">Compartilhamento Direto:</label>
+      <div class="share-buttons-grid">
+        <button class="share-action-btn share-btn-native" onclick="shareNative()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+          <span data-i18n="share_native">Compartilhar</span>
+        </button>
+        <button class="share-action-btn share-btn-ig" onclick="shareInstagram()">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+          <span>Instagram</span>
+        </button>
+        <button class="share-action-btn share-btn-wa" onclick="shareWhatsApp()">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
+          <span>WhatsApp</span>
+        </button>
+        <button class="share-action-btn share-btn-tg" onclick="shareTelegram()">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.121l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.832.942z"/></svg>
+          <span>Telegram</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Direct Download Buttons -->
+    <div>
+      <label style="font-weight:700; font-size:0.85rem; color:var(--brass-bright);" data-i18n="label_download_format">Baixar Arquivo:</label>
+      <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;">
+        <button class="tool-btn" onclick="downloadImage('png')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span>PNG (HD)</span>
+        </button>
+        <button class="tool-btn" onclick="downloadImage('jpeg')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span>JPG (Compacto)</span>
+        </button>
+        <button class="tool-btn" onclick="downloadPDF()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          <span>PDF (Documento)</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Tap / Quick Action on Mobile -->
+<div id="tapActionModal" class="modal-overlay">
+  <div class="modal-card" style="max-width:380px;">
+    <button class="modal-close-btn" onclick="closeModal('tapActionModal')">&times;</button>
+    <h2 id="tapActionTitle">Mover Jogo</h2>
+    <div id="tapActionsContainer" class="tap-actions-list"></div>
+    <div style="margin-top:16px;">
+      <button class="tool-btn" style="width:100%; color:#f87171; border-color:#7f1d1d; justify-content:center;" onclick="removeActiveTile()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
+        <span data-i18n="btn_remove_game">Remover da Tierlist</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Help & Instructions -->
+<div id="helpModal" class="modal-overlay">
+  <div class="modal-card">
+    <button class="modal-close-btn" onclick="closeModal('helpModal')">&times;</button>
+    <h2>
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      <span data-i18n="help_title">Como usar o Criador de Tierlist</span>
+    </h2>
+    <div style="font-size:0.9rem; line-height:1.6; color:var(--text-main);">
+      <p><strong data-i18n="help_step1_t">1. Busca Automática de Jogos:</strong><br><span data-i18n="help_step1_d">Digite o nome de qualquer jogo na barra de busca. O sistema consulta primeiro a <strong>Ludopedia</strong> e depois o <strong>BoardGameGeek (BGG)</strong> com aproximação de título e capas quadradas.</span></p>
+      <p><strong data-i18n="help_step2_t">2. Arraste e Snap Magnético:</strong><br><span data-i18n="help_step2_d">Novos jogos caem no tier <em>"Não jogado"</em>. Arraste e solte para posicioná-los em qualquer tier. No celular, você também pode tocar no jogo para escolher o tier rapidamente.</span></p>
+      <p><strong data-i18n="help_step3_t">3. Personalização Total:</strong><br><span data-i18n="help_step3_d">Clique no nome de qualquer tier para renomeá-lo, use os botões para mover para cima/baixo, alterar cor ou adicionar novos tiers (que entram perfeitamente na escala de cor do Índigo ao Vermelho). O slider de tamanho redimensiona todas as capas.</span></p>
+      <p><strong data-i18n="help_step4_t">4. Exportação e Redes Sociais:</strong><br><span data-i18n="help_step4_d">Exporte em PNG, JPG ou PDF, ou gere nos formatos especiais Feed (1:1) e Story (9:16) prontos para postar no Instagram, WhatsApp e Telegram!</span></p>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =======================================================
+   i18n DICTIONARY
+   ======================================================= */
+const I18N = {
+  pt: {
+    back_home: 'Board Bots',
+    tier_maker_title: 'Criador de Tierlist',
+    btn_export_share: 'Exportar / Compartilhar',
+    btn_add_custom: 'Jogo Manual / Upload',
+    btn_add_tier: '+ Novo Tier',
+    btn_recalc_colors: 'Auto-Gradiente',
+    label_size: 'Capa:',
+    btn_reset: 'Reiniciar',
+    footer_credits: 'Créditos',
+    footer_kofi: 'Me pague um café ☕',
+    footer_note: 'Ferramenta de apoio não-oficial para jogos de tabuleiro. Capas e metadados via Ludopedia & BoardGameGeek.',
+    search_placeholder: 'Buscar jogo na Ludopedia & BGG (ex: Catan, Ark Nova, Stone Age)...',
+    search_loading: 'Buscando jogos na Ludopedia & BGG...',
+    search_no_results: 'Nenhum jogo encontrado com esse nome. Tente outro termo ou adicione manualmente!',
+    source_ludopedia: 'Ludopedia',
+    source_bgg: 'BGG',
+    source_custom: 'Manual',
+    modal_custom_title: 'Adicionar Jogo Manual',
+    label_game_name: 'Nome do Jogo *',
+    label_game_img_url: 'URL da Imagem da Capa (Opcional)',
+    label_upload_file: 'Ou Enviar Arquivo de Imagem',
+    btn_cancel: 'Cancelar',
+    btn_add_to_tierlist: 'Adicionar à Tierlist',
+    modal_export_title: 'Exportar & Compartilhar',
+    label_preset: 'Enquadramento:',
+    preset_feed_desc: 'Ideal para Instagram Post, Twitter & Desktop',
+    preset_story_desc: 'Vertical para Instagram Stories e WhatsApp Status',
+    label_share_social: 'Compartilhamento Direto:',
+    share_native: 'Compartilhar',
+    label_download_format: 'Baixar Arquivo:',
+    btn_remove_game: 'Remover da Tierlist',
+    help_title: 'Como usar o Criador de Tierlist',
+    help_step1_t: '1. Busca Automática de Jogos:',
+    help_step1_d: 'Digite o nome de qualquer jogo na barra de busca. O sistema consulta primeiro a Ludopedia e depois o BoardGameGeek (BGG) com aproximação de título e capas quadradas.',
+    help_step2_t: '2. Arraste e Snap Magnético:',
+    help_step2_d: 'Novos jogos caem no tier "Não jogado". Arraste e solte para posicioná-los em qualquer tier. No celular, você também pode tocar no jogo para escolher o tier rapidamente.',
+    help_step3_t: '3. Personalização Total:',
+    help_step3_d: 'Clique no nome de qualquer tier para renomeá-lo, use os botões para mover para cima/baixo ou adicionar novos tiers (que entram perfeitamente na escala de cor do Índigo ao Vermelho). O slider de tamanho redimensiona todas as capas.',
+    help_step4_t: '4. Exportação e Redes Sociais:',
+    help_step4_d: 'Exporte em PNG, JPG ou PDF, ou gere nos formatos especiais Feed (1:1) e Story (9:16) prontos para postar no Instagram, WhatsApp e Telegram!',
+    confirm_reset: 'Tem certeza que deseja reiniciar a Tierlist e remover todos os jogos?',
+    confirm_delete_tier: 'Excluir este Tier? Todos os jogos nele voltarão para "Não jogado".',
+    toast_added: '"{name}" adicionado a Não Jogado!',
+    toast_exported: 'Imagem exportada com sucesso!',
+    toast_recalculated: 'Cores dos Tiers recalculadas no gradiente!',
+    unplayed_name: 'Não jogado'
+  },
+  en: {
+    back_home: 'Board Bots',
+    tier_maker_title: 'Tierlist Maker',
+    btn_export_share: 'Export / Share',
+    btn_add_custom: 'Custom Game / Upload',
+    btn_add_tier: '+ New Tier',
+    btn_recalc_colors: 'Auto-Gradient',
+    label_size: 'Tile:',
+    btn_reset: 'Reset',
+    footer_credits: 'Credits',
+    footer_kofi: 'Buy me a coffee ☕',
+    footer_note: 'Unofficial companion tool for board games. Box covers and metadata via Ludopedia & BoardGameGeek.',
+    search_placeholder: 'Search board games on Ludopedia & BGG (e.g. Catan, Ark Nova)...',
+    search_loading: 'Searching Ludopedia & BGG...',
+    search_no_results: 'No games found with this title. Try another search or add a custom game!',
+    source_ludopedia: 'Ludopedia',
+    source_bgg: 'BGG',
+    source_custom: 'Custom',
+    modal_custom_title: 'Add Custom Game',
+    label_game_name: 'Game Title *',
+    label_game_img_url: 'Cover Image URL (Optional)',
+    label_upload_file: 'Or Upload Image File',
+    btn_cancel: 'Cancel',
+    btn_add_to_tierlist: 'Add to Tierlist',
+    modal_export_title: 'Export & Share',
+    label_preset: 'Aspect Ratio / Preset:',
+    preset_feed_desc: 'Square / Standard for Instagram Feed & Web',
+    preset_story_desc: '9:16 Vertical for Instagram Stories & WhatsApp Status',
+    label_share_social: 'Direct Social Share:',
+    share_native: 'Share',
+    label_download_format: 'Download File:',
+    btn_remove_game: 'Remove from Tierlist',
+    help_title: 'How to Use Tierlist Maker',
+    help_step1_t: '1. Automatic Game Search:',
+    help_step1_d: 'Type any game title in the search box. Searches Ludopedia first, then BoardGameGeek (BGG) with title matching and square covers.',
+    help_step2_t: '2. Drag & Drop with Magnetic Snap:',
+    help_step2_d: 'New games appear in "Unplayed". Drag and drop to sort them into any tier. On mobile devices, tap any game for a quick action menu.',
+    help_step3_t: '3. Full Customization:',
+    help_step3_d: 'Click any tier name to edit it, reorder with up/down arrows, or add new tiers (which smoothly blend into the Indigo-to-Red spectrum). Use the slider to resize covers.',
+    help_step4_t: '4. Export & Social Sharing:',
+    help_step4_d: 'Export to PNG, JPG, or PDF, or generate Feed (1:1) and Story (9:16) formats ready to post on Instagram, WhatsApp, and Telegram!',
+    confirm_reset: 'Are you sure you want to reset the Tierlist and remove all games?',
+    confirm_delete_tier: 'Delete this Tier? Its games will be moved back to "Unplayed".',
+    toast_added: '"{name}" added to Unplayed!',
+    toast_exported: 'Image exported successfully!',
+    toast_recalculated: 'Tier colors recalculated along the gradient spectrum!',
+    unplayed_name: 'Unplayed'
+  }
+};
+
+let currentLang = localStorage.getItem('boardbots_lang') || 'pt';
+function t(key) {
+  return (I18N[currentLang] && I18N[currentLang][key]) || (I18N.pt && I18N.pt[key]) || key;
+}
+
+function setLang(lang) {
+  currentLang = lang;
+  localStorage.setItem('boardbots_lang', lang);
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.lang === lang);
+  });
+  applyI18n();
+  renderBoard();
+}
+
+function applyI18n() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (I18N[currentLang] && I18N[currentLang][key]) {
+      el.textContent = I18N[currentLang][key];
+    }
+  });
+  const searchInput = document.getElementById('gameSearchInput');
+  if (searchInput) searchInput.placeholder = t('search_placeholder');
+}
+
+/* =======================================================
+   STATE & DATA MODEL
+   ======================================================= */
+const STORAGE_KEY = 'boardbots_tierlist_state_v2';
+
+function defaultTiers() {
+  return [
+    { id: 'tier_s', name: 'S', isS: true, isUnplayed: false, color: '#f8fafc', textColor: '#0f172a' },
+    { id: 'tier_a', name: 'A', isS: false, isUnplayed: false, color: '#6366f1', textColor: '#ffffff' },
+    { id: 'tier_b', name: 'B', isS: false, isUnplayed: false, color: '#2563eb', textColor: '#ffffff' },
+    { id: 'tier_c', name: 'C', isS: false, isUnplayed: false, color: '#059669', textColor: '#ffffff' },
+    { id: 'tier_d', name: 'D', isS: false, isUnplayed: false, color: '#d97706', textColor: '#ffffff' },
+    { id: 'tier_e', name: 'E', isS: false, isUnplayed: false, color: '#ea580c', textColor: '#ffffff' },
+    { id: 'tier_f', name: 'F', isS: false, isUnplayed: false, color: '#dc2626', textColor: '#ffffff' },
+    { id: 'tier_unplayed', name: currentLang === 'en' ? 'Unplayed' : 'Não jogado', isS: false, isUnplayed: true, color: '#475569', textColor: '#f8fafc' }
+  ];
+}
+
+let state = {
+  title: 'Minha Tierlist de Jogos de Tabuleiro',
+  tileSize: 88,
+  tiers: defaultTiers(),
+  items: {} // { tier_id: [ { id, title, image, year, source } ] }
+};
+
+function initItemSlots() {
+  state.tiers.forEach(tr => {
+    if (!state.items[tr.id]) state.items[tr.id] = [];
+  });
+}
+
+function loadState() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (parsed.tiers && parsed.tiers.length > 0) {
+        state = parsed;
+      }
+    }
+  } catch (e) {
+    console.warn('Erro ao carregar estado salvo:', e);
+  }
+  initItemSlots();
+  if (state.tileSize) {
+    document.documentElement.style.setProperty('--tile-size', state.tileSize + 'px');
+    const slider = document.getElementById('tileSizeSlider');
+    if (slider) slider.value = state.tileSize;
+    const valLabel = document.getElementById('tileSizeVal');
+    if (valLabel) valLabel.textContent = state.tileSize + 'px';
+  }
+  const titleInput = document.getElementById('tierlistCustomTitle');
+  if (titleInput && state.title) titleInput.value = state.title;
+}
+
+function saveState() {
+  const titleInput = document.getElementById('tierlistCustomTitle');
+  if (titleInput) state.title = titleInput.value;
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch (e) {
+    console.warn('Erro ao salvar no localStorage:', e);
+  }
+}
+
+/* =======================================================
+   COLOR PALETTE & DYNAMIC SPECTRUM
+   ======================================================= */
+function calculateIndigoToRed(fraction) {
+  // Fraction 0.0 (Indigo / Violet ~260°) -> 1.0 (Red 0°)
+  const startHue = 260; // Indigo
+  const endHue = 0;     // Red
+  // Interpolate hue downwards: 260 -> 220 (Blue) -> 160 (Teal) -> 120 (Green) -> 45 (Gold) -> 20 (Orange) -> 0 (Red)
+  const hue = Math.round(startHue - (startHue - endHue) * fraction);
+  return `hsl(${hue}, 82%, 48%)`;
+}
+
+function recalcGradientColors() {
+  const letterTiers = state.tiers.filter(t => !t.isS && !t.isUnplayed);
+  const count = letterTiers.length;
+  if (count > 0) {
+    letterTiers.forEach((tier, idx) => {
+      const fraction = count === 1 ? 0.5 : idx / (count - 1);
+      tier.color = calculateIndigoToRed(fraction);
+      tier.textColor = '#ffffff';
+    });
+  }
+  saveState();
+  renderBoard();
+  showToast(t('toast_recalculated'));
+}
+
+/* =======================================================
+   RENDER TIERLIST BOARD
+   ======================================================= */
+function renderBoard() {
+  const board = document.getElementById('tierlistBoard');
+  if (!board) return;
+  board.innerHTML = '';
+
+  state.tiers.forEach((tier, index) => {
+    const row = document.createElement('div');
+    row.className = 'tier-row';
+    row.dataset.tierId = tier.id;
+
+    // Left Label Box
+    const labelBox = document.createElement('div');
+    labelBox.className = 'tier-label-box';
+    if (tier.isS) {
+      labelBox.classList.add('tier-s-finish');
+    } else if (tier.isUnplayed) {
+      labelBox.classList.add('tier-unplayed-finish');
+    } else {
+      labelBox.style.backgroundColor = tier.color;
+      labelBox.style.color = tier.textColor || '#fff';
+    }
+
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'tier-name';
+    nameSpan.contentEditable = true;
+    nameSpan.spellcheck = false;
+    nameSpan.textContent = tier.name;
+    nameSpan.onblur = (e) => {
+      tier.name = e.target.textContent.trim() || tier.name;
+      saveState();
+    };
+    nameSpan.onkeydown = (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); }
+    };
+
+    // Actions
+    const actions = document.createElement('div');
+    actions.className = 'tier-actions';
+
+    if (!tier.isUnplayed) {
+      // Move Up
+      if (index > 0) {
+        const upBtn = document.createElement('button');
+        upBtn.className = 'tier-action-btn';
+        upBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m18 15-6-6-6 6"/></svg>';
+        upBtn.title = 'Mover para cima';
+        upBtn.onclick = () => moveTier(index, -1);
+        actions.appendChild(upBtn);
+      }
+      // Move Down
+      if (index < state.tiers.length - 2) {
+        const downBtn = document.createElement('button');
+        downBtn.className = 'tier-action-btn';
+        downBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg>';
+        downBtn.title = 'Mover para baixo';
+        downBtn.onclick = () => moveTier(index, 1);
+        actions.appendChild(downBtn);
+      }
+      // Delete Tier (unless it's the last letter tier)
+      if (!tier.isS) {
+        const delBtn = document.createElement('button');
+        delBtn.className = 'tier-action-btn';
+        delBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>';
+        delBtn.title = 'Excluir Tier';
+        delBtn.onclick = () => deleteTier(tier.id);
+        actions.appendChild(delBtn);
+      }
+    }
+
+    labelBox.appendChild(nameSpan);
+    labelBox.appendChild(actions);
+
+    // Right Dropzone
+    const dropzone = document.createElement('div');
+    dropzone.className = 'tier-dropzone';
+    dropzone.dataset.tierId = tier.id;
+
+    // Enable Drag and Drop Events
+    setupDropzoneEvents(dropzone, tier.id);
+
+    // Render Tiles inside
+    const items = state.items[tier.id] || [];
+    items.forEach(item => {
+      const tile = createGameTileElement(item, tier.id);
+      dropzone.appendChild(tile);
+    });
+
+    row.appendChild(labelBox);
+    row.appendChild(dropzone);
+    board.appendChild(row);
+  });
+}
+
+/* =======================================================
+   DRAG & DROP & SNAP LOGIC
+   ======================================================= */
+let draggedItemId = null;
+let sourceTierId = null;
+let activeTileItem = null; // For mobile tap modal
+
+function createGameTileElement(item, currentTierId) {
+  const tile = document.createElement('div');
+  tile.className = 'game-tile';
+  tile.dataset.itemId = item.id;
+  tile.dataset.tierId = currentTierId;
+  tile.draggable = true;
+
+  if (item.image) {
+    const img = document.createElement('img');
+    img.src = item.image;
+    img.alt = item.title;
+    img.loading = 'lazy';
+    img.onerror = () => {
+      img.style.display = 'none';
+      if (!tile.querySelector('.game-tile-fallback')) {
+        const fb = document.createElement('div');
+        fb.className = 'game-tile-fallback';
+        fb.textContent = item.title;
+        tile.appendChild(fb);
+      }
+    };
+    tile.appendChild(img);
+  } else {
+    const fb = document.createElement('div');
+    fb.className = 'game-tile-fallback';
+    fb.textContent = item.title;
+    tile.appendChild(fb);
+  }
+
+  // Remove Button
+  const removeBtn = document.createElement('button');
+  removeBtn.className = 'tile-remove-btn';
+  removeBtn.innerHTML = '&times;';
+  removeBtn.title = 'Remover';
+  removeBtn.onclick = (e) => {
+    e.stopPropagation();
+    removeItem(item.id, currentTierId);
+  };
+  tile.appendChild(removeBtn);
+
+  // Tooltip
+  const tooltip = document.createElement('div');
+  tooltip.className = 'tile-tooltip';
+  tooltip.textContent = item.title + (item.year ? ` (${item.year})` : '');
+  tile.appendChild(tooltip);
+
+  // Desktop HTML5 Drag Events
+  tile.addEventListener('dragstart', (e) => {
+    draggedItemId = item.id;
+    sourceTierId = currentTierId;
+    tile.classList.add('dragging');
+    e.dataTransfer.setData('text/plain', item.id);
+    e.dataTransfer.effectAllowed = 'move';
+  });
+
+  tile.addEventListener('dragend', () => {
+    tile.classList.remove('dragging');
+    draggedItemId = null;
+    sourceTierId = null;
+    document.querySelectorAll('.tier-row').forEach(r => r.classList.remove('drag-over'));
+    document.querySelectorAll('.snap-placeholder').forEach(p => p.remove());
+  });
+
+  // Mobile Tap Menu Support
+  tile.addEventListener('click', (e) => {
+    if (e.target.classList.contains('tile-remove-btn')) return;
+    openTapModal(item, currentTierId);
+  });
+
+  return tile;
+}
+
+function setupDropzoneEvents(dropzone, tierId) {
+  dropzone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    dropzone.closest('.tier-row').classList.add('drag-over');
+
+    const placeholder = getOrCreatePlaceholder();
+    const afterElement = getDragAfterElement(dropzone, e.clientX);
+    if (afterElement == null) {
+      dropzone.appendChild(placeholder);
+    } else {
+      dropzone.insertBefore(placeholder, afterElement);
+    }
+  });
+
+  dropzone.addEventListener('dragleave', (e) => {
+    if (!dropzone.contains(e.relatedTarget)) {
+      dropzone.closest('.tier-row').classList.remove('drag-over');
+      const placeholder = document.querySelector('.snap-placeholder');
+      if (placeholder && placeholder.parentElement === dropzone) {
+        placeholder.remove();
+      }
+    }
+  });
+
+  dropzone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropzone.closest('.tier-row').classList.remove('drag-over');
+    if (!draggedItemId || !sourceTierId) return;
+
+    // Find item
+    const sourceItems = state.items[sourceTierId] || [];
+    const itemIndex = sourceItems.findIndex(i => i.id === draggedItemId);
+    if (itemIndex === -1) return;
+
+    const [item] = sourceItems.splice(itemIndex, 1);
+
+    // Calculate insertion index in target tier
+    if (!state.items[tierId]) state.items[tierId] = [];
+    const targetItems = state.items[tierId];
+
+    const afterElement = getDragAfterElement(dropzone, e.clientX);
+    if (afterElement == null) {
+      targetItems.push(item);
+    } else {
+      const afterId = afterElement.dataset.itemId;
+      const targetIndex = targetItems.findIndex(i => i.id === afterId);
+      if (targetIndex !== -1) {
+        targetItems.splice(targetIndex, 0, item);
+      } else {
+        targetItems.push(item);
+      }
+    }
+
+    document.querySelectorAll('.snap-placeholder').forEach(p => p.remove());
+    saveState();
+    renderBoard();
+  });
+}
+
+function getOrCreatePlaceholder() {
+  let ph = document.querySelector('.snap-placeholder');
+  if (!ph) {
+    ph = document.createElement('div');
+    ph.className = 'snap-placeholder';
+  }
+  return ph;
+}
+
+function getDragAfterElement(container, x) {
+  const draggableElements = [...container.querySelectorAll('.game-tile:not(.dragging)')];
+  return draggableElements.reduce((closest, child) => {
+    const box = child.getBoundingClientRect();
+    const offset = x - box.left - box.width / 2;
+    if (offset < 0 && offset > closest.offset) {
+      return { offset: offset, element: child };
+    } else {
+      return closest;
+    }
+  }, { offset: Number.NEGATIVE_INFINITY }).element;
+}
+
+/* =======================================================
+   SEARCH SYSTEM: LUDOPEDIA & BGG
+   ======================================================= */
+let searchDebounceTimer = null;
+const CORS_PROXIES = [
+  'https://corsproxy.io/?url=',
+  'https://api.allorigins.win/raw?url='
+];
+
+async function fetchWithFallback(targetUrl) {
+  // Try direct fetch first
+  try {
+    const res = await fetch(targetUrl, { mode: 'cors' });
+    if (res.ok) return await res.text();
+  } catch (e) {
+    // Ignore and fallback to proxies
+  }
+
+  // Fallback to CORS proxies
+  for (const proxy of CORS_PROXIES) {
+    try {
+      const proxyUrl = proxy + encodeURIComponent(targetUrl);
+      const res = await fetch(proxyUrl);
+      if (res.ok) return await res.text();
+    } catch (e) {
+      // Continue to next proxy
+    }
+  }
+  throw new Error('Falha ao conectar com o serviço de busca.');
+}
+
+async function searchLudopedia(query) {
+  const url = `https://ludopedia.com.br/busca?termo=${encodeURIComponent(query)}`;
+  try {
+    const html = await fetchWithFallback(url);
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+
+    const results = [];
+    const gameCards = doc.querySelectorAll('.grid-jogos .media, .fl-jogos-grid .media, div.media');
+
+    gameCards.forEach(card => {
+      const titleLink = card.querySelector('h4 a, .media-heading a');
+      if (!titleLink) return;
+      const title = titleLink.textContent.trim();
+      if (!title) return;
+
+      const imgEl = card.querySelector('img.media-object, img');
+      let image = imgEl ? (imgEl.getAttribute('data-src') || imgEl.src || '') : '';
+      if (image.includes('default') || !image.startsWith('http')) image = '';
+
+      // High-res Ludopedia cover transform
+      if (image.includes('/capas/pequena_')) {
+        image = image.replace('/capas/pequena_', '/capas/media_');
+      }
+
+      const yearSpan = card.querySelector('.ano, .text-muted');
+      let year = '';
+      if (yearSpan) {
+        const yMatch = yearSpan.textContent.match(/\b(19|20)\d{2}\b/);
+        if (yMatch) year = yMatch[0];
+      }
+
+      results.push({
+        id: 'ludo_' + Math.random().toString(36).substr(2, 9),
+        title,
+        image,
+        year,
+        source: 'ludopedia'
+      });
+    });
+
+    return results.slice(0, 8);
+  } catch (e) {
+    console.warn('Erro na busca da Ludopedia:', e);
+    return [];
+  }
+}
+
+async function searchBGG(query) {
+  const searchUrl = `https://boardgamegeek.com/xmlapi2/search?query=${encodeURIComponent(query)}&type=boardgame`;
+  try {
+    const xmlText = await fetchWithFallback(searchUrl);
+    const parser = new DOMParser();
+    const xml = parser.parseFromString(xmlText, 'text/xml');
+    const items = xml.querySelectorAll('item');
+
+    if (!items || items.length === 0) return [];
+
+    const idList = [];
+    const itemMap = {};
+    items.forEach((item, idx) => {
+      if (idx < 6) {
+        const id = item.getAttribute('id');
+        const nameEl = item.querySelector('name[type="primary"]') || item.querySelector('name');
+        const yearEl = item.querySelector('yearpublished');
+        idList.push(id);
+        itemMap[id] = {
+          id: 'bgg_' + id,
+          title: nameEl ? nameEl.getAttribute('value') : query,
+          year: yearEl ? yearEl.getAttribute('value') : '',
+          image: '',
+          source: 'bgg'
+        };
+      }
+    });
+
+    if (idList.length > 0) {
+      // Fetch Thing details for thumbnails/images
+      const thingUrl = `https://boardgamegeek.com/xmlapi2/thing?id=${idList.join(',')}`;
+      try {
+        const thingText = await fetchWithFallback(thingUrl);
+        const thingXml = parser.parseFromString(thingText, 'text/xml');
+        thingXml.querySelectorAll('item').forEach(th => {
+          const tid = th.getAttribute('id');
+          if (itemMap[tid]) {
+            const thumbEl = th.querySelector('thumbnail');
+            const imgEl = th.querySelector('image');
+            itemMap[tid].image = (thumbEl ? thumbEl.textContent : '') || (imgEl ? imgEl.textContent : '');
+          }
+        });
+      } catch (e) {
+        console.warn('Erro ao carregar miniaturas BGG:', e);
+      }
+    }
+
+    return Object.values(itemMap);
+  } catch (e) {
+    console.warn('Erro na busca BGG:', e);
+    return [];
+  }
+}
+
+// String similarity / fuzzy match score
+function similarity(s1, s2) {
+  const str1 = s1.toLowerCase().trim();
+  const str2 = s2.toLowerCase().trim();
+  if (str1 === str2) return 1.0;
+  if (str1.includes(str2) || str2.includes(str1)) return 0.8;
+  return 0.5;
+}
+
+async function performSearch(query) {
+  const dropdown = document.getElementById('searchResultsDropdown');
+  const spinner = document.getElementById('searchSpinner');
+  if (!dropdown) return;
+
+  if (!query || query.length < 2) {
+    dropdown.classList.remove('visible');
+    dropdown.innerHTML = '';
+    return;
+  }
+
+  spinner.style.display = 'block';
+  dropdown.innerHTML = `<div class="search-result-status">${t('search_loading')}</div>`;
+  dropdown.classList.add('visible');
+
+  try {
+    // 1. Query Ludopedia first
+    const ludoResults = await searchLudopedia(query);
+    // 2. Query BGG
+    const bggResults = await searchBGG(query);
+
+    // Merge: Ludopedia first, then unique BGG results
+    const seenTitles = new Set();
+    const merged = [];
+
+    ludoResults.forEach(r => {
+      seenTitles.add(r.title.toLowerCase());
+      merged.push(r);
+    });
+
+    bggResults.forEach(r => {
+      if (!seenTitles.has(r.title.toLowerCase())) {
+        merged.push(r);
+      }
+    });
+
+    // Sort with fuzzy priority matching query
+    merged.sort((a, b) => similarity(b.title, query) - similarity(a.title, query));
+
+    spinner.style.display = 'none';
+
+    if (merged.length === 0) {
+      dropdown.innerHTML = `<div class="search-result-empty">${t('search_no_results')}</div>`;
+      return;
+    }
+
+    dropdown.innerHTML = '';
+    merged.forEach(game => {
+      const itemRow = document.createElement('div');
+      itemRow.className = 'search-result-item';
+
+      const thumb = document.createElement('img');
+      thumb.className = 'search-result-thumb';
+      thumb.src = game.image || '../assets/mascot-trimmed.png';
+      thumb.alt = game.title;
+      thumb.onerror = () => { thumb.src = '../assets/mascot-trimmed.png'; };
+
+      const info = document.createElement('div');
+      info.className = 'search-result-info';
+
+      const title = document.createElement('div');
+      title.className = 'search-result-title';
+      title.textContent = game.title;
+
+      const meta = document.createElement('div');
+      meta.className = 'search-result-meta';
+
+      const badge = document.createElement('span');
+      badge.className = `source-badge ${game.source}`;
+      badge.textContent = game.source === 'ludopedia' ? t('source_ludopedia') : t('source_bgg');
+      meta.appendChild(badge);
+
+      if (game.year) {
+        const yearSpan = document.createElement('span');
+        yearSpan.textContent = `(${game.year})`;
+        meta.appendChild(yearSpan);
+      }
+
+      info.appendChild(title);
+      info.appendChild(meta);
+
+      const addBtn = document.createElement('button');
+      addBtn.className = 'search-result-add-btn';
+      addBtn.textContent = '+';
+      addBtn.title = 'Adicionar';
+
+      itemRow.appendChild(thumb);
+      itemRow.appendChild(info);
+      itemRow.appendChild(addBtn);
+
+      itemRow.onclick = () => {
+        addGameToTierlist(game);
+        dropdown.classList.remove('visible');
+        document.getElementById('gameSearchInput').value = '';
+        document.getElementById('searchClearBtn').style.display = 'none';
+      };
+
+      dropdown.appendChild(itemRow);
+    });
+
+  } catch (e) {
+    spinner.style.display = 'none';
+    dropdown.innerHTML = `<div class="search-result-empty">Erro ao pesquisar. Adicione o jogo manualmente abaixo.</div>`;
+  }
+}
+
+/* =======================================================
+   GAME & TIER ACTIONS
+   ======================================================= */
+function addGameToTierlist(game) {
+  // Destination: 'tier_unplayed' by default
+  const unplayedTier = state.tiers.find(t => t.isUnplayed) || state.tiers[state.tiers.length - 1];
+  const targetId = unplayedTier.id;
+
+  if (!state.items[targetId]) state.items[targetId] = [];
+  state.items[targetId].push({
+    id: 'item_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
+    title: game.title,
+    image: game.image,
+    year: game.year || '',
+    source: game.source || 'manual'
+  });
+
+  saveState();
+  renderBoard();
+  showToast(t('toast_added').replace('{name}', game.title));
+}
+
+function removeItem(itemId, tierId) {
+  if (!state.items[tierId]) return;
+  state.items[tierId] = state.items[tierId].filter(i => i.id !== itemId);
+  saveState();
+  renderBoard();
+}
+
+function moveTier(index, direction) {
+  const targetIndex = index + direction;
+  if (targetIndex < 0 || targetIndex >= state.tiers.length - 1) return;
+  const temp = state.tiers[index];
+  state.tiers[index] = state.tiers[targetIndex];
+  state.tiers[targetIndex] = temp;
+  saveState();
+  renderBoard();
+}
+
+function deleteTier(tierId) {
+  if (!confirm(t('confirm_delete_tier'))) return;
+  // Move games from this tier to 'tier_unplayed'
+  const unplayedTier = state.tiers.find(t => t.isUnplayed);
+  const itemsToMove = state.items[tierId] || [];
+
+  if (unplayedTier && unplayedTier.id !== tierId) {
+    if (!state.items[unplayedTier.id]) state.items[unplayedTier.id] = [];
+    state.items[unplayedTier.id].push(...itemsToMove);
+  }
+
+  delete state.items[tierId];
+  state.tiers = state.tiers.filter(t => t.id !== tierId);
+
+  saveState();
+  renderBoard();
+}
+
+function addNewTier() {
+  const count = state.tiers.filter(t => !t.isS && !t.isUnplayed).length;
+  const letters = ['G', 'H', 'I', 'J', 'K', 'L', 'M'];
+  const nextLetter = letters[count - 6] || `T${count + 1}`;
+  
+  const newTierId = 'tier_' + Date.now();
+  const unplayedIndex = state.tiers.findIndex(t => t.isUnplayed);
+
+  const newTier = {
+    id: newTierId,
+    name: nextLetter,
+    isS: false,
+    isUnplayed: false,
+    color: '#3b82f6',
+    textColor: '#ffffff'
+  };
+
+  if (unplayedIndex !== -1) {
+    state.tiers.splice(unplayedIndex, 0, newTier);
+  } else {
+    state.tiers.push(newTier);
+  }
+
+  state.items[newTierId] = [];
+  recalcGradientColors();
+}
+
+function updateTileSize(size) {
+  state.tileSize = parseInt(size, 10);
+  document.documentElement.style.setProperty('--tile-size', state.tileSize + 'px');
+  const valLabel = document.getElementById('tileSizeVal');
+  if (valLabel) valLabel.textContent = state.tileSize + 'px';
+  saveState();
+}
+
+function resetTierlist() {
+  if (!confirm(t('confirm_reset'))) return;
+  localStorage.removeItem(STORAGE_KEY);
+  state = {
+    title: 'Minha Tierlist de Jogos de Tabuleiro',
+    tileSize: 88,
+    tiers: defaultTiers(),
+    items: {}
+  };
+  initItemSlots();
+  document.getElementById('tierlistCustomTitle').value = state.title;
+  updateTileSize(88);
+  renderBoard();
+}
+
+/* =======================================================
+   CUSTOM GAME UPLOAD
+   ======================================================= */
+let uploadedBase64Image = '';
+
+function handleImageUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (event) => {
+    uploadedBase64Image = event.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function submitCustomGame() {
+  const nameInput = document.getElementById('customGameName');
+  const urlInput = document.getElementById('customGameUrl');
+  const title = nameInput.value.trim();
+
+  if (!title) {
+    alert(t('label_game_name'));
+    return;
+  }
+
+  const image = uploadedBase64Image || urlInput.value.trim() || '';
+
+  addGameToTierlist({
+    title,
+    image,
+    year: '',
+    source: 'custom'
+  });
+
+  nameInput.value = '';
+  urlInput.value = '';
+  uploadedBase64Image = '';
+  document.getElementById('customGameFile').value = '';
+  closeModal('customGameModal');
+}
+
+/* =======================================================
+   MOBILE TAP TO MOVE MODAL
+   ======================================================= */
+function openTapModal(item, currentTierId) {
+  activeTileItem = { item, currentTierId };
+  const modal = document.getElementById('tapActionModal');
+  const titleEl = document.getElementById('tapActionTitle');
+  const container = document.getElementById('tapActionsContainer');
+
+  titleEl.textContent = item.title;
+  container.innerHTML = '';
+
+  state.tiers.forEach(tier => {
+    if (tier.id === currentTierId) return;
+    const opt = document.createElement('div');
+    opt.className = 'tap-action-option';
+
+    const badge = document.createElement('div');
+    badge.className = 'tap-action-badge';
+    badge.textContent = tier.name;
+    if (tier.isS) {
+      badge.classList.add('tier-s-finish');
+    } else if (tier.isUnplayed) {
+      badge.classList.add('tier-unplayed-finish');
+    } else {
+      badge.style.backgroundColor = tier.color;
+      badge.style.color = tier.textColor || '#fff';
+    }
+
+    const label = document.createElement('span');
+    label.textContent = `Mover para ${tier.name}`;
+
+    opt.appendChild(badge);
+    opt.appendChild(label);
+
+    opt.onclick = () => {
+      // Move item
+      removeItem(item.id, currentTierId);
+      if (!state.items[tier.id]) state.items[tier.id] = [];
+      state.items[tier.id].push(item);
+      saveState();
+      renderBoard();
+      closeModal('tapActionModal');
+    };
+
+    container.appendChild(opt);
+  });
+
+  modal.classList.add('visible');
+}
+
+function removeActiveTile() {
+  if (activeTileItem) {
+    removeItem(activeTileItem.item.id, activeTileItem.currentTierId);
+  }
+  closeModal('tapActionModal');
+}
+
+/* =======================================================
+   CANVAS RENDERING & EXPORT ENGINE
+   ======================================================= */
+let currentExportPreset = 'feed'; // 'feed' (1:1) or 'story' (9:16)
+
+function setExportPreset(preset) {
+  currentExportPreset = preset;
+  document.getElementById('presetFeed').classList.toggle('active', preset === 'feed');
+  document.getElementById('presetStory').classList.toggle('active', preset === 'story');
+  generateExportCanvas();
+}
+
+function openExportModal() {
+  saveState();
+  const modal = document.getElementById('exportModal');
+  modal.classList.add('visible');
+  generateExportCanvas();
+}
+
+async function generateExportCanvas() {
+  const canvas = document.getElementById('exportCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+
+  const isStory = currentExportPreset === 'story';
+  const width = isStory ? 1080 : 1200;
+  
+  // Measure height needed for all tiers
+  const tierWidth = width - 80;
+  const labelWidth = 140;
+  const tileSize = 90;
+  const tileGap = 8;
+  const availableTilesWidth = tierWidth - labelWidth - 24;
+  const tilesPerRow = Math.max(1, Math.floor(availableTilesWidth / (tileSize + tileGap)));
+
+  let totalBoardHeight = 0;
+  const tierHeights = state.tiers.map(tr => {
+    const count = (state.items[tr.id] || []).length;
+    const rows = Math.max(1, Math.ceil(count / tilesPerRow));
+    const h = Math.max(tileSize + 16, rows * (tileSize + tileGap) + 8);
+    totalBoardHeight += h + 8;
+    return h;
+  });
+
+  const headerHeight = isStory ? 180 : 130;
+  const footerHeight = 80;
+  let height = headerHeight + totalBoardHeight + footerHeight;
+
+  if (isStory && height < 1920) height = 1920;
+  if (!isStory && height < width) height = width; // square 1:1 if feed
+
+  canvas.width = width;
+  canvas.height = height;
+
+  // Background
+  ctx.fillStyle = '#180e09';
+  ctx.fillRect(0, 0, width, height);
+
+  // Gradient Overlay
+  const bgGrad = ctx.createLinearGradient(0, 0, width, height);
+  bgGrad.addColorStop(0, 'rgba(46, 28, 18, 0.9)');
+  bgGrad.addColorStop(0.5, 'rgba(24, 14, 9, 0.95)');
+  bgGrad.addColorStop(1, 'rgba(12, 7, 4, 1)');
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0, 0, width, height);
+
+  // Board Title
+  ctx.fillStyle = '#e9c875';
+  ctx.font = 'bold 36px "Poppins", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(state.title || 'Minha Tierlist de Jogos de Tabuleiro', width / 2, isStory ? 100 : 70);
+
+  ctx.fillStyle = '#b8a68e';
+  ctx.font = '500 18px "Inter", sans-serif';
+  ctx.fillText('boardbots.com.br — Criador de Tierlist', width / 2, isStory ? 135 : 100);
+
+  // Render Tiers
+  let currentY = headerHeight;
+  const startX = (width - tierWidth) / 2;
+
+  // Pre-load all images for clean synchronous drawing
+  const imageCache = {};
+  const loadPromises = [];
+
+  state.tiers.forEach(tr => {
+    (state.items[tr.id] || []).forEach(item => {
+      if (item.image && !imageCache[item.image]) {
+        const p = new Promise((resolve) => {
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.onload = () => { imageCache[item.image] = img; resolve(); };
+          img.onerror = () => { imageCache[item.image] = null; resolve(); };
+          // Use corsproxy for canvas export to avoid tainted canvas
+          img.src = 'https://corsproxy.io/?url=' + encodeURIComponent(item.image);
+        });
+        loadPromises.push(p);
+      }
+    });
+  });
+
+  await Promise.all(loadPromises);
+
+  state.tiers.forEach((tier, tIdx) => {
+    const rowH = tierHeights[tIdx];
+
+    // Row Container BG
+    ctx.fillStyle = 'rgba(28, 16, 10, 0.9)';
+    ctx.fillRect(startX, currentY, tierWidth, rowH);
+    ctx.strokeStyle = 'rgba(197, 160, 89, 0.2)';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(startX, currentY, tierWidth, rowH);
+
+    // Tier Label Box
+    if (tier.isS) {
+      const sGrad = ctx.createLinearGradient(startX, currentY, startX + labelWidth, currentY + rowH);
+      sGrad.addColorStop(0, '#f8fafc');
+      sGrad.addColorStop(0.35, '#cbd5e1');
+      sGrad.addColorStop(0.7, '#ddd6fe');
+      sGrad.addColorStop(1, '#ffffff');
+      ctx.fillStyle = sGrad;
+      ctx.fillRect(startX, currentY, labelWidth, rowH);
+      ctx.fillStyle = '#0f172a';
+    } else if (tier.isUnplayed) {
+      ctx.fillStyle = '#475569';
+      ctx.fillRect(startX, currentY, labelWidth, rowH);
+      ctx.fillStyle = '#f8fafc';
+    } else {
+      ctx.fillStyle = tier.color || '#3b82f6';
+      ctx.fillRect(startX, currentY, labelWidth, rowH);
+      ctx.fillStyle = tier.textColor || '#ffffff';
+    }
+
+    ctx.font = 'bold 30px "Poppins", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(tier.name, startX + labelWidth / 2, currentY + rowH / 2);
+
+    // Draw Items
+    const items = state.items[tier.id] || [];
+    let itemX = startX + labelWidth + 12;
+    let itemY = currentY + 8;
+
+    items.forEach((item, iIdx) => {
+      const img = imageCache[item.image];
+      if (img) {
+        ctx.save();
+        // Rounded clip for tile
+        roundRect(ctx, itemX, itemY, tileSize, tileSize, 6);
+        ctx.clip();
+        ctx.drawImage(img, itemX, itemY, tileSize, tileSize);
+        ctx.restore();
+      } else {
+        // Fallback tile
+        ctx.fillStyle = '#2d180f';
+        ctx.fillRect(itemX, itemY, tileSize, tileSize);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 12px "Inter", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        wrapText(ctx, item.title, itemX + tileSize / 2, itemY + tileSize / 2, tileSize - 8, 14);
+      }
+
+      ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(itemX, itemY, tileSize, tileSize);
+
+      itemX += tileSize + tileGap;
+      if ((iIdx + 1) % tilesPerRow === 0) {
+        itemX = startX + labelWidth + 12;
+        itemY += tileSize + tileGap;
+      }
+    });
+
+    currentY += rowH + 8;
+  });
+
+  // Footer branding
+  ctx.fillStyle = '#b8a68e';
+  ctx.font = '14px "Inter", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('Gerado com Board Bots Tierlist Maker • Compartilhe com amigos!', width / 2, height - 30);
+}
+
+function roundRect(ctx, x, y, width, height, radius) {
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.lineTo(x + width - radius, y);
+  ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+  ctx.lineTo(x + width, y + height - radius);
+  ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+  ctx.lineTo(x + radius, y + height);
+  ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+  ctx.lineTo(x, y + radius);
+  ctx.quadraticCurveTo(x, y, x + radius, y);
+  ctx.closePath();
+}
+
+function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
+  const words = text.split(' ');
+  let line = '';
+  const lines = [];
+
+  for (let n = 0; n < words.length; n++) {
+    const testLine = line + words[n] + ' ';
+    const metrics = ctx.measureText(testLine);
+    const testWidth = metrics.width;
+    if (testWidth > maxWidth && n > 0) {
+      lines.push(line);
+      line = words[n] + ' ';
+    } else {
+      line = testLine;
+    }
+  }
+  lines.push(line);
+
+  const startY = y - ((lines.length - 1) * lineHeight) / 2;
+  lines.forEach((l, idx) => {
+    ctx.fillText(l.trim(), x, startY + (idx * lineHeight));
+  });
+}
+
+/* =======================================================
+   DOWNLOAD & SOCIAL SHARING
+   ======================================================= */
+async function getExportBlob(type = 'image/png') {
+  await generateExportCanvas();
+  const canvas = document.getElementById('exportCanvas');
+  return new Promise((resolve) => {
+    canvas.toBlob((blob) => resolve(blob), type, 0.92);
+  });
+}
+
+async function downloadImage(format = 'png') {
+  const mime = format === 'jpeg' ? 'image/jpeg' : 'image/png';
+  const blob = await getExportBlob(mime);
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.download = `tierlist-${Date.now()}.${format}`;
+  link.href = url;
+  link.click();
+  URL.revokeObjectURL(url);
+  showToast(t('toast_exported'));
+}
+
+async function downloadPDF() {
+  await generateExportCanvas();
+  const canvas = document.getElementById('exportCanvas');
+  const imgData = canvas.toDataURL('image/jpeg', 0.9);
+
+  if (window.jspdf && window.jspdf.jsPDF) {
+    const orientation = canvas.width > canvas.height ? 'landscape' : 'portrait';
+    const doc = new window.jspdf.jsPDF({
+      orientation,
+      unit: 'px',
+      format: [canvas.width, canvas.height]
+    });
+    doc.addImage(imgData, 'JPEG', 0, 0, canvas.width, canvas.height);
+    doc.save(`tierlist-${Date.now()}.pdf`);
+    showToast(t('toast_exported'));
+  } else {
+    // Fallback printable popup
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`<img src="${imgData}" style="max-width:100%;">`);
+    printWindow.print();
+  }
+}
+
+async function shareNative() {
+  const blob = await getExportBlob('image/png');
+  const file = new File([blob], 'tierlist.png', { type: 'image/png' });
+  const shareData = {
+    title: state.title,
+    text: `Confira a minha Tierlist de Jogos de Tabuleiro criada no Board Bots!`,
+    files: [file]
+  };
+
+  if (navigator.canShare && navigator.canShare(shareData)) {
+    try {
+      await navigator.share(shareData);
+    } catch (e) {
+      if (e.name !== 'AbortError') alert('Não foi possível compartilhar diretamente.');
+    }
+  } else {
+    downloadImage('png');
+  }
+}
+
+async function shareInstagram() {
+  // Instagram does not support web direct post injection; download image + open Instagram
+  await downloadImage(currentExportPreset === 'story' ? 'jpeg' : 'png');
+  showToast('Imagem baixada! Abra o Instagram e selecione-a da sua galeria.');
+  setTimeout(() => {
+    window.open('https://www.instagram.com/', '_blank');
+  }, 1000);
+}
+
+function shareWhatsApp() {
+  const text = encodeURIComponent(`🎮 Minha Tierlist de Jogos de Tabuleiro: "${state.title}" no Board Bots! https://colletes.github.io/boardbots/`);
+  window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+}
+
+function shareTelegram() {
+  const text = encodeURIComponent(`🎮 Minha Tierlist de Jogos de Tabuleiro: "${state.title}"`);
+  const url = encodeURIComponent('https://colletes.github.io/boardbots/');
+  window.open(`https://t.me/share/url?url=${url}&text=${text}`, '_blank');
+}
+
+/* =======================================================
+   UI MODALS & TOAST
+   ======================================================= */
+function openModal(id) { document.getElementById(id).classList.add('visible'); }
+function closeModal(id) { document.getElementById(id).classList.remove('visible'); }
+function openCustomGameModal() { openModal('customGameModal'); }
+function openHelpModal() { openModal('helpModal'); }
+
+function showToast(msg) {
+  const toast = document.getElementById('toastMsg');
+  if (!toast) return;
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => { toast.classList.remove('show'); }, 3000);
+}
+
+function clearSearch() {
+  const input = document.getElementById('gameSearchInput');
+  if (input) input.value = '';
+  document.getElementById('searchClearBtn').style.display = 'none';
+  document.getElementById('searchResultsDropdown').classList.remove('visible');
+}
+
+/* =======================================================
+   INITIALIZATION
+   ======================================================= */
+window.addEventListener('DOMContentLoaded', () => {
+  loadState();
+  applyI18n();
+  renderBoard();
+
+  const searchInput = document.getElementById('gameSearchInput');
+  const clearBtn = document.getElementById('searchClearBtn');
+
+  if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+      const q = e.target.value.trim();
+      clearBtn.style.display = q.length > 0 ? 'block' : 'none';
+      clearTimeout(searchDebounceTimer);
+      searchDebounceTimer = setTimeout(() => {
+        performSearch(q);
+      }, 350);
+    });
+
+    searchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        clearTimeout(searchDebounceTimer);
+        performSearch(searchInput.value.trim());
+      }
+    });
+  }
+
+  // Close dropdown on outside click
+  document.addEventListener('click', (e) => {
+    const searchWrapper = document.querySelector('.search-box-wrapper');
+    if (searchWrapper && !searchWrapper.contains(e.target)) {
+      document.getElementById('searchResultsDropdown').classList.remove('visible');
+    }
+  });
+
+  const titleInput = document.getElementById('tierlistCustomTitle');
+  if (titleInput) {
+    titleInput.addEventListener('change', saveState);
+  }
+});
+</script>
+
+<script type="module" src="../assets/analytics.js"></script>
+
+</body>
+</html>
