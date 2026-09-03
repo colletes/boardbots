@@ -1058,7 +1058,7 @@ footer {
     <div class="form-group">
       <label data-i18n="label_game_link">Link da Ludopedia ou BGG (Opcional)</label>
       <div style="display:flex; gap:8px;">
-        <input type="url" id="customGameLink" class="form-input" placeholder="https://ludopedia.com.br/jogo/... ou https://boardgamegeek.com/boardgame/..." onchange="handleLinkExtraction()">
+        <input type="url" id="customGameLink" class="form-input" placeholder="https://ludopedia.com.br/jogo/... ou https://boardgamegeek.com/boardgame/..." oninput="handleLinkInputDebounced(this.value)" onpaste="setTimeout(handleLinkExtraction, 80)" onchange="handleLinkExtraction()">
         <button type="button" class="tool-btn" onclick="handleLinkExtraction()" style="white-space:nowrap;" data-i18n="btn_extract_link">Extrair Dados</button>
       </div>
     </div>
@@ -1760,7 +1760,16 @@ const BOARD_GAMES_DATABASE = [
   { title: "Santorini", alt: "Santorini", image: "https://upload.wikimedia.org/wikipedia/en/0/02/Santorini_board_game_box_cover.jpg", year: "2016", source: "ludopedia" },
 
   // Recent 2022-2025 Acclaimed & Hot Board Games
-  { title: "SETI: Search for Extraterrestrial Intelligence", alt: "SETI CGE Tomas Holek", image: "../assets/art/seti_cover.jpg", year: "2024", source: "ludopedia" },
+  { title: "SETI: Search for Extraterrestrial Intelligence", alt: "SETI CGE Tomas Holek", image: "https://storage.googleapis.com/ludopedia-capas/64469_m.jpg", year: "2024", source: "ludopedia" },
+  { title: "Massive Darkness 2: Hellscape", alt: "Massive Darkness 2 Hellscape CMON", image: "https://storage.googleapis.com/ludopedia-capas/26735_m.jpg", year: "2022", source: "ludopedia" },
+  { title: "Massive Darkness", alt: "Massive Darkness 1 CMON", image: "https://storage.googleapis.com/ludopedia-capas/10200_m.jpg", year: "2017", source: "ludopedia" },
+  { title: "Zombicide: Black Plague", alt: "Zombicide Praga Negra", image: "https://storage.googleapis.com/ludopedia-capas/8128_m.jpg", year: "2015", source: "ludopedia" },
+  { title: "Zombicide: 2nd Edition", alt: "Zombicide Segunda Edicao", image: "https://storage.googleapis.com/ludopedia-capas/20421_m.jpg", year: "2021", source: "ludopedia" },
+  { title: "Marvel Champions: The Card Game", alt: "Marvel Champions", image: "https://storage.googleapis.com/ludopedia-capas/20424_m.jpg", year: "2019", source: "ludopedia" },
+  { title: "Arkham Horror: The Card Game", alt: "Arkham Horror Card Game LCG", image: "https://storage.googleapis.com/ludopedia-capas/9392_m.jpg", year: "2016", source: "ludopedia" },
+  { title: "Mage Knight Board Game", alt: "Mage Knight", image: "https://storage.googleapis.com/ludopedia-capas/5267_m.jpg", year: "2011", source: "ludopedia" },
+  { title: "Too Many Bones", alt: "Too Many Bones Chip Theory", image: "https://storage.googleapis.com/ludopedia-capas/10702_m.jpg", year: "2017", source: "ludopedia" },
+  { title: "Kemet: Blood and Sand", alt: "Kemet Sangue e Areia", image: "https://storage.googleapis.com/ludopedia-capas/22904_m.jpg", year: "2021", source: "ludopedia" },
   { title: "Arcs", alt: "Arcs Cole Wehrle Leder Games", image: "https://upload.wikimedia.org/wikipedia/en/a/a7/Root_board_game_box_cover.jpg", year: "2024", source: "bgg" },
   { title: "Wyrmspan", alt: "Wyrmspan Stonemaier", image: "https://upload.wikimedia.org/wikipedia/en/c/c3/3d-wingspan-768x752.png", year: "2024", source: "ludopedia" },
   { title: "Unconscious Mind", alt: "Mente Inconsciente", image: "https://upload.wikimedia.org/wikipedia/en/f/f0/Terraforming_Mars_board_game_box_cover.jpg", year: "2024", source: "ludopedia" },
@@ -1794,13 +1803,13 @@ async function searchWikipediaOpenDB(query) {
     const seen = new Set();
 
     const ignoredKeywords = [
-      'list of', 'lista de', 'category:', 'categoria:', 'template:', 'portal:',
+      'list of', 'lista de', 'category:', 'categoria:', 'template:', 'portal:', 'index of', 'índice de',
       'designer', 'autor', 'publisher', 'editora', 'award', 'prêmio', 'premio',
       'spiel des jahres', 'boardgamegeek', 'ludopedia', 'convention', 'video game',
       'filme', 'film', 'novel', 'livro', 'adaptação', 'adaptation', 'magazine', 'revista',
       'products', 'produtos', 'accessories', 'acessórios', 'merchandise', 'pharaoh', 'faraó',
       'astronomer', 'astronomy', 'scientist', 'scientology', 'institute', 'organization',
-      'carl sagan', 'biography', 'actor', 'director'
+      'carl sagan', 'biography', 'actor', 'director', 'cooperative board games', 'dungeon crawl'
     ];
 
     [resPt, resEn].forEach((data, idx) => {
@@ -1811,19 +1820,20 @@ async function searchWikipediaOpenDB(query) {
             const titleLower = rawTitle.toLowerCase();
             const descLower = (page.description || '').toLowerCase();
 
-            // 1. Title must actually contain the query terms
+            // 1. Strict anti-list and anti-meta filtering
+            if (titleLower.startsWith('list ') || titleLower.startsWith('lista ') || titleLower.startsWith('category:') || titleLower.startsWith('index of')) return;
+            const isIgnored = ignoredKeywords.some(kw => titleLower.includes(kw) || descLower.includes(kw));
+            if (isIgnored) return;
+
+            // 2. Title must actually contain the query terms
             const hasQueryInTitle = qWords.some(w => titleLower.includes(w));
             if (!hasQueryInTitle) return;
 
-            // 2. Must be a board game / tabletop game (or title has game tag)
+            // 3. Must be a board game / tabletop game
             const isGameTag = titleLower.includes('(board game)') || titleLower.includes('(jogo de tabuleiro)') || titleLower.includes('(game)') || titleLower.includes('(jogo)');
             const isGameDesc = descLower.includes('board game') || descLower.includes('card game') || descLower.includes('tabletop') || descLower.includes('jogo de tabuleiro') || descLower.includes('jogo de cartas') || descLower.includes('eurogame') || descLower.includes('wargame');
             
             if (!isGameTag && !isGameDesc) return;
-
-            // 3. Strict anti-list and anti-meta filtering
-            const isIgnored = ignoredKeywords.some(kw => titleLower.includes(kw) || descLower.includes(kw));
-            if (isIgnored) return;
 
             const cleanTitle = rawTitle.replace(/\s*\([^)]*\)/g, '').trim();
             if (!cleanTitle || cleanTitle.length < 2) return;
@@ -2198,69 +2208,89 @@ async function extractGameFromLink(rawUrl) {
     };
   }
 
-  // 2. Ludopedia Link: https://ludopedia.com.br/jogo/catan
+  // 2. Ludopedia Link: https://ludopedia.com.br/jogo/massive-darkness-2-hellscape
   const ludoMatch = url.match(/ludopedia\.com\.br\/jogo\/([a-zA-Z0-9\-_]+)/i);
   if (ludoMatch) {
     const slug = ludoMatch[1];
     const prettyTitle = slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 
+    // Try live reader extraction
+    try {
+      const jinaRes = await fetch('https://r.jina.ai/' + url);
+      if (jinaRes.ok) {
+        const txt = await jinaRes.text();
+        const titleMatch = txt.match(/^Title:\s*(.+)$/m);
+        const title = (titleMatch && !titleMatch[1].includes('não encontrado')) ? titleMatch[1].split('|')[0].trim() : prettyTitle;
+
+        const imgMatch = txt.match(/https:\/\/storage\.googleapis\.com\/ludopedia-capas\/[a-zA-Z0-9_\-\.]+/i);
+        let image = '';
+        if (imgMatch) {
+          image = imgMatch[0].replace(/_t\.jpg$/i, '_m.jpg');
+        }
+
+        if (image) {
+          return { title, image, year: '', source: 'ludopedia', link: url };
+        }
+      }
+    } catch(e) {
+      console.warn('Erro ao extrair via Ludopedia Reader:', e);
+    }
+
+    // Check local database
     const localMatch = BOARD_GAMES_DATABASE.find(g => g.title.toLowerCase() === prettyTitle.toLowerCase() || (g.alt && g.alt.toLowerCase().includes(slug.replace(/-/g, ' '))));
     if (localMatch) {
       return { ...localMatch, source: 'ludopedia', link: url };
     }
 
-    let title = prettyTitle;
-    let image = '';
-    let year = '';
-
-    // Fetch Open DB / Wiki for this game title
-    const wikiResults = await searchWikipediaOpenDB(prettyTitle);
-    if (wikiResults.length > 0) {
-      image = wikiResults[0].image;
-      title = wikiResults[0].title || prettyTitle;
-    }
-
     return {
-      title,
-      image,
-      year,
+      title: prettyTitle,
+      image: '',
+      year: '',
       source: 'ludopedia',
       link: url
     };
   }
 
-  // 3. BGG Link: https://boardgamegeek.com/boardgame/13/catan
+  // 3. BGG Link: https://boardgamegeek.com/boardgame/314819/massive-darkness-2-hellscape
   const bggMatch = url.match(/boardgamegeek\.com\/boardgame\/(\d+)(?:\/([a-zA-Z0-9\-_]+))?/i);
   if (bggMatch) {
     const id = bggMatch[1];
     const slug = bggMatch[2] || '';
     const prettyTitle = slug ? slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : `BGG #${id}`;
 
-    const localMatch = BOARD_GAMES_DATABASE.find(g => g.title.toLowerCase() === prettyTitle.toLowerCase());
+    // Try finding cover on Ludopedia using the slug
+    if (slug) {
+      try {
+        const ludoUrl = 'https://ludopedia.com.br/jogo/' + slug;
+        const jinaRes = await fetch('https://r.jina.ai/' + ludoUrl);
+        if (jinaRes.ok) {
+          const txt = await jinaRes.text();
+          const imgMatch = txt.match(/https:\/\/storage\.googleapis\.com\/ludopedia-capas\/[a-zA-Z0-9_\-\.]+/i);
+          if (imgMatch) {
+            const image = imgMatch[0].replace(/_t\.jpg$/i, '_m.jpg');
+            const titleMatch = txt.match(/^Title:\s*(.+)$/m);
+            const title = (titleMatch && !titleMatch[1].includes('não encontrado')) ? titleMatch[1].split('|')[0].trim() : prettyTitle;
+            return { title, image, year: '', source: 'bgg', link: url };
+          }
+        }
+      } catch(e) {}
+    }
+
+    const localMatch = BOARD_GAMES_DATABASE.find(g => g.title.toLowerCase() === prettyTitle.toLowerCase() || (g.alt && g.alt.toLowerCase().includes(slug.replace(/-/g, ' '))));
     if (localMatch) {
       return { ...localMatch, source: 'bgg', link: url };
     }
 
-    let title = prettyTitle;
-    let image = '';
-    let year = '';
-
-    const wikiResults = await searchWikipediaOpenDB(prettyTitle);
-    if (wikiResults.length > 0) {
-      image = wikiResults[0].image;
-      title = wikiResults[0].title || prettyTitle;
-    }
-
     return {
-      title,
-      image,
-      year,
+      title: prettyTitle,
+      image: '',
+      year: '',
       source: 'bgg',
       link: url
     };
   }
 
-  // Fallback for general URL
+  // Fallback for generic URL
   const pathParts = url.split('/').filter(Boolean);
   const lastPart = pathParts[pathParts.length - 1] || 'Jogo Customizado';
   return {
@@ -2270,6 +2300,17 @@ async function extractGameFromLink(rawUrl) {
     source: 'link',
     link: url
   };
+}
+
+let linkDebounceTimer = null;
+function handleLinkInputDebounced(val) {
+  clearTimeout(linkDebounceTimer);
+  const v = (val || '').trim();
+  if (v.startsWith('http://') || v.startsWith('https://') || v.includes('ludopedia.') || v.includes('boardgamegeek.')) {
+    linkDebounceTimer = setTimeout(() => {
+      handleLinkExtraction();
+    }, 400);
+  }
 }
 
 async function handleLinkExtraction() {
