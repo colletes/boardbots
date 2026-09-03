@@ -1193,6 +1193,16 @@ footer {
       <label data-i18n="label_game_name">Nome do Jogo *</label>
       <input type="text" id="customGameName" class="form-input" placeholder="Ex: Protótipo Incrível, Jogo Caseiro...">
     </div>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+      <div class="form-group">
+        <label data-i18n="label_designer">👤 Designer (Opcional)</label>
+        <input type="text" id="customGameDesigner" class="form-input" placeholder="Ex: Uwe Rosenberg, Reiner Knizia...">
+      </div>
+      <div class="form-group">
+        <label data-i18n="label_artist">🎨 Artista (Opcional)</label>
+        <input type="text" id="customGameArtist" class="form-input" placeholder="Ex: Vincent Dutrait, Ian O'Toole...">
+      </div>
+    </div>
     <div class="form-group">
       <label data-i18n="label_game_img_url">URL da Imagem da Capa (Opcional)</label>
       <input type="url" id="customGameUrl" class="form-input" placeholder="https://exemplo.com/capa.jpg" oninput="previewCustomImage(this.value)">
@@ -1223,6 +1233,16 @@ footer {
     <div class="form-group">
       <label data-i18n="label_game_name">Nome do Jogo *</label>
       <input type="text" id="editGameName" class="form-input" placeholder="Nome do jogo...">
+    </div>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+      <div class="form-group">
+        <label data-i18n="label_designer_edit">👤 Designer</label>
+        <input type="text" id="editGameDesigner" class="form-input" placeholder="Ex: Uwe Rosenberg, Reiner Knizia...">
+      </div>
+      <div class="form-group">
+        <label data-i18n="label_artist_edit">🎨 Artista</label>
+        <input type="text" id="editGameArtist" class="form-input" placeholder="Ex: Vincent Dutrait, Ian O'Toole...">
+      </div>
     </div>
     <div class="form-group">
       <label data-i18n="label_game_link">Link da Ludopedia ou BGG (Opcional)</label>
@@ -1465,6 +1485,10 @@ const I18N = {
     btn_edit_game: 'Editar Jogo',
     tap_edit_game: '✏️ Editar Jogo (Nome / Capa)',
     label_game_name: 'Nome do Jogo *',
+    label_designer: '👤 Designer (Opcional)',
+    label_artist: '🎨 Artista (Opcional)',
+    label_designer_edit: '👤 Designer',
+    label_artist_edit: '🎨 Artista',
     label_game_img_url: 'URL da Imagem da Capa (Opcional)',
     label_upload_file: 'Ou Enviar Arquivo de Imagem',
     btn_cancel: 'Cancelar',
@@ -1539,6 +1563,10 @@ const I18N = {
     toast_link_extracted: 'Game details & cover extracted successfully from Ludopedia!',
     toast_link_error: 'Could not automatically extract details from this link.',
     label_game_name: 'Game Title *',
+    label_designer: '👤 Designer (Optional)',
+    label_artist: '🎨 Artist (Optional)',
+    label_designer_edit: '👤 Designer',
+    label_artist_edit: '🎨 Artist',
     label_game_img_url: 'Cover Image URL (Optional)',
     label_upload_file: 'Or Upload Image File',
     btn_cancel: 'Cancel',
@@ -1857,6 +1885,12 @@ function createGameTileElement(item, currentTierId) {
   tooltip.textContent = item.title + (item.year ? ` (${item.year})` : '');
   tile.appendChild(tooltip);
 
+  // Native hover tooltip with full information
+  let hoverInfo = item.title + (item.year ? ` (${item.year})` : '');
+  if (item.designer) hoverInfo += `\n👤 Designer: ${item.designer}`;
+  if (item.artist) hoverInfo += `\n🎨 Artista: ${item.artist}`;
+  tile.title = hoverInfo;
+
   // Desktop HTML5 Drag Events
   tile.addEventListener('dragstart', (e) => {
     draggedItemId = item.id;
@@ -2066,11 +2100,37 @@ function parseBggThingXml(xmlText) {
   const yearEl = item.querySelector('yearpublished');
   const imageEl = item.querySelector('image');
   const thumbEl = item.querySelector('thumbnail');
+
+  const designers = Array.from(item.querySelectorAll('link[type="boardgamedesigner"]'))
+    .map(el => el.getAttribute('value'))
+    .filter(Boolean)
+    .join(', ');
+
+  const artists = Array.from(item.querySelectorAll('link[type="boardgameartist"]'))
+    .map(el => el.getAttribute('value'))
+    .filter(Boolean)
+    .join(', ');
+
+  const minPlayers = item.querySelector('minplayers')?.getAttribute('value');
+  const maxPlayers = item.querySelector('maxplayers')?.getAttribute('value');
+  let players = '';
+  if (minPlayers && maxPlayers) {
+    players = minPlayers === maxPlayers ? `${minPlayers} jogadores` : `${minPlayers} a ${maxPlayers} jogadores`;
+  }
+
+  const playingTime = item.querySelector('playingtime')?.getAttribute('value');
+  const time = playingTime && playingTime !== '0' ? `${playingTime} min` : '';
+
   return {
     bggId: item.getAttribute('id'),
     title: nameEl ? nameEl.getAttribute('value') : '',
     year: yearEl ? yearEl.getAttribute('value') : '',
-    image: (imageEl && imageEl.textContent.trim()) || (thumbEl && thumbEl.textContent.trim()) || ''
+    image: (imageEl && imageEl.textContent.trim()) || (thumbEl && thumbEl.textContent.trim()) || '',
+    designer: designers,
+    artist: artists,
+    players: players,
+    time: time,
+    link: `https://boardgamegeek.com/boardgame/${item.getAttribute('id')}`
   };
 }
 
@@ -2098,7 +2158,7 @@ async function searchBGGAPI(query) {
     const xml = await fetchBggXml(`/xmlapi2/search?query=${encodeURIComponent(qClean)}&type=boardgame`);
     const rawResults = parseBggSearchXml(xml).slice(0, 6);
 
-    // Fetch cover images for the top few matches only (avoid hammering the API).
+    // Fetch cover images and metadata for the top few matches only.
     const results = await Promise.all(rawResults.map(async (g) => {
       const detail = await fetchBggThing(g.bggId);
       return {
@@ -2108,8 +2168,12 @@ async function searchBGGAPI(query) {
         alt: g.title,
         image: (detail && detail.image) || '',
         year: g.year || (detail && detail.year) || '',
+        designer: (detail && detail.designer) || '',
+        artist: (detail && detail.artist) || '',
+        players: (detail && detail.players) || '',
+        time: (detail && detail.time) || '',
         source: 'bgg',
-        link: `https://boardgamegeek.com/boardgame/${g.bggId}`
+        link: (detail && detail.link) || `https://boardgamegeek.com/boardgame/${g.bggId}`
       };
     }));
 
@@ -2378,6 +2442,16 @@ async function performSearch(query) {
         meta.appendChild(yearSpan);
       }
 
+      if (game.designer) {
+        const designerSpan = document.createElement('span');
+        designerSpan.textContent = `• 👤 ${game.designer}`;
+        designerSpan.style.maxWidth = '180px';
+        designerSpan.style.overflow = 'hidden';
+        designerSpan.style.textOverflow = 'ellipsis';
+        designerSpan.style.whiteSpace = 'nowrap';
+        meta.appendChild(designerSpan);
+      }
+
       info.appendChild(title);
       info.appendChild(meta);
 
@@ -2448,6 +2522,7 @@ function addGameToTierlist(game) {
     image: game.image,
     year: game.year || '',
     ludoId: game.ludoId || null,
+    bggId: game.bggId || null,
     designer: game.designer || '',
     artist: game.artist || '',
     players: game.players || '',
@@ -2475,20 +2550,23 @@ function addGameToTierlist(game) {
   renderBoard();
   showToast(t('toast_added').replace('{name}', game.title));
 
-  // Fill in missing metadata (designer/artist/players/time/score...) from the
-  // live Ludopedia API in the background, without blocking the add action.
+  // Fill in missing metadata (designer/artist/players/time/score...) in the background
   if (newItem.ludoId) {
     enrichItemInBackground(newItem.id, newItem.ludoId);
+  } else if (newItem.bggId) {
+    enrichItemInBackgroundBGG(newItem.id, newItem.bggId);
   }
 }
 
-// Adds a freshly-added game to the in-memory catalog (de-duplicated by ludoId
-// or normalized title) so it's instantly searchable again this session.
+// Adds a freshly-added game to the in-memory catalog (de-duplicated by ludoId,
+// bggId or normalized title) so it's instantly searchable again this session.
 function addGameToLocalDatabase(game) {
   if (!game || !game.title) return;
   const normTitle = normalizeSearchStr(game.title);
   const exists = BOARD_GAMES_DATABASE.some(g =>
-    (game.ludoId && g.ludoId === game.ludoId) || normalizeSearchStr(g.title) === normTitle
+    (game.ludoId && g.ludoId === game.ludoId) ||
+    (game.bggId && g.bggId === game.bggId) ||
+    normalizeSearchStr(g.title) === normTitle
   );
   if (exists) return;
   BOARD_GAMES_DATABASE.push({
@@ -2496,6 +2574,7 @@ function addGameToLocalDatabase(game) {
     alt: game.alt || '',
     slug: game.slug || '',
     ludoId: game.ludoId || null,
+    bggId: game.bggId || null,
     image: game.image || '',
     year: game.year || '',
     designer: game.designer || '',
@@ -2583,6 +2662,48 @@ async function enrichItemInBackground(itemId, ludoId) {
     }
   } catch (e) {
     console.warn('Erro ao enriquecer jogo em segundo plano:', e);
+  }
+}
+
+// Fetches full live details from BoardGameGeek and patches them onto an item
+async function enrichItemInBackgroundBGG(itemId, bggId) {
+  try {
+    const details = await fetchBggThing(bggId);
+    if (!details) return;
+
+    const loc = findItemByIdAnywhere(itemId);
+    if (!loc) return;
+    const { item } = loc;
+
+    if (details.designer) item.designer = details.designer;
+    if (details.artist) item.artist = details.artist;
+    if (details.players) item.players = details.players;
+    if (details.time) item.time = details.time;
+    if (details.image && !item.image) item.image = details.image;
+    if (details.link && !item.link) item.link = details.link;
+
+    const dbEntry = BOARD_GAMES_DATABASE.find(g => g.bggId === bggId);
+    if (dbEntry) {
+      if (details.designer) dbEntry.designer = details.designer;
+      if (details.artist) dbEntry.artist = details.artist;
+      if (details.players) dbEntry.players = details.players;
+      if (details.time) dbEntry.time = details.time;
+      if (details.image && !dbEntry.image) dbEntry.image = details.image;
+      if (details.link && !dbEntry.link) dbEntry.link = details.link;
+    }
+
+    if (window.persistGameToCommunityDB) {
+      window.persistGameToCommunityDB(item);
+    }
+
+    saveState();
+    renderBoard();
+
+    if (activeTileItem && activeTileItem.item.id === itemId) {
+      openTapModal(item, loc.tierId);
+    }
+  } catch (e) {
+    console.warn('Erro ao enriquecer jogo do BGG em segundo plano:', e);
   }
 }
 
@@ -2891,6 +3012,8 @@ async function handleLinkExtraction() {
   const linkInput = document.getElementById('customGameLink');
   const nameInput = document.getElementById('customGameName');
   const urlInput = document.getElementById('customGameUrl');
+  const designerInput = document.getElementById('customGameDesigner');
+  const artistInput = document.getElementById('customGameArtist');
   const rawUrl = linkInput ? linkInput.value.trim() : '';
 
   if (!rawUrl) return;
@@ -2902,6 +3025,12 @@ async function handleLinkExtraction() {
       lastExtractedGame = extracted;
       if (extracted.title) {
         nameInput.value = extracted.title;
+      }
+      if (extracted.designer && designerInput) {
+        designerInput.value = extracted.designer;
+      }
+      if (extracted.artist && artistInput) {
+        artistInput.value = extracted.artist;
       }
       urlInput.value = extracted.image || '';
       previewCustomImage(extracted.image || '');
@@ -2919,6 +3048,8 @@ async function submitCustomGame() {
   const linkInput = document.getElementById('customGameLink');
   const nameInput = document.getElementById('customGameName');
   const urlInput = document.getElementById('customGameUrl');
+  const designerInput = document.getElementById('customGameDesigner');
+  const artistInput = document.getElementById('customGameArtist');
   const title = nameInput.value.trim();
 
   if (!title) {
@@ -2928,14 +3059,17 @@ async function submitCustomGame() {
 
   const image = uploadedBase64Image || urlInput.value.trim() || '';
   const link = linkInput ? linkInput.value.trim() : '';
+  const customDesigner = designerInput ? designerInput.value.trim() : '';
+  const customArtist = artistInput ? artistInput.value.trim() : '';
 
   const gamePayload = {
     title,
     image,
     year: (lastExtractedGame && lastExtractedGame.year) || '',
     ludoId: (lastExtractedGame && lastExtractedGame.ludoId) || null,
-    designer: (lastExtractedGame && lastExtractedGame.designer) || '',
-    artist: (lastExtractedGame && lastExtractedGame.artist) || '',
+    bggId: (lastExtractedGame && lastExtractedGame.bggId) || null,
+    designer: customDesigner || (lastExtractedGame && lastExtractedGame.designer) || '',
+    artist: customArtist || (lastExtractedGame && lastExtractedGame.artist) || '',
     players: (lastExtractedGame && lastExtractedGame.players) || '',
     time: (lastExtractedGame && lastExtractedGame.time) || '',
     plays: (lastExtractedGame && lastExtractedGame.plays) || 0,
@@ -2953,6 +3087,8 @@ async function submitCustomGame() {
 
   nameInput.value = '';
   urlInput.value = '';
+  if (designerInput) designerInput.value = '';
+  if (artistInput) artistInput.value = '';
   if (linkInput) linkInput.value = '';
   uploadedBase64Image = '';
   lastExtractedGame = null;
@@ -3006,6 +3142,8 @@ async function handleEditLinkExtraction() {
   const linkInput = document.getElementById('editGameLink');
   const nameInput = document.getElementById('editGameName');
   const urlInput = document.getElementById('editGameUrl');
+  const designerInput = document.getElementById('editGameDesigner');
+  const artistInput = document.getElementById('editGameArtist');
   const rawUrl = linkInput ? linkInput.value.trim() : '';
   if (!rawUrl) return;
 
@@ -3015,6 +3153,12 @@ async function handleEditLinkExtraction() {
     if (extracted && (extracted.title || extracted.image)) {
       if (extracted.title && !nameInput.value.trim()) {
         nameInput.value = extracted.title;
+      }
+      if (extracted.designer && designerInput) {
+        designerInput.value = extracted.designer;
+      }
+      if (extracted.artist && artistInput) {
+        artistInput.value = extracted.artist;
       }
       if (extracted.image) {
         urlInput.value = extracted.image;
@@ -3038,9 +3182,13 @@ function openEditGameModal(item, tierId) {
   const linkInput = document.getElementById('editGameLink');
   const urlInput = document.getElementById('editGameUrl');
   const fileInput = document.getElementById('editGameFile');
+  const designerInput = document.getElementById('editGameDesigner');
+  const artistInput = document.getElementById('editGameArtist');
 
   if (nameInput) nameInput.value = item.title || '';
   if (linkInput) linkInput.value = item.link || '';
+  if (designerInput) designerInput.value = item.designer || '';
+  if (artistInput) artistInput.value = item.artist || '';
   if (urlInput) urlInput.value = item.image && !item.image.startsWith('data:') ? item.image : '';
   if (fileInput) fileInput.value = '';
 
@@ -3054,6 +3202,8 @@ function saveEditedGame() {
   const nameInput = document.getElementById('editGameName');
   const linkInput = document.getElementById('editGameLink');
   const urlInput = document.getElementById('editGameUrl');
+  const designerInput = document.getElementById('editGameDesigner');
+  const artistInput = document.getElementById('editGameArtist');
   const newTitle = nameInput.value.trim();
 
   if (!newTitle) {
@@ -3067,6 +3217,8 @@ function saveEditedGame() {
   // Update item properties locally
   activeEditingItem.title = newTitle;
   activeEditingItem.image = newImage;
+  if (designerInput) activeEditingItem.designer = designerInput.value.trim();
+  if (artistInput) activeEditingItem.artist = artistInput.value.trim();
   if (newLink) activeEditingItem.link = newLink;
 
   // Save to local storage only (DO NOT persist to Firestore community DB)
@@ -3222,42 +3374,117 @@ async function openTapModal(item, currentTierId) {
     if (sMatch && sMatch.ludoId) ludoId = sMatch.ludoId;
   }
 
-  if (ludoId && (!finalDesigner || finalDesigner === '-' || finalScore == null)) {
+  // 1. Live Ludopedia Enrichment
+  if (ludoId && (!finalDesigner || finalDesigner === '-' || !finalArtist || finalArtist === '-' || finalScore == null)) {
     const details = await fetchGameDetails(ludoId);
     if (details && activeTileItem && activeTileItem.item.id === item.id) {
       if (details.designers && details.designers.length > 0) {
-        designerVal.textContent = details.designers.map(d => d.nm_profissional).join(', ');
+        const dStr = details.designers.map(d => d.nm_profissional).join(', ');
+        designerVal.textContent = dStr;
+        item.designer = dStr;
       }
       if (details.artistas && details.artistas.length > 0) {
-        artistVal.textContent = details.artistas.map(a => a.nm_profissional).join(', ');
+        const aStr = details.artistas.map(a => a.nm_profissional).join(', ');
+        artistVal.textContent = aStr;
+        item.artist = aStr;
       }
       if (details.qt_jogadores_min && details.qt_jogadores_max) {
-        playersVal.textContent = details.qt_jogadores_min === details.qt_jogadores_max 
+        item.players = details.qt_jogadores_min === details.qt_jogadores_max 
           ? `${details.qt_jogadores_min} jogadores`
           : `${details.qt_jogadores_min} a ${details.qt_jogadores_max} jogadores`;
+        playersVal.textContent = item.players;
       }
       if (details.vl_tempo_jogo) {
-        timeVal.textContent = `${details.vl_tempo_jogo} min`;
+        item.time = `${details.vl_tempo_jogo} min`;
+        timeVal.textContent = item.time;
       }
       if (details.qt_jogou != null) {
+        item.plays = details.qt_jogou;
         playsVal.textContent = `${Number(details.qt_jogou).toLocaleString()} registraram partidas`;
       }
-      // Ludopedia's public API doesn't expose an aggregate rating today (checked
-      // across multiple games: no nota/media_notas/rating field, and the
-      // dedicated /notas endpoint is an unimplemented stub) -- wired defensively
-      // so the row lights up automatically if/when Ludopedia adds one of these.
       const liveScore = details.nota ?? details.media_notas ?? details.vl_nota ?? details.rating;
       if (liveScore != null) {
+        item.score = liveScore;
         scoreVal.textContent = Number(liveScore).toLocaleString(undefined, { maximumFractionDigits: 2 });
         scoreRow.style.display = 'flex';
       }
       if (details.link) {
-        ludoLink.href = details.link.startsWith('http') ? details.link : `https://ludopedia.com.br/${details.link}`;
+        item.link = details.link.startsWith('http') ? details.link : `https://ludopedia.com.br/${details.link}`;
+        ludoLink.href = item.link;
         ludoLink.style.display = 'inline-flex';
       }
       if (details.thumb && !item.image) {
-        coverEl.src = details.thumb.replace(/_t\.jpg$/i, '_m.jpg');
+        item.image = details.thumb.replace(/_t\.jpg$/i, '_m.jpg');
+        coverEl.src = item.image;
       }
+      saveState();
+      renderBoard();
+    }
+  }
+
+  // 2. Live BGG Enrichment
+  let bggId = item.bggId || (item.id && item.id.startsWith('bgg_') ? item.id.replace('bgg_', '') : null);
+  if (!bggId && item.link && item.link.includes('boardgamegeek.com/boardgame/')) {
+    const m = item.link.match(/boardgame\/(\d+)/);
+    if (m) bggId = m[1];
+  }
+
+  if (bggId && (!item.designer || item.designer === '-' || !item.artist || item.artist === '-')) {
+    const bggThing = await fetchBggThing(bggId);
+    if (bggThing && activeTileItem && activeTileItem.item.id === item.id) {
+      if (bggThing.designer) {
+        designerVal.textContent = bggThing.designer;
+        item.designer = bggThing.designer;
+      }
+      if (bggThing.artist) {
+        artistVal.textContent = bggThing.artist;
+        item.artist = bggThing.artist;
+      }
+      if (bggThing.players && (!item.players || item.players === '-')) {
+        item.players = bggThing.players;
+        playersVal.textContent = item.players;
+      }
+      if (bggThing.time && (!item.time || item.time === '-')) {
+        item.time = bggThing.time;
+        timeVal.textContent = item.time;
+      }
+      if (bggThing.image && !item.image) {
+        item.image = bggThing.image;
+        coverEl.src = item.image;
+      }
+      if (bggThing.link) {
+        ludoLink.href = bggThing.link;
+        const linkSpan = ludoLink.querySelector('span');
+        if (linkSpan) linkSpan.textContent = 'Ver página no BoardGameGeek';
+        ludoLink.style.display = 'inline-flex';
+      }
+      saveState();
+      renderBoard();
+    }
+  }
+
+  // 3. Fallback search by title on Ludopedia if still missing designer & artist
+  if (!ludoId && !bggId && (!item.designer || item.designer === '-')) {
+    try {
+      const ludoMatches = await searchLudopediaAPI(item.title);
+      if (ludoMatches && ludoMatches.length > 0 && ludoMatches[0].ludoId) {
+        item.ludoId = ludoMatches[0].ludoId;
+        const details = await fetchGameDetails(item.ludoId);
+        if (details && activeTileItem && activeTileItem.item.id === item.id) {
+          if (details.designers && details.designers.length > 0) {
+            item.designer = details.designers.map(d => d.nm_profissional).join(', ');
+            designerVal.textContent = item.designer;
+          }
+          if (details.artistas && details.artistas.length > 0) {
+            item.artist = details.artistas.map(a => a.nm_profissional).join(', ');
+            artistVal.textContent = item.artist;
+          }
+          saveState();
+          renderBoard();
+        }
+      }
+    } catch (e) {
+      console.warn('Fallback metadata search error:', e);
     }
   }
 }
@@ -3583,7 +3810,15 @@ function downloadTextList() {
     const items = state.items[tier.id] || [];
     if (items.length === 0) return;
     lines.push(`${tier.name}:`);
-    items.forEach(item => lines.push(`- ${item.title}`));
+    items.forEach(item => {
+      let line = `- ${item.title}`;
+      if (item.year) line += ` (${item.year})`;
+      const meta = [];
+      if (item.designer) meta.push(`Designer: ${item.designer}`);
+      if (item.artist) meta.push(`Artista: ${item.artist}`);
+      if (meta.length > 0) line += ` [${meta.join(' | ')}]`;
+      lines.push(line);
+    });
   });
 
   const txtStr = lines.join('\n');
