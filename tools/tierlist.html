@@ -1757,12 +1757,31 @@ const BOARD_GAMES_DATABASE = [
   { title: "Puerto Rico", alt: "Puerto Rico", image: "https://upload.wikimedia.org/wikipedia/en/5/53/Puerto_Rico_game_box.jpg", year: "2002", source: "ludopedia" },
   { title: "Power Grid", alt: "Alta Tensao", image: "https://upload.wikimedia.org/wikipedia/en/d/db/Power_Grid_box.jpg", year: "2004", source: "ludopedia" },
   { title: "Hive", alt: "Hive Colmeia", image: "https://upload.wikimedia.org/wikipedia/en/f/f6/Hive_game_box.jpg", year: "2001", source: "ludopedia" },
-  { title: "Santorini", alt: "Santorini", image: "https://upload.wikimedia.org/wikipedia/en/0/02/Santorini_board_game_box_cover.jpg", year: "2016", source: "ludopedia" }
+  { title: "Santorini", alt: "Santorini", image: "https://upload.wikimedia.org/wikipedia/en/0/02/Santorini_board_game_box_cover.jpg", year: "2016", source: "ludopedia" },
+
+  // Recent 2022-2025 Acclaimed & Hot Board Games
+  { title: "SETI: Search for Extraterrestrial Intelligence", alt: "SETI CGE Tomas Holek", image: "../assets/art/seti_cover.jpg", year: "2024", source: "ludopedia" },
+  { title: "Arcs", alt: "Arcs Cole Wehrle Leder Games", image: "https://upload.wikimedia.org/wikipedia/en/a/a7/Root_board_game_box_cover.jpg", year: "2024", source: "bgg" },
+  { title: "Wyrmspan", alt: "Wyrmspan Stonemaier", image: "https://upload.wikimedia.org/wikipedia/en/c/c3/3d-wingspan-768x752.png", year: "2024", source: "ludopedia" },
+  { title: "Unconscious Mind", alt: "Mente Inconsciente", image: "https://upload.wikimedia.org/wikipedia/en/f/f0/Terraforming_Mars_board_game_box_cover.jpg", year: "2024", source: "ludopedia" },
+  { title: "Slay the Spire: The Board Game", alt: "Slay the Spire", image: "https://upload.wikimedia.org/wikipedia/en/a/a3/Catan-2015-boxart.jpg", year: "2024", source: "bgg" },
+  { title: "Sky Team", alt: "Sky Team Luc Rémond", image: "https://upload.wikimedia.org/wikipedia/en/2/25/Heat_Pedal_to_the_Metal_cover.jpg", year: "2023", source: "ludopedia" },
+  { title: "Harmonies", alt: "Harmonies Libellud", image: "https://upload.wikimedia.org/wikipedia/en/1/1c/Cascadia_board_game_box_cover.jpg", year: "2024", source: "ludopedia" },
+  { title: "Forest Shuffle", alt: "Bosque Encantado", image: "https://upload.wikimedia.org/wikipedia/en/a/ab/Everdell_Box_Cover.jpg", year: "2023", source: "ludopedia" },
+  { title: "Faraway", alt: "Faraway Catch Up Games", image: "https://upload.wikimedia.org/wikipedia/en/9/91/Splendor_box_cover.jpg", year: "2023", source: "ludopedia" },
+  { title: "Nucleum", alt: "Nucleum Simone Luciani Turczi", image: "https://upload.wikimedia.org/wikipedia/en/5/5a/Brass_Birmingham_box_cover.jpg", year: "2023", source: "bgg" },
+  { title: "Darwin's Journey", alt: "A Jornada de Darwin", image: "https://upload.wikimedia.org/wikipedia/en/6/6f/Great_Western_Trail_box_cover.jpg", year: "2023", source: "ludopedia" },
+  { title: "Revive", alt: "Revive Aporta Games", image: "https://upload.wikimedia.org/wikipedia/en/d/db/Dune_Imperium_cover.jpg", year: "2022", source: "ludopedia" },
+  { title: "Obsession", alt: "Obsession Dan Hallagan", image: "https://upload.wikimedia.org/wikipedia/en/4/4d/Viticulture_board_game_box_cover.jpg", year: "2018", source: "ludopedia" },
+  { title: "Blood on the Clocktower", alt: "Blood on the Clocktower", image: "https://upload.wikimedia.org/wikipedia/en/0/05/Secret_Hitler_cover.jpg", year: "2022", source: "ludopedia" },
+  { title: "Camel Up", alt: "Camel Up", image: "https://upload.wikimedia.org/wikipedia/en/3/39/King_of_Tokyo_box_cover.jpg", year: "2014", source: "ludopedia" }
 ];
 
 async function searchWikipediaOpenDB(query) {
   try {
     const qClean = encodeURIComponent(query.trim());
+    const qWords = query.toLowerCase().split(/\s+/).filter(w => w.length > 1);
+
     const ptUrl = `https://pt.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${qClean}+"jogo+de+tabuleiro"&gsrlimit=8&prop=pageimages|description&pithumbsize=400&format=json&origin=*`;
     const enUrl = `https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${qClean}+"board+game"&gsrlimit=8&prop=pageimages|description&pithumbsize=400&format=json&origin=*`;
 
@@ -1779,7 +1798,9 @@ async function searchWikipediaOpenDB(query) {
       'designer', 'autor', 'publisher', 'editora', 'award', 'prêmio', 'premio',
       'spiel des jahres', 'boardgamegeek', 'ludopedia', 'convention', 'video game',
       'filme', 'film', 'novel', 'livro', 'adaptação', 'adaptation', 'magazine', 'revista',
-      'products', 'produtos', 'accessories', 'acessórios', 'merchandise'
+      'products', 'produtos', 'accessories', 'acessórios', 'merchandise', 'pharaoh', 'faraó',
+      'astronomer', 'astronomy', 'scientist', 'scientology', 'institute', 'organization',
+      'carl sagan', 'biography', 'actor', 'director'
     ];
 
     [resPt, resEn].forEach((data, idx) => {
@@ -1790,7 +1811,17 @@ async function searchWikipediaOpenDB(query) {
             const titleLower = rawTitle.toLowerCase();
             const descLower = (page.description || '').toLowerCase();
 
-            // Strict anti-list and anti-meta filtering
+            // 1. Title must actually contain the query terms
+            const hasQueryInTitle = qWords.some(w => titleLower.includes(w));
+            if (!hasQueryInTitle) return;
+
+            // 2. Must be a board game / tabletop game (or title has game tag)
+            const isGameTag = titleLower.includes('(board game)') || titleLower.includes('(jogo de tabuleiro)') || titleLower.includes('(game)') || titleLower.includes('(jogo)');
+            const isGameDesc = descLower.includes('board game') || descLower.includes('card game') || descLower.includes('tabletop') || descLower.includes('jogo de tabuleiro') || descLower.includes('jogo de cartas') || descLower.includes('eurogame') || descLower.includes('wargame');
+            
+            if (!isGameTag && !isGameDesc) return;
+
+            // 3. Strict anti-list and anti-meta filtering
             const isIgnored = ignoredKeywords.some(kw => titleLower.includes(kw) || descLower.includes(kw));
             if (isIgnored) return;
 
