@@ -1432,6 +1432,7 @@ const I18N = {
     search_loading: 'Buscando jogos na Ludopedia...',
     search_no_results: 'Nenhum jogo encontrado com esse nome. Tente outro termo ou adicione manualmente!',
     source_ludopedia: 'Ludopedia',
+    source_bgg: 'BGG',
     source_custom: 'Manual',
     modal_custom_title: 'Adicionar Jogo Manual',
     modal_edit_title: 'Editar Jogo',
@@ -1494,6 +1495,7 @@ const I18N = {
     search_loading: 'Searching Ludopedia...',
     search_no_results: 'No games found with this title. Try another search or add a custom game!',
     source_ludopedia: 'Ludopedia',
+    source_bgg: 'BGG',
     source_custom: 'Custom',
     modal_custom_title: 'Add Custom Game',
     modal_edit_title: 'Edit Game',
@@ -17250,35 +17252,133 @@ const BOARD_GAMES_DATABASE = [
   }
 ];
 
-const LUDOPEDIA_ACCESS_TOKEN = '4c19506c8a280672ca249db5fde7c092';
+// Same-origin worker that injects the Ludopedia token server-side and proxies
+// BGG's XML API too (see workers/ludoproxy.js). This MUST be deployed
+// (`wrangler deploy` from workers/) — if it isn't reachable, live search
+// silently falls back to the small bundled curated database below.
+const LUDOPEDIA_PROXY_BASE = 'https://ludoproxy.boardbots.workers.dev';
+
+// BGG's XML API now requires a registered application + Bearer token
+// (see workers/ludoproxy.js BGG_TOKEN secret). Flip this on once that token
+// is set server-side, otherwise every BGG call would just 401.
+const BGG_ENABLED = false;
 
 // Multi-tier Proxy & Cache Client for Ludopedia API
 const LUDO_SEARCH_CACHE = new Map();
 const LUDO_GAME_CACHE = new Map();
+const BGG_SEARCH_CACHE = new Map();
+const BGG_THING_CACHE = new Map();
 
 async function fetchFromLudopediaProxy(apiPath) {
-  // Try Proxy Endpoints (Worker / Serverless / Direct)
-  const endpoints = [
-    `https://ludoproxy.boardbots.workers.dev/api/v1${apiPath}`,
-    `https://ludopedia.com.br/api/v1${apiPath}`
-  ];
-
-  for (const ep of endpoints) {
-    try {
-      const res = await fetch(ep, {
-        headers: {
-          'Authorization': `Bearer ${LUDOPEDIA_ACCESS_TOKEN}`,
-          'Accept': 'application/json'
-        }
-      });
-      if (res.ok) {
-        return await res.json();
-      }
-    } catch (e) {
-      // Continue to next endpoint
+  // The direct ludopedia.com.br API cannot be called from a browser (no CORS
+  // headers on their side), so the worker proxy is the only viable path.
+  try {
+    const res = await fetch(`${LUDOPEDIA_PROXY_BASE}/api/v1${apiPath}`, {
+      headers: { 'Accept': 'application/json' }
+    });
+    if (res.ok) {
+      return await res.json();
     }
+  } catch (e) {
+    // Proxy unreachable/not deployed — caller falls back to curated DB.
   }
   return null;
+}
+
+async function fetchBggXml(apiPath) {
+  if (!BGG_ENABLED) return null;
+  try {
+    const res = await fetch(`${LUDOPEDIA_PROXY_BASE}/bgg${apiPath}`, {
+      headers: { 'Accept': 'application/xml' }
+    });
+    if (res.ok) {
+      return await res.text();
+    }
+  } catch (e) {
+    // Proxy unreachable/not deployed.
+  }
+  return null;
+}
+
+function parseBggSearchXml(xmlText) {
+  if (!xmlText) return [];
+  const doc = new DOMParser().parseFromString(xmlText, 'text/xml');
+  if (doc.querySelector('parsererror')) return [];
+  return Array.from(doc.querySelectorAll('items > item')).map(item => {
+    const nameEl = item.querySelector('name[type="primary"]') || item.querySelector('name');
+    const yearEl = item.querySelector('yearpublished');
+    return {
+      bggId: item.getAttribute('id'),
+      title: nameEl ? nameEl.getAttribute('value') : '',
+      year: yearEl ? yearEl.getAttribute('value') : ''
+    };
+  }).filter(g => g.title);
+}
+
+function parseBggThingXml(xmlText) {
+  if (!xmlText) return null;
+  const doc = new DOMParser().parseFromString(xmlText, 'text/xml');
+  if (doc.querySelector('parsererror')) return null;
+  const item = doc.querySelector('items > item');
+  if (!item) return null;
+  const nameEl = item.querySelector('name[type="primary"]') || item.querySelector('name');
+  const yearEl = item.querySelector('yearpublished');
+  const imageEl = item.querySelector('image');
+  const thumbEl = item.querySelector('thumbnail');
+  return {
+    bggId: item.getAttribute('id'),
+    title: nameEl ? nameEl.getAttribute('value') : '',
+    year: yearEl ? yearEl.getAttribute('value') : '',
+    image: (imageEl && imageEl.textContent.trim()) || (thumbEl && thumbEl.textContent.trim()) || ''
+  };
+}
+
+async function fetchBggThing(bggId) {
+  if (!bggId) return null;
+  const cacheKey = String(bggId);
+  if (BGG_THING_CACHE.has(cacheKey)) return BGG_THING_CACHE.get(cacheKey);
+
+  const xml = await fetchBggXml(`/xmlapi2/thing?id=${encodeURIComponent(bggId)}`);
+  const result = parseBggThingXml(xml);
+  BGG_THING_CACHE.set(cacheKey, result);
+  return result;
+}
+
+async function searchBGGAPI(query) {
+  const qClean = (query || '').trim();
+  if (!qClean) return [];
+
+  const cacheKey = qClean.toLowerCase();
+  if (BGG_SEARCH_CACHE.has(cacheKey)) {
+    return BGG_SEARCH_CACHE.get(cacheKey);
+  }
+
+  try {
+    const xml = await fetchBggXml(`/xmlapi2/search?query=${encodeURIComponent(qClean)}&type=boardgame`);
+    const rawResults = parseBggSearchXml(xml).slice(0, 6);
+
+    // Fetch cover images for the top few matches only (avoid hammering the API).
+    const results = await Promise.all(rawResults.map(async (g) => {
+      const detail = await fetchBggThing(g.bggId);
+      return {
+        id: 'bgg_' + g.bggId,
+        bggId: g.bggId,
+        title: g.title,
+        alt: g.title,
+        image: (detail && detail.image) || '',
+        year: g.year || (detail && detail.year) || '',
+        source: 'bgg',
+        link: `https://boardgamegeek.com/boardgame/${g.bggId}`
+      };
+    }));
+
+    BGG_SEARCH_CACHE.set(cacheKey, results);
+    return results;
+  } catch (e) {
+    console.warn('Erro na busca BGG API:', e);
+  }
+
+  return [];
 }
 
 async function searchLudopediaAPI(query) {
@@ -17318,30 +17418,6 @@ async function searchLudopediaAPI(query) {
   }
 
   return [];
-}
-
-function searchCuratedDatabase(query) {
-  const q = query.toLowerCase().trim();
-  const qWords = q.split(/\s+/).filter(w => w.length > 1);
-
-  return BOARD_GAMES_DATABASE.filter(g => {
-    const titleLower = g.title.toLowerCase();
-    const altLower = (g.alt || '').toLowerCase();
-    const slugLower = (g.slug || '').toLowerCase();
-
-    if (titleLower.includes(q) || altLower.includes(q) || slugLower.includes(q.replace(/\s+/g, '-'))) return true;
-    if (qWords.length > 1 && qWords.every(w => titleLower.includes(w) || altLower.includes(w))) return true;
-    return false;
-  }).map(g => ({
-    id: 'db_' + (g.ludoId || g.title.replace(/\s+/g, '_').toLowerCase()),
-    ludoId: g.ludoId || null,
-    title: g.title,
-    slug: g.slug || '',
-    image: g.image,
-    year: g.year,
-    source: 'ludopedia',
-    link: g.link || (g.slug ? `https://ludopedia.com.br/jogo/${g.slug}` : '')
-  }));
 }
 
 function normalizeSearchStr(str) {
@@ -17491,8 +17567,11 @@ async function performSearch(query) {
     // 1. Instant Curated DB Results
     const curatedMatches = searchCuratedDatabase(query);
 
-    // 2. Official Ludopedia API Search
-    const apiMatches = await searchLudopediaAPI(query);
+    // 2. Official Ludopedia API Search + BGG XML API Search (in parallel)
+    const [apiMatches, bggMatches] = await Promise.all([
+      searchLudopediaAPI(query),
+      searchBGGAPI(query)
+    ]);
 
     // Merge results with de-duplication
     const seenTitles = new Set();
@@ -17512,6 +17591,7 @@ async function performSearch(query) {
 
     curatedMatches.forEach(addScored);
     apiMatches.forEach(addScored);
+    bggMatches.forEach(addScored);
 
     // Sort strictly by score: Exact match > Starts With > Word match > Substrings
     merged.sort((a, b) => b.score - a.score);
@@ -17548,7 +17628,7 @@ async function performSearch(query) {
 
       const badge = document.createElement('span');
       badge.className = `source-badge ${game.source || 'ludopedia'}`;
-      badge.textContent = t('source_ludopedia');
+      badge.textContent = game.source === 'bgg' ? t('source_bgg') : t('source_ludopedia');
       meta.appendChild(badge);
 
       if (game.year) {
@@ -17847,15 +17927,39 @@ async function extractGameFromLink(rawUrl) {
     };
   }
 
-  // 3. BGG Link fallback
-  const bggMatch = url.match(/boardgamegeek\.com\/boardgame\/(\d+)(?:\/([a-zA-Z0-9\-_]+))?/i);
-  if (bggMatch) {
-    const id = bggMatch[1];
-    const rawSlug = (bggMatch[2] || '').toLowerCase();
+  // 3. BGG Link: only recognize real game pages (boardgame / boardgameexpansion /
+  // boardgameaccessory with a numeric id). Any other BGG URL (forum threads,
+  // geeklists, wiki pages, blogs, guilds, user profiles, etc.) is rejected
+  // instead of silently fabricating a "game" from an unrelated URL fragment —
+  // that's what previously produced forum/geeklist/discussion junk entries.
+  if (/boardgamegeek\.com\//i.test(url)) {
+    const bggMatch = url.match(/boardgamegeek\.com\/(boardgame|boardgameexpansion|boardgameaccessory)\/(\d+)(?:\/([a-zA-Z0-9\-_]+))?/i);
+    if (!bggMatch) {
+      return null;
+    }
+    const id = bggMatch[2];
+    const rawSlug = (bggMatch[3] || '').toLowerCase();
+
+    // PRIORITY 1: Real BGG XML API data (authoritative title/cover/year) via the proxy worker
+    try {
+      const thing = await fetchBggThing(id);
+      if (thing && thing.title) {
+        return {
+          title: thing.title,
+          image: thing.image || '',
+          year: thing.year || '',
+          bggId: thing.bggId,
+          source: 'bgg',
+          link: url
+        };
+      }
+    } catch (thingErr) {
+      console.warn('BGG thing fetch fallback:', thingErr);
+    }
+
+    // PRIORITY 2: Ludopedia search using the English slug as a best-effort guess
     const cleanSearch = rawSlug.replace(/[-_]+/g, ' ').trim();
     const prettyTitle = cleanSearch ? cleanSearch.split(/\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : `BGG #${id}`;
-
-    // Try Ludopedia search with English title
     if (cleanSearch) {
       try {
         const apiResults = await searchLudopediaAPI(cleanSearch);
@@ -17873,6 +17977,7 @@ async function extractGameFromLink(rawUrl) {
       } catch (e) {}
     }
 
+    // PRIORITY 3: Curated database fallback
     const localMatch = BOARD_GAMES_DATABASE.find(g => {
       if (g.bggId && g.bggId === id) return true;
       if (g.slug && rawSlug && g.slug.toLowerCase() === rawSlug) return true;
@@ -17893,6 +17998,7 @@ async function extractGameFromLink(rawUrl) {
       title: prettyTitle,
       image: '',
       year: '',
+      bggId: id,
       source: 'bgg',
       link: url
     };
