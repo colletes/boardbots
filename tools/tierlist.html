@@ -1950,6 +1950,22 @@ const BOARD_GAMES_DATABASE = [];
 // silently falls back to the small bundled curated database below.
 const LUDOPEDIA_PROXY_BASE = 'https://ludoproxy.boardbots.workers.dev';
 
+// Cover-art hosts that don't send Access-Control-Allow-Origin themselves, so canvas
+// export must route them through the worker's /img proxy to avoid a tainted canvas
+// (must match the ALLOWED_IMAGE_HOSTS allow-list in workers/ludoproxy.js).
+const IMAGE_PROXY_HOSTS = ['storage.googleapis.com', 'cf.geekdo-images.com'];
+
+function resolveExportImageSrc(imageUrl) {
+  if (!imageUrl || imageUrl.startsWith('data:')) return imageUrl;
+  try {
+    const hostname = new URL(imageUrl, window.location.href).hostname;
+    if (IMAGE_PROXY_HOSTS.includes(hostname)) {
+      return `${LUDOPEDIA_PROXY_BASE}/img?url=` + encodeURIComponent(imageUrl);
+    }
+  } catch (err) { /* relative/invalid URL, fall through to direct load */ }
+  return imageUrl;
+}
+
 // BGG's XML API now requires a registered application + Bearer token
 // (see workers/ludoproxy.js BGG_TOKEN secret). Flip this on once that token
 // is set server-side, otherwise every BGG call would just 401.
@@ -3312,8 +3328,7 @@ async function generateExportCanvas() {
           img.crossOrigin = 'anonymous';
           img.onload = () => { imageCache[item.image] = img; resolve(); };
           img.onerror = () => { imageCache[item.image] = null; resolve(); };
-          // Use corsproxy for canvas export to avoid tainted canvas
-          img.src = 'https://corsproxy.io/?url=' + encodeURIComponent(item.image);
+          img.src = resolveExportImageSrc(item.image);
         });
         loadPromises.push(p);
       }

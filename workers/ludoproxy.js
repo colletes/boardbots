@@ -15,6 +15,11 @@
 const LUDOPEDIA_API_BASE = 'https://ludopedia.com.br/api/v1';
 const BGG_API_BASE = 'https://boardgamegeek.com/xmlapi2';
 
+// Cover-art CDNs allowed through the /img proxy below. Kept as a strict allow-list
+// (rather than an open passthrough for any URL) so this worker can't be abused as a
+// generic anonymizing proxy / SSRF vector.
+const ALLOWED_IMAGE_HOSTS = ['storage.googleapis.com', 'cf.geekdo-images.com'];
+
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, OPTIONS',
@@ -37,6 +42,60 @@ export default {
         status: 405,
         headers: { 'Content-Type': 'application/json', ...CORS_HEADERS }
       });
+    }
+
+    // Route: /img?url=... -> Re-serves a cover-art image with permissive CORS headers.
+    // Needed because <canvas> export (drawImage/toDataURL) taints the canvas unless every
+    // drawn image was fetched with CORS allowed -- Ludopedia/BGG's own CDNs don't send
+    // Access-Control-Allow-Origin, so the client used to route through the free public
+    // corsproxy.io, which now requires an API key and returns 401 for anonymous requests.
+    if (url.pathname === '/img') {
+      const target = url.searchParams.get('url');
+      if (!target) {
+        return new Response(JSON.stringify({ error: 'Missing url parameter' }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json', ...CORS_HEADERS }
+        });
+      }
+      let imgTargetUrl;
+      try {
+        imgTargetUrl = new URL(target);
+      } catch (err) {
+        return new Response(JSON.stringify({ error: 'Invalid url parameter' }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json', ...CORS_HEADERS }
+        });
+      }
+      if (imgTargetUrl.protocol !== 'https:' || !ALLOWED_IMAGE_HOSTS.includes(imgTargetUrl.hostname)) {
+        return new Response(JSON.stringify({ error: 'Image host not allowed' }), {
+          status: 403,
+          headers: { 'Content-Type': 'application/json', ...CORS_HEADERS }
+        });
+      }
+      try {
+        const imgResponse = await fetch(imgTargetUrl.toString(), {
+          headers: { 'User-Agent': 'BoardBots-Proxy/1.0' }
+        });
+        if (!imgResponse.ok) {
+          return new Response(JSON.stringify({ error: 'Upstream image error', status: imgResponse.status }), {
+            status: imgResponse.status,
+            headers: { 'Content-Type': 'application/json', ...CORS_HEADERS }
+          });
+        }
+        return new Response(imgResponse.body, {
+          status: 200,
+          headers: {
+            'Content-Type': imgResponse.headers.get('Content-Type') || 'image/jpeg',
+            ...CORS_HEADERS,
+            'Cache-Control': 'public, max-age=604800, s-maxage=604800'
+          }
+        });
+      } catch (err) {
+        return new Response(JSON.stringify({ error: 'Image proxy error', message: err.message }), {
+          status: 502,
+          headers: { 'Content-Type': 'application/json', ...CORS_HEADERS }
+        });
+      }
     }
 
     // Route: /bgg/... -> BoardGameGeek XML API
