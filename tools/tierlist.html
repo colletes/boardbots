@@ -1394,6 +1394,18 @@ footer {
             <span class="detail-meta-label">🎨 Artista:</span>
             <span id="detailArtistVal" class="detail-meta-val">-</span>
           </div>
+          <div id="detailCategoryRow" class="detail-meta-row" style="display:none;">
+            <span class="detail-meta-label">🏷️ Categoria:</span>
+            <span id="detailCategoryVal" class="detail-meta-val">-</span>
+          </div>
+          <div id="detailDomainRow" class="detail-meta-row" style="display:none;">
+            <span class="detail-meta-label">🌐 Domínio:</span>
+            <span id="detailDomainVal" class="detail-meta-val">-</span>
+          </div>
+          <div id="detailMechanicsRow" class="detail-meta-row" style="display:none;">
+            <span class="detail-meta-label">⚙️ Mecânicas:</span>
+            <span id="detailMechanicsVal" class="detail-meta-val">-</span>
+          </div>
           <div id="detailPlayersRow" class="detail-meta-row">
             <span class="detail-meta-label">👥 Jogadores:</span>
             <span id="detailPlayersVal" class="detail-meta-val">-</span>
@@ -1889,6 +1901,9 @@ function createGameTileElement(item, currentTierId) {
   let hoverInfo = item.title + (item.year ? ` (${item.year})` : '');
   if (item.designer) hoverInfo += `\n👤 Designer: ${item.designer}`;
   if (item.artist) hoverInfo += `\n🎨 Artista: ${item.artist}`;
+  if (item.category) hoverInfo += `\n🏷️ Categoria: ${item.category}`;
+  if (item.domain) hoverInfo += `\n🌐 Domínio: ${item.domain}`;
+  if (item.mechanics) hoverInfo += `\n⚙️ Mecânicas: ${item.mechanics}`;
   tile.title = hoverInfo;
 
   // Desktop HTML5 Drag Events
@@ -2121,6 +2136,21 @@ function parseBggThingXml(xmlText) {
   const playingTime = item.querySelector('playingtime')?.getAttribute('value');
   const time = playingTime && playingTime !== '0' ? `${playingTime} min` : '';
 
+  const mechanics = Array.from(item.querySelectorAll('link[type="boardgamemechanic"]'))
+    .map(el => el.getAttribute('value'))
+    .filter(Boolean)
+    .join(', ');
+
+  const categories = Array.from(item.querySelectorAll('link[type="boardgamecategory"]'))
+    .map(el => el.getAttribute('value'))
+    .filter(Boolean)
+    .join(', ');
+
+  const domains = Array.from(item.querySelectorAll('link[type="boardgamesubdomain"]'))
+    .map(el => el.getAttribute('value'))
+    .filter(Boolean)
+    .join(', ');
+
   return {
     bggId: item.getAttribute('id'),
     title: nameEl ? nameEl.getAttribute('value') : '',
@@ -2128,6 +2158,9 @@ function parseBggThingXml(xmlText) {
     image: (imageEl && imageEl.textContent.trim()) || (thumbEl && thumbEl.textContent.trim()) || '',
     designer: designers,
     artist: artists,
+    mechanics: mechanics,
+    category: categories,
+    domain: domains,
     players: players,
     time: time,
     link: `https://boardgamegeek.com/boardgame/${item.getAttribute('id')}`
@@ -2170,6 +2203,9 @@ async function searchBGGAPI(query) {
         year: g.year || (detail && detail.year) || '',
         designer: (detail && detail.designer) || '',
         artist: (detail && detail.artist) || '',
+        mechanics: (detail && detail.mechanics) || '',
+        category: (detail && detail.category) || '',
+        domain: (detail && detail.domain) || '',
         players: (detail && detail.players) || '',
         time: (detail && detail.time) || '',
         source: 'bgg',
@@ -2525,6 +2561,9 @@ function addGameToTierlist(game) {
     bggId: game.bggId || null,
     designer: game.designer || '',
     artist: game.artist || '',
+    category: game.category || '',
+    domain: game.domain || '',
+    mechanics: game.mechanics || '',
     players: game.players || '',
     time: game.time || '',
     plays: game.plays || 0,
@@ -2579,6 +2618,9 @@ function addGameToLocalDatabase(game) {
     year: game.year || '',
     designer: game.designer || '',
     artist: game.artist || '',
+    category: game.category || '',
+    domain: game.domain || '',
+    mechanics: game.mechanics || '',
     players: game.players || '',
     time: game.time || '',
     plays: game.plays || 0,
@@ -2615,6 +2657,16 @@ async function enrichItemInBackground(itemId, ludoId) {
     if (details.artistas && details.artistas.length > 0) {
       item.artist = details.artistas.map(a => a.nm_profissional).join(', ');
     }
+    if (details.categorias && details.categorias.length > 0) {
+      item.category = details.categorias.map(c => c.nm_categoria || c).filter(Boolean).join(', ');
+    }
+    if (details.mecanicas && details.mecanicas.length > 0) {
+      item.mechanics = details.mecanicas.map(m => m.nm_mecanica || m).filter(Boolean).join(', ');
+    }
+    const ludoDomain = details.dominio || (details.dominios && details.dominios.length > 0 ? details.dominios.map(d => d.nm_dominio || d).join(', ') : '');
+    if (ludoDomain) {
+      item.domain = ludoDomain;
+    }
     if (details.qt_jogadores_min && details.qt_jogadores_max) {
       item.players = details.qt_jogadores_min === details.qt_jogadores_max
         ? `${details.qt_jogadores_min} jogadores`
@@ -2641,6 +2693,9 @@ async function enrichItemInBackground(itemId, ludoId) {
     if (dbEntry) {
       dbEntry.designer = item.designer;
       dbEntry.artist = item.artist;
+      dbEntry.category = item.category;
+      dbEntry.domain = item.domain;
+      dbEntry.mechanics = item.mechanics;
       dbEntry.players = item.players;
       dbEntry.time = item.time;
       dbEntry.plays = item.plays;
@@ -2677,6 +2732,9 @@ async function enrichItemInBackgroundBGG(itemId, bggId) {
 
     if (details.designer) item.designer = details.designer;
     if (details.artist) item.artist = details.artist;
+    if (details.category) item.category = details.category;
+    if (details.domain) item.domain = details.domain;
+    if (details.mechanics) item.mechanics = details.mechanics;
     if (details.players) item.players = details.players;
     if (details.time) item.time = details.time;
     if (details.image && !item.image) item.image = details.image;
@@ -2686,6 +2744,9 @@ async function enrichItemInBackgroundBGG(itemId, bggId) {
     if (dbEntry) {
       if (details.designer) dbEntry.designer = details.designer;
       if (details.artist) dbEntry.artist = details.artist;
+      if (details.category) dbEntry.category = details.category;
+      if (details.domain) dbEntry.domain = details.domain;
+      if (details.mechanics) dbEntry.mechanics = details.mechanics;
       if (details.players) dbEntry.players = details.players;
       if (details.time) dbEntry.time = details.time;
       if (details.image && !dbEntry.image) dbEntry.image = details.image;
@@ -2861,6 +2922,9 @@ async function extractGameFromLink(rawUrl) {
             ludoId: best.ludoId,
             designer: best.designer || '',
             artist: best.artist || '',
+            category: best.category || '',
+            domain: best.domain || '',
+            mechanics: best.mechanics || '',
             players: best.players || '',
             time: best.time || '',
             plays: best.plays || 0,
@@ -2888,6 +2952,9 @@ async function extractGameFromLink(rawUrl) {
         ludoId: localMatch.ludoId || null,
         designer: localMatch.designer || '',
         artist: localMatch.artist || '',
+        category: localMatch.category || '',
+        domain: localMatch.domain || '',
+        mechanics: localMatch.mechanics || '',
         players: localMatch.players || '',
         time: localMatch.time || '',
         plays: localMatch.plays || 0,
@@ -2928,6 +2995,13 @@ async function extractGameFromLink(rawUrl) {
           image: thing.image || '',
           year: thing.year || '',
           bggId: thing.bggId,
+          designer: thing.designer || '',
+          artist: thing.artist || '',
+          category: thing.category || '',
+          domain: thing.domain || '',
+          mechanics: thing.mechanics || '',
+          players: thing.players || '',
+          time: thing.time || '',
           source: 'bgg',
           link: url
         };
@@ -3070,6 +3144,9 @@ async function submitCustomGame() {
     bggId: (lastExtractedGame && lastExtractedGame.bggId) || null,
     designer: customDesigner || (lastExtractedGame && lastExtractedGame.designer) || '',
     artist: customArtist || (lastExtractedGame && lastExtractedGame.artist) || '',
+    category: (lastExtractedGame && lastExtractedGame.category) || '',
+    domain: (lastExtractedGame && lastExtractedGame.domain) || '',
+    mechanics: (lastExtractedGame && lastExtractedGame.mechanics) || '',
     players: (lastExtractedGame && lastExtractedGame.players) || '',
     time: (lastExtractedGame && lastExtractedGame.time) || '',
     plays: (lastExtractedGame && lastExtractedGame.plays) || 0,
@@ -3264,6 +3341,12 @@ async function openTapModal(item, currentTierId) {
   const yearBadge = document.getElementById('detailYearBadge');
   const designerVal = document.getElementById('detailDesignerVal');
   const artistVal = document.getElementById('detailArtistVal');
+  const categoryRow = document.getElementById('detailCategoryRow');
+  const categoryVal = document.getElementById('detailCategoryVal');
+  const domainRow = document.getElementById('detailDomainRow');
+  const domainVal = document.getElementById('detailDomainVal');
+  const mechanicsRow = document.getElementById('detailMechanicsRow');
+  const mechanicsVal = document.getElementById('detailMechanicsVal');
   const playersVal = document.getElementById('detailPlayersVal');
   const timeVal = document.getElementById('detailTimeVal');
   const playsVal = document.getElementById('detailPlaysVal');
@@ -3295,6 +3378,9 @@ async function openTapModal(item, currentTierId) {
   // Instant display of metadata from item or dbMatch
   const finalDesigner = item.designer || item.designers || dbMatch.designer || '-';
   const finalArtist = item.artist || item.artistas || dbMatch.artist || '-';
+  const finalCategory = item.category || dbMatch.category || '';
+  const finalDomain = item.domain || dbMatch.domain || '';
+  const finalMechanics = item.mechanics || dbMatch.mechanics || '';
   const finalPlayers = item.players || dbMatch.players || '-';
   const finalTime = item.time || item.playTime || dbMatch.time || '-';
   const finalPlays = item.plays || dbMatch.plays;
@@ -3303,6 +3389,34 @@ async function openTapModal(item, currentTierId) {
 
   designerVal.textContent = finalDesigner;
   artistVal.textContent = finalArtist;
+
+  if (categoryRow && categoryVal) {
+    if (finalCategory) {
+      categoryVal.textContent = finalCategory;
+      categoryRow.style.display = 'flex';
+    } else {
+      categoryRow.style.display = 'none';
+    }
+  }
+
+  if (domainRow && domainVal) {
+    if (finalDomain) {
+      domainVal.textContent = finalDomain;
+      domainRow.style.display = 'flex';
+    } else {
+      domainRow.style.display = 'none';
+    }
+  }
+
+  if (mechanicsRow && mechanicsVal) {
+    if (finalMechanics) {
+      mechanicsVal.textContent = finalMechanics;
+      mechanicsRow.style.display = 'flex';
+    } else {
+      mechanicsRow.style.display = 'none';
+    }
+  }
+
   playersVal.textContent = finalPlayers;
   timeVal.textContent = finalTime;
   playsVal.textContent = finalPlays ? `${Number(finalPlays).toLocaleString()} registraram partidas` : '-';
@@ -3375,7 +3489,7 @@ async function openTapModal(item, currentTierId) {
   }
 
   // 1. Live Ludopedia Enrichment
-  if (ludoId && (!finalDesigner || finalDesigner === '-' || !finalArtist || finalArtist === '-' || finalScore == null)) {
+  if (ludoId && (!finalDesigner || finalDesigner === '-' || !finalArtist || finalArtist === '-' || !finalCategory || !finalMechanics || finalScore == null)) {
     const details = await fetchGameDetails(ludoId);
     if (details && activeTileItem && activeTileItem.item.id === item.id) {
       if (details.designers && details.designers.length > 0) {
@@ -3387,6 +3501,30 @@ async function openTapModal(item, currentTierId) {
         const aStr = details.artistas.map(a => a.nm_profissional).join(', ');
         artistVal.textContent = aStr;
         item.artist = aStr;
+      }
+      if (details.categorias && details.categorias.length > 0) {
+        const cStr = details.categorias.map(c => c.nm_categoria || c).filter(Boolean).join(', ');
+        item.category = cStr;
+        if (categoryVal && categoryRow) {
+          categoryVal.textContent = cStr;
+          categoryRow.style.display = 'flex';
+        }
+      }
+      if (details.mecanicas && details.mecanicas.length > 0) {
+        const mStr = details.mecanicas.map(m => m.nm_mecanica || m).filter(Boolean).join(', ');
+        item.mechanics = mStr;
+        if (mechanicsVal && mechanicsRow) {
+          mechanicsVal.textContent = mStr;
+          mechanicsRow.style.display = 'flex';
+        }
+      }
+      const liveDomain = details.dominio || (details.dominios && details.dominios.length > 0 ? details.dominios.map(d => d.nm_dominio || d).join(', ') : '');
+      if (liveDomain) {
+        item.domain = liveDomain;
+        if (domainVal && domainRow) {
+          domainVal.textContent = liveDomain;
+          domainRow.style.display = 'flex';
+        }
       }
       if (details.qt_jogadores_min && details.qt_jogadores_max) {
         item.players = details.qt_jogadores_min === details.qt_jogadores_max 
@@ -3429,7 +3567,7 @@ async function openTapModal(item, currentTierId) {
     if (m) bggId = m[1];
   }
 
-  if (bggId && (!item.designer || item.designer === '-' || !item.artist || item.artist === '-')) {
+  if (bggId && (!item.designer || item.designer === '-' || !item.artist || item.artist === '-' || !item.category || !item.mechanics || !item.domain)) {
     const bggThing = await fetchBggThing(bggId);
     if (bggThing && activeTileItem && activeTileItem.item.id === item.id) {
       if (bggThing.designer) {
@@ -3439,6 +3577,27 @@ async function openTapModal(item, currentTierId) {
       if (bggThing.artist) {
         artistVal.textContent = bggThing.artist;
         item.artist = bggThing.artist;
+      }
+      if (bggThing.category) {
+        item.category = bggThing.category;
+        if (categoryVal && categoryRow) {
+          categoryVal.textContent = bggThing.category;
+          categoryRow.style.display = 'flex';
+        }
+      }
+      if (bggThing.domain) {
+        item.domain = bggThing.domain;
+        if (domainVal && domainRow) {
+          domainVal.textContent = bggThing.domain;
+          domainRow.style.display = 'flex';
+        }
+      }
+      if (bggThing.mechanics) {
+        item.mechanics = bggThing.mechanics;
+        if (mechanicsVal && mechanicsRow) {
+          mechanicsVal.textContent = bggThing.mechanics;
+          mechanicsRow.style.display = 'flex';
+        }
       }
       if (bggThing.players && (!item.players || item.players === '-')) {
         item.players = bggThing.players;
@@ -3463,8 +3622,8 @@ async function openTapModal(item, currentTierId) {
     }
   }
 
-  // 3. Fallback search by title on Ludopedia if still missing designer & artist
-  if (!ludoId && !bggId && (!item.designer || item.designer === '-')) {
+  // 3. Fallback search by title on Ludopedia if still missing metadata
+  if (!ludoId && !bggId && (!item.designer || item.designer === '-' || !item.category || !item.mechanics)) {
     try {
       const ludoMatches = await searchLudopediaAPI(item.title);
       if (ludoMatches && ludoMatches.length > 0 && ludoMatches[0].ludoId) {
@@ -3478,6 +3637,28 @@ async function openTapModal(item, currentTierId) {
           if (details.artistas && details.artistas.length > 0) {
             item.artist = details.artistas.map(a => a.nm_profissional).join(', ');
             artistVal.textContent = item.artist;
+          }
+          if (details.categorias && details.categorias.length > 0) {
+            item.category = details.categorias.map(c => c.nm_categoria || c).filter(Boolean).join(', ');
+            if (categoryVal && categoryRow) {
+              categoryVal.textContent = item.category;
+              categoryRow.style.display = 'flex';
+            }
+          }
+          if (details.mecanicas && details.mecanicas.length > 0) {
+            item.mechanics = details.mecanicas.map(m => m.nm_mecanica || m).filter(Boolean).join(', ');
+            if (mechanicsVal && mechanicsRow) {
+              mechanicsVal.textContent = item.mechanics;
+              mechanicsRow.style.display = 'flex';
+            }
+          }
+          const fDomain = details.dominio || (details.dominios && details.dominios.length > 0 ? details.dominios.map(d => d.nm_dominio || d).join(', ') : '');
+          if (fDomain) {
+            item.domain = fDomain;
+            if (domainVal && domainRow) {
+              domainVal.textContent = fDomain;
+              domainRow.style.display = 'flex';
+            }
           }
           saveState();
           renderBoard();
@@ -3816,6 +3997,9 @@ function downloadTextList() {
       const meta = [];
       if (item.designer) meta.push(`Designer: ${item.designer}`);
       if (item.artist) meta.push(`Artista: ${item.artist}`);
+      if (item.category) meta.push(`Categoria: ${item.category}`);
+      if (item.domain) meta.push(`Domínio: ${item.domain}`);
+      if (item.mechanics) meta.push(`Mecânicas: ${item.mechanics}`);
       if (meta.length > 0) line += ` [${meta.join(' | ')}]`;
       lines.push(line);
     });
