@@ -7,7 +7,7 @@
  *   RESOLUTION, though, these 9 Zones pool into only 5 Sections: Left Wing
  *   (al+ml+dl), Right Wing (ar+mr+dr), Central Attack (ac), Central
  *   Midfield (mc), Central Defense (dc) — see eleven_solver.js AREAS. The
- *   pooling happens in eleven_bot_v1.html's buildTeamObj() right before
+ *   pooling happens in eleven_bot.html's buildTeamObj() right before
  *   solving; this file's TACTICS effects operate on the already-pooled
  *   5-Section team object.
  * - A Formation (e.g. "4-3-3") only fixes the TOTAL number of Defenders,
@@ -55,7 +55,7 @@ const ZONE_POS_TYPE = { al: 'fwd', ac: 'fwd', ar: 'fwd', ml: 'mid', mc: 'mid', m
 // above. Returns which "position type" (def/mid/fwd) ended up in each Zone,
 // used only to guess a sensible default Attacker/Defender icon per slot —
 // freely editable after. Resolution-time pooling into the 5 Sections
-// happens later, in eleven_bot_v1.html's buildTeamObj().
+// happens later, in eleven_bot.html's buildTeamObj().
 function suggestZoneLayout(formationKey) {
     const zones = { al: [], ac: [], ar: [], ml: [], mc: [], mr: [], dl: [], dc: [], dr: [] };
     const spec = FORMATION_ZONE_LAYOUT[formationKey];

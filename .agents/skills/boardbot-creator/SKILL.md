@@ -44,7 +44,7 @@ Quando o jogo tem P&P (Print & Play) com imagens de cartas:
 ## 4. UI/UX e Estrutura Comum (Padrão Boardbots)
 
 O projeto Boardbots mantém um padrão visual rigoroso para garantir que todos os bots pareçam fazer parte do mesmo app.
-Ao criar o HTML do bot, **você DEVE copiar e utilizar os seguintes elementos padrão** presentes nos bots mais recentes (ex: `stone_age_bot_v2.html`):
+Ao criar o HTML do bot, **você DEVE copiar e utilizar os seguintes elementos padrão** presentes nos bots mais recentes (ex: `stone_age_bot.html`):
 
 1. **Botões Flutuantes e Idioma (Início do body):**
    Inclua o botão de ajuda (`btn-help-float`), botão de reiniciar partida (`btn-reset-float`) e o seletor de idioma (`lang-switch`) fixos na tela.
@@ -56,9 +56,10 @@ Ao criar o HTML do bot, **você DEVE copiar e utilizar os seguintes elementos pa
    É OBRIGATÓRIO incluir o Modal de Regras (`#helpModal`) para explicar como o automa toma decisões, condições de vitória, e regras de desempate. Nunca assuma que as regras são simples demais para dispensar o modal.
 5. **Footer (Fim do body):**
    Sempre inclua os créditos do autor (`.credits`), o botão Buy Me a Coffee (`.bmc-inline`) e o botão Home para voltar (`.btn-home`).
-6. **Theming, Personalidade e UI Diegética (Padrão V2):**
+6. **Theming, Personalidade e UI Diegética (Padrão Completo):**
    O bot DEVE ter uma interface altamente imersiva e diegética (in-world). A interface deve se parecer com um componente físico ou um elemento dentro do universo do jogo (ex: interface de jornais de guerra da 2ª Guerra Mundial, um mapa de pergaminho de fantasia, blocos de mármore esculpidos ou marcadores de papelão/vitral estilo dial).
-   - Use texturas densas (noise SVG, degradês complexos), e pseudo-elementos (`::before`, `::after`) para compor cenários de fundo 3D (como mesas de madeira, ardósia, feltro ou pilares de pedra).
+   - **Texturas Reais CC0 Obrigatórias (`assets/textures/`):** Todo bot DEVE utilizar uma textura seamless CC0 real (ex: `dark-walnut.jpg`, `old-parchment.jpg`, `stone-slab.jpg`, `felt-weave.jpg`, `rusted-metal.jpg`, `cave-ground.jpg`, obtidas em ambientCG, 512x512, q72) combinada no stack de background do `body` ou contêiner de backdrop via blend modes (`multiply`, `overlay`, etc.). Nunca rely apenas em CSS puro ou gradientes planos.
+   - **Camada Atmosférica e Partículas Leves:** Inclua elementos sutis de ambiência temáticos (fagulhas/embers, poeira suspensa/dust, névoa, vapor, flocos de neve). Devem possuir `pointer-events: none`, `z-index: -1` e OBRIGATORIAMENTE ser envolvidos por `@media (prefers-reduced-motion: no-preference)`.
    - **Componentes Diegéticos Físicos:** Prefira sempre componentes diegéticos estilizados como objetos reais de mesa:
      - **Diais Físicos de Rodízio Duplo (Dual-Wheel Dials):** Marcadores de vida/pontos em formato de disco de papelão prensado com duas janelas recortadas (dezenas e unidades), rebites metálicos e acabamento temático (ex: Vitral/Obsidiana ou Ouro/Bronze).
      - **Tokens de Escudo/Marcadores:** Tokens de resina, metal ou madeira com feedback tátil de toque.
@@ -69,8 +70,12 @@ Ao criar o HTML do bot, **você DEVE copiar e utilizar os seguintes elementos pa
    - **Papel do Companion (Mesa Física vs Simulação Virtual):**
      - Quando o jogo físico possui cartas na caixa que o jogador compra na mesa, o bot NÃO deve simular a compra aleatória de cartas fictícias. O bot serve como assistente de estado de jogo (gerenciando escudos, dominância, dano, retaliações e gatilhos da mesa).
    - **Widescreen Layouts:** NUNCA confine a tela inteira em um `max-width: 500px` genérico no centro da tela para desktops. Em telas maiores (`min-width: 900px`), o layout deve se expandir utilizando CSS Grid ou Flexbox (ex: uma coluna lateral para status e uma coluna principal maior), aproveitando todo o espaço horizontal sem deixar enormes áreas pretas nas laterais.
-7. **Painel de Histórico (Log):**
-   É OBRIGATÓRIO incluir um painel de histórico de ações (log) na tela do jogo. O log deve registrar todas as ações e decisões do bot, para que o jogador possa auditar o que aconteceu caso clique rápido demais. O HTML deve conter um container (ex: `<div id="logPanel" class="log-panel"></div>`) e o JS deve alimentar esse painel com mensagens descritivas a cada jogada.
+   - **Nomenclatura Sem Sufixos de Versão:** NUNCA crie ou renomeie arquivos com sufixos de versão (`_v2`, `_RC2`). Os arquivos de bot residem diretamente como `bots/<nome_do_jogo>_bot.html` (ou nome consolidado) e são editados in-place. O histórico git e o ambiente de `staging` fornecem a segurança necessária.
+7. **Painel de Histórico (Log) com Voz em Personagem:**
+   É OBRIGATÓRIO incluir um painel de histórico de ações (log) na tela do jogo (`<div id="logPanel" class="log-panel"></div>`).
+   - O log deve registrar todas as ações e decisões do bot de forma descritiva e clara.
+   - **Voz Diegética (In-Character Voice):** O texto narrativo do log deve adotar a voz e a temática do jogo (ex: crônica tribal para Stone Age, conselheiro real para Tiny Epic Kingdoms, relatório de rádio de campanha para Memoir '44, diário de campo zoológico para Ark Nova, análise tática militar para Heroscape).
+   - **Preservação de Dados Mecânicos:** Nunca sacrifique a precisão dos dados em favor da narrativa. Mantenha os números, bônus, cartas descartadas e resultados de dados legíveis e auditáveis pelo jogador.
 ## 4.1 Internacionalização (i18n)
 
 
@@ -187,31 +192,42 @@ assets/art/7wd/leaders/bilkis.webp
 assets/art/7wd/decision_cards/dc_01.webp … dc_12.webp
 ```
 
-## 11. Conhecimento Específico: 3D Dice Box
+## 11. Conhecimento Específico: 3D Dice Box via Módulo Centralizado (`assets/dice-roller.js`)
 
-Ao integrar o `@3d-dice/dice-box` para rolagem física de dados:
+Ao integrar rolagem física 3D de dados em qualquer bot:
 
-1. **Evite Bugs de CORS/Web Worker:** Sempre use CDN com configuração exata para `assetPath` e `origin`. O worker precisa ser carregado do root do `dist/`.
-2. **Setup do Objeto:**
+1. **Utilize SEMPRE o Módulo Centralizado:** NUNCA copie código de inicialização do CDN `@3d-dice/dice-box` no inline script do bot. Use o helper compartilhado `assets/dice-roller.js`:
    ```javascript
-   const { default: DiceBox } = await import('https://unpkg.com/@3d-dice/dice-box@1.1.3/dist/dice-box.es.min.js');
-   diceBox = new DiceBox({
-     container: '#dice-box',
-     assetPath: 'assets/', 
-     origin: 'https://unpkg.com/@3d-dice/dice-box@1.1.3/dist/',
-     theme: 'default', themeColor: '#475569', scale: 9
-   });
+   const { loadDiceBox, rollDiceSafe, sanitizeDie } = await import('../assets/dice-roller.js');
    ```
-3. **Failsafe Global Rigoroso:** Para evitar congelamento infinito da UI caso o CDN caia ou o CSP bloqueie o import, enrole o `initDiceBox()` inteiro em um `Promise.race` de 3 segundos dentro de um bloco `try/catch`. Se falhar, ative um fallback imediato para `Math.random()`.
-4. **Mecânica de "Dice Tray" Estático (Altamente Recomendado):**
-   - Não mova o contêiner do dado (`#dice-box`) dinamicamente no DOM com `appendChild`, pois isso pode causar bugs em UIs reativas ou quando combinado com limpezas de `textContent`.
-   - Crie um "Tray" fixo e invisível no canto da tela e insira o `#dice-box` permanentemente dentro dele:
-     ```html
-     <div id="dice-tray" style="position:fixed; bottom:20px; left:20px; width:180px; height:180px; z-index:9999; pointer-events:none;">
-       <div id="dice-box" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none;"></div>
-     </div>
+2. **Temas Customizados (Bespoke Themes):** Escolha um tema diegético do pacote `@3d-dice/dice-themes` condizente com a arte do jogo em vez do cinza padrão:
+   - Temas disponíveis: `wooden` (madeira), `rust` (ferrugem pós-apocalíptica/militar), `gemstone` / `gemstoneMarble` (fantasia/joia), `blueGreenMetal` (fantasia medieval/alquimia), `smooth` (moderno clean, aceita `themeColor`), etc.
+   - Exemplo de setup:
+     ```javascript
+     diceBox = await loadDiceBox({
+       container: '#dice-box',
+       theme: 'wooden',
+       scale: 27,
+       timeoutMs: 5000
+     });
      ```
-   - Assim o dado rolará sempre no mesmo local, livre de bugs de renderização.
+3. **Execução Segura com `rollDiceSafe` + `sanitizeDie`:**
+   ```javascript
+   try {
+     const rollResult = await rollDiceSafe(diceBox, '1d6');
+     const dieVal = sanitizeDie(rollResult[0].value, 6);
+     // continuar lógica com dieVal...
+   } catch (err) {
+     console.warn("DiceBox timeout/falha, usando fallback:", err);
+     const dieVal = Math.floor(Math.random() * 6) + 1;
+   }
+   ```
+4. **Regra Crítica: Inicialização Lazy em Modais / Overlays (Bug Post-Ship Previsto):**
+   - Se o `#dice-box` residir dentro de um contêiner inicialmente oculto (`display: none`, classe `.hidden` ou modal fechada), **NUNCA inicialize o DiceBox no carregamento da página**.
+   - O WebGL colapsa para uma caixa `0x0`, resultando em tela preta sólida.
+   - A inicialização DEVE ser lazy e memoizada por Promise, chamada **imediatamente após** a remoção da classe de ocultação (`overlay.classList.remove('hidden')`), quando o elemento já tiver dimensões de layout reais.
+5. **Validação Obrigatória com Screenshot dos Dados Renderizados:**
+   - Ao testar ou validar bots com dados 3D via scripts Playwright, **não valide apenas flags booleanas ou variáveis de estado**. É mandatório capturar um screenshot dos dados efetivamente renderizados na tela durante a rolagem para confirmar ausência de bugs visuais (como o bug da tela preta).
 
 ## 12. Lições Críticas de Implementação e Boas Práticas (Aprendizados Recentes)
 
@@ -290,4 +306,24 @@ Para evitar incidentes em produção, o projeto adota um fluxo estrito de dois a
    - Após o push em `staging`, forneça imediatamente ao usuário o link de staging para testes em dispositivos reais: `https://colletes.github.io/boardbots/staging/` (ou caminho direto do bot em staging).
 3. **Deploy em Produção (Somente com a skill `deploy-to-prod`)**:
    - Apenas promova código para `main` quando o usuário testar e autorizar expressamente a publicação em produção, utilizando a skill dedicada `deploy-to-prod`.
+
+## 14. Kit de Tema Compartilhado e Regressão Visual (Obrigatório)
+
+Para evitar os bugs recorrentes de "o redesign quebrou o layout de novo" (botões gigantes, ícones estourados, CSS duplicado sobrescrevendo o tema), qualquer agente de IA que crie ou atualize um bot **DEVE**:
+
+1. **Usar o kit de tema compartilhado em vez de duplicar CSS/JS por bot:**
+   - `assets/theme-kit.css` — contém apenas o que é genuinamente idêntico entre bots hoje: keyframes `fadeSlideUp`/`popIn`, a classe utilitária `.icon-inline` (ícone dimensionado em `em`, relativo ao texto ao redor), e o componente "credits row" (`.credits`/`.credits img`/`.credits-text`, miniatura da capa + texto de créditos). Cores/tamanhos são ajustáveis via variáveis CSS (`--tk-credits-*`) definidas no `:root` do próprio bot — nunca reescreva essas regras localmente uma vez que o bot já linka o arquivo.
+   - `assets/theme-kit.js` — expõe `window.ThemeKit.setAmbientIcon(active, labelText)`, o helper de troca de ícone/label do botão de som ambiente (a lógica de áudio em si — osciladores, frequências — continua no próprio bot, pois varia por tema).
+   - **Nota importante**: `.hero`, `.lang-switch` e `.btn-help-float` NÃO foram unificados — o catálogo hoje usa pelo menos 3 famílias de layout de navegação diferentes e deliberadas (barra superior fixa com lang-switch inline, botões flutuantes circulares, botões de topo simples). Não force um bot a mudar de família de layout só para "usar o kit" — isso é um redesign visual, não uma extração de CSS duplicado, e deve ser tratado (e validado) como tal.
+   - Link no `<head>`, **antes** do `<style>` inline do bot: `<link rel="stylesheet" href="../assets/theme-kit.css">` e, se for usar o helper de ambiente, `<script src="../assets/theme-kit.js"></script>` antes do `<script>` inline do bot.
+   - O `<style>` de cada bot deve conter **apenas** o tema específico daquele jogo — nunca recopie `.credits`/`.icon-inline`/os keyframes acima uma vez que o bot já linka o kit.
+   - Bots já shipados **não precisam ser migrados de uma vez** — a migração é incremental, feita a cada pass de redesign daquele bot específico (ver `bots/mick_bot.html` como exemplo de migração já validada).
+2. **Rodar o script de regressão visual antes de qualquer deploy para staging:**
+   - `npm run visual-check [arquivo1.html arquivo2.html ...]` — compara screenshots atuais (desktop 1440px e mobile 390px) contra as baselines commitadas em `tools/visual-baselines/`; sem argumentos, roda em todos os bots. Diferenças acima do limiar (~0.2% dos pixels, ou mudança de altura de página) geram imagens em `tools/visual-diffs/` (não commitadas) para inspeção.
+   - Após confirmar visualmente que uma mudança é intencional, atualize a baseline: `npm run visual-update [arquivo.html ...]` e commit as novas imagens em `tools/visual-baselines/`.
+   - Script: `tools/visual-regression.mjs` (Playwright + pixelmatch, depende de `npm install` prévio — já configurado em `package.json`).
+   - **Falsos positivos conhecidos**: `arknova_arno_bot.html` e `sanctuary_bot.html` sorteiam aleatoriamente a ordem das cartas de ação já na tela inicial (antes de qualquer clique) — um `CHANGED` nesses dois bots, sem relação com o arquivo que você editou, é normal; confirme visualmente via o `.diff.png` gerado (se o conteúdo aleatório é o único diferente, ignore/atualize a baseline mesmo assim).
+   - Isso substitui o ciclo manual de "usuário reporta botão quebrado → corrige → usuário reporta de novo" observado em passes anteriores (Tiny Epic Kingdoms, Hoth).
+
+
 

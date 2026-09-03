@@ -4,18 +4,18 @@ import { initializeFirestore, doc, setDoc, increment } from 'https://www.gstatic
 import { app, CONFIGURED } from './firebase-init.js';
 
 const FILE_TO_BOT = {
-  'stone_age_bot_v2.html': 'stoneage',
-  'Colletes-hoth_bot_RC8.html': 'hoth',
-  'Heroscape_bot_v2.html': 'heroscape',
-  'Mystic_Vale_bot_v02.html': 'mysticvale',
-  'mick_bot_RC2.html': 'mick',
-  'Colletes-bot-trv-RC2.html': 'trv',
-  'utek_bot_v2.html': 'utek',
-  'cafe_baras_bot_v1.html': 'cafebaras',
-  'arknova_arno_bot_v1.html': 'arknova',
-  'sanctuary_bot_v2.html': 'sanctuary',
-  'eleven_bot_v1.html': 'eleven',
-  'memoir44_bot_v3.html': 'memoir44',
+  'stone_age_bot.html': 'stoneage',
+  'hoth_bot.html': 'hoth',
+  'Heroscape_bot.html': 'heroscape',
+  'Mystic_Vale_bot.html': 'mysticvale',
+  'mick_bot.html': 'mick',
+  'thunder_road_vendetta_bot.html': 'trv',
+  'utek_bot.html': 'utek',
+  'cafe_baras_bot.html': 'cafebaras',
+  'arknova_arno_bot.html': 'arknova',
+  'sanctuary_bot.html': 'sanctuary',
+  'eleven_bot.html': 'eleven',
+  'memoir44_bot.html': 'memoir44',
   'dice_roller_v1.html': 'tool-dice',
   'point_counter_v1.html': 'tool-pointcounter'
 };

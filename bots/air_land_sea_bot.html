@@ -1,0 +1,1415 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Air, Land & Sea - Command HQ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rye&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/site.css">
+<style>
+:root{
+  --bg: #1a1814; 
+  --glow: #708c48; --glow-dim: #455a28;
+  --paper: #e2d2b0; --paper-dark: #ccb78f; 
+  --ink: #2b251a; --ink-soft: #4a4030; --seal: #962020;
+  --font-typewriter: 'Courier New', Courier, monospace;
+  --font-serif: 'Times New Roman', Times, serif;
+  
+  --th-air: #5a3d28; 
+  --th-land: #556b2f; 
+  --th-sea: #1b3b6f; 
+  --th-econ: #6b1d2f; 
+  --th-diplo: #4a2d5b; 
+  --th-intel: #222222;
+  
+  --radius: 4px;
+}
+*{box-sizing:border-box;}
+html{-webkit-text-size-adjust:100%;}
+body{
+  font-family: var(--font-typewriter);
+  background-color: var(--bg);
+  background-image: 
+    radial-gradient(circle at center, transparent 40%, #000 120%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.005' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.15'/%3E%3C/svg%3E"),
+    repeating-linear-gradient(0deg, #1c1a15, #1c1a15 2px, #1a1814 2px, #1a1814 4px),
+    url('../assets/textures/rusted-metal.jpg');
+  background-size: auto, 400px 400px, auto, 340px 340px;
+  background-repeat: no-repeat, repeat, repeat, repeat;
+  background-blend-mode: normal, normal, multiply, normal;
+  color: var(--ink);
+  margin:0; padding:18px;
+  padding-bottom:max(18px, env(safe-area-inset-bottom));
+  -webkit-tap-highlight-color: transparent;
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Radar Sweep Background */
+body::before {
+  content: '';
+  position: fixed;
+  top: 50%; left: 50%;
+  width: 150vw; height: 150vw;
+  margin-top: -75vw; margin-left: -75vw;
+  background: conic-gradient(from 0deg, transparent 70%, rgba(112, 140, 72, 0.1) 95%, rgba(112, 140, 72, 0.4) 100%);
+  border-radius: 50%;
+  animation: radarSweep 6s linear infinite;
+  pointer-events: none;
+  z-index: -1;
+}
+@keyframes radarSweep {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+#setup-screen, #game-area {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Widescreen Layout */
+@media (min-width: 900px) {
+  #setup-screen, #game-area {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+  #setup-screen .card:last-child {
+    grid-column: 2;
+  }
+  #game-area > .card:nth-child(1) { grid-column: 1; }
+  #game-area > .card:nth-child(4) { grid-column: 1 / span 2; }
+}
+
+.hidden{ display:none !important; }
+
+/* Hero - Military Briefing Header */
+.hero{ position:relative; overflow:hidden; margin-bottom:18px; border: 4px solid #111; animation:fadeSlideUp 0.5s ease; background: #000; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
+.hero img{ width:100%; height:140px; object-fit:cover; object-position:top; display:block; filter:sepia(0.8) brightness(0.5) contrast(1.5); opacity: 0.6; }
+.hero-content{ position:absolute; inset:0; display:flex; flex-direction:column; justify-content:center; align-items:center; padding:14px 18px; background:linear-gradient(0deg, rgba(20,18,15,0.9), transparent); text-align: center; }
+h1{ font-family:var(--font-serif); margin:0; font-size:2.4em; color:var(--paper); text-transform: uppercase; letter-spacing: 4px; text-shadow: 2px 2px 4px #000; }
+.subtitle{ color:var(--glow); font-size:1em; font-weight:bold; letter-spacing: 2px; text-transform: uppercase; margin-top: 4px; }
+h2{ font-family:var(--font-typewriter); color:var(--ink); margin:0 0 14px; border-bottom:2px solid var(--ink-soft); padding-bottom:8px; text-transform: uppercase; letter-spacing: 2px; font-weight: bold; opacity: 0.9; }
+
+/* Cards & Dossier Layout (Manila Folders) */
+.card{
+  background-color: var(--paper);
+  background-image: 
+    radial-gradient(circle at 100% 100%, rgba(0,0,0,0.05) 0%, transparent 60%),
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.08'/%3E%3C/svg%3E");
+  color: var(--ink);
+  padding: 30px 24px 24px; 
+  border-radius: var(--radius); 
+  border: 1px solid #a39068;
+  box-shadow: 2px 4px 12px rgba(0,0,0,0.4), inset 0 0 40px rgba(100,80,50,0.1);
+  margin-bottom:20px; position: relative; animation:fadeSlideUp 0.45s ease both;
+  clip-path: polygon(0 0, 30% 0, 35% 15px, 100% 15px, 100% 100%, 0 100%);
+}
+.card::before {
+  content: ''; position: absolute; top: 0; left: 0; width: 30%; height: 15px;
+  background: var(--paper-dark);
+  border-bottom: 1px solid rgba(0,0,0,0.1);
+}
+
+.row{ display:flex; gap:10px; flex-wrap:wrap; }
+.row > *{ flex:1; min-width:120px; }
+
+/* Buttons as clunky switches / launch buttons */
+.btn{ 
+  padding:14px; 
+  border-radius: 4px; 
+  border: 2px solid #222; 
+  border-bottom-width: 6px;
+  background: linear-gradient(180deg, #444 0%, #222 100%); 
+  color: #eee; 
+  font-family:var(--font-typewriter); 
+  font-weight:bold; 
+  letter-spacing:1px; 
+  cursor:pointer; 
+  text-align:center; 
+  text-transform:uppercase; 
+  transition: all 0.1s; 
+  box-shadow: 0 4px 6px rgba(0,0,0,0.5);
+  text-shadow: 1px 1px 0 #000;
+}
+.btn:active{ 
+  transform:translateY(4px); 
+  border-bottom-width: 2px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+.btn-primary{ 
+  background: linear-gradient(180deg, #a02020 0%, #701010 100%);
+  border-color: #500;
+  border-bottom-color: #400;
+}
+.btn-block{ width:100%; display:block; margin-top:12px; }
+.btn.active{ 
+  background: linear-gradient(180deg, #8bab5a 0%, #5a7238 100%);
+  border-color: #334422;
+  border-bottom-color: #223311;
+  color: #000;
+  text-shadow: none;
+}
+
+/* Top Secret Stamp */
+.stamp-secret, .stamp-live {
+  position: absolute; top: 20px; right: 20px; border: 4px solid var(--seal); color: var(--seal);
+  font-family: var(--font-serif); font-weight: 900; letter-spacing: 2px; text-transform: uppercase;
+  font-size: 1.2em; padding: 4px 12px; transform: rotate(-10deg); opacity: 0.8; mix-blend-mode: multiply; pointer-events: none;
+  text-shadow: 0 0 2px rgba(150,32,32,0.5);
+  box-shadow: inset 0 0 2px var(--seal), 0 0 2px var(--seal);
+}
+.stamp-live { transform: rotate(5deg); top: 30px; }
+
+/* Dog Tag Component */
+.dog-tag {
+    color: #2a2a26; font-weight: 800; font-family: sans-serif; display: inline-flex; align-items: center;
+    padding: 6px 14px 6px 22px; font-size: 0.78em; letter-spacing: 0.5px; border-radius: 13px; position: relative;
+    background: linear-gradient(160deg, #e9e9e2 0%, #bcbdb2 45%, #90918a 100%);
+    box-shadow: 0 3px 6px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.6), inset 0 -2px 3px rgba(0,0,0,0.25);
+    text-transform: uppercase;
+}
+.dog-tag::before {
+    content: ''; position: absolute; left: 7px; top: 50%; transform: translateY(-50%); width: 7px; height: 7px; border-radius: 50%;
+    background: #6b6d64; box-shadow: inset 0 1px 2px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.3);
+}
+
+/* Setup Theater Grid */
+.theater-grid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; margin-bottom:16px; }
+.th-btn{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; padding:14px 4px; border-radius:4px; border:2px dashed var(--ink-soft); background:transparent; cursor:pointer; font-weight:bold; color:var(--ink); font-family:var(--font-typewriter); font-size:0.9em; text-transform:uppercase; transition:transform 0.1s; }
+.th-btn:active{ transform:scale(0.95); }
+.th-btn.active{ border-style:solid; background:var(--ink); color:var(--paper); box-shadow:0 4px 10px rgba(0,0,0,0.3); }
+
+/* Setup Hand Selector */
+.hand-grid{ display:grid; grid-template-columns:repeat(6, 1fr); gap:6px; margin-top: 10px; }
+.hand-btn{ padding:10px 4px; border-radius:4px; border:2px solid rgba(0,0,0,0.2); background:rgba(0,0,0,0.05); font-weight:bold; font-family:var(--font-typewriter); color:var(--ink); cursor:pointer; text-align:center; display:flex; flex-direction:column; gap:4px; }
+.hand-btn .val{ font-size:1.4em; }
+.hand-btn .th{ font-size:0.5em; text-transform:uppercase; letter-spacing:1px; }
+.hand-btn.selected{ border-color:var(--seal); background:var(--seal); color:#fff; box-shadow:0 4px 10px rgba(0,0,0,0.3); }
+.hand-btn.disabled{ opacity:0.3; pointer-events:none; }
+
+/* Game Screen */
+.bot-hand{ display:flex; justify-content:center; gap:6px; margin-bottom:20px; }
+.bot-card-back{ width:34px; height:50px; border-radius:4px; border:2px solid #111; background:repeating-linear-gradient(45deg, #465934, #465934 5px, #3a4a2a 5px, #3a4a2a 10px); box-shadow: 2px 2px 5px rgba(0,0,0,0.5); }
+.bot-card-back.used{ opacity:0.15; border-color: transparent; box-shadow: none; }
+
+/* Rendered Playing Card */
+.play-area{ display:flex; justify-content:center; margin:24px 0; perspective:1000px; }
+.playing-card{ width:260px; min-height:360px; border-radius:8px; border:4px solid #fff; box-shadow:0 12px 30px rgba(0,0,0,0.7); position:relative; overflow:hidden; display:flex; flex-direction:column; animation:popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); background-color: #2b2b2b; font-family:sans-serif; }
+.card-header{ display:flex; align-items:center; padding:12px 14px; color:#fff; background: rgba(0,0,0,0.3); border-bottom: 2px solid #000; }
+.card-val{ font-size:4em; font-weight: 900; line-height:0.8; margin-right:12px; text-shadow: 2px 2px 0 #000; }
+.card-title{ flex:1; display:flex; flex-direction:column; }
+.card-theater{ font-size:0.8em; text-transform:uppercase; letter-spacing:2px; font-weight:bold; opacity:0.9; }
+.card-name{ font-size:1.2em; text-transform:uppercase; line-height:1.1; font-weight: 900; text-shadow: 1px 1px 0 #000; margin-top: 2px; }
+.card-art{ flex:1; background:repeating-linear-gradient(45deg, rgba(255,255,255,0.05) 0, rgba(255,255,255,0.05) 10px, transparent 10px, transparent 20px); border-bottom:2px solid #000; }
+.card-text-box{ padding:16px; background:#e8e4d9; color:#111; font-size:0.95em; min-height:110px; display:flex; align-items:center; text-align:center; border-top: 4px solid #a32; }
+.card-text-box p{ margin:0; font-weight:bold; line-height: 1.4; }
+
+.priority-box{ border-left:4px solid var(--seal); padding:12px; margin-top:14px; font-size:0.9em; font-family: var(--font-typewriter); background: rgba(0,0,0,0.05); border-radius: 0 4px 4px 0; border: 1px solid rgba(0,0,0,0.1); border-left-width: 4px; }
+.priority-box h4{ margin:0 0 8px 0; color:var(--seal); font-weight: bold; letter-spacing: 1px; text-transform: uppercase; }
+.priority-box ul{ padding-left: 20px; margin: 0; color: var(--ink); }
+.priority-box li{ margin-bottom: 6px; line-height: 1.4; }
+
+/* Modal card context: make text crisp */
+#activePlayArea .card { background: var(--paper); border: 2px solid var(--ink-soft); color: var(--ink); clip-path: none; border-radius: 8px; }
+#activePlayArea .priority-box { background: rgba(0,0,0,0.05); border-left-color: var(--seal); }
+#activePlayArea .priority-box h4 { color: var(--seal); }
+#activePlayArea .priority-box ul { color: var(--ink); }
+#activePlayArea .priority-box strong { color: #000; }
+#activePlayArea h4 { color: var(--ink); font-family: var(--font-typewriter); }
+
+.stat-grid{ display:flex; align-items:center; gap:16px; margin-top:16px; background: rgba(0,0,0,0.05); border: 1px dashed var(--ink-soft); padding: 12px; }
+.stat-grid .lbl{ font-family: var(--font-typewriter); font-weight: bold; text-transform: uppercase; color: var(--ink); flex: 1; }
+.stat-controls { display: flex; align-items: center; gap: 12px; }
+.stat-controls .val{ font-size:1.8em; font-weight:bold; color:var(--seal); font-family: var(--font-typewriter); width:30px; text-align:center; }
+.stat-controls button{ width:36px; height:36px; border-radius:2px; border:2px solid var(--ink); border-bottom-width:4px; background:var(--ink); color:var(--paper); font-weight:bold; font-size:1.2em; cursor:pointer; transition: 0.1s; }
+.stat-controls button:active { transform: translateY(2px); border-bottom-width: 2px; }
+
+.lang-switch{ position:fixed; top:14px; right:14px; z-index:60; display:flex; gap:4px; background:rgba(0,0,0,0.6); border:1px solid var(--glow-dim); border-radius:4px; padding:4px; }
+.lang-switch button{ border:none; background:transparent; color:var(--glow-dim); padding:5px 10px; font-family: var(--font-typewriter); font-weight:bold; font-size:0.8em; cursor:pointer; }
+.lang-switch button.active{ background:var(--glow); color:#000; }
+.icon-inline{ display:inline-flex; vertical-align:-0.15em; }
+.icon-inline svg, svg.icon-inline{ width:1.1em; height:1.1em; }
+
+@keyframes popIn{ 0%{transform:scale(0.8) rotateY(90deg); opacity:0;} 100%{transform:scale(1) rotateY(0); opacity:1;} }
+@keyframes fadeSlideUp{ from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);} }
+
+/* Helpers */
+.text-dim { color: var(--ink-soft); font-style: italic; opacity: 0.8; }
+.badge { display: inline-block; padding: 2px 6px; background: var(--seal); color: #fff; font-size: 0.75em; border-radius: 2px; font-family: sans-serif; font-weight: bold; letter-spacing: 1px; }
+</style>
+<script src="../assets/logger.js"></script>
+</head>
+<body>
+<div class="lang-switch">
+  <button id="btnRules" onclick="openRulesModal()" title="Como Jogar / Rules" style="margin-right:6px; background:rgba(217,201,160,0.2); color:var(--paper);"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5.5A2.5 2.5 0 016.5 3H20v15.5a2.5 2.5 0 00-2.5-2.5H4V5.5z"/><path d="M4 18.5A2.5 2.5 0 016.5 16H20"/></svg> <span data-i18n="btnRules">Regras</span></button>
+  <button id="btnPt" onclick="setLang('pt')">PT</button>
+  <button id="btnEn" onclick="setLang('en')">EN</button>
+</div>
+
+<div class="hero">
+  <img src="../assets/art/airlandsea.webp" alt="">
+  <div class="hero-content">
+    <h1>Air, Land & Sea</h1>
+    <div class="subtitle" data-i18n="subtitle">Command HQ - Smart Deck</div>
+  </div>
+</div>
+
+<!-- SCORE HEADER -->
+<div id="score-header" class="hidden" style="display:flex; justify-content:space-between; align-items:center; background:#222; padding:10px 18px; border:2px solid var(--seal); border-radius:4px; margin-bottom:18px; font-family:sans-serif; font-weight:bold; font-size:1.1em;">
+    <div style="color:var(--paper)"><span data-i18n="playerScoreLabel">YOU</span>: <span id="scorePlayer">0</span></div>
+    <div style="color:#aaa; font-size:0.75em; text-align:center; font-weight:normal;">
+        <span data-i18n="roundLabel">Round</span> <span id="roundNum" style="font-weight:bold; color:#fff;">1</span>
+        &nbsp;|&nbsp;
+        <span data-i18n="targetLabel">Target</span>: <span id="scoreTarget" style="font-weight:bold; color:#fff;">12</span>
+    </div>
+    <div style="color:var(--seal)"><span data-i18n="aiScoreLabel">AI</span>: <span id="scoreAI">0</span></div>
+</div>
+
+<!-- SETUP SCREEN -->
+<div id="setup-screen">
+  <!-- Physical Setup Instructions -->
+  <div class="card" id="physical-setup-card" style="margin-bottom:14px;">
+    <h2 style="margin-top:0;" data-i18n="setupPhysicalTitle">Setup Físico (Na Mesa)</h2>
+    <ul style="font-family:sans-serif; font-size:0.85em; line-height:1.5; color:var(--ink); padding-left:18px; margin:0;">
+      <li data-i18n="setupPhys1">Coloque as cartas de Teatro no centro da mesa na ordem escolhida abaixo.</li>
+      <li data-i18n="setupPhys2">Embaralhe as 18 cartas correspondentes aos teatros em jogo (6 cartas de cada teatro).</li>
+      <li data-i18n="setupPhys3">Compre sua mão inicial (6 cartas no Standard / 10 no Epic).</li>
+      <li data-i18n="setupPhys4">O app gerencia automaticamente as cartas restantes da IA. Não precisa de baralho físico para o bot!</li>
+      <li data-i18n="setupPhys5">O primeiro jogador na 1ª rodada é determinado normalmente; o perdedor da rodada escolhe quem começa a próxima.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2 style="margin-top:0;" data-i18n="setupFormatTitle">0. Formato do Jogo</h2>
+    <div class="row" style="margin-bottom:14px;">
+      <button class="btn active" id="btnFormatStd" onclick="setFormat('standard')" data-i18n="btnFormatStd">Standard (3 Teatros)</button>
+      <button class="btn" id="btnFormatEpic" onclick="setFormat('epic')" data-i18n="btnFormatEpic">Epic (5 Teatros)</button>
+    </div>
+
+    <h2 data-i18n="setupTitle1">1. Ordem dos Teatros (Esq. para Dir.)</h2>
+    <p style="font-family:sans-serif; font-size:0.85em; color:var(--ink-soft); margin-top:0;" data-i18n="setupThDesc">Selecione os teatros na ordem em que estão posicionados na sua mesa, da Esquerda para a Direita.</p>
+    
+    <div class="theaters-grid" id="theaterOrderGrid" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:8px;"></div>
+    <button class="btn btn-block" onclick="resetTheaters()" style="margin-top:10px; border-color:var(--ink-soft);" data-i18n="btnClearTh">Limpar Ordem</button>
+
+    <h2 data-i18n="setupTitle2" style="margin-top:24px;">2. Sua Mão Inicial</h2>
+    <p style="font-family:sans-serif; font-size:0.85em; color:var(--ink-soft); margin-top:0;" data-i18n="setupHandDesc">Selecione as cartas que você comprou. O simulador processará as cartas restantes para a IA inimiga.</p>
+    <div id="handSelectorArea" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(80px, 1fr)); gap:6px;"></div>
+    <div style="font-family:sans-serif; font-size:0.9em; margin-top:10px; font-weight:bold;">
+      <span data-i18n="selected">Selecionadas</span>: <span id="handCount">0</span> / <span id="handTarget">6</span>
+    </div>
+
+    <h2 data-i18n="lblMode" style="margin-top:24px;">3. Protocolo da IA</h2>
+    <div class="row" style="margin-bottom:20px;">
+      <button class="btn active" id="btnModeAuto" onclick="setMode('auto')" data-i18n="btnModeAuto">Autônomo</button>
+      <button class="btn" id="btnModeSemi" onclick="setMode('semi')" data-i18n="btnModeSemi">Semiautônomo</button>
+    </div>
+
+    <button class="btn btn-primary btn-block" id="btnStart" onclick="startGame()" disabled data-i18n="btnStart">Iniciar Combate</button>
+  </div>
+</div>
+
+<!-- GAME AREA -->
+<div id="game-area" class="hidden">
+  <div class="card" style="margin-bottom:12px;">
+    <div class="stamp-live" data-i18n="stampActive">Em Campo</div>
+    <h2 style="margin-top:0;" data-i18n="botHandTitle">Mão do Inimigo</h2>
+    
+    <div class="bot-hand-container" id="botHandUI"></div>
+    
+    <div id="botWithdrawAlert" class="priority-box hidden" style="border-left-color:var(--seal); background:rgba(138,31,31,0.12); margin-top:12px; margin-bottom:4px; font-size:0.85em;">
+    </div>
+
+    <div class="row" style="margin-top:14px; gap:8px;">
+        <button class="btn btn-primary btn-block" id="btnDrawBot" onclick="drawBotCard(false)" data-i18n="btnDraw" style="margin-bottom:0; flex:1.5;">Posicionar Carta IA</button>
+        <button class="btn btn-block" onclick="drawBotCard(true)" style="margin-bottom:0; flex:1; border-color:#555; background:#2b2b2b; color:#fff;" title="Deploy Face Down (Strength 2)" data-i18n="btnDrawFD">Posicionar FD</button>
+        <button class="btn btn-block" id="btnDrawBonus" onclick="drawEnhancement()" style="margin-bottom:0; flex:1; border-color:var(--seal); color:var(--seal);" title="Comprar carta extra / reforço" data-i18n="btnDrawBonus">Carta Bônus</button>
+    </div>
+  </div>
+
+  <!-- ACTIVE PLAY AREA / PROMPT -->
+  <div id="activePlayArea" class="hidden" style="background:rgba(0,0,0,0.85); position:fixed; inset:0; z-index:100; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:18px;">
+    <div class="card" style="width:100%; max-width:440px; max-height:90vh; overflow-y:auto; position:relative; box-shadow:0 10px 25px rgba(0,0,0,0.8);">
+        <div id="playArea" style="display:flex; justify-content:center; margin-bottom:15px;"></div>
+        <div id="priorityBox" class="priority-box" style="margin-bottom:15px;"></div>
+        <h4 style="margin:0 0 10px; font-size:0.9em; text-transform:uppercase; text-align:center;" data-i18n="placePromptTitle">Onde esta carta foi posicionada?</h4>
+        <div class="row" id="placeButtonsArea" style="gap:6px;"></div>
+    </div>
+  </div>
+
+  <!-- TACTICAL REFERENCE / RULES QUICK GUIDE -->
+  <div class="card" style="padding:16px 18px; margin-bottom:14px; font-size:0.85em; background:var(--paper); border:2px solid var(--ink-soft); box-shadow:0 4px 12px rgba(0,0,0,0.5);">
+    <div style="font-weight:900; color:var(--seal); text-transform:uppercase; margin-bottom:8px; font-size:1.02em; letter-spacing:1px; display:flex; align-items:center; gap:6px;">
+        <span data-i18n="tacticalBannerTitle"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3H5a1 1 0 00-1 1v16a1 1 0 001 1h4M9 3v18M9 3h10a1 1 0 011 1v16a1 1 0 01-1 1H9"/><path d="M12 8h5M12 12h5M12 16h5"/></svg> Guia Tático Rápido (IA - 1º Jogador)</span>
+    </div>
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:12px; line-height:1.5; color:var(--ink);">
+        <div style="background:rgba(0,0,0,0.06); padding:8px 10px; border-radius:3px; border-left:3px solid #8a6d3b;">
+            <strong style="color:#000;" data-i18n="adjBannerLabel"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="9" r="3"/><path d="M12 21c-4-4.5-6-7.8-6-10.5A6 6 0 0112 4a6 6 0 016 6.5c0 2.7-2 6-6 10.5z"/></svg> Prioridade de Adjacência:</strong><br>
+            <span style="color:#222; font-weight:600;" data-i18n="adjBannerText">1º Adjacente Direita &gt; 2º Adjacente Esquerda &gt; 3º Mesmo Teatro &gt; 4º Não-Adjacente</span>
+        </div>
+        <div style="background:rgba(0,0,0,0.06); padding:8px 10px; border-radius:3px; border-left:3px solid var(--seal);">
+            <strong style="color:#000;" data-i18n="flipBannerLabel"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 11-3-6.7"/><path d="M21 4v5h-5"/></svg> Prioridade de Virar (Flip):</strong><br>
+            <span style="color:#222; font-weight:600;" data-i18n="flipBannerText">1º Face-Down Inimigo &gt; 2º Face-Up IA &gt; 3º Face-Down IA &gt; 4º Face-Up Inimigo</span>
+        </div>
+    </div>
+  </div>
+
+  <!-- TABLEAU (ENEMY PLAYED CARDS) -->
+  <div class="card">
+    <h2 style="margin-top:0;" data-i18n="tableauTitle">Tableau do Inimigo</h2>
+    <div id="tableauCols" style="display:flex; gap:10px; margin-top:10px; overflow-x:auto;"></div>
+  </div>
+
+  <!-- INTEL / STATS -->
+  <div class="card">
+    <h2 style="margin-top:0;" data-i18n="statsTitle">Inteligência de Dificuldade</h2>
+    <p style="font-family:sans-serif; font-size:0.85em; color:var(--ink-soft); margin-top:0;" data-i18n="statsDesc">Se o inimigo precisar de reforços, marque os teatros perdidos para liberar bônus de reforço.</p>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
+        <span style="font-family:sans-serif; font-weight:bold;" data-i18n="statLostTheatres">Teatros Perdidos</span>
+        <div class="stepper">
+            <button onclick="adjustTheatres(-1)">−</button>
+            <span id="vTheatresLost" style="font-family:sans-serif; font-weight:bold; min-width:24px; text-align:center;">0</span>
+            <button onclick="adjustTheatres(1)">+</button>
+        </div>
+    </div>
+    <div id="enhancementBox" class="priority-box hidden" style="border-left-color:var(--seal); background:rgba(138,31,31,0.05); margin-top:10px;"></div>
+  </div>
+
+  <div style="display:flex; gap:10px; margin-bottom:20px;">
+      <button class="btn btn-block" onclick="endRound()" style="margin-bottom:0; background:linear-gradient(160deg, #b58d20 0%, #856106 100%); color:#000; border:2px solid #e3c274;" data-i18n="btnEndRound">Fim da Rodada / Recuo</button>
+      <button class="btn btn-block" onclick="confirmReset()" data-i18n="btnNewGame" style="margin-bottom:0; flex:0.4;">Abortar</button>
+  </div>
+</div>
+
+<!-- RULES / HOW TO PLAY MODAL -->
+<div id="rulesModal" class="hidden" style="background:rgba(0,0,0,0.9); position:fixed; inset:0; z-index:250; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:18px;">
+    <div class="card" style="width:100%; max-width:560px; max-height:85vh; overflow-y:auto; position:relative; box-shadow:0 10px 25px rgba(0,0,0,0.8); text-align:left;">
+        <h2 style="margin-top:0;" data-i18n="rulesModalTitle">Como Jogar — Air, Land & Sea Solo</h2>
+        
+        <div style="font-family:sans-serif; font-size:0.85em; line-height:1.6; color:var(--ink);">
+            <h4 style="margin:12px 0 4px; color:var(--seal);" data-i18n="rulesS1Title">1. Objetivo & Formato</h4>
+            <p data-i18n="rulesS1Text">Vence quem alcançar 12 Pontos de Vitória (Standard, 3 Teatros) ou 6 VP (Epic, 5 Teatros). A cada rodada, os jogadores disputam o controle dos teatros jogando cartas Face-Up (com habilidade) ou Face-Down (Força 2).</p>
+
+            <h4 style="margin:12px 0 4px; color:var(--seal);" data-i18n="rulesS2Title">2. Turno da IA (Bot - Sempre 1º Jogador)</h4>
+            <p data-i18n="rulesS2Text">A IA é sempre o 1º jogador da rodada e vence empates de força. Clique em <strong>Posicionar Carta IA</strong> para revelar a carta. O app indica o teatro prioritário, o alvo e dicas táticas. Se a IA for jogar virada para baixo, use <strong>Posicionar FD</strong>.</p>
+
+            <h4 style="margin:12px 0 4px; color:var(--seal);" data-i18n="rulesAdjLabel"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="9" r="3"/><path d="M12 21c-4-4.5-6-7.8-6-10.5A6 6 0 0112 4a6 6 0 016 6.5c0 2.7-2 6-6 10.5z"/></svg> Regra de Prioridade de Adjacência</h4>
+            <p data-i18n="rulesAdjText">Quando um efeito afeta teatros adjacentes ou requer escolha de alvo, a IA segue a seguinte ordem estrita:<br>
+            <strong>1º</strong> Teatro Adjacente à Direita &gt; <strong>2º</strong> Teatro Adjacente à Esquerda &gt; <strong>3º</strong> Mesmo Teatro &gt; <strong>4º</strong> Teatro Não-Adjacente.</p>
+
+            <h4 style="margin:12px 0 4px; color:var(--seal);" data-i18n="rulesFlipLabel"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 11-3-6.7"/><path d="M21 4v5h-5"/></svg> Regra de Prioridade de Virar Cartas (Flip)</h4>
+            <p data-i18n="rulesFlipText">Quando a IA deve virar uma carta (habilidade <em>Maneuver</em>, <em>Ambush</em>, etc.), ela prioriza:<br>
+            <strong>1º</strong> Carta Face-Down do Oponente (para revelar Face-Up)<br>
+            <strong>2º</strong> Carta Face-Up da IA (para virar Face-Down)<br>
+            <strong>3º</strong> Carta Face-Down da IA (para revelar Face-Up)<br>
+            <strong>4º</strong> Carta Face-Up do Oponente (para virar Face-Down).</p>
+
+            <h4 style="margin:12px 0 4px; color:var(--seal);" data-i18n="rulesS3Title">3. Regra de Recuo da IA</h4>
+            <p data-i18n="rulesS3Text">A IA <strong>RECUA</strong> imediatamente se for forçada a jogar uma 4ª carta no mesmo teatro (ou 5ª no modo Epic), ou ao esgotar sua mão se não estiver na liderança. Você também pode recuar no seu turno para conceder menos VP ao adversário.</p>
+
+            <h4 style="margin:12px 0 4px; color:var(--seal);" data-i18n="rulesScoreTableLabel"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 01-10 0V4z"/><path d="M7 6H4a2 2 0 002 4M17 6h3a2 2 0 01-2 4"/></svg> Tabela de Pontuação de Recuo</h4>
+            <div style="background:rgba(0,0,0,0.06); padding:8px 12px; border-radius:4px; margin-bottom:10px; font-size:0.95em;">
+                <strong>Standard (Mão de 6 cartas):</strong><br>
+                • <em>IA (1º Jogador - Ganha Empates):</em> 4+ cartas rest. = 2 VP | 2-3 cartas = 3 VP | 1 carta = 4 VP | 0 cartas = 6 VP<br>
+                • <em>Jogador (2º Jogador - Perde Empates):</em> 5+ cartas rest. = 2 VP | 3-4 cartas = 3 VP | 2 cartas = 4 VP | 0-1 cartas = 6 VP<br><br>
+                <strong>Epic (Mão de 10 cartas):</strong><br>
+                • <em>IA (1º Jogador):</em> 6+ cartas = 2 VP | 3-5 cartas = 3 VP | 1-2 cartas = 4 VP | 0 cartas = 6 VP<br>
+                • <em>Jogador (2º Jogador):</em> 7+ cartas = 2 VP | 4-6 cartas = 3 VP | 2-3 cartas = 4 VP | 0-1 cartas = 6 VP
+            </div>
+
+            <h4 style="margin:12px 0 4px; color:var(--seal);" data-i18n="rulesS4Title">4. Reforços e Cartas Bônus</h4>
+            <p data-i18n="rulesS4Text">Se você vencer teatros, o nível de dificuldade do bot sobe e ele pode comprar cartas extras de reforço do baralho fora de jogo através do botão <strong>Carta Bônus</strong>.</p>
+        </div>
+
+        <button class="btn btn-primary btn-block" onclick="closeRulesModal()" style="margin-top:16px;" data-i18n="btnCloseRules">Entendido / Fechar</button>
+    </div>
+</div>
+
+<!-- END ROUND MODAL -->
+<div id="endRoundModal" class="hidden" style="background:rgba(0,0,0,0.9); position:fixed; inset:0; z-index:200; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:18px;">
+    <div class="card" style="width:100%; max-width:440px; text-align:center;">
+        <h2 data-i18n="roundEndedTitle">Rodada Encerrada</h2>
+        <div id="scoringStep1">
+            <p style="font-weight:bold; margin-bottom:20px;" data-i18n="whoWonPrompt">Quem venceu esta rodada?</p>
+            <button class="btn btn-block" onclick="selectWinner('player')" data-i18n="btnIWon">EU VENCI</button>
+            <button class="btn btn-block" onclick="selectWinner('ai')" data-i18n="btnAiWon">IA VENCEU</button>
+            <button class="btn btn-block" onclick="document.getElementById('endRoundModal').classList.add('hidden')" style="margin-top:20px; border:none; background:transparent;" data-i18n="btnCancel">Cancelar</button>
+        </div>
+        <div id="scoringStep2" class="hidden">
+            <p style="font-weight:bold; margin-bottom:12px;" data-i18n="howEndedPrompt">Como terminou?</p>
+            <p id="scoringSubPrompt" style="font-size:0.8em; color:var(--ink-soft); margin-top:0; font-family:sans-serif;"></p>
+            
+            <!-- Standard Scoring for AI (1st Player) -->
+            <div id="scoreBtnsStdAI" class="hidden">
+                <button class="btn btn-block" onclick="addScore(6)" data-i18n="scoreBattle6">Batalha Resolvida (6 VP)</button>
+                <button class="btn btn-block" onclick="addScore(2)" data-i18n="scoreAiStd4Plus">Recuo do Jogador c/ 4+ cartas (2 VP)</button>
+                <button class="btn btn-block" onclick="addScore(3)" data-i18n="scoreAiStd2to3">Recuo do Jogador c/ 2-3 cartas (3 VP)</button>
+                <button class="btn btn-block" onclick="addScore(4)" data-i18n="scoreAiStd1">Recuo do Jogador c/ 1 carta (4 VP)</button>
+                <button class="btn btn-block" onclick="addScore(6)" data-i18n="scoreAiStd0">Recuo do Jogador c/ 0 cartas (6 VP)</button>
+            </div>
+
+            <!-- Standard Scoring for Player (2nd Player) -->
+            <div id="scoreBtnsStdPlayer" class="hidden">
+                <button class="btn btn-block" onclick="addScore(6)" data-i18n="scoreBattle6">Batalha Resolvida (6 VP)</button>
+                <button class="btn btn-block" onclick="addScore(2)" data-i18n="scorePlStd5Plus">Recuo da IA c/ 5+ cartas (2 VP)</button>
+                <button class="btn btn-block" onclick="addScore(3)" data-i18n="scorePlStd3to4">Recuo da IA c/ 3-4 cartas (3 VP)</button>
+                <button class="btn btn-block" onclick="addScore(4)" data-i18n="scorePlStd2">Recuo da IA c/ 2 cartas (4 VP)</button>
+                <button class="btn btn-block" onclick="addScore(6)" data-i18n="scorePlStd0to1">Recuo da IA c/ 0-1 cartas (6 VP)</button>
+            </div>
+
+            <!-- Epic Scoring for AI (1st Player) -->
+            <div id="scoreBtnsEpicAI" class="hidden">
+                <button class="btn btn-block" onclick="addScore(6)" data-i18n="scoreBattle6">Batalha Resolvida (6 VP)</button>
+                <button class="btn btn-block" onclick="addScore(2)" data-i18n="scoreAiEpic6Plus">Recuo do Jogador c/ 6+ cartas (2 VP)</button>
+                <button class="btn btn-block" onclick="addScore(3)" data-i18n="scoreAiEpic3to5">Recuo do Jogador c/ 3-5 cartas (3 VP)</button>
+                <button class="btn btn-block" onclick="addScore(4)" data-i18n="scoreAiEpic1to2">Recuo do Jogador c/ 1-2 cartas (4 VP)</button>
+                <button class="btn btn-block" onclick="addScore(6)" data-i18n="scoreAiEpic0">Recuo do Jogador c/ 0 cartas (6 VP)</button>
+            </div>
+
+            <!-- Epic Scoring for Player (2nd Player) -->
+            <div id="scoreBtnsEpicPlayer" class="hidden">
+                <button class="btn btn-block" onclick="addScore(6)" data-i18n="scoreBattle6">Batalha Resolvida (6 VP)</button>
+                <button class="btn btn-block" onclick="addScore(2)" data-i18n="scorePlEpic7Plus">Recuo da IA c/ 7+ cartas (2 VP)</button>
+                <button class="btn btn-block" onclick="addScore(3)" data-i18n="scorePlEpic4to6">Recuo da IA c/ 4-6 cartas (3 VP)</button>
+                <button class="btn btn-block" onclick="addScore(4)" data-i18n="scorePlEpic2to3">Recuo da IA c/ 2-3 cartas (4 VP)</button>
+                <button class="btn btn-block" onclick="addScore(6)" data-i18n="scorePlEpic0to1">Recuo da IA c/ 0-1 cartas (6 VP)</button>
+            </div>
+
+            <button class="btn btn-block" onclick="document.getElementById('scoringStep2').classList.add('hidden'); document.getElementById('scoringStep1').classList.remove('hidden');" style="margin-top:20px; border:none; background:transparent;" data-i18n="btnBack">Voltar</button>
+        </div>
+    </div>
+</div>
+
+<!-- GAME OVER MODAL -->
+<div id="gameOverModal" class="hidden" style="background:rgba(0,0,0,0.92); position:fixed; inset:0; z-index:300; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:18px;">
+    <div class="card" style="width:100%; max-width:400px; text-align:center;">
+        <div id="gameOverEmoji" style="font-size:3.5em; margin-bottom:8px;"></div>
+        <h2 id="gameOverTitle" style="margin:0 0 12px;"></h2>
+        <p id="gameOverMsg" style="font-family:sans-serif; margin-bottom:24px; font-size:1.05em;"></p>
+        <button class="btn btn-primary btn-block" onclick="resetAllState()" data-i18n="btnNewGame">Nova Partida / Reset</button>
+    </div>
+</div>
+
+<style>
+.order-badge { position:absolute; top:-8px; right:-8px; background:var(--seal); color:#fff; width:22px; height:22px; border-radius:50%; font-size:12px; display:flex; align-items:center; justify-content:center; border:2px solid #000; font-family:sans-serif; }
+.th-btn { position:relative; }
+.th-btn.active .order-badge { display:flex; }
+.mini-card { width:100%; aspect-ratio:2/3; border:2px solid #000; border-radius:4px; font-family:sans-serif; display:flex; flex-direction:column; background-color:#222; position:relative; overflow:hidden; cursor:pointer; user-select:none; }
+.mini-card .header { background:var(--bg); color:#fff; font-weight:900; font-size:1.1em; padding:2px 4px; display:flex; align-items:center; justify-content:center; border-bottom:2px solid #000; }
+.mini-card .name { font-size:0.6em; text-align:center; padding:4px 2px; font-weight:bold; color:#fff; text-transform:uppercase; line-height:1.1; }
+.mini-card.facedown { background:repeating-linear-gradient(45deg, #2b2b2b, #2b2b2b 5px, #444 5px, #444 10px); border-color:#222; }
+.mini-card.facedown .content-wrap { opacity:0; pointer-events:none; }
+.mini-card.facedown::before { content:'2'; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#fff; font-size:2em; font-weight:900; text-shadow:0 2px 4px rgba(0,0,0,0.8); z-index:1; }
+</style>
+
+<script>
+const ALS_LS_KEY = 'als_bot_v1';
+const DB = [
+  // AIR
+  {id: 'a1', th: 'air', v: 1, name: 'Support', txt: 'You gain +3 Strength in each adjacent theater.'},
+  {id: 'a2', th: 'air', v: 2, name: 'Air Drop', txt: 'The next card you play may be played to any theater.'},
+  {id: 'a3', th: 'air', v: 3, name: 'Maneuver', txt: 'Flip an uncovered card in an adjacent theater.'},
+  {id: 'a4', th: 'air', v: 4, name: 'Aerodrome', txt: 'You may play cards of Strength 3 or less to any theater.'},
+  {id: 'a5', th: 'air', v: 5, name: 'Containment', txt: 'If any player plays a face-down card, destroy that card.'},
+  {id: 'a6', th: 'air', v: 6, name: 'Heavy Bombers', txt: ''},
+  
+  // LAND
+  {id: 'l1', th: 'land', v: 1, name: 'Reinforce', txt: 'Draw 1 card from the deck and play it face-down to any theater.'},
+  {id: 'l2', th: 'land', v: 2, name: 'Ambush', txt: 'Flip an uncovered card in any theater.'},
+  {id: 'l3', th: 'land', v: 3, name: 'Maneuver', txt: 'Flip an uncovered card in an adjacent theater.'},
+  {id: 'l4', th: 'land', v: 4, name: 'Cover Fire', txt: 'All cards covered by this card are now strength 4.'},
+  {id: 'l5', th: 'land', v: 5, name: 'Disrupt', txt: 'Starting with you, both players choose and flip 1 of their uncovered cards.'},
+  {id: 'l6', th: 'land', v: 6, name: 'Heavy Tanks', txt: ''},
+  
+  // SEA
+  {id: 's1', th: 'sea', v: 1, name: 'Transport', txt: 'You may move 1 of your cards to a different theater.'},
+  {id: 's2', th: 'sea', v: 2, name: 'Escalation', txt: 'All your face-down cards have Strength 4.'},
+  {id: 's3', th: 'sea', v: 3, name: 'Maneuver', txt: 'Flip an uncovered card in an adjacent theater.'},
+  {id: 's4', th: 'sea', v: 4, name: 'Redeploy', txt: 'Return 1 of your face-down cards to your hand. If you do, play a card.'},
+  {id: 's5', th: 'sea', v: 5, name: 'Blockade', txt: 'If any player plays a card to an adjacent theater occupied by at least 3 other cards, destroy that card.'},
+  {id: 's6', th: 'sea', v: 6, name: 'Super Battleship', txt: ''},
+  
+  // ECONOMICS
+  {id: 'e1', th: 'econ', v: 1, name: 'Retrofit', txt: "Choose 1 of your uncovered cards in any theater. Gain supplies in that theater equal to the chosen card's strength. Then, flip the card."},
+  {id: 'e2', th: 'econ', v: 2, name: 'Supply Lines', txt: 'On your turn, you may play to a non-matching theater. If you do, your enemy gains 1 supply token in that theater.'},
+  {id: 'e3', th: 'econ', v: 3, name: 'Manipulate', txt: 'Flip an uncovered card in an adjacent theater.'},
+  {id: 'e4', th: 'econ', v: 4, name: 'Requisition', txt: "You may reveal a card to gain 2 supplies in that card's theater."},
+  {id: 'e5', th: 'econ', v: 5, name: 'Arms Race', txt: 'Gain 2 supplies in any theater, then your enemy chooses a different theater and gain 2 supplies there.'},
+  {id: 'e6', th: 'econ', v: 6, name: 'Production Surge', txt: ''},
+  
+  // DIPLOMACY
+  {id: 'd1', th: 'diplo', v: 1, name: 'Relinquish', txt: 'You may destroy 1 of your other cards to destroy any uncovered cards.'},
+  {id: 'd2', th: 'diplo', v: 2, name: 'Envoy', txt: 'After you play a card in an adjacent theater, you may move this card so that it covers that card.'},
+  {id: 'd3', th: 'diplo', v: 3, name: 'Manipulate', txt: 'Flip an uncovered card in an adjacent theater.'},
+  {id: 'd4', th: 'diplo', v: 4, name: 'Leverage', txt: 'You may reveal a card to flip an uncovered card lower than or equal to your revealed card.'},
+  {id: 'd5', th: 'diplo', v: 5, name: 'Give & Take', txt: 'Draw 1 card. Either give it to your enemy and draw another, or keep it and your enemy draws 1.'},
+  {id: 'd6', th: 'diplo', v: 6, name: 'Grand Betrayal', txt: ''},
+  
+  // INTELLIGENCE
+  {id: 'i1', th: 'intel', v: 1, name: 'Incite', txt: "Use any uncovered card's instant ability as if it were on this card."},
+  {id: 'i2', th: 'intel', v: 2, name: 'Spy Network', txt: 'For each of your face-down cards in adjacent theaters, gain +3 strength in this theater.'},
+  {id: 'i3', th: 'intel', v: 3, name: 'Manipulate', txt: 'Flip an uncovered card in an adjacent theater.'},
+  {id: 'i4', th: 'intel', v: 4, name: 'Neutralize', txt: "Name a card. If it's in your enemy's hand, they must reveal it and play it face-down next time they play."},
+  {id: 'i5', th: 'intel', v: 5, name: 'Surveil', txt: 'Your enemy must reveal a card. You may reveal a lower card to flip any uncovered face-up card.'},
+  {id: 'i6', th: 'intel', v: 6, name: 'Covert Operations', txt: ''}
+];
+
+const DICT = {
+  pt: {
+    subtitle: "Command HQ - Simulador de Deck",
+    btnRules: "Regras",
+    rulesModalTitle: "Como Jogar — Air, Land & Sea Solo",
+    rulesS1Title: "1. Objetivo & Formato",
+    rulesS1Text: "Vence quem alcançar 12 Pontos de Vitória (Standard, 3 Teatros) ou 6 VP (Epic, 5 Teatros). A cada rodada, os jogadores disputam o controle dos teatros jogando cartas Face-Up (com habilidade) ou Face-Down (Força 2).",
+    rulesS2Title: "2. Turno da IA (Bot - Sempre 1º Jogador)",
+    rulesS2Text: "A IA é sempre o 1º jogador da rodada e vence empates de força. Clique em 'Posicionar Carta IA' para revelar a carta. O app indica o teatro prioritário, o alvo e dicas táticas. Se a IA for jogar virada para baixo, use 'Posicionar FD'.",
+    rulesAdjLabel: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><circle cx=\"12\" cy=\"9\" r=\"3\"/><path d=\"M12 21c-4-4.5-6-7.8-6-10.5A6 6 0 0112 4a6 6 0 016 6.5c0 2.7-2 6-6 10.5z\"/></svg> Regra de Prioridade de Adjacência",
+    rulesAdjText: "Quando um efeito afeta teatros adjacentes ou requer escolha de alvo, a IA segue a seguinte ordem estrita:<br><strong>1º</strong> Teatro Adjacente à Direita &gt; <strong>2º</strong> Teatro Adjacente à Esquerda &gt; <strong>3º</strong> Mesmo Teatro &gt; <strong>4º</strong> Teatro Não-Adjacente.",
+    rulesFlipLabel: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M21 12a9 9 0 11-3-6.7\"/><path d=\"M21 4v5h-5\"/></svg> Regra de Prioridade de Virar Cartas (Flip)",
+    rulesFlipText: "Quando a IA deve virar uma carta (habilidade <em>Maneuver</em>, <em>Ambush</em>, etc.), ela prioriza:<br><strong>1º</strong> Carta Face-Down do Oponente (para revelar Face-Up)<br><strong>2º</strong> Carta Face-Up da IA (para virar Face-Down)<br><strong>3º</strong> Carta Face-Down da IA (para revelar Face-Up)<br><strong>4º</strong> Carta Face-Up do Oponente (para virar Face-Down).",
+    rulesS3Title: "3. Regra de Recuo da IA",
+    rulesS3Text: "A IA RECUA se for forçada a jogar uma 4ª carta no mesmo teatro (ou 5ª no modo Epic), ou ao esgotar sua mão se não estiver na liderança. Você também pode recuar no seu turno para conceder menos VP ao adversário.",
+    rulesScoreTableLabel: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M8 21h8M12 17v4M7 4h10v4a5 5 0 01-10 0V4z\"/><path d=\"M7 6H4a2 2 0 002 4M17 6h3a2 2 0 01-2 4\"/></svg> Tabela de Pontuação de Recuo",
+    rulesS4Title: "4. Reforços e Cartas Bônus",
+    rulesS4Text: "Se você vencer teatros, o nível de dificuldade do bot sobe e ele pode comprar cartas extras de reforço do baralho fora de jogo através do botão 'Carta Bônus'.",
+    btnCloseRules: "Entendido / Fechar",
+    setupPhysicalTitle: "Setup Físico (Na Mesa)",
+    setupPhys1: "Coloque as cartas de Teatro no centro da mesa na ordem escolhida abaixo.",
+    setupPhys2: "Embaralhe as 18 cartas correspondentes aos teatros em jogo (6 cartas de cada teatro).",
+    setupPhys3: "Compre sua mão inicial (6 cartas no Standard / 10 no Epic).",
+    setupPhys4: "O app gerencia automaticamente as cartas restantes da IA. Não precisa de baralho físico para o bot!",
+    setupPhys5: "A IA é sempre o 1º Jogador da rodada e vence empates de força!",
+    setupFormatTitle: "0. Formato do Jogo",
+    btnFormatStd: "Standard (3 Teatros)",
+    btnFormatEpic: "Epic (5 Teatros)",
+    setupTitle1: "1. Ordem dos Teatros (Esq. para Dir.)",
+    setupThDesc: "Selecione os teatros na ordem em que estão posicionados na sua mesa, da Esquerda para a Direita.",
+    btnClearTh: "Limpar Ordem",
+    setupTitle2: "2. Sua Mão Inicial",
+    setupHandDesc: "Selecione as cartas que você comprou. O simulador processará as cartas restantes para a IA inimiga.",
+    selected: "Selecionadas",
+    lblMode: "3. Protocolo da IA",
+    btnModeAuto: "Autônomo",
+    btnModeSemi: "Semiautônomo",
+    btnStart: "Iniciar Combate",
+    botHandTitle: "Mão do Inimigo",
+    btnDraw: "Posicionar Carta IA",
+    btnDrawFD: "Posicionar FD",
+    btnDrawBonus: "Carta Bônus",
+    stampActive: "Em Campo",
+    tacticalBannerTitle: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M9 3H5a1 1 0 00-1 1v16a1 1 0 001 1h4M9 3v18M9 3h10a1 1 0 011 1v16a1 1 0 01-1 1H9\"/><path d=\"M12 8h5M12 12h5M12 16h5\"/></svg> Guia Tático Rápido (IA - 1º Jogador)",
+    adjBannerLabel: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><circle cx=\"12\" cy=\"9\" r=\"3\"/><path d=\"M12 21c-4-4.5-6-7.8-6-10.5A6 6 0 0112 4a6 6 0 016 6.5c0 2.7-2 6-6 10.5z\"/></svg> Prioridade de Adjacência:",
+    adjBannerText: "1º Adjacente Direita > 2º Adjacente Esquerda > 3º Mesmo Teatro > 4º Não-Adjacente",
+    flipBannerLabel: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M21 12a9 9 0 11-3-6.7\"/><path d=\"M21 4v5h-5\"/></svg> Prioridade de Virar (Flip):",
+    flipBannerText: "1º Face-Down Inimigo > 2º Face-Up IA > 3º Face-Down IA > 4º Face-Up Inimigo",
+    lblAdjOrder: "Prioridade de Alvo",
+    tableauTitle: "Tableau do Inimigo",
+    placePromptTitle: "Onde esta carta foi posicionada?",
+    btnEndRound: "Fim da Rodada / Recuo",
+    statsTitle: "Inteligência de Dificuldade",
+    statsDesc: "Se o inimigo precisar de reforços, marque os teatros perdidos para liberar bônus de reforço.",
+    statLostTheatres: "Teatros Perdidos",
+    btnNewGame: "Abortar Missão",
+    roundLabel: "Rodada",
+    targetLabel: "Alvo",
+    playerScoreLabel: "VOCÊ",
+    aiScoreLabel: "IA (1º)",
+    th_air: "Ar", th_land: "Terra", th_sea: "Mar", th_econ: "Econ", th_diplo: "Diplo", th_intel: "Intel",
+    roundEndedTitle: "Rodada Encerrada",
+    whoWonPrompt: "Quem venceu esta rodada?",
+    btnIWon: "EU VENCI",
+    btnAiWon: "IA VENCEU",
+    btnCancel: "Cancelar",
+    btnBack: "Voltar",
+    howEndedPrompt: "Como terminou?",
+    scoreBattle6: "Batalha Resolvida / Empate (6 VP)",
+    // 1st Player (AI) Standard Scoring
+    scoreAiStd4Plus: "Recuo do Jogador c/ 4+ cartas (2 VP)",
+    scoreAiStd2to3: "Recuo do Jogador c/ 2-3 cartas (3 VP)",
+    scoreAiStd1: "Recuo do Jogador c/ 1 carta (4 VP)",
+    scoreAiStd0: "Recuo do Jogador c/ 0 cartas (6 VP)",
+    // 2nd Player (Human) Standard Scoring
+    scorePlStd5Plus: "Recuo da IA c/ 5+ cartas (2 VP)",
+    scorePlStd3to4: "Recuo da IA c/ 3-4 cartas (3 VP)",
+    scorePlStd2: "Recuo da IA c/ 2 cartas (4 VP)",
+    scorePlStd0to1: "Recuo da IA c/ 0-1 cartas (6 VP)",
+    // 1st Player (AI) Epic Scoring
+    scoreAiEpic6Plus: "Recuo do Jogador c/ 6+ cartas (2 VP)",
+    scoreAiEpic3to5: "Recuo do Jogador c/ 3-5 cartas (3 VP)",
+    scoreAiEpic1to2: "Recuo do Jogador c/ 1-2 cartas (4 VP)",
+    scoreAiEpic0: "Recuo do Jogador c/ 0 cartas (6 VP)",
+    // 2nd Player (Human) Epic Scoring
+    scorePlEpic7Plus: "Recuo da IA c/ 7+ cartas (2 VP)",
+    scorePlEpic4to6: "Recuo da IA c/ 4-6 cartas (3 VP)",
+    scorePlEpic2to3: "Recuo da IA c/ 2-3 cartas (4 VP)",
+    scorePlEpic0to1: "Recuo da IA c/ 0-1 cartas (6 VP)",
+    pri_auto_title: "Ordens da IA (Autônomo)",
+    pri_semi_title: "Ordens da IA (Semiautônomo)",
+    pri_play: "<b>1. Posicionamento:</b> Tente jogar no teatro {th}.",
+    pri_withdraw: "<b>2. Recuar:</b> Se esta for a {limit}ª carta da IA no teatro {th}, ela <b>RECUA</b>.",
+    pri_choice: "<b>3. Alvo:</b> {targets}",
+    pri_flip: "<b>4. Prioridade de Virar:</b> Face-Down do Oponente > Face-Up da IA > Face-Down da IA > Face-Up do Oponente.",
+    pri_general: "<b>3. Efeito:</b> Resolva dando a maior vantagem para a IA.",
+    pri_no_effect: "Sem efeito instantâneo.",
+    pri_semi_text: "<b>3. Comando Tático:</b> Escolha a melhor opção para a IA (leia 'pode' como 'deve').",
+    enhancement2: "Nível de Dificuldade 2: o inimigo recebe reforços extras no front.",
+    enhancement3: "Nível de Dificuldade 3: reforços maciços chegam para fortalecer o inimigo.",
+    bot_out_of_cards: "A IA inimiga não tem cartas restantes na mão!",
+    warn_full_hand: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M12 3L2 20h20L12 3z\"/><path d=\"M12 10v4M12 17h.01\"/></svg> <b>Fim da Mão da IA:</b> A IA jogou todas as suas cartas ({size}/{size}). Se não estiver em vantagem, ela deve <b>RECUAR</b>!",
+    warn_withdraw_limit_reached: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M12 3L2 20h20L12 3z\"/><path d=\"M12 10v4M12 17h.01\"/></svg> <b>Limite Atingido:</b> O teatro <b>{th}</b> atingiu {limit} cartas da IA. A IA <b>RECUA</b> imediatamente!",
+    gameOverVictory: "Missão cumprida, comandante! Suas forças alcançaram {pts} pontos.",
+    gameOverDefeat: "Retirada. O inimigo dominou o campo com {pts} pontos."
+  },
+  en: {
+    subtitle: "Command HQ - Smart Deck",
+    btnRules: "Rules",
+    rulesModalTitle: "How to Play — Air, Land & Sea Solo",
+    rulesS1Title: "1. Goal & Format",
+    rulesS1Text: "First to reach 12 Victory Points (Standard, 3 Theaters) or 6 VP (Epic, 5 Theaters) wins. Each round, battle for theater control by playing cards Face-Up (with effects) or Face-Down (Strength 2).",
+    rulesS2Title: "2. AI (Bot - Always 1st Player)",
+    rulesS2Text: "The AI is always 1st player and wins ties in strength. Click 'Deploy AI Card' to reveal the bot's card. The app provides target advice and deployment hints. If the AI plays a card face-down, use 'Deploy FD'.",
+    rulesAdjLabel: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><circle cx=\"12\" cy=\"9\" r=\"3\"/><path d=\"M12 21c-4-4.5-6-7.8-6-10.5A6 6 0 0112 4a6 6 0 016 6.5c0 2.7-2 6-6 10.5z\"/></svg> Adjacency Priority Rule",
+    rulesAdjText: "When an effect targets adjacent theaters, the AI follows this strict order:<br><strong>1st</strong> Adjacent Right &gt; <strong>2nd</strong> Adjacent Left &gt; <strong>3rd</strong> Same Theater &gt; <strong>4th</strong> Non-Adjacent.",
+    rulesFlipLabel: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M21 12a9 9 0 11-3-6.7\"/><path d=\"M21 4v5h-5\"/></svg> Flip Priority Rule",
+    rulesFlipText: "When flipping a card (e.g. <em>Maneuver</em>, <em>Ambush</em>), the AI prioritizes:<br><strong>1st</strong> Opponent's Face-Down card (to flip Face-Up)<br><strong>2nd</strong> AI's Face-Up card (to flip Face-Down)<br><strong>3rd</strong> AI's Face-Down card (to flip Face-Up)<br><strong>4th</strong> Opponent's Face-Up card (to flip Face-Down).",
+    rulesS3Title: "3. Bot Withdrawal Rule",
+    rulesS3Text: "The AI WITHDRAWS immediately if forced to play a 4th card to the same theater (or 5th in Epic), or when its hand is depleted and trailing. You can also withdraw on your turn to concede fewer VP.",
+    rulesScoreTableLabel: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M8 21h8M12 17v4M7 4h10v4a5 5 0 01-10 0V4z\"/><path d=\"M7 6H4a2 2 0 002 4M17 6h3a2 2 0 01-2 4\"/></svg> Withdrawal Scoring Table",
+    rulesS4Title: "4. Reinforcements & Bonus Cards",
+    rulesS4Text: "If you win multiple theaters, the AI's difficulty increases and it gains access to Bonus deployment cards via the 'Bonus Card' button.",
+    btnCloseRules: "Understood / Close",
+    setupPhysicalTitle: "Physical Setup (On Table)",
+    setupPhys1: "Place the Theater cards in the center of the table in the order chosen below.",
+    setupPhys2: "Shuffle the 18 cards corresponding to the active theaters (6 cards per theater).",
+    setupPhys3: "Deal your starting hand (6 cards in Standard / 10 in Epic).",
+    setupPhys4: "The app automatically manages the AI's cards. No physical cards needed for the bot!",
+    setupPhys5: "The AI is always the 1st Player and wins ties in theater strength!",
+    setupFormatTitle: "0. Game Format",
+    btnFormatStd: "Standard (3 Theaters)",
+    btnFormatEpic: "Epic (5 Theaters)",
+    setupTitle1: "1. Theater Order (Left to Right)",
+    setupThDesc: "Select the theaters in order from Left to Right as placed on your table.",
+    btnClearTh: "Reset Order",
+    setupTitle2: "2. Your Starting Hand",
+    setupHandDesc: "Select the cards you drew. The simulator will compile the remaining cards for the enemy AI.",
+    selected: "Selected",
+    lblMode: "3. AI Protocol",
+    btnModeAuto: "Autonomous",
+    btnModeSemi: "Semiautonomous",
+    btnStart: "Initialize Combat",
+    botHandTitle: "Enemy Hand",
+    btnDraw: "Deploy AI Card",
+    btnDrawFD: "Deploy FD",
+    btnDrawBonus: "Bonus Card",
+    stampActive: "Live",
+    tacticalBannerTitle: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M9 3H5a1 1 0 00-1 1v16a1 1 0 001 1h4M9 3v18M9 3h10a1 1 0 011 1v16a1 1 0 01-1 1H9\"/><path d=\"M12 8h5M12 12h5M12 16h5\"/></svg> Quick Tactical Guide (AI - 1st Player)",
+    adjBannerLabel: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><circle cx=\"12\" cy=\"9\" r=\"3\"/><path d=\"M12 21c-4-4.5-6-7.8-6-10.5A6 6 0 0112 4a6 6 0 016 6.5c0 2.7-2 6-6 10.5z\"/></svg> Adjacency Priority:",
+    adjBannerText: "1st Adj Right > 2nd Adj Left > 3rd Matching Theater > 4th Non-Adjacent",
+    flipBannerLabel: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M21 12a9 9 0 11-3-6.7\"/><path d=\"M21 4v5h-5\"/></svg> Flip Priority:",
+    flipBannerText: "1st Opponent Face-Down > 2nd AI Face-Up > 3rd AI Face-Down > 4th Opponent Face-Up",
+    lblAdjOrder: "Target Priority",
+    tableauTitle: "Enemy Tableau",
+    placePromptTitle: "Where was this card placed?",
+    btnEndRound: "End Round / Withdraw",
+    statsTitle: "Difficulty Intel",
+    statsDesc: "If the enemy needs reinforcements, track lost theatres to trigger bonus deployments.",
+    statLostTheatres: "Theaters Lost",
+    btnNewGame: "Abort Mission",
+    roundLabel: "Round",
+    targetLabel: "Target",
+    playerScoreLabel: "YOU",
+    aiScoreLabel: "AI (1st)",
+    th_air: "Air", th_land: "Land", th_sea: "Sea", th_econ: "Econ", th_diplo: "Diplo", th_intel: "Intel",
+    roundEndedTitle: "Round Ended",
+    whoWonPrompt: "Who won this round?",
+    btnIWon: "I WON",
+    btnAiWon: "AI WON",
+    btnCancel: "Cancel",
+    btnBack: "Back",
+    howEndedPrompt: "How did it end?",
+    scoreBattle6: "Battle Resolved / Tie Won (6 VP)",
+    // 1st Player (AI) Standard Scoring
+    scoreAiStd4Plus: "Player Withdrew w/ 4+ cards (2 VP)",
+    scoreAiStd2to3: "Player Withdrew w/ 2-3 cards (3 VP)",
+    scoreAiStd1: "Player Withdrew w/ 1 card (4 VP)",
+    scoreAiStd0: "Player Withdrew w/ 0 cards (6 VP)",
+    // 2nd Player (Human) Standard Scoring
+    scorePlStd5Plus: "AI Withdrew w/ 5+ cards (2 VP)",
+    scorePlStd3to4: "AI Withdrew w/ 3-4 cards (3 VP)",
+    scorePlStd2: "AI Withdrew w/ 2 cards (4 VP)",
+    scorePlStd0to1: "AI Withdrew w/ 0-1 cards (6 VP)",
+    // 1st Player (AI) Epic Scoring
+    scoreAiEpic6Plus: "Player Withdrew w/ 6+ cards (2 VP)",
+    scoreAiEpic3to5: "Player Withdrew w/ 3-5 cards (3 VP)",
+    scoreAiEpic1to2: "Player Withdrew w/ 1-2 cards (4 VP)",
+    scoreAiEpic0: "Player Withdrew w/ 0 cards (6 VP)",
+    // 2nd Player (Human) Epic Scoring
+    scorePlEpic7Plus: "AI Withdrew w/ 7+ cards (2 VP)",
+    scorePlEpic4to6: "AI Withdrew w/ 4-6 cards (3 VP)",
+    scorePlEpic2to3: "AI Withdrew w/ 2-3 cards (4 VP)",
+    scorePlEpic0to1: "AI Withdrew w/ 0-1 cards (6 VP)",
+    pri_auto_title: "AI Orders (Autonomous)",
+    pri_semi_title: "AI Orders (Semiautonomous)",
+    pri_play: "<b>1. Placement:</b> Play to the {th} theater.",
+    pri_withdraw: "<b>2. Withdraw:</b> If this is the {limit}th card on {th}, <b>WITHDRAW</b>.",
+    pri_choice: "<b>3. Target:</b> {targets}",
+    pri_flip: "<b>4. Flip Priority:</b> Opponent Face-Down > AI Face-Up > AI Face-Down > Opponent Face-Up.",
+    pri_general: "<b>3. Effect:</b> Resolve for maximum AI advantage.",
+    pri_no_effect: "No instant effect.",
+    pri_semi_text: "<b>3. Tactical Command:</b> Make the best choice for the AI.",
+    enhancement2: "Difficulty Level 2: the enemy receives extra reinforcements at the front.",
+    enhancement3: "Difficulty Level 3: massive reinforcements arrive to bolster the enemy.",
+    bot_out_of_cards: "Enemy AI has no cards left in hand!",
+    warn_full_hand: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M12 3L2 20h20L12 3z\"/><path d=\"M12 10v4M12 17h.01\"/></svg> <b>AI Hand Exhausted:</b> The AI played all {size}/{size} cards. If not leading, it should <b>WITHDRAW</b>!",
+    warn_withdraw_limit_reached: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M12 3L2 20h20L12 3z\"/><path d=\"M12 10v4M12 17h.01\"/></svg> <b>Threshold Reached:</b> Theater <b>{th}</b> reached {limit} AI cards. AI <b>WITHDRAWS</b> immediately!",
+    gameOverVictory: "Mission accomplished, commander! Your forces reached {pts} points.",
+    gameOverDefeat: "Retreat. The enemy has taken the field with {pts} points."
+  }
+};
+
+let currentLang = localStorage.getItem('boardbots_lang') || 'pt';
+let mode = 'auto';
+let gameFormat = 'standard';
+let maxTheaters = 3;
+let handSize = 6;
+let roundNumber = 1;
+let selectedTheaters = [];
+let playerHand = [];
+let botDeck = [];
+let outOfGameDeck = [];
+let theatresLost = 0;
+let botCardsPlayed = 0;
+let tableau = [[], [], []];
+let scorePlayer = 0;
+let scoreAI = 0;
+let roundWinner = null;
+let currentPendingCard = null;
+let currentPendingFacedown = false;
+
+function saveState() {
+  try {
+    localStorage.setItem(ALS_LS_KEY, JSON.stringify({
+      gameFormat, maxTheaters, handSize, roundNumber, selectedTheaters, playerHand,
+      botDeck: botDeck.map(c => c.id), outOfGameDeck: outOfGameDeck.map(c => c.id),
+      botCardsPlayed, theatresLost, scorePlayer, scoreAI, mode,
+      tableau: tableau.map(col => col.map(item => ({ id: item.card.id, fd: item.facedown }))),
+      inGame: !document.getElementById('game-area').classList.contains('hidden')
+    }));
+  } catch(e) {}
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(ALS_LS_KEY);
+    if (!raw) return false;
+    const s = JSON.parse(raw);
+    gameFormat = s.gameFormat ?? 'standard';
+    maxTheaters = s.maxTheaters ?? 3;
+    handSize = s.handSize ?? 6;
+    roundNumber = s.roundNumber ?? 1;
+    selectedTheaters = s.selectedTheaters ?? [];
+    playerHand = s.playerHand ?? [];
+    botDeck = (s.botDeck ?? []).map(id => DB.find(c => c.id === id)).filter(Boolean);
+    outOfGameDeck = (s.outOfGameDeck ?? []).map(id => DB.find(c => c.id === id)).filter(Boolean);
+    botCardsPlayed = s.botCardsPlayed ?? 0;
+    theatresLost = s.theatresLost ?? 0;
+    scorePlayer = s.scorePlayer ?? 0;
+    scoreAI = s.scoreAI ?? 0;
+    mode = s.mode ?? 'auto';
+    tableau = (s.tableau ?? []).map(col => col.map(item => ({ card: DB.find(c => c.id === item.id), facedown: item.fd })).filter(i => i.card));
+    return s.inGame ?? false;
+  } catch(e) { return false; }
+}
+
+function resetAllState() {
+  try { localStorage.removeItem(ALS_LS_KEY); } catch(e){}
+  location.reload();
+}
+
+function confirmReset() {
+  if (confirm(currentLang === 'pt' ? 'Abortar missão?' : 'Abort mission?')) resetAllState();
+}
+
+function openRulesModal() {
+  document.getElementById('rulesModal').classList.remove('hidden');
+}
+
+function closeRulesModal() {
+  document.getElementById('rulesModal').classList.add('hidden');
+}
+
+function setLang(l) {
+  currentLang = l;
+  localStorage.setItem('boardbots_lang', l);
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const k = el.getAttribute('data-i18n');
+    if (DICT[l] && DICT[l][k]) el.innerHTML = DICT[l][k];
+  });
+  const btnPt = document.getElementById('btnPt');
+  const btnEn = document.getElementById('btnEn');
+  if (btnPt) btnPt.classList.toggle('active', l==='pt');
+  if (btnEn) btnEn.classList.toggle('active', l==='en');
+  updateTheaterUI();
+  renderHandSelector();
+  updateTableauUI();
+}
+
+function setFormat(fmt) {
+  gameFormat = fmt;
+  maxTheaters = fmt === 'epic' ? 5 : 3;
+  handSize = fmt === 'epic' ? 10 : 6;
+  document.getElementById('btnFormatStd').classList.toggle('active', fmt === 'standard');
+  document.getElementById('btnFormatEpic').classList.toggle('active', fmt === 'epic');
+  document.getElementById('handTarget').innerText = handSize;
+  document.getElementById('scoreTarget').innerText = fmt === 'epic' ? 6 : 12;
+  resetTheaters();
+  saveState();
+}
+
+function setMode(m) {
+  mode = m;
+  document.getElementById('btnModeAuto').classList.toggle('active', m === 'auto');
+  document.getElementById('btnModeSemi').classList.toggle('active', m === 'semi');
+  saveState();
+}
+
+function resetTheaters() {
+  selectedTheaters = [];
+  playerHand = [];
+  updateTheaterUI();
+  renderHandSelector();
+  saveState();
+}
+
+function updateTheaterUI() {
+  const grid = document.getElementById('theaterOrderGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  ['air', 'land', 'sea', 'econ', 'diplo', 'intel'].forEach(th => {
+    const btn = document.createElement('button');
+    const idx = selectedTheaters.indexOf(th);
+    btn.className = `btn th-btn ` + (idx !== -1 ? 'active' : '');
+    const thName = DICT[currentLang]['th_' + th] || th;
+    btn.innerHTML = `${thName} <div class="order-badge" style="display:${idx !== -1 ? 'flex' : 'none'}">${idx + 1}</div>`;
+    btn.onclick = () => toggleTheater(th);
+    grid.appendChild(btn);
+  });
+}
+
+function toggleTheater(th) {
+  const idx = selectedTheaters.indexOf(th);
+  if (idx !== -1) selectedTheaters.splice(idx, 1);
+  else if (selectedTheaters.length < maxTheaters) selectedTheaters.push(th);
+  updateTheaterUI();
+  renderHandSelector();
+  saveState();
+}
+
+function renderHandSelector() {
+  const area = document.getElementById('handSelectorArea');
+  if (!area) return;
+  area.innerHTML = '';
+  if (selectedTheaters.length !== maxTheaters) return;
+  const pool = DB.filter(c => selectedTheaters.includes(c.th));
+  pool.forEach(c => {
+    const btn = document.createElement('button');
+    btn.className = `btn ` + (playerHand.includes(c.id) ? 'active' : '');
+    btn.style.fontSize = '0.75em';
+    btn.style.padding = '8px 4px';
+    const thName = DICT[currentLang]['th_' + c.th] || c.th;
+    btn.innerHTML = `<strong>${c.v}</strong> ${c.name.substring(0,6)}<br><small style="opacity:0.75">${thName}</small>`;
+    btn.onclick = () => {
+      if (playerHand.includes(c.id)) playerHand = playerHand.filter(i => i !== c.id);
+      else if (playerHand.length < handSize) playerHand.push(c.id);
+      document.getElementById('handCount').innerText = playerHand.length;
+      document.getElementById('btnStart').disabled = playerHand.length !== handSize;
+      renderHandSelector();
+      saveState();
+    };
+    area.appendChild(btn);
+  });
+}
+
+function shuffleArray(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function startGame() {
+  tableau = Array.from({length: maxTheaters}, () => []);
+  initRoundLogic();
+  document.getElementById('setup-screen').classList.add('hidden');
+  document.getElementById('game-area').classList.remove('hidden');
+  document.getElementById('score-header').classList.remove('hidden');
+  saveState();
+}
+
+function initRoundLogic() {
+  const pool = DB.filter(c => selectedTheaters.includes(c.th));
+  let remaining = pool.filter(c => !playerHand.includes(c.id));
+  shuffleArray(remaining);
+  botDeck = remaining.slice(0, handSize);
+  outOfGameDeck = remaining.slice(handSize);
+  botCardsPlayed = 0;
+  renderBotHand();
+  updateTableauUI();
+}
+
+function renderBotHand() {
+  const ui = document.getElementById('botHandUI');
+  if (!ui) return;
+  ui.innerHTML = '';
+  for(let i=0; i<handSize; i++) {
+    const d = document.createElement('div');
+    d.className = 'bot-hand-card ' + (i < botCardsPlayed ? 'used' : '');
+    ui.appendChild(d);
+  }
+}
+
+function checkWithdrawalAlerts() {
+  const alertBox = document.getElementById('botWithdrawAlert');
+  if (!alertBox) return;
+  const withdrawLimit = gameFormat === 'epic' ? 5 : 4;
+  let alerts = [];
+
+  // Check theater card counts
+  for (let i = 0; i < maxTheaters; i++) {
+    const count = (tableau[i] || []).length;
+    const thName = DICT[currentLang]['th_' + selectedTheaters[i]] || ('TH ' + (i+1));
+    if (count >= withdrawLimit) {
+      alerts.push(DICT[currentLang].warn_withdraw_limit_reached.replace('{th}', thName).replace('{limit}', withdrawLimit));
+    }
+  }
+
+  // Check if AI played its full hand
+  if (botCardsPlayed >= handSize) {
+    alerts.push(DICT[currentLang].warn_full_hand.replace('{size}', handSize));
+  }
+
+  if (alerts.length > 0) {
+    alertBox.innerHTML = alerts.join('<br>');
+    alertBox.classList.remove('hidden');
+  } else {
+    alertBox.classList.add('hidden');
+  }
+}
+
+function drawBotCard(fd) {
+  if (botCardsPlayed >= botDeck.length) {
+    alert(DICT[currentLang].bot_out_of_cards);
+    return;
+  }
+  currentPendingCard = botDeck[botCardsPlayed++];
+  currentPendingFacedown = fd;
+  renderBotHand();
+  displayCardPrompt(currentPendingCard, fd);
+  saveState();
+}
+
+function drawEnhancement() {
+  if (outOfGameDeck.length === 0) {
+    alert(currentLang === 'pt' ? 'O baralho de fora de jogo está vazio!' : 'Out-of-game deck is empty!');
+    return;
+  }
+  currentPendingCard = outOfGameDeck.pop();
+  currentPendingFacedown = false;
+  displayCardPrompt(currentPendingCard, false, true);
+  saveState();
+}
+
+function getBotStrengthPerTheater() {
+  return tableau.map(col => col.reduce((s, item) => s + (item.facedown ? 2 : item.card.v), 0));
+}
+
+function getAdjacencyString(thId) {
+  const idx = selectedTheaters.indexOf(thId);
+  if (idx === -1) return currentLang === 'pt' ? 'Adjacente, Mesmo teatro, Não-adjacente' : 'Adjacent, Matching theater, Non-adjacent';
+  
+  const adjRight = idx < maxTheaters - 1 ? DICT[currentLang]['th_' + selectedTheaters[idx + 1]] : null;
+  const adjLeft = idx > 0 ? DICT[currentLang]['th_' + selectedTheaters[idx - 1]] : null;
+  const matching = DICT[currentLang]['th_' + thId] || thId;
+  
+  let targets = [];
+  if (adjRight) targets.push(`1º ${adjRight}`);
+  if (adjLeft) targets.push(`2º ${adjLeft}`);
+  targets.push(`3º ${matching}`);
+  targets.push(currentLang === 'pt' ? '4º Não-adjacente' : '4th Non-adjacent');
+  
+  return targets.join(', ');
+}
+
+function displayCardPrompt(card, facedown, isEnhancement = false) {
+  const modal = document.getElementById('activePlayArea');
+  const playArea = document.getElementById('playArea');
+  const pBox = document.getElementById('priorityBox');
+  const btnsArea = document.getElementById('placeButtonsArea');
+  modal.classList.remove('hidden');
+  
+  btnsArea.innerHTML = '';
+  for(let i=0; i<maxTheaters; i++) {
+      const b = document.createElement('button');
+      b.className = 'btn';
+      b.style.flex = '1';
+      b.style.minWidth = '80px';
+      b.style.padding = '12px 6px';
+      b.style.fontSize = '0.8em';
+      const thName = DICT[currentLang]['th_' + selectedTheaters[i]] || ('TH ' + (i+1));
+      b.innerText = `${currentLang === 'pt' ? 'Posicionar em' : 'Place in'} ${thName}`;
+      b.onclick = () => placeCard(i);
+      btnsArea.appendChild(b);
+  }
+
+  if (facedown) {
+      playArea.innerHTML = `
+        <div class="playing-card" style="border-color: #444; background:repeating-linear-gradient(45deg, #2b2b2b, #2b2b2b 5px, #444 5px, #444 10px);">
+            <div style="flex:1; display:flex; align-items:center; justify-content:center; color:#fff; font-size:5.5em; font-weight:900;">2</div>
+        </div>
+      `;
+      pBox.innerHTML = `<h4 style="color:#fff;"><span class="dog-tag">${currentLang === 'pt' ? 'Carta Face Down' : 'Face Down Card'}</span></h4><p style="color:#bbb; font-size:0.9em;">${currentLang === 'pt' ? 'Selecione em qual teatro a IA posicionará esta carta face down (Força 2).' : 'Select where the bot will place this Face Down card (Strength 2).'}</p>`;
+      return;
+  }
+  
+  const name = card.name;
+  const text = card.txt;
+  const thName = DICT[currentLang]['th_'+card.th] || card.th;
+  
+  playArea.innerHTML = `
+    <div class="playing-card" style="border-color: var(--th-${card.th})">
+        <div class="card-header" style="background-color: var(--th-${card.th})">
+            <div class="card-val">${card.v}</div>
+            <div class="card-title">
+                <div class="card-theater">${thName}</div>
+                <div class="card-name">${name}</div>
+            </div>
+        </div>
+        <div class="card-art"></div>
+        <div class="card-text-box">
+            <p>${text || (currentLang === 'pt' ? '<i>Sem efeito instantâneo.</i>' : '<i>No instant effect.</i>')}</p>
+        </div>
+    </div>
+  `;
+  
+  if (isEnhancement) {
+      pBox.innerHTML = `<h4><span class="dog-tag">${currentLang === 'pt' ? 'Posicionamento Bônus' : 'Bonus Deployment'}</span></h4><p style="margin:8px 0 0; color:#fff;">${currentLang === 'pt' ? 'O inimigo joga esta carta sem restrições.' : 'Enemy plays this card without restriction.'}</p>`;
+      return;
+  }
+  
+  let priHtml = '';
+  const txtLow = (card.txt || '').toLowerCase();
+  const withdrawLimit = gameFormat === 'epic' ? 5 : 4;
+  const withdrawStr = DICT[currentLang].pri_withdraw.replace('{th}', '<b>' + thName + '</b>').replace('{limit}', withdrawLimit);
+  
+  const thIdx = selectedTheaters.indexOf(card.th);
+  const strengths = getBotStrengthPerTheater();
+  let contextNote = '';
+  if (thIdx !== -1) {
+      const colCount = (tableau[thIdx] || []).length;
+      const curStr = strengths[thIdx] || 0;
+      if (colCount >= withdrawLimit - 1) {
+          contextNote = currentLang === 'pt' ? `<svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3L2 20h20L12 3z"/><path d="M12 10v4M12 17h.01"/></svg> <b>Atenção:</b> A IA já possui ${colCount} cartas aqui. Uma a mais atingirá o limite de recuo (${withdrawLimit})!` : `<svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3L2 20h20L12 3z"/><path d="M12 10v4M12 17h.01"/></svg> <b>Warning:</b> Bot has ${colCount} cards here. Next card triggers withdrawal limit (${withdrawLimit})!`;
+      } else if (curStr >= 7) {
+          contextNote = currentLang === 'pt' ? `✔ <b>Forte neste teatro</b> (${curStr} Força).` : `✔ <b>Strong in this theater</b> (${curStr} STR).`;
+      } else {
+          contextNote = currentLang === 'pt' ? `Força atual da IA aqui: <b>${curStr}</b>.` : `Current AI strength here: <b>${curStr}</b>.`;
+      }
+  }
+
+  priHtml += `<li>${DICT[currentLang].pri_play.replace('{th}', '<b>' + thName + '</b>')}</li>`;
+  if (contextNote) priHtml += `<li style="color:#d4af37; font-size:0.85em; font-style:italic;">${contextNote}</li>`;
+  priHtml += `<li>${withdrawStr}</li>`;
+
+  // Always show adjacency targets order
+  priHtml += `<li><strong>${DICT[currentLang].lblAdjOrder}:</strong> ${getAdjacencyString(card.th)}</li>`;
+
+  // Intelligence 4 (Neutralize) special bot random pick
+  if (card.id === 'i4') {
+      const activePool = DB.filter(c => selectedTheaters.includes(c.th));
+      const botCurrentHandIds = botDeck.slice(0, botCardsPlayed).map(c => c.id);
+      const possibleEnemyCards = activePool.filter(c => !botCurrentHandIds.includes(c.id) && c.id !== 'i4');
+      const randomNamedCard = possibleEnemyCards.length > 0 
+          ? possibleEnemyCards[Math.floor(Math.random() * possibleEnemyCards.length)]
+          : activePool[Math.floor(Math.random() * activePool.length)];
+      
+      const namedThName = DICT[currentLang]['th_' + randomNamedCard.th] || randomNamedCard.th;
+      const namedText = currentLang === 'pt' 
+          ? `<svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="0.6" fill="currentColor"/></svg> <b>Carta Nomeada pela IA:</b> [${randomNamedCard.v}] <b>${randomNamedCard.name}</b> (${namedThName})`
+          : `<svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="0.6" fill="currentColor"/></svg> <b>AI Named Card:</b> [${randomNamedCard.v}] <b>${randomNamedCard.name}</b> (${namedThName})`;
+      priHtml += `<li style="background:rgba(217,201,160,0.15); padding:4px 6px; border-radius:3px; margin:4px 0; color:#fff;">${namedText}</li>`;
+  }
+
+  if (mode === 'auto') {
+      if (txtLow.includes('flip')) {
+          priHtml += `<li>${DICT[currentLang].pri_flip}</li>`;
+      } else if (txtLow.includes('move') || txtLow.includes('destroy') || txtLow.includes('discard')) {
+          priHtml += `<li>${DICT[currentLang].pri_general}</li>`;
+      } else if (card.v === 6) {
+          priHtml += `<li><i>${DICT[currentLang].pri_no_effect}</i></li>`;
+      } else {
+          priHtml += `<li>${DICT[currentLang].pri_general}</li>`;
+      }
+      // Always show Flip priority note if not already included
+      if (!txtLow.includes('flip')) {
+          priHtml += `<li style="opacity:0.8; font-size:0.85em;"><i>${DICT[currentLang].pri_flip}</i></li>`;
+      }
+      pBox.innerHTML = `<h4><span class="dog-tag">${DICT[currentLang].pri_auto_title}</span></h4><ul style="margin:6px 0 0; padding-left:18px; line-height:1.4; font-size:0.9em;">${priHtml}</ul>`;
+  } else {
+      if (card.v === 6) priHtml += `<li><i>${DICT[currentLang].pri_no_effect}</i></li>`;
+      else priHtml += `<li>${DICT[currentLang].pri_semi_text}</li>`;
+      priHtml += `<li style="opacity:0.8; font-size:0.85em;"><i>${DICT[currentLang].pri_flip}</i></li>`;
+      pBox.innerHTML = `<h4><span class="dog-tag">${DICT[currentLang].pri_semi_title}</span></h4><ul style="margin:6px 0 0; padding-left:18px; line-height:1.4; font-size:0.9em;">${priHtml}</ul>`;
+  }
+}
+
+function placeCard(colIndex) {
+    document.getElementById('activePlayArea').classList.add('hidden');
+    tableau[colIndex].push({
+        card: currentPendingCard,
+        facedown: currentPendingFacedown
+    });
+    updateTableauUI();
+    saveState();
+}
+
+function updateTableauUI() {
+    const colsContainer = document.getElementById('tableauCols');
+    if (!colsContainer) return;
+    colsContainer.innerHTML = '';
+    const strengths = getBotStrengthPerTheater();
+    
+    for (let i=0; i<maxTheaters; i++) {
+        const colDiv = document.createElement('div');
+        colDiv.style.flex = '1';
+        colDiv.style.minWidth = '85px';
+        colDiv.style.border = '1px dashed var(--ink-soft)';
+        colDiv.style.borderRadius = '4px';
+        colDiv.style.display = 'flex';
+        colDiv.style.flexDirection = 'column';
+        colDiv.style.alignItems = 'center';
+        colDiv.style.padding = '8px 4px';
+        
+        const titleDiv = document.createElement('div');
+        titleDiv.style.fontWeight = 'bold';
+        titleDiv.style.fontSize = '0.8em';
+        titleDiv.style.marginBottom = '6px';
+        titleDiv.style.textTransform = 'uppercase';
+        titleDiv.style.borderBottom = '1px solid var(--ink)';
+        titleDiv.style.paddingBottom = '4px';
+        titleDiv.style.width = '100%';
+        titleDiv.style.textAlign = 'center';
+        titleDiv.innerText = DICT[currentLang]['th_' + selectedTheaters[i]] || `TH ${i+1}`;
+        colDiv.appendChild(titleDiv);
+        
+        const cardsDiv = document.createElement('div');
+        cardsDiv.style.display = 'flex';
+        cardsDiv.style.flexDirection = 'column';
+        cardsDiv.style.gap = '8px';
+        cardsDiv.style.width = '100%';
+        
+        (tableau[i] || []).forEach((item, idx) => {
+            const el = document.createElement('div');
+            el.className = 'mini-card' + (item.facedown ? ' facedown' : '');
+            el.style.borderColor = 'var(--th-' + item.card.th + ')';
+            
+            el.innerHTML = `
+                <div class="content-wrap" style="flex:1; display:flex; flex-direction:column; transition:opacity 0.2s;">
+                    <div class="header" style="background:var(--th-${item.card.th})">${item.card.v}</div>
+                    <div class="name">${item.card.name}</div>
+                </div>
+                <div class="card-controls" style="display:flex; justify-content:space-between; background:#111; padding:4px 2px; margin-top:auto; font-size:12px; border-top:1px solid #000; position:relative; z-index:2;">
+                    <span onclick="moveCard(event, ${i}, ${idx}, -1)" style="color:#fff; cursor:pointer; opacity:${i===0 ? 0.2 : 1}; pointer-events:${i===0 ? 'none' : 'auto'}; padding:0 2px;" title="Move Left" aria-label="Move Left">◀</span>
+                    <span onclick="flipCard(event, ${i}, ${idx})" style="color:#fff; cursor:pointer; padding:0 2px;" title="Flip" aria-label="Flip">↺</span>
+                    <span onclick="moveCard(event, ${i}, ${idx}, 1)" style="color:#fff; cursor:pointer; opacity:${i===maxTheaters-1 ? 0.2 : 1}; pointer-events:${i===maxTheaters-1 ? 'none' : 'auto'}; padding:0 2px;" title="Move Right" aria-label="Move Right">▶</span>
+                    <span onclick="returnToHand(event, ${i}, ${idx})" style="color:#6cf; cursor:pointer; padding:0 2px;" title="Return to Hand" aria-label="Return to Hand">↑</span>
+                    <span onclick="discardCard(event, ${i}, ${idx})" style="color:#f66; cursor:pointer; padding:0 2px;" title="Discard" aria-label="Discard">✖</span>
+                </div>
+            `;
+            
+            if (item.facedown) {
+                el.onclick = () => {
+                    item.facedown = false;
+                    updateTableauUI();
+                    saveState();
+                };
+            }
+            cardsDiv.appendChild(el);
+        });
+        
+        colDiv.appendChild(cardsDiv);
+
+        const strVal = strengths[i] || 0;
+        const strEl = document.createElement('div');
+        strEl.style.cssText = 'margin-top:auto; padding-top:8px; font-weight:bold; font-size:0.85em; color:var(--seal); font-family:sans-serif; text-align:center;';
+        strEl.innerText = `STR: ${strVal}`;
+        colDiv.appendChild(strEl);
+
+        colsContainer.appendChild(colDiv);
+    }
+
+    checkWithdrawalAlerts();
+}
+
+function moveCard(e, colIndex, cardIndex, dir) {
+    e.stopPropagation();
+    const newCol = colIndex + dir;
+    if (newCol >= 0 && newCol < maxTheaters) {
+        const item = tableau[colIndex].splice(cardIndex, 1)[0];
+        tableau[newCol].push(item);
+        updateTableauUI();
+        saveState();
+    }
+}
+
+function flipCard(e, colIndex, cardIndex) {
+    e.stopPropagation();
+    tableau[colIndex][cardIndex].facedown = !tableau[colIndex][cardIndex].facedown;
+    updateTableauUI();
+    saveState();
+}
+
+function returnToHand(e, colIndex, cardIndex) {
+    e.stopPropagation();
+    const item = tableau[colIndex].splice(cardIndex, 1)[0];
+    if (botCardsPlayed > 0) botCardsPlayed--;
+    // Place returned card into remaining unplayed bot cards and reshuffle unplayed deck
+    const remainingDeck = botDeck.slice(botCardsPlayed);
+    remainingDeck.push(item.card);
+    shuffleArray(remainingDeck);
+    botDeck = botDeck.slice(0, botCardsPlayed).concat(remainingDeck);
+    
+    renderBotHand();
+    updateTableauUI();
+    saveState();
+}
+
+function discardCard(e, colIndex, cardIndex) {
+    e.stopPropagation();
+    tableau[colIndex].splice(cardIndex, 1);
+    updateTableauUI();
+    saveState();
+}
+
+function adjustTheatres(delta) {
+  theatresLost = Math.max(0, theatresLost + delta);
+  document.getElementById('vTheatresLost').innerText = theatresLost;
+  const box = document.getElementById('enhancementBox');
+  if (theatresLost >= 2) {
+      box.classList.remove('hidden');
+      box.innerHTML = `<p style="margin:0; font-weight:bold; color:var(--seal);">${theatresLost >= 3 ? DICT[currentLang].enhancement3 : DICT[currentLang].enhancement2}</p>`;
+  } else {
+      box.classList.add('hidden');
+  }
+  saveState();
+}
+
+function endRound() {
+    document.getElementById('endRoundModal').classList.remove('hidden');
+    document.getElementById('scoringStep1').classList.remove('hidden');
+    document.getElementById('scoringStep2').classList.add('hidden');
+}
+
+function selectWinner(w) { 
+  roundWinner = w;
+  document.getElementById('scoringStep1').classList.add('hidden');
+  document.getElementById('scoringStep2').classList.remove('hidden');
+  
+  const isAI = (w === 'ai');
+  const subPrompt = document.getElementById('scoringSubPrompt');
+  if (subPrompt) {
+      if (isAI) {
+          subPrompt.innerText = currentLang === 'pt' 
+            ? 'A IA (1º Jogador) vence se você recuou ou se ela venceu a batalha (ganha empates):' 
+            : 'AI (1st Player) scores if you withdrew or AI won the battle (wins ties):';
+      } else {
+          subPrompt.innerText = currentLang === 'pt' 
+            ? 'Você (2º Jogador) vence se a IA recuou ou se você venceu a batalha (perde empates):' 
+            : 'Player (2nd Player) scores if AI withdrew or you won the battle (loses ties):';
+      }
+  }
+
+  // Hide all score button sets first
+  document.getElementById('scoreBtnsStdAI').classList.add('hidden');
+  document.getElementById('scoreBtnsStdPlayer').classList.add('hidden');
+  document.getElementById('scoreBtnsEpicAI').classList.add('hidden');
+  document.getElementById('scoreBtnsEpicPlayer').classList.add('hidden');
+
+  if (gameFormat === 'standard') {
+      if (isAI) document.getElementById('scoreBtnsStdAI').classList.remove('hidden');
+      else document.getElementById('scoreBtnsStdPlayer').classList.remove('hidden');
+  } else {
+      if (isAI) document.getElementById('scoreBtnsEpicAI').classList.remove('hidden');
+      else document.getElementById('scoreBtnsEpicPlayer').classList.remove('hidden');
+  }
+}
+
+function addScore(pts) {
+  if (roundWinner === 'player') scorePlayer += pts; else scoreAI += pts;
+  document.getElementById('scorePlayer').innerText = scorePlayer;
+  document.getElementById('scoreAI').innerText = scoreAI;
+  const target = gameFormat === 'epic' ? 6 : 12;
+  document.getElementById('endRoundModal').classList.add('hidden');
+  
+  if (scorePlayer >= target) {
+    showGameOver(true, scorePlayer);
+    saveState();
+    return;
+  } else if (scoreAI >= target) {
+    showGameOver(false, scoreAI);
+    saveState();
+    return;
+  }
+  
+  roundNumber++;
+  document.getElementById('roundNum').innerText = roundNumber;
+  
+  if (selectedTheaters.length === maxTheaters) {
+      const rightMost = selectedTheaters.pop();
+      selectedTheaters.unshift(rightMost);
+      updateTheaterUI();
+  }
+  
+  playerHand = [];
+  document.getElementById('game-area').classList.add('hidden');
+  document.getElementById('setup-screen').classList.remove('hidden');
+  renderHandSelector();
+  saveState();
+}
+
+function showGameOver(isVictory, pts) {
+    document.getElementById('gameOverEmoji').innerHTML = isVictory
+      ? '<svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 01-10 0V4z"/><path d="M7 6H4a2 2 0 002 4M17 6h3a2 2 0 01-2 4"/></svg>'
+      : '<svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="10" r="1.3" fill="currentColor"/><circle cx="15" cy="10" r="1.3" fill="currentColor"/><path d="M4 16c2 3 14 3 16 0M12 3a9 9 0 019 9v2H3v-2a9 9 0 019-9z"/></svg>';
+    document.getElementById('gameOverTitle').innerText = isVictory ? (currentLang === 'pt' ? 'Vitória!' : 'Victory!') : (currentLang === 'pt' ? 'Derrota!' : 'Defeat!');
+    document.getElementById('gameOverMsg').innerText = (DICT[currentLang][isVictory ? 'gameOverVictory' : 'gameOverDefeat'] || '').replace('{pts}', pts);
+    document.getElementById('gameOverModal').classList.remove('hidden');
+}
+
+// Init / Restore
+const wasInGame = loadState();
+setLang(currentLang);
+setFormat(gameFormat);
+setMode(mode);
+
+if (wasInGame) {
+  document.getElementById('setup-screen').classList.add('hidden');
+  document.getElementById('game-area').classList.remove('hidden');
+  document.getElementById('score-header').classList.remove('hidden');
+  document.getElementById('scorePlayer').innerText = scorePlayer;
+  document.getElementById('scoreAI').innerText = scoreAI;
+  document.getElementById('vTheatresLost').innerText = theatresLost;
+  document.getElementById('roundNum').innerText = roundNumber;
+  renderBotHand();
+  updateTableauUI();
+  updateTheaterUI();
+}
+</script>
+</body>
+</html>

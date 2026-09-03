@@ -834,8 +834,14 @@ function renderCampaign(lang) {
 
                 <div class="pdf-field">
                     <div class="ribbon-row">
+                        <div class="ribbon-box setup">
+                            <div class="ribbon-title"><span>${ui.setupTitle}</span><span class="ribbon-stars">★ ★ ★</span></div>
+                            <div class="ribbon-body">
+                                <ul>${setup.map(g => `<li>${g}</li>`).join('')}</ul>
+                            </div>
+                        </div>
                         <div class="ribbon-box goals">
-                            <div class="ribbon-title">${ui.goalsTitle}<span class="ribbon-stars">★ ★ ★</span></div>
+                            <div class="ribbon-title"><span>${ui.goalsTitle}</span><span class="ribbon-stars">★ ★ ★</span></div>
                             <div class="ribbon-body">
                                 <h4>${ui.directive}</h4>
                                 <ul>${goals.map(g => `<li>${g}</li>`).join('')}</ul>
@@ -843,23 +849,19 @@ function renderCampaign(lang) {
                                 <ul>${extraGoals.map(g => `<li>${g}</li>`).join('')}</ul>
                             </div>
                         </div>
-                        <div class="ribbon-box setup">
-                            <div class="ribbon-title">${ui.setupTitle}<span class="ribbon-stars">★ ★ ★</span></div>
-                            <div class="ribbon-body">
-                                <ul>${setup.map(g => `<li>${g}</li>`).join('')}</ul>
-                            </div>
-                        </div>
                     </div>
 
                     <div class="pdf-result">
                         <span class="result-tab">${ui.resultTitle}</span>
-                        <p>${ui.resultComplete} ${canPromote && i < chapters && currentDiv > 1 ? ui.resultPromote + ' ' + (currentDiv - 1) + '.' : ''}</p>
-                        <p>${isCritical ? ui.resultFail : ui.resultFailSoft}${failPenaltyText ? ` <strong>${ui.failPenaltyLabel}:</strong> ${failPenaltyText}` : ''}</p>
+                        <div class="pdf-result-body">
+                            <p>${ui.resultComplete} ${canPromote && i < chapters && currentDiv > 1 ? ui.resultPromote + ' ' + (currentDiv - 1) + '.' : ''}</p>
+                            <p>${isCritical ? ui.resultFail : ui.resultFailSoft}${failPenaltyText ? ` <strong>${ui.failPenaltyLabel}:</strong> ${failPenaltyText}` : ''}</p>
+                        </div>
                     </div>
                 </div>
 
                 <div class="pdf-continuity">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/></svg>
+                    <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/></svg>
                     <span>${ui.continuityNote}</span>
                 </div>
             </div>
@@ -872,7 +874,7 @@ function renderCampaign(lang) {
     container.innerHTML = html;
 }
 
-// Called from setLang() in eleven_bot_v1.html whenever the UI language
+// Called from setLang() in eleven_bot.html whenever the UI language
 // toggles — re-renders an already-generated campaign in the new language
 // (cached picks + cached bilingual team facts, no re-roll, no refetch).
 function onLanguageChanged(lang) {
@@ -898,7 +900,7 @@ function exportPDF() {
 }
 
 // Populate the team dropdown on initial load (applyI18n() in
-// eleven_bot_v1.html calls populateTeamSelect(true) again on every language
+// eleven_bot.html calls populateTeamSelect(true) again on every language
 // switch, to refresh translated labels while preserving the selection).
 document.addEventListener('DOMContentLoaded', () => populateTeamSelect(false));
 

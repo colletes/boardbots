@@ -1,0 +1,2836 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title id="page-title">TRV9000 - Comando Multi-Bot</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --rust: #d4202f; 
+            --yellow: #ffcc00; 
+            --bg: #0a0a0a;
+            --smoke: #ff3333;
+            --card-bg: rgba(16, 16, 16, 0.95);
+            --metal: #2b2b28;
+            --blood: #8a0303;
+            --bigrig: #c81e2c;
+            --chrome: #9fb0b8;
+            --font-display: 'Anton', 'Oswald', 'Courier New', sans-serif;
+            --font-body: 'Oswald', 'Courier New', monospace;
+        }
+        
+        body {
+            background-color: var(--bg);
+            color: var(--yellow);
+            font-family: var(--font-body);
+            margin: 0;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            position: relative;
+            overscroll-behavior-y: none;
+        }
+
+        /* Faixa de perigo (amarelo/preto) usada como acento em bordas Mad Max */
+        .hazard-stripes { background-image: repeating-linear-gradient(135deg, #000 0, #000 10px, var(--yellow) 10px, var(--yellow) 20px); }
+
+        /* Camada da Imagem de Fundo (Para todas as telas) */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url('../assets/textures/rusted-metal.jpg');
+            background-size: 380px 380px;
+            background-position: center;
+            background-repeat: repeat;
+            opacity: 0.3; 
+            filter: grayscale(20%) sepia(20%);
+            z-index: -2; 
+            pointer-events: none;
+        }
+
+        /* Scanlines - DESATIVADAS NO MOBILE PARA EVITAR BUGS DE TOQUE NO IOS */
+        body::after {
+            content: " ";
+            position: fixed;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(217, 92, 20, 0.03) 50%, rgba(0, 0, 0, 0.1) 50%);
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 100;
+            opacity: 0.5;
+            display: none; /* Padrão: Escondido no celular */
+        }
+
+        /* ESTRUTURA GERAL (MOBILE FIRST) */
+        .main-interface { display: flex; flex-direction: column; align-items: center; padding: 15px; flex: 1; position: relative; z-index: 1; }
+        
+        .screen-panel {
+            border: 2px solid var(--rust);
+            background: rgba(10, 10, 10, 0.6); 
+            width: 100%; max-width: 1600px; padding: 15px; box-sizing: border-box;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.8), 0 0 10px rgba(217, 92, 20, 0.2);
+            border-radius: 8px; display: flex; flex-direction: column; min-height: 85vh;
+            backdrop-filter: blur(4px); 
+            -webkit-backdrop-filter: blur(4px);
+            position: relative;
+        }
+        /* Sucata/ferrugem: buracos de bala e manchas de fuligem sobre o painel principal */
+        .screen-panel::before {
+            content: '';
+            position: absolute; inset: 0; z-index: 0; border-radius: 8px; pointer-events: none;
+            background-image:
+                radial-gradient(circle at 10% 18%, rgba(0,0,0,0.6) 0 3px, transparent 5px),
+                radial-gradient(circle at 85% 12%, rgba(0,0,0,0.55) 0 4px, transparent 6px),
+                radial-gradient(circle at 68% 90%, rgba(0,0,0,0.55) 0 3px, transparent 5px),
+                radial-gradient(circle at 28% 94%, rgba(0,0,0,0.5) 0 2px, transparent 4px),
+                radial-gradient(ellipse at 92% 55%, rgba(255,90,0,0.12) 0%, transparent 55%),
+                radial-gradient(ellipse at 5% 70%, rgba(139,0,0,0.15) 0%, transparent 50%);
+        }
+        .screen-panel > * { position: relative; z-index: 1; }
+        .screen-panel.boom { animation: screen-shake 0.4s; }
+        .screen-panel.boom::after {
+            content: '';
+            position: absolute; inset: 0; z-index: 5; border-radius: 8px; pointer-events: none;
+            background: radial-gradient(circle, rgba(255,180,60,0.55) 0%, rgba(255,90,0,0.25) 40%, transparent 70%);
+            animation: explosion-fade 0.5s ease-out forwards;
+        }
+        @keyframes screen-shake { 0%,100% { transform: translate(0,0); } 20% { transform: translate(-3px,2px); } 40% { transform: translate(3px,-2px); } 60% { transform: translate(-2px,-2px); } 80% { transform: translate(2px,2px); } }
+        @keyframes explosion-fade { from { opacity: 1; } to { opacity: 0; } }
+
+        h1 { text-align: center; margin: 0 0 15px 0; letter-spacing: 3px; font-size: 1.6em; font-family: var(--font-display); font-weight: normal; border-bottom: 4px solid var(--rust); padding-bottom: 12px; text-shadow: 0 0 10px var(--rust), 2px 2px 0 #000; position: relative; }
+        .icon-h1 { width: 0.55em; height: 0.55em; vertical-align: middle; margin: 0 10px; color: var(--rust); filter: drop-shadow(0 0 4px var(--rust)); }
+        .wasteland-tagline { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; font-family: var(--font-body); font-size: 0.7em; letter-spacing: 2px; color: var(--yellow); opacity: 0.85; margin: -8px 0 15px; text-transform: uppercase; text-shadow: 0 0 6px rgba(255,204,0,0.4); }
+        .icon-tagline { width: 0.9em; height: 0.9em; flex-shrink: 0; }
+        .lang-switch { display: flex; gap: 8px; justify-content: center; margin-bottom: 12px; }
+        .lang-btn { background: #111; border: 2px solid #555; color: #888; padding: 6px 14px; font-size: 0.75em; font-weight: bold; letter-spacing: 1px; cursor: pointer; border-radius: 4px; width: auto; }
+        .lang-btn.active { border-color: var(--yellow); color: var(--yellow); background: rgba(255,204,0,0.1); box-shadow: 0 0 8px rgba(255,204,0,0.4); }
+
+        .setup-container { display: flex; flex-direction: column; align-items: center; gap: 15px; width: 100%; max-width: 600px; margin: 0 auto; }
+        .bot-setup-row { display: flex; flex-direction: column; gap: 8px; width: 100%; background: rgba(0,0,0,0.8); padding: 15px; border: 1px solid #444; border-radius: 4px; box-sizing: border-box; }
+        
+        /* Ajustes de clique vitais para iOS */
+        select, input, button {
+            touch-action: manipulation;
+            -webkit-appearance: none;
+            border-radius: 4px;
+            position: relative;
+            z-index: 50; /* Força os elementos clicáveis pra frente */
+        }
+        
+        .bot-setup-row select { width: 100%; background: #000; color: var(--yellow); border: 1px solid var(--rust); padding: 12px; font-family: inherit; font-size: 1em; }
+        .bot-setup-row input { width: 100%; background: #000; color: #fff; border: 1px solid var(--rust); padding: 12px; text-align: center; font-size: 1.2em; }
+
+        .play-area { display: grid; grid-template-columns: 1fr; gap: 20px; width: 100%; margin-top: 20px; }
+        .card-wrapper { display: flex; flex-direction: column; align-items: center; width: 100%; max-width: 100%; transition: 0.3s; margin: 0 auto;}
+        /* Marcas de pneu queimado sob cada carro/bot, como se tivesse derrapado na estrada da sucata */
+        .card-wrapper::after {
+            content: '';
+            display: block; width: 92%; height: 6px; margin: -2px auto 10px;
+            background-image: repeating-linear-gradient(90deg, rgba(0,0,0,0.55) 0 6px, transparent 6px 14px);
+            opacity: 0.5; border-radius: 2px;
+        }
+        
+        .bot-name-badge { width: 100%; text-align: center; font-weight: normal; font-family: var(--font-display); padding: 10px; border-radius: 8px 8px 0 0; font-size: 1.1em; letter-spacing: 1px; box-sizing: border-box; text-transform: uppercase; border: 2px solid transparent; border-bottom: none; text-shadow: 1px 1px 0 rgba(0,0,0,0.5);}
+        
+        /* Painel de Habilidades */
+        .bot-abilities-panel { width: 100%; background: rgba(0,0,0,0.9); border-left: 2px solid; border-right: 2px solid; box-sizing: border-box; }
+        .bot-abilities-panel summary { padding: 12px 8px; cursor: pointer; font-weight: bold; color: #fff; text-align: center; font-size: 0.85em; background: rgba(255,255,255,0.1); text-transform: uppercase; border-bottom: 1px solid rgba(255,255,255,0.1); outline: none; touch-action: manipulation; -webkit-tap-highlight-color: transparent; position: relative; z-index: 50; }
+        .bot-abilities-panel ul { margin: 0; padding: 15px; font-size: 0.8em; color: #ccc; }
+        .bot-abilities-panel li { margin-bottom: 8px; line-height: 1.3; }
+        .ability-basic { opacity: 0.7; list-style-type: none; border-left: 2px solid var(--rust); padding-left: 8px; margin-bottom: 12px; }
+        .ability-advanced { color: #fff; text-shadow: 0 0 5px rgba(255,255,255,0.5); list-style-type: none; margin-bottom: 12px;}
+
+        .card {
+            width: 100%; min-height: 400px; box-sizing: border-box;
+            background-color: var(--card-bg);
+            border: 2px solid; border-top: none; border-radius: 0 0 8px 8px;
+            position: relative; padding: 15px; font-size: 0.85em;
+            display: flex; flex-direction: column;
+            background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255, 255, 255, 0.02) 10px, rgba(255, 255, 255, 0.02) 20px);
+            box-shadow: inset 0 0 40px rgba(0,0,0,0.6);
+        }
+        .card::before {
+            content: ''; position: absolute; top: 8px; left: 8px; width: 6px; height: 6px; border-radius: 50%;
+            background: #555; box-shadow: 6px 0 0 #555, 0 0 0 1px #000 inset, calc(100% - 20px) 0 0 #555, calc(100% - 14px) 0 0 #555;
+            opacity: 0.6;
+        }
+        
+        .priority-badge { background: repeating-linear-gradient(135deg, #1a1a1a 0, #1a1a1a 8px, #000 8px, #000 16px); border: 2px solid var(--yellow); color: var(--yellow); font-weight: bold; padding: 9px; font-size: 0.9em; text-align: center; margin-bottom: 10px; border-radius: 4px; text-transform: uppercase; letter-spacing: 1px; box-shadow: inset 0 0 10px rgba(0,0,0,0.8); }
+        .priority-badge .priority-arrow { font-size: 1.3em; margin-left: 6px; text-shadow: 0 0 6px var(--yellow); }
+        .card-header { font-weight: normal; font-family: var(--font-display); letter-spacing: 1px; border-bottom: 2px solid var(--rust); margin-bottom: 10px; padding-bottom: 8px; font-size: 1.3em; color: #fff; text-shadow: 0 0 5px var(--rust); text-align: center; }
+        .card-special { background: rgba(0,0,0,0.6); color: #eee; line-height: 1.4; font-size: 0.9em; border: 1px dashed #666; padding: 12px; margin-bottom: 15px; min-height: 60px; }
+        .special-title { color: var(--rust); font-weight: bold; margin-bottom: 5px; display: block; text-transform: uppercase;}
+
+        .vehicle-row { display: flex; align-items: center; background: rgba(0,0,0,0.7); border: 1.5px solid #444; margin-bottom: 10px; padding: 10px 12px; border-radius: 6px; transition: opacity 0.3s; min-height: 54px; }
+        .vehicle-size { font-size: 1.3rem; font-weight: 800; color: var(--rust); min-width: 36px; text-align: center; border-right: 1.5px solid #555; padding-right: 8px; margin-right: 10px; text-shadow: 0 0 6px rgba(212,32,47,0.5); flex-shrink: 0; }
+        .sdbr-section-badge { display: inline-flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 0.95rem; font-weight: 800; letter-spacing: 1px; color: #fff; background: linear-gradient(135deg, #400a0a, #200404); border: 1.5px solid var(--bigrig); border-radius: 4px; padding: 4px 10px; text-shadow: 1px 1px 2px #000; box-shadow: 0 2px 6px rgba(0,0,0,0.5); flex-shrink: 0; min-width: 68px; }
+        
+        .vehicle-moves { display: flex; gap: 8px; flex-wrap: wrap; flex: 1; align-items: center; justify-content: flex-start; }
+        
+        /* Tactical Wasteland Move Blocks (Die + Arrow) */
+        .move-block {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: linear-gradient(180deg, #2e2823 0%, #151311 100%);
+            color: #fff; padding: 5px 10px; border-radius: 6px; font-weight: 700;
+            border: 1.5px solid #5c4d3e; box-shadow: 0 3px 8px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.1);
+        }
+        .move-die {
+            font-size: 1.15rem; font-weight: 900; color: var(--yellow);
+            text-shadow: 0 0 8px rgba(255,204,0,0.6); display: inline-flex; align-items: center;
+        }
+        .move-dir {
+            font-size: 1.3rem; font-weight: 900; color: #fff;
+            filter: drop-shadow(0 0 4px rgba(255,255,255,0.4));
+        }
+        .move-block.move-block-sdbr {
+            background: linear-gradient(180deg, #3d0c0c 0%, #1a0404 100%);
+            border-color: var(--smoke); box-shadow: 0 0 8px rgba(255,51,51,0.4), inset 0 1px 0 rgba(255,100,100,0.2);
+        }
+        .move-block.move-block-sdbr .move-die { color: #ff6666; text-shadow: 0 0 8px rgba(255,51,51,0.8); }
+        .move-block.move-block-sdbr .move-dir { color: #fff; }
+
+        /* SDBR Activation Chip & Skip Indicator */
+        .sdbr-act-chip {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: rgba(40, 10, 10, 0.85); border: 1.5px solid var(--smoke);
+            border-radius: 5px; padding: 4px 10px; font-size: 0.85rem; font-weight: 700;
+            color: #ffcccc; box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+        }
+        .sdbr-skip-chip {
+            display: inline-flex; align-items: center; gap: 4px;
+            background: rgba(0,0,0,0.75); border: 1px dashed var(--smoke);
+            border-radius: 4px; padding: 2px 7px; font-size: 0.78rem; color: #ff8888;
+        }
+        .sdbr-skip-arrow-badge {
+            font-size: 1.15rem; font-weight: 900; color: var(--yellow); text-shadow: 0 0 6px var(--yellow);
+        }
+
+        /* Roda de Prioridade do SDBR — sentido horário/anti-horário ao redor do Big Rig */
+        .sdbr-priority-wheel { width: 42px; height: 42px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; position: relative; background: radial-gradient(circle, #2a0000 0%, #000 75%); border: 2px solid var(--smoke); box-shadow: 0 0 10px rgba(255,51,51,0.5), inset 0 0 8px rgba(0,0,0,0.9); }
+        .sdbr-priority-wheel::before { content: ''; position: absolute; inset: -6px; border-radius: 50%; border: 2px dashed rgba(255,51,51,0.4); animation: sdbr-spin 6s linear infinite; }
+        .sdbr-priority-wheel.ccw::before { animation-direction: reverse; }
+        .sdbr-priority-wheel .wheel-arrow { font-size: 1.5em; color: var(--smoke); text-shadow: 0 0 6px var(--smoke); line-height: 1; }
+        @keyframes sdbr-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        /* Indicador de Perigo/Terreno com Chip Interativo & Tooltip */
+        .sdbr-hazard-chip {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 4px 8px; border-radius: 5px; font-size: 0.76rem; font-weight: 800;
+            text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer;
+            border: 1.5px solid; transition: transform 0.15s, box-shadow 0.15s;
+            line-height: 1; user-select: none;
+        }
+        .sdbr-hazard-chip:hover, .sdbr-hazard-chip:active {
+            transform: scale(1.05);
+        }
+        .sdbr-hazard-chip.red {
+            border-color: #ff3333; color: #ff8888;
+            background: linear-gradient(180deg, #3d0c0c 0%, #1a0404 100%);
+            box-shadow: 0 0 8px rgba(255,51,51,0.5);
+        }
+        .sdbr-hazard-chip.brown {
+            border-color: #d98c00; color: #ffd280;
+            background: linear-gradient(180deg, #38240a 0%, #180e03 100%);
+            box-shadow: 0 0 8px rgba(217,140,0,0.5);
+        }
+        .sdbr-hazard-chip svg {
+            width: 11px; height: 11px; flex-shrink: 0;
+        }
+
+        .sdbr-act-chip {
+            cursor: pointer;
+            transition: transform 0.15s;
+        }
+        .sdbr-act-chip:hover, .sdbr-act-chip:active {
+            transform: scale(1.03);
+        }
+
+        /* Floating Info Toast (Instant mobile & desktop feedback on tap) */
+        .info-toast {
+            position: fixed; bottom: 24px; left: 50%;
+            transform: translateX(-50%) translateY(30px);
+            background: rgba(18, 14, 11, 0.96); border: 2px solid var(--yellow);
+            color: #fff; padding: 12px 18px; border-radius: 8px;
+            font-size: 0.9rem; font-weight: 600; line-height: 1.4;
+            max-width: 90vw; width: 440px; box-shadow: 0 10px 30px rgba(0,0,0,0.85), 0 0 18px rgba(255,204,0,0.35);
+            z-index: 9999; text-align: center; opacity: 0; pointer-events: none;
+            transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .info-toast.show {
+            opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: auto; cursor: pointer;
+        }
+
+        .sdbr-skip-arrow { display: inline-flex; align-items: center; justify-content: center; min-width: 30px; height: 30px; margin-left: 6px; padding: 0 8px; border: 2px solid var(--smoke); border-radius: 4px; font-weight: bold; font-size: 1.6em; line-height: 1; color: var(--smoke); text-shadow: 0 0 6px var(--smoke); box-shadow: 0 0 6px rgba(255,51,51,0.5); cursor: help; }
+        /* Botões de ação principal (Iniciar Corrida / Comprar Cartas) pulsam como uma granada armada */
+        .btn-explosive { position: relative; overflow: hidden; animation: grenade-pulse 1.8s ease-in-out infinite; }
+        .btn-explosive:disabled { animation: none; }
+        @keyframes grenade-pulse { 0%,100% { box-shadow: 0 0 6px rgba(255,90,0,0.5); } 50% { box-shadow: 0 0 22px rgba(255,140,0,0.9), 0 0 40px rgba(255,60,0,0.5); } }
+
+        .sdbr-field { font-size: 0.85em; color: var(--smoke); text-transform: uppercase; letter-spacing: 0.5px; }
+        .sdbr-field strong { color: #fff; margin-right: 2px; }
+        
+        .icon-fire { display: inline-block; width: 14px; height: 14px; background: #e62e00; border-radius: 50%; position: relative; margin-right: 6px; border: 1px solid #000; box-shadow: 0 0 5px #e62e00; }
+        .icon-fire::after { content: ''; position: absolute; top: 3px; left: 3px; width: 6px; height: 6px; background: var(--yellow); border-radius: 50%; }
+        .icon-extinguish { display: inline-block; position: relative; width: 18px; height: 18px; background: #00d2ff; border-radius: 50%; margin-right: 6px; border: 1px solid #fff; box-shadow: 0 0 5px #00d2ff; }
+        .icon-extinguish::after { content: ''; position: absolute; top: 4px; left: 6px; width: 6px; height: 9px; background: #fff; border-radius: 50% 50% 50% 0; transform: rotate(45deg); }
+        .icon-ignite { display: inline-block; position: relative; width: 18px; height: 18px; background: #e62e00; border-radius: 50%; margin-right: 6px; border: 1px solid #000; box-shadow: 0 0 5px #e62e00; }
+        .icon-ignite::after { content: ''; position: absolute; top: 4px; left: 6px; width: 6px; height: 9px; background: var(--yellow); border-radius: 50% 50% 50% 0; transform: rotate(-135deg); }
+
+        .sdff-row { display: flex; align-items: center; gap: 10px; }
+        .sdff-marks { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 40px; flex-shrink: 0; }
+        .sdff-mark { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; background: var(--yellow); color: #000; font-weight: bold; font-size: 0.9em; border: 1px solid #000; }
+        .sdff-mark.is-command { background: #fff; color: var(--rust); box-shadow: 0 0 6px var(--yellow); }
+        .sdff-mark-sep { color: #888; font-size: 0.7em; }
+
+        .deck-status { font-size: 0.8em; color: #aaa; text-align: center; margin-top: auto; border-top: 1px solid #444; padding-top: 8px; background: rgba(0,0,0,0.4); }
+
+        .initial-placement-box { width: 100%; background: rgba(0,0,0,0.6); border: 1px dashed #666; border-radius: 4px; padding: 10px; margin: 10px 0; box-sizing: border-box; }
+        .initial-placement-title { color: var(--rust); font-weight: bold; text-transform: uppercase; font-size: 0.8em; text-align: center; margin-bottom: 8px; letter-spacing: 0.5px; }
+        .initial-placement-row { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 4px 0; font-size: 0.9em; }
+        .initial-placement-size { font-weight: bold; color: var(--rust); width: 22px; text-align: center; border-right: 1px solid #555; }
+        .initial-placement-space { color: #eee; }
+
+        .expansion-toggle {
+            display: flex; align-items: center; gap: 12px; width: 100%; background: #111; border: 2px solid #444;
+            color: #999; padding: 14px; border-radius: 4px; cursor: pointer; text-align: left; font-family: var(--font-body);
+            font-size: 1em; text-transform: uppercase; letter-spacing: 0.5px; transition: 0.2s; box-shadow: none; margin-bottom: 10px;
+        }
+        .expansion-toggle .exp-icon { font-size: 1.6em; flex-shrink: 0; filter: grayscale(1) brightness(0.8); }
+        .expansion-toggle .exp-label { flex: 1; font-weight: bold; }
+        .expansion-toggle .exp-check { width: 26px; height: 26px; border: 2px solid #555; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 0.9em; }
+        .expansion-toggle.active { border-color: var(--rust); color: #fff; background: rgba(217, 92, 20, 0.15); box-shadow: 0 0 15px rgba(217,92,20,0.35); }
+        .expansion-toggle.active .exp-icon { filter: none; }
+        .expansion-toggle.active .exp-check { background: var(--rust); border-color: var(--rust); color: #000; }
+        .expansion-toggle.active .exp-check::after { content: '✓'; }
+
+        .controls-global { display: flex; flex-direction: column; gap: 15px; width: 100%; margin-top: 30px; border-top: 1px solid #555; padding-top: 20px; position: relative; z-index: 10; }
+        
+        button { 
+            background: rgba(0,0,0,0.9); color: var(--yellow); border: 2px solid var(--rust); 
+            padding: 18px 20px; cursor: pointer; text-transform: uppercase; font-weight: bold; 
+            font-family: var(--font-body); letter-spacing: 1px; width: 100%; font-size: 1.1em; transition: 0.2s; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.05); 
+        }
+        button:active:not(:disabled) { background: var(--rust); color: #fff; transform: scale(0.98); }
+        button:disabled { border-color: #444; color: #666; cursor: not-allowed; box-shadow: none; opacity: 0.7; }
+
+        .btn-help-float {
+            position: fixed; bottom: 20px; right: 20px; width: 55px; height: 55px;
+            border-radius: 50%; background: rgba(0,0,0,0.9); border: 2px solid var(--yellow);
+            color: var(--yellow); font-size: 24px; font-weight: bold; cursor: pointer;
+            z-index: 900; box-shadow: 0 0 15px rgba(255, 204, 0, 0.4);
+            display: flex; align-items: center; justify-content: center; padding: 0;
+        }
+        
+        
+        
+        
+
+        /* Banner removido (movido) */
+
+        /* Créditos (componente padrão da casa) */
+        .credits {
+            display: flex; align-items: center; gap: 12px;
+            background: rgba(0,0,0,0.75); border: 1px solid #333; border-radius: 6px;
+            padding: 10px 14px; margin-top: 20px; font-size: 0.75em;
+        }
+        .credits img { width: 44px; height: 44px; object-fit: cover; border-radius: 6px; border: 1px solid var(--rust); flex-shrink: 0; }
+        .credits-text { line-height: 1.4; letter-spacing: 0.3px; color: #aaa; }
+        .credits-text a { color: var(--yellow); text-decoration: none; }
+        .credits-text a:hover { text-decoration: underline; }
+
+        /* Icones inline (substituem emojis em títulos/botões) */
+        .icon-inline-title { width: 1.1em; height: 1.1em; vertical-align: -0.15em; margin-right: 8px; flex-shrink: 0; }
+        .icon-inline { display: inline-flex; vertical-align: -0.15em; }
+        .icon-inline svg { width: 1.1em; height: 1.1em; flex-shrink: 0; }
+        .btn-icon { width: 1.3em; height: 1.3em; vertical-align: -0.25em; margin-right: 8px; flex-shrink: 0; }
+        .exp-icon svg { width: 1.6em; height: 1.6em; display: block; }
+        .clickable-name { cursor: pointer; text-decoration: underline; color: var(--rust); font-weight: bold; }
+
+        /* MODAIS */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); padding: 10px; box-sizing: border-box;}
+        .config-panel { width: 100%; max-width: 1200px; height: 95vh; background: #0a0a0a; border: 2px solid var(--yellow); border-radius: 8px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 0 30px rgba(0,0,0,1); }
+        .dice-intro-panel { width: 100%; max-width: 560px; background: #0a0a0a; border: 2px solid var(--rust); border-radius: 8px; padding: 20px; box-shadow: 0 0 30px rgba(0,0,0,1); text-align: center; }
+        .dice-intro-panel h3 { margin: 0 0 14px; color: var(--rust); text-transform: uppercase; letter-spacing: 2px; font-size: 1em; text-shadow: 0 0 6px rgba(212,32,47,0.5); }
+        .dice-tray-container { width: 100%; height: 280px; background: rgba(0,0,0,0.6); border: 2px solid var(--metal); border-radius: 8px; position: relative; overflow: hidden; box-shadow: inset 0 3px 12px rgba(0,0,0,0.8); }
+        #dice-box { width:100%; height:100%; position:absolute; top:0; left:0; z-index:2; }
+        #dice-box canvas { width:100% !important; height:100% !important; display:block; }
+        
+        .help-panel { max-width: 800px; height: auto; max-height: 90vh; padding: 20px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+
+        .config-sidebar { width: 100%; background: #141414; border-bottom: 2px solid #333; display: flex; flex-direction: column; max-height: 40vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+        .file-controls { padding: 15px; border-bottom: 2px solid #444; background: #000; display: flex; flex-direction: column; gap: 10px; }
+        .btn-file { padding: 12px; font-size: 0.9em; border-width: 1px; background: #1a1a1a; color: #ccc; border-color: #555;}
+        .deck-tab.active { background: var(--rust); color: #fff; border-color: var(--rust); font-weight: bold; }
+        
+        .config-list-btn { background: transparent; border: none; border-bottom: 1px solid #333; color: #aaa; text-align: left; padding: 15px; width: 100%; font-size: 1em; cursor: pointer; }
+        .config-list-btn.active { background: var(--rust); color: #fff; font-weight: bold;}
+        
+        .config-editor { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; background: rgba(16,16,16,0.5); -webkit-overflow-scrolling: touch; }
+        .editor-form-group { display: flex; flex-direction: column; gap: 5px; width: 100%;}
+        .editor-form-group label { color: var(--yellow); font-weight: bold; font-size: 0.85em; text-transform: uppercase; }
+        .editor-form-group input, .editor-form-group select, .editor-form-group textarea { background: #000; border: 1px solid #555; color: #fff; padding: 12px; font-family: inherit; font-size: 1em; }
+        
+        .editor-row-container { background: rgba(255,255,255,0.03); border: 1px solid #444; padding: 15px; border-radius: 4px; margin-bottom: 10px; }
+        .move-edit-row { display: flex; gap: 10px; align-items: center; margin-bottom: 8px; background: rgba(0,0,0,0.6); padding: 10px; border-radius: 4px; border: 1px solid #333; flex-wrap: wrap; }
+        .move-edit-row select, .move-edit-row input { flex: 1; min-width: 80px;}
+        .btn-small { padding: 12px; font-size: 0.9em; border-color: #666; width: 100%; color: #ccc; background: #222;}
+
+        .hidden { display: none !important; }
+        .invisible { opacity: 0; visibility: hidden; }
+
+        /* ==================================================
+           MEDIA QUERIES - MODO DESKTOP (PC/MAC/TABLET GRANDE)
+           ================================================== */
+        @media (min-width: 768px) {
+            /* Restaura as scanlines no PC */
+            body::after { display: block; }
+            
+            .screen-panel { border-width: 3px; padding: 25px; }
+            h1 { font-size: 1.5em; letter-spacing: 5px; margin-bottom: 20px;}
+            
+            .bot-setup-row { flex-direction: row; }
+            .bot-setup-row select, .bot-setup-row input { width: auto; }
+            
+            /* Controles globais lado a lado no PC */
+            .controls-global { flex-direction: row; }
+            button { width: auto; flex: 1; max-width: 250px; }
+            
+            /* Modal vira layout de colunas no PC */
+            .config-panel { flex-direction: row; }
+            .config-sidebar { width: 250px; border-right: 2px solid #333; border-bottom: none; max-height: none; }
+            .config-editor { padding: 25px; }
+            .editor-form-group { width: auto; }
+            
+            .btn-small { width: auto; }
+            .play-area { grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); }
+            .card-wrapper { max-width: 360px; }
+            
+            .bot-abilities-panel summary:hover { background: rgba(255,255,255,0.2); }
+            .btn-file:hover { background: #333; color: #fff; border-color: #999;}
+            .config-list-btn:hover { background: #222; color: var(--yellow); }
+            .btn-small:hover { background: #444; color: #fff; border-color: #aaa;}
+            button:hover:not(:disabled) { background: var(--rust); color: #fff; box-shadow: 0 0 20px var(--rust); }
+            .btn-help-float:hover { background: var(--yellow); color: #000; transform: scale(1.1); box-shadow: 0 0 25px var(--yellow); }
+            .clickable-name:hover { color: var(--yellow); text-shadow: 0 0 10px var(--yellow); }
+            .expansion-toggle:hover { border-color: #999; color: #ccc; }
+            .expansion-toggle.active:hover { border-color: var(--yellow); }
+            .lang-btn:hover { border-color: #999; color: #ccc; }
+        }
+
+        ::-webkit-scrollbar { width: 8px; background: #0a0a0a; }
+        ::-webkit-scrollbar-thumb { background: #333; border: 1px solid #0a0a0a; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--rust); }
+    
+        /* --- Standard Boardbots Top Sticky Navigation --- */
+        .top-nav {
+            width: 100%;
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 16px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            background: rgba(10, 10, 10, 0.85);
+            border-bottom: 2px solid var(--rust);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.8);
+        }
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: var(--font-display);
+            font-size: 1.1rem;
+            color: var(--yellow);
+            text-decoration: none;
+            letter-spacing: 1px;
+            text-shadow: 0 0 10px rgba(255, 204, 0, 0.4);
+        }
+        .nav-brand svg { width: 20px; height: 20px; flex-shrink: 0; }
+        .nav-actions { display: flex; align-items: center; gap: 8px; }
+        .nav-btn {
+            background: rgba(20, 20, 20, 0.9);
+            color: #ddd;
+            border: 1px solid #555;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            cursor: pointer;
+            font-family: var(--font-body);
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .nav-btn:hover { color: var(--yellow); border-color: var(--yellow); box-shadow: 0 0 8px rgba(255,204,0,0.4); }
+        .nav-lang-btn {
+            background: rgba(20, 20, 20, 0.9);
+            color: var(--yellow);
+            border: 1px solid var(--yellow);
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            cursor: pointer;
+            font-family: var(--font-body);
+        }
+
+        /* --- Hero Banner --- */
+        .hero-wrapper { width: 100%; max-width: 1600px; margin: 12px auto; padding: 0 15px; box-sizing: border-box; }
+        .hero { 
+            position: relative; 
+            border-radius: 2px; 
+            overflow: hidden; 
+            border: 4px solid #1a1a1a; 
+            border-top: 4px solid #333;
+            border-left: 4px solid #333;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.9), inset 0 0 20px rgba(139, 44, 21, 0.8);
+            clip-path: polygon(0 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%);
+            background: #2a110a;
+        }
+        .hero img { width: 100%; height: 160px; object-fit: cover; object-position: center 25%; display: block; filter: brightness(0.5) saturate(1.8) contrast(1.2); mix-blend-mode: multiply; }
+        .hero::after { 
+            content: ''; position: absolute; inset: 0; 
+            background: 
+                linear-gradient(180deg, rgba(20,10,5,0.1) 0%, rgba(10,5,2,0.95) 100%),
+                url("data:image/svg+xml,%3Csvg width='200' height='200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.2'/%3E%3C/svg%3E"); 
+        }
+        .hero-content { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end; padding: 16px 24px; z-index: 2; }
+        .hero-title { font-family: var(--font-display); font-size: 2rem; font-weight: 900; letter-spacing: 3px; color: var(--yellow); text-shadow: 2px 2px 0 #000, -1px -1px 0 rgba(255,100,0,0.5), 0 0 20px rgba(255,50,0,0.8); margin: 0; display: flex; align-items: center; gap: 8px; text-transform: uppercase; }
+        .hero-subtitle { color: #fff; font-size: 0.9rem; font-weight: bold; margin-top: 6px; letter-spacing: 2px; text-transform: uppercase; background: var(--rust); display: inline-block; padding: 4px 10px; border-radius: 2px; border: 1px solid #000; box-shadow: 2px 2px 0 #000; width: max-content; }
+
+        /* --- Physical Setup Checklist --- */
+        .phys-setup-box { width: 100%; background: rgba(0,0,0,0.7); border: 1px solid var(--rust); border-radius: 6px; padding: 12px 16px; margin-bottom: 15px; font-size: 0.85em; line-height: 1.5; color: #ccc; box-sizing: border-box; }
+        .phys-setup-box summary { font-family: var(--font-display); font-size: 1.1em; color: var(--yellow); cursor: pointer; text-transform: uppercase; letter-spacing: 1px; }
+        .phys-setup-box ul { padding-left: 18px; margin: 8px 0 0; }
+        .phys-setup-box li { margin-bottom: 6px; }
+
+        /* --- Standard Footer --- */
+        footer.credits { text-align: center; margin-top: 30px; padding: 25px 15px; font-size: 0.85em; color: #888; border-top: 2px solid var(--rust); max-width: 1600px; margin-left: auto; margin-right: auto; width: 100%; box-sizing: border-box; }
+        footer.credits a { color: var(--yellow); text-decoration: none; font-weight: bold; }
+        
+
+
+        @media (max-width: 600px) {
+            .hero img { height: 90px; }
+            .hero-title { font-size: 1.3rem; }
+            .hero-subtitle { font-size: 0.75rem; }
+            .top-nav { padding: 8px 12px; }
+            .nav-brand { font-size: 0.95rem; }
+            .nav-btn, .nav-lang-btn { padding: 5px 8px; font-size: 0.75rem; }
+            .screen-panel { padding: 12px 10px; min-height: auto; }
+            .main-interface { padding: 10px 8px; }
+        }
+        
+        /* Ensure help modal scrolls nicely on iOS */
+        #help-modal, #deck-editor-modal, #log-modal {
+            align-items: flex-start !important;
+            padding: max(16px, env(safe-area-inset-top)) 12px max(40px, env(safe-area-inset-bottom)) !important;
+            overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+        }
+
+
+        /* Extra Dashboard Styling */
+        body {
+            background-color: #1a1a1a;
+            background-image: 
+                linear-gradient(45deg, rgba(0,0,0,0.8) 25%, transparent 25%, transparent 75%, rgba(0,0,0,0.8) 75%, rgba(0,0,0,0.8)), 
+                linear-gradient(45deg, rgba(0,0,0,0.8) 25%, transparent 25%, transparent 75%, rgba(0,0,0,0.8) 75%, rgba(0,0,0,0.8));
+            background-size: 40px 40px;
+            background-position: 0 0, 20px 20px;
+        }
+        .hero {
+            background: linear-gradient(145deg, #4a2511, #1a0f05);
+            border: 4px solid #000;
+            box-shadow: inset 0 0 30px #000, 0 10px 20px rgba(0,0,0,0.9);
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="8" height="8"><rect width="8" height="8" fill="none"/><circle cx="4" cy="4" r="1.5" fill="%23000" opacity="0.6"/></svg>');
+            pointer-events: none;
+        }
+        .board-container {
+            background: #222;
+            border: 3px solid #444;
+            border-radius: 8px;
+            box-shadow: inset 0 0 20px #000, 0 5px 15px rgba(0,0,0,0.8);
+            position: relative;
+        }
+        .board-container::after {
+            content: '';
+            position: absolute;
+            top: -3px; left: -3px; right: -3px; bottom: -3px;
+            border: 1px dashed var(--rust);
+            border-radius: 8px;
+            pointer-events: none;
+            opacity: 0.3;
+        }
+        .controls-global {
+            background: #111;
+            padding: 20px;
+            border: 2px solid #333;
+            border-radius: 8px;
+            box-shadow: inset 0 0 10px #000;
+        }
+        .nav-actions .nav-btn, .nav-actions .nav-lang-btn {
+            background: #000;
+            border: 1px solid var(--rust);
+            box-shadow: inset 0 0 5px var(--rust);
+            color: var(--yellow);
+        }
+
+
+/* Standard Buy Me a Coffee Button */
+.bmc-btn, .bmc-inline, .bmc-float {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  background: #FFDD00 !important;
+  color: #000000 !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+  font-weight: 700 !important;
+  font-size: 0.92rem !important;
+  padding: 10px 18px !important;
+  border-radius: 8px !important;
+  border: 1px solid rgba(0,0,0,0.15) !important;
+  text-decoration: none !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25) !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+  cursor: pointer !important;
+  margin: 16px auto !important;
+  width: max-content !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+}
+.bmc-btn:hover, .bmc-inline:hover, .bmc-float:hover {
+  transform: translateY(-2px) scale(1.02) !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35) !important;
+  background: #FFE433 !important;
+  color: #000000 !important;
+}
+.bmc-btn svg, .bmc-inline svg, .bmc-float svg {
+  width: 20px !important;
+  height: 20px !important;
+  min-width: 20px !important;
+  min-height: 20px !important;
+  max-width: 20px !important;
+  max-height: 20px !important;
+  stroke: #000000 !important;
+  fill: none !important;
+  flex-shrink: 0 !important;
+  vertical-align: middle !important;
+}
+
+/* Ambient thematic flavor: rising sparks + amber haze flicker (Mad Max wasteland/scrapyard fire) */
+@media (prefers-reduced-motion: no-preference) {
+  .wasteland-haze{ position:fixed; inset:0; pointer-events:none; z-index:-1;
+    background: radial-gradient(ellipse at 12% 88%, rgba(212,32,47,0.16), transparent 55%),
+                radial-gradient(ellipse at 90% 15%, rgba(255,204,0,0.10), transparent 60%);
+    animation: hazeFlicker 5.5s ease-in-out infinite alternate; }
+  @keyframes hazeFlicker { 0%{opacity:0.7;} 50%{opacity:1;} 100%{opacity:0.85;} }
+
+  .spark-layer{ position:fixed; inset:0; pointer-events:none; z-index:-1; overflow:hidden; }
+  .spark{ position:absolute; bottom:-10px; width:4px; height:4px; border-radius:50%;
+    background: radial-gradient(circle, #ffe27a 0%, #ff8c1a 55%, rgba(255,80,0,0) 75%);
+    box-shadow: 0 0 6px 2px rgba(255,140,0,0.55);
+    animation: sparkRise linear infinite; }
+  @keyframes sparkRise {
+    0%{ transform:translate(0,0) scale(1); opacity:0; }
+    8%{ opacity:1; }
+    55%{ transform:translate(14px,-55vh) scale(0.7); opacity:0.6; }
+    100%{ transform:translate(-10px,-100vh) scale(0.3); opacity:0; }
+  }
+  .spark:nth-child(1){ left:4%; animation-duration:9s; animation-delay:-2s; }
+  .spark:nth-child(2){ left:14%; animation-duration:7s; animation-delay:-5s; }
+  .spark:nth-child(3){ left:24%; animation-duration:11s; animation-delay:-1s; }
+  .spark:nth-child(4){ left:35%; animation-duration:8s; animation-delay:-7s; }
+  .spark:nth-child(5){ left:47%; animation-duration:10s; animation-delay:-3s; }
+  .spark:nth-child(6){ left:58%; animation-duration:6.5s; animation-delay:-6s; }
+  .spark:nth-child(7){ left:68%; animation-duration:12s; animation-delay:-2.5s; }
+  .spark:nth-child(8){ left:79%; animation-duration:8.5s; animation-delay:-8s; }
+  .spark:nth-child(9){ left:88%; animation-duration:9.5s; animation-delay:-4s; }
+  .spark:nth-child(10){ left:95%; animation-duration:7.5s; animation-delay:-9s; }
+}
+</style>
+    <script src="../assets/logger.js"></script>
+</head>
+<body>
+
+<div class="wasteland-haze" aria-hidden="true"></div>
+<div class="spark-layer" aria-hidden="true">
+  <span class="spark"></span><span class="spark"></span><span class="spark"></span><span class="spark"></span><span class="spark"></span>
+  <span class="spark"></span><span class="spark"></span><span class="spark"></span><span class="spark"></span><span class="spark"></span>
+</div>
+
+<nav class="top-nav">
+    <a class="nav-brand" href="../index.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
+        <span>Board Bots</span>
+    </a>
+    <div class="nav-actions">
+        <button class="nav-btn" onclick="handleNavReset()">
+            <span class="icon-inline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v6h6M20 20v-6h-6"/><path d="M4 10a8 8 0 0 1 14-5.3M20 14a8 8 0 0 1-14 5.3"/></svg></span> <span data-i18n="btnResetShort">Novo</span>
+        </button>
+        <button class="nav-btn" onclick="toggleHelp()">
+            <span>?</span> <span data-i18n="btnHelpShort">Ajuda</span>
+        </button>
+        <button class="nav-lang-btn" onclick="toggleLang()">PT / EN</button>
+    </div>
+</nav>
+
+<div class="hero-wrapper">
+    <div class="hero">
+        <img src="../assets/art/thunderroadvendetta.webp" alt="Thunder Road: Vendetta">
+        <div class="hero-content">
+            <h1 class="hero-title">
+                <span id="page-title-banner">TRV-9000</span>
+            </h1>
+            <div class="hero-subtitle" id="tagline-banner">COMBOIO BLINDADO NA ESTRADA DA MORTE</div>
+        </div>
+    </div>
+</div>
+
+    <input type="file" id="file-import" accept=".json" class="hidden" onchange="importDeck(event)">
+
+    <button class="btn-help-float" onclick="openHelpModal()">?</button>
+
+    <div id="help-modal" class="modal-overlay hidden">
+        <div class="config-panel help-panel">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--rust); padding-bottom: 15px; margin-bottom: 20px; flex-wrap:nowrap; gap:10px;">
+                <h2 style="margin:0; color:var(--rust); letter-spacing: 2px; text-transform: uppercase; font-size: 1.2em;"><svg class="icon-inline-title" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg><span data-i18n="helpModalTitle">Manuais: TRV-9000</span></h2>
+                <button onclick="closeHelpModal()" class="btn-small" style="flex-shrink:0; border-color: #ff3333; color: #ff3333; background: rgba(255,0,0,0.1); font-weight:bold;" style="border-color: #ff3333; color: #ff3333; background: rgba(255,0,0,0.1); font-weight:bold;" data-i18n="btnClose">FECHAR X</button>
+            </div>
+            
+            <div id="help-content" style="font-size: 0.95em; line-height: 1.6; color: #ddd;"></div>
+        </div>
+    </div>
+
+    <div id="dice-intro-overlay" class="modal-overlay hidden">
+        <div class="dice-intro-panel">
+            <h3 data-i18n="diceIntroTitle">Rolando posicionamento inicial...</h3>
+            <div id="dice-tray" class="dice-tray-container"><div id="dice-box"></div></div>
+        </div>
+    </div>
+
+    <div id="config-modal" class="modal-overlay hidden">
+        <div class="config-panel">
+            <div class="config-sidebar">
+                <div class="file-controls" style="margin-bottom:10px;">
+                    <button class="btn-file deck-tab active" data-tab="official" onclick="switchDeckTab('official')"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 13l1.5-4.5A2 2 0 0 1 6.4 7h11.2a2 2 0 0 1 1.9 1.5L21 13"/><rect x="2" y="13" width="20" height="5" rx="1.5"/><circle cx="7" cy="18" r="1.5"/><circle cx="17" cy="18" r="1.5"/></svg><span data-i18n="tabOfficial">TRV9000 (Base)</span></button>
+                    <button class="btn-file deck-tab" data-tab="sdbr" onclick="switchDeckTab('sdbr')"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 8h11v8H2z"/><path d="M13 11h4l3 3v2h-7z"/><circle cx="6" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/></svg><span data-i18n="tabSdbr">SDBR (Big Rig)</span></button>
+                    <button class="btn-file deck-tab" data-tab="sdff" onclick="switchDeckTab('sdff')"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5.5" cy="17.5" r="2.5"/><circle cx="18.5" cy="17.5" r="2.5"/><path d="M8 17.5h7l-2-6h-4l-1-3H5"/><path d="M13 11.5h4.5l1.5 2.5"/></svg><span data-i18n="tabSdff">SDFF (Final Five)</span></button>
+                </div>
+                <div class="file-controls" id="official-file-controls">
+                    <div style="font-size:0.8em; color:#888; text-align:center; margin-bottom:5px; text-transform:uppercase; font-weight:bold;" data-i18n="backupLabel">Backup de Deck</div>
+                    <button class="btn-file" onclick="exportDeck()"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg><span data-i18n="btnSaveFile">SALVAR ARQUIVO</span></button>
+                    <button class="btn-file" onclick="triggerImport()"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/></svg><span data-i18n="btnLoadFile">CARREGAR ARQUIVO</span></button>
+                </div>
+                <div id="config-sidebar-list"></div>
+            </div>
+            
+            <div class="config-editor" id="config-editor-area">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--rust); padding-bottom: 15px; margin-bottom: 15px; flex-wrap: nowrap; gap: 10px;">
+                    <h2 style="margin:0; text-transform:uppercase; letter-spacing:1px; text-shadow: 0 0 10px var(--rust); font-size:1.2em;" id="editor-title" data-i18n="editorTitleDefault">Editor de Deck Oficial</h2>
+                    <button onclick="closeConfigModal()" class="btn-small" style="flex-shrink:0;" style="border-color: #ff3333; color: #ff3333; background: rgba(255,0,0,0.1); font-weight:bold; width: auto;" data-i18n="btnClose">FECHAR X</button>
+                </div>
+                
+                <div id="editor-instructions" style="text-align:center; color:#888; padding: 30px 0;">
+                    <p data-i18n="editorInstructionsP">As alterações são salvas automaticamente na cache do navegador.</p>
+                    <h3 style="color:var(--yellow); margin-top:20px;" data-i18n="editorInstructionsH3">Selecione uma carta na lista para começar.</h3>
+                </div>
+
+                <div id="editor-fields" class="hidden">
+                    <div style="display: flex; gap: 15px; background: rgba(217, 92, 20, 0.1); padding: 15px; border: 1px solid var(--rust); border-radius: 4px; margin-bottom: 15px; flex-wrap: wrap;">
+                        <div class="editor-form-group" style="flex: 1; min-width: 150px;">
+                            <label data-i18n="labelPriority">Prioridade Tiro/Embalo</label>
+                            <select id="edit-priority">
+                                <option value="↓ (Cima para Baixo)">↓ (Cima para Baixo)</option>
+                                <option value="↑ (Baixo para Cima)">↑ (Baixo para Cima)</option>
+                            </select>
+                        </div>
+                        <div class="editor-form-group" style="flex: 1; min-width: 150px;">
+                            <label data-i18n="labelActionType">Tipo de Ação</label>
+                            <select id="edit-action-type" onchange="handleActionTypeChange()">
+                                <option value="airstrike" data-i18n="optAirstrike">Airstrike</option>
+                                <option value="reparo" data-i18n="optReparo">Reparo</option>
+                                <option value="drift" data-i18n="optDrift">Drift</option>
+                                <option value="custom" data-i18n="optCustom">Personalizado</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="editor-form-group">
+                        <label data-i18n="labelHeaderTitle">Título do Cabeçalho</label>
+                        <input type="text" id="edit-action-header" disabled>
+                    </div>
+                    
+                    <div class="editor-form-group" style="margin-bottom: 15px;">
+                        <label data-i18n="labelSpecialDesc">Descrição Especial</label>
+                        <textarea id="edit-special-text" rows="3" disabled></textarea>
+                    </div>
+
+                    <div style="display: flex; gap: 10px; padding: 15px; background: #000; border: 1px solid #444; border-radius: 4px; margin-bottom: 15px; flex-wrap: wrap;">
+                        <div class="editor-form-group" style="flex:1; min-width:80px;">
+                            <label data-i18n="label1st">1º a Ativar</label>
+                            <select id="edit-order-0" class="sel-order" onchange="enforceUniqueOrder(0)"><option value="S" data-i18n="sizeS">S (Pequeno)</option><option value="M" data-i18n="sizeM">M (Médio)</option><option value="L" data-i18n="sizeL">L (Grande)</option></select>
+                        </div>
+                        <div class="editor-form-group" style="flex:1; min-width:80px;">
+                            <label data-i18n="label2nd">2º a Ativar</label>
+                            <select id="edit-order-1" class="sel-order" onchange="enforceUniqueOrder(1)"><option value="S">S</option><option value="M" selected>M</option><option value="L">L</option></select>
+                        </div>
+                        <div class="editor-form-group" style="flex:1; min-width:80px;">
+                            <label data-i18n="label3rd">3º a Ativar</label>
+                            <select id="edit-order-2" class="sel-order" onchange="enforceUniqueOrder(2)"><option value="S">S</option><option value="M">M</option><option value="L" selected>L</option></select>
+                        </div>
+                    </div>
+
+                    <div id="moves-wrappers-container">
+                        <div class="editor-row-container" id="wrap-edit-S">
+                            <h3 style="color:var(--rust); margin:0 0 10px 0; font-size:1em;" data-i18n="movesHeaderS">Movimentos S (Pequeno)</h3>
+                            <div id="edit-moves-S"></div>
+                            <button class="btn-small" onclick="addMoveBlock('S')" data-i18n="btnAddCommandS">+ ADICIONAR COMANDO (S)</button>
+                        </div>
+
+                        <div class="editor-row-container" id="wrap-edit-M">
+                            <h3 style="color:var(--rust); margin:0 0 10px 0; font-size:1em;" data-i18n="movesHeaderM">Movimentos M (Médio)</h3>
+                            <div id="edit-moves-M"></div>
+                            <button class="btn-small" onclick="addMoveBlock('M')" data-i18n="btnAddCommandM">+ ADICIONAR COMANDO (M)</button>
+                        </div>
+
+                        <div class="editor-row-container" id="wrap-edit-L">
+                            <h3 style="color:var(--rust); margin:0 0 10px 0; font-size:1em;" data-i18n="movesHeaderL">Movimentos L (Grande)</h3>
+                            <div id="edit-moves-L"></div>
+                            <button class="btn-small" onclick="addMoveBlock('L')" data-i18n="btnAddCommandL">+ ADICIONAR COMANDO (L)</button>
+                        </div>
+                    </div>
+
+                    <div style="margin-top:10px; padding-top:15px; border-top: 1px solid #444;">
+                        <button onclick="saveCardEdit(false)" style="background:var(--rust); color:#fff; width: 100%; max-width: none; font-size:1.1em;"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg><span data-i18n="btnSaveChanges">SALVAR MUDANÇAS</span></button>
+                    </div>
+                </div>
+
+                <div id="editor-fields-sdbr" class="hidden">
+                    <div class="editor-form-group" style="margin-bottom: 15px;">
+                        <label data-i18n="labelPriority">Prioridade Tiro/Embalo</label>
+                        <select id="edit-sdbr-priority">
+                            <option value="↻ (Sentido Horário)">↻ (Sentido Horário / Clockwise)</option>
+                            <option value="↺ (Sentido Anti-Horário)">↺ (Sentido Anti-Horário / Counter-clockwise)</option>
+                        </select>
+                    </div>
+                    <div style="display: flex; gap: 10px; padding: 15px; background: #000; border: 1px solid #444; border-radius: 4px; margin-bottom: 15px; flex-wrap: wrap;">
+                        <div class="editor-form-group" style="flex:1; min-width:100px;">
+                            <label data-i18n="label1st">1º a Ativar</label>
+                            <select id="edit-sdbr-order-0" class="sel-sdbr-order" onchange="enforceUniqueSdbrOrder(0)"><option value="FRENTE">FRENTE</option><option value="MEIO">MEIO</option><option value="TRAS">TRAS</option></select>
+                        </div>
+                        <div class="editor-form-group" style="flex:1; min-width:100px;">
+                            <label data-i18n="label2nd">2º a Ativar</label>
+                            <select id="edit-sdbr-order-1" class="sel-sdbr-order" onchange="enforceUniqueSdbrOrder(1)"><option value="FRENTE">FRENTE</option><option value="MEIO" selected>MEIO</option><option value="TRAS">TRAS</option></select>
+                        </div>
+                        <div class="editor-form-group" style="flex:1; min-width:100px;">
+                            <label data-i18n="label3rd">3º a Ativar</label>
+                            <select id="edit-sdbr-order-2" class="sel-sdbr-order" onchange="enforceUniqueSdbrOrder(2)"><option value="FRENTE">FRENTE</option><option value="MEIO">MEIO</option><option value="TRAS" selected>TRAS</option></select>
+                        </div>
+                    </div>
+                    <div id="sdbr-sections-container"></div>
+                    <div style="margin-top:10px; padding-top:15px; border-top: 1px solid #444;">
+                        <button onclick="saveSdbrCardEdit(false)" style="background:var(--rust); color:#fff; width: 100%; max-width: none; font-size:1.1em;"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg><span data-i18n="btnSaveChanges">SALVAR MUDANÇAS</span></button>
+                    </div>
+                </div>
+
+                <div id="editor-fields-sdff" class="hidden">
+                    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:15px;">
+                        <div class="editor-form-group" style="flex:1; min-width:120px;">
+                            <label data-i18n="labelPriority">Prioridade Tiro/Embalo</label>
+                            <select id="edit-sdff-priority">
+                                <option value="↘">↘</option>
+                                <option value="↖">↖</option>
+                            </select>
+                        </div>
+                        <div class="editor-form-group" style="flex:1; min-width:120px;">
+                            <label data-i18n="labelCmd">Comando</label>
+                            <select id="edit-sdff-cmd">
+                                <option value="repair" data-i18n="cmdRepair">Reparo</option>
+                                <option value="airstrike" data-i18n="cmdAirstrike">Ataque Aéreo</option>
+                                <option value="respawn" data-i18n="cmdRespawn">Renascer</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="sdff-rows-container"></div>
+                    <div style="margin-top:10px; padding-top:15px; border-top: 1px solid #444;">
+                        <button onclick="saveSdffCardEdit(false)" style="background:var(--rust); color:#fff; width: 100%; max-width: none; font-size:1.1em;"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg><span data-i18n="btnSaveChanges">SALVAR MUDANÇAS</span></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-interface">
+        <div class="screen-panel" id="screen-panel">
+            <div id="view-setup" class="setup-container">
+                <details style="background:rgba(0,0,0,0.5); border:1px solid #333; border-radius:4px; width: 100%; box-sizing: border-box;">
+                    <summary style="padding: 12px 15px; cursor:pointer; font-weight:bold; color:#fff; text-transform:uppercase; letter-spacing:1px; font-size:0.9em; outline:none;" data-i18n="physicalSetupTitle">Configuração Física do Jogo (faça isso na sua mesa primeiro)</summary>
+                    <div style="padding: 5px 20px 18px;" data-i18n="physicalSetupBodyHtml"></div>
+                </details>
+
+                <div style="background:rgba(0,0,0,0.5); border:1px solid #333; padding:20px; border-radius:4px; text-align:center; width: 100%; box-sizing: border-box;">
+                    <p style="text-align: center; opacity: 0.8; margin-top: 0; margin-bottom: 15px; text-transform:uppercase; letter-spacing:1px; color:#aaa; font-size:0.9em;" data-i18n="setupBotCount">Quantidade de Bots Inimigos</p>
+                    <div style="display: flex; gap: 15px; justify-content:center; align-items:center; margin-bottom: 5px;">
+                        <button onclick="adjustBots(-1)" style="width: 60px; min-width:0; padding:12px; font-size:1.4em;">-</button>
+                        <input type="text" id="bot-count" value="1" readonly style="width: 80px; text-align: center; font-size: 1.5em; background: #000; color: #fff; border: 2px solid var(--rust); padding:10px;">
+                        <button onclick="adjustBots(1)" style="width: 60px; min-width:0; padding:12px; font-size:1.4em;">+</button>
+                    </div>
+                </div>
+
+                <div id="bot-configs" style="width: 100%; display: flex; flex-direction: column; gap: 10px;"></div>
+
+                <div style="background:rgba(0,0,0,0.5); border:1px solid #333; padding:15px; border-radius:4px; width:100%; box-sizing:border-box; margin-top:10px;">
+                    <div class="expansion-toggle" id="sdbr-enabled" onclick="toggleExpansion('sdbr-enabled')">
+                        <span class="exp-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 8h11v8H2z"/><path d="M13 11h4l3 3v2h-7z"/><circle cx="6" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/></svg></span>
+                        <span class="exp-label" data-i18n="sdbrToggleLabel">Adicionar SDBR (Big Rig Autônomo)</span>
+                        <span class="exp-check"></span>
+                    </div>
+                    <div class="expansion-toggle" id="sdff-enabled" onclick="toggleExpansion('sdff-enabled')">
+                        <span class="exp-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5.5" cy="17.5" r="2.5"/><circle cx="18.5" cy="17.5" r="2.5"/><path d="M8 17.5h7l-2-6h-4l-1-3H5"/><path d="M13 11.5h4.5l1.5 2.5"/></svg></span>
+                        <span class="exp-label" data-i18n="sdffToggleLabel">Adicionar SDFF (Final Five Autônomo)</span>
+                        <span class="exp-check"></span>
+                    </div>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 15px; width: 100%; margin-top: 15px; border-top: 1px solid #444; padding-top:20px;">
+                    <button onclick="startGame()" class="btn-explosive" style="width: 100%; max-width:100%; font-size:1.1em; padding:20px;"><svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c1 3-2 4-2 7a4 4 0 0 0 8 0c0-1-.3-2-1-3 .6 2-.5 3-1.5 3 .8-2-.3-4-1.5-5 .3 1.5-.5 2.5-2 2 .5-1.5 0-3-2-4z"/></svg><span data-i18n="btnStartGame">INICIAR CORRIDA</span></button>
+                    <button onclick="openConfigModal()" style="width: 100%; max-width:100%; border-color:#555; color:#aaa; background:rgba(255,255,255,0.05); font-size:0.9em; padding:15px;"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span data-i18n="btnEditDeck">EDITAR DECK OFICIAL</span></button>
+                </div>
+            </div>
+
+            <div id="view-game" class="hidden" style="display: flex; flex-direction: column; height: 100%; width: 100%;">
+                <div class="play-area" id="bots-board"></div>
+                <div class="controls-global">
+                    <button id="btn-draw" class="btn-explosive" onclick="drawCardsGlobal()"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="7" y="3" width="12" height="16" rx="2" transform="rotate(8 13 11)"/><rect x="3" y="6" width="12" height="16" rx="2"/></svg><span data-i18n="btnDrawCards">COMPRAR CARTAS</span></button>
+                    <button id="btn-step" onclick="nextStepGlobal()" disabled><svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M4 4l8 8-8 8V4z"/><path d="M13 4l8 8-8 8V4z"/></svg><span data-i18n="btnNextStep">PRÓXIMO PASSO</span></button>
+                    <button onclick="location.reload()" style="background: transparent; border-color: #555; color: #888; font-size:0.8em;"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 21V4"/><path d="M4 4h13l-2 4 2 4H4"/></svg><span data-i18n="btnAbandon">ABANDONAR</span></button>
+                </div>
+            </div>
+
+            <footer class="credits">
+                <img src="../assets/art/thunderroadvendetta.webp" alt="Thunder Road: Vendetta">
+                <div class="credits-text" id="creditsText"></div>
+            </footer>
+
+            <a class="bmc-inline" href="https://www.buymeacoffee.com/colletes" target="_blank" rel="noopener" aria-label="Buy me a coffee"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h13a2 2 0 0 1 2 2v1a3 3 0 0 1-3 3h-1"/><path d="M4 8h13v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V8Z"/><path d="M8 3c-.6 1 .5 1.6 0 3M12 3c-.6 1 .5 1.6 0 3"/></svg><span data-i18n="bmcBtn">Me pague um café</span></a>
+        </div>
+    </div>
+
+<script>
+    // --- I18N: SISTEMA DE IDIOMA (PT-BR / EN) ---
+    const I18N = {
+        pt: {
+            pageTitle: "TRV-9000",
+            heroTitle: "TRV-9000",
+            heroSubtitle: "COMBOIO BLINDADO NA ESTRADA DA MORTE",
+            wastelandTagline: "COMBOIO BLINDADO NA ESTRADA DA MORTE",
+            signaturePrefix: "Feito por",
+            btnResetShort: "NOVO",
+            btnHelpShort: "AJUDA",
+            helpModalTitle: "Manuais: TRV-9000",
+            btnClose: "FECHAR X",
+            backupLabel: "Backup de Deck",
+            btnSaveFile: "SALVAR ARQUIVO",
+            btnLoadFile: "CARREGAR ARQUIVO",
+            editorTitleDefault: "Editor de Deck Oficial",
+            editingLabel: "Editando",
+            editorInstructionsP: "As alterações são salvas automaticamente na cache do navegador.",
+            editorInstructionsH3: "Selecione uma carta na lista para começar.",
+            tabOfficial: "TRV9000 (Base)",
+            tabSdbr: "SDBR (Big Rig)",
+            tabSdff: "SDFF (Final Five)",
+            labelPriority: "Prioridade Tiro/Embalo",
+            labelActionType: "Tipo de Ação",
+            optAirstrike: "Airstrike",
+            optReparo: "Reparo",
+            optDrift: "Drift",
+            optCustom: "Personalizado",
+            labelHeaderTitle: "Título do Cabeçalho",
+            labelSpecialDesc: "Descrição Especial",
+            label1st: "1º a Ativar",
+            label2nd: "2º a Ativar",
+            label3rd: "3º a Ativar",
+            sizeS: "S (Pequeno)",
+            sizeM: "M (Médio)",
+            sizeL: "L (Grande)",
+            movesHeader: "Movimentos",
+            movesHeaderS: "Movimentos S (Pequeno)",
+            movesHeaderM: "Movimentos M (Médio)",
+            movesHeaderL: "Movimentos L (Grande)",
+            activationOrdinal: ["1º A ATIVAR","2º A ATIVAR","3º A ATIVAR"],
+            btnAddCommand: "+ ADICIONAR COMANDO",
+            btnAddCommandS: "+ ADICIONAR COMANDO (S)",
+            btnAddCommandM: "+ ADICIONAR COMANDO (M)",
+            btnAddCommandL: "+ ADICIONAR COMANDO (L)",
+            btnSaveChanges: "SALVAR MUDANÇAS",
+            condNormal: "Condição: Normal",
+            condFire: "Só se Fogo",
+            condSmoke: "Apagar Fogo",
+            condIgnite: "Ignição (sem valor)",
+            dirLabel: "Direção",
+            diceLabel: "Dado",
+            setupBotCount: "Quantidade de Bots Inimigos",
+            physicalSetupTitle: "Configuração Física do Jogo (faça isso na sua mesa primeiro)",
+            physicalSetupBodyHtml: `<ol>
+                <li>Monte o tabuleiro do jogo base normalmente: ladrilho traseiro, ladrilho do meio e ladrilho da frente, fichas de perigo viradas para baixo nos espaços corretos, fichas de dano em uma pilha e o dado FX por perto.</li>
+                <li>Para <strong>cada Bot TRV9000</strong>: escolha uma cor de equipe e pegue os 3 paineís (dashboards), os 3 carros e o helicóptero correspondentes — mas <strong>NÃO</strong> pegue o painel de controle nem os 4 dados de movimento (o app não usa esses dados, só as cartas).</li>
+                <li>Organize os paineís do Bot em fileira e coloque os 3 carros na área de partida, atrás do ladrilho traseiro (como faria um jogador humano).</li>
+                <li>Coloque a carta <strong>TRV9000 BASIC PROTOCOL</strong> ao lado dos paineís do Bot. Embaralhe as 18 cartas de ativação do TRV9000 e forme um monte virado para baixo ao lado da carta.</li>
+                <li>Se estiver usando a expansão <strong>Choppe Shoppe</strong>, compre 1 carta de EQUIPE aleatoriamente e coloque-a ao lado da carta de Protocolo Básico — os upgrades valem a partida toda para os carros correspondentes (P, M ou G).</li>
+                <li>Antes da primeira rodada, role os dados de movimento do Bot (ou use o próprio app) para determinar o jogador inicial, depois role os seus. O Bot pode ser o primeiro jogador.</li>
+                <li><strong>(Opcional) SDBR — Big Rig Autônomo:</strong> monte a figura do Big Rig (3 partes) na área de partida; pegue o painel de cabine frontal, o painel de seção, o helicóptero e as 10 fichas de dano leve do Big Rig; embaralhe o deck próprio de cartas de ativação do SDBR.</li>
+                <li><strong>(Opcional) SDFF — Final Five Autônomo:</strong> pegue as 5 motos, o painel de comando e os paineís das motos, o helicóptero e as 5 fichas de dano leve; embaralhe o deck próprio de cartas de ativação do SDFF.</li>
+                <li>A partir daqui, o app conduz a ativação de cada Bot automaticamente — basta seguir as instruções na tela a cada turno do Bot.</li>
+            </ol>`,
+            botPrefix: "BOT",
+            carPrefix: "Carro",
+            difficultyPrefix: "Protocolo Básico Nv.",
+            sdbrToggleLabel: "Adicionar SDBR (Big Rig Autônomo)",
+            sdffToggleLabel: "Adicionar SDFF (Final Five Autônomo)",
+            expAdded: "Adicionado",
+            expNotAdded: "Adicionar",
+            btnStartGame: "INICIAR CORRIDA",
+            btnEditDeck: "EDITAR DECK OFICIAL",
+            btnDrawCards: "COMPRAR CARTAS",
+            btnNextStep: "PRÓXIMO PASSO",
+            btnAbandon: "ABANDONAR",
+            waitingDraw: "Aguardando<br>Compras",
+            deckStatus: (d, x) => `DECK: ${d} | DESC: ${x}`,
+            initialPlacementTitle: "1ª Rodada: Posicionamento (Estacionamento)",
+            initialPlacementSpace: (space) => `Espaço ${space}`,
+            diceIntroTitle: "Rolando posicionamento inicial...",
+            abilitiesSummary: (lvl) => `Ver Habilidades Especiais (Protocolo Nv.${lvl}/4)`,
+            priorityBadge: (p) => `Tiro/Embalo: ${p}`,
+            sdbrPriorityBadge: (p) => `Prioridade: ${p}`,
+            sdbrCardAction: "SDBR: MOVIMENTO + COMANDO POR SEÇÃO",
+            sdbrBadgeName: "🚛 SDBR: BIG RIG AUTÔNOMO",
+            sdbrDetailsSummary: "Ver Comandos por Seção",
+            sdbrAbility1: "Direção Hidráulica (cabine): pode mudar de faixa nas vezes indicadas pelo valor de movimento da seção FRENTE nesta carta.",
+            sdbrAbility2: "Comandos de Seção: O Big Rig sempre tenta ativar a Coluna 3 (Reparo). Se a Coluna 3 desta seção já estiver destruída/inutilizada no tabuleiro físico, pule para a próxima coluna na direção da seta [→ / ←].",
+            sdbrHazardTitle: (color) => color === 'red' ? "Muda de faixa (uma única vez) ao encontrar o 1º espaço com ficha de perigo; senão anda reto." : "Muda de faixa (uma única vez) ao encontrar o 1º espaço do terreno indicado; senão anda reto.",
+            sdbrTravelLabel: "Mov.",
+            sdbrActivationLabel: "Ativação",
+            sdbrHazardRed: "Perigo (vermelho)",
+            sdbrHazardBrown: "Terreno (marrom)",
+            sdbrHazardRedShort: "Perigo",
+            sdbrHazardBrownShort: "Terreno",
+            sdbrSkipTitle: "Dado padrão: 3 (Reparo). Se o comando desta seção estiver destruído no tabuleiro físico, pule para a próxima coluna nesta direção.",
+            sdffCardAction: "SDFF: 2 MOTOS OU COMANDO + 1 MOTO POR TURNO",
+            sdffBadgeName: "🏍️ SDFF: FINAL FIVE AUTÔNOMO",
+            sdffDetailsSummary: "Ver Legenda das Motos",
+            sdffAbility1: "Cada turno ativa as 2 motos marcadas na linha (mesma prioridade de movimento do TRV9000).",
+            sdffAbility2: "Na linha com ★, ative o comando do topo da carta com a moto marcada, em vez da segunda moto.",
+            sdffAbility3: "🔥 = a moto pega fogo (ignição) neste turno. Bônus +1/+2 = micro-movimento extra se a moto já estiver pegando fogo.",
+            sdffAbility4: "Marcas das motos: ‖ ✕ ⌃ ◎ S — identifique cada moto física com uma destas marcas.",
+            inactivePhase: "Inativo nesta fase.",
+            fireTitle: "Apenas se estiver pegando Fogo",
+            extinguishTitle: "Apagar Fogo",
+            igniteTitle: "A moto pega Fogo",
+            alertExportOk: "Arquivo de backup gerado com sucesso.",
+            alertImportOk: "Deck importado de arquivo e salvo na cache com sucesso!",
+            alertImportBadFile: "Erro: O arquivo não é um deck compatível com a versão atual.",
+            alertImportCritical: "Erro crítico ao ler o arquivo.",
+            alertCardSaved: (id) => `Carta ${id} atualizada na cache!`,
+            editorLoadPrompt: "Selecione uma carta na lista para começar.",
+            labelCmd: "Comando",
+            labelMoveVal: "Movimento",
+            labelMark: "Marca",
+            labelIsIgnite: "Ignição",
+            cmdRepair: "Reparo",
+            cmdAirstrike: "Ataque Aéreo",
+            cmdRespawn: "Renascer",
+            creditsHtml: `Feito por <span class="clickable-name" onclick="engineSound()">Thiago Colletes</span> (<a href="mailto:colletes@gmail.com">colletes@gmail.com</a>) e Gemini — app de apoio para bots automatizados, baseado no jogo oficial <em>Thunder Road: Vendetta</em> (e expansões Big Rig/Final Five), da Restoration Games, e no sistema de bot criado por <a href="https://boardgamegeek.com/profile/mayrik" target="_blank" rel="noopener">Padey Mayrik</a>. Uso pessoal, sem fins comerciais.`,
+            bmcBtn: 'Me pague um café'
+        },
+        en: {
+            pageTitle: "TRV-9000",
+            heroTitle: "TRV-9000",
+            heroSubtitle: "ARMORED CONVOY ON THE WASTELAND HIGHWAY",
+            wastelandTagline: "ARMORED CONVOY ON THE WASTELAND HIGHWAY",
+            signaturePrefix: "Made by",
+            btnResetShort: "NEW",
+            btnHelpShort: "HELP",
+            helpModalTitle: "Manuals: TRV-9000",
+            btnClose: "CLOSE X",
+            backupLabel: "Deck Backup",
+            btnSaveFile: "SAVE FILE",
+            btnLoadFile: "LOAD FILE",
+            editorTitleDefault: "Official Deck Editor",
+            editingLabel: "Editing",
+            editorInstructionsP: "Changes are saved automatically to browser cache.",
+            editorInstructionsH3: "Select a card from the list to begin.",
+            tabOfficial: "TRV9000 (Base)",
+            tabSdbr: "SDBR (Big Rig)",
+            tabSdff: "SDFF (Final Five)",
+            labelPriority: "Shoot/Coast Priority",
+            labelActionType: "Action Type",
+            optAirstrike: "Airstrike",
+            optReparo: "Repair",
+            optDrift: "Drift",
+            optCustom: "Custom",
+            labelHeaderTitle: "Header Title",
+            labelSpecialDesc: "Special Description",
+            label1st: "1st to Activate",
+            label2nd: "2nd to Activate",
+            label3rd: "3rd to Activate",
+            sizeS: "S (Small)",
+            sizeM: "M (Medium)",
+            sizeL: "L (Large)",
+            movesHeader: "Moves",
+            movesHeaderS: "S (Small) Moves",
+            movesHeaderM: "M (Medium) Moves",
+            movesHeaderL: "L (Large) Moves",
+            activationOrdinal: ["1st TO ACTIVATE","2nd TO ACTIVATE","3rd TO ACTIVATE"],
+            btnAddCommand: "+ ADD COMMAND",
+            btnAddCommandS: "+ ADD COMMAND (S)",
+            btnAddCommandM: "+ ADD COMMAND (M)",
+            btnAddCommandL: "+ ADD COMMAND (L)",
+            btnSaveChanges: "SAVE CHANGES",
+            condNormal: "Condition: Normal",
+            condFire: "Only if on Fire",
+            condSmoke: "Extinguish Fire",
+            condIgnite: "Ignite (no value)",
+            dirLabel: "Direction",
+            diceLabel: "Die",
+            setupBotCount: "Number of Enemy Bots",
+            physicalSetupTitle: "Physical Game Setup (do this at your table first)",
+            physicalSetupBodyHtml: `<ol>
+                <li>Set up the base game board as usual: rear road tile, middle road tile and lead road tile, hazard tokens face-down on the correct spaces, damage tokens in a pile, and the FX die nearby.</li>
+                <li>For <strong>each TRV9000 Bot</strong>: choose a crew color and take the matching 3 dashboards, 3 cars and chopper — but <strong>do NOT</strong> take the control panel or the 4 movement dice (the app doesn't use those dice, only the cards).</li>
+                <li>Arrange the Bot's dashboards in a row and place its 3 cars in the starting area, behind the rear tile (as a human player would).</li>
+                <li>Place the <strong>TRV9000 BASIC PROTOCOL</strong> card next to the Bot's dashboards. Shuffle the 18 TRV9000 activation cards into a face-down deck next to it.</li>
+                <li>If playing with the <strong>Choppe Shoppe</strong> expansion, randomly draw 1 TEAM card and place it next to the Basic Protocol card — the upgrades apply for the whole game to the matching cars (S, M or L).</li>
+                <li>Before the first round, roll the Bot's movement dice (or let the app randomize it) to determine the first player, then roll your own. The Bot can be the first player.</li>
+                <li><strong>(Optional) SDBR — Autonomous Big Rig:</strong> assemble the Big Rig figure (3 parts) in the starting area; take the front cab board, section board, chopper, and 10 Big Rig minor damage tokens; shuffle the SDBR's own activation card deck.</li>
+                <li><strong>(Optional) SDFF — Autonomous Final Five:</strong> take the 5 motorcycle figures, the command board and dashboards, the chopper, and 5 minor damage tokens; shuffle the SDFF's own activation card deck.</li>
+                <li>From here on, the app guides each Bot's activation automatically — just follow the on-screen instructions on the Bot's turn.</li>
+            </ol>`,
+            botPrefix: "BOT",
+            carPrefix: "Car",
+            difficultyPrefix: "Basic Protocol Lv.",
+            sdbrToggleLabel: "Add SDBR (Autonomous Big Rig)",
+            sdffToggleLabel: "Add SDFF (Autonomous Final Five)",
+            expAdded: "Added",
+            expNotAdded: "Add",
+            btnStartGame: "START RACE",
+            btnEditDeck: "EDIT OFFICIAL DECK",
+            btnDrawCards: "DRAW CARDS",
+            btnNextStep: "NEXT STEP",
+            btnAbandon: "ABANDON",
+            waitingDraw: "Waiting for<br>Draw",
+            deckStatus: (d, x) => `DECK: ${d} | DISCARD: ${x}`,
+            initialPlacementTitle: "1st Round: Placement (Parking Lot)",
+            initialPlacementSpace: (space) => `Space ${space}`,
+            diceIntroTitle: "Rolling initial placement...",
+            abilitiesSummary: (lvl) => `View Special Abilities (Protocol Lv.${lvl}/4)`,
+            priorityBadge: (p) => {
+                const map = {'↓ (Cima para Baixo)': '↓ (Top to Bottom)', '↑ (Baixo para Cima)': '↑ (Bottom to Top)', '↻ (Sentido Horário)': '↻ (Clockwise)', '↺ (Sentido Anti-Horário)': '↺ (Counter-Clockwise)'};
+                return `Shoot/Coast: ${map[p] || p}`;
+            },
+            sdbrPriorityBadge: (p) => {
+                const map = {'↓ (Cima para Baixo)': '↓ (Top to Bottom)', '↑ (Baixo para Cima)': '↑ (Bottom to Top)', '↻ (Sentido Horário)': '↻ (Clockwise)', '↺ (Sentido Anti-Horário)': '↺ (Counter-Clockwise)'};
+                return `Priority: ${map[p] || p}`;
+            },
+            sdbrCardAction: "SDBR: MOVEMENT + COMMAND PER SECTION",
+            sdbrBadgeName: "🚛 SDBR: AUTONOMOUS BIG RIG",
+            sdbrDetailsSummary: "View Commands by Section",
+            sdbrAbility1: "Hydraulic Steering (cab): may change lanes as many times as the movement value of the FRONT section on this card.",
+            sdbrAbility2: "Section Commands: The Big Rig always attempts to activate Column 3 (Repair). If Column 3 in this section is already wrecked/unusable on the physical board, skip to the neighboring column in the direction of the arrow [→ / ←].",
+            sdbrHazardTitle: (color) => color === 'red' ? "Changes lane (once) upon reaching the 1st space with a hazard token; otherwise moves straight." : "Changes lane (once) upon reaching the 1st space of the indicated terrain; otherwise moves straight.",
+            sdbrTravelLabel: "Move",
+            sdbrActivationLabel: "Activation",
+            sdbrHazardRed: "Hazard (red)",
+            sdbrHazardBrown: "Terrain (brown)",
+            sdbrHazardRedShort: "Hazard",
+            sdbrHazardBrownShort: "Terrain",
+            sdbrSkipTitle: "Default die: 3 (Repair). If this section's command is wrecked on the physical board, skip to the neighboring column in this direction.",
+            sdffCardAction: "SDFF: 2 BIKES OR COMMAND + 1 BIKE PER TURN",
+            sdffBadgeName: "🏍️ SDFF: AUTONOMOUS FINAL FIVE",
+            sdffDetailsSummary: "View Bike Legend",
+            sdffAbility1: "Each turn activates the 2 bikes marked on the row (same TRV9000 movement priority).",
+            sdffAbility2: "On the row marked with ★, activate the command at the top of the card with the marked bike, instead of a second bike.",
+            sdffAbility3: "🔥 = the bike catches fire (ignite) this turn. +1/+2 bonus = extra micro-movement if the bike is already on fire.",
+            sdffAbility4: "Bike marks: ‖ ✕ ⌃ ◎ S — identify each physical bike with one of these marks.",
+            inactivePhase: "Inactive this phase.",
+            fireTitle: "Only if currently on fire",
+            extinguishTitle: "Extinguish Fire",
+            igniteTitle: "The bike catches fire",
+            alertExportOk: "Backup file generated successfully.",
+            alertImportOk: "Deck imported from file and saved to cache successfully!",
+            alertImportBadFile: "Error: The file is not a deck compatible with the current version.",
+            alertImportCritical: "Critical error reading the file.",
+            alertCardSaved: (id) => `Card ${id} updated in cache!`,
+            editorLoadPrompt: "Select a card from the list to begin.",
+            labelCmd: "Command",
+            labelMoveVal: "Move",
+            labelMark: "Mark",
+            labelIsIgnite: "Ignite",
+            cmdRepair: "Repair",
+            cmdAirstrike: "Airstrike",
+            cmdRespawn: "Respawn",
+            creditsHtml: `Made by <span class="clickable-name" onclick="engineSound()">Thiago Colletes</span> (<a href="mailto:colletes@gmail.com">colletes@gmail.com</a>) and Gemini — companion app for automated bots, based on the official game <em>Thunder Road: Vendetta</em> (and the Big Rig/Final Five expansions) by Restoration Games, and on the bot system created by <a href="https://boardgamegeek.com/profile/mayrik" target="_blank" rel="noopener">Padey Mayrik</a>. Personal, non-commercial use.`,
+            bmcBtn: 'Buy me a coffee'
+        }
+    };
+    let lang = localStorage.getItem('boardbots_lang') || 'pt';
+    function t(key) { const v = (I18N[lang] || I18N.pt)[key]; return v !== undefined ? v : (I18N.pt[key] !== undefined ? I18N.pt[key] : key); }
+    function tr(obj) { if (!obj) return ''; return (typeof obj === 'object') ? (obj[lang] !== undefined ? obj[lang] : obj.pt) : obj; }
+
+    function setLang(l) {
+        const priorityOpts = {
+            pt: {
+                '↓ (Cima para Baixo)': '↓ (Cima para Baixo)',
+                '↑ (Baixo para Cima)': '↑ (Baixo para Cima)',
+                '↻ (Sentido Horário)': '↻ (Sentido Horário)',
+                '↺ (Sentido Anti-Horário)': '↺ (Sentido Anti-Horário)'
+            },
+            en: {
+                '↓ (Cima para Baixo)': '↓ (Top to Bottom)',
+                '↑ (Baixo para Cima)': '↑ (Bottom to Top)',
+                '↻ (Sentido Horário)': '↻ (Clockwise)',
+                '↺ (Sentido Anti-Horário)': '↺ (Counter-Clockwise)'
+            }
+        };
+        document.querySelectorAll('select#edit-priority option, select#edit-sdbr-priority option').forEach(opt => {
+            if (priorityOpts[l] && priorityOpts[l][opt.value]) {
+                opt.textContent = priorityOpts[l][opt.value];
+            }
+        });
+        lang = l;
+        localStorage.setItem('boardbots_lang', l);
+        document.documentElement.lang = (l === 'pt') ? 'pt-br' : 'en';
+        applyI18n();
+    }
+
+    function toggleLang() {
+        setLang(lang === 'pt' ? 'en' : 'pt');
+    }
+
+    function applyI18n() {
+        document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
+        document.querySelectorAll('[data-i18n]').forEach(el => { el.innerHTML = t(el.getAttribute('data-i18n')); });
+        const pageTitleEl = document.getElementById('page-title');
+        if (pageTitleEl) pageTitleEl.textContent = t('pageTitle');
+        const pageTitleBanner = document.getElementById('page-title-banner');
+        if (pageTitleBanner) pageTitleBanner.textContent = t('heroTitle');
+        const taglineBanner = document.getElementById('tagline-banner');
+        if (taglineBanner) taglineBanner.textContent = t('heroSubtitle');
+        const creditsText = document.getElementById('creditsText');
+        if (creditsText) creditsText.innerHTML = t('creditsHtml');
+        renderHelpContent();
+        renderBotSetup();
+        updateExpansionToggleLabels();
+        if (!document.getElementById('view-game').classList.contains('hidden')) { renderAllBots(); }
+        if (!document.getElementById('config-modal').classList.contains('hidden')) { renderSidebar(); }
+    }
+
+    // --- CONTROLES DOS MODAIS E NAVEGAÇÃO ---
+    function openHelpModal() { document.getElementById('help-modal').classList.remove('hidden'); }
+    function closeHelpModal() { document.getElementById('help-modal').classList.add('hidden'); }
+    function toggleHelp() {
+        const modal = document.getElementById('help-modal');
+        if (!modal) return;
+        if (modal.classList.contains('hidden')) {
+            openHelpModal();
+        } else {
+            closeHelpModal();
+        }
+    }
+
+    function handleNavReset() {
+        const isGameActive = !document.getElementById('view-game').classList.contains('hidden');
+        if (isGameActive) {
+            const msg = lang === 'pt'
+                ? 'Deseja abandonar a corrida atual e voltar para o menu de configuração?'
+                : 'Do you want to abandon the current race and return to the setup screen?';
+            if (confirm(msg)) {
+                document.getElementById('view-game').classList.add('hidden');
+                document.getElementById('view-setup').classList.remove('hidden');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        } else {
+            window.location.reload();
+        }
+    }
+
+    function showInfoToast(msg) {
+        if (!msg) return;
+        let toast = document.getElementById('info-toast');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'info-toast';
+            toast.className = 'info-toast';
+            toast.onclick = () => toast.classList.remove('show');
+            document.body.appendChild(toast);
+        }
+        toast.textContent = msg;
+        toast.classList.add('show');
+        clearTimeout(toast._timer);
+        toast._timer = setTimeout(() => {
+            toast.classList.remove('show');
+        }, 4500);
+    }
+
+    // --- EFEITO SONORO DO MOTOR ---
+    function engineSound() {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        osc.type = 'sawtooth';
+        
+        const lfo = audioCtx.createOscillator();
+        lfo.type = 'sine';
+        lfo.frequency.value = 20; 
+
+        const lfoGain = audioCtx.createGain();
+        lfoGain.gain.value = 15; 
+        
+        lfo.connect(lfoGain);
+        lfoGain.connect(osc.detune);
+
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(150, audioCtx.currentTime); 
+        filter.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.3); 
+        filter.frequency.exponentialRampToValueAtTime(150, audioCtx.currentTime + 1.2); 
+
+        const gainNode = audioCtx.createGain();
+        gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+        gainNode.gain.linearRampToValueAtTime(0.5, audioCtx.currentTime + 0.1);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.2);
+
+        osc.frequency.setValueAtTime(40, audioCtx.currentTime); 
+        osc.frequency.exponentialRampToValueAtTime(120, audioCtx.currentTime + 0.3); 
+        osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 1.2); 
+
+        osc.connect(filter);
+        filter.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        osc.start();
+        lfo.start();
+        osc.stop(audioCtx.currentTime + 1.5);
+        lfo.stop(audioCtx.currentTime + 1.5);
+    }
+
+    // --- CONTEÚDO DO MANUAL (BILÍNGUE) ---
+    const HELP_CONTENT = {
+        pt: `
+            <h3 style="color: var(--yellow); border-left: 4px solid var(--yellow); padding-left: 10px;"><span class="icon-inline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span> INICIALIZAÇÃO</h3>
+            <ul style="padding-left: 20px; margin-bottom: 25px;">
+                <li>Os bots <strong>não usam dados de movimento OU o dado de estrada</strong>. Eles se guiam pelas cartas, que são reveladas 1 a 1, mostrando qual carro se move e a direção. Eles usam os painéis normalmente, entretanto, para controlar o dano. Utilizam também os dados de combate normalmente.</li>
+                <li>Role <strong>1d6</strong> para verificar onde posicionar o carro do bot na pista inicial. O número se resolve de cima para baixo, i.e., 1 é o espaço mais acima e 6 o mais abaixo.</li>
+                <li>Escolha a quantidade de bots, a cor e o time. Os times especiais fornecem desafios adicionais e suas habilidades são somadas às do protocolo básico. Escolha também o <strong>Nível de Dificuldade do Protocolo Básico (1 a 4)</strong>: quanto maior o nível, mais habilidades básicas ficam ativas ao mesmo tempo, tornando o bot mais difícil.</li>
+                <li>Você pode adicionar opcionalmente o <strong>SDBR (Big Rig Autônomo)</strong> e/ou o <strong>SDFF (Final Five Autônomo)</strong> como oponentes extras da expansão "Maximum Chrome".</li>
+            </ul>
+
+            <h3 style="color: var(--yellow); border-left: 4px solid var(--yellow); padding-left: 10px;"><span class="icon-inline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 13l1.5-4.5A2 2 0 0 1 6.4 7h9.2a2 2 0 0 1 1.9 1.4L19 13"/><rect x="2" y="13" width="20" height="5" rx="1"/><circle cx="7" cy="18" r="1.5"/><circle cx="17" cy="18" r="1.5"/></svg></span> FASE DE MOVIMENTO</h3>
+            <ul style="padding-left: 20px; margin-bottom: 25px;">
+                <li>Durante este turno, ative o carro designado pela letra S, M ou L, presente no início da linha de ativação revelada. Se este carro não estiver operável (destruído), avance a carta de ativação para revelar e ativar o próximo carro. Se todos os carros operáveis já tiverem sido ativados nesta rodada, realize <strong>1 EMBALO (COAST)</strong> com o maior carro operável na carta de ativação.</li>
+                <li>A fase de movimento é dividida em vários micro-movimentos na forma de uma linha de símbolos de movimento a serem executados em ordem, da esquerda para a direita. Para cada símbolo, sempre tente mover o carro ativado o maior número de espaços possível, na direção indicada. Cada símbolo de movimento indica o número máximo de espaços que ele pode se mover, e a direção fixa na qual deve se mover.</li>
+                <li><strong style="color:var(--rust);">🔥 Condição de Fogo:</strong> Aplique apenas se o carro ativado estiver pegando fogo. É um <strong>pré-resultado</strong> (não role o dado de fogo): os símbolos +1 e +2 não são movimentos obrigatórios, são micro-movimentos bônus, sempre em linha reta à frente, respeitando as regras de movimento do TRV9000.</li>
+                <li><strong>Lama, Gosma Tóxica, Planícies de Sal:</strong> Trate como espaços de estrada, não aplique nenhum efeito.</li>
+                <li><strong>Vidro do Deserto, Mancha de Óleo, Rampa, Fogo! e Ficha de Perigo virada para baixo:</strong> Aplique as regras normais, como para um jogador.</li>
+                <li><strong>Borda do tabuleiro, Espaços intransponíveis, Veículo da mesma equipe, Rampa Eliminatória, Ficha de perigo de Mina, Vidro do deserto (movendo-se em direção aos espaços mencionados acima):</strong> Causam uma mudança de direção. Pare o micro-movimento atual no espaço anterior e execute o próximo símbolo de movimento na linha de ativação.</li>
+                <li><strong style="color:var(--rust);">💥 Slam:</strong> O TRV9000 nunca dá Slam em carros da própria equipe (isso encerra o símbolo atual no espaço anterior e executa o próximo). Ao dar Slam em qualquer outro veículo, se o resultado mover o carro do TRV9000 e ele tiver direito a rerrolar (por ser o veículo maior), <strong>sempre rerrola</strong>.</li>
+                <li><strong>Resumo:</strong> Nunca se mova para um espaço onde você sabe de antemão que inevitavelmente resultará em dano ou na eliminação de um carro TRV9000.</li>
+                <li>Após executar o último símbolo, um SLAM, um SALTO ou receber DANO: <strong>encerre a fase de movimento e inicie a fase de tiro</strong>.</li>
+            </ul>
+
+            <h3 style="color: var(--yellow); border-left: 4px solid var(--yellow); padding-left: 10px;"><span class="icon-inline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg></span> TIRO</h3>
+            <ul style="padding-left: 20px; margin-bottom: 25px;">
+                <li>Se um veículo adversário estiver no arco frontal do carro ativado, atire.</li>
+                <li>Se houver vários veículos adversários presentes, dê prioridade àquele marcado com o símbolo de prioridade de tiro (no topo da carta de ativação). O carro ativado atira primeiro no espaço designado pela prioridade (Cima para Baixo ou Baixo para Cima). Se este espaço estiver vazio, atire no próximo espaço seguindo a prioridade.</li>
+            </ul>
+
+            <h3 style="color: var(--yellow); border-left: 4px solid var(--yellow); padding-left: 10px;"><span class="icon-inline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 8h13a3 3 0 1 0-3-3M3 13h17a3 3 0 1 1-3 3M3 18h9a3 3 0 1 1-3 3"/></svg></span> EMBALO (COAST)</h3>
+            <ul style="padding-left: 20px; margin-bottom: 25px;">
+                <li>Se o TRV9000 precisar realizar uma fase de movimento e todos os seus carros operáveis já tiverem sido ativados nesta rodada, realize 1 movimento de EMBALO (COAST) com o seu maior carro operável na carta de ativação.</li>
+                <li>Durante a fase de movimento, mova este carro 1 único espaço para frente, usando o símbolo de prioridade de tiro (no topo da carta de ativação) como sua prioridade de direção.</li>
+                <li>Ao fazer este movimento, certifique-se de nunca se mover para um espaço que você sabe que causará dano ou eliminará o carro.</li>
+            </ul>
+
+            <h3 style="color: var(--rust); border-left: 4px solid var(--rust); padding-left: 10px;">🚛 EXPANSÃO: SDBR (BIG RIG AUTÔNOMO)</h3>
+            <ul style="padding-left: 20px; margin-bottom: 25px;">
+                <li>O SDBR é um caminhão gigante dividido em 3 seções: <strong>FRENTE, MEIO e TRAS</strong>. Cada carta revela, seção por seção (na ordem indicada na carta), 1 micro-movimento e 1 comando daquela seção.</li>
+                <li>O <strong>círculo de prioridade</strong> no topo da carta é diferente do TRV9000 base: em vez de uma prioridade linear (Cima/Baixo), ele mostra um <strong>sentido de rotação</strong> (↻ horário ou ↺ anti-horário) ao redor do Big Rig. Comece pela posição indicada pela mira e siga girando no sentido mostrado até encontrar o primeiro alvo válido — esse mesmo sentido também define a direção do EMBALO (COAST).</li>
+                <li>Cada seção tem <strong>duas caixas distintas</strong> na carta original: a caixa esquerda (dado + seta pretos) tem o dado sempre fixo em <strong>3</strong> — ou seja, aquela seção <strong>sempre prioriza Reparo</strong> (remove 1 dano); a seta só indica, caso o comando de Reparo esteja danificado demais no tabuleiro físico (informação que este app não rastreia), para qual lado pular para o próximo comando disponível daquela seção. A caixa direita (dado + seta vermelha) define o <strong>movimento real</strong>: o valor do dado é o total de espaços que a seção anda em linha reta; a seta (↗ ou ↘) só se aplica na <strong>primeira vez</strong> que o SDBR encontrar um espaço do tipo indicado pelo <span style="color:#e62e00;">▲ ícone vermelho (ficha de perigo)</span> ou <span style="color:#9c6b30;">▲ marrom (outro terreno)</span>, mudando de faixa uma única vez antes de continuar reto pelo restante do movimento; se nenhum espaço desse tipo for cruzado, ela anda todo o valor em linha reta.</li>
+                <li><strong>Direção Hidráulica</strong> (cabine dianteira): a qualquer momento no turno do SDBR, ele pode mudar de faixa até um número de vezes igual ao valor de movimento indicado na seção FRENTE nesta carta.</li>
+                <li>Como o dado de ativação é sempre 3, na prática toda seção sempre executa <strong>Reparo</strong>; a seta de ativação exibida no card serve apenas como lembrete de para qual lado pular caso o Reparo físico daquela seção já esteja esgotado no tabuleiro.</li>
+            </ul>
+
+            <h3 style="color: var(--rust); border-left: 4px solid var(--rust); padding-left: 10px;">🏍️ EXPANSÃO: SDFF (FINAL FIVE AUTÔNOMO)</h3>
+            <ul style="padding-left: 20px;">
+                <li>O SDFF representa um esquadrão de <strong>5 motocicletas pequenas</strong> autônomas. Cada carta revela, linha por linha (de cima para baixo), qual ativação ocorre naquele turno.</li>
+                <li>Em <strong>2 das 3 linhas</strong>, duas motocicletas marcadas (símbolos ‖ ✕ ⌃ ◎ S) se movem simultaneamente, cada uma com seu próprio micro-movimento.</li>
+                <li>Na linha marcada com <strong>★</strong>, a motocicleta marcada nesta linha ativa o <strong>comando do topo da carta</strong> (Reparo, Ataque Aéreo ou Renascer) em vez de uma segunda motocicleta se mover.</li>
+                <li><strong>🔥 Ignição:</strong> quando este ícone aparece (sem valor numérico), a motocicleta pega fogo imediatamente neste turno, antes de se mover.</li>
+                <li><strong>🔥 Bônus de Fogo (+1/+2):</strong> mesma regra do TRV9000 base — aplique apenas se a motocicleta já estiver pegando fogo; é um micro-movimento bônus em linha reta à frente.</li>
+                <li>O símbolo de prioridade no topo da carta funciona como no TRV9000 base para definir o alvo do Ataque Aéreo e a direção do Renascer.</li>
+            </ul>
+        `,
+        en: `
+            <h3 style="color: var(--yellow); border-left: 4px solid var(--yellow); padding-left: 10px;"><span class="icon-inline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span> SETUP</h3>
+            <ul style="padding-left: 20px; margin-bottom: 25px;">
+                <li>Bots <strong>do not use movement dice OR the road die</strong>. They are guided by cards, revealed one at a time, showing which car moves and in which direction. They use damage panels normally, however, to track damage. They also use combat dice normally.</li>
+                <li>Roll <strong>1d6</strong> to determine where to place the bot's car on the starting track. The number resolves top to bottom, i.e. 1 is the topmost space and 6 the bottommost.</li>
+                <li>Choose the number of bots, their color and team. Special teams provide extra challenges and their abilities stack with the basic protocol's. Also choose the <strong>Basic Protocol Difficulty Level (1 to 4)</strong>: the higher the level, the more basic abilities are active at once, making the bot harder.</li>
+                <li>You may optionally add the <strong>SDBR (Autonomous Big Rig)</strong> and/or the <strong>SDFF (Autonomous Final Five)</strong> as extra opponents from the "Maximum Chrome" expansion.</li>
+            </ul>
+
+            <h3 style="color: var(--yellow); border-left: 4px solid var(--yellow); padding-left: 10px;"><span class="icon-inline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 13l1.5-4.5A2 2 0 0 1 6.4 7h9.2a2 2 0 0 1 1.9 1.4L19 13"/><rect x="2" y="13" width="20" height="5" rx="1"/><circle cx="7" cy="18" r="1.5"/><circle cx="17" cy="18" r="1.5"/></svg></span> MOVEMENT PHASE</h3>
+            <ul style="padding-left: 20px; margin-bottom: 25px;">
+                <li>During this turn, activate the car designated by the letter S, M or L at the start of the revealed activation row. If this car is not operational (destroyed), advance the activation card to reveal and activate the next car. If all operational cars have already been activated this round, perform <strong>1 COAST</strong> with the largest operational car on the activation card.</li>
+                <li>The movement phase is split into several micro-movements shown as a row of movement symbols to be executed in order, left to right. For each symbol, always try to move the activated car the maximum number of spaces possible, in the indicated direction. Each movement symbol shows the maximum number of spaces it may move, and the fixed direction it must move in.</li>
+                <li><strong style="color:var(--rust);">🔥 Fire Condition:</strong> Apply only if the activated car is currently on fire. It is a <strong>pre-result</strong> (do not roll the fire die): the +1 and +2 symbols are not mandatory moves, they are bonus micro-movements, always straight ahead, following TRV9000 movement rules.</li>
+                <li><strong>Mud, Toxic Sludge, Salt Flats:</strong> Treat as road spaces, apply no effect.</li>
+                <li><strong>Desert Glass, Oil Slick, Ramp, Fire! and face-down Hazard token:</strong> Apply the normal rules, as for a player.</li>
+                <li><strong>Board edge, impassable spaces, a vehicle from the same team, Elimination Ramp, Mine hazard token, Desert Glass (moving toward the spaces mentioned above):</strong> Cause a direction change. Stop the current micro-movement on the previous space and execute the next movement symbol on the activation row.</li>
+                <li><strong style="color:var(--rust);">💥 Slam:</strong> The TRV9000 never Slams cars from its own team (this ends the current symbol on the previous space and moves to the next). When Slamming any other vehicle, if the result moves the TRV9000's car and it is entitled to a reroll (for being the larger vehicle), it <strong>always rerolls</strong>.</li>
+                <li><strong>Summary:</strong> Never move to a space you know in advance will inevitably result in damage or elimination of a TRV9000 car.</li>
+                <li>After executing the last symbol, a SLAM, a JUMP, or taking DAMAGE: <strong>end the movement phase and start the shooting phase</strong>.</li>
+            </ul>
+
+            <h3 style="color: var(--yellow); border-left: 4px solid var(--yellow); padding-left: 10px;"><span class="icon-inline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg></span> SHOOTING</h3>
+            <ul style="padding-left: 20px; margin-bottom: 25px;">
+                <li>If an enemy vehicle is in the activated car's front arc, shoot.</li>
+                <li>If several enemy vehicles are present, give priority to the one marked with the shooting priority symbol (at the top of the activation card). The activated car shoots first at the space designated by priority (Top to Bottom or Bottom to Top). If this space is empty, shoot at the next space following priority.</li>
+            </ul>
+
+            <h3 style="color: var(--yellow); border-left: 4px solid var(--yellow); padding-left: 10px;"><span class="icon-inline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 8h13a3 3 0 1 0-3-3M3 13h17a3 3 0 1 1-3 3M3 18h9a3 3 0 1 1-3 3"/></svg></span> COAST</h3>
+            <ul style="padding-left: 20px; margin-bottom: 25px;">
+                <li>If the TRV9000 needs to perform a movement phase and all its operational cars have already been activated this round, perform 1 COAST movement with its largest operational car on the activation card.</li>
+                <li>During the movement phase, move this car 1 single space forward, using the shooting priority symbol (at the top of the activation card) as its direction priority.</li>
+                <li>When making this move, make sure to never move to a space you know will cause damage or eliminate the car.</li>
+            </ul>
+
+            <h3 style="color: var(--rust); border-left: 4px solid var(--rust); padding-left: 10px;">🚛 EXPANSION: SDBR (AUTONOMOUS BIG RIG)</h3>
+            <ul style="padding-left: 20px; margin-bottom: 25px;">
+                <li>The SDBR is a giant truck split into 3 sections: <strong>FRONT, MIDDLE and REAR</strong>. Each card reveals, section by section (in the order shown on the card), 1 micro-movement and 1 command for that section.</li>
+                <li>The <strong>priority circle</strong> at the top of the card is different from the base TRV9000: instead of a linear priority (Top/Bottom), it shows a <strong>rotation direction</strong> (↻ clockwise or ↺ counter-clockwise) around the Big Rig. Start at the position marked by the sight and keep sweeping in the shown direction until you find the first valid target — this same direction also sets the COAST direction.</li>
+                <li>Each section has <strong>two distinct boxes</strong> on the original card: the left box (black die + arrow) always has its die fixed at <strong>3</strong> — meaning that section <strong>always prioritizes Repair</strong> (removes 1 damage); the arrow only indicates, in case the Repair command is too damaged on the physical board (information this app doesn't track), which side to skip to for that section's next available command. The right box (die + red arrow) defines the <strong>actual movement</strong>: the die value is the total number of spaces the section moves in a straight line; the arrow (↗ or ↘) only applies the <strong>first time</strong> the SDBR reaches a space of the type shown by the <span style="color:#e62e00;">▲ red icon (hazard token)</span> or <span style="color:#9c6b30;">▲ brown icon (other terrain)</span>, changing lanes once before continuing straight for the rest of the movement; if no such space is crossed, it moves the full value in a straight line.</li>
+                <li><strong>Hydraulic Steering</strong> (front cab): at any point during the SDBR's turn, it may change lanes up to a number of times equal to the movement value shown on the FRONT section of this card.</li>
+                <li>Since the activation die is always 3, every section effectively always performs <strong>Repair</strong>; the activation arrow shown on the card is just a reminder of which side to skip to if that section's physical Repair is already exhausted on the board.</li>
+            </ul>
+
+            <h3 style="color: var(--rust); border-left: 4px solid var(--rust); padding-left: 10px;">🏍️ EXPANSION: SDFF (AUTONOMOUS FINAL FIVE)</h3>
+            <ul style="padding-left: 20px;">
+                <li>The SDFF represents a squad of <strong>5 small autonomous motorcycles</strong>. Each card reveals, row by row (top to bottom), which activation happens that turn.</li>
+                <li>On <strong>2 of the 3 rows</strong>, two marked motorcycles (symbols ‖ ✕ ⌃ ◎ S) move simultaneously, each with its own micro-movement.</li>
+                <li>On the row marked with <strong>★</strong>, the motorcycle marked on that row activates the <strong>command at the top of the card</strong> (Repair, Airstrike or Respawn) instead of a second motorcycle moving.</li>
+                <li><strong>🔥 Ignite:</strong> when this icon appears (with no numeric value), the motorcycle catches fire immediately this turn, before moving.</li>
+                <li><strong>🔥 Fire Bonus (+1/+2):</strong> same rule as the base TRV9000 — apply only if the motorcycle is already on fire; it's a bonus straight-ahead micro-movement.</li>
+                <li>The priority symbol at the top of the card works like the base TRV9000 to set the Airstrike target and the Respawn direction.</li>
+            </ul>
+        `
+    };
+    function renderHelpContent() {
+        const el = document.getElementById('help-content');
+        if (el) el.innerHTML = HELP_CONTENT[lang] || HELP_CONTENT.pt;
+    }
+
+    // --- DADOS DOS BOTS (CORES E HABILIDADES) ---
+    const CAR_COLORS = [
+        { id: 'white', name: { pt: 'Branco', en: 'White' }, hex: '#ffffff', text: '#000000' },
+        { id: 'lightblue', name: { pt: 'Azul Claro', en: 'Light Blue' }, hex: '#00d2ff', text: '#000000' },
+        { id: 'orange', name: { pt: 'Laranja', en: 'Orange' }, hex: '#ff8c00', text: '#ffffff' },
+        { id: 'green', name: { pt: 'Verde', en: 'Green' }, hex: '#39ff14', text: '#000000' },
+        { id: 'purple', name: { pt: 'Roxo', en: 'Purple' }, hex: '#b026ff', text: '#ffffff' }
+    ];
+
+    // Dado roxo de 6 faces: a posição inicial corresponde diretamente ao valor rolado, de cima (1) para baixo (6) no diagrama "Parking Lot".
+    function rollTRV9000InitialPlacement() {
+        const roll = Math.floor(Math.random() * 6) + 1;
+        return { rolls: [roll], space: roll };
+    }
+
+    // Mesma regra de posicionamento inicial vale para o TRV9000 base, o SDBR (Big Rig) e o SDFF (Final Five).
+    function renderInitialPlacementBox(placement) {
+        if (!placement) return '';
+        let rowsHtml;
+        if (placement.space !== undefined) {
+            rowsHtml = `
+                <div class="initial-placement-row">
+                    <span class="initial-placement-space">${t('initialPlacementSpace')(placement.space)}</span>
+                </div>`;
+        } else {
+            rowsHtml = Object.keys(placement).map(size => `
+                <div class="initial-placement-row">
+                    <span class="initial-placement-size">${size}</span>
+                    <span class="initial-placement-space">${t('initialPlacementSpace')(placement[size].space)}</span>
+                </div>
+            `).join('');
+        }
+        return `
+            <div class="initial-placement-box">
+                <div class="initial-placement-title">${t('initialPlacementTitle')}</div>
+                ${rowsHtml}
+            </div>`;
+    }
+
+    const BASIC_ABILITIES = {
+        pt: [
+            "<strong>[Lv1]</strong> Espaços Off-Road, lama, gosma tóxica e planícies de sal contam como estrada.",
+            "<strong>[Lv2]</strong> Ignora a primeira ficha de perigo (Hazard) cruzada no movimento.",
+            "<strong>[Lv3]</strong> Pode terminar o turno no espaço do helicóptero TRV9000 (remova-o do tabuleiro em vez de eliminar o carro).",
+            "<strong>[Lv4]</strong> Veículos TRV9000 podem passar por espaços com outro veículo TRV9000 sem realizar Slam."
+        ],
+        en: [
+            "<strong>[Lv1]</strong> Off-Road spaces, mud, toxic sludge and salt flats count as road.",
+            "<strong>[Lv2]</strong> Ignores the first Hazard token crossed during movement.",
+            "<strong>[Lv3]</strong> May end its turn on the TRV9000 helicopter's space (remove it from the board instead of eliminating the car).",
+            "<strong>[Lv4]</strong> TRV9000 vehicles may pass through spaces occupied by another TRV9000 vehicle without Slamming."
+        ]
+    };
+
+    const teams = [
+        { id: "basic", name: { pt: "Protocolo Básico", en: "Basic Protocol" }, abilities: { pt: [], en: [] } },
+        { id: "rams", name: { pt: "Mechanized Rams", en: "Mechanized Rams" }, abilities: {
+            pt: ["Se forçado a um espaço intransponível num slam, rerrola a direção.", "Oponentes não podem rerrolar dados de slam contra este carro.", "Move oponentes 1 espaço extra ao vencer slams."],
+            en: ["If forced into an impassable space during a slam, reroll the direction.", "Opponents cannot reroll slam dice against this car.", "Moves opponents 1 extra space when winning slams."]
+        } },
+        { id: "trigger", name: { pt: "Trigger Happy", en: "Trigger Happy" }, abilities: {
+            pt: ["Se errar um tiro, pode rerrolar o dado.", "Atira duas vezes (em alvos diferentes se possível).", "Atira antes E depois de se mover."],
+            en: ["If it misses a shot, may reroll the die.", "Shoots twice (at different targets if possible).", "Shoots before AND after moving."]
+        } },
+        { id: "gunners", name: { pt: "Gunners", en: "Gunners" }, abilities: {
+            pt: ["Pode atirar em qualquer espaço adjacente.", "Pode atirar a até 2 espaços de distância.", "Pode atirar até 3 espaços diretamente à frente."],
+            en: ["May shoot at any adjacent space.", "May shoot up to 2 spaces away.", "May shoot up to 3 spaces directly ahead."]
+        } },
+        { id: "immortals", name: { pt: "Immortals", en: "Immortals" }, abilities: {
+            pt: ["Ignora efeitos de fichas de dano (coloque-as viradas para baixo).", "Resultado 'ANY' em tiros inimigos conta como erro.", "Suporta 1 ficha de dano a mais."],
+            en: ["Ignores damage token effects (place them face down).", "An 'ANY' result on enemy shots counts as a miss.", "Can take 1 extra damage token."]
+        } },
+        { id: "untouchables", name: { pt: "The Untouchables", en: "The Untouchables" }, abilities: {
+            pt: ["Não pode ser alvejado pelo espaço diretamente atrás.", "Não pode ser alvejado se houver outro alvo válido.", "Resultado 'ANY' em tiros inimigos conta como erro."],
+            en: ["Cannot be targeted from the space directly behind.", "Cannot be targeted if another valid target exists.", "An 'ANY' result on enemy shots counts as a miss."]
+        } },
+        { id: "speed", name: { pt: "All For Speed", en: "All For Speed" }, abilities: {
+            pt: ["Ganha permanentemente +1 de movimento em frente.", "Quando inoperável, não é eliminado.", "Quando inoperável, todos os carros adjacentes são eliminados."],
+            en: ["Permanently gains +1 forward movement.", "When disabled, it is not eliminated.", "When disabled, all adjacent cars are eliminated."]
+        } },
+        { id: "bomb", name: { pt: "Bomb Squad", en: "Bomb Squad" }, abilities: {
+            pt: ["Se acertar um tiro, troca de lugar com o alvo após o dano.", "Se acertar um tiro, incendeia o alvo.", "Ao entrar no espaço de outro carro, empurra-o 1 espaço à frente."],
+            en: ["If it hits a shot, swaps places with the target after damage.", "If it hits a shot, sets the target on fire.", "When entering another car's space, pushes it 1 space forward."]
+        } }
+    ];
+
+    // SDBR (Self-Driving Big Rig) — expansão "Maximum Chrome"
+    const SDBR_SECTIONS = {
+        FRENTE: {
+            left: { name: { pt: "Pega-Vacas", en: "Cowcatcher" }, desc: { pt: "Na primeira vez que entrar em um espaço com perigo ou carro: se for perigo, remova-o; se for um carro, seu controlador o move para frente-esquerda ou frente-direita.", en: "The first time it enters a space with a hazard or a car: if a hazard, remove it; if a car, its controller moves it to front-left or front-right." } },
+            mid: { name: { pt: "Reparo", en: "Repair" }, desc: { pt: "Remova uma ficha de dano desta seção.", en: "Remove one damage token from this section." } },
+            right: { name: { pt: "Lançador de Mísseis", en: "Missile Launcher" }, desc: { pt: "Após se mover, role o dado de tiro. O veículo no espaço 2 à frente (ou adjacente a ele) sofre 1 dano menor se for atingido pela rolagem.", en: "After moving, roll the shooting die. The vehicle 2 spaces ahead (or adjacent to it) takes 1 minor damage if hit by the roll." } }
+        },
+        MEIO: {
+            left: { name: { pt: "Ataque Aéreo", en: "Airstrike" }, desc: { pt: "Coloque o helicóptero do SDBR em um espaço vazio e atire com ele.", en: "Place the SDBR chopper on an empty space and shoot with it." } },
+            mid: { name: { pt: "Reparo", en: "Repair" }, desc: { pt: "Remova uma ficha de dano desta seção.", en: "Remove one damage token from this section." } },
+            right: { name: { pt: "Tração Reforçada", en: "Reinforced Traction" }, desc: { pt: "Você pode usar o dado de estrada neste turno.", en: "You may use the road die this turn." } }
+        },
+        TRAS: {
+            left: { name: { pt: "Computador de Mira", en: "Aiming Computer" }, desc: { pt: "Ao atirar neste turno, você pode rerrolar o dado de tiro.", en: "When shooting this turn, you may reroll the shooting die." } },
+            mid: { name: { pt: "Reparo", en: "Repair" }, desc: { pt: "Remova uma ficha de dano desta seção.", en: "Remove one damage token from this section." } },
+            right: { name: { pt: "Dispensador de Perigos", en: "Hazard Dispenser" }, desc: { pt: "Após se mover, coloque uma ficha de perigo virada para baixo em um espaço adjacente à traseira do SDBR.", en: "After moving, place a face-down hazard token in a space adjacent to the SDBR's rear." } }
+        }
+    };
+    // Direção Hidráulica (cabine dianteira, não gated por seção): mudanças de faixa permitidas = valor de movimento da FRENTE nesta carta.
+
+    // Cada seção tem dois valores distintos, lidos de duas caixas separadas na carta:
+    // - "dir" (caixa esquerda, dado+seta pretos): o dado nessa caixa é SEMPRE 3 em toda seção de toda carta
+    //   (impresso fixo, não varia) — significa que aquela seção sempre prioriza Reparo. A seta (←/→) só indica,
+    //   caso o comando daquela seção esteja danificado demais no tabuleiro físico (algo que este app não rastreia),
+    //   para qual lado "pular" para o próximo comando disponível — por isso guardamos apenas a direção, não um valor.
+    // - "travel" (caixa direita, dado+seta vermelha): é o movimento real. O valor é o total de espaços em linha reta;
+    //   a direção (↗/↘) só se aplica na PRIMEIRA vez que o SDBR encontra um espaço do tipo indicado pelo ícone
+    //   (vermelho = ficha de perigo; marrom = outro tipo de terreno), mudando de faixa uma única vez antes de
+    //   continuar reto pelos espaços restantes. Se nenhum espaço desse tipo for encontrado, ele anda todo o
+    //   valor em linha reta.
+    const defaultSdbrDeck = [
+        { id: "SDBR 1/9", priority: "↻ (Sentido Horário)", order: ["TRAS","MEIO","FRENTE"],
+            TRAS: { dir:"←", travel:{val:3,dir:"↗",hazard:"red"} },
+            MEIO: { dir:"→", travel:{val:2,dir:"↗",hazard:"brown"} },
+            FRENTE: { dir:"→", travel:{val:1,dir:"↘",hazard:"red"} } },
+        { id: "SDBR 2/9", priority: "↺ (Sentido Anti-Horário)", order: ["TRAS","MEIO","FRENTE"],
+            TRAS: { dir:"→", travel:{val:1,dir:"↘",hazard:"brown"} },
+            MEIO: { dir:"←", travel:{val:2,dir:"↗",hazard:"red"} },
+            FRENTE: { dir:"→", travel:{val:2,dir:"↗",hazard:"brown"} } },
+        { id: "SDBR 3/9", priority: "↻ (Sentido Horário)", order: ["TRAS","FRENTE","MEIO"],
+            TRAS: { dir:"←", travel:{val:3,dir:"↗",hazard:"brown"} },
+            FRENTE: { dir:"←", travel:{val:2,dir:"↗",hazard:"red"} },
+            MEIO: { dir:"→", travel:{val:1,dir:"↘",hazard:"red"} } },
+        { id: "SDBR 4/9", priority: "↺ (Sentido Anti-Horário)", order: ["MEIO","TRAS","FRENTE"],
+            MEIO: { dir:"→", travel:{val:2,dir:"↘",hazard:"red"} },
+            TRAS: { dir:"→", travel:{val:2,dir:"↘",hazard:"brown"} },
+            FRENTE: { dir:"→", travel:{val:1,dir:"↗",hazard:"brown"} } },
+        { id: "SDBR 5/9", priority: "↻ (Sentido Horário)", order: ["MEIO","TRAS","FRENTE"],
+            MEIO: { dir:"←", travel:{val:1,dir:"↘",hazard:"brown"} },
+            TRAS: { dir:"←", travel:{val:2,dir:"↗",hazard:"brown"} },
+            FRENTE: { dir:"←", travel:{val:3,dir:"↘",hazard:"red"} } },
+        { id: "SDBR 6/9", priority: "↺ (Sentido Anti-Horário)", order: ["MEIO","FRENTE","TRAS"],
+            MEIO: { dir:"←", travel:{val:1,dir:"↗",hazard:"brown"} },
+            FRENTE: { dir:"→", travel:{val:3,dir:"↘",hazard:"brown"} },
+            TRAS: { dir:"→", travel:{val:2,dir:"↘",hazard:"red"} } },
+        { id: "SDBR 7/9", priority: "↻ (Sentido Horário)", order: ["FRENTE","MEIO","TRAS"],
+            FRENTE: { dir:"→", travel:{val:3,dir:"↘",hazard:"brown"} },
+            MEIO: { dir:"←", travel:{val:2,dir:"↗",hazard:"brown"} },
+            TRAS: { dir:"←", travel:{val:2,dir:"↗",hazard:"red"} } },
+        { id: "SDBR 8/9", priority: "↺ (Sentido Anti-Horário)", order: ["FRENTE","MEIO","TRAS"],
+            FRENTE: { dir:"←", travel:{val:2,dir:"↘",hazard:"brown"} },
+            MEIO: { dir:"→", travel:{val:1,dir:"↗",hazard:"red"} },
+            TRAS: { dir:"→", travel:{val:3,dir:"↗",hazard:"brown"} } },
+        { id: "SDBR 9/9", priority: "↻ (Sentido Horário)", order: ["FRENTE","TRAS","MEIO"],
+            FRENTE: { dir:"←", travel:{val:1,dir:"↘",hazard:"red"} },
+            TRAS: { dir:"←", travel:{val:1,dir:"↘",hazard:"red"} },
+            MEIO: { dir:"→", travel:{val:1,dir:"↘",hazard:"brown"} } }
+    ];
+
+    // SDFF (Self-Driving Final Five) — esquadrão de 5 motocicletas autônomas, expansão "Maximum Chrome"
+    // Cada carta tem 3 linhas reveladas progressivamente (mesmo esquema de globalStep). Em 2 linhas, duas
+    // motos marcadas se movem; na linha marcada com ★ (comando), a moto marcada ativa o comando do topo da carta.
+    const SDFF_MARKS = {
+        star: { sym: "★", label: { pt: "Comando", en: "Command" } },
+        bar: { sym: "‖", label: { pt: "Moto ‖", en: "Bike ‖" } },
+        x: { sym: "✕", label: { pt: "Moto ✕", en: "Bike ✕" } },
+        chevron: { sym: "⌃", label: { pt: "Moto ⌃", en: "Bike ⌃" } },
+        ring: { sym: "◎", label: { pt: "Moto ◎", en: "Bike ◎" } },
+        wave: { sym: "S", label: { pt: "Moto S", en: "Bike S" } }
+    };
+
+    // SDFF representa 5 motocicletas (não 1 veículo), cada uma identificada por seu símbolo — cada uma rola seu próprio posicionamento inicial.
+    const SDFF_BIKE_MARK_KEYS = ['bar', 'x', 'chevron', 'ring', 'wave'];
+    function rollSdffInitialPlacements() {
+        const placement = {};
+        SDFF_BIKE_MARK_KEYS.forEach(mk => { placement[SDFF_MARKS[mk].sym] = rollTRV9000InitialPlacement(); });
+        return placement;
+    }
+
+    const SDFF_COMMANDS = {
+        repair: { header: { pt: "REPARO", en: "REPAIR" }, text: { pt: "Remova uma ficha de dano da motocicleta danificada com maior prioridade de ativação.", en: "Remove one damage token from the damaged motorcycle with the highest activation priority." } },
+        airstrike: { header: { pt: "ATAQUE AÉREO", en: "AIRSTRIKE" }, text: { pt: "Coloque o helicóptero do SDFF no espaço vazio indicado pelo símbolo de prioridade, atrás do veículo inimigo mais avançado, e atire com ele.", en: "Place the SDFF chopper on the empty space indicated by the priority symbol, behind the foremost enemy vehicle, and shoot with it." } },
+        respawn: { header: { pt: "RENASCER", en: "RESPAWN" }, text: { pt: "Coloque uma motocicleta de volta em jogo no espaço vazio indicado pelo símbolo de prioridade de tiro, à frente da motocicleta mais atrasada.", en: "Put a motorcycle back into play on the empty space indicated by the shooting priority symbol, in front of the rearmost motorcycle." } }
+    };
+
+    const defaultSdffDeck = [
+        { id: "SDFF 1/9", priority: "↘", cmd: "repair", rows: [
+            { marks: ["star","chevron"], isCommand: true, moves: [{val:1,dir:"↗"},{val:3,dir:"↘"},{val:4,dir:"→"},{cond:"ignite"}] },
+            { marks: ["bar","ring"], moves: [{val:4,dir:"→"},{val:2,dir:"↗"},{val:2,dir:"↘"},{cond:"fire",val:2}] },
+            { marks: ["wave","x"], moves: [{val:4,dir:"↘"},{val:1,dir:"→"},{val:3,dir:"↗"},{cond:"fire",val:1}] }
+        ]},
+        { id: "SDFF 2/9", priority: "↘", cmd: "airstrike", rows: [
+            { marks: ["star","ring"], isCommand: true, moves: [{val:3,dir:"→"},{val:3,dir:"↗"},{val:2,dir:"↘"},{cond:"fire",val:2}] },
+            { marks: ["wave","x"], moves: [{val:1,dir:"↘"},{val:3,dir:"→"},{val:4,dir:"↘"},{cond:"ignite"}] },
+            { marks: ["bar","chevron"], moves: [{val:3,dir:"↘"},{val:4,dir:"→"},{val:1,dir:"↘"},{cond:"fire",val:1}] }
+        ]},
+        { id: "SDFF 3/9", priority: "↘", cmd: "repair", rows: [
+            { marks: ["star","x"], isCommand: true, moves: [{val:2,dir:"→"},{val:4,dir:"↘"},{val:2,dir:"↘"},{cond:"fire",val:1}] },
+            { marks: ["chevron","wave"], moves: [{val:2,dir:"→"},{val:3,dir:"↘"},{val:3,dir:"→"},{cond:"fire",val:2}] },
+            { marks: ["ring","bar"], moves: [{val:3,dir:"↘"},{val:2,dir:"↘"},{val:3,dir:"→"},{cond:"ignite"}] }
+        ]},
+        { id: "SDFF 4/9", priority: "↘", cmd: "repair", rows: [
+            { marks: ["x","wave"], moves: [{val:3,dir:"→"},{val:2,dir:"↘"},{val:3,dir:"↘"},{cond:"ignite"}] },
+            { marks: ["star","bar"], isCommand: true, moves: [{val:4,dir:"↘"},{val:1,dir:"→"},{val:3,dir:"↘"},{cond:"ignite"}] },
+            { marks: ["chevron","ring"], moves: [{val:2,dir:"↘"},{val:4,dir:"↗"},{val:2,dir:"↘"}] }
+        ]},
+        { id: "SDFF 5/9", priority: "↘", cmd: "airstrike", rows: [
+            { marks: ["bar","ring"], moves: [{val:2,dir:"→"},{val:3,dir:"↘"},{val:4,dir:"↗"},{cond:"ignite"}] },
+            { marks: ["star","wave"], isCommand: true, moves: [{val:3,dir:"→"},{val:4,dir:"↘"},{val:1,dir:"↘"},{cond:"ignite"}] },
+            { marks: ["x","chevron"], moves: [{val:4,dir:"→"},{val:2,dir:"↘"},{val:2,dir:"↗"},{cond:"fire",val:2}] }
+        ]},
+        { id: "SDFF 6/9", priority: "↖", cmd: "airstrike", rows: [
+            { marks: ["ring","x"], moves: [{val:3,dir:"→"},{val:4,dir:"↘"},{val:1,dir:"↘"},{cond:"fire",val:2}] },
+            { marks: ["star","chevron"], isCommand: true, moves: [{val:3,dir:"↘"},{val:2,dir:"→"},{val:3,dir:"↗"},{cond:"ignite"}] },
+            { marks: ["bar","wave"], moves: [{val:2,dir:"→"},{val:4,dir:"↘"},{val:2,dir:"↘"},{cond:"fire",val:2}] }
+        ]},
+        { id: "SDFF 7/9", priority: "↖", cmd: "repair", rows: [
+            { marks: ["wave","chevron"], moves: [{val:2,dir:"→"},{val:2,dir:"↘"},{val:4,dir:"↘"}] },
+            { marks: ["x","bar"], moves: [{val:3,dir:"→"},{val:3,dir:"↘"},{val:2,dir:"↘"},{cond:"fire",val:2}] },
+            { marks: ["star","ring"], isCommand: true, moves: [{val:2,dir:"→"},{val:3,dir:"↘"},{val:3,dir:"↗"},{cond:"ignite"}] }
+        ]},
+        { id: "SDFF 8/9", priority: "↖", cmd: "respawn", rows: [
+            { marks: ["chevron","wave"], moves: [{val:3,dir:"→"},{val:3,dir:"↘"},{val:2,dir:"↘"},{cond:"fire",val:2}] },
+            { marks: ["bar","ring"], moves: [{val:1,dir:"→"},{val:3,dir:"↘"},{val:4,dir:"↘"},{cond:"ignite"}] },
+            { marks: ["star","x"], isCommand: true, moves: [{val:2,dir:"→"},{val:2,dir:"↘"},{val:4,dir:"↘"},{cond:"ignite"}] }
+        ]},
+        { id: "SDFF 9/9", priority: "↖", cmd: "airstrike", rows: [
+            { marks: ["x","bar"], moves: [{val:2,dir:"→"},{val:3,dir:"↘"},{val:3,dir:"↗"},{cond:"ignite"}] },
+            { marks: ["ring","chevron"], moves: [{val:4,dir:"→"},{val:1,dir:"↘"},{val:3,dir:"↘"},{cond:"fire",val:1}] },
+            { marks: ["star","wave"], isCommand: true, moves: [{val:4,dir:"→"},{val:2,dir:"↘"},{val:2,dir:"↘"},{cond:"fire",val:1}] }
+        ]}
+    ];
+
+    const ACTION_DB = {
+        airstrike: { header: { pt: "AIRSTRIKE", en: "AIRSTRIKE" }, text: { pt: "Coloque o helicóptero TRV9000 atrás do veículo inimigo mais avançado, na origem da seta de prioridade; se ocupado, tente o próximo espaço na seta. Se nenhum dos 3 espaços estiver livre, mire atrás do veículo inimigo em 2º lugar. Depois, atire.", en: "Place the TRV9000 helicopter behind the foremost enemy vehicle, at the origin of the priority arrow; if occupied, try the next space on the arrow. If none of the 3 spaces are free, target behind the 2nd-place enemy vehicle instead. Then shoot." } },
+        reparo: { header: { pt: "REPARO", en: "REPAIR" }, text: { pt: "Remova imediatamente uma ficha de dano de cada carro desta equipe TRV9000 e embaralhe-as de volta na pilha de fichas de dano.", en: "Immediately remove one damage token from each car of this TRV9000 team and shuffle them back into the damage token pile." } },
+        drift: { header: { pt: "DRIFT", en: "DRIFT" }, text: { pt: "Todos os veículos TRV9000 passam através do primeiro espaço em que entrarem que contenha outro veículo, sem realizar Slam.", en: "All TRV9000 vehicles pass through the first space they enter that contains another vehicle, without Slamming." } },
+        custom: { header: { pt: "", en: "" }, text: { pt: "", en: "" } }
+    };
+
+    // DECK PADRÃO CORRIGIDO
+    const defaultDeck = [
+      {
+        "id": "DISK 01/18",
+        "priority": "↓ (Cima para Baixo)",
+        "actionType": "reparo",
+        "actionHeader": "REPARO",
+        "special": "Remova imediatamente uma ficha de dano de cada carro desta equipe TRV9000 e embaralhe-as de volta na pilha de fichas de dano.",
+        "order": ["S","M","L"],
+        "S": [{"val": 2,"dir": "↗"},{"val": 4,"dir": "→"},{"val": 3,"dir": "↘"}],
+        "M": [{"val": 4,"dir": "→"},{"val": 2,"dir": "↗"},{"val": 3,"dir": "↘"}],
+        "L": [{"val": 2,"dir": "↘"},{"val": 2,"dir": "↗"},{"val": 5,"dir": "→"}]
+      },
+      {
+        "id": "DISK 02/18",
+        "priority": "↑ (Baixo para Cima)",
+        "actionType": "drift",
+        "actionHeader": "DRIFT",
+        "special": "Todos os veículos TRV9000 passam através do primeiro espaço em que entrarem que contenha outro veículo, sem realizar Slam.",
+        "order": ["S","M","L"],
+        "S": [{"val": 5,"dir": "→"},{"val": 2,"dir": "↗"},{"val": 2,"dir": "↘"}],
+        "M": [{"val": 2,"dir": "↘"},{"val": 4,"dir": "→"},{"val": 3,"dir": "↗"}],
+        "L": [{"val": 3,"dir": "↗"},{"val": 2,"dir": "↘"},{"val": 4,"dir": "→"}]
+      },
+      {
+        "id": "DISK 03/18",
+        "priority": "↓ (Cima para Baixo)",
+        "actionType": "airstrike",
+        "actionHeader": "AIRSTRIKE",
+        "special": "Coloque o helicóptero TRV9000 atrás do veículo inimigo mais avançado, na origem da seta de prioridade; se ocupado, tente o próximo espaço na seta. Se nenhum dos 3 espaços estiver livre, mire atrás do veículo inimigo em 2º lugar. Depois, atire.",
+        "order": ["S","M","L"],
+        "S": [{"val": 3,"dir": "↘"},{"val": 3,"dir": "→"},{"val": 3,"dir": "↗"}],
+        "M": [{"val": 2,"dir": "↗"},{"val": 2,"dir": "↘"},{"val": 5,"dir": "→"}],
+        "L": [{"val": 4,"dir": "→"},{"val": 3,"dir": "↗"},{"val": 2,"dir": "↘"}]
+      },
+      {
+        "id": "DISK 04/18",
+        "priority": "↑ (Baixo para Cima)",
+        "actionType": "reparo",
+        "actionHeader": "REPARO",
+        "special": "Remova imediatamente uma ficha de dano de cada carro desta equipe TRV9000 e embaralhe-as de volta na pilha de fichas de dano.",
+        "order": ["S","L","M"],
+        "S": [{"val": 2,"dir": "↗"},{"val": 3,"dir": "↘"},{"val": 4,"dir": "→"}],
+        "M": [{"val": 3,"dir": "↘"},{"val": 4,"dir": "→"},{"val": 2,"dir": "↗"}],
+        "L": [{"val": 5,"dir": "→"},{"val": 2,"dir": "↗"},{"val": 2,"dir": "↘"}]
+      },
+      {
+        "id": "DISK 05/18",
+        "priority": "↓ (Cima para Baixo)",
+        "actionType": "drift",
+        "actionHeader": "DRIFT",
+        "special": "Todos os veículos TRV9000 passam através do primeiro espaço em que entrarem que contenha outro veículo, sem realizar Slam.",
+        "order": ["S","L","M"],
+        "S": [{"val": 4,"dir": "→"},{"val": 3,"dir": "↘"},{"val": 2,"dir": "↗"}],
+        "M": [{"val": 3,"dir": "↗"},{"val": 3,"dir": "→"},{"val": 3,"dir": "↘"}],
+        "L": [{"val": 2,"dir": "↘"},{"val": 4,"dir": "→"},{"val": 3,"dir": "↗"}]
+      },
+      {
+        "id": "DISK 06/18",
+        "priority": "↑ (Baixo para Cima)",
+        "actionType": "airstrike",
+        "actionHeader": "AIRSTRIKE",
+        "special": "Coloque o helicóptero TRV9000 atrás do veículo inimigo mais avançado, na origem da seta de prioridade; se ocupado, tente o próximo espaço na seta. Se nenhum dos 3 espaços estiver livre, mire atrás do veículo inimigo em 2º lugar. Depois, atire.",
+        "order": ["S","L","M"],
+        "S": [{"val": 2,"dir": "↘"},{"val": 2,"dir": "↗"},{"val": 5,"dir": "→"}],
+        "M": [{"val": 4,"dir": "→"},{"val": 3,"dir": "↘"},{"val": 2,"dir": "↗"}],
+        "L": [{"val": 2,"dir": "↗"},{"val": 3,"dir": "↘"},{"val": 4,"dir": "→"}]
+      },
+      {
+        "id": "DISK 07/18",
+        "priority": "↓ (Cima para Baixo)",
+        "actionType": "reparo",
+        "actionHeader": "REPARO",
+        "special": "Remova imediatamente uma ficha de dano de cada carro desta equipe TRV9000 e embaralhe-as de volta na pilha de fichas de dano.",
+        "order": ["M","S","L"],
+        "S": [{"val": 5,"dir": "→"},{"val": 2,"dir": "↘"},{"val": 2,"dir": "↗"}],
+        "M": [{"val": 2,"dir": "↗"},{"val": 4,"dir": "→"},{"val": 3,"dir": "↘"}],
+        "L": [{"val": 3,"dir": "↘"},{"val": 4,"dir": "→"},{"val": 2,"dir": "↗"}]
+      },
+      {
+        "id": "DISK 08/18",
+        "priority": "↑ (Baixo para Cima)",
+        "actionType": "drift",
+        "actionHeader": "DRIFT",
+        "special": "Todos os veículos TRV9000 passam através do primeiro espaço em que entrarem que contenha outro veículo, sem realizar Slam.",
+        "order": ["M","S","L"],
+        "S": [{"val": 3,"dir": "↘"},{"val": 2,"dir": "↗"},{"val": 4,"dir": "→"}],
+        "M": [{"val": 4,"dir": "→"},{"val": 2,"dir": "↘"},{"val": 3,"dir": "↗"}],
+        "L": [{"val": 3,"dir": "↗"},{"val": 3,"dir": "→"},{"val": 3,"dir": "↘"}]
+      },
+      {
+        "id": "DISK 09/18",
+        "priority": "↓ (Cima para Baixo)",
+        "actionType": "airstrike",
+        "actionHeader": "AIRSTRIKE",
+        "special": "Coloque o helicóptero TRV9000 atrás do veículo inimigo mais avançado, na origem da seta de prioridade; se ocupado, tente o próximo espaço na seta. Se nenhum dos 3 espaços estiver livre, mire atrás do veículo inimigo em 2º lugar. Depois, atire.",
+        "order": ["M","S","L"],
+        "S": [{"val": 2,"dir": "↗"},{"val": 3,"dir": "↘"},{"val": 4,"dir": "→"}],
+        "M": [{"val": 2,"dir": "↘"},{"val": 2,"dir": "↗"},{"val": 5,"dir": "→"}],
+        "L": [{"val": 4,"dir": "→"},{"val": 2,"dir": "↘"},{"val": 3,"dir": "↗"}]
+      },
+      {
+        "id": "DISK 10/18",
+        "priority": "↑ (Baixo para Cima)",
+        "actionType": "reparo",
+        "actionHeader": "REPARO",
+        "special": "Remova imediatamente uma ficha de dano de cada carro desta equipe TRV9000 e embaralhe-as de volta na pilha de fichas de dano.",
+        "order": ["M","L","S"],
+        "S": [{"val": 3,"dir": "↘"},{"val": 2,"dir": "↗"},{"val": 4,"dir": "→"}],
+        "M": [{"val": 2,"dir": "↗"},{"val": 3,"dir": "↘"},{"val": 4,"dir": "→"}],
+        "L": [{"val": 4,"dir": "→"},{"val": 3,"dir": "↘"},{"val": 2,"dir": "↗"}]
+      },
+      {
+        "id": "DISK 11/18",
+        "priority": "↓ (Cima para Baixo)",
+        "actionType": "drift",
+        "actionHeader": "DRIFT",
+        "special": "Todos os veículos TRV9000 passam através do primeiro espaço em que entrarem que contenha outro veículo, sem realizar Slam.",
+        "order": ["M","L","S"],
+        "S": [{"val": 2,"dir": "↗"},{"val": 2,"dir": "↘"},{"val": 5,"dir": "→"}],
+        "M": [{"val": 4,"dir": "→"},{"val": 3,"dir": "↗"},{"val": 2,"dir": "↘"}],
+        "L": [{"val": 3,"dir": "↘"},{"val": 2,"dir": "↗"},{"val": 4,"dir": "→"}]
+      },
+      {
+        "id": "DISK 12/18",
+        "priority": "↑ (Baixo para Cima)",
+        "actionType": "airstrike",
+        "actionHeader": "AIRSTRIKE",
+        "special": "Coloque o helicóptero TRV9000 atrás do veículo inimigo mais avançado, na origem da seta de prioridade; se ocupado, tente o próximo espaço na seta. Se nenhum dos 3 espaços estiver livre, mire atrás do veículo inimigo em 2º lugar. Depois, atire.",
+        "order": ["M","L","S"],
+        "S": [{"val": 4,"dir": "→"},{"val": 3,"dir": "↘"},{"val": 2,"dir": "↗"}],
+        "M": [{"val": 3,"dir": "↘"},{"val": 3,"dir": "→"},{"val": 3,"dir": "↗"}],
+        "L": [{"val": 3,"dir": "↗"},{"val": 4,"dir": "→"},{"val": 2,"dir": "↘"}]
+      },
+      {
+        "id": "DISK 13/18",
+        "priority": "↓ (Cima para Baixo)",
+        "actionType": "reparo",
+        "actionHeader": "REPARO",
+        "special": "Remova imediatamente uma ficha de dano de cada carro desta equipe TRV9000 e embaralhe-as de volta na pilha de fichas de dano.",
+        "order": ["L","S","M"],
+        "S": [{"val": 4,"dir": "→"},{"val": 2,"dir": "↗"},{"val": 3,"dir": "↘"}],
+        "M": [{"val": 2,"dir": "↘"},{"val": 3,"dir": "↗"},{"val": 4,"dir": "→"}],
+        "L": [{"val": 2,"dir": "↗"},{"val": 4,"dir": "→"},{"val": 3,"dir": "↘"}]
+      },
+      {
+        "id": "DISK 14/18",
+        "priority": "↑ (Baixo para Cima)",
+        "actionType": "drift",
+        "actionHeader": "DRIFT",
+        "special": "Todos os veículos TRV9000 passam através do primeiro espaço em que entrarem que contenha outro veículo, sem realizar Slam.",
+        "order": ["L","S","M"],
+        "S": [{"val": 2,"dir": "↘"},{"val": 4,"dir": "→"},{"val": 3,"dir": "↗"}],
+        "M": [{"val": 2,"dir": "↗"},{"val": 2,"dir": "↘"},{"val": 4,"dir": "→"}],
+        "L": [{"val": 4,"dir": "→"},{"val": 2,"dir": "↗"},{"val": 3,"dir": "↘"}]
+      },
+      {
+        "id": "DISK 15/18",
+        "priority": "↓ (Cima para Baixo)",
+        "actionType": "airstrike",
+        "actionHeader": "AIRSTRIKE",
+        "special": "Coloque o helicóptero TRV9000 atrás do veículo inimigo mais avançado, na origem da seta de prioridade; se ocupado, tente o próximo espaço na seta. Se nenhum dos 3 espaços estiver livre, mire atrás do veículo inimigo em 2º lugar. Depois, atire.",
+        "order": ["L","S","M"],
+        "S": [{"val": 3,"dir": "↗"},{"val": 3,"dir": "→"},{"val": 5,"dir": "↘"}],
+        "M": [{"val": 5,"dir": "→"},{"val": 2,"dir": "↗"},{"val": 2,"dir": "↘"}],
+        "L": [{"val": 3,"dir": "↘"},{"val": 3,"dir": "→"},{"val": 3,"dir": "↗"}]
+      },
+      {
+        "id": "DISK 16/18",
+        "priority": "↑ (Baixo para Cima)",
+        "actionType": "reparo",
+        "actionHeader": "REPARO",
+        "special": "Remova imediatamente uma ficha de dano de cada carro desta equipe TRV9000 e embaralhe-as de volta na pilha de fichas de dano.",
+        "order": ["L","M","S"],
+        "S": [{"val": 3,"dir": "↘"},{"val": 4,"dir": "→"},{"val": 2,"dir": "↗"}],
+        "M": [{"val": 5,"dir": "→"},{"val": 2,"dir": "↘"},{"val": 2,"dir": "↗"}],
+        "L": [{"val": 2,"dir": "↗"},{"val": 2,"dir": "↘"},{"val": 5,"dir": "→"}]
+      },
+      {
+        "id": "DISK 17/18",
+        "priority": "↓ (Cima para Baixo)",
+        "actionType": "drift",
+        "actionHeader": "DRIFT",
+        "special": "Todos os veículos TRV9000 passam através do primeiro espaço em que entrarem que contenha outro veículo, sem realizar Slam.",
+        "order": ["L","M","S"],
+        "S": [{"val": 3,"dir": "↗"},{"val": 4,"dir": "→"},{"val": 2,"dir": "↘"}],
+        "M": [{"val": 3,"dir": "↘"},{"val": 2,"dir": "↗"},{"val": 4,"dir": "→"}],
+        "L": [{"val": 5,"dir": "→"},{"val": 2,"dir": "↘"},{"val": 2,"dir": "↗"}]
+      },
+      {
+        "id": "DISK 18/18",
+        "priority": "↑ (Baixo para Cima)",
+        "actionType": "reparo",
+        "actionHeader": "REPARO",
+        "special": "Remova imediatamente uma ficha de dano de cada carro desta equipe TRV9000 e embaralhe-as de volta na pilha de fichas de dano.",
+        "order": ["L","M","S"],
+        "S": [{"val": 4,"dir": "→"},{"val": 2,"dir": "↗"},{"val": 3,"dir": "↘"}],
+        "M": [{"val": 3,"dir": "↗"},{"val": 4,"dir": "→"},{"val": 2,"dir": "↘"}],
+        "L": [{"val": 2,"dir": "↘"},{"val": 3,"dir": "↗"},{"val": 4,"dir": "→"}]
+      }
+    ];
+
+    // v9: corrige o texto da regra de Airstrike (alvo de fallback em 2º lugar)
+    let officialDeck = JSON.parse(localStorage.getItem('trv9000_officialDeck_v9'));
+    if (!officialDeck || officialDeck.length !== 18 || !officialDeck[0].order) {
+        officialDeck = defaultDeck;
+        localStorage.setItem('trv9000_officialDeck_v9', JSON.stringify(officialDeck));
+    }
+    function saveToLocalStorage() { localStorage.setItem('trv9000_officialDeck_v9', JSON.stringify(officialDeck)); }
+
+    // Decks editáveis do SDBR e do SDFF (expansão "Maximum Chrome")
+    // v3: remove os campos "move"/"cmd" (o dado da caixa esquerda é sempre 3 fixo; só a direção importa) —
+    //     também corrige vários valores de "travel" que estavam com leitura errada. Força recarregar decks antigos.
+    let sdbrDeckData = JSON.parse(localStorage.getItem('trv9000_sdbrDeck_v3'));
+    if (!sdbrDeckData || sdbrDeckData.length !== 9 || !sdbrDeckData[0].order || !sdbrDeckData[0][sdbrDeckData[0].order[0]].dir || sdbrDeckData[0][sdbrDeckData[0].order[0]].move) {
+        sdbrDeckData = JSON.parse(JSON.stringify(defaultSdbrDeck));
+        localStorage.setItem('trv9000_sdbrDeck_v3', JSON.stringify(sdbrDeckData));
+    }
+    function saveSdbrToLocalStorage() { localStorage.setItem('trv9000_sdbrDeck_v3', JSON.stringify(sdbrDeckData)); }
+
+    let sdffDeckData = JSON.parse(localStorage.getItem('trv9000_sdffDeck_v1'));
+    if (!sdffDeckData || sdffDeckData.length !== 9 || !sdffDeckData[0].rows) {
+        sdffDeckData = JSON.parse(JSON.stringify(defaultSdffDeck));
+        localStorage.setItem('trv9000_sdffDeck_v1', JSON.stringify(sdffDeckData));
+    }
+    function saveSdffToLocalStorage() { localStorage.setItem('trv9000_sdffDeck_v1', JSON.stringify(sdffDeckData)); }
+
+    function isExpansionActive(id) {
+        const el = document.getElementById(id);
+        return !!el && el.classList.contains('active');
+    }
+    function toggleExpansion(id) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.classList.toggle('active');
+        updateExpansionToggleLabels();
+    }
+    function updateExpansionToggleLabels() {
+        ['sdbr-enabled', 'sdff-enabled'].forEach(id => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            const labelEl = el.querySelector('.exp-label');
+            if (labelEl) labelEl.textContent = t(id === 'sdbr-enabled' ? 'sdbrToggleLabel' : 'sdffToggleLabel');
+        });
+    }
+
+    // --- ARQUIVOS ---
+    function exportDeck() {
+        if (currentEditingIndex !== -1) { saveCardEdit(true); }
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(officialDeck, null, 2));
+        const downloadAnchorNode = document.createElement('a');
+        downloadAnchorNode.setAttribute("href", dataStr);
+        downloadAnchorNode.setAttribute("download", "trv9000_backup_deck.json");
+        document.body.appendChild(downloadAnchorNode);
+        downloadAnchorNode.click();
+        downloadAnchorNode.remove();
+        alert(t('alertExportOk'));
+    }
+    
+    function triggerImport() { document.getElementById('file-import').click(); }
+    
+    function importDeck(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const importedData = JSON.parse(e.target.result);
+                if (Array.isArray(importedData) && importedData.length === 18 && importedData[0].hasOwnProperty('order')) {
+                    officialDeck = importedData;
+                    saveToLocalStorage();
+                    renderSidebar();
+                    document.getElementById('editor-fields').classList.add('hidden');
+                    document.getElementById('editor-instructions').classList.remove('hidden');
+                    currentEditingIndex = -1;
+                    alert(t('alertImportOk'));
+                } else { alert(t('alertImportBadFile')); }
+            } catch (error) { alert(t('alertImportCritical')); }
+        };
+        reader.readAsText(file);
+        event.target.value = '';
+    }
+
+    // --- EDITOR COM AUTO-SAVE ---
+    let currentEditingIndex = -1;
+    let currentDeckType = 'official'; // 'official' | 'sdbr' | 'sdff'
+
+    function getActiveDeckArray() {
+        if (currentDeckType === 'sdbr') return sdbrDeckData;
+        if (currentDeckType === 'sdff') return sdffDeckData;
+        return officialDeck;
+    }
+
+    function switchDeckTab(type) {
+        if (currentEditingIndex !== -1) { saveCurrentCardEdit(true); }
+        currentDeckType = type;
+        currentEditingIndex = -1;
+        document.querySelectorAll('.deck-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === type));
+        document.getElementById('official-file-controls').classList.toggle('hidden', type !== 'official');
+        document.getElementById('editor-fields').classList.add('hidden');
+        document.getElementById('editor-fields-sdbr').classList.add('hidden');
+        document.getElementById('editor-fields-sdff').classList.add('hidden');
+        document.getElementById('editor-instructions').classList.remove('hidden');
+        document.getElementById('editor-title').innerText = t(type === 'official' ? 'editorTitleDefault' : (type === 'sdbr' ? 'tabSdbr' : 'tabSdff'));
+        renderSidebar();
+    }
+
+    function saveCurrentCardEdit(silent) {
+        if (currentDeckType === 'sdbr') saveSdbrCardEdit(silent);
+        else if (currentDeckType === 'sdff') saveSdffCardEdit(silent);
+        else saveCardEdit(silent);
+    }
+
+    function openConfigModal() {
+        document.getElementById('config-modal').classList.remove('hidden');
+        currentDeckType = 'official';
+        currentEditingIndex = -1;
+        document.querySelectorAll('.deck-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === 'official'));
+        document.getElementById('official-file-controls').classList.remove('hidden');
+        document.getElementById('editor-fields').classList.add('hidden');
+        document.getElementById('editor-fields-sdbr').classList.add('hidden');
+        document.getElementById('editor-fields-sdff').classList.add('hidden');
+        document.getElementById('editor-instructions').classList.remove('hidden');
+        document.getElementById('editor-title').innerText = t('editorTitleDefault');
+        renderSidebar();
+    }
+    
+    function closeConfigModal() { 
+        if (currentEditingIndex !== -1) { saveCurrentCardEdit(true); }
+        document.getElementById('config-modal').classList.add('hidden'); 
+    }
+
+    function renderSidebar() {
+        const sb = document.getElementById('config-sidebar-list');
+        sb.innerHTML = '';
+        getActiveDeckArray().forEach((card, index) => {
+            const btn = document.createElement('button');
+            btn.className = `config-list-btn ${index === currentEditingIndex ? 'active' : ''}`;
+            btn.innerHTML = `<span style="color:#666; margin-right:5px;">[${String(index+1).padStart(2,'0')}]</span> ${card.id}`;
+            btn.onclick = () => {
+                if (currentDeckType === 'sdbr') loadSdbrCardToEditor(index);
+                else if (currentDeckType === 'sdff') loadSdffCardToEditor(index);
+                else loadCardToEditor(index);
+            };
+            sb.appendChild(btn);
+        });
+    }
+
+    function handleActionTypeChange() {
+        const type = document.getElementById('edit-action-type').value;
+        const headInput = document.getElementById('edit-action-header');
+        const textInput = document.getElementById('edit-special-text');
+        if (type === 'custom') { headInput.disabled = false; textInput.disabled = false; } 
+        else { headInput.value = tr(ACTION_DB[type].header); textInput.value = tr(ACTION_DB[type].text); headInput.disabled = true; textInput.disabled = true; }
+    }
+
+    function updateMovesOrderVisuals() {
+        const order0 = document.getElementById('edit-order-0').value;
+        const order1 = document.getElementById('edit-order-1').value;
+        const order2 = document.getElementById('edit-order-2').value;
+
+        const container = document.getElementById('moves-wrappers-container');
+        const wrap0 = document.getElementById(`wrap-edit-${order0}`);
+        const wrap1 = document.getElementById(`wrap-edit-${order1}`);
+        const wrap2 = document.getElementById(`wrap-edit-${order2}`);
+
+        container.appendChild(wrap0);
+        container.appendChild(wrap1);
+        container.appendChild(wrap2);
+
+        const titleMap = { 'S': t('sizeS'), 'M': t('sizeM'), 'L': t('sizeL') };
+        const ord = t('activationOrdinal');
+        wrap0.querySelector('h3').innerText = `${ord[0]}: ${t('movesHeader')} ${titleMap[order0]}`;
+        wrap1.querySelector('h3').innerText = `${ord[1]}: ${t('movesHeader')} ${titleMap[order1]}`;
+        wrap2.querySelector('h3').innerText = `${ord[2]}: ${t('movesHeader')} ${titleMap[order2]}`;
+    }
+
+    function enforceUniqueOrder(changedIndex) {
+        const selects = [document.getElementById('edit-order-0'), document.getElementById('edit-order-1'), document.getElementById('edit-order-2')];
+        const changedVal = selects[changedIndex].value;
+        for(let i=0; i<3; i++) {
+            if(i !== changedIndex && selects[i].value === changedVal) {
+                const used = [selects[changedIndex].value];
+                const all = ['S', 'M', 'L'];
+                let currentVals = selects.map(s => s.value);
+                let missing = all.find(x => currentVals.filter(v => v === x).length === 0);
+                if(!missing) missing = all.find(x => x !== changedVal && x !== selects[3 - changedIndex - i].value);
+                selects[i].value = missing;
+            }
+        }
+        updateMovesOrderVisuals();
+    }
+
+    function loadCardToEditor(index) {
+        if (currentEditingIndex !== -1 && currentEditingIndex !== index) { saveCardEdit(true); }
+
+        currentEditingIndex = index;
+        const card = officialDeck[index];
+        
+        document.getElementById('editor-title').innerText = `${t('editingLabel')}: ${card.id}`;
+        document.getElementById('editor-instructions').classList.add('hidden');
+        document.getElementById('editor-fields').classList.remove('hidden');
+        document.getElementById('edit-priority').value = card.priority || "↓ (Cima para Baixo)";
+        document.getElementById('edit-action-type').value = card.actionType || "custom";
+        document.getElementById('edit-action-header').value = card.actionHeader || "";
+        document.getElementById('edit-special-text').value = card.special || "";
+        handleActionTypeChange();
+        
+        let order = card.order || ["S", "M", "L"];
+        document.getElementById('edit-order-0').value = order[0];
+        document.getElementById('edit-order-1').value = order[1];
+        document.getElementById('edit-order-2').value = order[2];
+        
+        renderMovesToEditor('S', card.S || []);
+        renderMovesToEditor('M', card.M || []);
+        renderMovesToEditor('L', card.L || []);
+        
+        updateMovesOrderVisuals();
+        renderSidebar(); 
+    }
+
+    function renderMovesToEditor(size, movesList) {
+        const container = document.getElementById(`edit-moves-${size}`);
+        const movesDiv = container;
+        movesDiv.innerHTML = '';
+        if(movesList && movesList.length > 0) movesList.forEach(m => addMoveBlock(size, m));
+    }
+
+    function addMoveBlock(containerId, mData = {cond: '', val: '', dir: '→'}) {
+        const directEl = document.getElementById(containerId);
+        const container = directEl || document.getElementById(`edit-moves-${containerId}`);
+        const div = document.createElement('div');
+        div.className = 'move-edit-row';
+        div.innerHTML = `
+            <select class="inp-cond" onchange="this.closest('.move-edit-row').querySelector('.inp-val').disabled = (this.value === 'ignite');">
+                <option value="" ${mData.cond === '' ? 'selected' : ''} data-i18n="condNormal">Condição: Normal</option>
+                <option value="fire" ${mData.cond === 'fire' ? 'selected' : ''} data-i18n="condFire">Só se Fogo</option>
+                <option value="smoke" ${mData.cond === 'smoke' ? 'selected' : ''} data-i18n="condSmoke">Apagar Fogo</option>
+                <option value="ignite" ${mData.cond === 'ignite' ? 'selected' : ''} data-i18n="condIgnite">Ignição (sem valor)</option>
+            </select>
+            <input type="number" class="inp-val" value="${mData.val || ''}" min="1" max="6" placeholder="${t('diceLabel')}" ${mData.cond === 'ignite' ? 'disabled' : ''}>
+            <select class="inp-dir">
+                <option value="→" ${mData.dir === '→' ? 'selected' : ''}>${t('dirLabel')}: →</option>
+                <option value="↗" ${mData.dir === '↗' ? 'selected' : ''}>${t('dirLabel')}: ↗</option>
+                <option value="↘" ${mData.dir === '↘' ? 'selected' : ''}>${t('dirLabel')}: ↘</option>
+                <option value="←" ${mData.dir === '←' ? 'selected' : ''}>${t('dirLabel')}: ←</option>
+                <option value="↖" ${mData.dir === '↖' ? 'selected' : ''}>${t('dirLabel')}: ↖</option>
+            </select>
+            <button class="btn-small" style="color:#ff3333; background:rgba(255,0,0,0.1); border-color:#551111; max-width:50px;" onclick="this.parentElement.remove()">X</button>
+        `;
+        container.appendChild(div);
+    }
+
+    function saveCardEdit(silent = false) {
+        if(currentEditingIndex === -1) return;
+        const card = officialDeck[currentEditingIndex];
+        
+        card.priority = document.getElementById('edit-priority').value;
+        card.actionType = document.getElementById('edit-action-type').value;
+        card.actionHeader = document.getElementById('edit-action-header').value;
+        card.special = document.getElementById('edit-special-text').value;
+        card.order = [ document.getElementById('edit-order-0').value, document.getElementById('edit-order-1').value, document.getElementById('edit-order-2').value ];
+        
+        const extractMoves = (size) => {
+            const arr = [];
+            document.querySelectorAll(`#edit-moves-${size} .move-edit-row`).forEach(row => {
+                const cond = row.querySelector('.inp-cond').value;
+                const val = row.querySelector('.inp-val').value;
+                const dir = row.querySelector('.inp-dir').value;
+                let moveObj = {};
+                if (cond) moveObj.cond = cond;
+                if (val !== '') moveObj.val = parseInt(val);
+                if (dir) moveObj.dir = dir;
+                if(moveObj.val || moveObj.cond) arr.push(moveObj);
+            });
+            return arr;
+        };
+        
+        card.S = extractMoves('S'); 
+        card.M = extractMoves('M'); 
+        card.L = extractMoves('L');
+        
+        saveToLocalStorage();
+        
+        if (!silent) {
+            alert(t('alertCardSaved')(card.id));
+        }
+    }
+
+    // --- EDITOR SDBR ---
+    function enforceUniqueSdbrOrder(changedIndex) {
+        const selects = [document.getElementById('edit-sdbr-order-0'), document.getElementById('edit-sdbr-order-1'), document.getElementById('edit-sdbr-order-2')];
+        const all = ['FRENTE', 'MEIO', 'TRAS'];
+        const changedVal = selects[changedIndex].value;
+        for (let i = 0; i < 3; i++) {
+            if (i !== changedIndex && selects[i].value === changedVal) {
+                let currentVals = selects.map(s => s.value);
+                let missing = all.find(x => currentVals.filter(v => v === x).length === 0);
+                selects[i].value = missing;
+            }
+        }
+    }
+
+    function renderSdbrSectionsEditor(card) {
+        const container = document.getElementById('sdbr-sections-container');
+        container.innerHTML = '';
+        ['FRENTE', 'MEIO', 'TRAS'].forEach(sectionKey => {
+            const sectionData = card[sectionKey] || { dir: '→', travel: { val: 1, dir: '↗', hazard: 'red' } };
+            const travel = sectionData.travel || { val: 1, dir: '↗', hazard: 'red' };
+            const activationDirOptions = ['←','→'].map(d =>
+                `<option value="${d}" ${sectionData.dir === d ? 'selected' : ''}>${t('dirLabel')}: ${d}</option>`
+            ).join('');
+            const travelDirOptions = ['↗','↘'].map(d =>
+                `<option value="${d}" ${travel.dir === d ? 'selected' : ''}>${t('dirLabel')}: ${d}</option>`
+            ).join('');
+            const hazardOptions = ['red','brown'].map(hc =>
+                `<option value="${hc}" ${travel.hazard === hc ? 'selected' : ''}>${hc === 'red' ? t('sdbrHazardRed') : t('sdbrHazardBrown')}</option>`
+            ).join('');
+            const wrap = document.createElement('div');
+            wrap.className = 'editor-row-container';
+            wrap.style.marginBottom = '12px';
+            wrap.innerHTML = `
+                <h3 style="color:var(--rust); margin:0 0 10px 0; font-size:1em;">${sectionKey}</h3>
+                <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                    <select class="sdbr-activation-dir" data-section="${sectionKey}" style="flex:1; min-width:110px;" title="${t('sdbrSkipTitle')}">${activationDirOptions}</select>
+                </div>
+                <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:6px;">
+                    <input type="number" class="sdbr-travel-val" data-section="${sectionKey}" value="${travel.val || ''}" min="1" max="6" placeholder="${t('sdbrTravelLabel')}" style="flex:1; min-width:70px;">
+                    <select class="sdbr-travel-dir" data-section="${sectionKey}" style="flex:1; min-width:110px;">${travelDirOptions}</select>
+                    <select class="sdbr-travel-hazard" data-section="${sectionKey}" style="flex:2; min-width:160px;">${hazardOptions}</select>
+                </div>
+            `;
+            container.appendChild(wrap);
+        });
+    }
+
+    function loadSdbrCardToEditor(index) {
+        if (currentEditingIndex !== -1 && currentEditingIndex !== index) { saveSdbrCardEdit(true); }
+        currentEditingIndex = index;
+        const card = sdbrDeckData[index];
+
+        document.getElementById('editor-title').innerText = `${t('editingLabel')}: ${card.id}`;
+        document.getElementById('editor-instructions').classList.add('hidden');
+        document.getElementById('editor-fields-sdbr').classList.remove('hidden');
+        document.getElementById('edit-sdbr-priority').value = card.priority || "↻ (Sentido Horário)";
+
+        let order = card.order || ["FRENTE", "MEIO", "TRAS"];
+        document.getElementById('edit-sdbr-order-0').value = order[0];
+        document.getElementById('edit-sdbr-order-1').value = order[1];
+        document.getElementById('edit-sdbr-order-2').value = order[2];
+
+        renderSdbrSectionsEditor(card);
+        renderSidebar();
+    }
+
+    function saveSdbrCardEdit(silent = false) {
+        if (currentEditingIndex === -1) return;
+        const card = sdbrDeckData[currentEditingIndex];
+
+        card.priority = document.getElementById('edit-sdbr-priority').value;
+        card.order = [ document.getElementById('edit-sdbr-order-0').value, document.getElementById('edit-sdbr-order-1').value, document.getElementById('edit-sdbr-order-2').value ];
+
+        document.querySelectorAll('#sdbr-sections-container .sdbr-activation-dir').forEach(dirSelect => {
+            const sectionKey = dirSelect.dataset.section;
+            const travelValInput = document.querySelector(`.sdbr-travel-val[data-section="${sectionKey}"]`);
+            const travelDirSelect = document.querySelector(`.sdbr-travel-dir[data-section="${sectionKey}"]`);
+            const travelHazardSelect = document.querySelector(`.sdbr-travel-hazard[data-section="${sectionKey}"]`);
+            card[sectionKey] = {
+                dir: dirSelect.value,
+                travel: { val: parseInt(travelValInput.value) || 1, dir: travelDirSelect.value, hazard: travelHazardSelect.value }
+            };
+        });
+
+        saveSdbrToLocalStorage();
+
+        if (!silent) alert(t('alertCardSaved')(card.id));
+    }
+
+    // --- EDITOR SDFF ---
+    function renderSdffRowsEditor(card) {
+        const container = document.getElementById('sdff-rows-container');
+        container.innerHTML = '';
+        const markKeys = Object.keys(SDFF_MARKS).filter(k => k !== 'star');
+        card.rows.forEach((row, rowIndex) => {
+            const isCommandRow = row.marks.includes('star');
+            const nonStarMark = row.marks.find(m => m !== 'star') || row.marks[0] || markKeys[0];
+            const markOptions = markKeys.map(k => `<option value="${k}" ${nonStarMark === k ? 'selected' : ''}>${tr(SDFF_MARKS[k].label)}</option>`).join('');
+
+            const wrap = document.createElement('div');
+            wrap.className = 'editor-row-container';
+            wrap.style.marginBottom = '15px';
+            wrap.innerHTML = `
+                <h3 style="color:var(--rust); margin:0 0 10px 0; font-size:1em;">${t('activationOrdinal')[rowIndex] || (rowIndex+1)}</h3>
+                <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:8px;">
+                    <label style="display:flex; align-items:center; gap:6px; font-size:0.85em;">
+                        <input type="checkbox" class="sdff-row-iscommand" data-row="${rowIndex}" ${isCommandRow ? 'checked' : ''}> ★ ${t('labelCmd')}
+                    </label>
+                    <select class="sdff-row-mark" data-row="${rowIndex}">${markOptions}</select>
+                </div>
+                <div id="sdff-moves-${rowIndex}"></div>
+                <button class="btn-small" onclick="addMoveBlock('sdff-moves-${rowIndex}')">${t('btnAddCommand')}</button>
+            `;
+            container.appendChild(wrap);
+            const movesContainer = wrap.querySelector(`#sdff-moves-${rowIndex}`);
+            (row.moves || []).forEach(m => addMoveBlock(`sdff-moves-${rowIndex}`, m));
+        });
+    }
+
+    function loadSdffCardToEditor(index) {
+        if (currentEditingIndex !== -1 && currentEditingIndex !== index) { saveSdffCardEdit(true); }
+        currentEditingIndex = index;
+        const card = sdffDeckData[index];
+
+        document.getElementById('editor-title').innerText = `${t('editingLabel')}: ${card.id}`;
+        document.getElementById('editor-instructions').classList.add('hidden');
+        document.getElementById('editor-fields-sdff').classList.remove('hidden');
+        document.getElementById('edit-sdff-priority').value = card.priority || "↘";
+        document.getElementById('edit-sdff-cmd').value = card.cmd || "repair";
+
+        renderSdffRowsEditor(card);
+        renderSidebar();
+    }
+
+    function saveSdffCardEdit(silent = false) {
+        if (currentEditingIndex === -1) return;
+        const card = sdffDeckData[currentEditingIndex];
+
+        card.priority = document.getElementById('edit-sdff-priority').value;
+        card.cmd = document.getElementById('edit-sdff-cmd').value;
+
+        card.rows.forEach((row, rowIndex) => {
+            const isCommand = document.querySelector(`.sdff-row-iscommand[data-row="${rowIndex}"]`).checked;
+            const markSel = document.querySelector(`.sdff-row-mark[data-row="${rowIndex}"]`);
+            row.marks = isCommand ? ['star', markSel.value] : [markSel.value, row.marks.filter(m => m !== 'star' && m !== markSel.value)[0] || markSel.value];
+
+            const arr = [];
+            document.querySelectorAll(`#sdff-moves-${rowIndex} .move-edit-row`).forEach(mrow => {
+                const cond = mrow.querySelector('.inp-cond').value;
+                const val = mrow.querySelector('.inp-val').value;
+                const dir = mrow.querySelector('.inp-dir').value;
+                let moveObj = {};
+                if (cond) moveObj.cond = cond;
+                if (val !== '') moveObj.val = parseInt(val);
+                if (dir && cond !== 'ignite') moveObj.dir = dir;
+                if (moveObj.val || moveObj.cond) arr.push(moveObj);
+            });
+            row.moves = arr;
+        });
+
+        saveSdffToLocalStorage();
+
+        if (!silent) alert(t('alertCardSaved')(card.id));
+    }
+
+    // --- SETUP DO JOGO ---
+    let bots = [];
+    let numBots = 1;
+    let globalStep = 0;
+    let sdbr = null;
+    let sdff = null;
+
+    function adjustBots(delta) {
+        numBots += delta;
+        if (numBots < 1) numBots = 1;
+        if (numBots > 5) numBots = 5;
+        document.getElementById('bot-count').value = numBots;
+        renderBotSetup();
+    }
+
+    function renderBotSetup() {
+        const container = document.getElementById('bot-configs');
+        // Preserva as seleções atuais ao re-renderizar (ex: troca de idioma)
+        const prevSelections = [];
+        for (let i = 0; i < numBots; i++) {
+            const colorSel = document.getElementById(`bot-color-${i}`);
+            const teamSel = document.getElementById(`bot-team-${i}`);
+            const diffSel = document.getElementById(`bot-difficulty-${i}`);
+            prevSelections.push({
+                color: colorSel ? colorSel.value : null,
+                team: teamSel ? teamSel.value : null,
+                difficulty: diffSel ? diffSel.value : null
+            });
+        }
+        container.innerHTML = '';
+        for (let i = 0; i < numBots; i++) {
+            let teamOptions = teams.map(tm => `<option value="${tm.id}" ${prevSelections[i].team === tm.id ? 'selected' : ''}>${tr(tm.name)}</option>`).join('');
+            let colorOptions = CAR_COLORS.map((c, index) => `<option value="${c.id}" ${prevSelections[i].color ? (prevSelections[i].color === c.id ? 'selected' : '') : (index === (i % CAR_COLORS.length) ? 'selected' : '')}>${t('carPrefix')} ${tr(c.name)}</option>`).join('');
+            let difficultyOptions = [1,2,3,4].map(n => `<option value="${n}" ${prevSelections[i].difficulty ? (Number(prevSelections[i].difficulty) === n ? 'selected' : '') : (n === 4 ? 'selected' : '')}>${t('difficultyPrefix')}${n}</option>`).join('');
+            
+            container.innerHTML += `
+                <div class="bot-setup-row">
+                    <span style="color: var(--rust); font-weight: bold; width: auto; text-shadow:0 0 5px var(--rust);">${t('botPrefix')} ${i+1}:</span>
+                    <div style="display:flex; width: 100%; gap: 10px; flex-wrap: wrap;">
+                        <select id="bot-color-${i}" style="flex:1;">${colorOptions}</select>
+                        <select id="bot-team-${i}" style="flex:1;">${teamOptions}</select>
+                        <select id="bot-difficulty-${i}" style="flex:1;">${difficultyOptions}</select>
+                    </div>
+                </div>
+            `;
+        }
+    }
+    applyI18n();
+
+    let diceBox = null;
+    let diceBoxReady = false;
+    let diceBoxInitPromise = null;
+
+    // Init é adiado até a hora do roll: o tray fica dentro do overlay (display:none até então),
+    // e o dice-box cria seu canvas WebGL com as dimensões do container NO MOMENTO do load — se
+    // o container estiver oculto (0x0) nesse instante, os dados nunca aparecem visualmente depois.
+    function initDiceBox() {
+        if (diceBoxInitPromise) return diceBoxInitPromise;
+        diceBoxInitPromise = (async () => {
+            try {
+                const { loadDiceBox } = await import('../assets/dice-roller.js');
+                diceBox = await loadDiceBox({ theme: 'wasteland', themeUrl: new URL('../assets/dice-box/themes/wasteland', window.location.href).href, themeColor: '#d4202f', scale: 20, timeoutMs: 8000 });
+                diceBoxReady = true;
+                const tray = document.getElementById('dice-tray');
+                if (tray) tray.classList.add('has-3d');
+            } catch (e) {
+                diceBoxReady = false;
+            }
+        })();
+        return diceBoxInitPromise;
+    }
+
+    // Puramente decorativo: os valores já foram decididos (Math.random) antes desta chamada.
+    // A animação apenas visualiza esses valores já fixados via a notação de resultado forçado do dice-box ('NdN@v1,v2,...').
+    // Cada grupo (um por bot/SDBR/SDFF) rola separadamente para poder trocar a cor dos dados por grupo.
+    // Nunca bloqueia o início do jogo: qualquer falha/timeout apenas pula a animação silenciosamente.
+    async function playInitialPlacementRollAnimation(groups) {
+        if (!groups || !groups.length) return;
+        const overlay = document.getElementById('dice-intro-overlay');
+        try {
+            if (overlay) overlay.classList.remove('hidden');
+            await initDiceBox();
+            if (!diceBoxReady || !diceBox) return;
+            const { rollDiceSafe } = await import('../assets/dice-roller.js');
+            for (let i = 0; i < groups.length; i++) {
+                const group = groups[i];
+                if (!group.values || !group.values.length) continue;
+                if (typeof diceBox.clear === 'function') diceBox.clear();
+                await diceBox.updateConfig({ themeColor: group.color || '#d4202f' });
+                const notation = `${group.values.length}d6@${group.values.join(',')}`;
+                await rollDiceSafe(diceBox, notation, 8000);
+                await new Promise(resolve => setTimeout(resolve, i === groups.length - 1 ? 700 : 450));
+            }
+        } catch (e) {
+            // decorativo apenas; ignora falhas silenciosamente
+        } finally {
+            if (overlay) overlay.classList.add('hidden');
+        }
+    }
+
+    async function startGame() {
+        bots = [];
+        for (let i = 0; i < numBots; i++) {
+            let teamSel = document.getElementById(`bot-team-${i}`);
+            let teamId = teamSel.value;
+            let teamData = teams.find(t => t.id === teamId);
+            
+            let colorSel = document.getElementById(`bot-color-${i}`);
+            let colorData = CAR_COLORS.find(c => c.id === colorSel.value);
+
+            let difficultySel = document.getElementById(`bot-difficulty-${i}`);
+            let difficulty = parseInt(difficultySel.value, 10) || 4;
+            
+            let botDeck = JSON.parse(JSON.stringify(officialDeck)); 
+            shuffle(botDeck);
+            
+            bots.push({ 
+                id: i + 1, 
+                team: teamData, 
+                color: colorData,
+                difficulty: difficulty,
+                deck: botDeck, 
+                discard: [], 
+                currentCard: null,
+                // Primeiro round de cada carro TRV9000: rola o dado de direção e posiciona conforme o diagrama "Parking Lot".
+                initialPlacement: {
+                    S: rollTRV9000InitialPlacement(),
+                    M: rollTRV9000InitialPlacement(),
+                    L: rollTRV9000InitialPlacement()
+                }
+            });
+        }
+
+        sdbr = null;
+        if (isExpansionActive('sdbr-enabled')) {
+            let sdbrDeck = JSON.parse(JSON.stringify(sdbrDeckData));
+            shuffle(sdbrDeck);
+            sdbr = { deck: sdbrDeck, discard: [], currentCard: null, initialPlacement: rollTRV9000InitialPlacement() };
+        }
+
+        sdff = null;
+        if (isExpansionActive('sdff-enabled')) {
+            let sdffDeck = JSON.parse(JSON.stringify(sdffDeckData));
+            shuffle(sdffDeck);
+            sdff = { deck: sdffDeck, discard: [], currentCard: null, initialPlacement: rollSdffInitialPlacements() };
+        }
+
+        // Coleta os valores já decididos acima apenas para tocar a animação de dado (decorativa, não afeta o resultado real).
+        // Um grupo por bot (na cor do carro do bot) + um grupo para o SDBR + um grupo para o SDFF.
+        const rollGroups = [];
+        bots.forEach(bot => {
+            rollGroups.push({
+                color: bot.color ? bot.color.hex : null,
+                values: [bot.initialPlacement.S.space, bot.initialPlacement.M.space, bot.initialPlacement.L.space]
+            });
+        });
+        if (sdbr) rollGroups.push({ color: '#d4202f', values: [sdbr.initialPlacement.space] });
+        if (sdff) rollGroups.push({ color: '#d4202f', values: SDFF_BIKE_MARK_KEYS.map(mk => sdff.initialPlacement[SDFF_MARKS[mk].sym].space) });
+        await playInitialPlacementRollAnimation(rollGroups);
+
+        document.getElementById('view-setup').classList.add('hidden');
+        document.getElementById('view-game').classList.remove('hidden');
+        renderAllBots();
+    }
+
+    function shuffle(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+    }
+
+    function drawCardsGlobal() {
+        bots.forEach(bot => {
+            if (bot.deck.length === 0) {
+                bot.deck = [...bot.discard];
+                bot.discard = [];
+                shuffle(bot.deck);
+            }
+            bot.currentCard = bot.deck.pop();
+            bot.discard.push(bot.currentCard);
+        });
+        if (sdbr) {
+            if (sdbr.deck.length === 0) {
+                sdbr.deck = [...sdbr.discard];
+                sdbr.discard = [];
+                shuffle(sdbr.deck);
+            }
+            sdbr.currentCard = sdbr.deck.pop();
+            sdbr.discard.push(sdbr.currentCard);
+        }
+        if (sdff) {
+            if (sdff.deck.length === 0) {
+                sdff.deck = [...sdff.discard];
+                sdff.discard = [];
+                shuffle(sdff.deck);
+            }
+            sdff.currentCard = sdff.deck.pop();
+            sdff.discard.push(sdff.currentCard);
+        }
+        globalStep = 0;
+        document.getElementById('btn-draw').disabled = true;
+        document.getElementById('btn-step').disabled = false;
+        renderAllBots();
+        const panel = document.getElementById('screen-panel');
+        panel.classList.remove('boom');
+        void panel.offsetWidth; // reinicia a animação mesmo em compras consecutivas
+        panel.classList.add('boom');
+    }
+
+    function nextStepGlobal() {
+        globalStep++;
+        renderAllBots();
+        if (globalStep >= 3) {
+            document.getElementById('btn-draw').disabled = false;
+            document.getElementById('btn-step').disabled = true;
+        }
+    }
+
+    function renderVehicleMoves(movesData, isVisible, theme) {
+        if (!isVisible) return `<div class="vehicle-moves invisible"></div>`;
+        if (!movesData || movesData.length === 0) return `<div class="vehicle-moves" style="color: #666; font-style: italic; font-size:0.8em;">${t('inactivePhase')}</div>`;
+
+        const themeClass = theme === 'sdbr' ? ' move-block-sdbr' : '';
+        let html = `<div class="vehicle-moves">`;
+        movesData.forEach(m => {
+            if (m.cond === "fire") {
+                html += `<div class="move-block${themeClass}"><span class="icon-fire" title="${t('fireTitle')}"></span> <span class="move-die">${m.val || ''}</span> <span class="move-dir">${m.dir || ''}</span></div>`;
+            } else if (m.cond === "smoke") {
+                html += `<div class="move-block${themeClass}"><span class="icon-extinguish" title="${t('extinguishTitle')}"></span> <span class="move-die">${m.val || ''}</span> <span class="move-dir">${m.dir || ''}</span></div>`;
+            } else if (m.cond === "ignite") {
+                html += `<div class="move-block${themeClass}"><span class="icon-ignite" title="${t('igniteTitle')}"></span></div>`;
+            } else {
+                html += `<div class="move-block${themeClass}"><span class="move-die">${m.val}</span> <span class="move-dir">${m.dir}</span></div>`;
+            }
+        });
+        html += `</div>`;
+        return html;
+    }
+
+    function renderAllBots() {
+        const board = document.getElementById('bots-board');
+        board.innerHTML = '';
+
+        bots.forEach(bot => {
+            let cardHtml = '';
+            
+            let activeLevel = bot.difficulty || 4;
+            let basicList = BASIC_ABILITIES[lang].slice(0, activeLevel).map(a => `<li class="ability-basic">${a}</li>`).join('');
+            
+            let sizes = ['S', 'M', 'L'];
+            let advancedList = bot.team.abilities[lang].map((a, index) => `<li class="ability-advanced"><span style="color: var(--yellow);">[${sizes[index]}]</span> ${a}</li>`).join('');
+            
+            if (!bot.currentCard) {
+                cardHtml = `
+                    <div class="card" style="justify-content: center; align-items: center; border-color: ${bot.color.hex}; border-top: none; box-shadow: 0 10px 30px rgba(0,0,0,0.9), 0 0 15px ${bot.color.hex}40;">
+                        <span style="color: #555; font-size:1.2em; text-transform:uppercase; letter-spacing:1px; text-align:center;">${t('waitingDraw')}</span>
+                        ${renderInitialPlacementBox(bot.initialPlacement)}
+                        <div class="deck-status">${t('deckStatus')(bot.deck.length, bot.discard.length)}</div>
+                    </div>`;
+            } else {
+                const c = bot.currentCard;
+                
+                let rowsHtml = '';
+                c.order.forEach((size, index) => {
+                    let isVisible = globalStep >= (index + 1);
+                    rowsHtml += `
+                        <div class="vehicle-row">
+                            <div class="vehicle-size">${size}</div>
+                            ${renderVehicleMoves(c[size], isVisible)}
+                        </div>
+                    `;
+                });
+
+                let actionHeader = c.actionType === 'custom' ? c.actionHeader : tr(ACTION_DB[c.actionType].header);
+                let specialText = c.actionType === 'custom' ? c.special : tr(ACTION_DB[c.actionType].text);
+
+                cardHtml = `
+                    <div class="card" style="border-color: ${bot.color.hex}; border-top: none; box-shadow: 0 10px 30px rgba(0,0,0,0.9), 0 0 15px ${bot.color.hex}40;">
+                        <div class="priority-badge">${t('priorityBadge')(c.priority)}</div>
+                        <div class="card-header">${c.id}</div>
+                        <div class="card-action">${actionHeader}</div>
+                        <div class="card-special">
+                            ${specialText}
+                        </div>
+                        ${rowsHtml}
+                        <div class="deck-status">${t('deckStatus')(bot.deck.length, bot.discard.length)}</div>
+                    </div>
+                `;
+            }
+
+            board.innerHTML += `
+                <div class="card-wrapper">
+                    <div class="bot-name-badge" style="background-color: ${bot.color.hex}; color: ${bot.color.text}; border-color: ${bot.color.hex};">
+                        ${t('botPrefix')} ${bot.id}: ${tr(bot.team.name)}
+                    </div>
+                    <details class="bot-abilities-panel" style="border-color: ${bot.color.hex};">
+                        <summary>${t('abilitiesSummary')(activeLevel)}</summary>
+                        <ul>
+                            ${advancedList}
+                            ${basicList}
+                        </ul>
+                    </details>
+                    ${cardHtml}
+                </div>
+            `;
+        });
+
+        renderSdbr();
+        renderSdff();
+    }
+
+    function renderSdbr() {
+        if (!sdbr) return;
+        const board = document.getElementById('bots-board');
+        let cardHtml = '';
+
+        if (!sdbr.currentCard) {
+            cardHtml = `
+                <div class="card" style="justify-content: center; align-items: center; border-color: var(--bigrig); border-top: none; box-shadow: 0 10px 30px rgba(0,0,0,0.9);">
+                    <span style="color: #555; font-size:1.2em; text-transform:uppercase; letter-spacing:1px; text-align:center;">${t('waitingDraw')}</span>
+                    ${renderInitialPlacementBox(sdbr.initialPlacement)}
+                    <div class="deck-status">${t('deckStatus')(sdbr.deck.length, sdbr.discard.length)}</div>
+                </div>`;
+        } else {
+            const c = sdbr.currentCard;
+            const secNameMap = {
+                'FRENTE': { pt: 'FRENTE', en: 'FRONT' },
+                'MEIO': { pt: 'MEIO', en: 'MID' },
+                'TRAS': { pt: 'TRÁS', en: 'REAR' },
+                'TRÁS': { pt: 'TRÁS', en: 'REAR' }
+            };
+            let rowsHtml = '';
+            c.order.forEach((sectionKey, index) => {
+                let isVisible = globalStep >= (index + 1);
+                let sectionData = c[sectionKey] || {};
+                let activationDir = sectionData.dir || '→';
+                let travel = sectionData.travel || { val: 1, dir: '↗', hazard: 'red' };
+                let movesHtml = renderVehicleMoves([travel], isVisible, 'sdbr');
+                let displaySecName = (secNameMap[sectionKey.toUpperCase()] && secNameMap[sectionKey.toUpperCase()][lang]) || sectionKey;
+                let hazardText = travel.hazard === 'red' ? t('sdbrHazardRedShort') : t('sdbrHazardBrownShort');
+                let hazardRule = typeof t('sdbrHazardTitle') === 'function' ? t('sdbrHazardTitle')(travel.hazard) : t('sdbrHazardTitle');
+                let hazardHtml = isVisible
+                    ? `<span class="sdbr-hazard-chip ${travel.hazard}" title="${hazardRule}" data-toast="${hazardRule}" onclick="showInfoToast(this.getAttribute('data-toast'))">
+                         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3L2 21h20L12 3z"/></svg>
+                         <span>${hazardText}</span>
+                       </span>`
+                    : '';
+                let skipRule = t('sdbrSkipTitle');
+                let actAndTravelHtml = isVisible
+                    ? `<div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; flex:1;">
+                         <div class="sdbr-act-chip" title="${skipRule}" data-toast="${skipRule}" onclick="showInfoToast(this.getAttribute('data-toast'))">
+                           <span>🎲 3 (${lang === 'pt' ? 'Reparo' : 'Repair'})</span>
+                           <span class="sdbr-skip-chip">${lang === 'pt' ? 'Pular:' : 'Skip:'} <span class="sdbr-skip-arrow-badge">${activationDir}</span></span>
+                         </div>
+                         <div style="display:inline-flex; align-items:center; gap:6px;">
+                           ${movesHtml}
+                           ${hazardHtml}
+                         </div>
+                       </div>`
+                    : `<div class="vehicle-moves" style="color: #666; font-style: italic; font-size:0.8em;">${t('inactivePhase')}</div>`;
+                rowsHtml += `
+                    <div class="vehicle-row" style="display:flex; align-items:center; gap:10px;">
+                        <div class="sdbr-section-badge">${displaySecName}</div>
+                        ${actAndTravelHtml}
+                    </div>
+                `;
+            });
+
+            let isClockwise = c.priority.indexOf('↻') !== -1;
+            let wheelHtml = `
+                <div class="sdbr-priority-wheel ${isClockwise ? 'cw' : 'ccw'}" title="${t('sdbrPriorityBadge')(c.priority)}">
+                    <span class="wheel-arrow">${isClockwise ? '↻' : '↺'}</span>
+                </div>`;
+            cardHtml = `
+                <div class="card" style="border-color: var(--bigrig); border-top: none; box-shadow: 0 10px 30px rgba(0,0,0,0.9);">
+                    <div class="priority-badge" style="display:flex; align-items:center; justify-content:center; gap:12px;">
+                        ${wheelHtml}
+                        <span>${t('sdbrPriorityBadge')(c.priority)}</span>
+                    </div>
+                    <div class="card-header">${c.id}</div>
+                    <div class="card-action">${t('sdbrCardAction')}</div>
+                    ${rowsHtml}
+                    <div class="deck-status">${t('deckStatus')(sdbr.deck.length, sdbr.discard.length)}</div>
+                </div>
+            `;
+        }
+
+        board.innerHTML += `
+            <div class="card-wrapper">
+                <div class="bot-name-badge" style="background: linear-gradient(135deg, #7a0000, var(--bigrig)); color: #fff; border-color: var(--bigrig);">
+                    ${t('sdbrBadgeName')}
+                </div>
+                <details class="bot-abilities-panel" style="border-color: var(--bigrig);">
+                    <summary>${t('sdbrDetailsSummary')}</summary>
+                    <ul>
+                        <li class="ability-advanced">${t('sdbrAbility1')}</li>
+                        <li class="ability-basic">${t('sdbrAbility2')}</li>
+                    </ul>
+                </details>
+                ${cardHtml}
+            </div>
+        `;
+    }
+
+    function renderSdff() {
+        if (!sdff) return;
+        const board = document.getElementById('bots-board');
+        let cardHtml = '';
+
+        if (!sdff.currentCard) {
+            cardHtml = `
+                <div class="card" style="justify-content: center; align-items: center; border-color: #d98c00; border-top: none; box-shadow: 0 10px 30px rgba(0,0,0,0.9);">
+                    <span style="color: #555; font-size:1.2em; text-transform:uppercase; letter-spacing:1px; text-align:center;">${t('waitingDraw')}</span>
+                    ${renderInitialPlacementBox(sdff.initialPlacement)}
+                    <div class="deck-status">${t('deckStatus')(sdff.deck.length, sdff.discard.length)}</div>
+                </div>`;
+        } else {
+            const c = sdff.currentCard;
+            const cmdInfo = SDFF_COMMANDS[c.cmd];
+            let rowsHtml = '';
+            c.rows.forEach((row, index) => {
+                let isVisible = globalStep >= (index + 1);
+                let marksHtml = row.marks.map(mk => {
+                    let m = SDFF_MARKS[mk];
+                    return `<span class="sdff-mark ${mk === 'star' ? 'is-command' : ''}" title="${tr(m.label)}">${m.sym}</span>`;
+                }).join('<span class="sdff-mark-sep">▼</span>');
+                let movesHtml = renderVehicleMoves(row.moves, isVisible);
+                let isCommandRow = row.marks.includes('star');
+                let cmdHtml = (isVisible && isCommandRow)
+                    ? `<div class="card-special" style="margin-top:6px;"><strong>${tr(cmdInfo.header)}:</strong> ${tr(cmdInfo.text)}</div>`
+                    : '';
+                rowsHtml += `
+                    <div class="vehicle-row sdff-row" style="flex-direction:column; align-items:flex-start;">
+                        <div style="display:flex; width:100%; align-items:center; gap:10px;">
+                            <div class="sdff-marks">${marksHtml}</div>
+                            ${movesHtml}
+                        </div>
+                        ${cmdHtml}
+                    </div>
+                `;
+            });
+
+            cardHtml = `
+                <div class="card" style="border-color: #d98c00; border-top: none; box-shadow: 0 10px 30px rgba(0,0,0,0.9);">
+                    <div class="card-header">${c.id} <span style="font-size:0.7em; color:#aaa; float:right;">${t('sdbrPriorityBadge')(c.priority)}</span></div>
+                    <div class="card-action">${t('sdffCardAction')}</div>
+                    ${rowsHtml}
+                    <div class="deck-status">${t('deckStatus')(sdff.deck.length, sdff.discard.length)}</div>
+                </div>
+            `;
+        }
+
+        board.innerHTML += `
+            <div class="card-wrapper">
+                <div class="bot-name-badge" style="background-color: #d98c00; color: #000; border-color: #d98c00;">
+                    ${t('sdffBadgeName')}
+                </div>
+                <details class="bot-abilities-panel" style="border-color: #d98c00;">
+                    <summary>${t('sdffDetailsSummary')}</summary>
+                    <ul>
+                        <li class="ability-advanced">${t('sdffAbility1')}</li>
+                        <li class="ability-advanced">${t('sdffAbility2')}</li>
+                        <li class="ability-basic">${t('sdffAbility3')}</li>
+                        <li class="ability-basic">${t('sdffAbility4')}</li>
+                    </ul>
+                </details>
+                ${cardHtml}
+            </div>
+        `;
+    }
+</script>
+<script type="module" src="../assets/analytics.js"></script>
+<script type="module" src="../assets/bot-view.js"></script>
+
+<!-- Botão Voltar para a Home -->
+
+<div style="text-align: center; margin: 40px auto 20px auto; width: 100%;">
+    <a href="../index.html" class="btn-home" style="display:inline-flex; align-items:center; gap:8px; background:rgba(0,0,0,0.9); color:var(--yellow); border:2px solid var(--rust); text-transform:uppercase; font-weight:bold; font-family:var(--font-body); letter-spacing:1px; border-radius:4px; padding:14px 26px; font-size:16px; text-decoration:none; transition:0.2s;">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9 21v-6h6v6"/></svg>
+        ← Home
+    </a>
+</div>
+
+<footer class="credits" style="text-align: center; margin-top: 30px; padding: 25px 15px; font-size: 0.85em; color: #888; border-top: 2px solid var(--rust); max-width: 1600px; margin-left: auto; margin-right: auto; width: 100%; box-sizing: border-box;">
+    <div style="margin-bottom: 10px;">
+        <p><strong>Thunder Road: Vendetta — Bot TRV-9000</strong> adaptado com <span class="icon-inline"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-6.5-4.35-9.3-8.1C.9 10.3 1.4 6.9 4 5.2c2.2-1.5 4.9-.9 6.4 1 .5.6.9 1.3 1.6 1.3.7 0 1.1-.7 1.6-1.3 1.5-1.9 4.2-2.5 6.4-1 2.6 1.7 3.1 5.1 1.3 7.7C18.5 16.65 12 21 12 21z"/></svg></span> por Thiago Colletes. Sistema de IA por <a href="https://boardgamegeek.com/profile/mayrik" target="_blank" rel="noopener">Padey Mayrik</a>. Thunder Road: Vendetta &copy; Restoration Games.</p>
+    </div>
+    <div>
+        <a class="bmc-inline" href="https://www.buymeacoffee.com/colletes" target="_blank" rel="noopener" style="display: inline-flex; align-items: center; gap: 6px; background: var(--yellow); color: #000 !important; padding: 8px 16px; border-radius: 4px; font-weight: bold; text-decoration: none; margin: 12px 0;">
+            <span class="icon-inline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9h13v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z"/><path d="M17 10h1.5a2.5 2.5 0 0 1 0 5H17"/><path d="M7 3c0 1-1 1-1 2M11 3c0 1-1 1-1 2"/></svg></span> Me pague um café
+        </a>
+    </div>
+</footer>
+
+</body>
+</html>

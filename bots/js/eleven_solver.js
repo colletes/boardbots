@@ -5,7 +5,7 @@
 
 const ElevenSolver = {
     // team definition (already pooled into the 5 resolution Sections — see
-    // eleven_bot_v1.html buildTeamObj, which merges the 9 physical Zones
+    // eleven_bot.html buildTeamObj, which merges the 9 physical Zones
     // printed on the cards/board into these 5 Sections before solving):
     // {
     //    GK: { power: int, gloves: int },

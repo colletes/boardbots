@@ -1,0 +1,1861 @@
+
+let document = {
+    getElementById: (id) => ({
+        classList: { add:()=>{}, remove:()=>{}, contains:()=>false, toggle:()=>{} },
+        addEventListener: ()=>{},
+        innerHTML: '',
+        innerText: '',
+        value: '',
+        style: {},
+        appendChild: ()=>{}
+    }),
+    querySelectorAll: (sel) => [],
+    querySelector: (sel) => null,
+    createElement: (tag) => ({ classList: { add:()=>{}, remove:()=>{} }, style:{}, appendChild:()=>{} }),
+    body: { appendChild: ()=>{} },
+    documentElement: { lang: 'pt-BR' }
+};
+let window = {
+    AudioContext: function() {},
+    webkitAudioContext: function() {},
+    addEventListener: ()=>{},
+    scrollTo: ()=>{},
+    location: { reload: ()=>{} }
+};
+let localStorage = {
+    getItem: (k) => null,
+    setItem: (k, v) => {}
+};
+let confirm = () => true;
+let alert = () => {};
+
+
+    // --- I18N: SISTEMA DE IDIOMA (PT-BR / EN) ---
+    const I18N = {
+        pt: {
+            pageTitle: "TRV-9000",
+            heroTitle: "TRV-9000",
+            heroSubtitle: "COMBOIO BLINDADO NA ESTRADA DA MORTE",
+            wastelandTagline: "COMBOIO BLINDADO NA ESTRADA DA MORTE",
+            signaturePrefix: "Feito por",
+            btnResetShort: "NOVO",
+            btnHelpShort: "AJUDA",
+            helpModalTitle: "Manuais: TRV-9000",
+            btnClose: "FECHAR X",
+            backupLabel: "Backup de Deck",
+            btnSaveFile: "SALVAR ARQUIVO",
+            btnLoadFile: "CARREGAR ARQUIVO",
+            editorTitleDefault: "Editor de Deck Oficial",
+            editingLabel: "Editando",
+            editorInstructionsP: "As alterações são salvas automaticamente na cache do navegador.",
+            editorInstructionsH3: "Selecione uma carta na lista para começar.",
+            tabOfficial: "TRV9000 (Base)",
+            tabSdbr: "SDBR (Big Rig)",
+            tabSdff: "SDFF (Final Five)",
+            labelPriority: "Prioridade Tiro/Embalo",
+            labelActionType: "Tipo de Ação",
+            optAirstrike: "Airstrike",
+            optReparo: "Reparo",
+            optDrift: "Drift",
+            optCustom: "Personalizado",
+            labelHeaderTitle: "Título do Cabeçalho",
+            labelSpecialDesc: "Descrição Especial",
+            label1st: "1º a Ativar",
+            label2nd: "2º a Ativar",
+            label3rd: "3º a Ativar",
+            sizeS: "S (Pequeno)",
+            sizeM: "M (Médio)",
+            sizeL: "L (Grande)",
+            movesHeader: "Movimentos",
+            movesHeaderS: "Movimentos S (Pequeno)",
+            movesHeaderM: "Movimentos M (Médio)",
+            movesHeaderL: "Movimentos L (Grande)",
+            activationOrdinal: ["1º A ATIVAR","2º A ATIVAR","3º A ATIVAR"],
+            btnAddCommand: "+ ADICIONAR COMANDO",
+            btnAddCommandS: "+ ADICIONAR COMANDO (S)",
+            btnAddCommandM: "+ ADICIONAR COMANDO (M)",
+            btnAddCommandL: "+ ADICIONAR COMANDO (L)",
+            btnSaveChanges: "SALVAR MUDANÇAS",
+            condNormal: "Condição: Normal",
+            condFire: "Só se Fogo",
+            condSmoke: "Apagar Fogo",
+            condIgnite: "Ignição (sem valor)",
+            dirLabel: "Direção",
+            diceLabel: "Dado",
+            setupBotCount: "Quantidade de Bots Inimigos",
+            physicalSetupTitle: "Configuração Física do Jogo (faça isso na sua mesa primeiro)",
+            physicalSetupBodyHtml: `<ol>
+                <li>Monte o tabuleiro do jogo base normalmente: ladrilho traseiro, ladrilho do meio e ladrilho da frente, fichas de perigo viradas para baixo nos espaços corretos, fichas de dano em uma pilha e o dado FX por perto.</li>
+                <li>Para <strong>cada Bot TRV9000</strong>: escolha uma cor de equipe e pegue os 3 paineís (dashboards), os 3 carros e o helicóptero correspondentes — mas <strong>NÃO</strong> pegue o painel de controle nem os 4 dados de movimento (o app não usa esses dados, só as cartas).</li>
+                <li>Organize os paineís do Bot em fileira e coloque os 3 carros na área de partida, atrás do ladrilho traseiro (como faria um jogador humano).</li>
+                <li>Coloque a carta <strong>TRV9000 BASIC PROTOCOL</strong> ao lado dos paineís do Bot. Embaralhe as 18 cartas de ativação do TRV9000 e forme um monte virado para baixo ao lado da carta.</li>
+                <li>Se estiver usando a expansão <strong>Choppe Shoppe</strong>, compre 1 carta de EQUIPE aleatoriamente e coloque-a ao lado da carta de Protocolo Básico — os upgrades valem a partida toda para os carros correspondentes (P, M ou G).</li>
+                <li>Antes da primeira rodada, role os dados de movimento do Bot (ou use o próprio app) para determinar o jogador inicial, depois role os seus. O Bot pode ser o primeiro jogador.</li>
+                <li><strong>(Opcional) SDBR — Big Rig Autônomo:</strong> monte a figura do Big Rig (3 partes) na área de partida; pegue o painel de cabine frontal, o painel de seção, o helicóptero e as 10 fichas de dano leve do Big Rig; embaralhe o deck próprio de cartas de ativação do SDBR.</li>
+                <li><strong>(Opcional) SDFF — Final Five Autônomo:</strong> pegue as 5 motos, o painel de comando e os paineís das motos, o helicóptero e as 5 fichas de dano leve; embaralhe o deck próprio de cartas de ativação do SDFF.</li>
+                <li>A partir daqui, o app conduz a ativação de cada Bot automaticamente — basta seguir as instruções na tela a cada turno do Bot.</li>
+            </ol>`,
+            botPrefix: "BOT",
+            carPrefix: "Carro",
+            difficultyPrefix: "Protocolo Básico Nv.",
+            sdbrToggleLabel: "Adicionar SDBR (Big Rig Autônomo)",
+            sdffToggleLabel: "Adicionar SDFF (Final Five Autônomo)",
+            expAdded: "Adicionado",
+            expNotAdded: "Adicionar",
+            btnStartGame: "INICIAR CORRIDA",
+            btnEditDeck: "EDITAR DECK OFICIAL",
+            btnDrawCards: "COMPRAR CARTAS",
+            btnNextStep: "PRÓXIMO PASSO",
+            btnAbandon: "ABANDONAR",
+            waitingDraw: "Aguardando<br>Compras",
+            deckStatus: (d, x) => `DECK: ${d} | DESC: ${x}`,
+            initialPlacementTitle: "1ª Rodada: Posicionamento (Estacionamento)",
+            initialPlacementSpace: (space) => `Espaço ${space}`,
+            abilitiesSummary: (lvl) => `Ver Habilidades Especiais (Protocolo Nv.${lvl}/4)`,
+            priorityBadge: (p) => `Tiro/Embalo: ${p}`,
+            sdbrPriorityBadge: (p) => `Prioridade: ${p}`,
+            sdbrCardAction: "SDBR: MOVIMENTO + COMANDO POR SEÇÃO",
+            sdbrBadgeName: "🚛 SDBR: BIG RIG AUTÔNOMO",
+            sdbrDetailsSummary: "Ver Comandos por Seção",
+            sdbrAbility1: "Direção Hidráulica (cabine): pode mudar de faixa nas vezes indicadas pelo valor de movimento da seção FRENTE nesta carta.",
+            sdbrAbility2: "Comandos de Seção: O Big Rig sempre tenta ativar a Coluna 3 (Reparo). Se a Coluna 3 desta seção já estiver destruída/inutilizada no tabuleiro físico, pule para a próxima coluna na direção da seta [→ / ←].",
+            sdbrHazardTitle: (color) => color === 'red' ? "Muda de faixa (uma única vez) ao encontrar o 1º espaço com ficha de perigo; senão anda reto." : "Muda de faixa (uma única vez) ao encontrar o 1º espaço do terreno indicado; senão anda reto.",
+            sdbrTravelLabel: "Mov.",
+            sdbrActivationLabel: "Ativação",
+            sdbrHazardRed: "Perigo (vermelho)",
+            sdbrHazardBrown: "Terreno (marrom)",
+            sdbrHazardRedShort: "Perigo",
+            sdbrHazardBrownShort: "Terreno",
+            sdbrSkipTitle: "Dado padrão: 3 (Reparo). Se o comando desta seção estiver destruído no tabuleiro físico, pule para a próxima coluna nesta direção.",
+            sdffCardAction: "SDFF: 2 MOTOS OU COMANDO + 1 MOTO POR TURNO",
+            sdffBadgeName: "🏍️ SDFF: FINAL FIVE AUTÔNOMO",
+            sdffDetailsSummary: "Ver Legenda das Motos",
+            sdffAbility1: "Cada turno ativa as 2 motos marcadas na linha (mesma prioridade de movimento do TRV9000).",
+            sdffAbility2: "Na linha com ★, ative o comando do topo da carta com a moto marcada, em vez da segunda moto.",
+            sdffAbility3: "🔥 = a moto pega fogo (ignição) neste turno. Bônus +1/+2 = micro-movimento extra se a moto já estiver pegando fogo.",
+            sdffAbility4: "Marcas das motos: ‖ ✕ ⌃ ◎ S — identifique cada moto física com uma destas marcas.",
+            inactivePhase: "Inativo nesta fase.",
+            fireTitle: "Apenas se estiver pegando Fogo",
+            extinguishTitle: "Apagar Fogo",
+            igniteTitle: "A moto pega Fogo",
+            alertExportOk: "Arquivo de backup gerado com sucesso.",
+            alertImportOk: "Deck importado de arquivo e salvo na cache com sucesso!",
+            alertImportBadFile: "Erro: O arquivo não é um deck compatível com a versão atual.",
+            alertImportCritical: "Erro crítico ao ler o arquivo.",
+            alertCardSaved: (id) => `Carta ${id} atualizada na cache!`,
+            editorLoadPrompt: "Selecione uma carta na lista para começar.",
+            labelCmd: "Comando",
+            labelMoveVal: "Movimento",
+            labelMark: "Marca",
+            labelIsIgnite: "Ignição",
+            cmdRepair: "Reparo",
+            cmdAirstrike: "Ataque Aéreo",
+            cmdRespawn: "Renascer",
+            creditsHtml: `Feito por <span class="clickable-name" onclick="engineSound()">Thiago Colletes</span> (<a href="mailto:colletes@gmail.com">colletes@gmail.com</a>) e Gemini — app de apoio para bots automatizados, baseado no jogo oficial <em>Thunder Road: Vendetta</em> (e expansões Big Rig/Final Five), da Restoration Games, e no sistema de bot criado por <a href="https://boardgamegeek.com/profile/mayrik" target="_blank" rel="noopener">Padey Mayrik</a>. Uso pessoal, sem fins comerciais.`,
+            bmcBtn: 'Me pague um café'
+        },
+        en: {
+            pageTitle: "TRV-9000",
+            heroTitle: "TRV-9000",
+            heroSubtitle: "ARMORED CONVOY ON THE WASTELAND HIGHWAY",
+            wastelandTagline: "ARMORED CONVOY ON THE WASTELAND HIGHWAY",
+            signaturePrefix: "Made by",
+            btnResetShort: "NEW",
+            btnHelpShort: "HELP",
+            helpModalTitle: "Manuals: TRV-9000",
+            btnClose: "CLOSE X",
+            backupLabel: "Deck Backup",
+            btnSaveFile: "SAVE FILE",
+            btnLoadFile: "LOAD FILE",
+            editorTitleDefault: "Official Deck Editor",
+            editingLabel: "Editing",
+            editorInstructionsP: "Changes are saved automatically to browser cache.",
+            editorInstructionsH3: "Select a card from the list to begin.",
+            tabOfficial: "TRV9000 (Base)",
+            tabSdbr: "SDBR (Big Rig)",
+            tabSdff: "SDFF (Final Five)",
+            labelPriority: "Shoot/Coast Priority",
+            labelActionType: "Action Type",
+            optAirstrike: "Airstrike",
+            optReparo: "Repair",
+            optDrift: "Drift",
+            optCustom: "Custom",
+            labelHeaderTitle: "Header Title",
+            labelSpecialDesc: "Special Description",
+            label1st: "1st to Activate",
+            label2nd: "2nd to Activate",
+            label3rd: "3rd to Activate",
+            sizeS: "S (Small)",
+            sizeM: "M (Medium)",
+            sizeL: "L (Large)",
+            movesHeader: "Moves",
+            movesHeaderS: "S (Small) Moves",
+            movesHeaderM: "M (Medium) Moves",
+            movesHeaderL: "L (Large) Moves",
+            activationOrdinal: ["1st TO ACTIVATE","2nd TO ACTIVATE","3rd TO ACTIVATE"],
+            btnAddCommand: "+ ADD COMMAND",
+            btnAddCommandS: "+ ADD COMMAND (S)",
+            btnAddCommandM: "+ ADD COMMAND (M)",
+            btnAddCommandL: "+ ADD COMMAND (L)",
+            btnSaveChanges: "SAVE CHANGES",
+            condNormal: "Condition: Normal",
+            condFire: "Only if on Fire",
+            condSmoke: "Extinguish Fire",
+            condIgnite: "Ignite (no value)",
+            dirLabel: "Direction",
+            diceLabel: "Die",
+            setupBotCount: "Number of Enemy Bots",
+            physicalSetupTitle: "Physical Game Setup (do this at your table first)",
+            physicalSetupBodyHtml: `<ol>
+                <li>Set up the base game board as usual: rear road tile, middle road tile and lead road tile, hazard tokens face-down on the correct spaces, damage tokens in a pile, and the FX die nearby.</li>
+                <li>For <strong>each TRV9000 Bot</strong>: choose a crew color and take the matching 3 dashboards, 3 cars and chopper — but <strong>do NOT</strong> take the control panel or the 4 movement dice (the app doesn't use those dice, only the cards).</li>
+                <li>Arrange the Bot's dashboards in a row and place its 3 cars in the starting area, behind the rear tile (as a human player would).</li>
+                <li>Place the <strong>TRV9000 BASIC PROTOCOL</strong> card next to the Bot's dashboards. Shuffle the 18 TRV9000 activation cards into a face-down deck next to it.</li>
+                <li>If playing with the <strong>Choppe Shoppe</strong> expansion, randomly draw 1 TEAM card and place it next to the Basic Protocol card — the upgrades apply for the whole game to the matching cars (S, M or L).</li>
+                <li>Before the first round, roll the Bot's movement dice (or let the app randomize it) to determine the first player, then roll your own. The Bot can be the first player.</li>
+                <li><strong>(Optional) SDBR — Autonomous Big Rig:</strong> assemble the Big Rig figure (3 parts) in the starting area; take the front cab board, section board, chopper, and 10 Big Rig minor damage tokens; shuffle the SDBR's own activation card deck.</li>
+                <li><strong>(Optional) SDFF — Autonomous Final Five:</strong> take the 5 motorcycle figures, the command board and dashboards, the chopper, and 5 minor damage tokens; shuffle the SDFF's own activation card deck.</li>
+                <li>From here on, the app guides each Bot's activation automatically — just follow the on-screen instructions on the Bot's turn.</li>
+            </ol>`,
+            botPrefix: "BOT",
+            carPrefix: "Car",
+            difficultyPrefix: "Basic Protocol Lv.",
+            sdbrToggleLabel: "Add SDBR (Autonomous Big Rig)",
+            sdffToggleLabel: "Add SDFF (Autonomous Final Five)",
+            expAdded: "Added",
+            expNotAdded: "Add",
+            btnStartGame: "START RACE",
+            btnEditDeck: "EDIT OFFICIAL DECK",
+            btnDrawCards: "DRAW CARDS",
+            btnNextStep: "NEXT STEP",
+            btnAbandon: "ABANDON",
+            waitingDraw: "Waiting for<br>Draw",
+            deckStatus: (d, x) => `DECK: ${d} | DISCARD: ${x}`,
+            initialPlacementTitle: "1st Round: Placement (Parking Lot)",
+            initialPlacementSpace: (space) => `Space ${space}`,
+            abilitiesSummary: (lvl) => `View Special Abilities (Protocol Lv.${lvl}/4)`,
+            priorityBadge: (p) => {
+                const map = {'↓ (Cima para Baixo)': '↓ (Top to Bottom)', '↑ (Baixo para Cima)': '↑ (Bottom to Top)', '↻ (Sentido Horário)': '↻ (Clockwise)', '↺ (Sentido Anti-Horário)': '↺ (Counter-Clockwise)'};
+                return `Shoot/Coast: ${map[p] || p}`;
+            },
+            sdbrPriorityBadge: (p) => {
+                const map = {'↓ (Cima para Baixo)': '↓ (Top to Bottom)', '↑ (Baixo para Cima)': '↑ (Bottom to Top)', '↻ (Sentido Horário)': '↻ (Clockwise)', '↺ (Sentido Anti-Horário)': '↺ (Counter-Clockwise)'};
+                return `Priority: ${map[p] || p}`;
+            },
+            sdbrCardAction: "SDBR: MOVEMENT + COMMAND PER SECTION",
+            sdbrBadgeName: "🚛 SDBR: AUTONOMOUS BIG RIG",
+            sdbrDetailsSummary: "View Commands by Section",
+            sdbrAbility1: "Hydraulic Steering (cab): may change lanes as many times as the movement value of the FRONT section on this card.",
+            sdbrAbility2: "Section Commands: The Big Rig always attempts to activate Column 3 (Repair). If Column 3 in this section is already wrecked/unusable on the physical board, skip to the neighboring column in the direction of the arrow [→ / ←].",
+            sdbrHazardTitle: (color) => color === 'red' ? "Changes lane (once) upon reaching the 1st space with a hazard token; otherwise moves straight." : "Changes lane (once) upon reaching the 1st space of the indicated terrain; otherwise moves straight.",
+            sdbrTravelLabel: "Move",
+            sdbrActivationLabel: "Activation",
+            sdbrHazardRed: "Hazard (red)",
+            sdbrHazardBrown: "Terrain (brown)",
+            sdbrHazardRedShort: "Hazard",
+            sdbrHazardBrownShort: "Terrain",
+            sdbrSkipTitle: "Default die: 3 (Repair). If this section's command is wrecked on the physical board, skip to the neighboring column in this direction.",
+            sdffCardAction: "SDFF: 2 BIKES OR COMMAND + 1 BIKE PER TURN",
+            sdffBadgeName: "🏍️ SDFF: AUTONOMOUS FINAL FIVE",
+            sdffDetailsSummary: "View Bike Legend",
+            sdffAbility1: "Each turn activates the 2 bikes marked on the row (same TRV9000 movement priority).",
+            sdffAbility2: "On the row marked with ★, activate the command at the top of the card with the marked bike, instead of a second bike.",
+            sdffAbility3: "🔥 = the bike catches fire (ignite) this turn. +1/+2 bonus = extra micro-movement if the bike is already on fire.",
+            sdffAbility4: "Bike marks: ‖ ✕ ⌃ ◎ S — identify each physical bike with one of these marks.",
+            inactivePhase: "Inactive this phase.",
+            fireTitle: "Only if currently on fire",
+            extinguishTitle: "Extinguish Fire",
+            igniteTitle: "The bike catches fire",
+            alertExportOk: "Backup file generated successfully.",
+            alertImportOk: "Deck imported from file and saved to cache successfully!",
+            alertImportBadFile: "Error: The file is not a deck compatible with the current version.",
+            alertImportCritical: "Critical error reading the file.",
+            alertCardSaved: (id) => `Card ${id} updated in cache!`,
+            editorLoadPrompt: "Select a card from the list to begin.",
+            labelCmd: "Command",
+            labelMoveVal: "Move",
+            labelMark: "Mark",
+            labelIsIgnite: "Ignite",
+            cmdRepair: "Repair",
+            cmdAirstrike: "Airstrike",
+            cmdRespawn: "Respawn",
+            creditsHtml: `Made by <span class="clickable-name" onclick="engineSound()">Thiago Colletes</span> (<a href="mailto:colletes@gmail.com">colletes@gmail.com</a>) and Gemini — companion app for automated bots, based on the official game <em>Thunder Road: Vendetta</em> (and the Big Rig/Final Five expansions) by Restoration Games, and on the bot system created by <a href="https://boardgamegeek.com/profile/mayrik" target="_blank" rel="noopener">Padey Mayrik</a>. Personal, non-commercial use.`,
+            bmcBtn: 'Buy me a coffee'
+        }
+    };
+    let lang = localStorage.getItem('boardbots_lang') || 'pt';
+    function t(key) { const v = (I18N[lang] || I18N.pt)[key]; return v !== undefined ? v : (I18N.pt[key] !== undefined ? I18N.pt[key] : key); }
+    function tr(obj) { if (!obj) return ''; return (typeof obj === 'object') ? (obj[lang] !== undefined ? obj[lang] : obj.pt) : obj; }
+
+    function setLang(l) {
+        const priorityOpts = {
+            pt: {
+                '↓ (Cima para Baixo)': '↓ (Cima para Baixo)',
+                '↑ (Baixo para Cima)': '↑ (Baixo para Cima)',
+                '↻ (Sentido Horário)': '↻ (Sentido Horário)',
+                '↺ (Sentido Anti-Horário)': '↺ (Sentido Anti-Horário)'
+            },
+            en: {
+                '↓ (Cima para Baixo)': '↓ (Top to Bottom)',
+                '↑ (Baixo para Cima)': '↑ (Bottom to Top)',
+                '↻ (Sentido Horário)': '↻ (Clockwise)',
+                '↺ (Sentido Anti-Horário)': '↺ (Counter-Clockwise)'
+            }
+        };
+        document.querySelectorAll('select#edit-priority option, select#edit-sdbr-priority option').forEach(opt => {
+            if (priorityOpts[l] && priorityOpts[l][opt.value]) {
+                opt.textContent = priorityOpts[l][opt.value];
+            }
+        });
+        lang = l;
+        localStorage.setItem('boardbots_lang', l);
+        document.documentElement.lang = (l === 'pt') ? 'pt-br' : 'en';
+        applyI18n();
+    }
+
+    function toggleLang() {
+        setLang(lang === 'pt' ? 'en' : 'pt');
+    }
+
+    function applyI18n() {
+        document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
+        document.querySelectorAll('[data-i18n]').forEach(el => { el.innerHTML = t(el.getAttribute('data-i18n')); });
+        const pageTitleEl = document.getElementById('page-title');
+        if (pageTitleEl) pageTitleEl.textContent = t('pageTitle');
+        const pageTitleBanner = document.getElementById('page-title-banner');
+        if (pageTitleBanner) pageTitleBanner.textContent = t('heroTitle');
+        const taglineBanner = document.getElementById('tagline-banner');
+        if (taglineBanner) taglineBanner.textContent = t('heroSubtitle');
+        const creditsText = document.getElementById('creditsText');
+        if (creditsText) creditsText.innerHTML = t('creditsHtml');
+        renderHelpContent();
+        renderBotSetup();
+        updateExpansionToggleLabels();
+        if (!document.getElementById('view-game').classList.contains('hidden')) { renderAllBots(); }
+        if (!document.getElementById('config-modal').classList.contains('hidden')) { renderSidebar(); }
+    }
+
+    // --- CONTROLES DOS MODAIS E NAVEGAÇÃO ---
+    function openHelpModal() { document.getElementById('help-modal').classList.remove('hidden'); }
+    function closeHelpModal() { document.getElementById('help-modal').classList.add('hidden'); }
+    function toggleHelp() {
+        const modal = document.getElementById('help-modal');
+        if (!modal) return;
+        if (modal.classList.contains('hidden')) {
+            openHelpModal();
+        } else {
+            closeHelpModal();
+        }
+    }
+
+    function handleNavReset() {
+        const isGameActive = !document.getElementById('view-game').classList.contains('hidden');
+        if (isGameActive) {
+            const msg = lang === 'pt'
+                ? 'Deseja abandonar a corrida atual e voltar para o menu de configuração?'
+                : 'Do you want to abandon the current race and return to the setup screen?';
+            if (confirm(msg)) {
+                document.getElementById('view-game').classList.add('hidden');
+                document.getElementById('view-setup').classList.remove('hidden');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        } else {
+            window.location.reload();
+        }
+    }
+
+    function showInfoToast(msg) {
+        if (!msg) return;
+        let toast = document.getElementById('info-toast');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'info-toast';
+            toast.className = 'info-toast';
+            toast.onclick = () => toast.classList.remove('show');
+            document.body.appendChild(toast);
+        }
+        toast.textContent = msg;
+        toast.classList.add('show');
+        clearTimeout(toast._timer);
+        toast._timer = setTimeout(() => {
+            toast.classList.remove('show');
+        }, 4500);
+    }
+
+    // --- EFEITO SONORO DO MOTOR ---
+    function engineSound() {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        osc.type = 'sawtooth';
+        
+        const lfo = audioCtx.createOscillator();
+        lfo.type = 'sine';
+        lfo.frequency.value = 20; 
+
+        const lfoGain = audioCtx.createGain();
+        lfoGain.gain.value = 15; 
+        
+        lfo.connect(lfoGain);
+        lfoGain.connect(osc.detune);
+
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(150, audioCtx.currentTime); 
+        filter.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.3); 
+        filter.frequency.exponentialRampToValueAtTime(150, audioCtx.currentTime + 1.2); 
+
+        const gainNode = audioCtx.createGain();
+        gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+        gainNode.gain.linearRampToValueAtTime(0.5, audioCtx.currentTime + 0.1);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.2);
+
+        osc.frequency.setValueAtTime(40, audioCtx.currentTime); 
+        osc.frequency.exponentialRampToValueAtTime(120, audioCtx.currentTime + 0.3); 
+        osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 1.2); 
+
+        osc.connect(filter);
+        filter.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        osc.start();
+        lfo.start();
+        osc.stop(audioCtx.currentTime + 1.5);
+        lfo.stop(audioCtx.currentTime + 1.5);
+    }
+
+    // --- CONTEÚDO DO MANUAL (BILÍNGUE) ---
+    const HELP_CONTENT = {
+        pt: `
+            <h3 style="color: var(--yellow); border-left: 4px solid var(--yellow); padding-left: 10px;">⚙️ INICIALIZAÇÃO</h3>
+            <ul style="padding-left: 20px; margin-bottom: 25px;">
+                <li>Os bots <strong>não usam dados de movimento OU o dado de estrada</strong>. Eles se guiam pelas cartas, que são reveladas 1 a 1, mostrando qual carro se move e a direção. Eles usam os painéis normalmente, entretanto, para controlar o dano. Utilizam também os dados de combate normalmente.</li>
+                <li>Role <strong>1d6</strong> para verificar onde posicionar o carro do bot na pista inicial. O número se resolve de cima para baixo, i.e., 1 é o espaço mais acima e 6 o mais abaixo.</li>
+                <li>Escolha a quantidade de bots, a cor e o time. Os times especiais fornecem desafios adicionais e suas habilidades são somadas às do protocolo básico. Escolha também o <strong>Nível de Dificuldade do Protocolo Básico (1 a 4)</strong>: quanto maior o nível, mais habilidades básicas ficam ativas ao mesmo tempo, tornando o bot mais difícil.</li>
+                <li>Você pode adicionar opcionalmente o <strong>SDBR (Big Rig Autônomo)</strong> e/ou o <strong>SDFF (Final Five Autônomo)</strong> como oponentes extras da expansão "Maximum Chrome".</li>
+            </ul>
+
+            <h3 style="color: var(--yellow); border-left: 4px solid var(--yellow); padding-left: 10px;">🚗 FASE DE MOVIMENTO</h3>
+            <ul style="padding-left: 20px; margin-bottom: 25px;">
+                <li>Durante este turno, ative o carro designado pela letra S, M ou L, presente no início da linha de ativação revelada. Se este carro não estiver operável (destruído), avance a carta de ativação para revelar e ativar o próximo carro. Se todos os carros operáveis já tiverem sido ativados nesta rodada, realize <strong>1 EMBALO (COAST)</strong> com o maior carro operável na carta de ativação.</li>
+                <li>A fase de movimento é dividida em vários micro-movimentos na forma de uma linha de símbolos de movimento a serem executados em ordem, da esquerda para a direita. Para cada símbolo, sempre tente mover o carro ativado o maior número de espaços possível, na direção indicada. Cada símbolo de movimento indica o número máximo de espaços que ele pode se mover, e a direção fixa na qual deve se mover.</li>
+                <li><strong style="color:var(--rust);">🔥 Condição de Fogo:</strong> Aplique apenas se o carro ativado estiver pegando fogo. É um <strong>pré-resultado</strong> (não role o dado de fogo): os símbolos +1 e +2 não são movimentos obrigatórios, são micro-movimentos bônus, sempre em linha reta à frente, respeitando as regras de movimento do TRV9000.</li>
+                <li><strong>Lama, Gosma Tóxica, Planícies de Sal:</strong> Trate como espaços de estrada, não aplique nenhum efeito.</li>
+                <li><strong>Vidro do Deserto, Mancha de Óleo, Rampa, Fogo! e Ficha de Perigo virada para baixo:</strong> Aplique as regras normais, como para um jogador.</li>
+                <li><strong>Borda do tabuleiro, Espaços intransponíveis, Veículo da mesma equipe, Rampa Eliminatória, Ficha de perigo de Mina, Vidro do deserto (movendo-se em direção aos espaços mencionados acima):</strong> Causam uma mudança de direção. Pare o micro-movimento atual no espaço anterior e execute o próximo símbolo de movimento na linha de ativação.</li>
+                <li><strong style="color:var(--rust);">💥 Slam:</strong> O TRV9000 nunca dá Slam em carros da própria equipe (isso encerra o símbolo atual no espaço anterior e executa o próximo). Ao dar Slam em qualquer outro veículo, se o resultado mover o carro do TRV9000 e ele tiver direito a rerrolar (por ser o veículo maior), <strong>sempre rerrola</strong>.</li>
+                <li><strong>Resumo:</strong> Nunca se mova para um espaço onde você sabe de antemão que inevitavelmente resultará em dano ou na eliminação de um carro TRV9000.</li>
+                <li>Após executar o último símbolo, um SLAM, um SALTO ou receber DANO: <strong>encerre a fase de movimento e inicie a fase de tiro</strong>.</li>
+            </ul>
+
+            <h3 style="color: var(--yellow); border-left: 4px solid var(--yellow); padding-left: 10px;">🎯 TIRO</h3>
+            <ul style="padding-left: 20px; margin-bottom: 25px;">
+                <li>Se um veículo adversário estiver no arco frontal do carro ativado, atire.</li>
+                <li>Se houver vários veículos adversários presentes, dê prioridade àquele marcado com o símbolo de prioridade de tiro (no topo da carta de ativação). O carro ativado atira primeiro no espaço designado pela prioridade (Cima para Baixo ou Baixo para Cima). Se este espaço estiver vazio, atire no próximo espaço seguindo a prioridade.</li>
+            </ul>
+
+            <h3 style="color: var(--yellow); border-left: 4px solid var(--yellow); padding-left: 10px;">💨 EMBALO (COAST)</h3>
+            <ul style="padding-left: 20px; margin-bottom: 25px;">
+                <li>Se o TRV9000 precisar realizar uma fase de movimento e todos os seus carros operáveis já tiverem sido ativados nesta rodada, realize 1 movimento de EMBALO (COAST) com o seu maior carro operável na carta de ativação.</li>
+                <li>Durante a fase de movimento, mova este carro 1 único espaço para frente, usando o símbolo de prioridade de tiro (no topo da carta de ativação) como sua prioridade de direção.</li>
+                <li>Ao fazer este movimento, certifique-se de nunca se mover para um espaço que você sabe que causará dano ou eliminará o carro.</li>
+            </ul>
+
+            <h3 style="color: var(--rust); border-left: 4px solid var(--rust); padding-left: 10px;">🚛 EXPANSÃO: SDBR (BIG RIG AUTÔNOMO)</h3>
+            <ul style="padding-left: 20px; margin-bottom: 25px;">
+                <li>O SDBR é um caminhão gigante dividido em 3 seções: <strong>FRENTE, MEIO e TRAS</strong>. Cada carta revela, seção por seção (na ordem indicada na carta), 1 micro-movimento e 1 comando daquela seção.</li>
+                <li>O <strong>círculo de prioridade</strong> no topo da carta é diferente do TRV9000 base: em vez de uma prioridade linear (Cima/Baixo), ele mostra um <strong>sentido de rotação</strong> (↻ horário ou ↺ anti-horário) ao redor do Big Rig. Comece pela posição indicada pela mira e siga girando no sentido mostrado até encontrar o primeiro alvo válido — esse mesmo sentido também define a direção do EMBALO (COAST).</li>
+                <li>Cada seção tem <strong>duas caixas distintas</strong> na carta original: a caixa esquerda (dado + seta pretos) tem o dado sempre fixo em <strong>3</strong> — ou seja, aquela seção <strong>sempre prioriza Reparo</strong> (remove 1 dano); a seta só indica, caso o comando de Reparo esteja danificado demais no tabuleiro físico (informação que este app não rastreia), para qual lado pular para o próximo comando disponível daquela seção. A caixa direita (dado + seta vermelha) define o <strong>movimento real</strong>: o valor do dado é o total de espaços que a seção anda em linha reta; a seta (↗ ou ↘) só se aplica na <strong>primeira vez</strong> que o SDBR encontrar um espaço do tipo indicado pelo <span style="color:#e62e00;">▲ ícone vermelho (ficha de perigo)</span> ou <span style="color:#9c6b30;">▲ marrom (outro terreno)</span>, mudando de faixa uma única vez antes de continuar reto pelo restante do movimento; se nenhum espaço desse tipo for cruzado, ela anda todo o valor em linha reta.</li>
+                <li><strong>Direção Hidráulica</strong> (cabine dianteira): a qualquer momento no turno do SDBR, ele pode mudar de faixa até um número de vezes igual ao valor de movimento indicado na seção FRENTE nesta carta.</li>
+                <li>Como o dado de ativação é sempre 3, na prática toda seção sempre executa <strong>Reparo</strong>; a seta de ativação exibida no card serve apenas como lembrete de para qual lado pular caso o Reparo físico daquela seção já esteja esgotado no tabuleiro.</li>
+            </ul>
+
+            <h3 style="color: var(--rust); border-left: 4px solid var(--rust); padding-left: 10px;">🏍️ EXPANSÃO: SDFF (FINAL FIVE AUTÔNOMO)</h3>
+            <ul style="padding-left: 20px;">
+                <li>O SDFF representa um esquadrão de <strong>5 motocicletas pequenas</strong> autônomas. Cada carta revela, linha por linha (de cima para baixo), qual ativação ocorre naquele turno.</li>
+                <li>Em <strong>2 das 3 linhas</strong>, duas motocicletas marcadas (símbolos ‖ ✕ ⌃ ◎ S) se movem simultaneamente, cada uma com seu próprio micro-movimento.</li>
+                <li>Na linha marcada com <strong>★</strong>, a motocicleta marcada nesta linha ativa o <strong>comando do topo da carta</strong> (Reparo, Ataque Aéreo ou Renascer) em vez de uma segunda motocicleta se mover.</li>
+                <li><strong>🔥 Ignição:</strong> quando este ícone aparece (sem valor numérico), a motocicleta pega fogo imediatamente neste turno, antes de se mover.</li>
+                <li><strong>🔥 Bônus de Fogo (+1/+2):</strong> mesma regra do TRV9000 base — aplique apenas se a motocicleta já estiver pegando fogo; é um micro-movimento bônus em linha reta à frente.</li>
+                <li>O símbolo de prioridade no topo da carta funciona como no TRV9000 base para definir o alvo do Ataque Aéreo e a direção do Renascer.</li>
+            </ul>
+        `,
+        en: `
+            <h3 style="color: var(--yellow); border-left: 4px solid var(--yellow); padding-left: 10px;">⚙️ SETUP</h3>
+            <ul style="padding-left: 20px; margin-bottom: 25px;">
+                <li>Bots <strong>do not use movement dice OR the road die</strong>. They are guided by cards, revealed one at a time, showing which car moves and in which direction. They use damage panels normally, however, to track damage. They also use combat dice normally.</li>
+                <li>Roll <strong>1d6</strong> to determine where to place the bot's car on the starting track. The number resolves top to bottom, i.e. 1 is the topmost space and 6 the bottommost.</li>
+                <li>Choose the number of bots, their color and team. Special teams provide extra challenges and their abilities stack with the basic protocol's. Also choose the <strong>Basic Protocol Difficulty Level (1 to 4)</strong>: the higher the level, the more basic abilities are active at once, making the bot harder.</li>
+                <li>You may optionally add the <strong>SDBR (Autonomous Big Rig)</strong> and/or the <strong>SDFF (Autonomous Final Five)</strong> as extra opponents from the "Maximum Chrome" expansion.</li>
+            </ul>
+
+            <h3 style="color: var(--yellow); border-left: 4px solid var(--yellow); padding-left: 10px;">🚗 MOVEMENT PHASE</h3>
+            <ul style="padding-left: 20px; margin-bottom: 25px;">
+                <li>During this turn, activate the car designated by the letter S, M or L at the start of the revealed activation row. If this car is not operational (destroyed), advance the activation card to reveal and activate the next car. If all operational cars have already been activated this round, perform <strong>1 COAST</strong> with the largest operational car on the activation card.</li>
+                <li>The movement phase is split into several micro-movements shown as a row of movement symbols to be executed in order, left to right. For each symbol, always try to move the activated car the maximum number of spaces possible, in the indicated direction. Each movement symbol shows the maximum number of spaces it may move, and the fixed direction it must move in.</li>
+                <li><strong style="color:var(--rust);">🔥 Fire Condition:</strong> Apply only if the activated car is currently on fire. It is a <strong>pre-result</strong> (do not roll the fire die): the +1 and +2 symbols are not mandatory moves, they are bonus micro-movements, always straight ahead, following TRV9000 movement rules.</li>
+                <li><strong>Mud, Toxic Sludge, Salt Flats:</strong> Treat as road spaces, apply no effect.</li>
+                <li><strong>Desert Glass, Oil Slick, Ramp, Fire! and face-down Hazard token:</strong> Apply the normal rules, as for a player.</li>
+                <li><strong>Board edge, impassable spaces, a vehicle from the same team, Elimination Ramp, Mine hazard token, Desert Glass (moving toward the spaces mentioned above):</strong> Cause a direction change. Stop the current micro-movement on the previous space and execute the next movement symbol on the activation row.</li>
+                <li><strong style="color:var(--rust);">💥 Slam:</strong> The TRV9000 never Slams cars from its own team (this ends the current symbol on the previous space and moves to the next). When Slamming any other vehicle, if the result moves the TRV9000's car and it is entitled to a reroll (for being the larger vehicle), it <strong>always rerolls</strong>.</li>
+                <li><strong>Summary:</strong> Never move to a space you know in advance will inevitably result in damage or elimination of a TRV9000 car.</li>
+                <li>After executing the last symbol, a SLAM, a JUMP, or taking DAMAGE: <strong>end the movement phase and start the shooting phase</strong>.</li>
+            </ul>
+
+            <h3 style="color: var(--yellow); border-left: 4px solid var(--yellow); padding-left: 10px;">🎯 SHOOTING</h3>
+            <ul style="padding-left: 20px; margin-bottom: 25px;">
+                <li>If an enemy vehicle is in the activated car's front arc, shoot.</li>
+                <li>If several enemy vehicles are present, give priority to the one marked with the shooting priority symbol (at the top of the activation card). The activated car shoots first at the space designated by priority (Top to Bottom or Bottom to Top). If this space is empty, shoot at the next space following priority.</li>
+            </ul>
+
+            <h3 style="color: var(--yellow); border-left: 4px solid var(--yellow); padding-left: 10px;">💨 COAST</h3>
+            <ul style="padding-left: 20px; margin-bottom: 25px;">
+                <li>If the TRV9000 needs to perform a movement phase and all its operational cars have already been activated this round, perform 1 COAST movement with its largest operational car on the activation card.</li>
+                <li>During the movement phase, move this car 1 single space forward, using the shooting priority symbol (at the top of the activation card) as its direction priority.</li>
+                <li>When making this move, make sure to never move to a space you know will cause damage or eliminate the car.</li>
+            </ul>
+
+            <h3 style="color: var(--rust); border-left: 4px solid var(--rust); padding-left: 10px;">🚛 EXPANSION: SDBR (AUTONOMOUS BIG RIG)</h3>
+            <ul style="padding-left: 20px; margin-bottom: 25px;">
+                <li>The SDBR is a giant truck split into 3 sections: <strong>FRONT, MIDDLE and REAR</strong>. Each card reveals, section by section (in the order shown on the card), 1 micro-movement and 1 command for that section.</li>
+                <li>The <strong>priority circle</strong> at the top of the card is different from the base TRV9000: instead of a linear priority (Top/Bottom), it shows a <strong>rotation direction</strong> (↻ clockwise or ↺ counter-clockwise) around the Big Rig. Start at the position marked by the sight and keep sweeping in the shown direction until you find the first valid target — this same direction also sets the COAST direction.</li>
+                <li>Each section has <strong>two distinct boxes</strong> on the original card: the left box (black die + arrow) always has its die fixed at <strong>3</strong> — meaning that section <strong>always prioritizes Repair</strong> (removes 1 damage); the arrow only indicates, in case the Repair command is too damaged on the physical board (information this app doesn't track), which side to skip to for that section's next available command. The right box (die + red arrow) defines the <strong>actual movement</strong>: the die value is the total number of spaces the section moves in a straight line; the arrow (↗ or ↘) only applies the <strong>first time</strong> the SDBR reaches a space of the type shown by the <span style="color:#e62e00;">▲ red icon (hazard token)</span> or <span style="color:#9c6b30;">▲ brown icon (other terrain)</span>, changing lanes once before continuing straight for the rest of the movement; if no such space is crossed, it moves the full value in a straight line.</li>
+                <li><strong>Hydraulic Steering</strong> (front cab): at any point during the SDBR's turn, it may change lanes up to a number of times equal to the movement value shown on the FRONT section of this card.</li>
+                <li>Since the activation die is always 3, every section effectively always performs <strong>Repair</strong>; the activation arrow shown on the card is just a reminder of which side to skip to if that section's physical Repair is already exhausted on the board.</li>
+            </ul>
+
+            <h3 style="color: var(--rust); border-left: 4px solid var(--rust); padding-left: 10px;">🏍️ EXPANSION: SDFF (AUTONOMOUS FINAL FIVE)</h3>
+            <ul style="padding-left: 20px;">
+                <li>The SDFF represents a squad of <strong>5 small autonomous motorcycles</strong>. Each card reveals, row by row (top to bottom), which activation happens that turn.</li>
+                <li>On <strong>2 of the 3 rows</strong>, two marked motorcycles (symbols ‖ ✕ ⌃ ◎ S) move simultaneously, each with its own micro-movement.</li>
+                <li>On the row marked with <strong>★</strong>, the motorcycle marked on that row activates the <strong>command at the top of the card</strong> (Repair, Airstrike or Respawn) instead of a second motorcycle moving.</li>
+                <li><strong>🔥 Ignite:</strong> when this icon appears (with no numeric value), the motorcycle catches fire immediately this turn, before moving.</li>
+                <li><strong>🔥 Fire Bonus (+1/+2):</strong> same rule as the base TRV9000 — apply only if the motorcycle is already on fire; it's a bonus straight-ahead micro-movement.</li>
+                <li>The priority symbol at the top of the card works like the base TRV9000 to set the Airstrike target and the Respawn direction.</li>
+            </ul>
+        `
+    };
+    function renderHelpContent() {
+        const el = document.getElementById('help-content');
+        if (el) el.innerHTML = HELP_CONTENT[lang] || HELP_CONTENT.pt;
+    }
+
+    // --- DADOS DOS BOTS (CORES E HABILIDADES) ---
+    const CAR_COLORS = [
+        { id: 'white', name: { pt: 'Branco', en: 'White' }, hex: '#ffffff', text: '#000000' },
+        { id: 'lightblue', name: { pt: 'Azul Claro', en: 'Light Blue' }, hex: '#00d2ff', text: '#000000' },
+        { id: 'orange', name: { pt: 'Laranja', en: 'Orange' }, hex: '#ff8c00', text: '#ffffff' },
+        { id: 'green', name: { pt: 'Verde', en: 'Green' }, hex: '#39ff14', text: '#000000' },
+        { id: 'purple', name: { pt: 'Roxo', en: 'Purple' }, hex: '#b026ff', text: '#ffffff' }
+    ];
+
+    // Dado roxo de 6 faces: a posição inicial corresponde diretamente ao valor rolado, de cima (1) para baixo (6) no diagrama "Parking Lot".
+    function rollTRV9000InitialPlacement() {
+        const roll = Math.floor(Math.random() * 6) + 1;
+        return { rolls: [roll], space: roll };
+    }
+
+    // Mesma regra de posicionamento inicial vale para o TRV9000 base, o SDBR (Big Rig) e o SDFF (Final Five).
+    function renderInitialPlacementBox(placement) {
+        if (!placement) return '';
+        let rowsHtml;
+        if (placement.space !== undefined) {
+            rowsHtml = `
+                <div class="initial-placement-row">
+                    <span class="initial-placement-space">${t('initialPlacementSpace')(placement.space)}</span>
+                </div>`;
+        } else {
+            rowsHtml = Object.keys(placement).map(size => `
+                <div class="initial-placement-row">
+                    <span class="initial-placement-size">${size}</span>
+                    <span class="initial-placement-space">${t('initialPlacementSpace')(placement[size].space)}</span>
+                </div>
+            `).join('');
+        }
+        return `
+            <div class="initial-placement-box">
+                <div class="initial-placement-title">${t('initialPlacementTitle')}</div>
+                ${rowsHtml}
+            </div>`;
+    }
+
+    const BASIC_ABILITIES = {
+        pt: [
+            "<strong>[Lv1]</strong> Espaços Off-Road, lama, gosma tóxica e planícies de sal contam como estrada.",
+            "<strong>[Lv2]</strong> Ignora a primeira ficha de perigo (Hazard) cruzada no movimento.",
+            "<strong>[Lv3]</strong> Pode terminar o turno no espaço do helicóptero TRV9000 (remova-o do tabuleiro em vez de eliminar o carro).",
+            "<strong>[Lv4]</strong> Veículos TRV9000 podem passar por espaços com outro veículo TRV9000 sem realizar Slam."
+        ],
+        en: [
+            "<strong>[Lv1]</strong> Off-Road spaces, mud, toxic sludge and salt flats count as road.",
+            "<strong>[Lv2]</strong> Ignores the first Hazard token crossed during movement.",
+            "<strong>[Lv3]</strong> May end its turn on the TRV9000 helicopter's space (remove it from the board instead of eliminating the car).",
+            "<strong>[Lv4]</strong> TRV9000 vehicles may pass through spaces occupied by another TRV9000 vehicle without Slamming."
+        ]
+    };
+
+    const teams = [
+        { id: "basic", name: { pt: "Protocolo Básico", en: "Basic Protocol" }, abilities: { pt: [], en: [] } },
+        { id: "rams", name: { pt: "Mechanized Rams", en: "Mechanized Rams" }, abilities: {
+            pt: ["Se forçado a um espaço intransponível num slam, rerrola a direção.", "Oponentes não podem rerrolar dados de slam contra este carro.", "Move oponentes 1 espaço extra ao vencer slams."],
+            en: ["If forced into an impassable space during a slam, reroll the direction.", "Opponents cannot reroll slam dice against this car.", "Moves opponents 1 extra space when winning slams."]
+        } },
+        { id: "trigger", name: { pt: "Trigger Happy", en: "Trigger Happy" }, abilities: {
+            pt: ["Se errar um tiro, pode rerrolar o dado.", "Atira duas vezes (em alvos diferentes se possível).", "Atira antes E depois de se mover."],
+            en: ["If it misses a shot, may reroll the die.", "Shoots twice (at different targets if possible).", "Shoots before AND after moving."]
+        } },
+        { id: "gunners", name: { pt: "Gunners", en: "Gunners" }, abilities: {
+            pt: ["Pode atirar em qualquer espaço adjacente.", "Pode atirar a até 2 espaços de distância.", "Pode atirar até 3 espaços diretamente à frente."],
+            en: ["May shoot at any adjacent space.", "May shoot up to 2 spaces away.", "May shoot up to 3 spaces directly ahead."]
+        } },
+        { id: "immortals", name: { pt: "Immortals", en: "Immortals" }, abilities: {
+            pt: ["Ignora efeitos de fichas de dano (coloque-as viradas para baixo).", "Resultado 'ANY' em tiros inimigos conta como erro.", "Suporta 1 ficha de dano a mais."],
+            en: ["Ignores damage token effects (place them face down).", "An 'ANY' result on enemy shots counts as a miss.", "Can take 1 extra damage token."]
+        } },
+        { id: "untouchables", name: { pt: "The Untouchables", en: "The Untouchables" }, abilities: {
+            pt: ["Não pode ser alvejado pelo espaço diretamente atrás.", "Não pode ser alvejado se houver outro alvo válido.", "Resultado 'ANY' em tiros inimigos conta como erro."],
+            en: ["Cannot be targeted from the space directly behind.", "Cannot be targeted if another valid target exists.", "An 'ANY' result on enemy shots counts as a miss."]
+        } },
+        { id: "speed", name: { pt: "All For Speed", en: "All For Speed" }, abilities: {
+            pt: ["Ganha permanentemente +1 de movimento em frente.", "Quando inoperável, não é eliminado.", "Quando inoperável, todos os carros adjacentes são eliminados."],
+            en: ["Permanently gains +1 forward movement.", "When disabled, it is not eliminated.", "When disabled, all adjacent cars are eliminated."]
+        } },
+        { id: "bomb", name: { pt: "Bomb Squad", en: "Bomb Squad" }, abilities: {
+            pt: ["Se acertar um tiro, troca de lugar com o alvo após o dano.", "Se acertar um tiro, incendeia o alvo.", "Ao entrar no espaço de outro carro, empurra-o 1 espaço à frente."],
+            en: ["If it hits a shot, swaps places with the target after damage.", "If it hits a shot, sets the target on fire.", "When entering another car's space, pushes it 1 space forward."]
+        } }
+    ];
+
+    // SDBR (Self-Driving Big Rig) — expansão "Maximum Chrome"
+    const SDBR_SECTIONS = {
+        FRENTE: {
+            left: { name: { pt: "Pega-Vacas", en: "Cowcatcher" }, desc: { pt: "Na primeira vez que entrar em um espaço com perigo ou carro: se for perigo, remova-o; se for um carro, seu controlador o move para frente-esquerda ou frente-direita.", en: "The first time it enters a space with a hazard or a car: if a hazard, remove it; if a car, its controller moves it to front-left or front-right." } },
+            mid: { name: { pt: "Reparo", en: "Repair" }, desc: { pt: "Remova uma ficha de dano desta seção.", en: "Remove one damage token from this section." } },
+            right: { name: { pt: "Lançador de Mísseis", en: "Missile Launcher" }, desc: { pt: "Após se mover, role o dado de tiro. O veículo no espaço 2 à frente (ou adjacente a ele) sofre 1 dano menor se for atingido pela rolagem.", en: "After moving, roll the shooting die. The vehicle 2 spaces ahead (or adjacent to it) takes 1 minor damage if hit by the roll." } }
+        },
+        MEIO: {
+            left: { name: { pt: "Ataque Aéreo", en: "Airstrike" }, desc: { pt: "Coloque o helicóptero do SDBR em um espaço vazio e atire com ele.", en: "Place the SDBR chopper on an empty space and shoot with it." } },
+            mid: { name: { pt: "Reparo", en: "Repair" }, desc: { pt: "Remova uma ficha de dano desta seção.", en: "Remove one damage token from this section." } },
+            right: { name: { pt: "Tração Reforçada", en: "Reinforced Traction" }, desc: { pt: "Você pode usar o dado de estrada neste turno.", en: "You may use the road die this turn." } }
+        },
+        TRAS: {
+            left: { name: { pt: "Computador de Mira", en: "Aiming Computer" }, desc: { pt: "Ao atirar neste turno, você pode rerrolar o dado de tiro.", en: "When shooting this turn, you may reroll the shooting die." } },
+            mid: { name: { pt: "Reparo", en: "Repair" }, desc: { pt: "Remova uma ficha de dano desta seção.", en: "Remove one damage token from this section." } },
+            right: { name: { pt: "Dispensador de Perigos", en: "Hazard Dispenser" }, desc: { pt: "Após se mover, coloque uma ficha de perigo virada para baixo em um espaço adjacente à traseira do SDBR.", en: "After moving, place a face-down hazard token in a space adjacent to the SDBR's rear." } }
+        }
+    };
+    // Direção Hidráulica (cabine dianteira, não gated por seção): mudanças de faixa permitidas = valor de movimento da FRENTE nesta carta.
+
+    // Cada seção tem dois valores distintos, lidos de duas caixas separadas na carta:
+    // - "dir" (caixa esquerda, dado+seta pretos): o dado nessa caixa é SEMPRE 3 em toda seção de toda carta
+    //   (impresso fixo, não varia) — significa que aquela seção sempre prioriza Reparo. A seta (←/→) só indica,
+    //   caso o comando daquela seção esteja danificado demais no tabuleiro físico (algo que este app não rastreia),
+    //   para qual lado "pular" para o próximo comando disponível — por isso guardamos apenas a direção, não um valor.
+    // - "travel" (caixa direita, dado+seta vermelha): é o movimento real. O valor é o total de espaços em linha reta;
+    //   a direção (↗/↘) só se aplica na PRIMEIRA vez que o SDBR encontra um espaço do tipo indicado pelo ícone
+    //   (vermelho = ficha de perigo; marrom = outro tipo de terreno), mudando de faixa uma única vez antes de
+    //   continuar reto pelos espaços restantes. Se nenhum espaço desse tipo for encontrado, ele anda todo o
+    //   valor em linha reta.
+    const defaultSdbrDeck = [
+        { id: "SDBR 1/9", priority: "↻ (Sentido Horário)", order: ["TRAS","MEIO","FRENTE"],
+            TRAS: { dir:"←", travel:{val:3,dir:"↗",hazard:"red"} },
+            MEIO: { dir:"→", travel:{val:2,dir:"↗",hazard:"brown"} },
+            FRENTE: { dir:"→", travel:{val:1,dir:"↘",hazard:"red"} } },
+        { id: "SDBR 2/9", priority: "↺ (Sentido Anti-Horário)", order: ["TRAS","MEIO","FRENTE"],
+            TRAS: { dir:"→", travel:{val:1,dir:"↘",hazard:"brown"} },
+            MEIO: { dir:"←", travel:{val:2,dir:"↗",hazard:"red"} },
+            FRENTE: { dir:"→", travel:{val:2,dir:"↗",hazard:"brown"} } },
+        { id: "SDBR 3/9", priority: "↻ (Sentido Horário)", order: ["TRAS","FRENTE","MEIO"],
+            TRAS: { dir:"←", travel:{val:3,dir:"↗",hazard:"brown"} },
+            FRENTE: { dir:"←", travel:{val:2,dir:"↗",hazard:"red"} },
+            MEIO: { dir:"→", travel:{val:1,dir:"↘",hazard:"red"} } },
+        { id: "SDBR 4/9", priority: "↺ (Sentido Anti-Horário)", order: ["MEIO","TRAS","FRENTE"],
+            MEIO: { dir:"→", travel:{val:2,dir:"↘",hazard:"red"} },
+            TRAS: { dir:"→", travel:{val:2,dir:"↘",hazard:"brown"} },
+            FRENTE: { dir:"→", travel:{val:1,dir:"↗",hazard:"brown"} } },
+        { id: "SDBR 5/9", priority: "↻ (Sentido Horário)", order: ["MEIO","TRAS","FRENTE"],
+            MEIO: { dir:"←", travel:{val:1,dir:"↘",hazard:"brown"} },
+            TRAS: { dir:"←", travel:{val:2,dir:"↗",hazard:"brown"} },
+            FRENTE: { dir:"←", travel:{val:3,dir:"↘",hazard:"red"} } },
+        { id: "SDBR 6/9", priority: "↺ (Sentido Anti-Horário)", order: ["MEIO","FRENTE","TRAS"],
+            MEIO: { dir:"←", travel:{val:1,dir:"↗",hazard:"brown"} },
+            FRENTE: { dir:"→", travel:{val:3,dir:"↘",hazard:"brown"} },
+            TRAS: { dir:"→", travel:{val:2,dir:"↘",hazard:"red"} } },
+        { id: "SDBR 7/9", priority: "↻ (Sentido Horário)", order: ["FRENTE","MEIO","TRAS"],
+            FRENTE: { dir:"→", travel:{val:3,dir:"↘",hazard:"brown"} },
+            MEIO: { dir:"←", travel:{val:2,dir:"↗",hazard:"brown"} },
+            TRAS: { dir:"←", travel:{val:2,dir:"↗",hazard:"red"} } },
+        { id: "SDBR 8/9", priority: "↺ (Sentido Anti-Horário)", order: ["FRENTE","MEIO","TRAS"],
+            FRENTE: { dir:"←", travel:{val:2,dir:"↘",hazard:"brown"} },
+            MEIO: { dir:"→", travel:{val:1,dir:"↗",hazard:"red"} },
+            TRAS: { dir:"→", travel:{val:3,dir:"↗",hazard:"brown"} } },
+        { id: "SDBR 9/9", priority: "↻ (Sentido Horário)", order: ["FRENTE","TRAS","MEIO"],
+            FRENTE: { dir:"←", travel:{val:1,dir:"↘",hazard:"red"} },
+            TRAS: { dir:"←", travel:{val:1,dir:"↘",hazard:"red"} },
+            MEIO: { dir:"→", travel:{val:1,dir:"↘",hazard:"brown"} } }
+    ];
+
+    // SDFF (Self-Driving Final Five) — esquadrão de 5 motocicletas autônomas, expansão "Maximum Chrome"
+    // Cada carta tem 3 linhas reveladas progressivamente (mesmo esquema de globalStep). Em 2 linhas, duas
+    // motos marcadas se movem; na linha marcada com ★ (comando), a moto marcada ativa o comando do topo da carta.
+    const SDFF_MARKS = {
+        star: { sym: "★", label: { pt: "Comando", en: "Command" } },
+        bar: { sym: "‖", label: { pt: "Moto ‖", en: "Bike ‖" } },
+        x: { sym: "✕", label: { pt: "Moto ✕", en: "Bike ✕" } },
+        chevron: { sym: "⌃", label: { pt: "Moto ⌃", en: "Bike ⌃" } },
+        ring: { sym: "◎", label: { pt: "Moto ◎", en: "Bike ◎" } },
+        wave: { sym: "S", label: { pt: "Moto S", en: "Bike S" } }
+    };
+
+    // SDFF representa 5 motocicletas (não 1 veículo), cada uma identificada por seu símbolo — cada uma rola seu próprio posicionamento inicial.
+    const SDFF_BIKE_MARK_KEYS = ['bar', 'x', 'chevron', 'ring', 'wave'];
+    function rollSdffInitialPlacements() {
+        const placement = {};
+        SDFF_BIKE_MARK_KEYS.forEach(mk => { placement[SDFF_MARKS[mk].sym] = rollTRV9000InitialPlacement(); });
+        return placement;
+    }
+
+    const SDFF_COMMANDS = {
+        repair: { header: { pt: "REPARO", en: "REPAIR" }, text: { pt: "Remova uma ficha de dano da motocicleta danificada com maior prioridade de ativação.", en: "Remove one damage token from the damaged motorcycle with the highest activation priority." } },
+        airstrike: { header: { pt: "ATAQUE AÉREO", en: "AIRSTRIKE" }, text: { pt: "Coloque o helicóptero do SDFF no espaço vazio indicado pelo símbolo de prioridade, atrás do veículo inimigo mais avançado, e atire com ele.", en: "Place the SDFF chopper on the empty space indicated by the priority symbol, behind the foremost enemy vehicle, and shoot with it." } },
+        respawn: { header: { pt: "RENASCER", en: "RESPAWN" }, text: { pt: "Coloque uma motocicleta de volta em jogo no espaço vazio indicado pelo símbolo de prioridade de tiro, à frente da motocicleta mais atrasada.", en: "Put a motorcycle back into play on the empty space indicated by the shooting priority symbol, in front of the rearmost motorcycle." } }
+    };
+
+    const defaultSdffDeck = [
+        { id: "SDFF 1/9", priority: "↘", cmd: "repair", rows: [
+            { marks: ["star","chevron"], isCommand: true, moves: [{val:1,dir:"↗"},{val:3,dir:"↘"},{val:4,dir:"→"},{cond:"ignite"}] },
+            { marks: ["bar","ring"], moves: [{val:4,dir:"→"},{val:2,dir:"↗"},{val:2,dir:"↘"},{cond:"fire",val:2}] },
+            { marks: ["wave","x"], moves: [{val:4,dir:"↘"},{val:1,dir:"→"},{val:3,dir:"↗"},{cond:"fire",val:1}] }
+        ]},
+        { id: "SDFF 2/9", priority: "↘", cmd: "airstrike", rows: [
+            { marks: ["star","ring"], isCommand: true, moves: [{val:3,dir:"→"},{val:3,dir:"↗"},{val:2,dir:"↘"},{cond:"fire",val:2}] },
+            { marks: ["wave","x"], moves: [{val:1,dir:"↘"},{val:3,dir:"→"},{val:4,dir:"↘"},{cond:"ignite"}] },
+            { marks: ["bar","chevron"], moves: [{val:3,dir:"↘"},{val:4,dir:"→"},{val:1,dir:"↘"},{cond:"fire",val:1}] }
+        ]},
+        { id: "SDFF 3/9", priority: "↘", cmd: "repair", rows: [
+            { marks: ["star","x"], isCommand: true, moves: [{val:2,dir:"→"},{val:4,dir:"↘"},{val:2,dir:"↘"},{cond:"fire",val:1}] },
+            { marks: ["chevron","wave"], moves: [{val:2,dir:"→"},{val:3,dir:"↘"},{val:3,dir:"→"},{cond:"fire",val:2}] },
+            { marks: ["ring","bar"], moves: [{val:3,dir:"↘"},{val:2,dir:"↘"},{val:3,dir:"→"},{cond:"ignite"}] }
+        ]},
+        { id: "SDFF 4/9", priority: "↘", cmd: "repair", rows: [
+            { marks: ["x","wave"], moves: [{val:3,dir:"→"},{val:2,dir:"↘"},{val:3,dir:"↘"},{cond:"ignite"}] },
+            { marks: ["star","bar"], isCommand: true, moves: [{val:4,dir:"↘"},{val:1,dir:"→"},{val:3,dir:"↘"},{cond:"ignite"}] },
+            { marks: ["chevron","ring"], moves: [{val:2,dir:"↘"},{val:4,dir:"↗"},{val:2,dir:"↘"}] }
+        ]},
+        { id: "SDFF 5/9", priority: "↘", cmd: "airstrike", rows: [
+            { marks: ["bar","ring"], moves: [{val:2,dir:"→"},{val:3,dir:"↘"},{val:4,dir:"↗"},{cond:"ignite"}] },
+            { marks: ["star","wave"], isCommand: true, moves: [{val:3,dir:"→"},{val:4,dir:"↘"},{val:1,dir:"↘"},{cond:"ignite"}] },
+            { marks: ["x","chevron"], moves: [{val:4,dir:"→"},{val:2,dir:"↘"},{val:2,dir:"↗"},{cond:"fire",val:2}] }
+        ]},
+        { id: "SDFF 6/9", priority: "↖", cmd: "airstrike", rows: [
+            { marks: ["ring","x"], moves: [{val:3,dir:"→"},{val:4,dir:"↘"},{val:1,dir:"↘"},{cond:"fire",val:2}] },
+            { marks: ["star","chevron"], isCommand: true, moves: [{val:3,dir:"↘"},{val:2,dir:"→"},{val:3,dir:"↗"},{cond:"ignite"}] },
+            { marks: ["bar","wave"], moves: [{val:2,dir:"→"},{val:4,dir:"↘"},{val:2,dir:"↘"},{cond:"fire",val:2}] }
+        ]},
+        { id: "SDFF 7/9", priority: "↖", cmd: "repair", rows: [
+            { marks: ["wave","chevron"], moves: [{val:2,dir:"→"},{val:2,dir:"↘"},{val:4,dir:"↘"}] },
+            { marks: ["x","bar"], moves: [{val:3,dir:"→"},{val:3,dir:"↘"},{val:2,dir:"↘"},{cond:"fire",val:2}] },
+            { marks: ["star","ring"], isCommand: true, moves: [{val:2,dir:"→"},{val:3,dir:"↘"},{val:3,dir:"↗"},{cond:"ignite"}] }
+        ]},
+        { id: "SDFF 8/9", priority: "↖", cmd: "respawn", rows: [
+            { marks: ["chevron","wave"], moves: [{val:3,dir:"→"},{val:3,dir:"↘"},{val:2,dir:"↘"},{cond:"fire",val:2}] },
+            { marks: ["bar","ring"], moves: [{val:1,dir:"→"},{val:3,dir:"↘"},{val:4,dir:"↘"},{cond:"ignite"}] },
+            { marks: ["star","x"], isCommand: true, moves: [{val:2,dir:"→"},{val:2,dir:"↘"},{val:4,dir:"↘"},{cond:"ignite"}] }
+        ]},
+        { id: "SDFF 9/9", priority: "↖", cmd: "airstrike", rows: [
+            { marks: ["x","bar"], moves: [{val:2,dir:"→"},{val:3,dir:"↘"},{val:3,dir:"↗"},{cond:"ignite"}] },
+            { marks: ["ring","chevron"], moves: [{val:4,dir:"→"},{val:1,dir:"↘"},{val:3,dir:"↘"},{cond:"fire",val:1}] },
+            { marks: ["star","wave"], isCommand: true, moves: [{val:4,dir:"→"},{val:2,dir:"↘"},{val:2,dir:"↘"},{cond:"fire",val:1}] }
+        ]}
+    ];
+
+    const ACTION_DB = {
+        airstrike: { header: { pt: "AIRSTRIKE", en: "AIRSTRIKE" }, text: { pt: "Coloque o helicóptero TRV9000 atrás do veículo inimigo mais avançado, na origem da seta de prioridade; se ocupado, tente o próximo espaço na seta. Se nenhum dos 3 espaços estiver livre, mire atrás do veículo inimigo em 2º lugar. Depois, atire.", en: "Place the TRV9000 helicopter behind the foremost enemy vehicle, at the origin of the priority arrow; if occupied, try the next space on the arrow. If none of the 3 spaces are free, target behind the 2nd-place enemy vehicle instead. Then shoot." } },
+        reparo: { header: { pt: "REPARO", en: "REPAIR" }, text: { pt: "Remova imediatamente uma ficha de dano de cada carro desta equipe TRV9000 e embaralhe-as de volta na pilha de fichas de dano.", en: "Immediately remove one damage token from each car of this TRV9000 team and shuffle them back into the damage token pile." } },
+        drift: { header: { pt: "DRIFT", en: "DRIFT" }, text: { pt: "Todos os veículos TRV9000 passam através do primeiro espaço em que entrarem que contenha outro veículo, sem realizar Slam.", en: "All TRV9000 vehicles pass through the first space they enter that contains another vehicle, without Slamming." } },
+        custom: { header: { pt: "", en: "" }, text: { pt: "", en: "" } }
+    };
+
+    // DECK PADRÃO CORRIGIDO
+    const defaultDeck = [
+      {
+        "id": "DISK 01/18",
+        "priority": "↓ (Cima para Baixo)",
+        "actionType": "reparo",
+        "actionHeader": "REPARO",
+        "special": "Remova imediatamente uma ficha de dano de cada carro desta equipe TRV9000 e embaralhe-as de volta na pilha de fichas de dano.",
+        "order": ["S","M","L"],
+        "S": [{"val": 2,"dir": "↗"},{"val": 4,"dir": "→"},{"val": 3,"dir": "↘"}],
+        "M": [{"val": 4,"dir": "→"},{"val": 2,"dir": "↗"},{"val": 3,"dir": "↘"}],
+        "L": [{"val": 2,"dir": "↘"},{"val": 2,"dir": "↗"},{"val": 5,"dir": "→"}]
+      },
+      {
+        "id": "DISK 02/18",
+        "priority": "↑ (Baixo para Cima)",
+        "actionType": "drift",
+        "actionHeader": "DRIFT",
+        "special": "Todos os veículos TRV9000 passam através do primeiro espaço em que entrarem que contenha outro veículo, sem realizar Slam.",
+        "order": ["S","M","L"],
+        "S": [{"val": 5,"dir": "→"},{"val": 2,"dir": "↗"},{"val": 2,"dir": "↘"}],
+        "M": [{"val": 2,"dir": "↘"},{"val": 4,"dir": "→"},{"val": 3,"dir": "↗"}],
+        "L": [{"val": 3,"dir": "↗"},{"val": 2,"dir": "↘"},{"val": 4,"dir": "→"}]
+      },
+      {
+        "id": "DISK 03/18",
+        "priority": "↓ (Cima para Baixo)",
+        "actionType": "airstrike",
+        "actionHeader": "AIRSTRIKE",
+        "special": "Coloque o helicóptero TRV9000 atrás do veículo inimigo mais avançado, na origem da seta de prioridade; se ocupado, tente o próximo espaço na seta. Se nenhum dos 3 espaços estiver livre, mire atrás do veículo inimigo em 2º lugar. Depois, atire.",
+        "order": ["S","M","L"],
+        "S": [{"val": 3,"dir": "↘"},{"val": 3,"dir": "→"},{"val": 3,"dir": "↗"}],
+        "M": [{"val": 2,"dir": "↗"},{"val": 2,"dir": "↘"},{"val": 5,"dir": "→"}],
+        "L": [{"val": 4,"dir": "→"},{"val": 3,"dir": "↗"},{"val": 2,"dir": "↘"}]
+      },
+      {
+        "id": "DISK 04/18",
+        "priority": "↑ (Baixo para Cima)",
+        "actionType": "reparo",
+        "actionHeader": "REPARO",
+        "special": "Remova imediatamente uma ficha de dano de cada carro desta equipe TRV9000 e embaralhe-as de volta na pilha de fichas de dano.",
+        "order": ["S","L","M"],
+        "S": [{"val": 2,"dir": "↗"},{"val": 3,"dir": "↘"},{"val": 4,"dir": "→"}],
+        "M": [{"val": 3,"dir": "↘"},{"val": 4,"dir": "→"},{"val": 2,"dir": "↗"}],
+        "L": [{"val": 5,"dir": "→"},{"val": 2,"dir": "↗"},{"val": 2,"dir": "↘"}]
+      },
+      {
+        "id": "DISK 05/18",
+        "priority": "↓ (Cima para Baixo)",
+        "actionType": "drift",
+        "actionHeader": "DRIFT",
+        "special": "Todos os veículos TRV9000 passam através do primeiro espaço em que entrarem que contenha outro veículo, sem realizar Slam.",
+        "order": ["S","L","M"],
+        "S": [{"val": 4,"dir": "→"},{"val": 3,"dir": "↘"},{"val": 2,"dir": "↗"}],
+        "M": [{"val": 3,"dir": "↗"},{"val": 3,"dir": "→"},{"val": 3,"dir": "↘"}],
+        "L": [{"val": 2,"dir": "↘"},{"val": 4,"dir": "→"},{"val": 3,"dir": "↗"}]
+      },
+      {
+        "id": "DISK 06/18",
+        "priority": "↑ (Baixo para Cima)",
+        "actionType": "airstrike",
+        "actionHeader": "AIRSTRIKE",
+        "special": "Coloque o helicóptero TRV9000 atrás do veículo inimigo mais avançado, na origem da seta de prioridade; se ocupado, tente o próximo espaço na seta. Se nenhum dos 3 espaços estiver livre, mire atrás do veículo inimigo em 2º lugar. Depois, atire.",
+        "order": ["S","L","M"],
+        "S": [{"val": 2,"dir": "↘"},{"val": 2,"dir": "↗"},{"val": 5,"dir": "→"}],
+        "M": [{"val": 4,"dir": "→"},{"val": 3,"dir": "↘"},{"val": 2,"dir": "↗"}],
+        "L": [{"val": 2,"dir": "↗"},{"val": 3,"dir": "↘"},{"val": 4,"dir": "→"}]
+      },
+      {
+        "id": "DISK 07/18",
+        "priority": "↓ (Cima para Baixo)",
+        "actionType": "reparo",
+        "actionHeader": "REPARO",
+        "special": "Remova imediatamente uma ficha de dano de cada carro desta equipe TRV9000 e embaralhe-as de volta na pilha de fichas de dano.",
+        "order": ["M","S","L"],
+        "S": [{"val": 5,"dir": "→"},{"val": 2,"dir": "↘"},{"val": 2,"dir": "↗"}],
+        "M": [{"val": 2,"dir": "↗"},{"val": 4,"dir": "→"},{"val": 3,"dir": "↘"}],
+        "L": [{"val": 3,"dir": "↘"},{"val": 4,"dir": "→"},{"val": 2,"dir": "↗"}]
+      },
+      {
+        "id": "DISK 08/18",
+        "priority": "↑ (Baixo para Cima)",
+        "actionType": "drift",
+        "actionHeader": "DRIFT",
+        "special": "Todos os veículos TRV9000 passam através do primeiro espaço em que entrarem que contenha outro veículo, sem realizar Slam.",
+        "order": ["M","S","L"],
+        "S": [{"val": 3,"dir": "↘"},{"val": 2,"dir": "↗"},{"val": 4,"dir": "→"}],
+        "M": [{"val": 4,"dir": "→"},{"val": 2,"dir": "↘"},{"val": 3,"dir": "↗"}],
+        "L": [{"val": 3,"dir": "↗"},{"val": 3,"dir": "→"},{"val": 3,"dir": "↘"}]
+      },
+      {
+        "id": "DISK 09/18",
+        "priority": "↓ (Cima para Baixo)",
+        "actionType": "airstrike",
+        "actionHeader": "AIRSTRIKE",
+        "special": "Coloque o helicóptero TRV9000 atrás do veículo inimigo mais avançado, na origem da seta de prioridade; se ocupado, tente o próximo espaço na seta. Se nenhum dos 3 espaços estiver livre, mire atrás do veículo inimigo em 2º lugar. Depois, atire.",
+        "order": ["M","S","L"],
+        "S": [{"val": 2,"dir": "↗"},{"val": 3,"dir": "↘"},{"val": 4,"dir": "→"}],
+        "M": [{"val": 2,"dir": "↘"},{"val": 2,"dir": "↗"},{"val": 5,"dir": "→"}],
+        "L": [{"val": 4,"dir": "→"},{"val": 2,"dir": "↘"},{"val": 3,"dir": "↗"}]
+      },
+      {
+        "id": "DISK 10/18",
+        "priority": "↑ (Baixo para Cima)",
+        "actionType": "reparo",
+        "actionHeader": "REPARO",
+        "special": "Remova imediatamente uma ficha de dano de cada carro desta equipe TRV9000 e embaralhe-as de volta na pilha de fichas de dano.",
+        "order": ["M","L","S"],
+        "S": [{"val": 3,"dir": "↘"},{"val": 2,"dir": "↗"},{"val": 4,"dir": "→"}],
+        "M": [{"val": 2,"dir": "↗"},{"val": 3,"dir": "↘"},{"val": 4,"dir": "→"}],
+        "L": [{"val": 4,"dir": "→"},{"val": 3,"dir": "↘"},{"val": 2,"dir": "↗"}]
+      },
+      {
+        "id": "DISK 11/18",
+        "priority": "↓ (Cima para Baixo)",
+        "actionType": "drift",
+        "actionHeader": "DRIFT",
+        "special": "Todos os veículos TRV9000 passam através do primeiro espaço em que entrarem que contenha outro veículo, sem realizar Slam.",
+        "order": ["M","L","S"],
+        "S": [{"val": 2,"dir": "↗"},{"val": 2,"dir": "↘"},{"val": 5,"dir": "→"}],
+        "M": [{"val": 4,"dir": "→"},{"val": 3,"dir": "↗"},{"val": 2,"dir": "↘"}],
+        "L": [{"val": 3,"dir": "↘"},{"val": 2,"dir": "↗"},{"val": 4,"dir": "→"}]
+      },
+      {
+        "id": "DISK 12/18",
+        "priority": "↑ (Baixo para Cima)",
+        "actionType": "airstrike",
+        "actionHeader": "AIRSTRIKE",
+        "special": "Coloque o helicóptero TRV9000 atrás do veículo inimigo mais avançado, na origem da seta de prioridade; se ocupado, tente o próximo espaço na seta. Se nenhum dos 3 espaços estiver livre, mire atrás do veículo inimigo em 2º lugar. Depois, atire.",
+        "order": ["M","L","S"],
+        "S": [{"val": 4,"dir": "→"},{"val": 3,"dir": "↘"},{"val": 2,"dir": "↗"}],
+        "M": [{"val": 3,"dir": "↘"},{"val": 3,"dir": "→"},{"val": 3,"dir": "↗"}],
+        "L": [{"val": 3,"dir": "↗"},{"val": 4,"dir": "→"},{"val": 2,"dir": "↘"}]
+      },
+      {
+        "id": "DISK 13/18",
+        "priority": "↓ (Cima para Baixo)",
+        "actionType": "reparo",
+        "actionHeader": "REPARO",
+        "special": "Remova imediatamente uma ficha de dano de cada carro desta equipe TRV9000 e embaralhe-as de volta na pilha de fichas de dano.",
+        "order": ["L","S","M"],
+        "S": [{"val": 4,"dir": "→"},{"val": 2,"dir": "↗"},{"val": 3,"dir": "↘"}],
+        "M": [{"val": 2,"dir": "↘"},{"val": 3,"dir": "↗"},{"val": 4,"dir": "→"}],
+        "L": [{"val": 2,"dir": "↗"},{"val": 4,"dir": "→"},{"val": 3,"dir": "↘"}]
+      },
+      {
+        "id": "DISK 14/18",
+        "priority": "↑ (Baixo para Cima)",
+        "actionType": "drift",
+        "actionHeader": "DRIFT",
+        "special": "Todos os veículos TRV9000 passam através do primeiro espaço em que entrarem que contenha outro veículo, sem realizar Slam.",
+        "order": ["L","S","M"],
+        "S": [{"val": 2,"dir": "↘"},{"val": 4,"dir": "→"},{"val": 3,"dir": "↗"}],
+        "M": [{"val": 2,"dir": "↗"},{"val": 2,"dir": "↘"},{"val": 4,"dir": "→"}],
+        "L": [{"val": 4,"dir": "→"},{"val": 2,"dir": "↗"},{"val": 3,"dir": "↘"}]
+      },
+      {
+        "id": "DISK 15/18",
+        "priority": "↓ (Cima para Baixo)",
+        "actionType": "airstrike",
+        "actionHeader": "AIRSTRIKE",
+        "special": "Coloque o helicóptero TRV9000 atrás do veículo inimigo mais avançado, na origem da seta de prioridade; se ocupado, tente o próximo espaço na seta. Se nenhum dos 3 espaços estiver livre, mire atrás do veículo inimigo em 2º lugar. Depois, atire.",
+        "order": ["L","S","M"],
+        "S": [{"val": 3,"dir": "↗"},{"val": 3,"dir": "→"},{"val": 5,"dir": "↘"}],
+        "M": [{"val": 5,"dir": "→"},{"val": 2,"dir": "↗"},{"val": 2,"dir": "↘"}],
+        "L": [{"val": 3,"dir": "↘"},{"val": 3,"dir": "→"},{"val": 3,"dir": "↗"}]
+      },
+      {
+        "id": "DISK 16/18",
+        "priority": "↑ (Baixo para Cima)",
+        "actionType": "reparo",
+        "actionHeader": "REPARO",
+        "special": "Remova imediatamente uma ficha de dano de cada carro desta equipe TRV9000 e embaralhe-as de volta na pilha de fichas de dano.",
+        "order": ["L","M","S"],
+        "S": [{"val": 3,"dir": "↘"},{"val": 4,"dir": "→"},{"val": 2,"dir": "↗"}],
+        "M": [{"val": 5,"dir": "→"},{"val": 2,"dir": "↘"},{"val": 2,"dir": "↗"}],
+        "L": [{"val": 2,"dir": "↗"},{"val": 2,"dir": "↘"},{"val": 5,"dir": "→"}]
+      },
+      {
+        "id": "DISK 17/18",
+        "priority": "↓ (Cima para Baixo)",
+        "actionType": "drift",
+        "actionHeader": "DRIFT",
+        "special": "Todos os veículos TRV9000 passam através do primeiro espaço em que entrarem que contenha outro veículo, sem realizar Slam.",
+        "order": ["L","M","S"],
+        "S": [{"val": 3,"dir": "↗"},{"val": 4,"dir": "→"},{"val": 2,"dir": "↘"}],
+        "M": [{"val": 3,"dir": "↘"},{"val": 2,"dir": "↗"},{"val": 4,"dir": "→"}],
+        "L": [{"val": 5,"dir": "→"},{"val": 2,"dir": "↘"},{"val": 2,"dir": "↗"}]
+      },
+      {
+        "id": "DISK 18/18",
+        "priority": "↑ (Baixo para Cima)",
+        "actionType": "reparo",
+        "actionHeader": "REPARO",
+        "special": "Remova imediatamente uma ficha de dano de cada carro desta equipe TRV9000 e embaralhe-as de volta na pilha de fichas de dano.",
+        "order": ["L","M","S"],
+        "S": [{"val": 4,"dir": "→"},{"val": 2,"dir": "↗"},{"val": 3,"dir": "↘"}],
+        "M": [{"val": 3,"dir": "↗"},{"val": 4,"dir": "→"},{"val": 2,"dir": "↘"}],
+        "L": [{"val": 2,"dir": "↘"},{"val": 3,"dir": "↗"},{"val": 4,"dir": "→"}]
+      }
+    ];
+
+    // v9: corrige o texto da regra de Airstrike (alvo de fallback em 2º lugar)
+    let officialDeck = JSON.parse(localStorage.getItem('trv9000_officialDeck_v9'));
+    if (!officialDeck || officialDeck.length !== 18 || !officialDeck[0].order) {
+        officialDeck = defaultDeck;
+        localStorage.setItem('trv9000_officialDeck_v9', JSON.stringify(officialDeck));
+    }
+    function saveToLocalStorage() { localStorage.setItem('trv9000_officialDeck_v9', JSON.stringify(officialDeck)); }
+
+    // Decks editáveis do SDBR e do SDFF (expansão "Maximum Chrome")
+    // v3: remove os campos "move"/"cmd" (o dado da caixa esquerda é sempre 3 fixo; só a direção importa) —
+    //     também corrige vários valores de "travel" que estavam com leitura errada. Força recarregar decks antigos.
+    let sdbrDeckData = JSON.parse(localStorage.getItem('trv9000_sdbrDeck_v3'));
+    if (!sdbrDeckData || sdbrDeckData.length !== 9 || !sdbrDeckData[0].order || !sdbrDeckData[0][sdbrDeckData[0].order[0]].dir || sdbrDeckData[0][sdbrDeckData[0].order[0]].move) {
+        sdbrDeckData = JSON.parse(JSON.stringify(defaultSdbrDeck));
+        localStorage.setItem('trv9000_sdbrDeck_v3', JSON.stringify(sdbrDeckData));
+    }
+    function saveSdbrToLocalStorage() { localStorage.setItem('trv9000_sdbrDeck_v3', JSON.stringify(sdbrDeckData)); }
+
+    let sdffDeckData = JSON.parse(localStorage.getItem('trv9000_sdffDeck_v1'));
+    if (!sdffDeckData || sdffDeckData.length !== 9 || !sdffDeckData[0].rows) {
+        sdffDeckData = JSON.parse(JSON.stringify(defaultSdffDeck));
+        localStorage.setItem('trv9000_sdffDeck_v1', JSON.stringify(sdffDeckData));
+    }
+    function saveSdffToLocalStorage() { localStorage.setItem('trv9000_sdffDeck_v1', JSON.stringify(sdffDeckData)); }
+
+    function isExpansionActive(id) {
+        const el = document.getElementById(id);
+        return !!el && el.classList.contains('active');
+    }
+    function toggleExpansion(id) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.classList.toggle('active');
+        updateExpansionToggleLabels();
+    }
+    function updateExpansionToggleLabels() {
+        ['sdbr-enabled', 'sdff-enabled'].forEach(id => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            const labelEl = el.querySelector('.exp-label');
+            if (labelEl) labelEl.textContent = t(id === 'sdbr-enabled' ? 'sdbrToggleLabel' : 'sdffToggleLabel');
+        });
+    }
+
+    // --- ARQUIVOS ---
+    function exportDeck() {
+        if (currentEditingIndex !== -1) { saveCardEdit(true); }
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(officialDeck, null, 2));
+        const downloadAnchorNode = document.createElement('a');
+        downloadAnchorNode.setAttribute("href", dataStr);
+        downloadAnchorNode.setAttribute("download", "trv9000_backup_deck.json");
+        document.body.appendChild(downloadAnchorNode);
+        downloadAnchorNode.click();
+        downloadAnchorNode.remove();
+        alert(t('alertExportOk'));
+    }
+    
+    function triggerImport() { document.getElementById('file-import').click(); }
+    
+    function importDeck(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const importedData = JSON.parse(e.target.result);
+                if (Array.isArray(importedData) && importedData.length === 18 && importedData[0].hasOwnProperty('order')) {
+                    officialDeck = importedData;
+                    saveToLocalStorage();
+                    renderSidebar();
+                    document.getElementById('editor-fields').classList.add('hidden');
+                    document.getElementById('editor-instructions').classList.remove('hidden');
+                    currentEditingIndex = -1;
+                    alert(t('alertImportOk'));
+                } else { alert(t('alertImportBadFile')); }
+            } catch (error) { alert(t('alertImportCritical')); }
+        };
+        reader.readAsText(file);
+        event.target.value = '';
+    }
+
+    // --- EDITOR COM AUTO-SAVE ---
+    let currentEditingIndex = -1;
+    let currentDeckType = 'official'; // 'official' | 'sdbr' | 'sdff'
+
+    function getActiveDeckArray() {
+        if (currentDeckType === 'sdbr') return sdbrDeckData;
+        if (currentDeckType === 'sdff') return sdffDeckData;
+        return officialDeck;
+    }
+
+    function switchDeckTab(type) {
+        if (currentEditingIndex !== -1) { saveCurrentCardEdit(true); }
+        currentDeckType = type;
+        currentEditingIndex = -1;
+        document.querySelectorAll('.deck-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === type));
+        document.getElementById('official-file-controls').classList.toggle('hidden', type !== 'official');
+        document.getElementById('editor-fields').classList.add('hidden');
+        document.getElementById('editor-fields-sdbr').classList.add('hidden');
+        document.getElementById('editor-fields-sdff').classList.add('hidden');
+        document.getElementById('editor-instructions').classList.remove('hidden');
+        document.getElementById('editor-title').innerText = t(type === 'official' ? 'editorTitleDefault' : (type === 'sdbr' ? 'tabSdbr' : 'tabSdff'));
+        renderSidebar();
+    }
+
+    function saveCurrentCardEdit(silent) {
+        if (currentDeckType === 'sdbr') saveSdbrCardEdit(silent);
+        else if (currentDeckType === 'sdff') saveSdffCardEdit(silent);
+        else saveCardEdit(silent);
+    }
+
+    function openConfigModal() {
+        document.getElementById('config-modal').classList.remove('hidden');
+        currentDeckType = 'official';
+        currentEditingIndex = -1;
+        document.querySelectorAll('.deck-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === 'official'));
+        document.getElementById('official-file-controls').classList.remove('hidden');
+        document.getElementById('editor-fields').classList.add('hidden');
+        document.getElementById('editor-fields-sdbr').classList.add('hidden');
+        document.getElementById('editor-fields-sdff').classList.add('hidden');
+        document.getElementById('editor-instructions').classList.remove('hidden');
+        document.getElementById('editor-title').innerText = t('editorTitleDefault');
+        renderSidebar();
+    }
+    
+    function closeConfigModal() { 
+        if (currentEditingIndex !== -1) { saveCurrentCardEdit(true); }
+        document.getElementById('config-modal').classList.add('hidden'); 
+    }
+
+    function renderSidebar() {
+        const sb = document.getElementById('config-sidebar-list');
+        sb.innerHTML = '';
+        getActiveDeckArray().forEach((card, index) => {
+            const btn = document.createElement('button');
+            btn.className = `config-list-btn ${index === currentEditingIndex ? 'active' : ''}`;
+            btn.innerHTML = `<span style="color:#666; margin-right:5px;">[${String(index+1).padStart(2,'0')}]</span> ${card.id}`;
+            btn.onclick = () => {
+                if (currentDeckType === 'sdbr') loadSdbrCardToEditor(index);
+                else if (currentDeckType === 'sdff') loadSdffCardToEditor(index);
+                else loadCardToEditor(index);
+            };
+            sb.appendChild(btn);
+        });
+    }
+
+    function handleActionTypeChange() {
+        const type = document.getElementById('edit-action-type').value;
+        const headInput = document.getElementById('edit-action-header');
+        const textInput = document.getElementById('edit-special-text');
+        if (type === 'custom') { headInput.disabled = false; textInput.disabled = false; } 
+        else { headInput.value = tr(ACTION_DB[type].header); textInput.value = tr(ACTION_DB[type].text); headInput.disabled = true; textInput.disabled = true; }
+    }
+
+    function updateMovesOrderVisuals() {
+        const order0 = document.getElementById('edit-order-0').value;
+        const order1 = document.getElementById('edit-order-1').value;
+        const order2 = document.getElementById('edit-order-2').value;
+
+        const container = document.getElementById('moves-wrappers-container');
+        const wrap0 = document.getElementById(`wrap-edit-${order0}`);
+        const wrap1 = document.getElementById(`wrap-edit-${order1}`);
+        const wrap2 = document.getElementById(`wrap-edit-${order2}`);
+
+        container.appendChild(wrap0);
+        container.appendChild(wrap1);
+        container.appendChild(wrap2);
+
+        const titleMap = { 'S': t('sizeS'), 'M': t('sizeM'), 'L': t('sizeL') };
+        const ord = t('activationOrdinal');
+        wrap0.querySelector('h3').innerText = `${ord[0]}: ${t('movesHeader')} ${titleMap[order0]}`;
+        wrap1.querySelector('h3').innerText = `${ord[1]}: ${t('movesHeader')} ${titleMap[order1]}`;
+        wrap2.querySelector('h3').innerText = `${ord[2]}: ${t('movesHeader')} ${titleMap[order2]}`;
+    }
+
+    function enforceUniqueOrder(changedIndex) {
+        const selects = [document.getElementById('edit-order-0'), document.getElementById('edit-order-1'), document.getElementById('edit-order-2')];
+        const changedVal = selects[changedIndex].value;
+        for(let i=0; i<3; i++) {
+            if(i !== changedIndex && selects[i].value === changedVal) {
+                const used = [selects[changedIndex].value];
+                const all = ['S', 'M', 'L'];
+                let currentVals = selects.map(s => s.value);
+                let missing = all.find(x => currentVals.filter(v => v === x).length === 0);
+                if(!missing) missing = all.find(x => x !== changedVal && x !== selects[3 - changedIndex - i].value);
+                selects[i].value = missing;
+            }
+        }
+        updateMovesOrderVisuals();
+    }
+
+    function loadCardToEditor(index) {
+        if (currentEditingIndex !== -1 && currentEditingIndex !== index) { saveCardEdit(true); }
+
+        currentEditingIndex = index;
+        const card = officialDeck[index];
+        
+        document.getElementById('editor-title').innerText = `${t('editingLabel')}: ${card.id}`;
+        document.getElementById('editor-instructions').classList.add('hidden');
+        document.getElementById('editor-fields').classList.remove('hidden');
+        document.getElementById('edit-priority').value = card.priority || "↓ (Cima para Baixo)";
+        document.getElementById('edit-action-type').value = card.actionType || "custom";
+        document.getElementById('edit-action-header').value = card.actionHeader || "";
+        document.getElementById('edit-special-text').value = card.special || "";
+        handleActionTypeChange();
+        
+        let order = card.order || ["S", "M", "L"];
+        document.getElementById('edit-order-0').value = order[0];
+        document.getElementById('edit-order-1').value = order[1];
+        document.getElementById('edit-order-2').value = order[2];
+        
+        renderMovesToEditor('S', card.S || []);
+        renderMovesToEditor('M', card.M || []);
+        renderMovesToEditor('L', card.L || []);
+        
+        updateMovesOrderVisuals();
+        renderSidebar(); 
+    }
+
+    function renderMovesToEditor(size, movesList) {
+        const container = document.getElementById(`edit-moves-${size}`);
+        const movesDiv = container;
+        movesDiv.innerHTML = '';
+        if(movesList && movesList.length > 0) movesList.forEach(m => addMoveBlock(size, m));
+    }
+
+    function addMoveBlock(containerId, mData = {cond: '', val: '', dir: '→'}) {
+        const directEl = document.getElementById(containerId);
+        const container = directEl || document.getElementById(`edit-moves-${containerId}`);
+        const div = document.createElement('div');
+        div.className = 'move-edit-row';
+        div.innerHTML = `
+            <select class="inp-cond" onchange="this.closest('.move-edit-row').querySelector('.inp-val').disabled = (this.value === 'ignite');">
+                <option value="" ${mData.cond === '' ? 'selected' : ''} data-i18n="condNormal">Condição: Normal</option>
+                <option value="fire" ${mData.cond === 'fire' ? 'selected' : ''} data-i18n="condFire">Só se Fogo</option>
+                <option value="smoke" ${mData.cond === 'smoke' ? 'selected' : ''} data-i18n="condSmoke">Apagar Fogo</option>
+                <option value="ignite" ${mData.cond === 'ignite' ? 'selected' : ''} data-i18n="condIgnite">Ignição (sem valor)</option>
+            </select>
+            <input type="number" class="inp-val" value="${mData.val || ''}" min="1" max="6" placeholder="${t('diceLabel')}" ${mData.cond === 'ignite' ? 'disabled' : ''}>
+            <select class="inp-dir">
+                <option value="→" ${mData.dir === '→' ? 'selected' : ''}>${t('dirLabel')}: →</option>
+                <option value="↗" ${mData.dir === '↗' ? 'selected' : ''}>${t('dirLabel')}: ↗</option>
+                <option value="↘" ${mData.dir === '↘' ? 'selected' : ''}>${t('dirLabel')}: ↘</option>
+                <option value="←" ${mData.dir === '←' ? 'selected' : ''}>${t('dirLabel')}: ←</option>
+                <option value="↖" ${mData.dir === '↖' ? 'selected' : ''}>${t('dirLabel')}: ↖</option>
+            </select>
+            <button class="btn-small" style="color:#ff3333; background:rgba(255,0,0,0.1); border-color:#551111; max-width:50px;" onclick="this.parentElement.remove()">X</button>
+        `;
+        container.appendChild(div);
+    }
+
+    function saveCardEdit(silent = false) {
+        if(currentEditingIndex === -1) return;
+        const card = officialDeck[currentEditingIndex];
+        
+        card.priority = document.getElementById('edit-priority').value;
+        card.actionType = document.getElementById('edit-action-type').value;
+        card.actionHeader = document.getElementById('edit-action-header').value;
+        card.special = document.getElementById('edit-special-text').value;
+        card.order = [ document.getElementById('edit-order-0').value, document.getElementById('edit-order-1').value, document.getElementById('edit-order-2').value ];
+        
+        const extractMoves = (size) => {
+            const arr = [];
+            document.querySelectorAll(`#edit-moves-${size} .move-edit-row`).forEach(row => {
+                const cond = row.querySelector('.inp-cond').value;
+                const val = row.querySelector('.inp-val').value;
+                const dir = row.querySelector('.inp-dir').value;
+                let moveObj = {};
+                if (cond) moveObj.cond = cond;
+                if (val !== '') moveObj.val = parseInt(val);
+                if (dir) moveObj.dir = dir;
+                if(moveObj.val || moveObj.cond) arr.push(moveObj);
+            });
+            return arr;
+        };
+        
+        card.S = extractMoves('S'); 
+        card.M = extractMoves('M'); 
+        card.L = extractMoves('L');
+        
+        saveToLocalStorage();
+        
+        if (!silent) {
+            alert(t('alertCardSaved')(card.id));
+        }
+    }
+
+    // --- EDITOR SDBR ---
+    function enforceUniqueSdbrOrder(changedIndex) {
+        const selects = [document.getElementById('edit-sdbr-order-0'), document.getElementById('edit-sdbr-order-1'), document.getElementById('edit-sdbr-order-2')];
+        const all = ['FRENTE', 'MEIO', 'TRAS'];
+        const changedVal = selects[changedIndex].value;
+        for (let i = 0; i < 3; i++) {
+            if (i !== changedIndex && selects[i].value === changedVal) {
+                let currentVals = selects.map(s => s.value);
+                let missing = all.find(x => currentVals.filter(v => v === x).length === 0);
+                selects[i].value = missing;
+            }
+        }
+    }
+
+    function renderSdbrSectionsEditor(card) {
+        const container = document.getElementById('sdbr-sections-container');
+        container.innerHTML = '';
+        ['FRENTE', 'MEIO', 'TRAS'].forEach(sectionKey => {
+            const sectionData = card[sectionKey] || { dir: '→', travel: { val: 1, dir: '↗', hazard: 'red' } };
+            const travel = sectionData.travel || { val: 1, dir: '↗', hazard: 'red' };
+            const activationDirOptions = ['←','→'].map(d =>
+                `<option value="${d}" ${sectionData.dir === d ? 'selected' : ''}>${t('dirLabel')}: ${d}</option>`
+            ).join('');
+            const travelDirOptions = ['↗','↘'].map(d =>
+                `<option value="${d}" ${travel.dir === d ? 'selected' : ''}>${t('dirLabel')}: ${d}</option>`
+            ).join('');
+            const hazardOptions = ['red','brown'].map(hc =>
+                `<option value="${hc}" ${travel.hazard === hc ? 'selected' : ''}>${hc === 'red' ? t('sdbrHazardRed') : t('sdbrHazardBrown')}</option>`
+            ).join('');
+            const wrap = document.createElement('div');
+            wrap.className = 'editor-row-container';
+            wrap.style.marginBottom = '12px';
+            wrap.innerHTML = `
+                <h3 style="color:var(--rust); margin:0 0 10px 0; font-size:1em;">${sectionKey}</h3>
+                <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                    <select class="sdbr-activation-dir" data-section="${sectionKey}" style="flex:1; min-width:110px;" title="${t('sdbrSkipTitle')}">${activationDirOptions}</select>
+                </div>
+                <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:6px;">
+                    <input type="number" class="sdbr-travel-val" data-section="${sectionKey}" value="${travel.val || ''}" min="1" max="6" placeholder="${t('sdbrTravelLabel')}" style="flex:1; min-width:70px;">
+                    <select class="sdbr-travel-dir" data-section="${sectionKey}" style="flex:1; min-width:110px;">${travelDirOptions}</select>
+                    <select class="sdbr-travel-hazard" data-section="${sectionKey}" style="flex:2; min-width:160px;">${hazardOptions}</select>
+                </div>
+            `;
+            container.appendChild(wrap);
+        });
+    }
+
+    function loadSdbrCardToEditor(index) {
+        if (currentEditingIndex !== -1 && currentEditingIndex !== index) { saveSdbrCardEdit(true); }
+        currentEditingIndex = index;
+        const card = sdbrDeckData[index];
+
+        document.getElementById('editor-title').innerText = `${t('editingLabel')}: ${card.id}`;
+        document.getElementById('editor-instructions').classList.add('hidden');
+        document.getElementById('editor-fields-sdbr').classList.remove('hidden');
+        document.getElementById('edit-sdbr-priority').value = card.priority || "↻ (Sentido Horário)";
+
+        let order = card.order || ["FRENTE", "MEIO", "TRAS"];
+        document.getElementById('edit-sdbr-order-0').value = order[0];
+        document.getElementById('edit-sdbr-order-1').value = order[1];
+        document.getElementById('edit-sdbr-order-2').value = order[2];
+
+        renderSdbrSectionsEditor(card);
+        renderSidebar();
+    }
+
+    function saveSdbrCardEdit(silent = false) {
+        if (currentEditingIndex === -1) return;
+        const card = sdbrDeckData[currentEditingIndex];
+
+        card.priority = document.getElementById('edit-sdbr-priority').value;
+        card.order = [ document.getElementById('edit-sdbr-order-0').value, document.getElementById('edit-sdbr-order-1').value, document.getElementById('edit-sdbr-order-2').value ];
+
+        document.querySelectorAll('#sdbr-sections-container .sdbr-activation-dir').forEach(dirSelect => {
+            const sectionKey = dirSelect.dataset.section;
+            const travelValInput = document.querySelector(`.sdbr-travel-val[data-section="${sectionKey}"]`);
+            const travelDirSelect = document.querySelector(`.sdbr-travel-dir[data-section="${sectionKey}"]`);
+            const travelHazardSelect = document.querySelector(`.sdbr-travel-hazard[data-section="${sectionKey}"]`);
+            card[sectionKey] = {
+                dir: dirSelect.value,
+                travel: { val: parseInt(travelValInput.value) || 1, dir: travelDirSelect.value, hazard: travelHazardSelect.value }
+            };
+        });
+
+        saveSdbrToLocalStorage();
+
+        if (!silent) alert(t('alertCardSaved')(card.id));
+    }
+
+    // --- EDITOR SDFF ---
+    function renderSdffRowsEditor(card) {
+        const container = document.getElementById('sdff-rows-container');
+        container.innerHTML = '';
+        const markKeys = Object.keys(SDFF_MARKS).filter(k => k !== 'star');
+        card.rows.forEach((row, rowIndex) => {
+            const isCommandRow = row.marks.includes('star');
+            const nonStarMark = row.marks.find(m => m !== 'star') || row.marks[0] || markKeys[0];
+            const markOptions = markKeys.map(k => `<option value="${k}" ${nonStarMark === k ? 'selected' : ''}>${tr(SDFF_MARKS[k].label)}</option>`).join('');
+
+            const wrap = document.createElement('div');
+            wrap.className = 'editor-row-container';
+            wrap.style.marginBottom = '15px';
+            wrap.innerHTML = `
+                <h3 style="color:var(--rust); margin:0 0 10px 0; font-size:1em;">${t('activationOrdinal')[rowIndex] || (rowIndex+1)}</h3>
+                <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:8px;">
+                    <label style="display:flex; align-items:center; gap:6px; font-size:0.85em;">
+                        <input type="checkbox" class="sdff-row-iscommand" data-row="${rowIndex}" ${isCommandRow ? 'checked' : ''}> ★ ${t('labelCmd')}
+                    </label>
+                    <select class="sdff-row-mark" data-row="${rowIndex}">${markOptions}</select>
+                </div>
+                <div id="sdff-moves-${rowIndex}"></div>
+                <button class="btn-small" onclick="addMoveBlock('sdff-moves-${rowIndex}')">${t('btnAddCommand')}</button>
+            `;
+            container.appendChild(wrap);
+            const movesContainer = wrap.querySelector(`#sdff-moves-${rowIndex}`);
+            (row.moves || []).forEach(m => addMoveBlock(`sdff-moves-${rowIndex}`, m));
+        });
+    }
+
+    function loadSdffCardToEditor(index) {
+        if (currentEditingIndex !== -1 && currentEditingIndex !== index) { saveSdffCardEdit(true); }
+        currentEditingIndex = index;
+        const card = sdffDeckData[index];
+
+        document.getElementById('editor-title').innerText = `${t('editingLabel')}: ${card.id}`;
+        document.getElementById('editor-instructions').classList.add('hidden');
+        document.getElementById('editor-fields-sdff').classList.remove('hidden');
+        document.getElementById('edit-sdff-priority').value = card.priority || "↘";
+        document.getElementById('edit-sdff-cmd').value = card.cmd || "repair";
+
+        renderSdffRowsEditor(card);
+        renderSidebar();
+    }
+
+    function saveSdffCardEdit(silent = false) {
+        if (currentEditingIndex === -1) return;
+        const card = sdffDeckData[currentEditingIndex];
+
+        card.priority = document.getElementById('edit-sdff-priority').value;
+        card.cmd = document.getElementById('edit-sdff-cmd').value;
+
+        card.rows.forEach((row, rowIndex) => {
+            const isCommand = document.querySelector(`.sdff-row-iscommand[data-row="${rowIndex}"]`).checked;
+            const markSel = document.querySelector(`.sdff-row-mark[data-row="${rowIndex}"]`);
+            row.marks = isCommand ? ['star', markSel.value] : [markSel.value, row.marks.filter(m => m !== 'star' && m !== markSel.value)[0] || markSel.value];
+
+            const arr = [];
+            document.querySelectorAll(`#sdff-moves-${rowIndex} .move-edit-row`).forEach(mrow => {
+                const cond = mrow.querySelector('.inp-cond').value;
+                const val = mrow.querySelector('.inp-val').value;
+                const dir = mrow.querySelector('.inp-dir').value;
+                let moveObj = {};
+                if (cond) moveObj.cond = cond;
+                if (val !== '') moveObj.val = parseInt(val);
+                if (dir && cond !== 'ignite') moveObj.dir = dir;
+                if (moveObj.val || moveObj.cond) arr.push(moveObj);
+            });
+            row.moves = arr;
+        });
+
+        saveSdffToLocalStorage();
+
+        if (!silent) alert(t('alertCardSaved')(card.id));
+    }
+
+    // --- SETUP DO JOGO ---
+    let bots = [];
+    let numBots = 1;
+    let globalStep = 0;
+    let sdbr = null;
+    let sdff = null;
+
+    function adjustBots(delta) {
+        numBots += delta;
+        if (numBots < 1) numBots = 1;
+        if (numBots > 5) numBots = 5;
+        document.getElementById('bot-count').value = numBots;
+        renderBotSetup();
+    }
+
+    function renderBotSetup() {
+        const container = document.getElementById('bot-configs');
+        // Preserva as seleções atuais ao re-renderizar (ex: troca de idioma)
+        const prevSelections = [];
+        for (let i = 0; i < numBots; i++) {
+            const colorSel = document.getElementById(`bot-color-${i}`);
+            const teamSel = document.getElementById(`bot-team-${i}`);
+            const diffSel = document.getElementById(`bot-difficulty-${i}`);
+            prevSelections.push({
+                color: colorSel ? colorSel.value : null,
+                team: teamSel ? teamSel.value : null,
+                difficulty: diffSel ? diffSel.value : null
+            });
+        }
+        container.innerHTML = '';
+        for (let i = 0; i < numBots; i++) {
+            let teamOptions = teams.map(tm => `<option value="${tm.id}" ${prevSelections[i].team === tm.id ? 'selected' : ''}>${tr(tm.name)}</option>`).join('');
+            let colorOptions = CAR_COLORS.map((c, index) => `<option value="${c.id}" ${prevSelections[i].color ? (prevSelections[i].color === c.id ? 'selected' : '') : (index === (i % CAR_COLORS.length) ? 'selected' : '')}>${t('carPrefix')} ${tr(c.name)}</option>`).join('');
+            let difficultyOptions = [1,2,3,4].map(n => `<option value="${n}" ${prevSelections[i].difficulty ? (Number(prevSelections[i].difficulty) === n ? 'selected' : '') : (n === 4 ? 'selected' : '')}>${t('difficultyPrefix')}${n}</option>`).join('');
+            
+            container.innerHTML += `
+                <div class="bot-setup-row">
+                    <span style="color: var(--rust); font-weight: bold; width: auto; text-shadow:0 0 5px var(--rust);">${t('botPrefix')} ${i+1}:</span>
+                    <div style="display:flex; width: 100%; gap: 10px; flex-wrap: wrap;">
+                        <select id="bot-color-${i}" style="flex:1;">${colorOptions}</select>
+                        <select id="bot-team-${i}" style="flex:1;">${teamOptions}</select>
+                        <select id="bot-difficulty-${i}" style="flex:1;">${difficultyOptions}</select>
+                    </div>
+                </div>
+            `;
+        }
+    }
+    applyI18n();
+
+    function startGame() {
+        bots = [];
+        for (let i = 0; i < numBots; i++) {
+            let teamSel = document.getElementById(`bot-team-${i}`);
+            let teamId = teamSel.value;
+            let teamData = teams.find(t => t.id === teamId);
+            
+            let colorSel = document.getElementById(`bot-color-${i}`);
+            let colorData = CAR_COLORS.find(c => c.id === colorSel.value);
+
+            let difficultySel = document.getElementById(`bot-difficulty-${i}`);
+            let difficulty = parseInt(difficultySel.value, 10) || 4;
+            
+            let botDeck = JSON.parse(JSON.stringify(officialDeck)); 
+            shuffle(botDeck);
+            
+            bots.push({ 
+                id: i + 1, 
+                team: teamData, 
+                color: colorData,
+                difficulty: difficulty,
+                deck: botDeck, 
+                discard: [], 
+                currentCard: null,
+                // Primeiro round de cada carro TRV9000: rola o dado de direção e posiciona conforme o diagrama "Parking Lot".
+                initialPlacement: {
+                    S: rollTRV9000InitialPlacement(),
+                    M: rollTRV9000InitialPlacement(),
+                    L: rollTRV9000InitialPlacement()
+                }
+            });
+        }
+
+        sdbr = null;
+        if (isExpansionActive('sdbr-enabled')) {
+            let sdbrDeck = JSON.parse(JSON.stringify(sdbrDeckData));
+            shuffle(sdbrDeck);
+            sdbr = { deck: sdbrDeck, discard: [], currentCard: null, initialPlacement: rollTRV9000InitialPlacement() };
+        }
+
+        sdff = null;
+        if (isExpansionActive('sdff-enabled')) {
+            let sdffDeck = JSON.parse(JSON.stringify(sdffDeckData));
+            shuffle(sdffDeck);
+            sdff = { deck: sdffDeck, discard: [], currentCard: null, initialPlacement: rollSdffInitialPlacements() };
+        }
+
+        document.getElementById('view-setup').classList.add('hidden');
+        document.getElementById('view-game').classList.remove('hidden');
+        renderAllBots();
+    }
+
+    function shuffle(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+    }
+
+    function drawCardsGlobal() {
+        bots.forEach(bot => {
+            if (bot.deck.length === 0) {
+                bot.deck = [...bot.discard];
+                bot.discard = [];
+                shuffle(bot.deck);
+            }
+            bot.currentCard = bot.deck.pop();
+            bot.discard.push(bot.currentCard);
+        });
+        if (sdbr) {
+            if (sdbr.deck.length === 0) {
+                sdbr.deck = [...sdbr.discard];
+                sdbr.discard = [];
+                shuffle(sdbr.deck);
+            }
+            sdbr.currentCard = sdbr.deck.pop();
+            sdbr.discard.push(sdbr.currentCard);
+        }
+        if (sdff) {
+            if (sdff.deck.length === 0) {
+                sdff.deck = [...sdff.discard];
+                sdff.discard = [];
+                shuffle(sdff.deck);
+            }
+            sdff.currentCard = sdff.deck.pop();
+            sdff.discard.push(sdff.currentCard);
+        }
+        globalStep = 0;
+        document.getElementById('btn-draw').disabled = true;
+        document.getElementById('btn-step').disabled = false;
+        renderAllBots();
+        const panel = document.getElementById('screen-panel');
+        panel.classList.remove('boom');
+        void panel.offsetWidth; // reinicia a animação mesmo em compras consecutivas
+        panel.classList.add('boom');
+    }
+
+    function nextStepGlobal() {
+        globalStep++;
+        renderAllBots();
+        if (globalStep >= 3) {
+            document.getElementById('btn-draw').disabled = false;
+            document.getElementById('btn-step').disabled = true;
+        }
+    }
+
+    function renderVehicleMoves(movesData, isVisible, theme) {
+        if (!isVisible) return `<div class="vehicle-moves invisible"></div>`;
+        if (!movesData || movesData.length === 0) return `<div class="vehicle-moves" style="color: #666; font-style: italic; font-size:0.8em;">${t('inactivePhase')}</div>`;
+
+        const themeClass = theme === 'sdbr' ? ' move-block-sdbr' : '';
+        let html = `<div class="vehicle-moves">`;
+        movesData.forEach(m => {
+            if (m.cond === "fire") {
+                html += `<div class="move-block${themeClass}"><span class="icon-fire" title="${t('fireTitle')}"></span> <span class="move-die">${m.val || ''}</span> <span class="move-dir">${m.dir || ''}</span></div>`;
+            } else if (m.cond === "smoke") {
+                html += `<div class="move-block${themeClass}"><span class="icon-extinguish" title="${t('extinguishTitle')}"></span> <span class="move-die">${m.val || ''}</span> <span class="move-dir">${m.dir || ''}</span></div>`;
+            } else if (m.cond === "ignite") {
+                html += `<div class="move-block${themeClass}"><span class="icon-ignite" title="${t('igniteTitle')}"></span></div>`;
+            } else {
+                html += `<div class="move-block${themeClass}"><span class="move-die">${m.val}</span> <span class="move-dir">${m.dir}</span></div>`;
+            }
+        });
+        html += `</div>`;
+        return html;
+    }
+
+    function renderAllBots() {
+        const board = document.getElementById('bots-board');
+        board.innerHTML = '';
+
+        bots.forEach(bot => {
+            let cardHtml = '';
+            
+            let activeLevel = bot.difficulty || 4;
+            let basicList = BASIC_ABILITIES[lang].slice(0, activeLevel).map(a => `<li class="ability-basic">${a}</li>`).join('');
+            
+            let sizes = ['S', 'M', 'L'];
+            let advancedList = bot.team.abilities[lang].map((a, index) => `<li class="ability-advanced"><span style="color: var(--yellow);">[${sizes[index]}]</span> ${a}</li>`).join('');
+            
+            if (!bot.currentCard) {
+                cardHtml = `
+                    <div class="card" style="justify-content: center; align-items: center; border-color: ${bot.color.hex}; border-top: none; box-shadow: 0 10px 30px rgba(0,0,0,0.9), 0 0 15px ${bot.color.hex}40;">
+                        <span style="color: #555; font-size:1.2em; text-transform:uppercase; letter-spacing:1px; text-align:center;">${t('waitingDraw')}</span>
+                        ${renderInitialPlacementBox(bot.initialPlacement)}
+                        <div class="deck-status">${t('deckStatus')(bot.deck.length, bot.discard.length)}</div>
+                    </div>`;
+            } else {
+                const c = bot.currentCard;
+                
+                let rowsHtml = '';
+                c.order.forEach((size, index) => {
+                    let isVisible = globalStep >= (index + 1);
+                    rowsHtml += `
+                        <div class="vehicle-row">
+                            <div class="vehicle-size">${size}</div>
+                            ${renderVehicleMoves(c[size], isVisible)}
+                        </div>
+                    `;
+                });
+
+                let actionHeader = c.actionType === 'custom' ? c.actionHeader : tr(ACTION_DB[c.actionType].header);
+                let specialText = c.actionType === 'custom' ? c.special : tr(ACTION_DB[c.actionType].text);
+
+                cardHtml = `
+                    <div class="card" style="border-color: ${bot.color.hex}; border-top: none; box-shadow: 0 10px 30px rgba(0,0,0,0.9), 0 0 15px ${bot.color.hex}40;">
+                        <div class="priority-badge">${t('priorityBadge')(c.priority)}</div>
+                        <div class="card-header">${c.id}</div>
+                        <div class="card-action">${actionHeader}</div>
+                        <div class="card-special">
+                            ${specialText}
+                        </div>
+                        ${rowsHtml}
+                        <div class="deck-status">${t('deckStatus')(bot.deck.length, bot.discard.length)}</div>
+                    </div>
+                `;
+            }
+
+            board.innerHTML += `
+                <div class="card-wrapper">
+                    <div class="bot-name-badge" style="background-color: ${bot.color.hex}; color: ${bot.color.text}; border-color: ${bot.color.hex};">
+                        ${t('botPrefix')} ${bot.id}: ${tr(bot.team.name)}
+                    </div>
+                    <details class="bot-abilities-panel" style="border-color: ${bot.color.hex};">
+                        <summary>${t('abilitiesSummary')(activeLevel)}</summary>
+                        <ul>
+                            ${advancedList}
+                            ${basicList}
+                        </ul>
+                    </details>
+                    ${cardHtml}
+                </div>
+            `;
+        });
+
+        renderSdbr();
+        renderSdff();
+    }
+
+    function renderSdbr() {
+        if (!sdbr) return;
+        const board = document.getElementById('bots-board');
+        let cardHtml = '';
+
+        if (!sdbr.currentCard) {
+            cardHtml = `
+                <div class="card" style="justify-content: center; align-items: center; border-color: var(--bigrig); border-top: none; box-shadow: 0 10px 30px rgba(0,0,0,0.9);">
+                    <span style="color: #555; font-size:1.2em; text-transform:uppercase; letter-spacing:1px; text-align:center;">${t('waitingDraw')}</span>
+                    ${renderInitialPlacementBox(sdbr.initialPlacement)}
+                    <div class="deck-status">${t('deckStatus')(sdbr.deck.length, sdbr.discard.length)}</div>
+                </div>`;
+        } else {
+            const c = sdbr.currentCard;
+            const secNameMap = {
+                'FRENTE': { pt: 'FRENTE', en: 'FRONT' },
+                'MEIO': { pt: 'MEIO', en: 'MID' },
+                'TRAS': { pt: 'TRÁS', en: 'REAR' },
+                'TRÁS': { pt: 'TRÁS', en: 'REAR' }
+            };
+            let rowsHtml = '';
+            c.order.forEach((sectionKey, index) => {
+                let isVisible = globalStep >= (index + 1);
+                let sectionData = c[sectionKey] || {};
+                let activationDir = sectionData.dir || '→';
+                let travel = sectionData.travel || { val: 1, dir: '↗', hazard: 'red' };
+                let movesHtml = renderVehicleMoves([travel], isVisible, 'sdbr');
+                let displaySecName = (secNameMap[sectionKey.toUpperCase()] && secNameMap[sectionKey.toUpperCase()][lang]) || sectionKey;
+                let hazardText = travel.hazard === 'red' ? t('sdbrHazardRedShort') : t('sdbrHazardBrownShort');
+                let hazardRule = typeof t('sdbrHazardTitle') === 'function' ? t('sdbrHazardTitle')(travel.hazard) : t('sdbrHazardTitle');
+                let hazardHtml = isVisible
+                    ? `<span class="sdbr-hazard-chip ${travel.hazard}" title="${hazardRule}" data-toast="${hazardRule}" onclick="showInfoToast(this.getAttribute('data-toast'))">
+                         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3L2 21h20L12 3z"/></svg>
+                         <span>${hazardText}</span>
+                       </span>`
+                    : '';
+                let skipRule = t('sdbrSkipTitle');
+                let actAndTravelHtml = isVisible
+                    ? `<div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; flex:1;">
+                         <div class="sdbr-act-chip" title="${skipRule}" data-toast="${skipRule}" onclick="showInfoToast(this.getAttribute('data-toast'))">
+                           <span>🎲 3 (${lang === 'pt' ? 'Reparo' : 'Repair'})</span>
+                           <span class="sdbr-skip-chip">${lang === 'pt' ? 'Pular:' : 'Skip:'} <span class="sdbr-skip-arrow-badge">${activationDir}</span></span>
+                         </div>
+                         <div style="display:inline-flex; align-items:center; gap:6px;">
+                           ${movesHtml}
+                           ${hazardHtml}
+                         </div>
+                       </div>`
+                    : `<div class="vehicle-moves" style="color: #666; font-style: italic; font-size:0.8em;">${t('inactivePhase')}</div>`;
+                rowsHtml += `
+                    <div class="vehicle-row" style="display:flex; align-items:center; gap:10px;">
+                        <div class="sdbr-section-badge">${displaySecName}</div>
+                        ${actAndTravelHtml}
+                    </div>
+                `;
+            });
+
+            let isClockwise = c.priority.indexOf('↻') !== -1;
+            let wheelHtml = `
+                <div class="sdbr-priority-wheel ${isClockwise ? 'cw' : 'ccw'}" title="${t('sdbrPriorityBadge')(c.priority)}">
+                    <span class="wheel-arrow">${isClockwise ? '↻' : '↺'}</span>
+                </div>`;
+            cardHtml = `
+                <div class="card" style="border-color: var(--bigrig); border-top: none; box-shadow: 0 10px 30px rgba(0,0,0,0.9);">
+                    <div class="priority-badge" style="display:flex; align-items:center; justify-content:center; gap:12px;">
+                        ${wheelHtml}
+                        <span>${t('sdbrPriorityBadge')(c.priority)}</span>
+                    </div>
+                    <div class="card-header">${c.id}</div>
+                    <div class="card-action">${t('sdbrCardAction')}</div>
+                    ${rowsHtml}
+                    <div class="deck-status">${t('deckStatus')(sdbr.deck.length, sdbr.discard.length)}</div>
+                </div>
+            `;
+        }
+
+        board.innerHTML += `
+            <div class="card-wrapper">
+                <div class="bot-name-badge" style="background: linear-gradient(135deg, #7a0000, var(--bigrig)); color: #fff; border-color: var(--bigrig);">
+                    ${t('sdbrBadgeName')}
+                </div>
+                <details class="bot-abilities-panel" style="border-color: var(--bigrig);">
+                    <summary>${t('sdbrDetailsSummary')}</summary>
+                    <ul>
+                        <li class="ability-advanced">${t('sdbrAbility1')}</li>
+                        <li class="ability-basic">${t('sdbrAbility2')}</li>
+                    </ul>
+                </details>
+                ${cardHtml}
+            </div>
+        `;
+    }
+
+    function renderSdff() {
+        if (!sdff) return;
+        const board = document.getElementById('bots-board');
+        let cardHtml = '';
+
+        if (!sdff.currentCard) {
+            cardHtml = `
+                <div class="card" style="justify-content: center; align-items: center; border-color: #d98c00; border-top: none; box-shadow: 0 10px 30px rgba(0,0,0,0.9);">
+                    <span style="color: #555; font-size:1.2em; text-transform:uppercase; letter-spacing:1px; text-align:center;">${t('waitingDraw')}</span>
+                    ${renderInitialPlacementBox(sdff.initialPlacement)}
+                    <div class="deck-status">${t('deckStatus')(sdff.deck.length, sdff.discard.length)}</div>
+                </div>`;
+        } else {
+            const c = sdff.currentCard;
+            const cmdInfo = SDFF_COMMANDS[c.cmd];
+            let rowsHtml = '';
+            c.rows.forEach((row, index) => {
+                let isVisible = globalStep >= (index + 1);
+                let marksHtml = row.marks.map(mk => {
+                    let m = SDFF_MARKS[mk];
+                    return `<span class="sdff-mark ${mk === 'star' ? 'is-command' : ''}" title="${tr(m.label)}">${m.sym}</span>`;
+                }).join('<span class="sdff-mark-sep">▼</span>');
+                let movesHtml = renderVehicleMoves(row.moves, isVisible);
+                let isCommandRow = row.marks.includes('star');
+                let cmdHtml = (isVisible && isCommandRow)
+                    ? `<div class="card-special" style="margin-top:6px;"><strong>${tr(cmdInfo.header)}:</strong> ${tr(cmdInfo.text)}</div>`
+                    : '';
+                rowsHtml += `
+                    <div class="vehicle-row sdff-row" style="flex-direction:column; align-items:flex-start;">
+                        <div style="display:flex; width:100%; align-items:center; gap:10px;">
+                            <div class="sdff-marks">${marksHtml}</div>
+                            ${movesHtml}
+                        </div>
+                        ${cmdHtml}
+                    </div>
+                `;
+            });
+
+            cardHtml = `
+                <div class="card" style="border-color: #d98c00; border-top: none; box-shadow: 0 10px 30px rgba(0,0,0,0.9);">
+                    <div class="card-header">${c.id} <span style="font-size:0.7em; color:#aaa; float:right;">${t('sdbrPriorityBadge')(c.priority)}</span></div>
+                    <div class="card-action">${t('sdffCardAction')}</div>
+                    ${rowsHtml}
+                    <div class="deck-status">${t('deckStatus')(sdff.deck.length, sdff.discard.length)}</div>
+                </div>
+            `;
+        }
+
+        board.innerHTML += `
+            <div class="card-wrapper">
+                <div class="bot-name-badge" style="background-color: #d98c00; color: #000; border-color: #d98c00;">
+                    ${t('sdffBadgeName')}
+                </div>
+                <details class="bot-abilities-panel" style="border-color: #d98c00;">
+                    <summary>${t('sdffDetailsSummary')}</summary>
+                    <ul>
+                        <li class="ability-advanced">${t('sdffAbility1')}</li>
+                        <li class="ability-advanced">${t('sdffAbility2')}</li>
+                        <li class="ability-basic">${t('sdffAbility3')}</li>
+                        <li class="ability-basic">${t('sdffAbility4')}</li>
+                    </ul>
+                </details>
+                ${cardHtml}
+            </div>
+        `;
+    }
+
+// Initialize sdbr mock
+sdbr = {
+    enabled: true,
+    deck: [],
+    discard: [],
+    currentCard: {
+        id: 'SDBR-01',
+        priority: '↓ (Cima para Baixo)',
+        order: ['FRENTE', 'MEIO', 'TRAS'],
+        FRENTE: { dir: '→', travel: { val: 2, dir: '↗', hazard: 'red' } },
+        MEIO: { dir: '←', travel: { val: 1, dir: '↘', hazard: 'brown' } },
+        TRAS: { dir: '→', travel: { val: 3, dir: '↗', hazard: 'red' } }
+    },
+    initialPlacement: { lead: 'MID', rear: 'LEFT' }
+};
+globalStep = 3;
+lang = 'pt';
+renderSdbr();
+console.log('SDBR Rendered PT SUCCESS!');
+lang = 'en';
+renderSdbr();
+console.log('SDBR Rendered EN SUCCESS!');

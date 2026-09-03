@@ -1,0 +1,1173 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Rock Hard: 1977 - Mick Solo Bot</title>
+    <link rel="stylesheet" href="../assets/theme-kit.css">
+    <style>
+
+        @import url('https://fonts.googleapis.com/css2?family=Teko:wght@400;600;700&family=Metal+Mania&display=swap');
+
+        :root {
+            --gh-green: #39FF14; --gh-red: #FF1E1E; --gh-yellow: #FFD500;
+            --gh-blue: #00C8FF; --gh-orange: #FF7A00; 
+            --bg-dark: #1a1a1a;
+            --neck-color: #2b2b2b; --text-light: #f0f0f0;
+            --gold: #FFC72C; --chrome: #e8e8e8;
+            --flame-1: #fff5b0; --flame-2: #ff9d00; --flame-3: #ff2600; --flame-4: #6b0000;
+            --font-display: 'Metal Mania', cursive; --font-body: 'Teko', sans-serif;
+            --flight-case: #111;
+            --metal: #888;
+            /* theme-kit .credits overrides (keeps this bot's existing look identical) */
+            --tk-credits-border-top: 1px dashed #555;
+            --tk-credits-padding: 15px 0 0;
+            --tk-credits-img-radius: 4px;
+            --tk-credits-img-border: 2px solid #333;
+            --tk-credits-font-size: 1.1rem;
+            --tk-credits-color: #888;
+            --tk-credits-link-color: var(--gh-blue);
+        }
+
+        @keyframes flicker { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.15); } }
+        @keyframes flamePulse { 0%, 100% { opacity: 0.75; transform: scale(1); } 50% { opacity: 1; transform: scale(1.03); } }
+        @keyframes starSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        html { -webkit-text-size-adjust: 100%; overflow-x: hidden; }
+        body {
+            font-family: var(--font-body); 
+            background-color: var(--bg-dark);
+            background-image: 
+                radial-gradient(circle at center, rgba(0,0,0,0) 0%, rgba(0,0,0,0.8) 100%),
+                repeating-linear-gradient(45deg, #111 0px, #111 2px, #1a1a1a 2px, #1a1a1a 4px),
+                repeating-linear-gradient(-45deg, transparent 0px, transparent 2px, #161616 2px, #161616 4px),
+                url('../assets/textures/stage-asphalt.jpg');
+            background-size: auto, auto, auto, 320px 320px;
+            background-repeat: no-repeat, repeat, repeat, repeat;
+            background-blend-mode: normal, multiply, normal, multiply;
+            color: var(--text-light); margin: 0; padding: 20px;
+            padding-left: max(20px, env(safe-area-inset-left));
+            padding-right: max(20px, env(safe-area-inset-right));
+            padding-bottom: max(20px, env(safe-area-inset-bottom));
+            display: flex; flex-direction: column; align-items: center; min-height: 100vh;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+        button, select, .close-modal { touch-action: manipulation; }
+
+        .container {
+            width: 100%; max-width: 650px; 
+            background-color: var(--flight-case);
+            background-image: url('data:image/svg+xml;utf8,<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="4" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23noise)" opacity="0.1"/></svg>');
+            border: 4px solid #000;
+            border-radius: 8px;
+            padding: 20px 30px 40px;
+            box-shadow: 
+                0 0 0 4px var(--metal), 
+                inset 0 0 0 2px rgba(255,255,255,0.2),
+                0 10px 40px rgba(0,0,0,0.9);
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        /* Rivets on flight case */
+        .container::before, .container::after {
+            content: ''; position: absolute; width: 12px; height: 12px; border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #ddd, #555);
+            box-shadow: inset 0 -1px 2px rgba(0,0,0,0.5), 0 1px 2px rgba(0,0,0,0.8);
+        }
+        .container::before { top: 10px; left: 10px; }
+        .container::after { bottom: 10px; right: 10px; }
+
+        /* Landscape Mode Overrides */
+        body.landscape .container { max-width: 1100px; }
+        .content-wrapper { display: flex; flex-direction: column; gap: 20px; width: 100%; }
+        @media(min-width: 900px) {
+            body.landscape .content-wrapper { flex-direction: row; align-items: flex-start; }
+            body.landscape .left-col, body.landscape .right-col { flex: 1; min-width: 0; }
+        }
+
+        .hero {
+            position: relative; border-radius: 4px; overflow: hidden; height: 130px;
+            margin-bottom: 15px; border: 2px solid #333;
+            box-shadow: 0 0 20px rgba(255,30,30,0.3);
+            animation: heroFadeIn 0.5s ease both;
+        }
+        @keyframes heroFadeIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+        .hero img { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; filter: contrast(1.2) saturate(1.2); }
+        .hero::after {
+            content: ""; position: absolute; inset: 0;
+            background: linear-gradient(180deg, rgba(5,5,5,0) 40%, rgba(5,5,5,0.9) 100%);
+        }
+
+        .title-block { display: flex; flex-direction: column; align-items: center; flex: 1; min-width: 0; }
+        h1 {
+            font-family: var(--font-display); text-align: center; font-size: clamp(1.6rem, 6vw, 2.9rem); margin: 0; line-height: 1.05;
+            text-transform: uppercase; letter-spacing: 3px; color: var(--flame-1); white-space: nowrap;
+            text-shadow: 0 0 6px var(--flame-1), 0 0 16px var(--flame-2), 0 0 30px var(--flame-3), 0 0 50px var(--flame-4), 3px 3px 0px #000;
+            transform: skewX(-4deg); animation: flicker 2.2s infinite ease-in-out;
+        }
+        .subtitle-mick { font-family: var(--font-body); text-align: center; font-size: 1.1rem; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); margin-top: 2px; }
+        
+        .physical-setup { background-color: rgba(0, 0, 0, 0.85); border: 2px solid var(--metal); border-radius: 4px; margin-bottom: 20px; }
+        .physical-setup summary { padding: 12px 15px; cursor: pointer; font-family: var(--font-display); color: var(--chrome); text-transform: uppercase; letter-spacing: 1px; font-size: 1.1rem; outline: none; }
+        .physical-setup .physical-setup-body { padding: 5px 20px 18px; font-size: 1.2rem; line-height: 1.5; color: #ddd; }
+
+        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 3px solid #333; padding-bottom: 15px; gap: 10px;}
+        .btn-top { background: linear-gradient(180deg, #444, #222); border: 2px solid #555; color: #eee; padding: 5px 15px; font-size: 1.3rem; cursor: pointer; text-transform: uppercase; border-radius: 4px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 2px 4px rgba(0,0,0,0.5); font-family: var(--font-body); letter-spacing: 1px; display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; }
+        .btn-top:active { transform: translateY(2px); box-shadow: none; }
+        .btn-top svg { width: 1.1em; height: 1.1em; flex-shrink: 0; }
+        
+        /* Dashboard */
+        .dashboard { background-color: #1a1a1a; border: 2px solid #444; border-radius: 4px; padding: 15px; display: flex; flex-direction: column; gap: 15px; box-shadow: inset 0 0 15px rgba(0,0,0,0.8); margin-bottom: 20px;}
+        .dashboard-header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; width: 100%; gap: 12px 10px; }
+        .difficulty-select { background: #000; color: var(--gold); border: 2px solid #333; padding: 5px; font-family: var(--font-body); font-size: 1.3rem; border-radius: 4px; cursor: pointer; }
+        .fame-tracker { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+        .fame-display { font-size: 2.5rem; color: var(--gold); text-shadow: 0 0 10px var(--gold), 0 0 20px rgba(255,199,44,0.6); font-weight: bold; min-width: 50px; text-align: center; font-family: var(--font-display); }
+        
+        /* Dial Buttons */
+        .btn-btn { background: radial-gradient(circle, #555, #222); color: #fff; border: 2px solid #111; border-radius: 50%; width: 40px; height: 40px; font-size: 1.2rem; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.6), inset 0 2px 2px rgba(255,255,255,0.2); }
+        .btn-btn:active { transform: scale(0.9); box-shadow: none; }
+
+        .amp-stats { background-color: #111; border: 2px solid #333; border-radius: 4px; padding: 10px; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 6px; margin-bottom: 20px; box-shadow: inset 0 0 10px #000; }
+        .stat-group { display: flex; flex-direction: column; align-items: center; min-width: 0; flex-shrink: 0; }
+        .stat-label { font-size: 1.2rem; color: #888; margin-bottom: 5px; text-transform: uppercase; font-weight: bold; }
+        .stat-controls { display: flex; align-items: center; gap: 8px; }
+        .stat-val { font-size: 1.8rem; color: #f0f0f0; text-shadow: 0 0 8px rgba(255,255,255,0.4); font-weight: bold; width: 30px; text-align: center; }
+
+        /* Toggle Switches */
+        .controls-section { background-color: #1a1a1a; border: 2px solid #444; padding: 15px; border-radius: 4px; margin-bottom: 20px; box-shadow: inset 0 0 10px rgba(0,0,0,0.8); }
+        .button-group { display: flex; gap: 10px; width: 100%; margin-bottom: 10px; }
+        .btn-toggle { flex: 1; padding: 12px 8px; background: linear-gradient(180deg, #333, #111); color: #777; border: 2px solid #000; font-family: var(--font-body); font-size: 1.3rem; cursor: pointer; text-transform: uppercase; border-radius: 4px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), 0 2px 4px rgba(0,0,0,0.5); }
+        .btn-toggle.active { background: linear-gradient(180deg, #555, #333); color: #fff; box-shadow: inset 0 0 10px rgba(0,0,0,0.8), 0 0 8px var(--gh-green); border-color: var(--gh-green); }
+
+        .dice-area { display: flex; flex-direction: column; margin-top: 15px; width: 100%; gap: 10px; }
+        .dice-tray-container {
+            width: 100%; height: 130px; background: rgba(0,0,0,0.55); border: 2px solid var(--metal);
+            border-radius: 4px; position: relative; overflow: hidden;
+            box-shadow: inset 0 3px 12px rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center;
+        }
+        #dice-box{ width:100%; height:100%; position:absolute; top:0; left:0; z-index:2; }
+        #dice-box canvas{ width:100% !important; height:100% !important; display:block; }
+        button.btn-roll {
+            flex-grow: 1; font-family: var(--font-display); background: linear-gradient(180deg, #900, #400);
+            color: #fff; border: 2px solid #200; padding: 15px; font-size: 2.3rem;
+            text-transform: uppercase; letter-spacing: 2px; cursor: pointer; border-radius: 4px;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 6px 0 #200, 0 10px 15px rgba(0,0,0,0.8);
+            transition: all 0.1s; text-shadow: 0 0 10px rgba(255,255,255,0.5);
+        }
+        button.btn-roll:active { transform: translateY(6px); box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 0 0 #200, 0 0 5px rgba(0,0,0,0.8); }
+
+        /* Action Panel */
+        .action-panel { background-color: #0d0d0d; border: 4px solid #222; padding: 20px; border-radius: 4px; min-height: 180px; margin-bottom: 20px; box-shadow: inset 0 0 20px #000; }
+        .action-item { padding: 10px 15px; margin-bottom: 10px; font-size: 1.4rem; border-radius: 4px; color: #777; background-color: #1a1a1a; border: 2px solid #333; display: flex; justify-content: space-between; align-items: center; transition: all 0.2s; }
+        .action-content { display: flex; align-items: center; }
+        .action-item.active { color: #fff; background: #2a2a2a; border-color: var(--gh-orange); font-size: 1.6rem; transform: scale(1.02); box-shadow: 0 0 15px rgba(255,122,0,0.4); }
+        .action-item.discarded { text-decoration: line-through; opacity: 0.3; transform: scale(0.95); }
+        
+        .active-controls { display: flex; gap: 10px; }
+        .btn-confirm, .btn-miss { padding: 8px 15px; font-family: var(--font-body); font-size: 1.2rem; cursor: pointer; border-radius: 4px; text-transform: uppercase; font-weight: bold; border: 2px solid #000; }
+        .btn-confirm { background: linear-gradient(180deg, #39FF14, #1a8a00); color: #000; box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), 0 2px 4px rgba(0,0,0,0.5); }
+        .btn-miss { background: linear-gradient(180deg, #FF1E1E, #800000); color: #fff; box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), 0 2px 4px rgba(0,0,0,0.5); }
+        .btn-confirm:active, .btn-miss:active { transform: translateY(2px); box-shadow: none; }
+
+        .flavor-box { background-color: #111; border: 1px dashed #555; padding: 10px 20px; font-size: 1.3rem; font-style: italic; color: #ffcc80; margin-bottom: 20px; text-align: center; border-radius: 4px; }
+        
+        .insane-modifiers { display: none; background-color: #1a0505; border: 1px dashed var(--gh-red); padding: 10px 15px; border-radius: 4px; }
+        .insane-modifiers h4 { font-family: var(--font-display); color: var(--gh-red); margin: 0 0 10px 0; font-size: 1.2rem; text-transform: uppercase; }
+        .mod-item { display: flex; align-items: center; margin-bottom: 8px; font-size: 1.2rem; color: #ddd; }
+        .mod-item input { margin-right: 10px; width: 18px; height: 18px; accent-color: var(--gh-red); cursor: pointer; }
+
+        .setlist { background-color: #111; border: 2px solid #333; padding: 15px; border-radius: 4px; }
+        .setlist h3 { font-family: var(--font-display); margin: 0 0 10px 0; color: #aaa; text-align: center; text-transform: uppercase; font-size: 1.3rem; }
+        .setlist ul { margin: 0; padding-left: 20px; color: #888; font-size: 1.2rem; max-height: 150px; overflow-y: auto; }
+        .setlist li { margin-bottom: 5px; border-bottom: 1px dashed #333; padding-bottom: 5px; }
+        
+        /* Credits and Misc: .credits/.credits img/.credits-text now come from theme-kit.css,
+           colors/sizing overridden via --tk-credits-* vars in :root above */
+
+        #toast { visibility: hidden; min-width: 250px; background: #FFD500; color: #000; text-align: center; border-radius: 4px; padding: 16px; position: fixed; z-index: 1001; left: 50%; bottom: 30px; transform: translateX(-50%); font-family: var(--font-display); font-size: 1.4rem; text-transform: uppercase; border: 2px solid #000; box-shadow: 0 10px 20px rgba(0,0,0,0.8); }
+        #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
+        @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
+        @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
+
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-content { background-color: #1a1a1a; border: 4px solid var(--metal); padding: 25px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto; position: relative; font-size: 1.2rem; border-radius: 4px; box-shadow: 0 0 40px rgba(0,0,0,0.9); color: #eee;}
+        .close-modal { position: absolute; top: 6px; right: 10px; color: var(--gh-red); font-size: 2rem; cursor: pointer; background: none; border: none; padding: 8px; }
+        .hidden { display: none !important; }
+
+
+/* Standard Buy Me a Coffee Button */
+.bmc-btn, .bmc-inline, .bmc-float {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  background: #FFDD00 !important;
+  color: #000000 !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+  font-weight: 700 !important;
+  font-size: 0.92rem !important;
+  padding: 10px 18px !important;
+  border-radius: 8px !important;
+  border: 1px solid rgba(0,0,0,0.15) !important;
+  text-decoration: none !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25) !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+  cursor: pointer !important;
+  margin: 16px auto !important;
+  width: max-content !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+}
+.bmc-btn:hover, .bmc-inline:hover, .bmc-float:hover {
+  transform: translateY(-2px) scale(1.02) !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35) !important;
+  background: #FFE433 !important;
+  color: #000000 !important;
+}
+.bmc-btn svg, .bmc-inline svg, .bmc-float svg {
+  width: 20px !important;
+  height: 20px !important;
+  min-width: 20px !important;
+  min-height: 20px !important;
+  max-width: 20px !important;
+  max-height: 20px !important;
+  stroke: #000000 !important;
+  fill: none !important;
+  flex-shrink: 0 !important;
+  vertical-align: middle !important;
+}
+
+/* Ambient concert atmosphere: sweeping stage spotlight beams + rising haze */
+.concert-beams{ position: fixed; inset: 0; pointer-events: none; z-index: -1; overflow: hidden; opacity: 0.55; }
+.beam{
+  position: absolute; top: -20%; width: 140px; height: 140%;
+  transform-origin: top center;
+  opacity: 0;
+}
+.beam:nth-child(1){ left: 8%;  background: linear-gradient(180deg, rgba(57,255,20,0.22), transparent 70%); }
+.beam:nth-child(2){ left: 42%; background: linear-gradient(180deg, rgba(255,213,0,0.2), transparent 70%); }
+.beam:nth-child(3){ left: 74%; background: linear-gradient(180deg, rgba(255,30,30,0.2), transparent 70%); }
+@media (prefers-reduced-motion: no-preference){
+  .beam{ animation: beamSweep 9s ease-in-out infinite; }
+  .beam:nth-child(2){ animation-duration: 11s; animation-delay: -3s; }
+  .beam:nth-child(3){ animation-duration: 8s; animation-delay: -5.5s; }
+}
+@keyframes beamSweep{
+  0%   { transform: rotate(-26deg); opacity: 0.2; }
+  50%  { transform: rotate(26deg);  opacity: 0.65; }
+  100% { transform: rotate(-26deg); opacity: 0.2; }
+}
+.haze-layer{ position: fixed; inset: 0; pointer-events: none; z-index: -1; overflow: hidden; }
+.haze-puff{
+  position: absolute; bottom: -60px; width: 220px; height: 90px; border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(230,230,240,0.10) 0%, transparent 70%);
+  opacity: 0;
+}
+@media (prefers-reduced-motion: no-preference){
+  .haze-puff{ animation: hazeDrift linear infinite; }
+}
+@keyframes hazeDrift{
+  0% { transform: translate(0, 0) scale(0.9); opacity: 0; }
+  15% { opacity: 0.8; }
+  85% { opacity: 0.4; }
+  100% { transform: translate(60px, -70vh) scale(1.4); opacity: 0; }
+}
+.haze-puff:nth-child(1){ left: 5%;  animation-duration: 22s; animation-delay: -2s; }
+.haze-puff:nth-child(2){ left: 30%; animation-duration: 26s; animation-delay: -10s; }
+.haze-puff:nth-child(3){ left: 55%; animation-duration: 20s; animation-delay: -6s; }
+.haze-puff:nth-child(4){ left: 78%; animation-duration: 24s; animation-delay: -14s; }
+</style>
+    <script src="../assets/logger.js"></script>
+</head>
+<body id="bodyTag">
+
+    <div class="concert-beams" aria-hidden="true">
+        <span class="beam"></span><span class="beam"></span><span class="beam"></span>
+    </div>
+    <div class="haze-layer" aria-hidden="true">
+        <span class="haze-puff"></span><span class="haze-puff"></span><span class="haze-puff"></span><span class="haze-puff"></span>
+    </div>
+
+    <div class="container" id="mainContainer">
+        <div class="hero">
+            <img src="../assets/art/rockhardmick.webp" alt="Mick, The Rising Star box art">
+        </div>
+        <div class="top-bar">
+            <button class="btn-top btn-options" id="btnOptions"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg> <span data-i18n="btn_options">Opções</span></button>
+            <div class="title-block">
+                <h1>Rock Hard 1977</h1>
+                <div class="subtitle-mick" data-i18n="subtitle_mick">Bot Solo: Mick</div>
+            </div>
+            <button class="btn-top btn-help" id="btnHelp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 2-3 4"/><path d="M12 17h.01"/></svg> <span data-i18n="btn_help">Ajuda</span></button>
+        </div>
+
+        <details class="physical-setup">
+            <summary data-i18n="physical_setup_title">Configuração Física do Jogo (faça isso na sua mesa primeiro)</summary>
+            <div class="physical-setup-body" data-i18n="physical_setup_body"></div>
+        </details>
+
+        <div class="content-wrapper">
+            <div class="left-col">
+                <div class="dashboard">
+                    <div class="dashboard-header">
+                        <div>
+                            <label style="color: #aaa; font-size: 1.2rem; display: block;" data-i18n="label_difficulty">DIFICULDADE INICIAL</label>
+                            <select class="difficulty-select" id="difficultySelector" onchange="setDifficulty()">
+                                <option value="5" selected data-i18n="diff_easy">Fácil (5 Fama)</option>
+                                <option value="10" data-i18n="diff_normal">Normal (10 Fama)</option>
+                                <option value="15" data-i18n="diff_hard">Difícil (15 Fama)</option>
+                                <option value="insane" data-i18n="diff_insane">Insana (15 Fama + Mods)</option>
+                            </select>
+                        </div>
+                        <div class="fame-tracker">
+                            <span style="font-size: 1.5rem; color:#aaa; text-transform:uppercase;" data-i18n="label_fame">Fama:</span>
+                            <button class="btn-btn" onclick="changeFame(-1)">-</button>
+                            <div class="fame-display" id="fameScore">5</div>
+                            <button class="btn-btn" onclick="changeFame(1)">+</button>
+                        </div>
+                    </div>
+
+                    <div class="insane-modifiers" id="insaneModifiers">
+                        <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:1.1em;height:1.1em;vertical-align:-2px;margin-right:6px;"><path d="M13 2 3 14h7l-1 8 11-14h-7l1-6Z"/></svg><span data-i18n="mod_title">Modificadores Insanos</span></h4>
+                        <div class="mod-item">
+                            <label><input type="checkbox" id="mod_ritmo" onchange="checkFrenetic(); saveState();"> <span data-i18n="mod_rhythm">Ritmo Frenético</span></label>
+                        </div>
+                        <div class="mod-item">
+                            <label><input type="checkbox" id="mod_contratos" onchange="saveState()"> <span data-i18n="mod_contracts">Aceleração de Contratos</span></label>
+                        </div>
+                        <div class="mod-item">
+                            <label><input type="checkbox" id="mod_ego" onchange="saveState()"> <span data-i18n="mod_ego">Inflação do Ego</span></label>
+                        </div>
+                        <div class="mod-item" style="font-style: italic; opacity: 0.7; font-size: 1rem;" data-i18n="mod_disclaimer">Nota: modificadores caseiros, não fazem parte das regras oficiais do modo solo.</div>
+                    </div>
+                </div>
+
+                <div class="amp-stats">
+                    <div class="stat-group">
+                        <div class="stat-label" data-i18n="stat_chops">Talento</div>
+                        <div class="stat-controls">
+                            <button class="btn-btn" onclick="changeStat('talento', -1)">-</button>
+                            <div class="stat-val" id="val_talento">2</div>
+                            <button class="btn-btn" onclick="changeStat('talento', 1)">+</button>
+                        </div>
+                    </div>
+                    <div class="stat-group">
+                        <div class="stat-label" data-i18n="stat_rep">Reputação</div>
+                        <div class="stat-controls">
+                            <button class="btn-btn" onclick="changeStat('reputacao', -1)">-</button>
+                            <div class="stat-val" id="val_reputacao">2</div>
+                            <button class="btn-btn" onclick="changeStat('reputacao', 1)">+</button>
+                        </div>
+                    </div>
+                    <div class="stat-group">
+                        <div class="stat-label" data-i18n="stat_songs">Canções</div>
+                        <div class="stat-controls">
+                            <button class="btn-btn" onclick="changeStat('cancoes', -1)">-</button>
+                            <div class="stat-val" id="val_cancoes">2</div>
+                            <button class="btn-btn" onclick="changeStat('cancoes', 1)">+</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="controls-section">
+                    <span class="button-group-label" data-i18n="label_period">Período (Mês)</span>
+                    <div class="button-group" id="periodGroup">
+                        <button class="btn-toggle active" data-period="p1" onclick="setPeriod('p1', this)" data-i18n="btn_p1">ABR-JUN</button>
+                        <button class="btn-toggle" data-period="p2" onclick="setPeriod('p2', this)" data-i18n="btn_p2">JUL-SET</button>
+                        <button class="btn-toggle" data-period="p3" onclick="setPeriod('p3', this)" data-i18n="btn_p3">OUT-DEZ</button>
+                    </div>
+
+                    <span class="button-group-label" style="margin-top: 15px;" data-i18n="label_phase">Fase do Dia</span>
+                    <div class="button-group" id="phaseGroup">
+                        <button class="btn-toggle active" data-phase="ph1" onclick="setPhase('ph1', this)" data-i18n="btn_ph1">DIA</button>
+                        <button class="btn-toggle" data-phase="ph2" onclick="setPhase('ph2', this)" data-i18n="btn_ph2">NOITE</button>
+                        <button class="btn-toggle" data-phase="ph3" onclick="setPhase('ph3', this)" data-i18n="btn_ph3">ALTAS HORAS</button>
+                    </div>
+
+                    <div class="dice-area">
+                        <div id="dice-tray" class="dice-tray-container"><div id="dice-box"></div></div>
+                        <button class="btn-roll" onclick="rollDice()" id="btnStrum" data-i18n="btn_strum">Strum (Rolar Ação)</button>
+                    </div>
+                </div>
+                
+                <div class="frenetic-alert" id="freneticAlert">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:1.2em;height:1.2em;vertical-align:-3px;margin-right:6px;"><path d="M12 9v4M12 17h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/></svg><span data-i18n="alert_frenetic">RITMO FRENÉTICO ATIVO: O MICK EXECUTA DUAS AÇÕES NESTA FASE!</span>
+                    <div id="freneticCounter" style="margin-top: 4px; font-size: 1.6rem;"></div>
+                </div>
+            </div>
+
+            <div class="right-col">
+                <div class="action-panel" id="actionPanel">
+                    <div id="actionList">
+                        <div style="text-align: center; color: #777; font-size: 1.5rem; margin-top: 40px;" data-i18n="msg_idle">BATA NA PALHETA PARA COMEÇAR O SHOW!</div>
+                    </div>
+                </div>
+
+                <div class="flavor-box" id="flavorText">
+                    "Afinar a guitarra é para quem não tem atitude. Apenas toque mais alto."
+                </div>
+
+                <div class="setlist">
+                    <h3 data-i18n="history_title">Setlist de Ações (Histórico)</h3>
+                    <ul id="historyList"><li><em data-i18n="history_empty">O palco está vazio...</em></li></ul>
+                    <button class="btn-copy" onclick="copyHistory()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:1em;height:1em;vertical-align:-2px;margin-right:6px;"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2"/></svg><span data-i18n="btn_copy_history">Copiar Setlist</span></button>
+                </div>
+            </div>
+        </div>
+
+        <footer class="credits">
+            <img src="../assets/art/rockhardmick.webp" alt="Mick">
+            <div class="credits-text" id="creditsText"></div>
+        </footer>
+
+        <a class="bmc-inline" href="https://www.buymeacoffee.com/colletes" target="_blank" rel="noopener" aria-label="Buy me a coffee"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h13a2 2 0 0 1 2 2v1a3 3 0 0 1-3 3h-1"/><path d="M4 8h13v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V8Z"/><path d="M8 3c-.6 1 .5 1.6 0 3M12 3c-.6 1 .5 1.6 0 3"/></svg><span data-i18n="bmc_btn">Me pague um café</span></a>
+    </div>
+
+    <div id="toast">STATUS MÁXIMO!</div>
+
+    <div class="modal" id="optionsModal">
+        <div class="modal-content">
+            <button class="close-modal" id="closeOptions">&times;</button>
+            <h2 style="color: var(--gh-green); margin-top: 0; text-transform: uppercase;" data-i18n="modal_options_title">Opções</h2>
+            
+            <div class="opt-row">
+                <span class="opt-label" data-i18n="opt_language">Idioma / Language</span>
+                <select class="opt-select" id="optLang" onchange="applySettings()">
+                    <option value="auto">Auto</option>
+                    <option value="pt">Português (PT-BR)</option>
+                    <option value="en">English (EN)</option>
+                </select>
+            </div>
+            
+            <div class="opt-row">
+                <span class="opt-label" data-i18n="opt_layout">Layout (Tela)</span>
+                <select class="opt-select" id="optLayout" onchange="applySettings()">
+                    <option value="auto" data-i18n="opt_auto">Auto Detectar</option>
+                    <option value="portrait" data-i18n="opt_portrait">Retrato (Mobile)</option>
+                    <option value="landscape" data-i18n="opt_landscape">Paisagem (PC/Tablet)</option>
+                </select>
+            </div>
+
+            <div class="opt-row">
+                <span class="opt-label" data-i18n="opt_audio">Áudio (Som)</span>
+                <select class="opt-select" id="optAudio" onchange="applySettings()">
+                    <option value="on" data-i18n="opt_on">Ligado</option>
+                    <option value="off" data-i18n="opt_off">Desligado (Mute)</option>
+                </select>
+            </div>
+
+            <div class="opt-row" style="border: none; margin-top: 20px;">
+                <button class="btn-miss" onclick="resetGame(true)" style="width: 100%; font-size: 1.4rem; padding: 10px;" data-i18n="btn_new_game">NOVA PARTIDA</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="helpModal">
+        <div class="modal-content">
+            <button class="close-modal" onclick="document.getElementById('helpModal').style.display='none'">&times;</button>
+            <div id="helpModalBody"></div>
+        </div>
+    </div>
+
+    <script>
+        // Forces iOS Safari to treat the first tap as a click instead of only "hovering" (WebKit quirk).
+        document.addEventListener('touchstart', function(){}, {passive: true});
+        // --- DICTIONARY (I18N) ---
+        const i18n = {
+            pt: {
+                btn_options: "Opções", btn_help: "Ajuda", label_difficulty: "DIFICULDADE INICIAL",
+                diff_easy: "Fácil (5 Fama)", diff_normal: "Normal (10 Fama)", diff_hard: "Difícil (15 Fama)", diff_insane: "Insana (15 Fama + Mods)",
+                label_fame: "Fama:", mod_title: "Modificadores Insanos",
+                mod_rhythm: "Ritmo Frenético (Out-Dez: 2 Ações)", mod_contracts: "Aceleração de Contratos (Set de 3 Cartas)", mod_ego: "Inflação do Ego (+2 Fama no excedente)",
+                stat_chops: "Talento", stat_rep: "Reputação", stat_songs: "Canções",
+                label_period: "Período (Mês)", btn_p1: "ABR-JUN", btn_p2: "JUL-SET", btn_p3: "OUT-DEZ",
+                label_phase: "Fase do Dia", btn_ph1: "DIA", btn_ph2: "NOITE", btn_ph3: "ALTAS HORAS",
+                btn_strum: "Strum (Rolar Ação)", alert_frenetic: "RITMO FRENÉTICO ATIVO: O MICK EXECUTA DUAS AÇÕES NESTA FASE!",
+                msg_idle: "BATA NA PALHETA PARA COMEÇAR O SHOW!", history_title: "Setlist de Ações (Histórico)", history_empty: "O palco está vazio...",
+                modal_options_title: "Configurações", opt_language: "Idioma / Language", opt_layout: "Layout (Tela)", opt_auto: "Auto Detectar", opt_portrait: "Retrato (Mobile)", opt_landscape: "Paisagem (PC/Tablet)",
+                opt_audio: "Áudio (Som)", opt_on: "Ligado", opt_off: "Desligado (Mute)",
+                plan_b: "PLANO B ATIVADO:", write_song: "Escrever uma Canção", btn_confirm: "✔ CONFIRMAR", btn_miss: "✖ BLOQUEADO",
+                toast_max: "STATUS MÁXIMO! Mick ganhou Fama extra!", action_confirmed: "AÇÃO CONFIRMADA! PREPARE-SE PARA O PRÓXIMO TURNO.",
+                turn_label: "Turno", btn_new_game: "NOVA PARTIDA", confirm_new_game: "Deseja iniciar uma nova partida? O tabuleiro e o histórico serão zerados.",
+                confirm_difficulty_change: "Mudar a dificuldade agora vai redefinir a Fama atual. Continuar?",
+                mod_disclaimer: "Nota: modificadores caseiros, não fazem parte das regras oficiais do modo solo.",
+                frenetic_action_label: "Ação", btn_copy_history: "Copiar Setlist", toast_copied: "SETLIST COPIADO PARA A ÁREA DE TRANSFERÊNCIA!",
+                subtitle_mick: "Bot Solo: Mick",
+                physical_setup_title: "Configuração Física do Jogo (faça isso na sua mesa primeiro)",
+                physical_setup_body: `<ol>
+                    <li>Monte o tabuleiro normalmente, como em uma partida de 2 jogadores de <strong>Rock Hard: 1977</strong> (motor Rising Star): tabuleiro, ladrilhos de local, trilha de Fama, dados, baralhos de cartas, etc.</li>
+                    <li>Dê ao Mick um <strong>painel de amplificador</strong>, os marcadores de estatística e um peão de personagem — servem apenas para acompanhar os stats dele (Talento, Reputação, Canções) na mesa.</li>
+                    <li>O Mick <strong>não recebe dinheiro nem doces</strong>.</li>
+                    <li>Remova do baralho de Metas Bônus quaisquer cartas que o Mick nunca conseguiria cumprir.</li>
+                    <li>O <strong>Mick é sempre o primeiro jogador</strong> a começar a partida.</li>
+                    <li>Compre 2 cartas de Empresário (Manager) e escolha 1 para você — o Mick não pega carta de empresário, emprego ou meta pessoal.</li>
+                    <li>Escolha a dificuldade aqui no app (Mick começa com 5, 10 ou 15 de Fama, ou o modo Insano com modificadores) — isso substitui qualquer anotação em papel.</li>
+                    <li>A partir daqui, use este app a cada turno do Mick para tocar (Strum) e resolver as ações dele.</li>
+                </ol>`,
+                creditsHtml: `Desenvolvido por <strong>Thiago Colletes</strong> (<a href="mailto:colletes@gmail.com">colletes@gmail.com</a>) e Gemini<br>com base no mod feito por <a href="https://boardgamegeek.com/profile/baseballbuzz" target="_blank">baseballbuzz</a>. Uso pessoal, sem fins comerciais.`,
+                bmc_btn: 'Me pague um café'
+            },
+            en: {
+                btn_options: "Options", btn_help: "Help", label_difficulty: "STARTING DIFFICULTY",
+                diff_easy: "Easy (5 Fame)", diff_normal: "Normal (10 Fame)", diff_hard: "Hard (15 Fame)", diff_insane: "Insane (15 Fame + Mods)",
+                label_fame: "Fame:", mod_title: "Insane Modifiers",
+                mod_rhythm: "Frenetic Rhythm (Oct-Dec: 2 Actions)", mod_contracts: "Contract Acceleration (3-Card Set)", mod_ego: "Ego Inflation (+2 Fame on excess)",
+                stat_chops: "Chops", stat_rep: "Reputation", stat_songs: "Songs",
+                label_period: "Period (Month)", btn_p1: "APR-JUN", btn_p2: "JUL-SEP", btn_p3: "OCT-DEC",
+                label_phase: "Phase of Day", btn_ph1: "DAY", btn_ph2: "NIGHT", btn_ph3: "AFTER HOURS",
+                btn_strum: "Strum (Roll Action)", alert_frenetic: "FRENETIC RHYTHM ACTIVE: MICK TAKES TWO ACTIONS THIS PHASE!",
+                msg_idle: "STRUM TO START THE SHOW!", history_title: "Action Setlist (History)", history_empty: "The stage is empty...",
+                modal_options_title: "Settings", opt_language: "Idioma / Language", opt_layout: "Layout (Screen)", opt_auto: "Auto Detect", opt_portrait: "Portrait (Mobile)", opt_landscape: "Landscape (PC/Tablet)",
+                opt_audio: "Audio (Sound)", opt_on: "On", opt_off: "Off (Muted)",
+                plan_b: "PLAN B ACTIVATED:", write_song: "Write a Song", btn_confirm: "✔ CONFIRM", btn_miss: "✖ BLOCKED",
+                toast_max: "MAX STATUS! Mick gained extra Fame!", action_confirmed: "ACTION CONFIRMED! GET READY FOR NEXT TURN.",
+                turn_label: "Turn", btn_new_game: "NEW GAME", confirm_new_game: "Start a new game? The board and history will be reset.",
+                confirm_difficulty_change: "Changing difficulty now will reset the current Fame. Continue?",
+                mod_disclaimer: "Note: house-rule modifiers, not part of the official solo mode rules.",
+                frenetic_action_label: "Action", btn_copy_history: "Copy Setlist", toast_copied: "SETLIST COPIED TO CLIPBOARD!",
+                subtitle_mick: "Solo Bot: Mick",
+                physical_setup_title: "Physical Game Setup (do this at your table first)",
+                physical_setup_body: `<ol>
+                    <li>Set up the board normally, as for a 2-player game of <strong>Rock Hard: 1977</strong> (Rising Star engine): board, location tiles, Fame track, dice, card decks, etc.</li>
+                    <li>Give Mick an <strong>amp board</strong>, the stat tokens, and a character standee — these are only used to track his stats (Chops, Reputation, Songs) on the table.</li>
+                    <li>Mick <strong>does not get money or candy</strong>.</li>
+                    <li>Remove any Bonus Goal cards from the deck that Mick could never achieve.</li>
+                    <li><strong>Mick is always the first player</strong> to start the game.</li>
+                    <li>Draw 2 Manager cards and choose 1 for yourself — Mick does not take a manager, job, or personal goal card.</li>
+                    <li>Choose the difficulty here in the app (Mick starts at 5, 10, or 15 Fame, or Insane mode with modifiers) — this replaces any paper tracking.</li>
+                    <li>From here on, use this app on each of Mick's turns to Strum and resolve his actions.</li>
+                </ol>`,
+                creditsHtml: `Made by <strong>Thiago Colletes</strong> (<a href="mailto:colletes@gmail.com">colletes@gmail.com</a>) and Gemini<br>based on the mod created by <a href="https://boardgamegeek.com/profile/baseballbuzz" target="_blank">baseballbuzz</a>. Personal, non-commercial use.`,
+                bmc_btn: 'Buy me a coffee'
+            }
+        };
+
+        const flavorQuotes = {
+            pt: [
+                "Dica: Ninguém liga para o baixista. Exceto a mãe dele.",
+                "Dica: Se errar a nota, faça uma careta e finja que é jazz experimental.",
+                "Dica: Cuidado para não tropeçar no cabo do microfone.",
+                "Mick exigiu que todos os M&Ms marrons fossem retirados do camarim.",
+                "Lembre-se: O amplificador sempre deve ir até o 11.",
+                "Dica: Distorção não é ruído, é um estilo de vida.",
+                "Mick quebrou a guitarra no palco. O problema é que ela era alugada.",
+                "Dica: Bateristas não se atrasam, eles entram no próprio tempo.",
+                "Se o vocalista esquecer a letra, aponte o microfone para a plateia.",
+                "Mick tentou dar um mosh na plateia. A plateia abriu.",
+                "Dica: Óculos escuros à noite são essenciais para o estrelato.",
+                "O solo de guitarra vai ser longo hoje. O Mick esqueceu como termina.",
+                "Mick pediu água mineral. Entregaram água da torneira com gás.",
+                "Dica: Mais fumaça no palco esconde os erros do tecladista.",
+                "O show só acaba quando o Mick joga o pedestal no chão.",
+                "Dica: Jaqueta de couro no calor de 40 graus é o preço do Rock.",
+                "Mick ameaçou sair da banda. De novo. É a terceira vez hoje.",
+                "Nunca olhe diretamente para o baterista durante o solo.",
+                "Dica: Aumentar o volume não substitui afinar o instrumento. Mas ajuda.",
+                "Mick foi expulso do próprio camarim. Longa história.",
+                "Dica: Se o público não estiver pulando, toque mais rápido.",
+                "Eles disseram que o rock estava morto. Mick riu e aumentou o fuzz."
+            ],
+            en: [
+                "Tip: Nobody cares about the bassist. Except his mom.",
+                "Tip: If you play a wrong note, make a face and pretend it's experimental jazz.",
+                "Tip: Try not to trip over the microphone cable.",
+                "Mick demanded all brown M&Ms be removed from the dressing room.",
+                "Remember: The amp must always go to 11.",
+                "Tip: Distortion isn't noise, it's a lifestyle.",
+                "Mick smashed his guitar on stage. Too bad it was a rental.",
+                "Tip: Drummers aren't late, they just enter on their own tempo.",
+                "If the singer forgets the lyrics, point the mic at the crowd.",
+                "Mick tried to stage dive. The crowd parted.",
+                "Tip: Wearing sunglasses at night is essential for stardom.",
+                "The guitar solo will be long today. Mick forgot how it ends.",
+                "Mick asked for mineral water. They gave him sparkling tap water.",
+                "Tip: More stage smoke hides the keyboardist's mistakes.",
+                "The show only ends when Mick drops the mic stand.",
+                "Tip: A leather jacket in 100-degree heat is the price of Rock.",
+                "Mick threatened to quit the band. Again. Third time today.",
+                "Never look directly at the drummer during a solo.",
+                "Tip: Turning up the volume doesn't replace tuning. But it helps.",
+                "Mick got kicked out of his own dressing room. Long story.",
+                "Tip: If the crowd isn't jumping, play faster.",
+                "They said rock was dead. Mick laughed and turned up the fuzz."
+            ]
+        };
+
+        // --- HELP CONTENT (Dual Language) ---
+        const HELP_CONTENT = {
+            pt: `<h2 style="color: var(--gh-yellow); margin-top: 0;">Regras do Modo Solo (Mick)</h2>
+                <h3 style="color: var(--gh-green);">Setup Inicial</h3>
+                <ul>
+                    <li>Mick não recebe ou usa dinheiro e doces. Ignora todos os custos em dinheiro.</li>
+                    <li>Você compra 2 cartas de empresário e escolhe 1. Mick não compra cartas de empresário, emprego ou objetivos pessoais.</li>
+                    <li>Remova cartas de Objetivo Bônus que ele não possa alcançar.</li>
+                    <li>Mick é <strong>sempre o primeiro jogador</strong>.</li>
+                </ul>
+                <h3 style="color: var(--gh-red);">Como o Mick Joga</h3>
+                <ul>
+                    <li>Qualquer conjunto de 4 cartas forma um "set" imediatamente.</li>
+                    <li>Sempre escolhe o espaço na locação com a <strong>maior Fama</strong>.</li>
+                    <li>Se tiver que escolher um status, escolhe o mais baixo (se empatar, é aleatório).</li>
+                    <li>Se ganhar um status acima de 11, converte o excedente em <strong>Fama</strong> (1 Fama por ponto extra).</li>
+                    <li>Ele <strong>nunca</strong> usa "Recuperar", "Dormir Cedo" ou a 3ª locação de "Contratar Equipe".</li>
+                    <li>Se a locação não estiver disponível (bloqueada), ele vai direto para "Escrever uma Canção".</li>
+                </ul>
+                <h3 style="color: var(--gold);">⚠ Sobre os Modificadores Insanos</h3>
+                <ul>
+                    <li><em>Ritmo Frenético, Aceleração de Contratos e Inflação do Ego são extras caseiros deste app e não fazem parte do modo solo oficial/fan-made original — use por sua conta e risco!</em></li>
+                </ul>`,
+            en: `<h2 style="color: var(--gh-yellow); margin-top: 0;">Solo Mode Rules (Mick)</h2>
+                <h3 style="color: var(--gh-green);">Setup</h3>
+                <ul>
+                    <li>Mick does not get money or candy. Ignores money costs.</li>
+                    <li>You draw 2 manager cards and choose 1. Mick does not take manager, job or personal goal cards.</li>
+                    <li>Do not use Bonus Goal cards that Mick cannot achieve.</li>
+                    <li>Mick is <strong>always the first player</strong>.</li>
+                </ul>
+                <h3 style="color: var(--gh-red);">How Mick Plays</h3>
+                <ul>
+                    <li>Any 4 cards is considered a set immediately.</li>
+                    <li>He always chooses the space on a location with the <strong>highest Fame</strong>.</li>
+                    <li>If he has to choose a stat, he chooses the lowest (if tied, random).</li>
+                    <li>Gains <strong>1 Fame</strong> for each stat gained over the max (11).</li>
+                    <li>He <strong>never</strong> uses "Recover", "Go to Bed Early" or the 3rd space of "Hire Crew".</li>
+                    <li>If a location is not available, he goes to "Write a Song".</li>
+                </ul>
+                <h3 style="color: var(--gold);">⚠ About the Insane Modifiers</h3>
+                <ul>
+                    <li><em>Frenetic Rhythm, Contract Acceleration and Ego Inflation are house-rule extras added by this app and are not part of the original official/fan-made solo mode — use at your own risk!</em></li>
+                </ul>`
+        };
+
+        // --- MICK ACTIONS (Dual Language) - SEPARATED & NO APOSTROPHES ---
+        const mActions = {
+            pt: {
+                p1: { 
+                    ph1: [ ["Estação de Rádio", "Estúdio de Ensaio", "Contratar Equipe (máx $3) (máx 2)"], ["Estação de Rádio", "Estúdio de Ensaio", "Contratar Equipe (máx $3) (máx 2)"], ["Estúdio de Ensaio", "Contratar Assessor de Imprensa", "Contratar Equipe ($1/3/5) (máx 2)"], ["Promoção Independente ($2)", "Contratar Assessor de Imprensa", "Promoção Independente ($3)"], ["Contratar Equipe ($1/3/5) (máx 2)", "Estação de Rádio", "Estúdio de Ensaio"], ["Contrato Discográfico", "Contratar Equipe ($1/3/5) (máx 1)", "Promoção Independente ($2)"] ], 
+                    ph2: [ ["Show Aleatório", "TJs", "Estúdio de Ensaio"], ["Show Aleatório", "TJs", "Estúdio de Ensaio"], ["TJs", "Estúdio de Ensaio", "Show Aleatório"], ["Fox Den", "Panda Palace", "TJs"], ["Panda Palace", "Show Aleatório", "Estúdio de Ensaio"], ["Yenser Arena", "Carter Stadium", "Fox Den"] ], 
+                    ph3: [ ["Gravar Demo", "Fama (+1 ou +2)", "Bastidores"], ["Gravar Demo", "Fama (+1 ou +2)", "Bastidores"], ["Bastidores", "Slinkys", "Hoovers"], ["Carta de Objetivo", "Jax", "Fama (+2 ou +1)"], ["Hoovers", "Jax", "Buds"], ["Gravar Demo", "Buds", "Bastidores"] ] 
+                },
+                p2: { 
+                    ph1: [ ["Contratar Equipe", "Estação de Rádio", "Promoção Independente ($2)"], ["Contratar Equipe", "Estação de Rádio", "Promoção Independente ($2)"], ["Contrato Discográfico", "Contratar Equipe", "Estação de Rádio"], ["Promoção Independente ($2)", "Estúdio de Ensaio", "Contrato Discográfico"], ["Contratar Assessor de Imprensa", "Promoção Independente ($3)", "Estação de Rádio"], ["Contrato Discográfico", "Contratar Assessor", "Contratar Equipe"] ], 
+                    ph2: [ ["Panda Palace", "Show Aleatório", "Estúdio de Ensaio"], ["Panda Palace", "Show Aleatório", "Estúdio de Ensaio"], ["Yenser Arena", "Fox Den", "Carter Stadium"], ["Fox Den", "TJs", "Yenser Arena"], ["Show Aleatório", "Panda Palace", "Estúdio de Ensaio"], ["Carter Stadium", "Yenser Arena", "TJs"] ], 
+                    ph3: [ ["Gravar Demo", "Fama (+2 ou +1)", "Bastidores"], ["Gravar Demo", "Fama (+2 ou +1)", "Bastidores"], ["Bastidores", "Hoovers", "Slinkys"], ["Jax", "Buds", "Carta de Objetivo"], ["Gravar Demo", "Hoovers", "Buds"], ["Carta de Objetivo", "Bastidores", "Jax"] ] 
+                },
+                p3: { 
+                    ph1: [ ["Contrato Discográfico", "Contratar Assessor", "Contratar Equipe"], ["Contrato Discográfico", "Contratar Assessor", "Contratar Equipe"], ["Contratar Equipe", "Estação de Rádio", "Promoção Independente ($3)"], ["Promoção Independente ($2)", "Contrato Discográfico", "Estação de Rádio"], ["Contratar Equipe", "Promoção Ind. ($2)", "Estúdio de Ensaio"], ["Promoção Independente ($3)", "Contrato Discográfico", "Contratar Assessor"] ], 
+                    ph2: [ ["Carter Stadium", "Panda Palace", "Show Aleatório"], ["Carter Stadium", "Panda Palace", "Show Aleatório"], ["Yenser Arena", "Carter Stadium", "Fox Den"], ["Panda Palace", "Yenser Arena", "Show Aleatório"], ["Show Aleatório", "Carter Stadium", "TJs"], ["Panda Palace", "Show Aleatório", "Yenser Arena"] ], 
+                    ph3: [ ["Carta de Objetivo", "Hoovers", "Fama (+2 ou +1)"], ["Carta de Objetivo", "Hoovers", "Fama (+2 ou +1)"], ["Bastidores", "Slinkys", "Hoovers"], ["Jax", "Buds", "Bastidores"], ["Gravar Demo", "Carta de Objetivo", "Jax"], ["Buds", "Carta de Objetivo", "Fama (+2 ou +1)"] ] 
+                }
+            },
+            en: {
+                p1: { 
+                    ph1: [ ["Radio Station", "Rehearsal Studio", "Hire Crew (max $3) (max 2)"], ["Radio Station", "Rehearsal Studio", "Hire Crew (max $3) (max 2)"], ["Rehearsal Studio", "Hire Publicist", "Hire Crew ($1/3/5) (max 2)"], ["Indie Promo ($2)", "Hire Publicist", "Indie Promo ($3)"], ["Hire Crew ($1/3/5) (max 2)", "Radio Station", "Rehearsal Studio"], ["Record Deal", "Hire Crew ($1/3/5) (max 1)", "Indie Promo ($2)"] ], 
+                    ph2: [ ["Random Gig", "TJs", "Rehearsal Studio"], ["Random Gig", "TJs", "Rehearsal Studio"], ["TJs", "Rehearsal Studio", "Random Gig"], ["Fox Den", "Panda Palace", "TJs"], ["Panda Palace", "Random Gig", "Rehearsal Studio"], ["Yenser Arena", "Carter Stadium", "Fox Den"] ], 
+                    ph3: [ ["Record Demo", "Fame (+1 or +2)", "Backstage"], ["Record Demo", "Fame (+1 or +2)", "Backstage"], ["Backstage", "Slinkys", "Hoovers"], ["Goal Card", "Jax", "Fame (+2 or +1)"], ["Hoovers", "Jax", "Buds"], ["Record Demo", "Buds", "Backstage"] ] 
+                },
+                p2: { 
+                    ph1: [ ["Hire Crew", "Radio Station", "Indie Promo ($2)"], ["Hire Crew", "Radio Station", "Indie Promo ($2)"], ["Record Deal", "Hire Crew", "Radio Station"], ["Indie Promo ($2)", "Rehearsal Studio", "Record Deal"], ["Hire Publicist", "Indie Promo ($3)", "Radio Station"], ["Record Deal", "Hire Publicist", "Hire Crew"] ], 
+                    ph2: [ ["Panda Palace", "Random Gig", "Rehearsal Studio"], ["Panda Palace", "Random Gig", "Rehearsal Studio"], ["Yenser Arena", "Fox Den", "Carter Stadium"], ["Fox Den", "TJs", "Yenser Arena"], ["Random Gig", "Panda Palace", "Rehearsal Studio"], ["Carter Stadium", "Yenser Arena", "TJs"] ], 
+                    ph3: [ ["Record Demo", "Fame (+2 or +1)", "Backstage"], ["Record Demo", "Fame (+2 or +1)", "Backstage"], ["Backstage", "Hoovers", "Slinkys"], ["Jax", "Buds", "Goal Card"], ["Record Demo", "Hoovers", "Buds"], ["Goal Card", "Backstage", "Jax"] ] 
+                },
+                p3: { 
+                    ph1: [ ["Record Deal", "Hire Publicist", "Hire Crew"], ["Record Deal", "Hire Publicist", "Hire Crew"], ["Hire Crew", "Radio Station", "Indie Promo ($3)"], ["Indie Promo ($2)", "Record Deal", "Radio Station"], ["Hire Crew", "Indie Promo ($2)", "Rehearsal Studio"], ["Indie Promo ($3)", "Record Deal", "Hire Publicist"] ], 
+                    ph2: [ ["Carter Stadium", "Panda Palace", "Random Gig"], ["Carter Stadium", "Panda Palace", "Random Gig"], ["Yenser Arena", "Carter Stadium", "Fox Den"], ["Panda Palace", "Yenser Arena", "Random Gig"], ["Random Gig", "Carter Stadium", "TJs"], ["Panda Palace", "Random Gig", "Yenser Arena"] ], 
+                    ph3: [ ["Goal Card", "Hoovers", "Fame (+2 or +1)"], ["Goal Card", "Hoovers", "Fame (+2 or +1)"], ["Backstage", "Slinkys", "Hoovers"], ["Jax", "Buds", "Backstage"], ["Record Demo", "Goal Card", "Jax"], ["Buds", "Goal Card", "Fame (+2 or +1)"] ] 
+                }
+            }
+        };
+
+        // --- STATE VARIABLES ---
+        const STORAGE_KEY = 'mickBotState_v1';
+        let currentLang = 'en';
+        let currentActionSet = [];
+        let activeIndex = 0;
+        let isMuted = false; 
+        let audioCtx = null;
+        let currentFame = 5; 
+        let ampStats = { talento: 2, reputacao: 2, cancoes: 2 };
+        let historyCount = 0;
+        let historyEntries = [];
+        let freneticActionCounter = 0;
+        let lastDifficultyValue = '5';
+        let currentPeriod = 'p1';
+        let currentPhase = 'ph1';
+
+        // --- CORE FUNCTIONS ---
+        function detectDefaults() {
+            const saved = loadState();
+
+            let siteLang = localStorage.getItem('boardbots_lang');
+            if (siteLang) {
+                document.getElementById('optLang').value = siteLang;
+            } else if (saved && saved.lang) {
+                document.getElementById('optLang').value = saved.lang;
+            } else {
+                const browserLang = navigator.language || navigator.userLanguage;
+                if (browserLang.startsWith('pt')) currentLang = 'pt';
+                document.getElementById('optLang').value = 'auto';
+            }
+            document.getElementById('optLayout').value = (saved && saved.layout) ? saved.layout : 'auto';
+            if (saved && saved.audio) document.getElementById('optAudio').value = saved.audio;
+
+            applySettings(true);
+
+            if (saved) {
+                restoreState(saved);
+            } else {
+                document.getElementById('difficultySelector').value = "5";
+                setDifficulty(true);
+            }
+        }
+
+        function loadState() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                return raw ? JSON.parse(raw) : null;
+            } catch (e) { return null; }
+        }
+
+        function saveState() {
+            const state = {
+                lang: document.getElementById('optLang').value,
+                layout: document.getElementById('optLayout').value,
+                audio: document.getElementById('optAudio').value,
+                difficulty: document.getElementById('difficultySelector').value,
+                mods: {
+                    ritmo: document.getElementById('mod_ritmo').checked,
+                    contratos: document.getElementById('mod_contratos').checked,
+                    ego: document.getElementById('mod_ego').checked
+                },
+                fame: currentFame,
+                ampStats: ampStats,
+                historyEntries: historyEntries,
+                currentPeriod: currentPeriod,
+                currentPhase: currentPhase,
+                currentActionSet: typeof currentActionSet === 'number' ? currentActionSet : null,
+                activeIndex: activeIndex
+            };
+            try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) { /* storage unavailable, ignore */ }
+        }
+
+        function restoreState(saved) {
+            document.getElementById('difficultySelector').value = saved.difficulty || "5";
+            lastDifficultyValue = saved.difficulty || "5";
+            document.getElementById('mod_ritmo').checked = !!(saved.mods && saved.mods.ritmo);
+            document.getElementById('mod_contratos').checked = !!(saved.mods && saved.mods.contratos);
+            document.getElementById('mod_ego').checked = !!(saved.mods && saved.mods.ego);
+            document.getElementById('insaneModifiers').style.display = saved.difficulty === 'insane' ? 'block' : 'none';
+
+            currentFame = typeof saved.fame === 'number' ? saved.fame : 5;
+            document.getElementById('fameScore').innerText = currentFame;
+
+            ampStats = saved.ampStats || { talento: 2, reputacao: 2, cancoes: 2 };
+            document.getElementById('val_talento').innerText = ampStats.talento;
+            document.getElementById('val_reputacao').innerText = ampStats.reputacao;
+            document.getElementById('val_cancoes').innerText = ampStats.cancoes;
+
+            historyEntries = saved.historyEntries || [];
+            historyCount = historyEntries.length;
+            renderHistory();
+
+            const periodBtn = document.querySelector(`#periodGroup .btn-toggle[data-period="${saved.currentPeriod || 'p1'}"]`) || document.querySelector('#periodGroup .btn-toggle:first-child');
+            setPeriod(saved.currentPeriod || 'p1', periodBtn);
+            const phaseBtn = document.querySelector(`#phaseGroup .btn-toggle[data-phase="${saved.currentPhase || 'ph1'}"]`) || document.querySelector('#phaseGroup .btn-toggle:first-child');
+            setPhase(saved.currentPhase || 'ph1', phaseBtn);
+
+            if (typeof saved.currentActionSet === 'number') {
+                currentActionSet = saved.currentActionSet;
+                activeIndex = saved.activeIndex || 0;
+                renderList();
+            }
+        }
+
+        function applySettings(isInit = false) {
+            const langSel = document.getElementById('optLang').value;
+            if (langSel !== 'auto') {
+                currentLang = langSel;
+                localStorage.setItem('boardbots_lang', currentLang);
+            }
+            else {
+                currentLang = (navigator.language.startsWith('pt')) ? 'pt' : 'en';
+            }
+            updateLanguageUI();
+
+            const layoutSel = document.getElementById('optLayout').value;
+            const body = document.getElementById('bodyTag');
+            body.classList.remove('landscape');
+            if (layoutSel === 'landscape') {
+                body.classList.add('landscape');
+            } else if (layoutSel === 'auto') {
+                if (window.innerWidth > window.innerHeight) body.classList.add('landscape');
+            }
+
+            const audioSel = document.getElementById('optAudio').value;
+            isMuted = (audioSel === 'off');
+
+            if (!isInit) {
+                document.getElementById('optionsModal').style.display = 'none';
+                document.body.style.overflow = '';
+                saveState();
+            }
+        }
+
+        function updateLanguageUI() {
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                const val = i18n[currentLang][key];
+                if (val) {
+                    if (val.indexOf('<') !== -1) { el.innerHTML = val; } else { el.innerText = val; }
+                }
+            });
+            document.getElementById('creditsText').innerHTML = i18n[currentLang].creditsHtml;
+
+            renderHelp();
+            renderHistory();
+            if (document.getElementById('freneticAlert').style.display === 'block') updateFreneticCounter();
+            if (typeof currentActionSet === 'number') renderList();
+        }
+
+        function renderHelp() {
+            document.getElementById('helpModalBody').innerHTML = HELP_CONTENT[currentLang] || HELP_CONTENT.en;
+        }
+
+        window.addEventListener('resize', () => {
+            if (document.getElementById('optLayout').value === 'auto') applySettings(true);
+        });
+
+        // --- GAME LOGIC ---
+        function showToast(messageKey) {
+            const toast = document.getElementById("toast");
+            toast.innerText = i18n[currentLang][messageKey] || messageKey;
+            toast.className = "show";
+            setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3500);
+        }
+
+        function changeFame(amount) {
+            currentFame += amount;
+            if (currentFame < 0) currentFame = 0;
+            document.getElementById('fameScore').innerText = currentFame;
+            saveState();
+        }
+
+        function setDifficulty(skipConfirm = false) {
+            const val = document.getElementById('difficultySelector').value;
+            if (!skipConfirm && historyCount > 0) {
+                if (!confirm(i18n[currentLang].confirm_difficulty_change)) {
+                    document.getElementById('difficultySelector').value = lastDifficultyValue;
+                    return;
+                }
+            }
+            lastDifficultyValue = val;
+            const modPanel = document.getElementById('insaneModifiers');
+            if (val === 'insane') {
+                currentFame = 15;
+                modPanel.style.display = 'block';
+            } else {
+                currentFame = parseInt(val);
+                modPanel.style.display = 'none';
+                document.getElementById('mod_ritmo').checked = false;
+                document.getElementById('mod_contratos').checked = false;
+                document.getElementById('mod_ego').checked = false;
+            }
+            document.getElementById('fameScore').innerText = currentFame;
+            checkFrenetic();
+            saveState();
+        }
+
+        function resetGame(fromBtn = false) {
+            if(fromBtn) {
+                if(!confirm(i18n[currentLang].confirm_new_game)) return;
+            }
+            // Zera Stats
+            ampStats = { talento: 2, reputacao: 2, cancoes: 2 };
+            document.getElementById('val_talento').innerText = 2;
+            document.getElementById('val_reputacao').innerText = 2;
+            document.getElementById('val_cancoes').innerText = 2;
+            
+            // Re-aplica Dificuldade atual para a Fama (sem pedir confirmação, já confirmado acima)
+            setDifficulty(true); 
+            
+            // Zera Histórico
+            historyCount = 0;
+            historyEntries = [];
+            renderHistory();
+            
+            // Zera Ações
+            currentActionSet = [];
+            freneticActionCounter = 0;
+            document.getElementById('actionList').innerHTML = `<div style="text-align: center; color: #777; font-size: 1.5rem; margin-top: 40px;">${i18n[currentLang].msg_idle}</div>`;
+            
+            // Retorna ao Periodo 1 e Fase 1
+            setPeriod('p1', document.querySelector('#periodGroup .btn-toggle:first-child'));
+            setPhase('ph1', document.querySelector('#phaseGroup .btn-toggle:first-child'));
+            
+            document.getElementById('optionsModal').style.display = 'none';
+            document.body.style.overflow = '';
+            saveState();
+        }
+
+        function setPeriod(period, btnElement) {
+            currentPeriod = period;
+            document.querySelectorAll('#periodGroup .btn-toggle').forEach(b => b.classList.remove('active'));
+            btnElement.classList.add('active');
+            checkFrenetic();
+            saveState();
+        }
+
+        function setPhase(phase, btnElement) {
+            currentPhase = phase;
+            document.querySelectorAll('#phaseGroup .btn-toggle').forEach(b => b.classList.remove('active'));
+            btnElement.classList.add('active');
+            saveState();
+        }
+
+        function checkFrenetic() {
+            const isRitmo = document.getElementById('mod_ritmo').checked;
+            const alertBox = document.getElementById('freneticAlert');
+            const isActive = isRitmo && currentPeriod === 'p3';
+            if (isActive) {
+                alertBox.style.display = 'block';
+                updateFreneticCounter();
+            } else {
+                alertBox.style.display = 'none';
+                freneticActionCounter = 0;
+            }
+        }
+
+        function updateFreneticCounter() {
+            document.getElementById('freneticCounter').innerText = `${i18n[currentLang].frenetic_action_label} ${freneticActionCounter + 1}/2`;
+        }
+
+        function changeStat(statKey, amount) {
+            ampStats[statKey] += amount;
+            if (ampStats[statKey] > 11) {
+                ampStats[statKey] = 11;
+                const isEgo = document.getElementById('mod_ego').checked;
+                const fameGain = isEgo ? 2 : 1;
+                changeFame(fameGain); 
+                showToast("toast_max");
+            } else if (ampStats[statKey] < 0) ampStats[statKey] = 0;
+            document.getElementById('val_' + statKey).innerText = ampStats[statKey];
+            saveState();
+        }
+
+        let diceBox = null;
+        let diceBoxReady = false;
+
+        async function initDiceBox() {
+            try {
+                const { loadDiceBox } = await import('../assets/dice-roller.js');
+                diceBox = await loadDiceBox({ theme: 'rockhard', themeUrl: new URL('../assets/dice-box/themes/rockhard', window.location.href).href, themeColor: '#FFC72C', scale: 27, timeoutMs: 6000 });
+                diceBoxReady = true;
+                const tray = document.getElementById('dice-tray');
+                if (tray) tray.classList.add('has-3d');
+            } catch (e) {
+                diceBoxReady = false;
+            }
+        }
+        initDiceBox();
+
+        // Physics engine can occasionally never settle (silent hang); guard every roll with a timeout.
+        async function rollDiceBoxSafe(notation, timeoutMs = 5000) {
+            const { rollDiceSafe } = await import('../assets/dice-roller.js');
+            return rollDiceSafe(diceBox, notation, timeoutMs);
+        }
+
+        async function rollDice() {
+            let roll;
+            if (diceBoxReady && diceBox) {
+                try {
+                    const { sanitizeDie } = await import('../assets/dice-roller.js');
+                    const rollRes = await rollDiceBoxSafe('1d6');
+                    roll = (rollRes && rollRes.length > 0) ? sanitizeDie(rollRes[0].value, 6) : (Math.floor(Math.random() * 6) + 1);
+                } catch (e) {
+                    roll = Math.floor(Math.random() * 6) + 1;
+                }
+            } else {
+                roll = Math.floor(Math.random() * 6) + 1;
+            }
+            playGuitarSolo();
+            currentActionSet = roll; 
+            activeIndex = 0;
+            renderList();
+            saveState();
+        }
+
+        function discardAction() { activeIndex++; renderList(); saveState(); }
+
+        function confirmAction(actionName) {
+            historyCount++;
+            historyEntries.push({ turn: historyCount, periodKey: currentPeriod, phaseKey: currentPhase, action: actionName });
+            renderHistory();
+
+            document.getElementById('actionList').innerHTML = `<div style="text-align: center; color: #32CD32; font-size: 1.5rem; margin-top: 40px;">${i18n[currentLang].action_confirmed}</div>`;
+            
+            const quotes = flavorQuotes[currentLang];
+            document.getElementById('flavorText').innerText = quotes[Math.floor(Math.random() * quotes.length)];
+            currentActionSet = [];
+
+            if (document.getElementById('mod_ritmo').checked && currentPeriod === 'p3') {
+                freneticActionCounter = (freneticActionCounter + 1) % 2;
+                updateFreneticCounter();
+            }
+            saveState();
+        }
+
+        function renderHistory() {
+            const list = document.getElementById('historyList');
+            if (historyEntries.length === 0) {
+                list.innerHTML = `<li><em>${i18n[currentLang].history_empty}</em></li>`;
+                return;
+            }
+            list.innerHTML = historyEntries.slice().reverse().map(e => {
+                const periodStr = i18n[currentLang]['btn_' + e.periodKey];
+                const phaseStr = i18n[currentLang]['btn_' + e.phaseKey];
+                return `<li><strong style="color: var(--gold)">${i18n[currentLang].turn_label} ${e.turn}:</strong> [${periodStr} | ${phaseStr}] -> <span style="color: #fff">${e.action}</span></li>`;
+            }).join('');
+        }
+
+        function copyHistory() {
+            if (historyEntries.length === 0) { showToast('history_empty'); return; }
+            const lines = historyEntries.map(e => `${i18n[currentLang].turn_label} ${e.turn}: [${i18n[currentLang]['btn_' + e.periodKey]} | ${i18n[currentLang]['btn_' + e.phaseKey]}] -> ${e.action}`);
+            const text = lines.join('\n');
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(() => showToast('toast_copied')).catch(() => alert(text));
+            } else {
+                alert(text);
+            }
+        }
+
+        function renderList() {
+            if(!currentActionSet || typeof currentActionSet !== 'number') return;
+            const list = document.getElementById('actionList');
+            list.innerHTML = '';
+            
+            const arr = mActions[currentLang][currentPeriod][currentPhase][currentActionSet - 1];
+
+            if (activeIndex < arr.length) {
+                arr.forEach((action, idx) => {
+                    const div = document.createElement('div');
+                    let statusClass = 'pending';
+                    if (idx === activeIndex) statusClass = 'active'; else if (idx < activeIndex) statusClass = 'discarded';
+
+                    div.className = `action-item ${statusClass}`;
+                    const content = document.createElement('div'); content.className = 'action-content';
+                    content.innerHTML = `<div class="action-indicator"></div> ${idx + 1}ª: ${action}`;
+                    div.appendChild(content);
+
+                    if (idx === activeIndex) {
+                        const controls = document.createElement('div'); controls.className = 'active-controls';
+                        controls.innerHTML = `<button class="btn-confirm" onclick="confirmAction('${action}')">${i18n[currentLang].btn_confirm}</button>
+                                              <button class="btn-miss" onclick="discardAction()">${i18n[currentLang].btn_miss}</button>`;
+                        div.appendChild(controls);
+                    }
+                    list.appendChild(div);
+                });
+            } else {
+                const div = document.createElement('div'); div.className = 'action-item active';
+                const songTxt = i18n[currentLang].write_song;
+                div.innerHTML = `<div class="action-content"><div class="action-indicator"></div><strong>${i18n[currentLang].plan_b}</strong>&nbsp;${songTxt}</div>
+                                 <div class="active-controls"><button class="btn-confirm" onclick="confirmAction('${songTxt}')">${i18n[currentLang].btn_confirm}</button></div>`;
+                list.appendChild(div);
+            }
+        }
+
+        // --- WEB AUDIO API SYNTH ---
+        function makeDistortionCurve(amount) {
+            let k = typeof amount === 'number' ? amount : 50, n_samples = 44100, curve = new Float32Array(n_samples), deg = Math.PI / 180;
+            for (let i = 0; i < n_samples; ++i ) { let x = i * 2 / n_samples - 1; curve[i] = ( 3 + k ) * x * 20 * deg / ( Math.PI + k * Math.abs(x) ); }
+            return curve;
+        }
+        function playPowerChord(baseFreq, startTime, duration, bend, outputNode) {
+            // 4-string "open power chord" stack (root, 5th, octave, octave+5th) instead of a bare triad - fuller, more metal.
+            const freqs = [baseFreq, baseFreq * 1.4983, baseFreq * 2, baseFreq * 2 * 1.4983];
+            // pick-attack transient: a tiny burst of high-passed noise gives the string pluck its "click"; tone/length varies per hit so it doesn't sound machine-repeated
+            const clickDur = 0.010 + Math.random() * 0.008;
+            const clickBuffer = audioCtx.createBuffer(1, audioCtx.sampleRate * clickDur, audioCtx.sampleRate);
+            const clickData = clickBuffer.getChannelData(0);
+            for (let i = 0; i < clickBuffer.length; i++) clickData[i] = (Math.random() * 2 - 1) * (1 - i / clickBuffer.length);
+            const clickNoise = audioCtx.createBufferSource(); clickNoise.buffer = clickBuffer;
+            const clickFilter = audioCtx.createBiquadFilter(); clickFilter.type = 'highpass'; clickFilter.frequency.value = 1400 + Math.random() * 800;
+            const clickGain = audioCtx.createGain(); clickGain.gain.setValueAtTime(0.5, startTime); clickGain.gain.exponentialRampToValueAtTime(0.001, startTime + clickDur);
+            clickNoise.connect(clickFilter); clickFilter.connect(clickGain); clickGain.connect(outputNode);
+            clickNoise.start(startTime); clickNoise.stop(startTime + clickDur);
+
+            // low-end "body thump" under the pick attack - the acoustic weight a real guitar body/cab adds beneath the distorted tone
+            const thump = audioCtx.createOscillator(); thump.type = 'sine'; thump.frequency.value = baseFreq / 2;
+            const thumpGain = audioCtx.createGain(); thumpGain.gain.setValueAtTime(0.35, startTime); thumpGain.gain.exponentialRampToValueAtTime(0.01, startTime + 0.09);
+            thump.connect(thumpGain); thumpGain.connect(outputNode); thump.start(startTime); thump.stop(startTime + 0.1);
+
+            // strum sweep: a real pick stroke hits each string a few ms apart, not all in perfect unison - direction flips randomly like alternating down/up strokes
+            const strumDir = Math.random() < 0.5 ? 1 : -1;
+            freqs.forEach((freq, idx) => {
+                const stringPos = strumDir > 0 ? idx : (freqs.length - 1 - idx);
+                const stringStart = startTime + stringPos * (0.004 + Math.random() * 0.003);
+                const osc1 = audioCtx.createOscillator(); const osc2 = audioCtx.createOscillator(); const gain = audioCtx.createGain(); const filter = audioCtx.createBiquadFilter();
+                osc1.type = 'sawtooth'; osc2.type = 'square'; osc2.detune.value = 4 + Math.random() * 6;
+                if (bend) { osc1.frequency.setValueAtTime(freq, stringStart); osc1.frequency.linearRampToValueAtTime(freq * 1.05946, stringStart + duration); osc2.frequency.setValueAtTime(freq, stringStart); osc2.frequency.linearRampToValueAtTime(freq * 1.05946, stringStart + duration); } else { osc1.frequency.value = freq; osc2.frequency.value = freq; }
+                // subtle vibrato on sustained, non-root notes - like a player working the string after the pluck
+                if (duration > 0.3 && idx > 0) {
+                    const lfo = audioCtx.createOscillator(); lfo.type = 'sine'; lfo.frequency.value = 5.5;
+                    const lfoGain = audioCtx.createGain(); lfoGain.gain.value = freq * 0.006;
+                    lfo.connect(lfoGain); lfoGain.connect(osc1.frequency); lfoGain.connect(osc2.frequency);
+                    lfo.start(stringStart + 0.08); lfo.stop(stringStart + duration + 0.1);
+                }
+                gain.gain.setValueAtTime(0, stringStart); gain.gain.linearRampToValueAtTime(0.65, stringStart + 0.015); gain.gain.exponentialRampToValueAtTime(0.01, stringStart + duration);
+                filter.type = 'lowpass'; filter.Q.value = 2; filter.frequency.setValueAtTime(4200, stringStart); filter.frequency.exponentialRampToValueAtTime(700, stringStart + duration);
+                osc1.connect(filter); osc2.connect(filter); filter.connect(gain); gain.connect(outputNode);
+                osc1.start(stringStart); osc1.stop(stringStart + duration + 0.1); osc2.start(stringStart); osc2.stop(stringStart + duration + 0.1);
+            });
+        }
+        function playGuitarSolo() {
+            pulseStrumButton();
+            if (isMuted) return;
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const now = audioCtx.currentTime;
+            const riffs = [ [ {f: 110.00, d: 0.25}, {f: 130.81, d: 0.25}, {f: 146.83, d: 0.40}, {f: 110.00, d: 0.25}, {f: 130.81, d: 0.25}, {f: 155.56, d: 0.15}, {f: 146.83, d: 0.40} ], [ {f: 329.63, d: 0.08}, {f: 369.99, d: 0.08}, {f: 392.00, d: 0.08}, {f: 440.00, d: 0.08}, {f: 493.88, d: 0.08}, {f: 587.33, d: 0.40, bend: true} ], [ {f: 293.66, d: 0.15}, {f: 329.63, d: 0.15}, {f: 392.00, d: 0.20, bend: true}, {f: 329.63, d: 0.15}, {f: 293.66, d: 0.15}, {f: 220.00, d: 0.50} ] ];
+            const selectedRiff = riffs[Math.floor(Math.random() * riffs.length)]; let timeOffset = 0;
+            const masterGain = audioCtx.createGain(); masterGain.gain.value = 0.3;
+            const distortion = audioCtx.createWaveShaper(); distortion.curve = makeDistortionCurve(100); distortion.oversample = '4x';
+            // amp cabinet simulation: lowpass to tame fizzy highs + a presence peak, closer to a miked speaker cab than a plain bandpass
+            const cabLow = audioCtx.createBiquadFilter(); cabLow.type = 'lowpass'; cabLow.frequency.value = 3200; cabLow.Q.value = 0.7;
+            const cabPeak = audioCtx.createBiquadFilter(); cabPeak.type = 'peaking'; cabPeak.frequency.value = 900; cabPeak.Q.value = 1.2; cabPeak.gain.value = 5;
+            distortion.connect(cabLow); cabLow.connect(cabPeak); cabPeak.connect(masterGain); masterGain.connect(audioCtx.destination);
+            selectedRiff.forEach((note) => { playPowerChord(note.f, now + timeOffset, note.d, note.bend, distortion); timeOffset += note.d + 0.05; });
+        }
+
+        function pulseStrumButton() {
+            const btn = document.getElementById('btnStrum');
+            btn.classList.add('pulse-flash');
+            setTimeout(() => btn.classList.remove('pulse-flash'), 300);
+        }
+
+        // --- EVENTS ---
+        document.getElementById("btnHelp").onclick = () => { document.getElementById("helpModal").style.display = "flex"; document.body.style.overflow = "hidden"; };
+        document.getElementById("btnOptions").onclick = () => { document.getElementById("optionsModal").style.display = "flex"; document.body.style.overflow = "hidden"; };
+        document.querySelectorAll(".close-modal").forEach(btn => {
+            btn.onclick = function() { this.parentElement.parentElement.style.display = "none"; document.body.style.overflow = ""; }
+        });
+        
+        window.onclick = (e) => { 
+            if (e.target == document.getElementById("helpModal")) { document.getElementById("helpModal").style.display = "none"; document.body.style.overflow = ""; }
+            if (e.target == document.getElementById("optionsModal")) { document.getElementById("optionsModal").style.display = "none"; document.body.style.overflow = ""; }
+        }
+
+        // Initialization
+        detectDefaults();
+    </script>
+<script type="module" src="../assets/analytics.js"></script>
+<script type="module" src="../assets/bot-view.js"></script>
+
+<div style="text-align: center; margin: 40px auto 20px auto; width: 100%;">
+    <a href="../index.html" class="btn-home" style="display:inline-flex; align-items:center; gap:8px; background:linear-gradient(135deg, #ff9d00, #ff2600); color:#fff; border:2px solid #FFC72C; border-radius:30px; padding:12px 28px; font-family:'Metal Mania', cursive; letter-spacing:1px; text-transform:uppercase; font-size:15px; text-decoration:none; box-shadow:0 4px 14px rgba(255,60,0,0.4); transition:transform 0.15s, box-shadow 0.15s;">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9 21v-6h6v6"/></svg>
+        ← Home
+    </a>
+</div>
+
+</body>
+</html>

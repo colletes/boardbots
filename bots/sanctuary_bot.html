@@ -1,0 +1,1439 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Sanctuary Solo Automa</title>
+<link rel="icon" href="../assets/mascot-trimmed.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/site.css?v=7">
+<style>
+:root {
+  --bg-0: #0f1c16;
+  --bg-1: #0a130f;
+  --surface: rgba(22, 34, 28, 0.95);
+  --surface-2: rgba(32, 46, 38, 0.85);
+  --border: #2c4237;
+  --border-gold: rgba(139, 181, 120, 0.4);
+  --border-light: rgba(255, 255, 255, 0.08);
+  --gold: #d9a441;
+  --gold-dim: #a8792f;
+  --gold-glow: rgba(217, 164, 65, 0.2);
+  --amethyst: #c2708f;
+  --text: #ede8dc;
+  --text-dim: #9aa79c;
+  --font-display: 'Cinzel', serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --radius: 8px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  background-color: var(--bg-0);
+  background-image: 
+    radial-gradient(circle at 50% 15%, rgba(139, 181, 120, 0.06) 0%, transparent 60%),
+    radial-gradient(circle at 80% 85%, rgba(194, 112, 143, 0.04) 0%, transparent 50%),
+    linear-gradient(rgba(15,28,22,0.88), rgba(15,28,22,0.88)),
+    url("../assets/textures/forest-floor.jpg"),
+    url("data:image/svg+xml,%3Csvg width='160' height='160' viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='slate'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23slate)' opacity='0.08'/%3E%3C/svg%3E");
+  background-size: auto, auto, auto, 340px 340px, auto;
+  background-repeat: no-repeat, no-repeat, no-repeat, repeat, repeat;
+  background-attachment: fixed;
+  color: var(--text);
+  margin: 0 auto;
+  padding-bottom: max(30px, env(safe-area-inset-bottom));
+  -webkit-tap-highlight-color: transparent;
+  min-height: 100vh;
+}
+
+.hidden { display: none !important; }
+
+/* Top Navigation Bar */
+.top-nav {
+  width: 100%;
+  max-width: 1300px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  background: rgba(15, 28, 22, 0.94);
+  border-bottom: 2px solid var(--border-gold);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+}
+.nav-brand {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--gold);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  letter-spacing: 1px;
+}
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.nav-btn, .lang-btn {
+  background: var(--surface-2);
+  color: var(--text);
+  border: 1px solid var(--border-gold);
+  padding: 6px 12px;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s;
+}
+.nav-btn:hover, .lang-btn:hover {
+  background: var(--gold);
+  color: #0f1c16;
+  border-color: var(--gold);
+}
+.lang-switch {
+  display: flex;
+  border: 1px solid var(--border-gold);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.lang-btn {
+  border: none;
+  border-radius: 0;
+  padding: 6px 10px;
+}
+.lang-btn.active {
+  background: var(--gold);
+  color: #0f1c16;
+  font-weight: 800;
+}
+
+/* Hero Banner */
+.hero-wrapper {
+  width: 100%;
+  max-width: 1300px;
+  margin: 14px auto 18px;
+  padding: 0 16px;
+}
+.hero {
+  position: relative;
+  border-radius: 10px;
+  overflow: hidden;
+  height: 170px;
+  display: flex;
+  align-items: center;
+  border: 2px solid var(--border-gold);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+  background: linear-gradient(135deg, var(--bg-0), var(--bg-1));
+}
+.hero-bg {
+  position: absolute;
+  top: 10px; right: 14px; bottom: 10px; left: auto;
+  width: auto; height: calc(100% - 20px);
+  object-fit: contain;
+  object-position: center;
+  border-radius: 6px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.55);
+  filter: none;
+}
+.hero-content {
+  position: relative;
+  z-index: 2;
+  padding: 20px;
+  padding-right: 150px;
+  width: 100%;
+  background: linear-gradient(90deg, rgba(15,28,22,0.95) 0%, rgba(15,28,22,0.75) 55%, rgba(15,28,22,0) 100%);
+}
+.hero-badge {
+  display: inline-block;
+  background: rgba(217, 164, 65, 0.2);
+  border: 1px solid var(--gold);
+  color: var(--gold);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  padding: 3px 8px;
+  border-radius: 3px;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+}
+.hero-title {
+  font-family: var(--font-display);
+  font-size: 2.1rem;
+  font-weight: 800;
+  color: #fff;
+  margin: 0;
+  text-shadow: 2px 2px 6px #000;
+  line-height: 1.1;
+  letter-spacing: 1px;
+}
+.hero-subtitle {
+  color: var(--gold);
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin-top: 3px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+@media (max-width: 600px) {
+  .hero-bg { display: none; }
+  .hero-content { padding-right: 20px; }
+}
+
+.main-interface {
+  max-width: 1300px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+@media (min-width: 900px) {
+  #game-area {
+    display: grid;
+    grid-template-columns: 360px 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+  .setup-container {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  .game-col-left, .game-col-right {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+}
+
+button, select, input { touch-action: manipulation; }
+@keyframes fadeSlideUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes popIn { 0% { transform: scale(0.9); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+
+/* Cards & Containers */
+.card {
+  background: var(--surface);
+  padding: 20px 22px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.45);
+  margin-bottom: 20px;
+  animation: fadeSlideUp 0.3s ease both;
+  position: relative;
+  word-break: break-word;
+}
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--border-gold), transparent);
+  border-radius: 10px 10px 0 0;
+}
+
+h2 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--gold);
+  margin: 0 0 14px;
+  padding-bottom: 8px;
+  font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--border);
+}
+h2::before {
+  content: '◆';
+  color: var(--gold);
+  font-size: 0.8rem;
+}
+h3 {
+  color: var(--text);
+  font-size: 1.05rem;
+  font-family: var(--font-display);
+  margin: 16px 0 8px;
+  letter-spacing: 0.5px;
+}
+
+label { display: block; margin: 10px 0 4px; font-size: 0.9rem; color: var(--text-dim); }
+.row { display: flex; gap: 12px; flex-wrap: wrap; }
+.row > * { flex: 1; min-width: 120px; }
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 18px;
+  border-radius: 6px;
+  border: 1px solid var(--border-gold);
+  background: linear-gradient(145deg, #24352c, #16211b);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  min-height: 44px;
+  font-family: var(--font-display);
+  letter-spacing: 0.5px;
+  transition: all 0.15s ease;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+.icon-inline{ display:inline-flex; vertical-align:-0.15em; }
+.icon-inline svg, svg.icon-inline{ width:1.1em; height:1.1em; flex-shrink:0; }
+.btn:hover {
+  filter: brightness(1.15);
+  transform: translateY(-1px);
+  border-color: var(--gold);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.4);
+}
+.btn:active {
+  transform: translateY(1px);
+  box-shadow: none;
+}
+.btn-primary {
+  background: linear-gradient(145deg, #a8637c, #6e3f4e);
+  border-color: #c2708f;
+  color: #fff;
+  width: 100%;
+}
+.btn-primary:hover {
+  border-color: #d8a0b3;
+}
+.btn-block {
+  width: 100%;
+  margin-top: 10px;
+}
+.btn.active {
+  background: linear-gradient(145deg, var(--gold), var(--gold-dim));
+  border-color: #f3d98a;
+  color: #0f1c16;
+  font-weight: 800;
+}
+
+/* Status Counters */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 12px;
+}
+.stat {
+  background: rgba(13, 24, 19, 0.75);
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 8px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 105px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+}
+.stat .lbl {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+.stat .val {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--gold);
+  margin: 2px 0;
+  line-height: 1;
+  font-family: var(--font-display);
+  text-shadow: 1px 1px 2px #000;
+}
+.stat .adj {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  width: 100%;
+  margin-top: 4px;
+}
+.stat .adj button {
+  width: 34px;
+  height: 32px;
+  border-radius: 5px;
+  border: 1px solid var(--border-gold);
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 1.2rem;
+  font-weight: 800;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.12s;
+}
+.stat .adj button:hover {
+  background: var(--gold);
+  color: #0f1c16;
+}
+
+/* Action Cards */
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 12px;
+  margin-top: 10px;
+}
+.acard {
+  --ac-color: var(--amethyst);
+  background: linear-gradient(165deg, rgba(22, 34, 28, 0.95), rgba(14, 24, 19, 0.98));
+  border: 2px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  padding: 12px 8px 10px;
+  text-align: center;
+  position: relative;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.acard.active {
+  border-color: var(--ac-color);
+  box-shadow: 0 0 16px rgba(0,0,0,0.6), 0 0 12px color-mix(in srgb, var(--ac-color) 40%, transparent);
+  transform: translateY(-2px);
+  animation: popIn 0.35s ease;
+}
+.acard .slot {
+  position: absolute;
+  top: 6px;
+  left: 8px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--gold);
+  font-family: var(--font-display);
+}
+.ac-icon-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 6px auto;
+}
+.ac-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 50% !important;
+  background: rgba(0, 0, 0, 0.45);
+  border: 2px solid var(--ac-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+  flex-shrink: 0;
+}
+.ac-icon svg {
+  width: 22px !important;
+  height: 22px !important;
+  max-width: 22px !important;
+  max-height: 22px !important;
+  stroke: var(--ac-color);
+  display: block;
+}
+.acard .name {
+  font-weight: 700;
+  margin: 2px 0 8px;
+  font-size: 0.8rem;
+  line-height: 1.2;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-family: var(--font-display);
+  color: var(--text);
+  min-height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.acard .side-toggle .btn-side {
+  width: 100%;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 6px 4px;
+  border-radius: 4px;
+  background: rgba(0,0,0,0.5);
+  border: 1px solid var(--border-gold);
+  color: var(--gold);
+  cursor: pointer;
+  font-family: var(--font-display);
+  transition: all 0.15s;
+}
+.acard .side-toggle .btn-side:hover {
+  background: var(--gold);
+  color: #0f1c16;
+}
+
+/* Die Box & Tactile Board Game Die */
+.roll-box { text-align: center; }
+.round-indicator {
+  color: var(--text-dim);
+  font-size: 0.88rem;
+  margin: -4px 0 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-family: var(--font-display);
+}
+.round-indicator b {
+  color: var(--gold);
+  font-size: 1.25rem;
+}
+.die-wrap {
+  display: flex;
+  justify-content: center;
+  margin: 6px 0 16px;
+  perspective: 1000px;
+}
+.die-face {
+  width: 72px;
+  height: 72px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #223428, #121f18);
+  border: 2px solid var(--gold);
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: var(--gold);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.6);
+  user-select: none;
+  font-family: var(--font-display);
+}
+.die-face.spinning {
+  animation: dieSpinCrystal 0.2s linear infinite;
+  border-color: var(--amethyst);
+  color: #d8a0b3;
+}
+.die-face.settled {
+  animation: popIn 0.35s ease;
+  border-color: var(--gold);
+}
+@keyframes dieSpinCrystal {
+  0% { transform: rotateY(0deg) scale(1); }
+  50% { transform: rotateY(180deg) scale(1.08); }
+  100% { transform: rotateY(360deg) scale(1); }
+}
+
+/* History List */
+.history-list {
+  margin-top: 14px;
+  text-align: left;
+  max-height: 240px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-right: 4px;
+}
+.history-list::-webkit-scrollbar { width: 5px; }
+.history-list::-webkit-scrollbar-thumb { background: var(--border-gold); border-radius: 3px; }
+.history-item {
+  background: rgba(13, 24, 19, 0.7);
+  border-left: 3px solid var(--gold);
+  border-radius: 0 6px 6px 0;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+.history-item .h-head {
+  display: flex;
+  justify-content: space-between;
+  color: var(--text-dim);
+  font-size: 0.82rem;
+  margin-bottom: 4px;
+  font-family: var(--font-display);
+}
+.history-item .h-head b { color: var(--gold); }
+.history-item .h-lines { color: var(--text); }
+.history-empty { color: var(--text-dim); font-size: 0.85rem; text-align: center; padding: 12px 0; }
+
+/* End Conditions */
+.end-row { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+.end-cond {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: rgba(13, 24, 19, 0.65);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 0.9rem;
+}
+.end-cond b { color: var(--gold); font-size: 1.1rem; }
+.end-cond .btn { min-height: 34px; padding: 6px 14px; font-size: 0.82rem; }
+
+#endBanner {
+  margin-top: 14px;
+  background: rgba(140, 79, 102, 0.3);
+  color: #fff;
+  padding: 14px 16px;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  animation: popIn 0.4s ease;
+  border: 1.5px solid #c2708f;
+  border-radius: 8px;
+}
+#endBanner b { display: block; font-size: 1.1rem; margin-bottom: 6px; color: var(--gold); }
+
+/* Setup Checklists & Notes */
+.setup-checklist { margin: 0; padding-left: 20px; color: var(--text); font-size: 0.92rem; line-height: 1.6; }
+.setup-checklist li { margin-bottom: 8px; }
+.setup-note {
+  background: rgba(217, 164, 65, 0.08);
+  border-left: 4px solid var(--gold);
+  border-radius: 0 6px 6px 0;
+  padding: 12px 14px;
+  font-size: 0.88rem;
+  color: var(--text);
+  margin-top: 12px;
+}
+
+/* Credits */
+.credits { display: flex; align-items: center; gap: 14px; }
+.credits img {
+  width: 54px;
+  height: 54px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1.5px solid var(--border-gold);
+}
+.credits a { color: var(--gold); text-decoration: none; font-weight: 600; }
+
+/* Help Modal Dialog */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.modal {
+  background: #16241d;
+  border: 2px solid var(--border-gold);
+  border-radius: 12px;
+  max-width: 650px;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  padding: 24px 22px;
+  box-shadow: 0 14px 45px rgba(0,0,0,0.8);
+  color: var(--text);
+  position: relative;
+  line-height: 1.6;
+  font-size: 0.92rem;
+}
+.modal h3 {
+  color: var(--gold);
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  margin: 16px 0 6px;
+}
+.modal p { margin-bottom: 10px; }
+.modal ol, .modal ul { margin: 6px 0 12px 20px; }
+.modal li { margin-bottom: 6px; }
+.modal-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  border: 1.5px solid var(--border-gold);
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+.modal-close:hover {
+  background: #b91c1c;
+  border-color: #ef4444;
+}
+
+/* Buy Me a Coffee Button */
+.bmc-btn, .bmc-inline, .bmc-float {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  background: #FFDD00 !important;
+  color: #000000 !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+  font-weight: 700 !important;
+  font-size: 0.92rem !important;
+  padding: 10px 18px !important;
+  border-radius: 8px !important;
+  border: 1px solid rgba(0,0,0,0.15) !important;
+  text-decoration: none !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25) !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+  cursor: pointer !important;
+  margin: 16px auto !important;
+  width: max-content !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+}
+.bmc-btn:hover, .bmc-inline:hover, .bmc-float:hover {
+  transform: translateY(-2px) scale(1.02) !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35) !important;
+  background: #FFE433 !important;
+  color: #000000 !important;
+}
+.bmc-btn svg, .bmc-inline svg, .bmc-float svg {
+  width: 20px !important;
+  height: 20px !important;
+  min-width: 20px !important;
+  min-height: 20px !important;
+  max-width: 20px !important;
+  max-height: 20px !important;
+  stroke: #000000 !important;
+  fill: none !important;
+  flex-shrink: 0 !important;
+  vertical-align: middle !important;
+}
+
+/* Ambient thematic flavor: fireflies + canopy-glow flicker (Sanctuary wildlife/nature theme) */
+@media (prefers-reduced-motion: no-preference) {
+  .canopy-glow{ position:fixed; inset:0; pointer-events:none; z-index:-1;
+    background: radial-gradient(ellipse at 15% 10%, rgba(139,181,120,0.22), transparent 55%),
+                radial-gradient(ellipse at 88% 88%, rgba(217,164,65,0.14), transparent 60%);
+    animation: canopyFlicker 6.5s ease-in-out infinite alternate; }
+  @keyframes canopyFlicker { 0%{opacity:0.7;} 50%{opacity:1;} 100%{opacity:0.85;} }
+
+  .firefly-layer{ position:fixed; inset:0; pointer-events:none; z-index:-1; overflow:hidden; }
+  .firefly{ position:absolute; bottom:-10px; width:6px; height:6px; border-radius:50%;
+    background: radial-gradient(circle, rgba(240,220,170,0.95), rgba(240,220,170,0) 70%);
+    box-shadow: 0 0 8px 3px rgba(217,164,65,0.5);
+    animation: fireflyRise linear infinite; }
+  @keyframes fireflyRise {
+    0%{ transform:translate(0,0); opacity:0; }
+    10%{ opacity:0.9; }
+    50%{ transform:translate(18px,-50vh); opacity:0.5; }
+    90%{ opacity:0.8; }
+    100%{ transform:translate(-14px,-100vh); opacity:0; }
+  }
+  .firefly:nth-child(1){ left:5%; animation-duration:13s; animation-delay:-2s; }
+  .firefly:nth-child(2){ left:15%; animation-duration:10s; animation-delay:-6s; }
+  .firefly:nth-child(3){ left:26%; animation-duration:15s; animation-delay:-1s; }
+  .firefly:nth-child(4){ left:37%; animation-duration:11s; animation-delay:-9s; }
+  .firefly:nth-child(5){ left:48%; animation-duration:14s; animation-delay:-4s; }
+  .firefly:nth-child(6){ left:59%; animation-duration:9s; animation-delay:-7s; }
+  .firefly:nth-child(7){ left:69%; animation-duration:16s; animation-delay:-3s; }
+  .firefly:nth-child(8){ left:78%; animation-duration:12s; animation-delay:-10s; }
+  .firefly:nth-child(9){ left:87%; animation-duration:13.5s; animation-delay:-5s; }
+  .firefly:nth-child(10){ left:94%; animation-duration:10.5s; animation-delay:-8s; }
+}
+</style>
+<script src="../assets/logger.js"></script>
+</head>
+<body>
+
+<div class="canopy-glow" aria-hidden="true"></div>
+<div class="firefly-layer" aria-hidden="true">
+  <span class="firefly"></span><span class="firefly"></span><span class="firefly"></span><span class="firefly"></span><span class="firefly"></span>
+  <span class="firefly"></span><span class="firefly"></span><span class="firefly"></span><span class="firefly"></span><span class="firefly"></span>
+</div>
+
+<!-- Top Sticky Navigation -->
+<nav class="top-nav">
+  <a class="nav-brand" href="../index.html">
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
+    <span>Sanctuary</span>
+  </a>
+  <div class="nav-actions">
+    <button class="nav-btn" onclick="openHelp()">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9.3 9.2a2.7 2.7 0 0 1 5.1 1.2c0 1.8-2.4 2-2.4 3.6"/><circle cx="12" cy="17" r="0.6" fill="currentColor"/></svg>
+      <span data-i18n="helpNavBtn">REGRAS / AJUDA</span>
+    </button>
+    <div class="lang-switch">
+      <button class="lang-btn" id="btnPt" onclick="setLang('pt')">PT</button>
+      <button class="lang-btn" id="btnEn" onclick="setLang('en')">EN</button>
+    </div>
+  </div>
+</nav>
+
+<!-- Hero Banner -->
+<div class="hero-wrapper">
+  <div class="hero">
+    <img src="../assets/art/sanctuary.webp" alt="Sanctuary" class="hero-bg">
+    <div class="hero-content">
+      <div class="hero-badge">SOLO COMPANION</div>
+      <h1 class="hero-title">Sanctuary</h1>
+      <div class="hero-subtitle" data-i18n="subtitle">Automa Solo para Sanctuary</div>
+    </div>
+  </div>
+</div>
+
+<div class="main-interface">
+
+<!-- SETUP SCREEN -->
+<div id="setup-screen" class="setup-container">
+  <div class="card">
+    <h2 data-i18n="setupPhysicalTitle">Preparação física da mesa</h2>
+    <div data-i18n-html="setupPhysicalBody"></div>
+  </div>
+
+  <div class="card">
+    <h2 data-i18n="setupTitle">Configuração do Bot</h2>
+
+    <h3 data-i18n="lblFirst">Quem começa a partida?</h3>
+    <p style="color:var(--text-dim); font-size:0.88rem;" data-i18n="firstHelp">Determina em qual espaço a carta de Projetos do Bot é colocada.</p>
+    <div class="row" style="margin-top:8px;">
+      <button class="btn" id="btnFirstYou" onclick="setFirstPlayer('you')" data-i18n="btnFirstYou">Eu começo</button>
+      <button class="btn" id="btnFirstBot" onclick="setFirstPlayer('bot')" data-i18n="btnFirstBot">O Bot começa</button>
+    </div>
+
+    <h3 data-i18n="lblAssign">Distribuição das ações nos espaços 1–4</h3>
+    <p style="color:var(--text-dim); font-size:0.88rem;" data-i18n="assignHelp">A carta de Projetos fica fixa conforme a ordem de turno; as outras 3 cartas são sorteadas nos espaços restantes.</p>
+    <div class="cards-grid" id="setupSlotsPreview"></div>
+    <button class="btn btn-block" onclick="shuffleSlots()" style="margin-top:12px;"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M4 4l6 6M15 15l6 6"/></svg><span data-i18n="btnReshuffle">Sortear novamente</span></button>
+
+    <button class="btn btn-primary btn-block" onclick="startGame()" data-i18n="btnStart" style="margin-top:14px;">Iniciar automa</button>
+  </div>
+
+  <div class="card credits">
+    <img src="../assets/art/sanctuary.webp" alt="Sanctuary">
+    <div>
+      <div data-i18n="creditsLine1">Bot criado para uso pessoal — Colletes bots.</div>
+      <div data-i18n="creditsLine2">Sanctuary é "An Ark Nova Game", publicado pela Capstone Games.</div>
+      <div><a href="https://capstone-games.com/board-games/sanctuary/" target="_blank" rel="noopener">capstone-games.com/board-games/sanctuary</a></div>
+      <div><a href="mailto:colletes@gmail.com">colletes@gmail.com</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- GAME SCREEN -->
+<div id="game-area" class="hidden">
+  <div class="game-col-left">
+    <div class="card">
+      <h2 data-i18n="statsTitle">Painel do Bot</h2>
+      <div class="stat-grid">
+        <div class="stat">
+          <div class="lbl" data-i18n="statPoints">Pontos</div>
+          <div class="val" id="vPoints">0</div>
+          <div class="adj">
+            <button onclick="adjust('points',-1)">−</button>
+            <button onclick="adjust('points',1)">+</button>
+          </div>
+        </div>
+        <div class="stat">
+          <div class="lbl" data-i18n="statObjectives">Objetivos</div>
+          <div class="val" id="vObjectives">0/4</div>
+          <div class="adj">
+            <button onclick="adjust('objectives',-1)">−</button>
+            <button onclick="adjust('objectives',1)">+</button>
+          </div>
+        </div>
+        <div class="stat">
+          <div class="lbl" data-i18n="statCoverage">Fichas</div>
+          <div class="val" id="vCoverage">0</div>
+          <div class="adj">
+            <button onclick="adjust('coverage',-1)">−</button>
+            <button onclick="adjust('coverage',1)">+</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 data-i18n="endTitle">Fim de jogo</h2>
+      <p style="color:var(--text-dim); font-size:0.85rem;" data-i18n="endHelp">O jogo termina quando pelo menos 1 destas 3 condições é atingida ao final de um turno.</p>
+      <div class="end-row">
+        <div class="end-cond">
+          <span data-i18n="endCond1">4 Objetivos apoiados</span>
+          <b id="endCond1Val">☐</b>
+        </div>
+        <div class="end-cond">
+          <span data-i18n="endCond2">Mapa preenchido</span>
+          <button class="btn" id="btnEndCond2" onclick="toggleEndCond('mapFull')" data-i18n="btnToggleOff">Não</button>
+        </div>
+        <div class="end-cond">
+          <span data-i18n="endCond3">Pilha de fichas esgotada</span>
+          <button class="btn" id="btnEndCond3" onclick="toggleEndCond('pileEmpty')" data-i18n="btnToggleOff">Não</button>
+        </div>
+      </div>
+      <div id="endBanner" class="hidden"></div>
+      <button class="btn btn-block" onclick="resetGame()" style="margin-top:14px; border-color:#ef4444; color:#f87171;"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v6h6M20 20v-6h-6"/><path d="M4 10a8 8 0 0 1 14-5.3M20 14a8 8 0 0 1-14 5.3"/></svg><span data-i18n="btnReset">Reiniciar automa</span></button>
+    </div>
+  </div>
+
+  <div class="game-col-right">
+    <div class="card">
+      <h2 data-i18n="cardsTitle">Cartas de ação</h2>
+      <div class="cards-grid" id="cardsGrid"></div>
+    </div>
+
+    <div class="card roll-box">
+      <h2 data-i18n="rollTitle">Turno do Bot</h2>
+      <p class="round-indicator"><span data-i18n="lblRound">Rodada</span> <b id="roundNo">1</b></p>
+      <div class="die-wrap"><div class="die-face" id="dieFace">?</div></div>
+      <button class="btn btn-primary btn-block" id="btnRoll" onclick="rollDice()"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="8" r="1.2" fill="currentColor"/><circle cx="16" cy="8" r="1.2" fill="currentColor"/><circle cx="8" cy="16" r="1.2" fill="currentColor"/><circle cx="16" cy="16" r="1.2" fill="currentColor"/></svg><span data-i18n="btnRoll">Sortear Ação (D4)</span></button>
+      <div id="rollOut" style="margin-top:14px; text-align:left;"></div>
+      
+      <h3 data-i18n="lblHistory" style="margin-top:18px;">Histórico de rodadas</h3>
+      <div class="history-list" id="historyList"></div>
+    </div>
+  </div>
+</div>
+
+<div style="text-align:center; margin:16px 0;">
+  <a class="bmc-inline" href="https://www.buymeacoffee.com/colletes" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h13a2 2 0 0 1 2 2v1a3 3 0 0 1-3 3h-1"/><path d="M4 8h13v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V8Z"/><path d="M8 3c-.6 1 .5 1.6 0 3M12 3c-.6 1 .5 1.6 0 3"/></svg><span data-i18n="bmcBtn">Me pague um café</span></a>
+</div>
+
+<!-- Help Modal Dialog -->
+<div id="helpModal" class="modal-overlay hidden" onclick="if(event.target===this)closeHelp()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeHelp()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    <h2 data-i18n="helpTitle">Como jogar contra o Bot</h2>
+    <div data-i18n-html="helpBody"></div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('touchstart', function(){}, {passive:true});
+
+function openHelp(){ document.getElementById('helpModal').classList.remove('hidden'); }
+function closeHelp(){ document.getElementById('helpModal').classList.add('hidden'); }
+
+const LANG_KEY = 'boardbots_lang';
+const STORAGE_KEY = 'sanctuary_state_v1';
+
+const I18N = {
+  pt: {
+    helpNavBtn: 'REGRAS / AJUDA',
+    subtitle: 'Automa Solo para Sanctuary',
+    setupPhysicalTitle: 'Preparação física da mesa',
+    setupPhysicalBody: `<ul class="setup-checklist">
+      <li>Componentes partilhados: coloque o tabuleiro de Exibição, embaralhe todas as fichas e forme a pilha de compra, revele 6 fichas na Exibição, e separe espaço para a pilha de descarte.</li>
+      <li>Coloque o tabuleiro de Conservação, embaralhe os 10 objetivos e revele 5 aleatoriamente sobre ele.</li>
+      <li>Separe os marcadores de Conservação, Bolsa e Fim-de-Jogo como suprimento comum.</li>
+      <li><b>Apenas você precisa de um jogo físico completo</b> (mapa do Zoológico, porta-fichas, as 4 cartas de ação na face I, e seus marcadores de Melhoria/Conquista de Conservação). O Bot não usa nenhum componente físico — todo o turno dele é resolvido neste app.</li>
+      <li>Determine quem começa (você ou o Bot) e use o seletor abaixo — isso define em qual espaço a carta de Projetos do Bot começa, exatamente como a regra de turno determina para o 2º jogador.</li>
+    </ul>
+    <div class="setup-note">Dica: para a primeira partida, é comum devolver os 4 marcadores de Conquista de Conservação à caixa e usar apenas os 3 primeiros — assim o fim de jogo por objetivos é acionado mais cedo.</div>`,
+    setupTitle: 'Configuração do Bot',
+    lblFirst: 'Quem começa a partida?',
+    firstHelp: 'Determina em qual espaço a carta de Projetos do Bot é colocada (regra: o jogador inicial vai para o espaço 1, o próximo jogador para o espaço 2).',
+    btnFirstYou: 'Eu começo',
+    btnFirstBot: 'O Bot começa',
+    lblAssign: 'Distribuição das ações nos espaços 1–4',
+    assignHelp: 'A carta de Projetos fica fixa conforme a ordem de turno escolhida acima; as outras 3 cartas são sorteadas aleatoriamente nos espaços restantes.',
+    btnReshuffle: 'Sortear novamente',
+    bmcBtn: 'Me pague um café',
+    btnStart: 'Iniciar automa',
+    creditsLine1: 'Bot criado para uso pessoal — Colletes bots.',
+    creditsLine2: 'Sanctuary é "An Ark Nova Game", publicado pela Capstone Games. Mecânicas do bot 100% adaptadas pelo autor inspiradas no Automa ARNO de Ark Nova.',
+    statsTitle: 'Painel do Bot',
+    statPoints: 'Pontos', statObjectives: 'Objetivos', statCoverage: 'Fichas Jogadas',
+    cardsTitle: 'Cartas de ação',
+    rollTitle: 'Turno do Bot',
+    lblRound: 'Rodada',
+    btnRoll: 'Sortear Ação (D4)',
+    lblHistory: 'Histórico de rodadas',
+    endTitle: 'Fim de jogo',
+    endHelp: 'O jogo termina quando pelo menos 1 destas 3 condições é atingida (por você OU pelo Bot) ao final de um turno. Marque manualmente as condições 2 e 3, pois dependem do mapa físico e da pilha de fichas.',
+    endCond1: '4 Objetivos de Conservação apoiados',
+    endCond1Short: 'Objetivo Apoiado',
+    endCond2: 'Mapa do Zoológico totalmente preenchido',
+    endCond3: 'Pilha de fichas esgotada',
+    lblStrength: 'Força',
+    btnToggleOff: 'Não',
+    btnToggleOn: 'Sim ✓',
+    endBannerTitle: 'Fim de jogo acionado!',
+    endBannerGrace: ' Quem atingiu a condição pega o marcador de Fim-de-Jogo de 10 pontos; todos os outros jogadores (incluindo o Bot, se ele não a atingiu) jogam mais 1 turno cada. Se alguém também atingir uma condição nesse turno extra, pega o marcador de 5 pontos. Depois disso, vá para a pontuação final.',
+    endBannerImmediate: ' Como a pilha de fichas esgotou antes de alguém apoiar 4 objetivos ou preencher o mapa, o jogo termina IMEDIATAMENTE após este turno — vá direto para a pontuação final.',
+    marketTakeOne: '<svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/><path d="M2 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6"/></svg> Mercado: retire a ficha da posição {p} da Exibição (e reponha ao final do turno).',
+    marketTakeTwo: '<svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/><path d="M2 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6"/></svg> Mercado: retire as fichas das posições {p1} e {p2} da Exibição (e reponha ao final do turno).',
+    btnReset: 'Reiniciar automa',
+    lblSideI: 'Face I',
+    lblSideII: 'Face II',
+    btnClose: 'Fechar',
+    helpTitle: 'Como jogar contra o Bot',
+    helpBody: `<h3 style="margin-top:0;">Turno do bot</h3>
+      <p>Toque em <b>Sortear Ação</b> para o app escolher aleatoriamente um espaço (1 a 4). A carta daquele espaço é ativada com força igual ao número do espaço (+1 se estiver na face II) e desliza para o espaço 1, empurrando as demais uma posição para a direita — exatamente como as cartas de ação físicas do Sanctuary funcionam.</p>
+      <p><b>Projetos:</b> o bot ganha Pontos e joga 1 ficha (Fichas Jogadas +1). Com força 4+, ele também apoia 1 Objetivo de Conservação (máx. 4, abstraindo a exigência de ícones correspondentes no zoológico).</p>
+      <p><b>Animais (Rocha, Floresta, Água):</b> o bot ganha Pontos com base na força da ação e joga 2 fichas (Animal + Área Aberta).</p>
+      <p><b>Mercado:</b> como o Bot não rastreia fichas específicas, cada resultado também diz qual(is) posição(ões) (1–6) da Exibição física você deve retirar por ele — sempre a(s) posição(ões) mais alta(s) disponível(is): dentro do alcance da força atual para Projetos, ou as 2 posições mais altas para ações de Animais. Depois, reponha a Exibição com uma nova ficha da pilha, como de costume.</p>
+      <h3>Preparação física</h3>
+      <p>Veja o quadro "Preparação física da mesa" na tela de configuração para o passo a passo completo. Resumindo: apenas você monta um jogo físico completo; o Bot é 100% abstrato neste app. Escolha quem começa para definir corretamente o espaço inicial da carta de Projetos do Bot.</p>
+      <h3>Fim de jogo e pontuação final</h3>
+      <p>O jogo (regra oficial, p. 8) termina quando 1 destas 3 condições ocorre ao final de um turno:</p>
+      <ol>
+        <li><b>4 Objetivos de Conservação apoiados</b> — rastreado automaticamente pelo app.</li>
+        <li><b>Mapa do Zoológico totalmente preenchido</b> (seu ou do Bot) — marque manualmente no quadro "Fim de jogo".</li>
+        <li><b>Pilha de fichas viradas para baixo esgotada</b> — marque manualmente.</li>
+      </ol>
+      <p>Se a condição 1 ou 2 for atingida, quem a atingiu pega o marcador de 10 pontos e todos os outros jogadores (incluindo o Bot) jogam mais 1 turno cada antes da pontuação final; se alguém também atingir uma condição nesse turno extra, pega o marcador de 5 pontos. Se a condição 3 ocorrer primeiro (antes de 1 ou 2 acontecerem), o jogo termina imediatamente, sem turno extra.</p>
+      <p><b>Pontuação final:</b> some os pontos das fichas do seu zoológico (Animais, Construções, Projetos e Áreas Abertas), os pontos dos marcadores de Conquista de Conservação colocados, 2 pontos para cada marcador de Bolsa e de Conservação restante, e os pontos do seu marcador de Fim-de-Jogo (10 ou 5), se tiver um. Quem tiver mais pontos vence.</p>`
+  },
+  en: {
+    helpNavBtn: 'RULES / HELP',
+    subtitle: 'Solo Automa for Sanctuary',
+    setupPhysicalTitle: 'Physical table setup',
+    setupPhysicalBody: `<ul class="setup-checklist">
+      <li>Shared components: place the Display board, shuffle all tiles into a draw pile, reveal 6 tiles onto the Display, and leave room for a discard pile.</li>
+      <li>Place the Conservation board, shuffle the 10 objectives, and reveal 5 of them at random onto it.</li>
+      <li>Set aside the Conservation, Pouch, and End-of-game markers as the shared supply.</li>
+      <li><b>Only you need a full physical player set</b> (Zoo map, tile holder, all 4 Action cards on side I, and your Upgrade/Conservation Achievement markers). The Bot uses no physical components at all — its entire turn is resolved right here in the app.</li>
+      <li>Decide who starts (you or the Bot) and use the selector below — this sets which slot the Bot's Projects card starts in, exactly as the turn-order rule defines for the 2nd player.</li>
+    </ul>
+    <div class="setup-note">Tip: for your first game, it's common to return the 4th Conservation Achievement marker to the box and only use the first 3 — this triggers the objectives end condition sooner.</div>`,
+    setupTitle: 'Bot setup',
+    lblFirst: 'Who goes first?',
+    firstHelp: "Determines which slot the Bot's Projects card starts in (rule: the starting player's card goes to slot 1, the next player's to slot 2).",
+    btnFirstYou: 'I go first',
+    btnFirstBot: 'The Bot goes first',
+    lblAssign: 'Action card layout (slots 1–4)',
+    assignHelp: "The Projects card stays fixed based on the turn order chosen above; the other 3 cards are randomly assigned to the remaining slots.",
+    btnReshuffle: 'Reshuffle',
+    bmcBtn: 'Buy me a coffee',
+    btnStart: 'Start automa',
+    creditsLine1: 'Bot built for personal use — Colletes bots.',
+    creditsLine2: 'Sanctuary is "An Ark Nova Game", published by Capstone Games. Bot mechanics 100% adapted by the author inspired by the ARNO automa.',
+    statsTitle: "Bot's board",
+    statPoints: 'Points', statObjectives: 'Objectives', statCoverage: 'Tiles Played',
+    cardsTitle: 'Action cards',
+    rollTitle: "Bot's turn",
+    lblRound: 'Round',
+    btnRoll: 'Draw Action (D4)',
+    lblHistory: 'Round history',
+    endTitle: 'End of game',
+    endHelp: 'The game ends when at least 1 of these 3 conditions is met (by you OR the Bot) at the end of a turn. Toggle conditions 2 and 3 manually, since they depend on the physical map and tile pile.',
+    endCond1: '4 Conservation objectives supported',
+    endCond1Short: 'Objective supported',
+    endCond2: "Zoo map is completely full",
+    endCond3: 'The tile pile is empty',
+    lblStrength: 'Strength',
+    btnToggleOff: 'No',
+    btnToggleOn: 'Yes ✓',
+    endBannerTitle: 'End of game triggered!',
+    endBannerGrace: " Whoever met the condition takes the 10-point End-of-game marker; every other player (including the Bot, if it didn't meet the condition) gets 1 more turn each. If anyone also meets a condition on that extra turn, they take the 5-point marker instead. After that, move to final scoring.",
+    endBannerImmediate: ' Since the tile pile ran out before anyone supported 4 objectives or filled their map, the game ends IMMEDIATELY after this turn — go straight to final scoring.',
+    marketTakeOne: '<svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/><path d="M2 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6"/></svg> Market: take the tile from Display position {p} (then refill it at the end of the turn).',
+    marketTakeTwo: '<svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/><path d="M2 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6"/></svg> Market: take the tiles from Display positions {p1} and {p2} (then refill them at the end of the turn).',
+    btnReset: 'Reset automa',
+    lblSideI: 'Side I',
+    lblSideII: 'Side II',
+    btnClose: 'Close',
+    helpTitle: 'How to play against the Bot',
+    helpBody: `<h3 style="margin-top:0;">Bot's turn</h3>
+      <p>Tap <b>Draw Action</b> for the app to randomly select a slot (1 to 4). The card in that slot activates with strength equal to its slot number (+1 if on side II) and slides to slot 1, pushing the others one slot to the right — exactly how Sanctuary's physical action cards work.</p>
+      <p><b>Projects:</b> the bot gains Points and plays 1 tile (Tiles Played +1). At strength 4+, it also supports 1 Conservation Objective (max 4, abstracting the matching-icon requirement in the zoo).</p>
+      <p><b>Animals (Rock, Forest, Water):</b> the bot gains Points based on action strength and plays 2 tiles (Animal + Open Area).</p>
+      <p><b>Market:</b> since the Bot doesn't track specific tiles, every result also tells you which Display position(s) (1–6) to physically remove on its behalf — always the highest available position(s): within range of the current strength for Projects, or the 2 highest positions for Animal actions. Afterwards, refill the Display with a new tile from the pile as usual.</p>
+      <h3>Physical setup</h3>
+      <p>See the "Physical table setup" panel on the setup screen for the full checklist. In short: only you build a full physical player set; the Bot is 100% abstracted in this app. Pick who goes first to correctly set the Bot's Projects card starting slot.</p>
+      <h3>End of game &amp; final scoring</h3>
+      <p>The game (official rule, p. 8) ends when 1 of these 3 conditions occurs at the end of a turn:</p>
+      <ol>
+        <li><b>4 Conservation objectives supported</b> — tracked automatically by the app.</li>
+        <li><b>Zoo map completely full</b> (yours or the Bot's) — toggle manually in the "End of game" panel.</li>
+        <li><b>Face-down tile pile empty</b> — toggle manually.</li>
+      </ol>
+      <p>If condition 1 or 2 is met, whoever met it takes the 10-point marker and every other player (including the Bot) gets 1 more turn each before final scoring; if anyone also meets a condition on that extra turn, they take the 5-point marker instead. If condition 3 happens first (before 1 or 2), the game ends immediately, with no extra turn.</p>
+      <p><b>Final scoring:</b> add up the points on your zoo tiles (Animals, Buildings, Projects, and Open Areas), the points on your placed Conservation Achievement markers, 2 points for each remaining Pouch and Conservation marker, and the points on your End-of-game marker (10 or 5), if any. Whoever has the most points wins.</p>`
+  }
+};
+
+let lang = localStorage.getItem(LANG_KEY) || 'pt';
+function t(k){ return I18N[lang][k] || k; }
+
+function applyI18n(){
+  document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-html]').forEach(el => { el.innerHTML = t(el.dataset.i18nHtml); });
+  document.getElementById('btnPt').classList.toggle('active', lang === 'pt');
+  document.getElementById('btnEn').classList.toggle('active', lang === 'en');
+  document.title = lang === 'pt' ? 'Sanctuary Solo Automa' : 'Sanctuary Solo Automa';
+  refreshCardsUI();
+  renderSetupSlotsPreview();
+  renderStats();
+  renderHistory();
+}
+function setLang(l){ lang = l; localStorage.setItem(LANG_KEY, l); applyI18n(); }
+
+const ACTION_KEYS = ['projects','animal_rock','animal_forest','animal_water'];
+const ACTION_LABEL = { 
+  pt: { projects: 'Projetos', animal_rock: 'Animais (Rocha)', animal_forest: 'Animais (Floresta)', animal_water: 'Animais (Água)' },
+  en: { projects: 'Projects', animal_rock: 'Animals (Rock)', animal_forest: 'Animals (Forest)', animal_water: 'Animals (Water)' } 
+};
+const SANCTUARY_LOG = {
+  projects: { pt: 'Novas cercas e trilhas se erguem, ampliando o alcance do santuário.', en: 'New fences and trails rise, extending the sanctuary\'s reach.' },
+  animal_rock: { pt: 'Um bando vindo dos penhascos encontra abrigo entre as pedras do santuário.', en: 'A troop from the cliffs finds shelter among the sanctuary\'s rocks.' },
+  animal_forest: { pt: 'Passos silenciosos entre as árvores anunciam um novo morador da floresta.', en: 'Quiet footsteps among the trees announce a new forest resident.' },
+  animal_water: { pt: 'Uma nova espécie desliza para dentro do lago e faz dele seu lar.', en: 'A new species slips into the lake and makes it home.' }
+};
+function sanctuaryLogLine(actionKey, L){ const e = SANCTUARY_LOG[actionKey]; return e ? e[L] : ''; }
+const ACTION_COLOR = { projects: '#c2708f', animal_rock: '#c96a3a', animal_forest: '#4caf6e', animal_water: '#4a95b8' };
+
+const ACTION_ICON = {
+  projects: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.4-3.4a1 1 0 0 0 0-1.4L19.5 3a1 1 0 0 0-1.4 0z"/><path d="M9 12L3 18v3h3l6-6"/><path d="M13 7l4 4"/></svg>',
+  animal_rock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 22L12 18l-4 4-4-4 4-4 2 2 4-4 6 6-4 4z"/></svg>',
+  animal_forest: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-6m-4-6l4-6 4 6m-4 6l-6-8h12z"/></svg>',
+  animal_water: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/></svg>'
+};
+
+let state = null;
+let firstPlayer = 'you';
+
+function setFirstPlayer(who){
+  firstPlayer = who;
+  syncFirstPlayerButtons();
+  shuffleSlots();
+}
+
+function syncFirstPlayerButtons(){
+  const who = state && state.firstPlayer ? state.firstPlayer : firstPlayer;
+  const byou = document.getElementById('btnFirstYou');
+  const bbot = document.getElementById('btnFirstBot');
+  if(byou) byou.classList.toggle('active', who === 'you');
+  if(bbot) bbot.classList.toggle('active', who === 'bot');
+}
+
+function shuffleSlots(){
+  const projectsSlot = firstPlayer === 'bot' ? 1 : 2;
+  const others = ACTION_KEYS.filter(k => k !== 'projects');
+  for(let i = others.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [others[i], others[j]] = [others[j], others[i]];
+  }
+  const slots = new Array(4);
+  slots[projectsSlot - 1] = 'projects';
+  let oi = 0;
+  for(let s = 0; s < 4; s++){ if(slots[s] === undefined) slots[s] = others[oi++]; }
+  state = {
+    round: 1, firstPlayer,
+    cards: slots.map(id => ({ id, lvl: 1 })),
+    stats: { points: 0, objectives: 0, coverage: 0 },
+    end: { mapFull: false, pileEmpty: false },
+    history: [], setup: true
+  };
+  renderSetupSlotsPreview();
+}
+
+function startGame(){
+  state.setup = false;
+  saveState();
+  initUI();
+}
+
+function resetGame(){
+  if(confirm(lang === 'pt' ? 'Tem certeza que deseja reiniciar?' : 'Are you sure you want to reset?')){
+    localStorage.removeItem(STORAGE_KEY);
+    state = null;
+    initUI();
+  }
+}
+
+function adjust(stat, amt){
+  if(!state) return;
+  state.stats[stat] += amt;
+  if(stat === 'objectives' && state.stats.objectives < 0) state.stats.objectives = 0;
+  if(stat === 'objectives' && state.stats.objectives > 4) state.stats.objectives = 4;
+  if(stat === 'coverage' && state.stats.coverage < 0) state.stats.coverage = 0;
+  saveState();
+  renderStats();
+}
+
+function toggleEndCond(key){
+  if(!state) return;
+  state.end[key] = !state.end[key];
+  saveState();
+  renderEndConditions();
+}
+
+function renderEndConditions(){
+  if(!state) return;
+  const objectivesMet = state.stats.objectives >= 4;
+  const c1 = document.getElementById('endCond1Val');
+  if(c1) c1.textContent = objectivesMet ? '☑' : '☐';
+  const b2 = document.getElementById('btnEndCond2');
+  if(b2){ b2.textContent = state.end.mapFull ? t('btnToggleOn') : t('btnToggleOff'); b2.classList.toggle('active', state.end.mapFull); }
+  const b3 = document.getElementById('btnEndCond3');
+  if(b3){ b3.textContent = state.end.pileEmpty ? t('btnToggleOn') : t('btnToggleOff'); b3.classList.toggle('active', state.end.pileEmpty); }
+
+  const banner = document.getElementById('endBanner');
+  if(!banner) return;
+  const anyTrigger = objectivesMet || state.end.mapFull || state.end.pileEmpty;
+  if(!anyTrigger){ banner.classList.add('hidden'); banner.innerHTML = ''; return; }
+  banner.classList.remove('hidden');
+  if(state.end.pileEmpty && !objectivesMet && !state.end.mapFull){
+    banner.innerHTML = `<b>${t('endBannerTitle')}</b>${t('endBannerImmediate')}`;
+  } else {
+    banner.innerHTML = `<b>${t('endBannerTitle')}</b>${t('endBannerGrace')}`;
+  }
+}
+
+function toggleLevel(id){
+  const c = state.cards.find(x => x.id === id);
+  if(c){ c.lvl = c.lvl === 1 ? 2 : 1; saveState(); refreshCardsUI(); }
+}
+
+function renderSetupSlotsPreview(){
+  const cont = document.getElementById('setupSlotsPreview');
+  if(!cont) return;
+  cont.innerHTML = '';
+  if(!state) return;
+  syncFirstPlayerButtons();
+  state.cards.forEach((c, idx) => {
+    cont.innerHTML += `<div class="acard" style="--ac-color:${ACTION_COLOR[c.id]}">
+      <div class="slot">${idx+1}</div>
+      <div class="ac-icon-wrap">
+        <div class="ac-icon">${ACTION_ICON[c.id]}</div>
+      </div>
+      <div class="name">${ACTION_LABEL[lang][c.id]}</div>
+    </div>`;
+  });
+}
+
+function refreshCardsUI(){
+  const cont = document.getElementById('cardsGrid');
+  if(!cont || !state || state.setup) return;
+  const prevRects = {};
+  cont.querySelectorAll('.acard').forEach(el => { prevRects[el.dataset.key] = el.getBoundingClientRect(); });
+  cont.innerHTML = '';
+  state.cards.forEach((c, idx) => {
+    const isLevel2 = c.lvl > 1;
+    const div = document.createElement('div');
+    div.className = 'acard';
+    div.dataset.key = c.id;
+    div.style.setProperty('--ac-color', ACTION_COLOR[c.id]);
+    div.style.borderColor = isLevel2 ? 'var(--gold)' : 'var(--border)';
+    div.innerHTML = `<div class="slot">${idx+1}</div>
+      <div class="ac-icon-wrap">
+        <div class="ac-icon">${ACTION_ICON[c.id]}</div>
+      </div>
+      <div class="name">${ACTION_LABEL[lang][c.id]}</div>
+      <div class="side-toggle"><button class="btn-side" onclick="toggleLevel('${c.id}')">${c.lvl===1?t('lblSideI'):t('lblSideII')}</button></div>`;
+    cont.appendChild(div);
+  });
+  cont.querySelectorAll('.acard').forEach(el => {
+    const prev = prevRects[el.dataset.key];
+    if(!prev) return;
+    const next = el.getBoundingClientRect();
+    const dx = prev.left - next.left, dy = prev.top - next.top;
+    if(!dx && !dy) return;
+    el.style.transition = 'none';
+    el.style.transform = `translate(${dx}px, ${dy}px)`;
+    requestAnimationFrame(() => {
+      el.style.transition = 'transform .45s ease';
+      el.style.transform = '';
+    });
+  });
+}
+
+function renderStats(){
+  if(!state) return;
+  document.getElementById('vPoints').textContent = state.stats.points;
+  document.getElementById('vObjectives').textContent = state.stats.objectives + '/4';
+  document.getElementById('vCoverage').textContent = state.stats.coverage;
+  document.getElementById('roundNo').textContent = state.round;
+  renderEndConditions();
+}
+
+function logHistory(html){
+  state.history.unshift({ r: state.round, h: html });
+  if(state.history.length > 10) state.history.pop();
+}
+function renderHistory(){
+  const lst = document.getElementById('historyList');
+  if(!state || state.history.length === 0){
+    lst.innerHTML = `<div class="history-empty">${lang === 'pt' ? 'Nenhum turno jogado ainda.' : 'No turns played yet.'}</div>`;
+    return;
+  }
+  lst.innerHTML = state.history.map(item => `<div class="history-item"><div class="h-head">${lang === 'pt' ? 'Rodada' : 'Round'} <b>${item.r}</b></div><div class="h-lines">${item.h}</div></div>`).join('');
+}
+
+function saveState(){ if(state) localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+
+function loadState(){
+  try { const s = localStorage.getItem(STORAGE_KEY); if(s) state = JSON.parse(s); } catch(e){}
+  if(!state || !state.cards) shuffleSlots();
+  else {
+    firstPlayer = state.firstPlayer || 'you';
+    if(!state.end) state.end = { mapFull: false, pileEmpty: false };
+  }
+}
+
+// 3D Dice Box Integration (floating corner tray; #dice-tray/#dice-box already present in HTML)
+let diceBox = null;
+let diceBoxReady = false;
+
+async function initDiceBox() {
+  try {
+    const { loadDiceBox } = await import('../assets/dice-roller.js');
+    diceBox = await loadDiceBox({ theme: 'hallowed', themeUrl: new URL('../assets/dice-box/themes/hallowed', window.location.href).href, scale: 27, timeoutMs: 6000 });
+    diceBoxReady = true;
+  } catch (e) {
+    diceBoxReady = false;
+  }
+}
+initDiceBox();
+
+// Physics engine can occasionally never settle (silent hang); guard every roll with a timeout.
+async function rollDiceBoxSafe(notation, timeoutMs = 5000) {
+  const { rollDiceSafe } = await import('../assets/dice-roller.js');
+  return rollDiceSafe(diceBox, notation, timeoutMs);
+}
+
+async function rollDice(){
+  const btn = document.getElementById('btnRoll');
+  btn.disabled = true;
+  const face = document.getElementById('dieFace');
+  face.classList.add('spinning'); face.classList.remove('settled');
+  document.getElementById('rollOut').innerHTML = '';
+
+  let val = null;
+  if (diceBoxReady && diceBox) {
+    try {
+      const rollRes = await rollDiceBoxSafe('1d4');
+      if (rollRes && rollRes.length > 0 && Number.isInteger(rollRes[0].value) && rollRes[0].value >= 1 && rollRes[0].value <= 4) {
+        val = rollRes[0].value;
+      }
+    } catch (e) { /* fall through to Math.random() below */ }
+  }
+  if (val === null) val = Math.floor(Math.random() * 4) + 1; // 1 to 4
+
+  setTimeout(() => {
+    face.textContent = val;
+    face.classList.remove('spinning');
+    face.classList.add('settled');
+    setTimeout(() => resolveTurn(val), 250);
+    btn.disabled = false;
+  }, 500);
+}
+
+function getMarketPositions(card, strength){
+  if(card.id === 'projects'){
+    const count = card.lvl === 2 ? 2 : 1;
+    const base = Math.min(strength, 6);
+    const positions = [];
+    for(let i = 0; i < count; i++){ const p = base - i; if(p >= 1) positions.push(p); }
+    return positions;
+  }
+  return [6, 5];
+}
+
+function resolveTurn(slotVal){
+  const idx = slotVal - 1;
+  const card = state.cards[idx];
+  const strength = slotVal + (card.lvl === 2 ? 1 : 0);
+  const name = ACTION_LABEL[lang][card.id];
+
+  let hLines = [];
+  if(card.id === 'projects'){
+    const pts = Math.max(0, strength - 1);
+    state.stats.points += pts;
+    state.stats.coverage += 1;
+    hLines.push(`+${pts} ${t('statPoints')} | +1 ${t('statCoverage')}`);
+    if(strength >= 4 && state.stats.objectives < 4){
+      state.stats.objectives += 1;
+      hLines.push(`+1 ${t('endCond1Short')}`);
+    }
+  } else {
+    const pts = strength;
+    state.stats.points += pts;
+    state.stats.coverage += 2;
+    hLines.push(`+${pts} ${t('statPoints')} | +2 ${t('statCoverage')}`);
+  }
+
+  const positions = getMarketPositions(card, strength);
+  if(positions.length === 2) hLines.push(t('marketTakeTwo').replace('{p1}', positions[0]).replace('{p2}', positions[1]));
+  else if(positions.length === 1) hLines.push(t('marketTakeOne').replace('{p}', positions[0]));
+
+  const out = document.getElementById('rollOut');
+  const flavor = sanctuaryLogLine(card.id, lang);
+  out.innerHTML = `<div style="background:var(--surface-2); padding:12px 14px; border-radius:8px; border:1px solid var(--border); box-shadow:0 3px 8px rgba(0,0,0,0.3);">
+    <div style="font-size:1.05rem; font-weight:700; color:${ACTION_COLOR[card.id]}; margin-bottom:6px; font-family:var(--font-display);">${name} (${t('lblStrength')} ${strength})</div>
+    ${flavor ? `<div style="font-style:italic; color:var(--text-dim); font-size:0.85em; margin-bottom:6px;">${flavor}</div>` : ''}
+    <div style="color:var(--text); line-height:1.4;">${hLines.join('<br>')}</div>
+  </div>`;
+  
+  logHistory(`<b>${name}</b> (${t('lblStrength')} ${strength}):${flavor ? `<div style="font-style:italic; color:var(--text-dim); font-size:0.85em; margin:2px 0 4px;">${flavor}</div>` : '<br>'}${hLines.join('<br>')}`);
+  
+  const used = state.cards.splice(idx, 1)[0];
+  state.cards.unshift(used);
+  
+  state.round++;
+  saveState();
+  renderStats();
+  refreshCardsUI();
+  renderHistory();
+  
+  setTimeout(() => {
+    const cEls = document.querySelectorAll('#cardsGrid .acard');
+    if(cEls[0]) {
+      cEls[0].classList.add('active');
+      setTimeout(() => cEls[0].classList.remove('active'), 900);
+    }
+  }, 100);
+}
+
+function initUI(){
+  loadState();
+  applyI18n();
+  if(state.setup){
+    document.getElementById('setup-screen').classList.remove('hidden');
+    document.getElementById('game-area').classList.add('hidden');
+  } else {
+    document.getElementById('setup-screen').classList.add('hidden');
+    document.getElementById('game-area').classList.remove('hidden');
+    renderHistory();
+    document.getElementById('dieFace').textContent = '?';
+    document.getElementById('dieFace').classList.remove('settled');
+    document.getElementById('rollOut').innerHTML = '';
+  }
+}
+
+initUI();
+</script>
+
+<script type="module" src="../assets/analytics.js"></script>
+<script type="module" src="../assets/bot-view.js"></script>
+
+<div style="text-align: center; margin: 40px auto 20px auto; width: 100%;">
+    <a href="../index.html" class="btn-home" style="display:inline-flex; align-items:center; gap:8px; color:var(--gold); text-decoration:none; font-family:'Cinzel',serif; font-size:0.95rem; font-weight:bold; padding:10px 22px; border:1.5px solid var(--border-gold); background:var(--surface-2); border-radius:6px; box-shadow:0 4px 12px rgba(0,0,0,0.5); transition:transform 0.15s ease;">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9 21v-6h6v6"/></svg>
+        ← Home
+    </a>
+</div>
+
+</div>
+
+<div id="dice-tray" style="position:fixed; bottom:20px; left:20px; width:160px; height:160px; z-index:9999; pointer-events:none;">
+  <div id="dice-box" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none;"></div>
+</div>
+
+</body>
+</html>

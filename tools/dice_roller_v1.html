@@ -40,10 +40,12 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
-
 #wood-tray-rim {
   position: absolute; top: 1.5vh; left: 1.5vw; right: 1.5vw; bottom: 1.5vh;
-  background: linear-gradient(135deg, var(--wood-light), var(--wood-dark));
+  background-image: linear-gradient(135deg, rgba(74,42,24,0.55), rgba(42,22,16,0.7)), url('../assets/textures/dark-walnut.jpg');
+  background-blend-mode: multiply;
+  background-size: auto, 260px 260px;
+  background-repeat: no-repeat, repeat;
   border-radius: 12px;
   clip-path: polygon(10% 0%, 90% 0%, 100% 10%, 100% 90%, 90% 100%, 10% 100%, 0% 90%, 0% 10%);
   z-index: 0;
@@ -51,13 +53,44 @@ body {
 }
 #tray-bg {
   position: absolute; top: 2vh; left: 2vw; right: 2vw; bottom: 2vh;
-  background: radial-gradient(circle at 50% 50%, var(--velvet-light) 0%, var(--velvet-green) 100%);
+  background-image: radial-gradient(circle at 50% 50%, var(--velvet-light) 0%, var(--velvet-green) 100%), url('../assets/textures/felt-weave.jpg');
+  background-blend-mode: multiply;
+  background-size: auto, 220px 220px;
+  background-repeat: no-repeat, repeat;
   box-shadow: inset 0 20px 50px rgba(0,0,0,0.8), 0 0 20px rgba(0,0,0,0.9);
   border: 16px solid var(--wood-light);
   border-radius: 10px;
   clip-path: polygon(10% 0%, 90% 0%, 100% 10%, 100% 90%, 90% 100%, 10% 100%, 0% 90%, 0% 10%);
   z-index: 1;
 }
+
+@media (prefers-reduced-motion: no-preference) {
+  .candle-glow {
+    position: fixed; inset: 0; pointer-events: none; z-index: -1;
+    background: radial-gradient(circle at 50% 40%, rgba(255,178,90,0.16) 0%, transparent 60%);
+    animation: candleFlicker 5s ease-in-out infinite alternate;
+  }
+  @keyframes candleFlicker { 0% { opacity: 0.7; } 50% { opacity: 1; } 100% { opacity: 0.85; } }
+
+  .dust-layer { position: fixed; inset: 0; pointer-events: none; z-index: -1; overflow: hidden; }
+  .dust-mote {
+    position: absolute; bottom: -12px; width: 4px; height: 4px; border-radius: 50%;
+    background: rgba(232,214,168,0.55); box-shadow: 0 0 4px 1px rgba(232,214,168,0.4);
+    animation: motesRise linear infinite;
+  }
+  @keyframes motesRise { 0% { transform: translate(0,0); opacity: 0; } 10% { opacity: 0.8; } 90% { opacity: 0.5; } 100% { transform: translate(20px,-100vh); opacity: 0; } }
+  .dust-mote:nth-child(1) { left: 6%; animation-duration: 11s; animation-delay: -1s; }
+  .dust-mote:nth-child(2) { left: 16%; animation-duration: 14s; animation-delay: -6s; }
+  .dust-mote:nth-child(3) { left: 27%; animation-duration: 9s; animation-delay: -3s; }
+  .dust-mote:nth-child(4) { left: 38%; animation-duration: 13s; animation-delay: -9s; }
+  .dust-mote:nth-child(5) { left: 49%; animation-duration: 10s; animation-delay: -2s; }
+  .dust-mote:nth-child(6) { left: 60%; animation-duration: 15s; animation-delay: -7s; }
+  .dust-mote:nth-child(7) { left: 71%; animation-duration: 12s; animation-delay: -4s; }
+  .dust-mote:nth-child(8) { left: 82%; animation-duration: 9s; animation-delay: -8s; }
+  .dust-mote:nth-child(9) { left: 91%; animation-duration: 14s; animation-delay: -5s; }
+  .dust-mote:nth-child(10) { left: 50%; animation-duration: 16s; animation-delay: -11s; }
+}
+
 #tray-bg::after {
   content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
   background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><filter id="noiseFilter"><feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23noiseFilter)" opacity="0.12"/></svg>');
@@ -227,6 +260,12 @@ body {
 </head>
 <body>
 
+<div class="candle-glow" aria-hidden="true"></div>
+<div class="dust-layer" aria-hidden="true">
+  <span class="dust-mote"></span><span class="dust-mote"></span><span class="dust-mote"></span><span class="dust-mote"></span><span class="dust-mote"></span>
+  <span class="dust-mote"></span><span class="dust-mote"></span><span class="dust-mote"></span><span class="dust-mote"></span><span class="dust-mote"></span>
+</div>
+
 <a href="../index.html" class="btn-home">
   <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9 21v-6h6v6"/></svg>
   <span data-i18n="backBtn">Voltar</span>
@@ -274,6 +313,18 @@ body {
       <option value="diceOfRolling" data-i18n="themeDiceOfRolling">⚔️ Aventureiro (Dice of Rolling)</option>
       <option value="rock" data-i18n="themeRock">🪨 Pedra (Rock)</option>
       <option value="smooth-pip" data-i18n="themeSmoothPip">🎲 Clássico de Pontinhos (Pips)</option>
+      <optgroup label="Temas dos Bots" data-i18n-label="themeGroupBots">
+        <option value="canopy" data-i18n="themeCanopy">🌲 Copa (Ark Nova)</option>
+        <option value="vellum" data-i18n="themeVellum">📜 Pergaminho (Burgundy)</option>
+        <option value="warzone" data-i18n="themeWarzone">💥 Zona de Guerra (Heroscape)</option>
+        <option value="onering" data-i18n="themeOnering">💍 Um Anel (LOTR Duelo)</option>
+        <option value="rockhard" data-i18n="themeRockhard">🎸 Rock Hard (Mick)</option>
+        <option value="allomantic" data-i18n="themeAllomantic">🔩 Aço Alomântico (Mistborn)</option>
+        <option value="hallowed" data-i18n="themeHallowed">🕯️ Consagrado (Sanctuary)</option>
+        <option value="primeval" data-i18n="themePrimeval">🪨 Pedra Primeva (Stone Age)</option>
+        <option value="wasteland" data-i18n="themeWasteland">☢️ Terra Devastada (TRV-9000)</option>
+        <option value="stellar" data-i18n="themeStellar">🚀 Estelar (Space Base)</option>
+      </optgroup>
     </select>
   </div>
   <div class="form-group">
@@ -329,8 +380,10 @@ body {
   <button class="close-result-btn" onclick="closeResults()" data-i18n="continueBtn">Continuar</button>
 </div>
 
+<script src="../assets/theme-kit.js"></script>
 <script type="module">
   import DiceBox from 'https://unpkg.com/@3d-dice/dice-box@1.1.3/dist/dice-box.es.min.js';
+  import { triggerHaptic } from '../assets/dice-roller.js';
 
   const STORAGE_KEY = 'boardbots_dice_3d_v2';
   const PRESETS_KEY = 'boardbots_dice_presets_v2';
@@ -360,8 +413,12 @@ body {
     rock: `${DICE_THEMES_CDN}/rock`,
     'smooth-pip': `${DICE_THEMES_CDN}/smooth-pip`
   };
+  // Hand-authored themes matching each bot's game (see /assets/dice-box/themes/).
+  const BOT_THEMES = ['canopy', 'vellum', 'warzone', 'onering', 'rockhard', 'allomantic', 'hallowed', 'primeval', 'wasteland', 'stellar'];
+  const BOT_THEMES_BASE = new URL('../assets/dice-box/themes/', window.location.href).href;
+  BOT_THEMES.forEach(name => { EXTERNAL_THEMES[name] = `${BOT_THEMES_BASE}${name}`; });
   // Themes whose material is a fixed texture ("standard" type) ignore themeColor.
-  const NON_RECOLORABLE_THEMES = ['blueGreenMetal', 'gemstoneMarble', 'wooden'];
+  const NON_RECOLORABLE_THEMES = ['blueGreenMetal', 'gemstoneMarble', 'wooden', ...BOT_THEMES];
   // Legacy theme values saved before this update no longer point anywhere valid.
   const THEME_MIGRATION = { wood: 'wooden', smoothPip: 'smooth-pip' };
 
@@ -389,6 +446,17 @@ body {
       themeDiceOfRolling: '⚔️ Aventureiro (Dice of Rolling)',
       themeRock: '🪨 Pedra',
       themeSmoothPip: '🎲 Clássico de Pontinhos',
+      themeGroupBots: 'Temas dos Bots (feitos à mão)',
+      themeCanopy: '🌲 Copa (Ark Nova)',
+      themeVellum: '📜 Pergaminho (Burgundy)',
+      themeWarzone: '💥 Zona de Guerra (Heroscape)',
+      themeOnering: '💍 Um Anel (LOTR Duelo)',
+      themeRockhard: '🎸 Rock Hard (Mick)',
+      themeAllomantic: '🔩 Aço Alomântico (Mistborn)',
+      themeHallowed: '🕯️ Consagrado (Sanctuary)',
+      themePrimeval: '🪨 Pedra Primeva (Stone Age)',
+      themeWasteland: '☢️ Terra Devastada (TRV-9000)',
+      themeStellar: '🚀 Estelar (Space Base)',
       colorLabel: 'Cor Principal',
       colorNote: 'Esta textura já tem cor/padrão próprio — a cor escolhida não se aplica.',
       numberColorLabel: 'Cor dos Números (Apenas UI)',
@@ -433,6 +501,17 @@ body {
       themeDiceOfRolling: '⚔️ Adventurer (Dice of Rolling)',
       themeRock: '🪨 Rock',
       themeSmoothPip: '🎲 Classic Pips',
+      themeGroupBots: 'Bot Themes (hand-made)',
+      themeCanopy: '🌲 Canopy (Ark Nova)',
+      themeVellum: '📜 Vellum (Burgundy)',
+      themeWarzone: '💥 Warzone (Heroscape)',
+      themeOnering: '💍 One Ring (LOTR Duel)',
+      themeRockhard: '🎸 Rock Hard (Mick)',
+      themeAllomantic: '🔩 Allomantic Steel (Mistborn)',
+      themeHallowed: '🕯️ Hallowed (Sanctuary)',
+      themePrimeval: '🪨 Primeval Stone (Stone Age)',
+      themeWasteland: '☢️ Wasteland (TRV-9000)',
+      themeStellar: '🚀 Stellar (Space Base)',
       colorLabel: 'Main Color',
       colorNote: "This texture already has its own color/pattern — the chosen color won't apply.",
       numberColorLabel: 'Number Color (UI Only)',
@@ -472,6 +551,10 @@ body {
     document.querySelectorAll('[data-i18n-title]').forEach(el => {
       const key = el.dataset.i18nTitle;
       if (S()[key] !== undefined) el.title = S()[key];
+    });
+    document.querySelectorAll('[data-i18n-label]').forEach(el => {
+      const key = el.dataset.i18nLabel;
+      if (S()[key] !== undefined) el.label = S()[key];
     });
 
     document.getElementById('lang-pt').classList.toggle('active', currentLang === 'pt');
@@ -628,6 +711,7 @@ body {
     saveState();
     updateColorPickerAvailability();
     applyNumberStyle();
+    renderDiceList();
 
     if (diceBox) {
       diceBox.updateConfig({
@@ -754,6 +838,12 @@ body {
   }
 
   function playRealDiceSound(count) {
+    if (window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
+      const sfxKey = count > 2 ? 'dice-tray' : 'dice-roll';
+      const played = window.ThemeKit.playSfx(sfxKey, { volume: 0.75 });
+      if (played) return;
+    }
+
     const ctx = getAudioCtx();
     if (!ctx) return;
     if (!noiseBuffer) noiseBuffer = createNoiseBuffer(ctx);
@@ -819,6 +909,9 @@ body {
     document.getElementById('sidebar').classList.add('hidden-ui');
     document.getElementById('result-panel').classList.remove('show');
     
+    // Haptic buzz on throw (Android + iOS fallback)
+    triggerHaptic([25]);
+
     if (state.sfx === 'robot') {
       playRobotActivate();
     } else if (state.sfx === 'realistic') {
@@ -869,6 +962,12 @@ body {
       </div>
     `).join('');
 
+    // Haptic settle pattern + audio landing feedback
+    triggerHaptic([15, 30, 20]);
+    if (window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
+      window.ThemeKit.playSfx('token-place', { volume: 0.35 });
+    }
+
     document.getElementById('result-panel').classList.add('show');
   }
 
@@ -880,6 +979,10 @@ body {
   syncUIWithState();
   renderPresets();
   initDiceBox();
+
+  if (window.ThemeKit && typeof window.ThemeKit.preloadSfx === 'function') {
+    window.ThemeKit.preloadSfx(['dice-roll', 'dice-tray', 'token-place', 'ui-click']);
+  }
 
 </script>
 </body>

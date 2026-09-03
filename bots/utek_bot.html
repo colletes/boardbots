@@ -1,0 +1,1673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Ultra Tiny Epic Kingdoms — Solo Assistant</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=EB+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --parchment: #f7eedb;
+  --parchment-dark: #ecdcc1;
+  --parchment-darker: #d8c39e;
+  --parchment-border: #b89f78;
+  --ink: #22150c;
+  --ink-soft: #4a3525;
+  --forest: #234727;
+  --forest-dark: #142e18;
+  --gold: #cfa13a;
+  --gold-dark: #8c6a23;
+  --gold-light: #f5e29f;
+  --crimson: #8f1d1e;
+  --crimson-dark: #5c1011;
+  --shadow: rgba(0,0,0,0.5);
+  --wood-table: #1e130b;
+}
+
+* { box-sizing:border-box; margin: 0; padding: 0; }
+
+body{
+  font-family: 'EB Garamond', 'Georgia', serif;
+  background-color: var(--wood-table);
+  background-image: 
+    radial-gradient(circle at 50% 15%, rgba(255, 175, 75, 0.16) 0%, transparent 65%),
+    radial-gradient(circle at 85% 85%, rgba(200, 130, 50, 0.08) 0%, transparent 50%),
+    repeating-linear-gradient(90deg, 
+      rgba(0,0,0,0.4) 0px, rgba(0,0,0,0.4) 2px, 
+      transparent 2px, transparent 120px
+    ),
+    repeating-linear-gradient(0deg, 
+      rgba(0,0,0,0.2) 0px, rgba(0,0,0,0.2) 1px, 
+      transparent 1px, transparent 30px
+    ),
+    linear-gradient(rgba(30,19,11,0.82), rgba(30,19,11,0.82)),
+    url('../assets/textures/old-parchment.jpg'),
+    url('data:image/svg+xml;utf8,<svg viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg"><filter id="wood"><feTurbulence type="fractalNoise" baseFrequency="0.04 0.005" numOctaves="4" result="noise"/><feColorMatrix type="matrix" values="0.8 0 0 0 0.12  0 0.7 0 0 0.08  0 0 0.6 0 0.05  0 0 0 0.35 0"/></filter><rect width="100%" height="100%" filter="url(%23wood)"/></svg>');
+  background-size: auto, auto, auto, 340px 340px, auto;
+  background-repeat: no-repeat, no-repeat, no-repeat, repeat, repeat;
+  background-attachment: fixed;
+  color: var(--ink);
+  padding: 20px 16px;
+  padding-left: max(16px, env(safe-area-inset-left));
+  padding-right: max(16px, env(safe-area-inset-right));
+  padding-bottom: max(20px, env(safe-area-inset-bottom));
+  -webkit-tap-highlight-color: transparent;
+  min-height: 100vh;
+  font-size: 17px;
+  line-height: 1.5;
+}
+
+button, select, .action-chip, summary{ touch-action: manipulation; }
+
+.main-interface { max-width: 1200px; margin: 0 auto; }
+.hidden { display: none !important; }
+.gjj-only, .official-only { display: none !important; }
+body.mode-gjj .gjj-only, body.mode-official .official-only { display: revert !important; }
+
+.container { width: 100%; max-width: 1100px; margin: 0 auto; }
+.row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.row > * { min-width: 0; }
+.small { color: var(--ink-soft); font-size: 0.9em; line-height: 1.45; }
+
+svg { max-width: 100%; }
+.icon-inline, .btn-icon, .icon-h1, h1 svg, h2 svg, h3 svg, button svg, .modal-content svg { 
+  display: inline-block !important;
+  width: 1.2em !important; 
+  height: 1.2em !important; 
+  max-width: 24px !important; 
+  max-height: 24px !important; 
+  flex-shrink: 0 !important; 
+  vertical-align: -0.2em !important; 
+}
+.btn-icon { width: 1.15em !important; height: 1.15em !important; vertical-align: -0.18em !important; }
+.icon-h1 { width: 0.9em !important; height: 0.9em !important; vertical-align: -0.08em !important; color: var(--gold); }
+
+
+
+
+
+/* Hero Banner (War Table Command Center) */
+.hero {
+  position: relative;
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 20px;
+  border: 4px solid #3c2a1c;
+  box-shadow: 0 14px 35px rgba(0,0,0,0.8), inset 0 0 50px rgba(0,0,0,0.7);
+  background: #1e130b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 190px;
+}
+.hero-bg {
+  position: absolute;
+  inset: -30px;
+  background-size: cover;
+  background-position: center 30%;
+  filter: blur(18px) brightness(0.35) saturate(1.4);
+  opacity: 0.85;
+  transform: scale(1.1);
+  pointer-events: none;
+}
+.hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 50%, rgba(207,161,58,0.12) 0%, rgba(15,9,5,0.75) 100%),
+              linear-gradient(90deg, rgba(30,19,11,0.8) 0%, transparent 25%, transparent 75%, rgba(30,19,11,0.8) 100%);
+  pointer-events: none;
+}
+.hero-box-wrap {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.hero-box-img {
+  height: 155px;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+  border-radius: 6px;
+  border: 2px solid var(--gold-dark);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.85), 0 0 15px rgba(207,161,58,0.3);
+  transition: transform 0.2s ease;
+}
+.hero-box-img:hover {
+  transform: scale(1.04) rotate(-1deg);
+}
+
+h1{ 
+  font-family: 'Cinzel', serif; text-align: center; color: var(--gold-light); 
+  font-size: 2.2em; margin: 0 0 6px; 
+  text-shadow: 0 2px 8px rgba(0,0,0,0.9), 0 0 20px rgba(207,161,58,0.4); 
+  letter-spacing: 2px;
+}
+.subtitle{ 
+  text-align: center; font-size: 0.95em; color: #d4b08c; 
+  margin-bottom: 24px; font-style: italic; font-family: 'EB Garamond', serif;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+}
+h2{ 
+  font-family: 'Cinzel', serif; color: var(--crimson-dark); 
+  border-bottom: 2px solid var(--parchment-border); 
+  padding-bottom: 8px; margin: 20px 0 16px; font-size: 1.45em; letter-spacing: 1px;
+}
+h3{ font-family: 'Cinzel', serif; color: var(--ink); margin: 18px 0 10px; font-size: 1.15em; }
+
+/* Unrolled Parchment War Scroll Card */
+.card{
+  background: var(--parchment); 
+  border-radius: 3px; 
+  padding: 26px 28px; 
+  margin-bottom: 24px;
+  box-shadow: 
+    0 12px 28px rgba(0,0,0,0.65), 
+    0 2px 6px rgba(0,0,0,0.3),
+    inset 0 0 60px rgba(160, 125, 85, 0.25);
+  position: relative; 
+  border: 1px solid var(--parchment-border);
+}
+.card::before {
+  content: ''; position: absolute; inset: 6px;
+  border: 1px solid rgba(139, 107, 72, 0.25);
+  pointer-events: none;
+}
+
+/* Medieval Buttons & Royal Wax Seals */
+button, .btn{ 
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; 
+  padding: 12px 22px; border: 2px solid #142e18; 
+  background: linear-gradient(135deg, var(--forest), var(--forest-dark)); 
+  color: #fff9ed; font-weight: bold; font-size: 0.92em; cursor: pointer; 
+  min-height: 46px; border-radius: 4px; font-family: 'Cinzel', serif; 
+  transition: all 0.15s ease; 
+  box-shadow: 0 4px 10px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.25); 
+  text-transform: uppercase; letter-spacing: 1px;
+}
+button:hover, .btn:hover{ 
+  filter: brightness(1.12); transform: translateY(-2px); 
+  box-shadow: 0 6px 14px rgba(0,0,0,0.5); 
+}
+button:active, .btn:active{ transform: translateY(1px); box-shadow: 0 2px 4px rgba(0,0,0,0.4); }
+
+.btn-primary, .danger{ 
+  background: linear-gradient(135deg, var(--crimson), var(--crimson-dark)); 
+  border-color: #3b0809; color: #fff; 
+  box-shadow: 0 4px 12px rgba(143,29,30,0.45), inset 0 1px 0 rgba(255,255,255,0.3);
+}
+.btn-block{ width: 100%; margin-top: 12px; }
+.btn-outline, .secondary{ 
+  background: transparent; color: var(--forest-dark); border-color: var(--forest-dark); 
+}
+.forest{ 
+  background: linear-gradient(135deg, #2d5a32, #18331c); color: #fff; 
+}
+
+/* Action Chips (Carved Wooden Battle Tokens) */
+.action-chips{ display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+.action-chip{
+  flex: 1 1 140px; min-width: 140px; padding: 12px 14px; min-height: 60px;
+  background: linear-gradient(145deg, var(--parchment-dark), var(--parchment-darker));
+  border: 2px solid var(--parchment-border); border-radius: 6px; 
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 4px; text-align: center; cursor: pointer; 
+  color: var(--ink); transition: all 0.15s ease;
+  font-family: 'Cinzel', serif; font-size: 0.9em;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.5);
+}
+.action-chip:hover{ transform: translateY(-2px); border-color: var(--forest); color: var(--forest-dark); }
+.action-chip .chip-name{
+  font-weight: 800; font-size: 1.05em; line-height: 1.15; letter-spacing: 0.5px;
+}
+.action-chip .chip-tag{
+  display: block; font-size: 0.72em; font-weight: 700;
+  padding: 2px 8px; border-radius: 4px;
+  background: rgba(0,0,0,0.35); color: #fff;
+  border: 1px solid rgba(255,255,255,0.3);
+  text-transform: uppercase; letter-spacing: 0.5px;
+  margin-top: 2px;
+}
+
+/* Player-selected chip (Royal Burgundy / Crimson) */
+.action-chip.by-you{
+  background: linear-gradient(145deg, #a72829, #681213);
+  color: #ffffff;
+  border-color: var(--gold);
+  box-shadow: 0 4px 14px rgba(143, 29, 30, 0.55), inset 0 1px 0 rgba(255,255,255,0.3);
+}
+.action-chip.by-you .chip-tag{
+  background: rgba(0,0,0,0.45);
+  border-color: var(--gold);
+  color: var(--gold-light);
+}
+
+/* Bot-selected chip (Imperial Forest Green) */
+.action-chip.by-ai{
+  background: linear-gradient(145deg, #245729, #123316);
+  color: #ffffff;
+  border-color: var(--gold);
+  box-shadow: 0 4px 14px rgba(18, 51, 22, 0.55), inset 0 1px 0 rgba(255,255,255,0.3);
+}
+.action-chip.by-ai .chip-tag{
+  background: rgba(0,0,0,0.45);
+  border-color: var(--gold);
+  color: var(--gold-light);
+}
+
+/* Astrolabe / Mariner Compass on War Table */
+.compass-wheel-wrap{ display: flex; flex-direction: column; align-items: center; margin: 24px auto; text-align: center; }
+.compass-wheel{
+  position: relative; width: 320px; height: 320px; max-width: 88vw; max-height: 88vw; border-radius: 50%;
+  background: radial-gradient(circle at 50% 50%, var(--parchment), var(--parchment-dark) 65%, #c8a35e 100%);
+  border: 8px solid #2a1f14;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.6), inset 0 0 35px rgba(0,0,0,0.35);
+  margin: 0 auto 12px auto;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+.compass-phase-badge{
+  position: absolute; top: 22px; right: 78px; z-index: 5;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
+}
+.compass-phase-badge svg{ width: 1.6em !important; height: 1.6em !important; max-width: 30px !important; max-height: 30px !important; }
+.compass-tick{
+  position: absolute; top: 50%; left: 50%; width: 68px; height: 38px;
+  margin-top: -19px; margin-left: -34px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; font-size: 0.64em; font-weight: 700; color: var(--ink);
+  font-family: 'Cinzel', serif; line-height: 1.1;
+  text-shadow: 0 1px 1px rgba(255,255,255,0.8);
+  pointer-events: none;
+}
+.tick-num{
+  font-size: 1.45em; font-weight: 900; color: var(--crimson); display: block; margin-bottom: 1px;
+}
+.compass-needle{
+  position: absolute; top: 50%; left: 50%; width: 14px; height: 125px; margin-left: -7px; margin-top: -125px;
+  transform-origin: 50% 100%;
+  background: linear-gradient(to top, #142e18 0%, var(--crimson) 25%, #ff5252 100%);
+  clip-path: polygon(50% 0%, 100% 85%, 50% 100%, 0% 85%);
+  z-index: 10; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5)); pointer-events: none;
+  transition: transform 1.4s cubic-bezier(0.22, 1.4, 0.36, 1);
+}
+.compass-needle::after{
+  content: ''; position: absolute; bottom: -35px; left: 3px; width: 8px; height: 35px;
+  background: linear-gradient(to bottom, #142e18, #071008);
+  clip-path: polygon(50% 100%, 100% 0%, 0% 0%);
+}
+.compass-center-label{
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  width: 84px; height: 84px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #fff6dd, var(--gold) 60%, #8c6a23 100%);
+  border: 3px solid #2a1f14;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.5), inset 0 2px 4px rgba(255,255,255,0.7);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  z-index: 12; font-family: 'Cinzel', serif; font-size: 0.72em; font-weight: 800;
+  color: var(--ink); text-align: center; line-height: 1.1; box-sizing: border-box; padding: 4px;
+}
+
+/* Inputs & Details */
+select, input[type=text]{ 
+  width: 100%; padding: 12px 14px; font-size: 1.05em; 
+  background: var(--parchment-dark); border: 2px solid var(--parchment-border); 
+  border-radius: 4px; color: var(--ink); font-family: inherit; margin-bottom: 14px; 
+}
+select:focus, input[type=text]:focus{ outline: none; border-color: var(--crimson); background: #ffffff; }
+
+.badge{ display: inline-flex; align-items: center; justify-content: center; min-width: 28px; padding: 4px 10px; border: 1px solid var(--gold-dark); border-radius: 999px; background: rgba(207,161,58,0.2); color: var(--ink); font-size: 0.62em; vertical-align: middle; font-family: 'Cinzel', serif; font-weight: bold; }
+.pill{ display: inline-block; background: var(--crimson); color: #fff; border-radius: 14px; padding: 5px 12px; font-size: 0.78em; margin-left: 8px; font-family: 'Cinzel', serif; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+
+.guidance{ margin-top: 14px; padding: 16px; background: rgba(35,71,39,0.08); border: 1px solid var(--parchment-border); border-left: 5px solid var(--gold); border-radius: 4px; color: var(--ink); line-height: 1.5; }
+.log-list{ margin: 0; padding-left: 22px; max-height: 280px; overflow: auto; color: var(--ink-soft); }
+.log-list li{ padding: 7px 0; border-bottom: 1px dashed var(--parchment-border); line-height: 1.35; }
+
+.score-row{ display: flex; justify-content: space-between; align-items: center; padding: 14px; background: var(--parchment-dark); border: 1px solid var(--parchment-border); border-radius: 4px; margin-bottom: 8px; }
+.score-label{ font-weight: bold; font-size: 1.1em; color: var(--ink); font-family: 'Cinzel', serif; }
+.score-controls{ display: flex; align-items: center; gap: 12px; }
+.score-btn{ width: 40px; height: 40px; border-radius: 4px; border: 2px solid var(--forest-dark); background: var(--forest); color: #fff; font-size: 1.4em; font-weight: bold; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.score-val{ font-size: 1.4em; font-weight: bold; font-family: 'Cinzel', serif; width: 30px; text-align: center; }
+.vp-total{ font-size: 1.8em; font-weight: bold; font-family: 'Cinzel', serif; color: var(--crimson); text-shadow: 1px 1px 0 rgba(255,255,255,0.5); }
+
+.lang-switch{ position: absolute; top: 16px; right: 16px; display: flex; gap: 4px; background: rgba(0,0,0,0.6); border: 1px solid var(--parchment-border); border-radius: 4px; padding: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.5); z-index: 60; }
+.lang-btn{ border: none; background: transparent; color: #d4b08c; padding: 6px 10px; border-radius: 3px; font-size: 0.9em; font-weight: bold; cursor: pointer; font-family: 'Cinzel', serif; }
+.lang-btn.active{ background: var(--gold); color: #1e130b; }
+
+.btn-help-float{ position: fixed; bottom: 20px; right: 20px; z-index: 50; width: 56px; height: 56px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, var(--gold-light), var(--gold-dark)); color: #1e130b; border: 2px solid #3c2a1c; font-weight: bold; font-size: 1.8em; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 16px rgba(0,0,0,0.6); cursor: pointer; transition: transform 0.15s; font-family: 'Cinzel', serif; }
+.btn-help-float:active{ transform: scale(0.92); }
+
+.credits{ display: flex; align-items: center; gap: 16px; margin-top: 20px; padding: 18px; border: 1px solid var(--parchment-border); border-radius: 4px; background: var(--parchment-dark); }
+.credits img{ width: 64px; height: 64px; border-radius: 4px; border: 1px solid var(--parchment-border); object-fit: cover; }
+.credits p{ margin: 0 0 6px; font-size: 0.95em; color: var(--ink-soft); }
+.credits a{ color: var(--crimson); font-weight: bold; text-decoration: none; }
+
+
+
+.modal-overlay{ display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 80; align-items: center; justify-content: center; padding: 16px; backdrop-filter: blur(4px); }
+.modal-overlay.open{ display: flex; }
+.modal-content{ background: var(--parchment); border: 3px solid var(--crimson-dark); border-radius: 6px; max-width: 680px; width: 100%; max-height: 85vh; overflow-y: auto; padding: 28px; position: relative; box-shadow: 0 14px 45px rgba(0,0,0,0.8); }
+.modal-content h2{ font-family: 'Cinzel', serif; color: var(--crimson); margin-top: 0; border-bottom: 2px solid var(--parchment-border); padding-bottom: 10px; }
+.modal-close{ position: absolute; top: 16px; right: 16px; background: var(--parchment-dark); border: 1px solid var(--crimson-dark); color: var(--ink); font-size: 1.4em; width: 38px; height: 38px; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+
+/* Responsive Widescreen */
+@media (min-width: 900px) {
+  #game-ui { display: grid; grid-template-columns: 360px 1fr; gap: 24px; align-items: start; }
+  .setup-container { max-width: 760px; margin: 0 auto; }
+}
+
+@media (max-width: 700px) {
+  body { padding: 12px; }
+  h1 { font-size: 1.65em; padding: 0 34px; }
+  h2 { font-size: 1.3em; }
+  .two-col, .wide-grid { grid-template-columns: 1fr; gap: 14px; }
+  .card { padding: 18px; margin-bottom: 16px; }
+  .row > button, .row > .btn { flex: 1 1 100%; }
+  .action-chips { gap: 7px; }
+  .action-chip { min-width: calc(50% - 4px); padding: 10px 6px; font-size: 0.82em; }
+}
+
+/* Standard Buy Me a Coffee Button */
+.bmc-btn, .bmc-inline, .bmc-float {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  background: #FFDD00 !important;
+  color: #000000 !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+  font-weight: 700 !important;
+  font-size: 0.92rem !important;
+  padding: 10px 18px !important;
+  border-radius: 8px !important;
+  border: 1px solid rgba(0,0,0,0.15) !important;
+  text-decoration: none !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25) !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+  cursor: pointer !important;
+  margin: 16px auto !important;
+  width: max-content !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+}
+.bmc-btn:hover, .bmc-inline:hover, .bmc-float:hover {
+  transform: translateY(-2px) scale(1.02) !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35) !important;
+  background: #FFE433 !important;
+  color: #000000 !important;
+}
+.bmc-btn svg, .bmc-inline svg, .bmc-float svg {
+  width: 20px !important;
+  height: 20px !important;
+  min-width: 20px !important;
+  min-height: 20px !important;
+  max-width: 20px !important;
+  max-height: 20px !important;
+  stroke: #000000 !important;
+  fill: none !important;
+  flex-shrink: 0 !important;
+  vertical-align: middle !important;
+}
+
+/* Ambient thematic flavor: flickering torchlight glow + rising embers (war-table candlelight) */
+@media (prefers-reduced-motion: no-preference) {
+  .torch-glow{ position:fixed; inset:0; pointer-events:none; z-index:-1;
+    background: radial-gradient(ellipse at 15% 20%, rgba(255,175,75,0.10), transparent 55%),
+                radial-gradient(ellipse at 88% 75%, rgba(207,161,58,0.08), transparent 60%);
+    animation: torchFlicker 5s ease-in-out infinite alternate; }
+  @keyframes torchFlicker { 0%{opacity:0.65;} 30%{opacity:1;} 55%{opacity:0.8;} 100%{opacity:0.9;} }
+
+  .ember-layer{ position:fixed; inset:0; pointer-events:none; z-index:-1; overflow:hidden; }
+  .ember{ position:absolute; bottom:-10px; width:4px; height:4px; border-radius:50%;
+    background: radial-gradient(circle, #ffd27a, #cfa13a 60%, transparent 100%);
+    box-shadow: 0 0 6px 2px rgba(207,161,58,0.55);
+    animation: emberRise linear infinite; }
+  @keyframes emberRise {
+    0%{ transform:translate(0,0) scale(0.6); opacity:0; }
+    10%{ opacity:0.9; }
+    60%{ transform:translate(10px,-60vh) scale(1); opacity:0.6; }
+    100%{ transform:translate(-6px,-100vh) scale(0.4); opacity:0; }
+  }
+  .ember:nth-child(1){ left:5%; animation-duration:9s; animation-delay:-2s; }
+  .ember:nth-child(2){ left:16%; animation-duration:12s; animation-delay:-6s; }
+  .ember:nth-child(3){ left:28%; animation-duration:8s; animation-delay:-1s; }
+  .ember:nth-child(4){ left:41%; animation-duration:11s; animation-delay:-8s; }
+  .ember:nth-child(5){ left:55%; animation-duration:10s; animation-delay:-3s; }
+  .ember:nth-child(6){ left:68%; animation-duration:9.5s; animation-delay:-5s; }
+  .ember:nth-child(7){ left:80%; animation-duration:13s; animation-delay:-7s; }
+  .ember:nth-child(8){ left:92%; animation-duration:8.5s; animation-delay:-4s; }
+  .ember:nth-child(9){ left:36%; animation-duration:14s; animation-delay:-9s; }
+  .ember:nth-child(10){ left:74%; animation-duration:11.5s; animation-delay:-2.5s; }
+}
+</style>
+    <script src="../assets/logger.js"></script>
+</head>
+<body class="mode-gjj">
+<div class="torch-glow" aria-hidden="true"></div>
+<div class="ember-layer" aria-hidden="true">
+  <span class="ember"></span><span class="ember"></span><span class="ember"></span><span class="ember"></span><span class="ember"></span>
+  <span class="ember"></span><span class="ember"></span><span class="ember"></span><span class="ember"></span><span class="ember"></span>
+</div>
+<div class="main-interface">
+<div class="lang-switch">
+  <button class="lang-btn" id="langPt" onclick="setLang('pt')">PT-BR</button>
+  <button class="lang-btn" id="langEn" onclick="setLang('en')">EN</button>
+</div>
+<button class="btn-help-float" onclick="openHelpModal()" aria-label="Help">?</button>
+<div class="hero">
+  <div class="hero-bg" style="background-image: url('../assets/art/Utek.webp');"></div>
+  <div class="hero-box-wrap">
+    <img src="../assets/art/Utek.webp" class="hero-box-img" alt="Ultra Tiny Epic Kingdoms box art">
+  </div>
+</div>
+<h1>
+  <svg class="icon-h1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 8l4 3 5-6 5 6 4-3-2 10H5L3 8z" stroke-linejoin="round"/><circle cx="3" cy="7" r="1.2" fill="currentColor"/><circle cx="12" cy="5" r="1.2" fill="currentColor"/><circle cx="21" cy="7" r="1.2" fill="currentColor"/></svg>
+  <span data-i18n="appTitle">Ultra Tiny Epic Kingdoms</span>
+  <svg class="icon-h1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 8l4 3 5-6 5 6 4-3-2 10H5L3 8z" stroke-linejoin="round"/><circle cx="3" cy="7" r="1.2" fill="currentColor"/><circle cx="12" cy="5" r="1.2" fill="currentColor"/><circle cx="21" cy="7" r="1.2" fill="currentColor"/></svg>
+</h1>
+<div class="subtitle" id="modeSubtitle">Solo Assistant — GJJ Games fan solo variant (dummy player)</div>
+
+<!-- SETUP -->
+<div id="setup" class="card">
+  <h2><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg><span data-i18n="setupTitle">Setup</span></h2>
+
+  <h3><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="10" rx="5"/><path d="M7 10v4M5 12h4M15.5 11.5h.01M18.5 13.5h.01"/></svg><span data-i18n="soloModeTitle">Solo Mode</span></h3>
+  <div id="soloModeBody" data-i18n-html="soloModeBodyHtml"></div>
+
+  <h3><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 4h6a1 1 0 011 1v1H8V5a1 1 0 011-1z"/><rect x="5" y="6" width="14" height="15" rx="2"/><path d="M9 12h6M9 16h6"/></svg><span data-i18n="physicalSetupTitle">Physical Game Setup (do this on your table first)</span></h3>
+  <div id="physicalSetupBody" data-i18n-html="physicalSetupBodyHtml"></div>
+
+  <h3><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l9 9-9 9-9-9 9-9z"/><circle cx="9" cy="9" r="1.2" fill="currentColor"/></svg><span data-i18n="factionsTitle">Factions</span></h3>
+  <label data-i18n="labelYourFaction">Your Faction (flavor only, no game effect)</label>
+  <input type="text" id="setupYourFaction" data-i18n-placeholder="placeholderYourFaction" placeholder="e.g. Halflings">
+  <label data-i18n="labelAiFaction">Dummy Player's Faction</label>
+  <input type="text" id="setupAiFaction" data-i18n-placeholder="placeholderAiFaction" placeholder="e.g. Orcs">
+
+  <div class="gjj-only">
+    <h3><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a4 4 0 00-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 005.4-5.4l-2.1 2.1-2-2 2.1-2.1z" stroke-linejoin="round"/></svg><span data-i18n="difficultyTitle">Difficulty Adjustments</span></h3>
+    <div id="difficultyBody" data-i18n-html="difficultyBodyHtml"></div>
+  </div>
+
+  <p class="small official-only" style="margin-top:14px;" data-i18n-html="officialNoteHtml">On the Dummy's own turn, the app rolls a virtual 12-sided Compass die for you and automatically picks the resulting action (advancing clockwise past any action already taken this round, just like the physical Compass card). You still need the physical Compass card and Territory cards on the table: use the roll number the app shows you to resolve <em>which</em> army/region is selected for Patrol, Quest or Expand, and to read the current Day/Night war cost.</p>
+  <p class="small" style="margin-top:14px;" data-i18n="generalNoteText">Resources, tower/magic levels and armies stay on your physical boards after this point — this assistant only tracks the round/action order, the Dummy's choices, war outcomes, and final scoring.</p>
+  <div class="row" style="margin-top:12px;">
+    <button class="forest" onclick="startGame()"><svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l14 8-14 8V4z"/></svg><span data-i18n="startGameBtn">Start Game</span></button>
+    <button class="secondary hidden" id="continueSavedBtn" onclick="continueSavedGame()"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 14l-4-4 4-4M5 10h9a5 5 0 015 5v1" stroke-linecap="round" stroke-linejoin="round"/></svg><span data-i18n="continueSavedBtn">Continue Saved Game</span></button>
+  </div>
+</div>
+
+<!-- GAME -->
+<div id="game" class="hidden">
+
+  <div class="card">
+    <h2><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="8" r="1.3" fill="currentColor"/><circle cx="16" cy="8" r="1.3" fill="currentColor"/><circle cx="12" cy="12" r="1.3" fill="currentColor"/><circle cx="8" cy="16" r="1.3" fill="currentColor"/><circle cx="16" cy="16" r="1.3" fill="currentColor"/></svg><span data-i18n="roundTrackerTitle">Round Tracker</span> <span class="badge" id="roundBadge">Round 1</span></h2>
+    <p class="small" data-i18n-html="roundTrackerIntroHtml">The lead player alternates by round — the Dummy always leads odd rounds (starting with Round 1), you lead even rounds. Only 5 of the 6 actions are used per round; the round automatically clears and rotates lead once the 5th is taken. Only one action can be picked per turn: click your cube (<strong style="color:var(--burgundy-dark);">burgundy</strong>) on your turn, then press Next Turn — the Dummy's cube (<strong style="color:var(--forest-dark);">green</strong>) is chosen automatically the instant it becomes its turn.</p>
+    <div class="row" id="actionChips"></div>
+    <div class="row" style="margin-top:10px;">
+      <span class="pill">Active turn: <strong id="activeSideLabel">You</strong></span>
+      <span class="pill official-only" id="compassPhasePill"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M15 9l-2 5-5 2 2-5z" fill="currentColor" stroke="none"/></svg> Compass: Day <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4 12H2M22 12h-2M5 5l1.5 1.5M17.5 17.5L19 19M19 5l-1.5 1.5M6.5 17.5L5 19"/></svg></span>
+      <button onclick="nextTurn()" id="nextTurnBtn"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12h14M13 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg><span data-i18n="nextTurnBtn">Next Turn</span></button>
+    </div>
+    <div class="compass-wheel-wrap official-only" id="compassWheelWrap">
+      <div class="compass-wheel" id="compassWheel">
+        <div class="compass-phase-badge" id="compassPhaseBadge"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4 12H2M22 12h-2M5 5l1.5 1.5M17.5 17.5L19 19M19 5l-1.5 1.5M6.5 17.5L5 19"/></svg></div>
+        <div class="compass-tick" style="transform: rotate(30deg) translateY(-114px) rotate(-30deg);"><span class="tick-num">1</span><span data-i18n="actionResearch">Research</span></div>
+        <div class="compass-tick" style="transform: rotate(60deg) translateY(-114px) rotate(-60deg);"><span class="tick-num">2</span><span data-i18n="actionTrade">Trade</span></div>
+        <div class="compass-tick" style="transform: rotate(90deg) translateY(-114px) rotate(-90deg);"><span class="tick-num">3</span><span data-i18n="actionBuild">Build</span></div>
+        <div class="compass-tick" style="transform: rotate(120deg) translateY(-114px) rotate(-120deg);"><span class="tick-num">4</span><span data-i18n="actionPatrol">Patrol</span></div>
+        <div class="compass-tick" style="transform: rotate(150deg) translateY(-114px) rotate(-150deg);"><span class="tick-num">5</span><span data-i18n="actionQuest">Quest</span></div>
+        <div class="compass-tick" style="transform: rotate(180deg) translateY(-114px) rotate(-180deg);"><span class="tick-num">6</span><span data-i18n="actionExpand">Expand</span></div>
+        <div class="compass-tick" style="transform: rotate(210deg) translateY(-114px) rotate(-210deg);"><span class="tick-num">7</span><span data-i18n="actionResearch">Research</span></div>
+        <div class="compass-tick" style="transform: rotate(240deg) translateY(-114px) rotate(-240deg);"><span class="tick-num">8</span><span data-i18n="actionTrade">Trade</span></div>
+        <div class="compass-tick" style="transform: rotate(270deg) translateY(-114px) rotate(-270deg);"><span class="tick-num">9</span><span data-i18n="actionBuild">Build</span></div>
+        <div class="compass-tick" style="transform: rotate(300deg) translateY(-114px) rotate(-300deg);"><span class="tick-num">10</span><span data-i18n="actionPatrol">Patrol</span></div>
+        <div class="compass-tick" style="transform: rotate(330deg) translateY(-114px) rotate(-330deg);"><span class="tick-num">11</span><span data-i18n="actionQuest">Quest</span></div>
+        <div class="compass-tick" style="transform: rotate(0deg) translateY(-114px) rotate(0deg);"><span class="tick-num">12</span><span data-i18n="actionExpand">Expand</span></div>
+        <div class="compass-needle" id="compassNeedle"></div>
+        <div class="compass-center-label" id="compassCenterLabel">—</div>
+      </div>
+      <p class="small" style="margin:0;" data-i18n="compassSpinHintText">Spins to the last Compass roll — use it for army/region resolution on the physical board.</p>
+    </div>
+    <div class="row" style="margin-top:10px;">
+      <button class="danger" onclick="endGame()" id="endGameBtn"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3v18M5 4h11l-2 3 2 3H5" stroke-linejoin="round"/></svg><span data-i18n="endGameBtn">End Game &amp; Reveal Scoring</span></button>
+      <button class="secondary hidden" onclick="resumeGame()" id="resumeGameBtn"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3l4 4-11 11H6v-4L17 3z" stroke-linejoin="round"/></svg><span data-i18n="resumeBtn">Resume Round Tracking</span></button>
+    </div>
+  </div>
+
+  <div id="scoreSection" class="two-col hidden">
+    <div class="card kingdom you">
+      <h3><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l8 3v6c0 5-3.5 8.5-8 11-4.5-2.5-8-6-8-11V5l8-3z" stroke-linejoin="round"/></svg><span data-i18n="yourKingdomTitle">Your Kingdom</span> — <span id="yourFactionLabel">Faction</span></h3>
+      <label data-i18n="labelYouArmies">Armies in play (not in Ruins)</label>
+      <input type="number" min="0" id="youArmies" value="0" onchange="updateScoreInputs('you','armies',this.value)">
+      <label data-i18n="labelYouRuinArmies">Armies in Ruins (excluded from army VP)</label>
+      <input type="number" min="0" id="youRuinArmies" value="0" onchange="updateScoreInputs('you','ruinArmies',this.value)">
+      <label data-i18n="labelYouTowerVP">Tower VP (read from your Tower card at final level)</label>
+      <input type="number" min="0" id="youTowerVP" value="0" onchange="updateScoreInputs('you','towerVP',this.value)">
+      <label data-i18n="labelYouMagicVP">Magic VP (mana cubes shown at final level, + top-level bonus if reached)</label>
+      <input type="number" min="0" id="youMagicVP" value="0" onchange="updateScoreInputs('you','magicVP',this.value)">
+      <label data-i18n-html="labelCapitalCitiesHtml">Capital Cities<span class="gjj-only"> — solely controlled / shared (allied)</span><span class="official-only"> occupied (2 VP each — no allied/shared control in this mode)</span></label>
+      <div class="row">
+        <input type="number" min="0" style="flex:1" id="youCapSolo" value="0" onchange="updateScoreInputs('you','capitalsSolo',this.value)">
+        <input type="number" min="0" style="flex:1" class="gjj-only" id="youCapShared" value="0" onchange="updateScoreInputs('you','capitalsShared',this.value)">
+      </div>
+      <div class="gjj-only">
+        <label data-i18n="labelYouOnEnemy">Your armies on the Dummy's territory card (+1 VP each)</label>
+        <input type="number" min="0" id="youOnEnemyTerritory" value="0" onchange="updateScoreInputs('you','onEnemyTerritory',this.value)">
+      </div>
+      <p class="small" id="scoreBreakdownYou"></p>
+      <div class="vp-total" id="yourTotalVP">0</div>
+    </div>
+
+    <div class="card kingdom ai">
+      <h3><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="8" width="14" height="11" rx="2"/><path d="M12 8V4M9 4h6"/><circle cx="9" cy="13" r="1.2" fill="currentColor"/><circle cx="15" cy="13" r="1.2" fill="currentColor"/><path d="M9 17h6M3 12v3M21 12v3"/></svg><span data-i18n="dummyPlayerTitle">Dummy Player</span> — <span id="aiFactionLabel">Faction</span></h3>
+      <label data-i18n-html="labelAiArmiesHtml">Armies in play (not in Ruins)<span class="gjj-only"> — always kept ≥2 in Home Region</span></label>
+      <input type="number" min="0" id="aiArmies" value="0" onchange="updateScoreInputs('ai','armies',this.value)">
+      <label data-i18n="labelAiRuinArmies">Dummy armies in Ruins (excluded from army VP)</label>
+      <input type="number" min="0" id="aiRuinArmies" value="0" onchange="updateScoreInputs('ai','ruinArmies',this.value)">
+      <label data-i18n="labelAiTowerVP">Tower VP (read from Tower card at final level)</label>
+      <input type="number" min="0" id="aiTowerVP" value="0" onchange="updateScoreInputs('ai','towerVP',this.value)">
+      <label data-i18n="labelAiMagicVP">Magic VP + top-level bonus (Dummy always gets this bonus if reached, even without AI abilities)</label>
+      <input type="number" min="0" id="aiMagicVP" value="0" onchange="updateScoreInputs('ai','magicVP',this.value)">
+      <label data-i18n-html="labelCapitalCitiesHtml">Capital Cities<span class="gjj-only"> — solely controlled / shared (allied)</span><span class="official-only"> occupied (2 VP each — no allied/shared control in this mode)</span></label>
+      <div class="row">
+        <input type="number" min="0" style="flex:1" id="aiCapSolo" value="0" onchange="updateScoreInputs('ai','capitalsSolo',this.value)">
+        <input type="number" min="0" style="flex:1" class="gjj-only" id="aiCapShared" value="0" onchange="updateScoreInputs('ai','capitalsShared',this.value)">
+      </div>
+      <div class="gjj-only">
+        <label data-i18n="labelAiOnEnemy">Dummy armies on your territory card (+1 VP each)</label>
+        <input type="number" min="0" id="aiOnEnemyTerritory" value="0" onchange="updateScoreInputs('ai','onEnemyTerritory',this.value)">
+      </div>
+      <p class="small" id="scoreBreakdownAi"></p>
+      <div class="vp-total" id="aiTotalVP">0</div>
+    </div>
+  </div>
+  <div id="winnerNoteWrap" class="card hidden" style="text-align:center;">
+    <p class="small" id="winnerNote" style="font-weight:700;font-size:1.1em;margin:0;"></p>
+    <p class="small" id="adjustmentsSummary" style="margin-top:8px;"></p>
+  </div>
+
+  <div class="wide-grid">
+
+    <div class="card">
+      <h2><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M15 9l-2 6-6 2 2-6 6-2z" stroke-linejoin="round"/></svg><span data-i18n="turnAssistantTitle">Turn Assistant</span></h2>
+      <p class="small" data-i18n="turnAssistantIntroText">Reacts automatically to the Round Tracker above and explains exactly what the Dummy does for the current action, including fallback rules when it's blocked.</p>
+      <div id="guidanceBox" class="guidance" data-i18n="guidanceDefaultText">Click an action above to begin your turn.</div>
+      <details>
+        <summary data-i18n="summaryActionCosts">Action costs</summary>
+        <div data-i18n-html="actionCostsHtml"><ul>
+          <li><strong>Build:</strong> pay Ore = next tower level (1,2,3,4,5,6).</li>
+          <li><strong>Research:</strong> pay Mana = next magic level (1,2,3,4,5).</li>
+          <li><strong>Expand:</strong> pay Food = your new total army count. New army placed with an existing solitary army.</li>
+          <li><strong>Trade:</strong> convert any amount of one resource into an equal amount of another, once per action.</li>
+          <li><strong>Collect:</strong> 1 resource per occupied region (Forest→Mana, Mountain→Ore, Plains→Food, Ruins→choice); Capital Cities give none.</li>
+          <li>Resource maximum is 9 of each type.</li>
+        </ul></div>
+      </details>
+      <details class="official-only">
+        <summary><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M15 9l-2 6-6 2 2-6 6-2z" stroke-linejoin="round"/></svg><span data-i18n="summaryCompassRef">Compass Card reference</span></summary>
+        <div data-i18n-html="compassRefBodyHtml">
+        <p class="small">The Compass ring is the same on both sides — only the war cost and region-selection distance preference change between Day and Night. Each number pairs with its opposite (N and N+6) on the same action:</p>
+        <ul>
+          <li><strong>1 &amp; 7</strong> — Research</li>
+          <li><strong>2 &amp; 8</strong> — Trade</li>
+          <li><strong>3 &amp; 9</strong> — Build</li>
+          <li><strong>4 &amp; 10</strong> — Patrol</li>
+          <li><strong>5 &amp; 11</strong> — Quest</li>
+          <li><strong>6 &amp; 12</strong> — Expand</li>
+        </ul>
+        <p class="small">Each time the round clears (the Action card is cleared, its 5th action taken), the Compass flips: Day → Night grants the Dummy 1 Ore, 1 Mana and 1 Food; Night → Day grants nothing. During the Day the Dummy prefers the region/army <strong>closer</strong> to the Compass card; at Night it prefers whichever is <strong>farther</strong> away — this part stays physical since it depends on your actual table layout.</p>
+        </div>
+      </details>
+      <details>
+        <summary data-i18n="summaryDummyOverview">Dummy Player Overview</summary>
+        <div class="gjj-only" data-i18n-html="dummyOverviewGjjHtml"><ul>
+          <li>Dummy takes the very first turn of the game, always selecting Patrol.</li>
+          <li>On your turn: Dummy follows your action if able, else collects resources (exception: never follows Trade — does nothing).</li>
+          <li>On Dummy's own turn: it picks the available action closest to the top of the action card (Patrol &gt; Quest &gt; Build &gt; Research &gt; Expand); it will never select Trade itself.</li>
+          <li>Dummy never uses Research faction abilities, except any level-5 bonus VP at scoring.</li>
+          <li>Dummy always keeps 2 armies in its Home Region; a new army is added free the moment only 1 remains there.</li>
+        </ul></div>
+        <div class="official-only" data-i18n-html="dummyOverviewOfficialHtml"><ul>
+          <li>On the Dummy's own turn, the app rolls a virtual 12-sided Compass die and automatically selects the resulting action, advancing clockwise past any action already taken this round — see the Compass Card reference above for the number/action pairing.</li>
+          <li>That same roll also picks which army moves for Patrol/Quest/Expand — starting at the rolled number, move clockwise around the territory until you reach a valid army/region. When the Dummy is just following your action instead, the app rolls once for this purpose too.</li>
+          <li>The Dummy never moves into a region it already occupies, but will move into one of yours (triggering war).</li>
+          <li>On your turn: Dummy follows your action if able, else collects resources — except Trade, which it always "follows" by simply gaining 1 of each resource.</li>
+          <li>The Dummy benefits from its faction's abilities according to its magic level, same as a normal player.</li>
+          <li>When the Dummy collects from a Ruin, either give it the resource it currently has least of, or roll a die (1–4 Ore, 5–8 Mana, 9–12 Food) — pick one method and stick with it.</li>
+          <li>The app automatically flips the Compass between Day and Night each time the round clears; check the <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M15 9l-2 5-5 2 2-5z" fill="currentColor" stroke="none"/></svg> pill above the action chips for the current phase.</li>
+        </ul></div>
+      </details>
+      <details>
+        <summary data-i18n-html="summaryScoring">Scoring &amp; end game</summary>
+        <div class="gjj-only" data-i18n-html="scoringGjjHtml"><ul>
+          <li>End triggers (either player): all 7 armies in play, 6th Tower level reached, or 5th Magic level reached. If the Dummy triggers it on the round's 5th action, play one more full round.</li>
+          <li>VP: 1 per army in play (not in Ruins) + Tower VP + Magic VP (+top level bonus) + Capital Cities (2 solo / 1 shared each) + 1 per army on the opponent's territory card.</li>
+        </ul></div>
+        <div class="official-only" data-i18n-html="scoringOfficialHtml"><ul>
+          <li>End triggers (either player): all 7 armies in play, 6th Tower level reached, or 5th Magic level reached. Once triggered, the game ends the next time the action card is next cleared, no matter what.</li>
+          <li>VP: 1 per army in play (not in Ruins) + Tower VP + Magic VP (+top level bonus) + 2 per Capital City occupied. No allied/shared capital control in this mode.</li>
+          <li>Tie-break order: most armies in play, then tower level, then magic level, then total resources. Still tied → the game ends in a tie.</li>
+        </ul></div>
+      </details>
+    </div>
+
+    <div class="card">
+      <h2><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6.5 3l6 6M17.5 3l-6 6M3 20.5l5-5M21 20.5l-5-5M9 9l-6 6 2 2 6-6M15 9l6 6-2 2-6-6" stroke-linejoin="round" stroke-linecap="round"/></svg><span data-i18n="warResolverTitle">War Resolver</span></h2>
+      <div class="gjj-only">
+        <p class="small" data-i18n-html="warResolverGjjIntroHtml">You always choose your own war value in secret (0–11, or the White Flag). The Dummy never chooses — roll a 12-sided combat die for it: rolling a <strong>12</strong> is the White Flag; any other face is a value of 1–11. The Dummy's real committed value is always the <em>lower</em> of that die roll or the total Mana + Ore it currently has available (Mana counts as 2, Ore as 1) — it spends Mana before Ore, an exact amount if possible.</p>
+        <ul id="warRulesList"></ul>
+      </div>
+      <div class="official-only">
+        <p class="small" id="officialWarCostText">Check the Compass card: on the <strong>Day</strong> side, the Dummy's war cost is <strong>2 × its total armies currently in play</strong>; on the <strong>Night</strong> side, its war cost equals its total armies currently in play. You only need to meet or exceed this cost to win the war — if you choose not to pay it, you lose.</p>
+        <ul data-i18n-html="officialWarRulesHtml">
+          <li>The Dummy never has a White Flag or alliance option in this mode — every war has a winner.</li>
+          <li>Win/tie resolution and your own retreat-or-removal follow the standard rules.</li>
+          <li>If the Dummy loses, it retreats into an adjacent empty region if one exists (roll a die among tied options, and use the Compass to determine the retreat direction) and pays food equal to its total armies in play; if it can't afford that food, the losing army is removed instead. It will never retreat into a region with your army or one of its own armies already in it.</li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="card">
+    <h2><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4.5A2.5 2.5 0 016.5 2H20v17H6.5A2.5 2.5 0 004 16.5v-12z"/><path d="M4 16.5A2.5 2.5 0 016.5 19H20"/></svg><span data-i18n="logTitle">Log</span> <span class="badge" id="logCount">0</span></h2>
+    <ul class="log-list" id="logList"></ul>
+    <div class="row" style="margin-top:10px;">
+      <button class="danger" onclick="resetGame()"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" stroke-linejoin="round" stroke-linecap="round"/></svg><span data-i18n="resetBtn">Reset Game</span></button>
+    </div>
+  </div>
+
+</div>
+
+<footer class="credits">
+  <img src="../assets/art/Utek.webp" alt="Ultra Tiny Epic Kingdoms">
+  <div class="credits-text" id="creditsText"></div>
+</footer>
+
+<a class="bmc-inline" href="https://www.buymeacoffee.com/colletes" target="_blank" rel="noopener" aria-label="Buy me a coffee"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h13a2 2 0 0 1 2 2v1a3 3 0 0 1-3 3h-1"/><path d="M4 8h13v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V8Z"/><path d="M8 3c-.6 1 .5 1.6 0 3M12 3c-.6 1 .5 1.6 0 3"/></svg><span data-i18n="bmcBtn">Me pague um café</span></a>
+</div>
+
+<div class="modal-overlay" id="helpModal">
+  <div class="modal-content">
+    <button class="modal-close" onclick="closeHelpModal()" aria-label="Close">&times;</button>
+    <h2><svg class="icon-inline" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4.5A2.5 2.5 0 016.5 2H20v17H6.5A2.5 2.5 0 004 16.5v-12z"/><path d="M4 16.5A2.5 2.5 0 016.5 19H20"/></svg><span data-i18n="helpModalTitle">How to Use This App</span></h2>
+    <div id="helpBody" data-i18n-html="helpBodyHtml"></div>
+  </div>
+</div>
+
+<script>
+// Forces iOS Safari to treat the first tap as a click instead of only "hovering" (WebKit quirk).
+document.addEventListener('touchstart', function(){}, {passive: true});
+
+const LANG_KEY = 'boardbots_lang';
+let lang = localStorage.getItem(LANG_KEY) || 'pt';
+
+const COMPASS_ICON_SVG = '<svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M15 9l-2 5-5 2 2-5z" fill="currentColor" stroke="none"/></svg>';
+const SUN_ICON_SVG = '<svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4 12H2M22 12h-2M5 5l1.5 1.5M17.5 17.5L19 19M19 5l-1.5 1.5M6.5 17.5L5 19"/></svg>';
+const MOON_ICON_SVG = '<svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z" fill="currentColor" stroke="none"/></svg>';
+const CROWN_ICON_SVG = '<svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 18h16M4 18l-1-9 5 4 4-7 4 7 5-4-1 9"/></svg>';
+
+const I18N = {
+en: {
+  appTitle: 'Ultra Tiny Epic Kingdoms',
+  setupTitle: 'Setup',
+  soloModeTitle: 'Solo Mode',
+  soloModeBodyHtml: '<p class="small">Pick which solo ruleset the Turn Assistant should use for this game.</p><div class="checkbox-row"><input type="radio" name="soloMode" id="modeGjj" value="gjj" onchange="setSoloMode(\'gjj\')"><label style="margin:0" for="modeGjj"><strong>GJJ Games Fan Variant</strong> — smarter priority-based Dummy AI, adjustable difficulty (default)</label></div><div class="checkbox-row"><input type="radio" name="soloMode" id="modeOfficial" value="official" onchange="setSoloMode(\'official\')"><label style="margin:0" for="modeOfficial"><strong>Official Rulebook Solo Mode</strong> — die-roll Dummy per the printed Solo Quick Reference card, Day/Night war cost, no White Flag</label></div>',
+  physicalSetupTitle: 'Physical Game Setup (do this on your table first)',
+  physicalSetupBodyHtml: '<ol><li>Randomly select two Factions and two Territory cards — one set for you, one for the Dummy.</li><li class="gjj-only">For the <strong>Dummy\'s</strong> Territory card, use the side <strong>without Ruins</strong> (or use the Dark Army Faction card instead, if you have it).</li><li class="gjj-only"><strong>Your setup:</strong> place 2 of your Meeples on any one region of your Territory card, and divide your starting resources however you like (6 by default, or 3 if you enable the "You start with 3 resources" Harder adjustment below).</li><li class="gjj-only"><strong>Dummy setup:</strong> place 2 Dummy Meeples on the region closest to the Name Banner on its Territory card — this becomes its <strong>Home Region</strong>. Give it 3 Food, 2 Mana and 1 Ore by default (0 of each if you enable the "Dummy starts with no resources" Easier adjustment below).</li><li class="official-only">Place the Compass card, day side up, between the two Territory cards, the Action card (with its 5 gray action cubes) to one side and the Tower card to the other. The app tracks Day/Night for you from here on — it automatically flips each time the round clears, so keep the physical card in sync by flipping it too.</li><li class="official-only"><strong>Dummy setup:</strong> pick any one Forest and any one Mountain on the Dummy\'s Territory card and place 1 army in each (2 armies total, on two different regions). Give it 3 of each resource — give it more starting resources to raise the difficulty.</li><li class="official-only"><strong>Your setup:</strong> place 2 of your Meeples on any one region of your Territory card, and start with a total of 6 resources split however you like (beginners: 1 Ore, 2 Mana, 3 Food).</li><li>Finish setting up the rest of the board as usual (Tower, Magic track, Action Board, etc.).<span class="gjj-only"> Do <strong>not</strong> use a Lost Kingdom.</span></li></ol>',
+  factionsTitle: 'Factions',
+  labelYourFaction: 'Your Faction (flavor only, no game effect)',
+  placeholderYourFaction: 'e.g. Halflings',
+  labelAiFaction: "Dummy Player's Faction",
+  placeholderAiFaction: 'e.g. Orcs',
+  difficultyTitle: 'Difficulty Adjustments',
+  difficultyBodyHtml: '<p class="small">Chosen once here, before the game starts — they\'ll drive the Turn Assistant and War Resolver text live throughout the game.</p><div class="checkbox-row"><input type="checkbox" id="adjEasyMax1" onchange="setAdjustment(\'easyMax1\', this.checked)"><label style="margin:0" for="adjEasyMax1">Easier: Dummy never gains more than 1 of any resource type when gaining</label></div><div class="checkbox-row"><input type="checkbox" id="adjEasyNoGainOnFail" onchange="setAdjustment(\'easyNoGainOnFail\', this.checked)"><label style="margin:0" for="adjEasyNoGainOnFail">Easier: Dummy cannot gain resources when it chose an action it can\'t take</label></div><div class="checkbox-row"><input type="checkbox" id="adjEasyNoStart" onchange="setAdjustment(\'easyNoStart\', this.checked)"><label style="margin:0" for="adjEasyNoStart">Easier: Dummy starts with no resources</label></div><div class="checkbox-row"><input type="checkbox" id="adjHardTrade" onchange="setAdjustment(\'hardTrade\', this.checked)"><label style="margin:0" for="adjHardTrade">Harder: Dummy gains resources on Trade</label></div><div class="checkbox-row"><input type="checkbox" id="adjHardStart3" onchange="setAdjustment(\'hardStart3\', this.checked)"><label style="margin:0" for="adjHardStart3">Harder: You start with 3 resources instead of 6</label></div><p class="small" style="margin-top:14px;font-weight:700;">White Flag handling — pick one (these three clash, so only one can be active):</p><div class="checkbox-row"><input type="radio" name="whiteFlagRule" id="wfDefault" value="default" onchange="setWhiteFlagRule(\'default\')"><label style="margin:0" for="wfDefault">Standard: alliances possible either way (default)</label></div><div class="checkbox-row"><input type="radio" name="whiteFlagRule" id="wfNoAllyUnlessFlag" value="noAllyUnlessFlag" onchange="setWhiteFlagRule(\'noAllyUnlessFlag\')"><label style="margin:0" for="wfNoAllyUnlessFlag">Harder: No alliances unless Dummy rolls the White Flag</label></div><div class="checkbox-row"><input type="radio" name="whiteFlagRule" id="wfAutoWin" value="autoWin" onchange="setWhiteFlagRule(\'autoWin\')"><label style="margin:0" for="wfAutoWin">Harder: No Alliances — if Dummy rolls White Flag, it auto-wins the war for free</label></div>',
+  officialNoteHtml: "On the Dummy's own turn, the app rolls a virtual 12-sided Compass die for you and automatically picks the resulting action (advancing clockwise past any action already taken this round, just like the physical Compass card). You still need the physical Compass card and Territory cards on the table: use the roll number the app shows you to resolve <em>which</em> army/region is selected for Patrol, Quest or Expand, and to read the current Day/Night war cost.",
+  generalNoteText: "Resources, tower/magic levels and armies stay on your physical boards after this point — this assistant only tracks the round/action order, the Dummy's choices, war outcomes, and final scoring.",
+  startGameBtn: 'Start Game',
+  continueSavedBtn: 'Continue Saved Game',
+  roundTrackerTitle: 'Round Tracker',
+  roundTrackerIntroHtml: 'The lead player alternates by round — the Dummy always leads odd rounds (starting with Round 1), you lead even rounds. Only 5 of the 6 actions are used per round; the round automatically clears and rotates lead once the 5th is taken. Only one action can be picked per turn: click your cube (<strong style="color:var(--burgundy-dark);">burgundy</strong>) on your turn, then press Next Turn — the Dummy\'s cube (<strong style="color:var(--forest-dark);">green</strong>) is chosen automatically the instant it becomes its turn.',
+  nextTurnBtn: 'Next Turn',
+  actionResearch: 'Research', actionTrade: 'Trade', actionBuild: 'Build', actionPatrol: 'Patrol', actionQuest: 'Quest', actionExpand: 'Expand',
+  compassSpinHintText: 'Spins to the last Compass roll — use it for army/region resolution on the physical board.',
+  endGameBtn: 'End Game &amp; Reveal Scoring',
+  resumeBtn: 'Resume Round Tracking',
+  yourKingdomTitle: 'Your Kingdom',
+  labelYouArmies: 'Armies in play (not in Ruins)',
+  labelYouRuinArmies: 'Armies in Ruins (excluded from army VP)',
+  labelYouTowerVP: 'Tower VP (read from your Tower card at final level)',
+  labelYouMagicVP: 'Magic VP (mana cubes shown at final level, + top-level bonus if reached)',
+  labelCapitalCitiesHtml: 'Capital Cities<span class="gjj-only"> — solely controlled / shared (allied)</span><span class="official-only"> occupied (2 VP each — no allied/shared control in this mode)</span>',
+  labelYouOnEnemy: "Your armies on the Dummy's territory card (+1 VP each)",
+  dummyPlayerTitle: 'Dummy Player',
+  labelAiArmiesHtml: 'Armies in play (not in Ruins)<span class="gjj-only"> — always kept ≥2 in Home Region</span>',
+  labelAiRuinArmies: 'Dummy armies in Ruins (excluded from army VP)',
+  labelAiTowerVP: 'Tower VP (read from Tower card at final level)',
+  labelAiMagicVP: 'Magic VP + top-level bonus (Dummy always gets this bonus if reached, even without AI abilities)',
+  labelAiOnEnemy: 'Dummy armies on your territory card (+1 VP each)',
+  turnAssistantTitle: 'Turn Assistant',
+  turnAssistantIntroText: "Reacts automatically to the Round Tracker above and explains exactly what the Dummy does for the current action, including fallback rules when it's blocked.",
+  guidanceDefaultText: 'Click an action above to begin your turn.',
+  summaryActionCosts: 'Action costs',
+  actionCostsHtml: '<ul><li><strong>Build:</strong> pay Ore = next tower level (1,2,3,4,5,6).</li><li><strong>Research:</strong> pay Mana = next magic level (1,2,3,4,5).</li><li><strong>Expand:</strong> pay Food = your new total army count. New army placed with an existing solitary army.</li><li><strong>Trade:</strong> convert any amount of one resource into an equal amount of another, once per action.</li><li><strong>Collect:</strong> 1 resource per occupied region (Forest→Mana, Mountain→Ore, Plains→Food, Ruins→choice); Capital Cities give none.</li><li>Resource maximum is 9 of each type.</li></ul>',
+  summaryCompassRef: 'Compass Card reference',
+  compassRefBodyHtml: '<p class="small">The Compass ring is the same on both sides — only the war cost and region-selection distance preference change between Day and Night. Each number pairs with its opposite (N and N+6) on the same action:</p><ul><li><strong>1 &amp; 7</strong> — Research</li><li><strong>2 &amp; 8</strong> — Trade</li><li><strong>3 &amp; 9</strong> — Build</li><li><strong>4 &amp; 10</strong> — Patrol</li><li><strong>5 &amp; 11</strong> — Quest</li><li><strong>6 &amp; 12</strong> — Expand</li></ul><p class="small">Each time the round clears (the Action card is cleared, its 5th action taken), the Compass flips: Day → Night grants the Dummy 1 Ore, 1 Mana and 1 Food; Night → Day grants nothing. During the Day the Dummy prefers the region/army <strong>closer</strong> to the Compass card; at Night it prefers whichever is <strong>farther</strong> away — this part stays physical since it depends on your actual table layout.</p>',
+  summaryDummyOverview: 'Dummy Player Overview',
+  dummyOverviewGjjHtml: '<ul><li>Dummy takes the very first turn of the game, always selecting Patrol.</li><li>On your turn: Dummy follows your action if able, else collects resources (exception: never follows Trade — does nothing).</li><li>On Dummy\'s own turn: it picks the available action closest to the top of the action card (Patrol &gt; Quest &gt; Build &gt; Research &gt; Expand); it will never select Trade itself.</li><li>Dummy never uses Research faction abilities, except any level-5 bonus VP at scoring.</li><li>Dummy always keeps 2 armies in its Home Region; a new army is added free the moment only 1 remains there.</li></ul>',
+  dummyOverviewOfficialHtml: '<ul><li>On the Dummy\'s own turn, the app rolls a virtual 12-sided Compass die and automatically selects the resulting action, advancing clockwise past any action already taken this round — see the Compass Card reference above for the number/action pairing.</li><li>That same roll also picks which army moves for Patrol/Quest/Expand — starting at the rolled number, move clockwise around the territory until you reach a valid army/region. When the Dummy is just following your action instead, the app rolls once for this purpose too.</li><li>The Dummy never moves into a region it already occupies, but will move into one of yours (triggering war).</li><li>On your turn: Dummy follows your action if able, else collects resources — except Trade, which it always "follows" by simply gaining 1 of each resource.</li><li>The Dummy benefits from its faction\'s abilities according to its magic level, same as a normal player.</li><li>When the Dummy collects from a Ruin, either give it the resource it currently has least of, or roll a die (1–4 Ore, 5–8 Mana, 9–12 Food) — pick one method and stick with it.</li><li>The app automatically flips the Compass between Day and Night each time the round clears; check the <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M15 9l-2 5-5 2 2-5z" fill="currentColor" stroke="none"/></svg> pill above the action chips for the current phase.</li></ul>',
+  summaryScoring: 'Scoring &amp; end game',
+  scoringGjjHtml: '<ul><li>End triggers (either player): all 7 armies in play, 6th Tower level reached, or 5th Magic level reached. If the Dummy triggers it on the round\'s 5th action, play one more full round.</li><li>VP: 1 per army in play (not in Ruins) + Tower VP + Magic VP (+top level bonus) + Capital Cities (2 solo / 1 shared each) + 1 per army on the opponent\'s territory card.</li></ul>',
+  scoringOfficialHtml: '<ul><li>End triggers (either player): all 7 armies in play, 6th Tower level reached, or 5th Magic level reached. Once triggered, the game ends the next time the action card is next cleared, no matter what.</li><li>VP: 1 per army in play (not in Ruins) + Tower VP + Magic VP (+top level bonus) + 2 per Capital City occupied. No allied/shared capital control in this mode.</li><li>Tie-break order: most armies in play, then tower level, then magic level, then total resources. Still tied → the game ends in a tie.</li></ul>',
+  warResolverTitle: 'War Resolver',
+  warResolverGjjIntroHtml: "You always choose your own war value in secret (0–11, or the White Flag). The Dummy never chooses — roll a 12-sided combat die for it: rolling a <strong>12</strong> is the White Flag; any other face is a value of 1–11. The Dummy's real committed value is always the <em>lower</em> of that die roll or the total Mana + Ore it currently has available (Mana counts as 2, Ore as 1) — it spends Mana before Ore, an exact amount if possible.",
+  officialWarRulesHtml: "<li>The Dummy never has a White Flag or alliance option in this mode — every war has a winner.</li><li>Win/tie resolution and your own retreat-or-removal follow the standard rules.</li><li>If the Dummy loses, it retreats into an adjacent empty region if one exists (roll a die among tied options, and use the Compass to determine the retreat direction) and pays food equal to its total armies in play; if it can't afford that food, the losing army is removed instead. It will never retreat into a region with your army or one of its own armies already in it.</li>",
+  logTitle: 'Log',
+  resetBtn: 'Reset Game',
+  helpModalTitle: 'How to Use This App',
+  helpBodyHtml: '<p>This app is a turn assistant/scorekeeper for solo play against a "Dummy" AI opponent in <em>Ultra Tiny Epic Kingdoms</em>. It does not replace the physical components — you still play on your table with all cards, meeples, and boards.</p><ul><li><strong>Setup:</strong> choose which solo ruleset to use (GJJ Games Fan Variant or Official Rulebook Solo Mode), follow the physical setup steps shown, optionally name both factions, and set any difficulty adjustments.</li><li><strong>Round Tracker:</strong> click your action cube on your turn, then press Next Turn. The Dummy\'s action is chosen automatically the instant it becomes its turn.</li><li><strong>Turn Assistant:</strong> shows exactly what the Dummy does for the current action — expand the reference sections below it for action costs, the Compass Card ring (Official mode), the Dummy\'s full behavior, and end-game/scoring rules.</li><li><strong>War Resolver:</strong> once a war is triggered on the table, follow this section to resolve the Dummy\'s committed value and the outcome.</li><li><strong>End Game:</strong> once the game-ending trigger happens, press "End Game &amp; Reveal Scoring", fill in the final numbers from your physical boards, and the app computes both totals and the winner.</li><li>Your progress is saved automatically in this browser (no account needed) — use "Continue Saved Game" on the setup screen to resume later, or "Reset Game" to start over.</li></ul>',
+  creditsHtml: 'Made by Thiago Colletes (<a href="mailto:colletes@gmail.com">colletes@gmail.com</a>) &amp; Gemini — fan-made solo assistant for personal use, based on the <a href="https://gjjgames.blogspot.com/" target="_blank" rel="noopener">GJJ Games</a> fan solo variant for <em>Tiny Epic Kingdoms</em>. <em>Ultra Tiny Epic Kingdoms</em> © Gamelyn Games.',
+  bmcBtn: 'Buy me a coffee',
+  modeSubtitleGjj: 'Solo Assistant — GJJ Games fan solo variant (dummy player)',
+  modeSubtitleOfficial: 'Solo Assistant — Official Rulebook Solo Mode (dummy player)',
+  resetConfirm: 'Reset the whole game? This clears all tracked progress.'
+},
+pt: {
+  appTitle: 'Ultra Tiny Epic Kingdoms',
+  setupTitle: 'Configuração',
+  soloModeTitle: 'Modo Solo',
+  soloModeBodyHtml: '<p class="small">Escolha qual variante solo o Assistente de Turnos deve usar nesta partida.</p><div class="checkbox-row"><input type="radio" name="soloMode" id="modeGjj" value="gjj" onchange="setSoloMode(\'gjj\')"><label style="margin:0" for="modeGjj"><strong>Variante Fã da GJJ Games</strong> — Bot mais inteligente, com IA baseada em prioridades, dificuldade ajustável (padrão)</label></div><div class="checkbox-row"><input type="radio" name="soloMode" id="modeOfficial" value="official" onchange="setSoloMode(\'official\')"><label style="margin:0" for="modeOfficial"><strong>Modo Solo Oficial do Manual</strong> — Bot por rolagem de dado conforme a carta de Referência Rápida Solo impressa, custo de guerra Dia/Noite, sem Bandeira Branca</label></div>',
+  physicalSetupTitle: 'Configuração Física do Jogo (faça isso na sua mesa primeiro)',
+  physicalSetupBodyHtml: '<ol><li>Selecione aleatoriamente duas Facções e duas cartas de Território — um conjunto para você, outro para o Bot.</li><li class="gjj-only">Para a carta de Território <strong>do Bot</strong>, use o lado <strong>sem Ruínas</strong> (ou use a carta de Facção Exército das Trevas, se tiver).</li><li class="gjj-only"><strong>Sua configuração:</strong> coloque 2 dos seus Meeples em qualquer região da sua carta de Território, e divida seus recursos iniciais como preferir (6 por padrão, ou 3 se ativar o ajuste Mais Difícil "Você começa com 3 recursos" abaixo).</li><li class="gjj-only"><strong>Configuração do Bot:</strong> coloque 2 Meeples do Bot na região mais próxima do Estandarte de Nome na carta de Território dele — isso se torna sua <strong>Região Natal</strong>. Dê a ele 3 Comida, 2 Mana e 1 Minério por padrão (0 de cada se ativar o ajuste Mais Fácil "Bot começa sem recursos" abaixo).</li><li class="official-only">Coloque a carta da Bússola, lado do dia para cima, entre as duas cartas de Território, a carta de Ação (com seus 5 cubos de ação cinzas) de um lado e a carta da Torre do outro. O app rastreia Dia/Noite para você a partir daqui — ela vira automaticamente a cada vez que a rodada se encerra, então mantenha a carta física sincronizada virando-a também.</li><li class="official-only"><strong>Configuração do Bot:</strong> escolha uma Floresta e uma Montanha na carta de Território do Bot e coloque 1 exército em cada (2 exércitos no total, em duas regiões diferentes). Dê a ele 3 de cada recurso — dê mais recursos iniciais para aumentar a dificuldade.</li><li class="official-only"><strong>Sua configuração:</strong> coloque 2 dos seus Meeples em qualquer região da sua carta de Território, e comece com um total de 6 recursos divididos como preferir (iniciantes: 1 Minério, 2 Mana, 3 Comida).</li><li>Termine de configurar o resto do tabuleiro normalmente (Torre, trilha de Magia, Tabuleiro de Ação, etc.).<span class="gjj-only"> <strong>Não</strong> use um Reino Perdido.</span></li></ol>',
+  factionsTitle: 'Facções',
+  labelYourFaction: 'Sua Facção (apenas ambientação, sem efeito no jogo)',
+  placeholderYourFaction: 'ex.: Halflings',
+  labelAiFaction: 'Facção do Bot',
+  placeholderAiFaction: 'ex.: Orcs',
+  difficultyTitle: 'Ajustes de Dificuldade',
+  difficultyBodyHtml: '<p class="small">Escolhidos uma vez aqui, antes do início da partida — eles vão orientar o texto do Assistente de Turnos e do Resolvedor de Guerra ao vivo durante todo o jogo.</p><div class="checkbox-row"><input type="checkbox" id="adjEasyMax1" onchange="setAdjustment(\'easyMax1\', this.checked)"><label style="margin:0" for="adjEasyMax1">Mais fácil: o Bot nunca ganha mais de 1 de qualquer tipo de recurso ao ganhar</label></div><div class="checkbox-row"><input type="checkbox" id="adjEasyNoGainOnFail" onchange="setAdjustment(\'easyNoGainOnFail\', this.checked)"><label style="margin:0" for="adjEasyNoGainOnFail">Mais fácil: o Bot não ganha recursos quando escolheu uma ação que não pode realizar</label></div><div class="checkbox-row"><input type="checkbox" id="adjEasyNoStart" onchange="setAdjustment(\'easyNoStart\', this.checked)"><label style="margin:0" for="adjEasyNoStart">Mais fácil: o Bot começa sem recursos</label></div><div class="checkbox-row"><input type="checkbox" id="adjHardTrade" onchange="setAdjustment(\'hardTrade\', this.checked)"><label style="margin:0" for="adjHardTrade">Mais difícil: o Bot ganha recursos ao Comerciar</label></div><div class="checkbox-row"><input type="checkbox" id="adjHardStart3" onchange="setAdjustment(\'hardStart3\', this.checked)"><label style="margin:0" for="adjHardStart3">Mais difícil: você começa com 3 recursos em vez de 6</label></div><p class="small" style="margin-top:14px;font-weight:700;">Tratamento da Bandeira Branca — escolha um (estes três se excluem, apenas um pode estar ativo):</p><div class="checkbox-row"><input type="radio" name="whiteFlagRule" id="wfDefault" value="default" onchange="setWhiteFlagRule(\'default\')"><label style="margin:0" for="wfDefault">Padrão: alianças possíveis dos dois lados (padrão)</label></div><div class="checkbox-row"><input type="radio" name="whiteFlagRule" id="wfNoAllyUnlessFlag" value="noAllyUnlessFlag" onchange="setWhiteFlagRule(\'noAllyUnlessFlag\')"><label style="margin:0" for="wfNoAllyUnlessFlag">Mais difícil: sem alianças a menos que o Bot tire a Bandeira Branca</label></div><div class="checkbox-row"><input type="radio" name="whiteFlagRule" id="wfAutoWin" value="autoWin" onchange="setWhiteFlagRule(\'autoWin\')"><label style="margin:0" for="wfAutoWin">Mais difícil: sem Alianças — se o Bot tirar Bandeira Branca, ele vence a guerra automaticamente de graça</label></div>',
+  officialNoteHtml: 'No próprio turno do Bot, o app rola um dado virtual de 12 lados da Bússola para você e escolhe automaticamente a ação resultante (avançando no sentido horário além de qualquer ação já tomada nesta rodada, assim como a carta física da Bússola). Você ainda precisa da carta física da Bússola e das cartas de Território na mesa: use o número da rolagem que o app mostra para resolver <em>qual</em> exército/região é selecionado para Patrulhar, Missão ou Expandir, e para ler o custo de guerra Dia/Noite atual.',
+  generalNoteText: 'Recursos, níveis de torre/magia e exércitos continuam nos seus tabuleiros físicos a partir daqui — este assistente só rastreia a ordem de rodada/ação, as escolhas do Bot, os resultados de guerra e a pontuação final.',
+  startGameBtn: 'Iniciar Partida',
+  continueSavedBtn: 'Continuar Partida Salva',
+  roundTrackerTitle: 'Rastreador de Rodadas',
+  roundTrackerIntroHtml: 'O jogador líder se alterna a cada rodada — o Bot sempre lidera as rodadas ímpares (começando pela Rodada 1), você lidera as rodadas pares. Apenas 5 das 6 ações são usadas por rodada; a rodada se encerra automaticamente e o líder se alterna assim que a 5ª ação é tomada. Apenas uma ação pode ser escolhida por turno: clique no seu cubo (<strong style="color:var(--burgundy-dark);">bordô</strong>) no seu turno, depois pressione Próximo Turno — o cubo do Bot (<strong style="color:var(--forest-dark);">verde</strong>) é escolhido automaticamente assim que chega o turno dele.',
+  nextTurnBtn: 'Próximo Turno',
+  actionResearch: 'Pesquisar', actionTrade: 'Comerciar', actionBuild: 'Construir', actionPatrol: 'Patrulhar', actionQuest: 'Missão', actionExpand: 'Expandir',
+  compassSpinHintText: 'Gira até o último resultado da Bússola — use-o para resolver qual exército/região no tabuleiro físico.',
+  endGameBtn: 'Encerrar Partida e Revelar Pontuação',
+  resumeBtn: 'Retomar Rastreamento de Rodadas',
+  yourKingdomTitle: 'Seu Reino',
+  labelYouArmies: 'Exércitos em jogo (fora de Ruínas)',
+  labelYouRuinArmies: 'Exércitos em Ruínas (excluídos da pontuação de exércitos)',
+  labelYouTowerVP: 'PV da Torre (leia na sua carta de Torre no nível final)',
+  labelYouMagicVP: 'PV de Magia (cubos de mana mostrados no nível final, + bônus do nível máximo se alcançado)',
+  labelCapitalCitiesHtml: 'Capitais<span class="gjj-only"> — controladas sozinho / compartilhadas (aliança)</span><span class="official-only"> ocupadas (2 PV cada — sem controle compartilhado/aliado neste modo)</span>',
+  labelYouOnEnemy: 'Seus exércitos na carta de território do Bot (+1 PV cada)',
+  dummyPlayerTitle: 'Jogador Bot',
+  labelAiArmiesHtml: 'Exércitos em jogo (fora de Ruínas)<span class="gjj-only"> — sempre mantém ≥2 na Região Natal</span>',
+  labelAiRuinArmies: 'Exércitos do Bot em Ruínas (excluídos da pontuação de exércitos)',
+  labelAiTowerVP: 'PV da Torre (leia na carta de Torre no nível final)',
+  labelAiMagicVP: 'PV de Magia + bônus do nível máximo (o Bot sempre recebe esse bônus se alcançado, mesmo sem habilidades de facção)',
+  labelAiOnEnemy: 'Exércitos do Bot na sua carta de território (+1 PV cada)',
+  turnAssistantTitle: 'Assistente de Turnos',
+  turnAssistantIntroText: 'Reage automaticamente ao Rastreador de Rodadas acima e explica exatamente o que o Bot faz na ação atual, incluindo regras alternativas quando está bloqueado.',
+  guidanceDefaultText: 'Clique em uma ação acima para começar seu turno.',
+  summaryActionCosts: 'Custos das ações',
+  actionCostsHtml: '<ul><li><strong>Construir:</strong> pague Minério = próximo nível da torre (1,2,3,4,5,6).</li><li><strong>Pesquisar:</strong> pague Mana = próximo nível de magia (1,2,3,4,5).</li><li><strong>Expandir:</strong> pague Comida = sua nova contagem total de exércitos. O novo exército é colocado junto a um exército solitário existente.</li><li><strong>Comerciar:</strong> converta qualquer quantidade de um recurso em quantidade igual de outro, uma vez por ação.</li><li><strong>Coletar:</strong> 1 recurso por região ocupada (Floresta→Mana, Montanha→Minério, Planície→Comida, Ruínas→escolha); Capitais não dão nada.</li><li>O máximo de recursos é 9 de cada tipo.</li></ul>',
+  summaryCompassRef: 'Referência da Carta da Bússola',
+  compassRefBodyHtml: '<p class="small">O anel da Bússola é igual nos dois lados — apenas o custo de guerra e a preferência de distância na seleção de região mudam entre Dia e Noite. Cada número forma par com seu oposto (N e N+6) na mesma ação:</p><ul><li><strong>1 e 7</strong> — Pesquisar</li><li><strong>2 e 8</strong> — Comerciar</li><li><strong>3 e 9</strong> — Construir</li><li><strong>4 e 10</strong> — Patrulhar</li><li><strong>5 e 11</strong> — Missão</li><li><strong>6 e 12</strong> — Expandir</li></ul><p class="small">Cada vez que a rodada se encerra (a carta de Ação é zerada, sua 5ª ação tomada), a Bússola vira: Dia → Noite concede ao Bot 1 Minério, 1 Mana e 1 Comida; Noite → Dia não concede nada. Durante o Dia o Bot prefere a região/exército <strong>mais perto</strong> da carta da Bússola; à Noite prefere o que estiver <strong>mais longe</strong> — essa parte continua física, pois depende do layout real da sua mesa.</p>',
+  summaryDummyOverview: 'Visão Geral do Bot',
+  dummyOverviewGjjHtml: '<ul><li>O Bot joga o primeiríssimo turno da partida, sempre escolhendo Patrulhar.</li><li>No seu turno: o Bot segue sua ação se puder, senão coleta recursos (exceção: nunca segue Comerciar — não faz nada).</li><li>No próprio turno do Bot: ele escolhe a ação disponível mais próxima do topo da carta de ação (Patrulhar &gt; Missão &gt; Construir &gt; Pesquisar &gt; Expandir); ele nunca escolhe Comerciar por conta própria.</li><li>O Bot nunca usa habilidades de facção de Pesquisa, exceto qualquer bônus de PV de nível 5 na pontuação final.</li><li>O Bot sempre mantém 2 exércitos na sua Região Natal; um novo exército é adicionado de graça assim que resta apenas 1 lá.</li></ul>',
+  dummyOverviewOfficialHtml: '<ul><li>No próprio turno do Bot, o app rola um dado virtual de 12 lados da Bússola e seleciona automaticamente a ação resultante, avançando no sentido horário além de qualquer ação já usada nesta rodada — veja a Referência da Carta da Bússola acima para o pareamento número/ação.</li><li>Essa mesma rolagem também escolhe qual exército se move em Patrulhar/Missão/Expandir — a partir do número rolado, mova no sentido horário pelo território até chegar a um exército/região válido. Quando o Bot está apenas seguindo sua ação, o app também rola uma vez para essa finalidade.</li><li>O Bot nunca se move para uma região que já ocupa, mas se moverá para uma sua (desencadeando guerra).</li><li>No seu turno: o Bot segue sua ação se puder, senão coleta recursos — exceto Comerciar, que ele sempre "segue" simplesmente ganhando 1 de cada recurso.</li><li>O Bot se beneficia das habilidades da sua facção de acordo com seu nível de magia, igual a um jogador normal.</li><li>Quando o Bot coleta de uma Ruína, dê a ele o recurso que atualmente tem menos, ou role um dado (1–4 Minério, 5–8 Mana, 9–12 Comida) — escolha um método e mantenha-o.</li><li>O app vira automaticamente a Bússola entre Dia e Noite a cada vez que a rodada se encerra; confira o indicador <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M15 9l-2 5-5 2 2-5z" fill="currentColor" stroke="none"/></svg> acima dos cubos de ação para ver a fase atual.</li></ul>',
+  summaryScoring: 'Pontuação e fim de jogo',
+  scoringGjjHtml: '<ul><li>Gatilhos de fim de jogo (qualquer jogador): os 7 exércitos em jogo, 6º nível da Torre alcançado, ou 5º nível de Magia alcançado. Se o Bot o disparar na 5ª ação da rodada, jogue mais uma rodada completa.</li><li>PV: 1 por exército em jogo (fora de Ruínas) + PV da Torre + PV de Magia (+bônus do nível máximo) + Capitais (2 sozinho / 1 compartilhada cada) + 1 por exército no território do oponente.</li></ul>',
+  scoringOfficialHtml: '<ul><li>Gatilhos de fim de jogo (qualquer jogador): os 7 exércitos em jogo, 6º nível da Torre alcançado, ou 5º nível de Magia alcançado. Uma vez disparado, o jogo termina na próxima vez que a carta de ação for zerada, não importa o quê.</li><li>PV: 1 por exército em jogo (fora de Ruínas) + PV da Torre + PV de Magia (+bônus do nível máximo) + 2 por Capital ocupada. Sem controle compartilhado/aliado de capitais neste modo.</li><li>Ordem de desempate: mais exércitos em jogo, depois nível da torre, depois nível de magia, depois total de recursos. Ainda empatado → o jogo termina em empate.</li></ul>',
+  warResolverTitle: 'Resolvedor de Guerra',
+  warResolverGjjIntroHtml: 'Você sempre escolhe seu próprio valor de guerra em segredo (0–11, ou a Bandeira Branca). O Bot nunca escolhe — role um dado de combate de 12 lados para ele: tirar <strong>12</strong> é a Bandeira Branca; qualquer outra face é um valor de 1–11. O valor realmente empenhado pelo Bot é sempre o <em>menor</em> entre esse resultado do dado ou o total de Mana + Minério que ele tem disponível no momento (Mana conta como 2, Minério como 1) — ele gasta Mana antes de Minério, uma quantia exata se possível.',
+  officialWarRulesHtml: '<li>O Bot nunca tem opção de Bandeira Branca ou aliança neste modo — toda guerra tem um vencedor.</li><li>A resolução de vitória/empate e sua própria retirada-ou-remoção seguem as regras padrão.</li><li>Se o Bot perder, ele recua para uma região vazia adjacente se existir uma (role um dado entre as opções empatadas, e use a Bússola para determinar a direção da retirada) e paga comida igual ao total de seus exércitos em jogo; se não puder pagar essa comida, o exército derrotado é removido. Ele nunca recuará para uma região com seu exército ou um dos próprios exércitos já presente.</li>',
+  logTitle: 'Registro',
+  resetBtn: 'Reiniciar Partida',
+  helpModalTitle: 'Como Usar Este App',
+  helpBodyHtml: '<p>Este app é um assistente de turnos/marcador de pontos para jogar sozinho contra um oponente "Bot" em <em>Ultra Tiny Epic Kingdoms</em>. Ele não substitui os componentes físicos — você ainda joga na sua mesa com todas as cartas, meeples e tabuleiros.</p><ul><li><strong>Configuração:</strong> escolha qual variante solo usar (Variante Fã da GJJ Games ou Modo Solo Oficial do Manual), siga os passos de configuração física mostrados, nomeie as facções se quiser, e defina os ajustes de dificuldade.</li><li><strong>Rastreador de Rodadas:</strong> clique no seu cubo de ação no seu turno, depois pressione Próximo Turno. A ação do Bot é escolhida automaticamente assim que chega o turno dele.</li><li><strong>Assistente de Turnos:</strong> mostra exatamente o que o Bot faz na ação atual — expanda as seções de referência abaixo para custos de ação, o anel da Carta da Bússola (modo Oficial), o comportamento completo do Bot, e as regras de fim de jogo/pontuação.</li><li><strong>Resolvedor de Guerra:</strong> assim que uma guerra for disparada na mesa, siga esta seção para resolver o valor empenhado pelo Bot e o resultado.</li><li><strong>Fim de Jogo:</strong> quando o gatilho de fim de jogo acontecer, pressione "Encerrar Partida e Revelar Pontuação", preencha os números finais dos seus tabuleiros físicos, e o app calcula os totais e o vencedor.</li><li>Seu progresso é salvo automaticamente neste navegador (sem necessidade de conta) — use "Continuar Partida Salva" na tela de configuração para retomar depois, ou "Reiniciar Partida" para recomeçar.</li></ul>',
+  creditsHtml: 'Feito por Thiago Colletes (<a href="mailto:colletes@gmail.com">colletes@gmail.com</a>) e Gemini — assistente solo feito por fã para uso pessoal, baseado na variante solo fã da <a href="https://gjjgames.blogspot.com/" target="_blank" rel="noopener">GJJ Games</a> para <em>Tiny Epic Kingdoms</em>. <em>Ultra Tiny Epic Kingdoms</em> © Gamelyn Games.',
+  bmcBtn: 'Me pague um café',
+  modeSubtitleGjj: 'Assistente Solo — variante fã da GJJ Games (jogador Bot)',
+  modeSubtitleOfficial: 'Assistente Solo — Modo Solo Oficial do Manual (jogador Bot)',
+  resetConfirm: 'Reiniciar a partida inteira? Isso apaga todo o progresso registrado.'
+}
+};
+
+function t(key){ return (I18N[lang] && I18N[lang][key]) || I18N.en[key] || key; }
+function S(){ return I18N[lang]; }
+
+function applyI18n(){
+  document.documentElement.lang = lang;
+  document.getElementById('langPt').classList.toggle('active', lang==='pt');
+  document.getElementById('langEn').classList.toggle('active', lang==='en');
+  document.querySelectorAll('[data-i18n]').forEach(el=>{ el.innerHTML = t(el.getAttribute('data-i18n')); });
+  document.querySelectorAll('[data-i18n-html]').forEach(el=>{ el.innerHTML = t(el.getAttribute('data-i18n-html')); });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el=>{ el.placeholder = t(el.getAttribute('data-i18n-placeholder')); });
+  document.getElementById('creditsText').innerHTML = t('creditsHtml');
+  ACTION_NAMES.patrol = t('actionPatrol');
+  ACTION_NAMES.quest = t('actionQuest');
+  ACTION_NAMES.build = t('actionBuild');
+  ACTION_NAMES.research = t('actionResearch');
+  ACTION_NAMES.expand = t('actionExpand');
+  ACTION_NAMES.trade = t('actionTrade');
+  syncModeUI(state ? state.mode : pendingMode);
+  syncAdjustmentInputs(state ? state.adjustments : pendingAdjustments);
+  if(state){ renderedCompassRoll = null; render(); }
+}
+
+function setLang(l){
+  lang = l;
+  localStorage.setItem(LANG_KEY, l);
+  applyI18n();
+}
+
+function openHelpModal(){
+  document.getElementById('helpModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeHelpModal(){
+  document.getElementById('helpModal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+const STORAGE_KEY = 'utek_solo_v4';
+let state = null;
+const AI_PRIORITY = ['patrol','quest','build','research','expand'];
+const ACTION_NAMES = {patrol:'Patrol',quest:'Quest',build:'Build',research:'Research',expand:'Expand',trade:'Trade'};
+
+// Official Compass Card ring, read clockwise off the physical card (both Day and Night sides share this same ring):
+// each action sits opposite its own number pair, 6 apart (1&7 Research, 2&8 Trade, 3&9 Build, 4&10 Patrol, 5&11 Quest, 6&12 Expand).
+const COMPASS_ACTION_BY_NUMBER = {1:'research',2:'trade',3:'build',4:'patrol',5:'quest',6:'expand',7:'research',8:'trade',9:'build',10:'patrol',11:'quest',12:'expand'};
+
+function rollCompassDie(){ return 1 + Math.floor(Math.random()*12); }
+
+// current cumulative needle rotation in degrees; kept increasing so every new roll always spins forward, never snaps backward
+let compassRotation = 0;
+let renderedCompassRoll = null;
+
+function rotateNeedleTo(targetNumber, extraSpins, transition){
+  const needle = document.getElementById('compassNeedle');
+  if(!needle) return;
+  const targetAngle = (targetNumber % 12) * 30;
+  const current = ((compassRotation % 360) + 360) % 360;
+  let delta = targetAngle - current;
+  if(delta <= 0) delta += 360;
+  compassRotation += delta + 360 * extraSpins;
+  needle.style.transition = transition;
+  needle.style.transform = 'rotate('+compassRotation+'deg)';
+}
+
+// spins the needle to the die roll; if that number's action was already taken this round, first lands
+// on the raw roll, then hops forward to the resolved slot — mirroring the rulebook's clockwise-advance rule
+function spinCompassTo(finalNumber, startNumber){
+  const label = document.getElementById('compassCenterLabel');
+  const isSkip = startNumber && startNumber !== finalNumber;
+  const firstStop = isSkip ? startNumber : finalNumber;
+  rotateNeedleTo(firstStop, 2, 'transform 1.4s cubic-bezier(0.22,1.4,0.36,1)');
+  if(label) label.innerHTML = '<span style="font-size:1.3em">'+firstStop+'</span><br>'+ACTION_NAMES[COMPASS_ACTION_BY_NUMBER[firstStop]];
+  if(!isSkip) return;
+  setTimeout(()=>{
+    if(label) label.innerHTML = '<span style="font-size:0.82em;opacity:0.8">'+ACTION_NAMES[COMPASS_ACTION_BY_NUMBER[firstStop]]+(lang==='pt' ? ' usada \u2014 avan\u00e7ando\u2026' : ' taken \u2014 advancing\u2026')+'</span>';
+    setTimeout(()=>{
+      rotateNeedleTo(finalNumber, 0, 'transform 0.7s cubic-bezier(0.3,1.2,0.4,1)');
+      if(label) label.innerHTML = '<span style="font-size:1.3em">'+finalNumber+'</span><br>'+ACTION_NAMES[COMPASS_ACTION_BY_NUMBER[finalNumber]];
+    }, 550);
+  }, 1450);
+}
+
+// positions the needle immediately, no spin animation — used when restoring a saved game on page load
+function snapCompassTo(number){
+  const needle = document.getElementById('compassNeedle');
+  if(!needle) return;
+  compassRotation = (number % 12) * 30;
+  const prevTransition = needle.style.transition;
+  needle.style.transition = 'none';
+  needle.style.transform = 'rotate('+compassRotation+'deg)';
+  needle.offsetHeight; // force reflow so the transition:none takes effect before restoring it
+  needle.style.transition = prevTransition;
+}
+
+function renderCompassWheel(){
+  const wrap = document.getElementById('compassWheelWrap');
+  if(!wrap || !state) return;
+  const isNight = state.compassPhase==='night';
+  wrap.classList.toggle('is-night', isNight);
+  const badge = document.getElementById('compassPhaseBadge');
+  if(badge) badge.innerHTML = isNight ? MOON_ICON_SVG : SUN_ICON_SVG;
+  const roll = state.lastCompassRoll;
+  const label = document.getElementById('compassCenterLabel');
+  if(!roll && label) label.innerHTML = '—';
+  if(roll && roll !== renderedCompassRoll){
+    spinCompassTo(roll, state.lastCompassStartRoll);
+    renderedCompassRoll = roll;
+  }
+}
+
+// starting at startRoll, advance clockwise (wrapping 12->1) until landing on an action not yet used this round
+function resolveCompassAction(startRoll){
+  let n = startRoll;
+  for(let i=0;i<12;i++){
+    const action = COMPASS_ACTION_BY_NUMBER[n];
+    if(state.actions[action]===null) return {roll:n, action};
+    n = (n===12) ? 1 : n+1;
+  }
+  return null;
+}
+
+function defaultAdjustments(){
+  return {
+    easyMax1:false, easyNoGainOnFail:false, easyNoStart:false,
+    hardTrade:false, hardStart3:false,
+    whiteFlagRule:'default' // 'default' | 'noAllyUnlessFlag' | 'autoWin'
+  };
+}
+
+// adjustments chosen on the Setup screen before a game exists; startGame() snapshots this into state.adjustments
+const PENDING_ADJ_KEY = 'utek_pending_adjustments_v1';
+let pendingAdjustments = loadPendingAdjustments();
+
+function loadPendingAdjustments(){
+  const raw = localStorage.getItem(PENDING_ADJ_KEY);
+  if(raw){
+    try{
+      const parsed = JSON.parse(raw);
+      if(parsed) return Object.assign(defaultAdjustments(), parsed);
+    }catch(e){ /* ignore corrupt storage */ }
+  }
+  return defaultAdjustments();
+}
+
+function savePendingAdjustments(){
+  localStorage.setItem(PENDING_ADJ_KEY, JSON.stringify(pendingAdjustments));
+}
+
+function syncAdjustmentInputs(adj){
+  document.getElementById('adjEasyMax1').checked = !!adj.easyMax1;
+  document.getElementById('adjEasyNoGainOnFail').checked = !!adj.easyNoGainOnFail;
+  document.getElementById('adjEasyNoStart').checked = !!adj.easyNoStart;
+  document.getElementById('adjHardTrade').checked = !!adj.hardTrade;
+  document.getElementById('adjHardStart3').checked = !!adj.hardStart3;
+  document.getElementById('wfDefault').checked = adj.whiteFlagRule==='default';
+  document.getElementById('wfNoAllyUnlessFlag').checked = adj.whiteFlagRule==='noAllyUnlessFlag';
+  document.getElementById('wfAutoWin').checked = adj.whiteFlagRule==='autoWin';
+}
+
+function describeAdjustments(adj){
+  const labels = [];
+  if(lang==='pt'){
+    if(adj.easyMax1) labels.push('Mais fácil: Bot limitado a +1 recurso por ganho');
+    if(adj.easyNoGainOnFail) labels.push('Mais fácil: Bot não ganha nada em ação falha');
+    if(adj.easyNoStart) labels.push('Mais fácil: Bot começou sem recursos');
+    if(adj.hardTrade) labels.push('Mais difícil: Bot ganha recursos ao Comerciar');
+    if(adj.hardStart3) labels.push('Mais difícil: você começou com 3 recursos em vez de 6');
+    if(adj.whiteFlagRule==='noAllyUnlessFlag') labels.push('Mais difícil: sem alianças a menos que o Bot tire a Bandeira Branca');
+    else if(adj.whiteFlagRule==='autoWin') labels.push('Mais difícil: sem alianças — Bot vence automaticamente na Bandeira Branca');
+    return labels.length ? labels.join(' • ') : 'Nenhum (regras padrão)';
+  }
+  if(adj.easyMax1) labels.push('Easier: Dummy capped at +1 resource per gain');
+  if(adj.easyNoGainOnFail) labels.push('Easier: Dummy gains nothing on a failed action');
+  if(adj.easyNoStart) labels.push('Easier: Dummy started with no resources');
+  if(adj.hardTrade) labels.push('Harder: Dummy gains resources on Trade');
+  if(adj.hardStart3) labels.push('Harder: You started with 3 resources instead of 6');
+  if(adj.whiteFlagRule==='noAllyUnlessFlag') labels.push('Harder: No alliances unless Dummy rolls the White Flag');
+  else if(adj.whiteFlagRule==='autoWin') labels.push('Harder: No alliances — Dummy auto-wins on White Flag');
+  return labels.length ? labels.join(' • ') : 'None (standard rules)';
+}
+
+// solo ruleset chosen on the Setup screen before a game exists; startGame() snapshots this into state.mode
+const PENDING_MODE_KEY = 'utek_pending_mode_v1';
+let pendingMode = localStorage.getItem(PENDING_MODE_KEY) || 'gjj';
+
+function setSoloMode(mode){
+  pendingMode = mode;
+  localStorage.setItem(PENDING_MODE_KEY, mode);
+  syncModeUI(mode);
+}
+
+function syncModeUI(mode){
+  document.body.classList.toggle('mode-official', mode==='official');
+  document.body.classList.toggle('mode-gjj', mode!=='official');
+  document.getElementById('modeGjj').checked = mode!=='official';
+  document.getElementById('modeOfficial').checked = mode==='official';
+  document.getElementById('modeSubtitle').innerText = mode==='official' ? t('modeSubtitleOfficial') : t('modeSubtitleGjj');
+}
+
+function describeMode(mode){
+  if(lang==='pt') return mode==='official' ? 'Modo Solo Oficial do Manual' : 'Variante Fã da GJJ Games';
+  return mode==='official' ? 'Official Rulebook Solo Mode' : 'GJJ Games Fan Variant';
+}
+
+function emptyActions(){
+  const a={};
+  Object.keys(ACTION_NAMES).forEach(k=>a[k]=null);
+  return a;
+}
+
+function defaultKingdom(){
+  return {
+    faction:'', armies:0, ruinArmies:0,
+    towerVP:0, magicVP:0,
+    capitalsSolo:0, capitalsShared:0,
+    onEnemyTerritory:0
+  };
+}
+
+function pickAiTurn(){
+  const pt = lang==='pt';
+  if(state.mode==='official'){
+    // official mode: the app rolls the Compass die itself and resolves the action, exactly like a physical 12-sided die + Compass card
+    const startRoll = rollCompassDie();
+    const result = resolveCompassAction(startRoll);
+    if(result){
+      state.actions[result.action] = 'ai';
+      state.currentAction = result.action;
+      state.currentActionBy = 'ai';
+      state.lastCompassRoll = result.roll;
+      state.lastCompassStartRoll = startRoll;
+      const advancedNote = result.roll !== startRoll
+        ? (pt ? ' ('+ACTION_NAMES[COMPASS_ACTION_BY_NUMBER[startRoll]]+' já usada — avançou no sentido horário para '+result.roll+')' : ' ('+ACTION_NAMES[COMPASS_ACTION_BY_NUMBER[startRoll]]+' already taken — advanced clockwise to '+result.roll+')')
+        : '';
+      logMsg(pt
+        ? '🧭 Meu senhor, a Bússola girou e marcou '+startRoll+advancedNote+'. O Bot segue o desígnio e escolhe '+ACTION_NAMES[result.action]+'.'
+        : '🧭 My lord, the Compass has turned and marked '+startRoll+advancedNote+'. The Dummy heeds its call and chooses '+ACTION_NAMES[result.action]+'.');
+    } else {
+      state.currentAction = null;
+      state.currentActionBy = 'ai-collect';
+      state.lastCompassRoll = startRoll;
+      state.lastCompassStartRoll = startRoll;
+      logMsg(pt
+        ? '🧭 Meu senhor, a Bússola marcou '+startRoll+', mas nenhum caminho resta livre nesta rodada — o Bot recolhe o que os campos oferecem.'
+        : '🧭 My lord, the Compass marked '+startRoll+', but no path remains open this round — the Dummy gathers what the land provides.');
+    }
+    state.turnLocked = true;
+    return;
+  }
+  const action = AI_PRIORITY.find(k=>state.actions[k]===null);
+  if(action){
+    state.actions[action] = 'ai';
+    state.currentAction = action;
+    state.currentActionBy = 'ai';
+    logMsg(pt ? 'Meu senhor, o Bot ergue seu estandarte sobre '+ACTION_NAMES[action]+' — sua prioridade mais alta ainda livre.' : 'My lord, the Dummy raises its banner over '+ACTION_NAMES[action]+' — its highest remaining priority.');
+  } else {
+    state.currentAction = null;
+    state.currentActionBy = 'ai-collect';
+    logMsg(pt ? 'Meu senhor, nenhuma ação prioritária resta ao Bot — ele recolhe recursos para fortalecer seu reino.' : 'My lord, no priority action remains for the Dummy — it gathers resources to strengthen its realm.');
+  }
+  state.turnLocked = true;
+}
+
+function leaderForRound(round){
+  return (round % 2 === 1) ? 'ai' : 'you';
+}
+
+function startGame(){
+  const yourFaction = document.getElementById('setupYourFaction').value.trim() || (lang==='pt' ? 'Seu Reino' : 'Your Kingdom');
+  const aiFaction = document.getElementById('setupAiFaction').value.trim() || (lang==='pt' ? 'O Jogador Bot' : 'The Dummy Player');
+  state = {
+    version:6,
+    mode: pendingMode,
+    round:1,
+    activeSide:leaderForRound(1),
+    actions: emptyActions(),
+    currentAction:null,
+    currentActionBy:null,
+    turnLocked:false,
+    gameOver:false,
+    compassPhase:'day',
+    lastCompassRoll:null,
+    lastCompassStartRoll:null,
+    adjustments: Object.assign({}, pendingAdjustments),
+    you: Object.assign(defaultKingdom(), {faction:yourFaction}),
+    ai: Object.assign(defaultKingdom(), {faction:aiFaction}),
+    log:[]
+  };
+  logMsg(lang==='pt'
+    ? 'Meu senhor, a corte se reúne: '+yourFaction+' contra '+aiFaction+'. O Bot toma o trono na Rodada 1 (rodadas ímpares); a vossa liderança reina nas rodadas pares.'
+    : 'My lord, the court convenes: '+yourFaction+' versus '+aiFaction+'. The Dummy takes the throne in Round 1 (odd rounds); your rule reigns on even rounds.');
+  document.getElementById('setup').classList.add('hidden');
+  document.getElementById('game').classList.remove('hidden');
+  savedState = null;
+  const continueBtn = document.getElementById('continueSavedBtn');
+  if(continueBtn) continueBtn.classList.add('hidden');
+  compassRotation = 0;
+  renderedCompassRoll = null;
+  if(state.activeSide==='ai') pickAiTurn();
+  save();
+  render();
+}
+
+function updateScoreInputs(side, field, value){
+  state[side][field] = Math.max(0, parseInt(value)||0);
+  save(); render();
+}
+
+function setAdjustment(key, value){
+  pendingAdjustments[key] = value;
+  savePendingAdjustments();
+}
+
+function setWhiteFlagRule(value){
+  pendingAdjustments.whiteFlagRule = value;
+  savePendingAdjustments();
+}
+
+function toggleChip(key){
+  if(!state || state.gameOver) return;
+  if(state.activeSide !== 'you') return; // the Dummy always picks for itself (auto-rolled in pickAiTurn), no manual input
+  if(state.turnLocked && state.currentAction !== key) return; // only one action may be picked per turn
+  const side = state.activeSide;
+  const cur = state.actions[key];
+  if(cur === side){
+    state.actions[key] = null;
+    state.currentAction = null;
+    state.currentActionBy = null;
+    state.turnLocked = false;
+    logMsg(lang==='pt' ? 'Meu senhor, a ordem de "'+ACTION_NAMES[key]+'" foi retirada.' : 'My lord, the order for "'+ACTION_NAMES[key]+'" has been withdrawn.');
+  } else if(cur === null){
+    state.actions[key] = side;
+    state.currentAction = key;
+    state.currentActionBy = side;
+    state.turnLocked = true;
+    logMsg(state.you.faction+(lang==='pt' ? ' avança para ' : ' marches toward ')+ACTION_NAMES[key]+'.');
+    if(state.mode==='official'){
+      // the Dummy still needs a Compass roll to resolve army/region selection when it's just following your action
+      // (this reuses the raw roll verbatim as a movement direction — the clockwise "already taken" advance only applies to picking an action, not to this)
+      state.lastCompassRoll = rollCompassDie();
+      state.lastCompassStartRoll = state.lastCompassRoll;
+      logMsg(lang==='pt' ? '🧭 Meu senhor, a Bússola gira mais uma vez para guiar o Bot: '+state.lastCompassRoll+'.' : '🧭 My lord, the Compass turns once more to guide the Dummy: '+state.lastCompassRoll+'.');
+    }
+  } else {
+    return;
+  }
+  save(); render();
+}
+
+function startNewRound(){
+  state.actions = emptyActions();
+  state.currentAction = null;
+  state.currentActionBy = null;
+  state.turnLocked = false;
+  state.lastCompassRoll = null;
+  state.lastCompassStartRoll = null;
+  if(state.mode==='official'){
+    const wasDay = state.compassPhase!=='night';
+    state.compassPhase = wasDay ? 'night' : 'day';
+    logMsg(lang==='pt'
+      ? '🧭 Meu senhor, a carta de Ação se esgota — a Bússola vira para '+(wasDay?'Noite 🌙':'Dia ☀️')+'.'+(wasDay ? ' O Bot recebe a dádiva noturna: 1 Minério, 1 Mana e 1 Comida (aplique isso no seu tabuleiro físico).' : '')
+      : '🧭 My lord, the Action card runs dry — the Compass turns to '+(wasDay?'Night 🌙':'Day ☀️')+'.'+(wasDay ? ' The Dummy receives the night\'s boon: 1 Ore, 1 Mana and 1 Food (apply this on your physical board).' : ''));
+  }
+  state.round++;
+  state.activeSide = leaderForRound(state.round);
+  logMsg(lang==='pt'
+    ? '— Meu senhor, a Rodada '+state.round+' se abre — quem lidera agora: '+(state.activeSide==='you'?state.you.faction:state.ai.faction)
+    : '— My lord, Round '+state.round+' begins — who leads now: '+(state.activeSide==='you'?state.you.faction:state.ai.faction));
+  if(state.activeSide==='ai') pickAiTurn();
+  save(); render();
+}
+
+function clearRound(){
+  startNewRound();
+}
+
+function nextTurn(){
+  if(!state || state.gameOver) return;
+  if(!state.turnLocked) return; // current turn's action hasn't been picked yet
+  const usedCount = Object.values(state.actions).filter(v=>v!==null).length;
+  if(usedCount >= 5){
+    startNewRound();
+    return;
+  }
+  state.activeSide = state.activeSide==='you' ? 'ai' : 'you';
+  state.currentAction = null;
+  state.currentActionBy = null;
+  state.turnLocked = false;
+  if(state.activeSide==='ai'){
+    pickAiTurn();
+  }
+  save(); render();
+}
+
+function endGame(){
+  state.gameOver = true;
+  save(); render();
+}
+
+function resumeGame(){
+  state.gameOver = false;
+  save(); render();
+}
+
+function movementRulesHtml(){
+  if(lang==='pt') return '<ul>'
+    +'<li><strong>Qual ex\u00e9rcito se move (DE):</strong> prefere uma regi\u00e3o (fora a Regi\u00e3o Natal) com 2 ex\u00e9rcitos que atenda ao m\u00e1ximo destes crit\u00e9rios: adjacente a uma regi\u00e3o desocupada, mais distante da Regi\u00e3o Natal, adjacente ao tipo de \u00e1rea que controla menos, produz o recurso que ele mais controla. Se apenas a Regi\u00e3o Natal tiver 2 ex\u00e9rcitos, ele s\u00f3 sai de l\u00e1 se um ex\u00e9rcito de reserva puder reabastecer a Regi\u00e3o Natal imediatamente — ele nunca sai da Regi\u00e3o Natal com um \u00fanico ex\u00e9rcito. Se nenhuma regi\u00e3o tiver 2 ex\u00e9rcitos, ele move um \u00fanico ex\u00e9rcito, mas apenas para uma regi\u00e3o desocupada de maior prioridade.</li>'
+    +'<li><strong>Para onde ele se move (PARA), em ordem:</strong> (1) uma regi\u00e3o desocupada que produza o recurso que ele controla menos, preferindo a mais distante da Regi\u00e3o Natal; sen\u00e3o (2) uma regi\u00e3o que ele j\u00e1 ocupa e que seja adjacente a uma regi\u00e3o desocupada, preferindo a mais distante da Regi\u00e3o Natal; sen\u00e3o (3) uma regi\u00e3o que voc\u00ea ocupa que produza o recurso que ele controla menos, preferindo a mais distante da Regi\u00e3o Natal — isso desencadeia combate (veja o Resolvedor de Guerra).</li>'
+    +'<li><strong>Ordem de prefer\u00eancia em caso de empate:</strong> Mana/Floresta &gt; Min\u00e9rio/Montanha &gt; Comida/Plan\u00edcie.</li>'
+    +'<li>Ele n\u00e3o se mover\u00e1 para Ru\u00ednas ou uma Capital a menos que toda outra regi\u00e3o naquela carta de territ\u00f3rio j\u00e1 esteja ocupada.</li>'
+    +'</ul>';
+  return '<ul>'
+  +'<li><strong>Which army moves (FROM):</strong> prefers a region (other than Home) with 2 armies that meets the most of: adjacent to an unoccupied region, furthest from Home, adjacent to the area type it controls least, produces the resource it controls most of. If only the Home Region has 2 armies, it only leaves if a reserve army can refill Home immediately — it never leaves Home with a single army. If no region has 2 armies, it instead moves a single army, but only to a higher-priority unoccupied region.</li>'
+  +'<li><strong>Where it moves (TO), in order:</strong> (1) an unoccupied region producing the resource it controls least, preferring furthest from Home; else (2) a region it already occupies that\'s adjacent to an unoccupied region, preferring furthest from Home; else (3) a region you occupy producing the resource it controls least, preferring furthest from Home — this triggers combat (see War Resolver).</li>'
+  +'<li><strong>Tie-break preference order:</strong> Mana/Forest &gt; Ore/Mountain &gt; Food/Plains.</li>'
+  +'<li>It will not move into Ruins or a Capital City unless every other region on that territory card is already occupied.</li>'
+  +'</ul>';
+}
+
+// phrase used whenever the Dummy would normally fall back to collecting resources, adjusted per active Easier settings
+function collectFallbackText(){
+  const adj = state.adjustments;
+  if(lang==='pt'){
+    if(adj.easyNoGainOnFail) return 'n\u00e3o ganha nada neste turno (ajuste Mais F\u00e1cil: sem coleta alternativa em a\u00e7\u00e3o falha)';
+    if(adj.easyMax1) return 'ele coleta recursos em vez disso, limitado a ganhar apenas 1 daquele tipo de recurso (ajuste Mais F\u00e1cil)';
+    return 'ele coleta recursos em vez disso';
+  }
+  if(adj.easyNoGainOnFail) return 'it gains nothing this turn (Easier adjustment: no fallback collection on a failed action)';
+  if(adj.easyMax1) return 'it collects resources instead, capped at gaining only 1 of that resource type (Easier adjustment)';
+  return 'it collects resources instead';
+}
+
+const GUIDANCE = {
+  patrol:{
+    you:()=>lang==='pt'
+      ? 'O Bot segue Patrulhando um dos seus próprios exércitos usando exatamente estas regras:'+movementRulesHtml()+'Ele só vai Patrulhar no seu território se já tiver feito Missão lá antes e não tiver mais opções no próprio território. Se nenhum desses movimentos for válido, '+collectFallbackText()+'.'
+      : 'The Dummy follows by Patrolling one of its own armies using these exact rules:'+movementRulesHtml()+'It will only Patrol onto your territory if it already Quested there before and has no options left on its own territory. If none of these moves is legal, '+collectFallbackText()+'.',
+    ai:()=>lang==='pt'
+      ? 'Ele tenta Patrulhar para uma região aberta no próprio território ou se expandir a partir da Região Natal, seguindo estas regras:'+movementRulesHtml()+'Ele só vai Patrulhar no seu território se já tiver feito Missão lá antes e não tiver mais opções no próprio território. <strong>Se nenhum desses movimentos for possível, '+collectFallbackText()+'.</strong>'
+      : 'It attempts to Patrol to an open region on its own territory or expand outward from its Home Region, following these rules:'+movementRulesHtml()+'It will only Patrol onto your territory if it already Quested there before and has no options left on its own territory. <strong>If none of these moves is possible, '+collectFallbackText()+'.</strong>'
+  },
+  quest:{
+    you:()=>lang==='pt'
+      ? 'O Bot segue fazendo Missão — <strong>exceto</strong> que ele não fará Missão até que toda região do próprio território já tenha pelo menos um exército (seu ou seu); se não, '+collectFallbackText()+', mesmo você tendo escolhido Missão. Quando puder fazer Missão, ele move um exército para fora de uma região de fronteira com 2 exércitos, usando exatamente estas regras de movimento:'+movementRulesHtml()+'Ele nunca fará Missão de volta do seu território para o próprio.'
+      : 'The Dummy follows by Questing — <strong>except</strong> it will not Quest until every region on its own territory already has at least one army (its own or yours); if not, '+collectFallbackText()+', even though you selected Quest. When it can Quest, it moves an army out of a border region with 2 armies, using these exact movement rules:'+movementRulesHtml()+'It will never Quest back from your territory to its own.',
+    ai:()=>lang==='pt'
+      ? 'Ele só faz Missão se toda região do próprio território já tiver pelo menos um exército (seu ou seu) — <strong>senão '+collectFallbackText()+'.</strong> Quando puder, ele move um exército para fora de uma região de fronteira que tenha 2 exércitos, usando exatamente estas regras de movimento:'+movementRulesHtml()+'Ele nunca fará Missão de volta do seu território para o próprio.'
+      : 'It only Quests if every region on its own territory already has at least one army (its own or yours) — <strong>otherwise '+collectFallbackText()+'.</strong> When able, it moves one army out of a border region that has 2 armies there, using these exact movement rules:'+movementRulesHtml()+'It will never Quest back from your territory to its own.'
+  },
+  build:{
+    you:()=>lang==='pt'
+      ? 'O Bot segue apenas se tiver Minério suficiente para o próximo nível da Torre. Se não, '+collectFallbackText()+'.'
+      : 'The Dummy follows only if it has enough Ore for its next Tower level. If not, '+collectFallbackText()+'.',
+    ai:()=>lang==='pt'
+      ? 'Se ele tiver Minério suficiente para o próximo nível da Torre, ele constrói. <strong>Se não, '+collectFallbackText()+'.</strong>'
+      : 'If it has enough Ore for its next Tower level, it builds. <strong>If not, '+collectFallbackText()+'.</strong>'
+  },
+  research:{
+    you:()=>lang==='pt'
+      ? 'O Bot segue apenas se tiver Mana suficiente para o próximo nível de Magia. Se não, '+collectFallbackText()+'.'
+      : 'The Dummy follows only if it has enough Mana for its next Magic level. If not, '+collectFallbackText()+'.',
+    ai:()=>lang==='pt'
+      ? 'Se ele tiver Mana suficiente para o próximo nível de Magia, ele pesquisa. <strong>Se não, '+collectFallbackText()+'.</strong>'
+      : 'If it has enough Mana for its next Magic level, it researches. <strong>If not, '+collectFallbackText()+'.</strong>'
+  },
+  expand:{
+    you:()=>lang==='pt'
+      ? 'O Bot segue apenas se tiver a Comida, um exército sobressalente, e uma região disponível para Expandir. Se não, '+collectFallbackText()+'.'
+      : 'The Dummy follows only if it has the Food, a spare army, and an available region to Expand into. If not, '+collectFallbackText()+'.',
+    ai:()=>lang==='pt'
+      ? '<ul>'
+        +'<li>Se ele tiver a Comida, um exército sobressalente, e uma região disponível, ele se expande para a região mais próxima da sua Região Natal que atualmente tenha apenas um exército.</li>'
+        +'<li>Em caso de empate, ele prefere uma região adjacente a uma região desocupada, senão uma adjacente a uma região que você ocupa.</li>'
+        +'<li><strong>Se ele não puder atender a todas essas condições, '+collectFallbackText()+'.</strong></li>'
+        +'</ul>'
+      : '<ul>'
+      +'<li>If it has the Food, a spare army, and an available region, it expands into the region nearest its Home Region that currently has only one army.</li>'
+      +'<li>On a tie, it prefers a region adjacent to an unoccupied region, else one adjacent to a region you occupy.</li>'
+      +'<li><strong>If it can\'t meet all of these conditions, '+collectFallbackText()+'.</strong></li>'
+      +'</ul>'
+  },
+  trade:{
+    you:()=>state.adjustments.hardTrade
+      ? (lang==='pt'
+        ? 'Por causa do ajuste Mais Difícil (o Bot ganha recursos ao Comerciar), o Bot ganha 1 recurso do tipo que ele atualmente controla menos (ordem de preferência Mana/Floresta &gt; Minério/Montanha &gt; Comida/Planície) em vez de não fazer nada.'
+        : 'Because of the Harder adjustment (Dummy gains resources on Trade), the Dummy gains 1 resource of the type it currently controls least (Mana/Forest &gt; Ore/Mountain &gt; Food/Plains preference order) instead of doing nothing.')
+      : (lang==='pt'
+        ? 'O Bot não faz <em>nada</em> — ele nunca segue nem coleta em um Comerciar.'
+        : 'The Dummy does <em>nothing</em> — it never follows or collects on a Trade.'),
+    ai:()=>''
+  }
+};
+
+// movement note shared by Official-mode Patrol/Quest/Expand guidance — references the actual compass roll the app already tracked;
+// the specific army/region choice on the physical board is still something this app can't see or simulate
+function officialMoveNote(){
+  const n = state.lastCompassRoll;
+  if(lang==='pt') return 'Usando a rolagem da bússola de <strong>'+(n||'—')+'</strong>, começando por esse número, mova no sentido horário pelo território até chegar a um exército/região válido para este movimento.';
+  return 'Using the compass roll of <strong>'+(n||'—')+'</strong>, starting at that number, move clockwise around the territory until you reach a valid army/region for this move.';
+}
+
+const GUIDANCE_OFFICIAL = {
+  patrol:{
+    you:()=>lang==='pt'
+      ? 'O Bot segue movendo um dos seus exércitos para uma região adjacente no mesmo território (nunca através de água ou penhascos). '+officialMoveNote()+' Ele nunca patrulhará para uma região que já ocupa, mas patrulhará para uma sua (desencadeando guerra). Se não existir movimento válido, ele coleta recursos em vez disso.'
+      : 'The Dummy follows by moving one of its armies to an adjacent region on the same territory (never across water or crags). '+officialMoveNote()+' It will never patrol into a region it already occupies, but will patrol into one of yours (triggering war). If no legal move exists, it collects resources instead.',
+    ai:()=>lang==='pt'
+      ? 'Ele move um dos seus exércitos para uma região adjacente no mesmo território (nunca através de água ou penhascos). '+officialMoveNote()+' Ele nunca patrulhará para uma região que já ocupa, mas patrulhará para uma sua (desencadeando guerra). Se não existir movimento válido, ele coleta recursos em vez disso.'
+      : 'It moves one of its armies to an adjacent region on the same territory (never across water or crags). '+officialMoveNote()+' It will never patrol into a region it already occupies, but will patrol into one of yours (triggering war). If no legal move exists, it collects resources instead.'
+  },
+  quest:{
+    you:()=>lang==='pt'
+      ? 'O Bot segue movendo um exército de uma região na fronteira de um território para uma região na fronteira do outro (água nunca é fronteira). '+officialMoveNote()+' Ele nunca fará missão para uma região que já ocupa, mas fará missão para uma sua (desencadeando guerra). Se não existir movimento válido, ele coleta recursos em vez disso.'
+      : 'The Dummy follows by moving an army from a region on the border of one territory to a region on the border of the other (water is never a border). '+officialMoveNote()+' It will never quest into a region it already occupies, but will quest into one of yours (triggering war). If no legal move exists, it collects resources instead.',
+    ai:()=>lang==='pt'
+      ? 'Ele move um exército de uma região na fronteira de um território para uma região na fronteira do outro (água nunca é fronteira). '+officialMoveNote()+' Ele nunca fará missão para uma região que já ocupa, mas fará missão para uma sua (desencadeando guerra). Se não existir movimento válido, ele coleta recursos em vez disso.'
+      : 'It moves an army from a region on the border of one territory to a region on the border of the other (water is never a border). '+officialMoveNote()+' It will never quest into a region it already occupies, but will quest into one of yours (triggering war). If no legal move exists, it collects resources instead.'
+  },
+  build:{
+    you:()=>lang==='pt'
+      ? 'O Bot segue apenas se tiver Minério suficiente para o próximo nível da Torre. Se não, ele coleta recursos em vez disso.'
+      : 'The Dummy follows only if it has enough Ore for its next Tower level. If not, it collects resources instead.',
+    ai:()=>lang==='pt'
+      ? 'Se ele tiver Minério suficiente para o próximo nível da Torre, ele constrói. Se não, ele coleta recursos em vez disso.'
+      : 'If it has enough Ore for its next Tower level, it builds. If not, it collects resources instead.'
+  },
+  research:{
+    you:()=>lang==='pt'
+      ? 'O Bot segue apenas se tiver Mana suficiente para o próximo nível de Magia. Se não, ele coleta recursos em vez disso.'
+      : 'The Dummy follows only if it has enough Mana for its next Magic level. If not, it collects resources instead.',
+    ai:()=>lang==='pt'
+      ? 'Se ele tiver Mana suficiente para o próximo nível de Magia, ele pesquisa. Se não, ele coleta recursos em vez disso.'
+      : 'If it has enough Mana for its next Magic level, it researches. If not, it collects resources instead.'
+  },
+  expand:{
+    you:()=>lang==='pt'
+      ? 'O Bot segue apenas se tiver a Comida e uma região aberta adjacente a um dos seus exércitos para Expandir — seu novo exército vai para essa região aberta (nunca combinado com um exército existente, e ele nunca pode iniciar uma guerra ao expandir). '+officialMoveNote()+' Se não, ele coleta recursos em vez disso.'
+      : 'The Dummy follows only if it has the Food and an open region adjacent to one of its armies to Expand into — its new army goes into that open region (never merged with an existing army, and it can never start a war by expanding). '+officialMoveNote()+' If not, it collects resources instead.',
+    ai:()=>lang==='pt'
+      ? 'Se ele tiver a Comida e uma região aberta adjacente a um dos seus exércitos, ele se expande para essa região, pagando comida igual à sua nova contagem total de exércitos (ele nunca pode iniciar uma guerra ao expandir). '+officialMoveNote()+' Se não, ele coleta recursos em vez disso.'
+      : 'If it has the Food and an open region adjacent to one of its armies, it expands into that region, paying food equal to its new total army count (it can never start a war by expanding). '+officialMoveNote()+' If not, it collects resources instead.'
+  },
+  trade:{
+    you:()=>lang==='pt'
+      ? 'O Bot "segue" o Comerciar simplesmente ganhando 1 de cada recurso (Mana, Minério, Comida) — ele nunca realiza uma conversão real.'
+      : 'The Dummy "follows" Trade by simply gaining 1 of each resource (Mana, Ore, Food) — it never performs a real conversion.',
+    ai:()=>lang==='pt'
+      ? 'Ele simplesmente ganha 1 de cada recurso (Mana, Minério, Comida) — ele nunca realiza uma conversão real.'
+      : 'It simply gains 1 of each resource (Mana, Ore, Food) — it never performs a real conversion.'
+  }
+};
+
+function renderGuidance(){
+  const box = document.getElementById('guidanceBox');
+  if(!state){ box.innerHTML=''; return; }
+  const official = state.mode==='official';
+  const G = official ? GUIDANCE_OFFICIAL : GUIDANCE;
+  const key = state.currentAction;
+  const by = state.currentActionBy;
+  let html = '';
+  const pt = lang==='pt';
+  if(by==='you'){
+    html = '<strong>'+(pt?'Você selecionou ':'You selected ')+ACTION_NAMES[key]+'.</strong> '+G[key].you();
+  } else if(by==='ai'){
+    html = official
+      ? '<strong>'+(pt?'Turno do próprio Bot — rolagem da Bússola ':'Dummy\'s own turn — Compass roll ')+(state.lastCompassRoll||'?')+' → '+ACTION_NAMES[key]+'.</strong> '+G[key].ai()
+      : '<strong>'+(pt?'Turno do próprio Bot — ele selecionou ':'Dummy\'s own turn — it selected ')+ACTION_NAMES[key]+'.</strong> '+G[key].ai();
+  } else if(by==='ai-collect'){
+    html = pt
+      ? '<strong>Turno do próprio Bot.</strong> Toda ação prioritária (Patrulhar/Missão/Construir/Pesquisar/Expandir) já foi usada nesta rodada — '+collectFallbackText()+'.'
+      : '<strong>Dummy\'s own turn.</strong> Every priority action (Patrol/Quest/Build/Research/Expand) is already used this round — '+collectFallbackText()+'.';
+  } else if(official && state.activeSide==='ai'){
+    html = pt ? 'Rolando o dado da Bússola…' : 'Rolling the Compass die…';
+  } else {
+    html = pt ? 'Clique em um cubo de ação acima para registrar seu turno.' : 'Click an action cube above to record your turn.';
+  }
+  box.innerHTML = html;
+}
+
+function renderWarResolver(){
+  if(!state) return;
+  const pt = lang==='pt';
+  if(state.mode==='official'){
+    const p = document.getElementById('officialWarCostText');
+    if(p){
+      const isDay = state.compassPhase!=='night';
+      const phaseWord = isDay ? (pt?'Dia':'Day') : (pt?'Noite':'Night');
+      const phaseIcon = isDay ? SUN_ICON_SVG : MOON_ICON_SVG;
+      p.innerHTML = pt
+        ? 'A Bússola está atualmente mostrando o lado <strong>'+phaseWord+' '+phaseIcon+'</strong> — o custo de guerra do Bot é <strong>'+(isDay?'2 × o total de exércitos dele em jogo':'o total de exércitos dele em jogo')+'</strong>. Você só precisa igualar ou superar esse custo para vencer a guerra — se optar por não pagá-lo, você perde.'
+        : 'The Compass is currently showing the <strong>'+phaseWord+' '+phaseIcon+'</strong> side — the Dummy\'s war cost is <strong>'+(isDay?'2 × its total armies currently in play':'its total armies currently in play')+'</strong>. You only need to meet or exceed this cost to win the war — if you choose not to pay it, you lose.';
+    }
+    return;
+  }
+  const ul = document.getElementById('warRulesList');
+  if(!ul) return;
+  const rule = state.adjustments.whiteFlagRule;
+  let flagBullets;
+  if(pt){
+    if(rule==='autoWin'){
+      flagBullets =
+          '<li><strong>Ajuste Mais Difícil ativo:</strong> nenhuma aliança é possível. Se o Bot tirar a Bandeira Branca, ele vence automaticamente a guerra de graça e não paga recursos.</li>'
+        + '<li><strong>Bandeira Branca, só você:</strong> você perde a guerra e não paga nada; o Bot ainda paga seu valor empenhado.</li>';
+    } else if(rule==='noAllyUnlessFlag'){
+      flagBullets =
+          '<li><strong>Ajuste Mais Difícil ativo:</strong> uma aliança só pode se formar se o próprio Bot tirar a Bandeira Branca — sua escolha de Bandeira Branca sozinha nunca cria uma.</li>'
+        + '<li><strong>Bandeira Branca, só o Bot:</strong> você pode aceitar a Aliança (sem custo, coexistem) ou derrotar o Bot de graça (ele não ofereceu resistência).</li>'
+        + '<li><strong>Bandeira Branca, só você:</strong> nenhuma aliança é possível aqui sob este ajuste — você perde a guerra e não paga nada; o Bot ainda paga seu valor empenhado.</li>';
+    } else {
+      flagBullets =
+          '<li><strong>Bandeira Branca, ambos os lados:</strong> uma Aliança se forma — nenhum recurso é gasto, ambos os exércitos coexistem na região.</li>'
+        + '<li><strong>Bandeira Branca, só você:</strong> você perde a guerra e não paga nada; o Bot ainda paga seu valor empenhado.</li>'
+        + '<li><strong>Bandeira Branca, só o Bot:</strong> você pode aceitar a Aliança (sem custo, coexistem) ou derrotar o Bot de graça (ele não ofereceu resistência).</li>';
+    }
+    ul.innerHTML =
+        '<li><strong>Vitória:</strong> o exército do vencedor toma a região. O perdedor recua (paga comida = seu total atual de exércitos em jogo) ou aquele exército é removido.</li>'
+      + '<li><strong>Empate:</strong> o <strong>defensor</strong> vence automaticamente — resolvido da mesma forma que uma vitória.</li>'
+      + '<li>Independentemente do resultado, ambos os lados ainda pagam seu valor empenhado em recursos.</li>'
+      + flagBullets
+      + '<li>O Bot nunca recua por escolha própria — se perder, ele sempre paga comida para recuar quando pode, senão o exército é removido.</li>';
+    return;
+  }
+  if(rule==='autoWin'){
+    flagBullets =
+        '<li><strong>Harder adjustment active:</strong> no alliances are possible at all. If the Dummy rolls the White Flag, it automatically wins the war for free and pays no resources.</li>'
+      + '<li><strong>White Flag, only you:</strong> you lose the war and pay nothing; the Dummy still pays its committed value.</li>';
+  } else if(rule==='noAllyUnlessFlag'){
+    flagBullets =
+        '<li><strong>Harder adjustment active:</strong> an alliance can only form if the Dummy itself rolls the White Flag — your own White Flag choice alone never creates one.</li>'
+      + '<li><strong>White Flag, only the Dummy:</strong> you may accept the Alliance (no cost, coexist) or defeat the Dummy for free (it offered no resistance).</li>'
+      + '<li><strong>White Flag, only you:</strong> no alliance is possible here under this adjustment — you lose the war and pay nothing; the Dummy still pays its committed value.</li>';
+  } else {
+    flagBullets =
+        '<li><strong>White Flag, both sides:</strong> an Alliance forms — no resources spent, both armies coexist in the region.</li>'
+      + '<li><strong>White Flag, only you:</strong> you lose the war and pay nothing; the Dummy still pays its committed value.</li>'
+      + '<li><strong>White Flag, only the Dummy:</strong> you may accept the Alliance (no cost, coexist) or defeat the Dummy for free (it offered no resistance).</li>';
+  }
+  ul.innerHTML =
+      '<li><strong>Win:</strong> the winner\'s army takes the region. The loser retreats (pays food = their current total armies in play) or that army is removed.</li>'
+    + '<li><strong>Tie:</strong> the <strong>defender</strong> automatically wins — resolved the same way as a win.</li>'
+    + '<li>Regardless of outcome, both sides still pay their committed value in resources.</li>'
+    + flagBullets
+    + '<li>The Dummy never retreats by choice — if it loses, it always pays food to retreat when it can, otherwise the army is removed.</li>';
+}
+
+function computeSideScore(side){
+  const k = state[side];
+  const armyVP = Math.max(0, k.armies - k.ruinArmies);
+  const official = state.mode==='official';
+  const capVP = k.capitalsSolo*2 + (official ? 0 : k.capitalsShared*1);
+  const territoryVP = official ? 0 : k.onEnemyTerritory;
+  const total = armyVP + (k.towerVP||0) + (k.magicVP||0) + capVP + territoryVP;
+  return {armyVP, capVP, territoryVP, total};
+}
+
+function render(){
+  if(!state) return;
+  document.getElementById('roundBadge').innerText = 'Round '+state.round;
+  document.getElementById('activeSideLabel').innerText = state.activeSide==='you'?state.you.faction:state.ai.faction;
+  document.getElementById('yourFactionLabel').innerText = state.you.faction;
+  document.getElementById('aiFactionLabel').innerText = state.ai.faction;
+  const compassPill = document.getElementById('compassPhasePill');
+  if(compassPill){
+    const isDay = state.compassPhase!=='night';
+    const phaseIcon = isDay ? SUN_ICON_SVG : MOON_ICON_SVG;
+    compassPill.innerHTML = lang==='pt' ? (COMPASS_ICON_SVG+' Bússola: '+(isDay?'Dia':'Noite')+' '+phaseIcon) : (COMPASS_ICON_SVG+' Compass: '+(isDay?'Day':'Night')+' '+phaseIcon);
+  }
+  renderCompassWheel();
+
+  // action chips, colored by who used them
+  const chipsEl = document.getElementById('actionChips');
+  chipsEl.innerHTML='';
+  const manualSide = state.activeSide==='you' ? 'you' : null;
+  Object.keys(ACTION_NAMES).forEach(k=>{
+    const by = state.actions[k];
+    const chip = document.createElement('div');
+    const pickable = !!manualSide && !state.gameOver && (by===null ? !state.turnLocked : (by===manualSide && k===state.currentAction));
+    chip.className = 'action-chip'+(by==='you'?' by-you':'')+(by==='ai'?' by-ai':'')+(pickable?'':' locked');
+    const tagText = by==='you' ? (state.you.faction || (lang==='pt'?'Você':'You')) : (state.ai.faction || (lang==='pt'?'Jogador Bot':'Dummy'));
+    chip.innerHTML = `<span class="chip-name">${ACTION_NAMES[k]}</span>` + (by ? `<span class="chip-tag">${tagText}</span>` : '');
+    chip.onclick = ()=>toggleChip(k);
+    chipsEl.appendChild(chip);
+  });
+
+  renderGuidance();
+  renderWarResolver();
+  syncModeUI(state.mode);
+  syncAdjustmentInputs(state.adjustments);
+
+  document.getElementById('nextTurnBtn').disabled = !state.turnLocked || state.gameOver;
+
+  // reveal score section only once the game is marked over
+  const scoreSection = document.getElementById('scoreSection');
+  const winnerWrap = document.getElementById('winnerNoteWrap');
+  const endBtn = document.getElementById('endGameBtn');
+  const resumeBtn = document.getElementById('resumeGameBtn');
+  if(state.gameOver){
+    scoreSection.classList.remove('hidden');
+    winnerWrap.classList.remove('hidden');
+    endBtn.classList.add('hidden');
+    resumeBtn.classList.remove('hidden');
+  } else {
+    scoreSection.classList.add('hidden');
+    winnerWrap.classList.add('hidden');
+    endBtn.classList.remove('hidden');
+    resumeBtn.classList.add('hidden');
+  }
+
+  // sync score inputs (in case loaded from storage)
+  document.getElementById('youArmies').value = state.you.armies||0;
+  document.getElementById('youRuinArmies').value = state.you.ruinArmies||0;
+  document.getElementById('youTowerVP').value = state.you.towerVP||0;
+  document.getElementById('youMagicVP').value = state.you.magicVP||0;
+  document.getElementById('youCapSolo').value = state.you.capitalsSolo||0;
+  document.getElementById('youCapShared').value = state.you.capitalsShared||0;
+  document.getElementById('youOnEnemyTerritory').value = state.you.onEnemyTerritory||0;
+  document.getElementById('aiArmies').value = state.ai.armies||0;
+  document.getElementById('aiRuinArmies').value = state.ai.ruinArmies||0;
+  document.getElementById('aiTowerVP').value = state.ai.towerVP||0;
+  document.getElementById('aiMagicVP').value = state.ai.magicVP||0;
+  document.getElementById('aiCapSolo').value = state.ai.capitalsSolo||0;
+  document.getElementById('aiCapShared').value = state.ai.capitalsShared||0;
+  document.getElementById('aiOnEnemyTerritory').value = state.ai.onEnemyTerritory||0;
+
+  // scoring
+  const ys = computeSideScore('you');
+  const as = computeSideScore('ai');
+  document.getElementById('yourTotalVP').innerText = ys.total;
+  document.getElementById('aiTotalVP').innerText = as.total;
+  const official = state.mode==='official';
+  if(lang==='pt'){
+    document.getElementById('scoreBreakdownYou').innerText = ys.armyVP+' exércitos + '+(state.you.towerVP||0)+' torre + '+(state.you.magicVP||0)+' magia + '+ys.capVP+' capitais'+(official?'':' + '+ys.territoryVP+' no território inimigo');
+    document.getElementById('scoreBreakdownAi').innerText = as.armyVP+' exércitos + '+(state.ai.towerVP||0)+' torre + '+(state.ai.magicVP||0)+' magia + '+as.capVP+' capitais'+(official?'':' + '+as.territoryVP+' no território inimigo');
+  } else {
+    document.getElementById('scoreBreakdownYou').innerText = ys.armyVP+' armies + '+(state.you.towerVP||0)+' tower + '+(state.you.magicVP||0)+' magic + '+ys.capVP+' capitals'+(official?'':' + '+ys.territoryVP+' on enemy territory');
+    document.getElementById('scoreBreakdownAi').innerText = as.armyVP+' armies + '+(state.ai.towerVP||0)+' tower + '+(state.ai.magicVP||0)+' magic + '+as.capVP+' capitals'+(official?'':' + '+as.territoryVP+' on enemy territory');
+  }
+  const winnerNote = document.getElementById('winnerNote');
+  if(ys.total===0 && as.total===0){ winnerNote.innerHTML=''; }
+  else if(ys.total>as.total) winnerNote.innerHTML = lang==='pt' ? (CROWN_ICON_SVG+' '+state.you.faction+' vence com '+ys.total+' PV (Bot: '+as.total+')!') : (CROWN_ICON_SVG+' '+state.you.faction+' wins with '+ys.total+' VP (Dummy: '+as.total+')!');
+  else if(as.total>ys.total) winnerNote.innerHTML = lang==='pt' ? (CROWN_ICON_SVG+' '+state.ai.faction+' vence com '+as.total+' PV (Você: '+ys.total+')!') : (CROWN_ICON_SVG+' '+state.ai.faction+' wins with '+as.total+' VP (You: '+ys.total+')!');
+  else winnerNote.innerHTML = lang==='pt' ? ('Empate em '+ys.total+' PV!') : ("It's a tie at "+ys.total+' VP!');
+  document.getElementById('adjustmentsSummary').innerText = lang==='pt'
+    ? ('Modo: '+describeMode(state.mode)+(official ? '' : ' • Ajustes usados nesta partida: '+describeAdjustments(state.adjustments)))
+    : ('Mode: '+describeMode(state.mode)+(official ? '' : ' • Adjustments used this game: '+describeAdjustments(state.adjustments)));
+
+  // log
+  const logList = document.getElementById('logList');
+  logList.innerHTML='';
+  state.log.slice(0,60).forEach(entry=>{
+    const li = document.createElement('li');
+    li.innerText = entry;
+    logList.appendChild(li);
+  });
+  document.getElementById('logCount').innerText = state.log.length;
+}
+
+function logMsg(text){
+  state.log.unshift('R'+state.round+': '+text);
+  if(state.log.length>60) state.log.length=60;
+}
+
+function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+
+function resetGame(){
+  if(!confirm(t('resetConfirm'))) return;
+  localStorage.removeItem(STORAGE_KEY);
+  state = null;
+  savedState = null;
+  renderedCompassRoll = null;
+  document.getElementById('game').classList.add('hidden');
+  document.getElementById('setup').classList.remove('hidden');
+  const continueBtn = document.getElementById('continueSavedBtn');
+  if(continueBtn) continueBtn.classList.add('hidden');
+  syncAdjustmentInputs(pendingAdjustments);
+  syncModeUI(pendingMode);
+}
+
+// saved game found on load but not yet resumed — the app starts at Setup either way; call continueSavedGame() to resume it
+let savedState = null;
+
+function loadState(){
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if(!raw) return;
+  try{
+    const parsed = JSON.parse(raw);
+    if(parsed && parsed.version===3 && parsed.you && parsed.ai && parsed.actions){
+      parsed.adjustments = defaultAdjustments();
+      parsed.version = 4;
+    }
+    if(parsed && (parsed.version===4 || parsed.version===5 || parsed.version===6) && parsed.you && parsed.ai && parsed.actions){
+      if(!parsed.adjustments) parsed.adjustments = defaultAdjustments();
+      if(!parsed.mode) parsed.mode = 'gjj';
+      if(!parsed.compassPhase) parsed.compassPhase = 'day';
+      if(parsed.lastCompassRoll === undefined) parsed.lastCompassRoll = null;
+      if(parsed.lastCompassStartRoll === undefined) parsed.lastCompassStartRoll = null;
+      parsed.version = 6;
+      savedState = parsed;
+      const continueBtn = document.getElementById('continueSavedBtn');
+      if(continueBtn) continueBtn.classList.remove('hidden');
+    }
+  }catch(e){ /* ignore corrupt storage */ }
+}
+
+function continueSavedGame(){
+  if(!savedState) return;
+  state = savedState;
+  document.getElementById('setup').classList.add('hidden');
+  document.getElementById('game').classList.remove('hidden');
+  if(state.lastCompassRoll){
+    renderedCompassRoll = state.lastCompassRoll;
+    snapCompassTo(state.lastCompassRoll);
+  }
+  render();
+}
+
+loadState();
+applyI18n();
+</script>
+<script type="module" src="../assets/analytics.js"></script>
+<script type="module" src="../assets/bot-view.js"></script>
+
+<div style="text-align: center; margin: 40px auto 20px auto; width: 100%;">
+    <a href="../index.html" class="btn-home" style="display:inline-flex; align-items:center; gap:8px; color:var(--gold); text-decoration:none; font-family:'Cinzel',serif; font-size:0.9em; font-weight:bold; padding:10px 20px; border:2px solid var(--gold-dark); background:rgba(0,0,0,0.6); border-radius:4px; box-shadow:0 4px 10px rgba(0,0,0,0.5); transition:transform 0.15s ease;">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9 21v-6h6v6"/></svg>
+        ← Home
+    </a>
+</div>
+
+</body>
+</html>

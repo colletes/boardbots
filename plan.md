@@ -2,7 +2,7 @@
 
 ## Diagnosis
 
-The current deliverable is [bots/memoir44_bot_v3.html](bots/memoir44_bot_v3.html).
+The current deliverable is [bots/memoir44_bot.html](bots/memoir44_bot.html).
 
 The card data and rendering loop append cards to `#bot-hand` in the existing `hand` array order, so the JavaScript is not reordering the cards. The layout regression is in the `v3` desktop CSS:
 
@@ -15,7 +15,7 @@ The card data and rendering loop append cards to `#bot-hand` in the existing `ha
 
 ## Implementation Plan
 
-1. Apply the fix directly to `bots/memoir44_bot_v3.html`; do not create or bump a versioned file.
+1. Apply the fix directly to `bots/memoir44_bot.html`; do not create or bump a versioned file.
 2. Scope the desktop layout rule so it does not turn `#view-game` into a grid. Keep `#view-game` as a vertical flex container at every viewport width, including its scrolling behavior.
 3. Keep any desktop two-column treatment limited to setup content only if it is still needed after visual inspection. Do not use a broad selector that changes the display mode of both views.
 4. Make `#bot-hand` the sole owner of card placement:
@@ -28,7 +28,7 @@ The card data and rendering loop append cards to `#bot-hand` in the existing `ha
 
 ## Validation
 
-- Run `node --check` against the extracted inline script from `bots/memoir44_bot_v3.html`.
+- Run `node --check` against the extracted inline script from `bots/memoir44_bot.html`.
 - Serve the repository with a local static server and open the new bot in a browser.
 - At a desktop viewport, start a game and verify that status, hand, controls, and log are stacked vertically; verify cards form a centered, evenly spaced hand.
 - Compare each card's DOM index with its rendered `getBoundingClientRect()` position to ensure visual row/column order follows insertion order.
@@ -38,7 +38,7 @@ The card data and rendering loop append cards to `#bot-hand` in the existing `ha
 
 ## Implementation Status
 
-Implemented directly in `bots/memoir44_bot_v3.html`:
+Implemented directly in `bots/memoir44_bot.html`:
 
 - Removed the desktop rule that converted `#view-game` into a two-column grid.
 - Changed hand columns to centered tracks capped at `--card-w`.

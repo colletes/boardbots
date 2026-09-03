@@ -1,0 +1,2427 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title data-i18n="docTitle">Lord of the Rings: Duel for Middle-earth — Automa Duelist</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="../assets/logger.js"></script>
+
+  <style>
+.hidden { display: none !important; }
+
+    :root {
+      /* Earthy tones, dark woods, and parchment */
+      --bg-0: #1a1410;
+      --bg-1: #2a2018;
+      --surface: #362c24;
+      --surface-2: #4a3d32;
+      --surface-3: #5c4e42;
+      --border: #6b5a48;
+      --border-focus: #cba833;
+      --text: #f0e6d2;
+      --text-dim: #d1c1a5;
+      --text-muted: #9e917d;
+      
+      /* Highlights: Gold, Crimson, Elven Blue */
+      --accent: #cba833;
+      --accent-soft: rgba(203, 168, 51, 0.2);
+      --accent-glow: rgba(203, 168, 51, 0.4);
+      
+      --red: #9e1b1b;
+      --red-soft: rgba(158, 27, 27, 0.25);
+      --green: #2a5228;
+      --green-soft: rgba(42, 82, 40, 0.25);
+      --blue: #5b8fb9;
+      --blue-soft: rgba(91, 143, 185, 0.25);
+      --purple: #6a4087;
+      --purple-soft: rgba(106, 64, 135, 0.25);
+      --yellow: #cba833;
+      --yellow-soft: rgba(203, 168, 51, 0.25);
+      --grey: #8a9298;
+      --grey-soft: rgba(138, 146, 152, 0.25);
+      --brown: #8a5a44;
+      --brown-soft: rgba(138, 90, 68, 0.25);
+
+      --font-display: 'Cinzel', serif;
+      --font-body: 'Georgia', serif;
+      --radius: 12px;
+      --radius-sm: 6px;
+      --shadow: 0 10px 30px -10px rgba(0,0,0,0.8);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    @keyframes pulseRing {
+        0% { box-shadow: 0 0 20px 5px rgba(203,168,51,0.2), inset 0 0 20px 5px rgba(203,168,51,0.2); transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
+        50% { box-shadow: 0 0 50px 15px rgba(203,168,51,0.4), inset 0 0 50px 15px rgba(203,168,51,0.4); transform: translate(-50%, -50%) scale(1.05); opacity: 0.8; }
+        100% { box-shadow: 0 0 20px 5px rgba(203,168,51,0.2), inset 0 0 20px 5px rgba(203,168,51,0.2); transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
+    }
+
+    body {
+      background-color: var(--bg-0);
+      background-image: 
+        radial-gradient(circle at 50% 50%, rgba(203,168,51,0.05) 0%, transparent 70%),
+        url("data:image/svg+xml,%3Csvg width='200' height='200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.02' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23noise)' opacity='0.08'/%3E%3C/svg%3E"),
+        repeating-linear-gradient(45deg, rgba(0,0,0,0.1) 0, rgba(0,0,0,0.1) 2px, transparent 2px, transparent 10px),
+        url('../assets/textures/stone-slab.jpg');
+      background-size: auto, 200px 200px, auto, 340px 340px;
+      background-repeat: no-repeat, repeat, repeat, repeat;
+      color: var(--text);
+      font-family: var(--font-body);
+      text-shadow: 0 0 1px rgba(0,0,0,0.8);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-bottom: calc(40px + env(safe-area-inset-bottom));
+      overflow-x: hidden;
+      position: relative;
+    }
+    
+    body::before {
+        content: ''; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+        width: 400px; height: 400px; border-radius: 50%;
+        border: 2px solid rgba(203,168,51,0.5);
+        animation: pulseRing 5s infinite ease-in-out;
+        pointer-events: none; z-index: -1;
+    }
+
+    button {
+      font-family: inherit;
+      cursor: pointer;
+      touch-action: manipulation;
+      border: none;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    /* Fixed Top Floating Header */
+    .top-nav {
+      width: 100%;
+      max-width: 760px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      backdrop-filter: blur(12px);
+      background: rgba(11, 14, 18, 0.75);
+      border-bottom: 1px solid rgba(45, 54, 68, 0.4);
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-display);
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .lang-btn {
+      background: var(--surface);
+      color: var(--text-dim);
+      border: 1px solid var(--border);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    .lang-btn.active {
+      background: var(--accent-soft);
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .icon-btn {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+    }
+    .icon-btn:hover {
+      background: var(--surface-2);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    .icon-inline{ display:inline-flex; vertical-align:-0.15em; }
+    .icon-inline svg, svg.icon-inline{ width:1.1em; height:1.1em; flex-shrink:0; }
+
+    /* Main Container */
+    .container {
+      width: 100%;
+      max-width: 720px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* Hero Banner */
+    .hero {
+      position: relative;
+      border-radius: var(--radius);
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      min-height: 180px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 24px;
+    }
+    .hero-bg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center 25%;
+      opacity: 0.45;
+      filter: saturate(1.2) brightness(0.8);
+      z-index: 1;
+    }
+    .hero-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(to top, var(--bg-0) 10%, rgba(11, 14, 18, 0.4) 60%, transparent 100%);
+      z-index: 2;
+    }
+    .hero-content {
+      position: relative;
+      z-index: 3;
+    }
+    .hero-title {
+      font-family: var(--font-display);
+      font-size: 1.8rem;
+      font-weight: 900;
+      color: #fff;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+      letter-spacing: 0.5px;
+    }
+    .hero-subtitle {
+      font-size: 0.85rem;
+      color: var(--accent);
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+
+    /* Cards & Panels */
+    .card {
+      background: 
+        linear-gradient(135deg, rgba(0,0,0,0.4) 0%, transparent 20%, transparent 80%, rgba(0,0,0,0.4) 100%),
+        var(--surface);
+      border: none;
+      clip-path: polygon(2% 1%, 98% 0%, 100% 98%, 97% 100%, 1% 99%, 0% 98%);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      position: relative;
+      filter: drop-shadow(0 10px 15px rgba(0,0,0,0.8));
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      border: 1px solid rgba(203, 168, 51, 0.25);
+      box-shadow: inset 0 0 20px rgba(158,27,27,0.5);
+      pointer-events: none;
+    }
+
+    .card-title {
+      font-family: var(--font-display);
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Setup Screen: Leaders List */
+    .leader-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .leader-option {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: var(--surface-2);
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 14px;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .leader-option:hover {
+      border-color: rgba(201, 162, 39, 0.5);
+      background: var(--surface-3);
+    }
+    .leader-option.selected {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      box-shadow: 0 0 16px var(--accent-glow);
+    }
+    .leader-thumb {
+      width: 58px;
+      height: 74px;
+      border-radius: var(--radius-sm);
+      object-fit: cover;
+      border: 1px solid var(--border);
+      flex-shrink: 0;
+      background: var(--bg-1);
+      transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+      z-index: 1;
+      transform-origin: left center;
+    }
+    .leader-thumb:hover {
+      transform: scale(3.5);
+      z-index: 100;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.8);
+    }
+    .leader-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .leader-name-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .leader-name {
+      font-family: var(--font-display);
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .leader-stars {
+      color: var(--accent);
+      font-size: 0.8rem;
+    }
+    .leader-meta {
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+    }
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      border: 1px solid transparent;
+    }
+    .tag-purple { background: var(--purple-soft); color: var(--purple); border-color: rgba(168, 85, 247, 0.3); }
+    .tag-grey { background: var(--grey-soft); color: var(--grey); border-color: rgba(148, 163, 184, 0.3); }
+    .tag-yellow { background: var(--yellow-soft); color: var(--yellow); border-color: rgba(234, 179, 8, 0.3); }
+    .tag-brown { background: var(--brown-soft); color: var(--brown); border-color: rgba(180, 83, 9, 0.3); }
+    .tag-blue { background: var(--blue-soft); color: var(--blue); border-color: rgba(59, 130, 246, 0.3); }
+
+    /* Collapsible Details */
+    details {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      transition: all 0.2s ease;
+    }
+    details[open] {
+      background: var(--surface-3);
+      border-color: rgba(201, 162, 39, 0.4);
+    }
+    summary {
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      user-select: none;
+    }
+    .setup-desc {
+      margin-top: 10px;
+      font-size: 0.84rem;
+      color: var(--text-dim);
+      line-height: 1.5;
+    }
+    .setup-desc ul {
+      padding-left: 20px;
+      margin-top: 6px;
+    }
+    .setup-desc li {
+      margin-bottom: 4px;
+    }
+
+    /* Primary Start Button */
+    .btn-primary {
+      background: linear-gradient(135deg, #4a4a4a 0%, #2a2a2a 100%);
+      color: var(--accent);
+      border: 2px solid var(--accent);
+      font-family: var(--font-display);
+      font-size: 1.05rem;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      padding: 14px 24px;
+      border-radius: 4px;
+      box-shadow: inset 0 2px 4px rgba(255,255,255,0.2), inset 0 -2px 4px rgba(0,0,0,0.6), 0 4px 10px rgba(0,0,0,0.8);
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn-primary:hover {
+      filter: brightness(1.15);
+      transform: translateY(-1px);
+    }
+    .btn-primary:active {
+      transform: translateY(1px);
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.8), 0 1px 2px rgba(0,0,0,0.4);
+    }
+
+    .btn-secondary {
+      background: var(--surface-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      font-weight: 600;
+      padding: 10px 16px;
+      border-radius: var(--radius-sm);
+    }
+    .btn-secondary:hover {
+      background: var(--surface-3);
+      border-color: var(--accent);
+    }
+
+    /* Game Area */
+    #game-area {
+      display: none;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* Active Leader Header */
+    .active-leader-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 16px;
+    }
+    .active-leader-identity {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .active-leader-portrait {
+      width: 44px;
+      height: 56px;
+      border-radius: 6px;
+      object-fit: cover;
+      border: 1px solid var(--border);
+    }
+    .active-leader-text h3 {
+      font-family: var(--font-display);
+      font-size: 1rem;
+      color: var(--accent);
+    }
+    .active-leader-text span {
+      font-size: 0.76rem;
+      color: var(--text-dim);
+    }
+
+    /* Status Grid */
+    .status-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 10px;
+    }
+    .status-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 6px;
+    }
+    .status-label {
+      font-size: 0.74rem;
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: var(--text-dim);
+    }
+    .status-val {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--text);
+    }
+    .status-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .step-btn {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-sm);
+      font-size: 1.1rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .step-btn:hover {
+      background: var(--surface-3);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* Science Tracker Chips */
+    .science-tracker {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .science-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--text-dim);
+      text-transform: uppercase;
+    }
+    .science-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .science-chip {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      border-radius: 20px;
+      padding: 6px 12px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .science-chip.active {
+      background: var(--green-soft);
+      border-color: var(--green);
+      color: var(--green);
+      box-shadow: 0 0 10px rgba(34, 197, 94, 0.25);
+    }
+
+    /* Decision Card Display Panel */
+    .decision-panel {
+      background: var(--surface);
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+    .decision-card-img-wrap {
+      width: 100%;
+      max-width: 380px;
+      background: transparent;
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      border: 1px solid var(--border);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+      aspect-ratio: 600 / 390;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .decision-card-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .card-meta-bar {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      font-weight: 600;
+      padding: 0 4px;
+    }
+    .priority-list {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .priority-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      border: 1px solid transparent;
+    }
+    .priority-arrow {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .fallback-info {
+      font-size: 0.82rem;
+      color: var(--text-dim);
+      background: var(--surface-2);
+      padding: 8px 14px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      width: 100%;
+    }
+
+    /* Extra Turn Banner */
+    .extra-turn-badge {
+      display: none;
+      background: linear-gradient(135deg, rgba(234, 179, 8, 0.25), rgba(201, 162, 39, 0.35));
+      border: 1px solid var(--yellow);
+      color: #fef08a;
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 0.86rem;
+      font-weight: 700;
+      width: 100%;
+      animation: pulseGlow 1.5s infinite alternate;
+    }
+
+    /* Supremacy Banners */
+    .supremacy-alert {
+      display: none;
+      padding: 14px 18px;
+      border-radius: var(--radius);
+      font-weight: 700;
+      text-align: center;
+      animation: bounceIn 0.4s ease;
+      font-size: 0.95rem;
+    }
+    .supremacy-alert.win {
+      background: var(--green-soft);
+      border: 2px solid var(--green);
+      color: #bbf7d0;
+    }
+    .supremacy-alert.lose {
+      background: var(--red-soft);
+      border: 2px solid var(--red);
+      color: #fecaca;
+    }
+
+    /* Deck Notification Pill */
+    .deck-notice {
+      display: none;
+      background: var(--blue-soft);
+      border: 1px solid var(--blue);
+      color: #93c5fd;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+
+    /* Action Buttons Row */
+    .action-row {
+      display: flex;
+      width: 100%;
+      gap: 10px;
+    }
+    .action-row button {
+      flex: 1;
+    }
+
+    /* History Log */
+    .log-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 160px;
+      overflow-y: auto;
+    }
+    .log-title {
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+    .log-item {
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      border-left: 2px solid var(--accent);
+      padding-left: 8px;
+      line-height: 1.4;
+    }
+
+    /* Floating Help & Reset Buttons */
+    .floating-btn-wrap {
+      position: fixed;
+      bottom: calc(16px + env(safe-area-inset-bottom));
+      display: flex;
+      gap: 12px;
+      z-index: 50;
+    }
+    .float-left { left: 16px; }
+    .float-right { right: 16px; }
+
+    .btn-fab {
+      background: var(--surface-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 30px;
+      padding: 10px 16px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.6);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-fab:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--surface-3);
+    }
+
+    /* Modals */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(8px);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .modal-overlay.open {
+      display: flex;
+    }
+    .modal-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      max-width: 560px;
+      width: 100%;
+      max-height: 85vh;
+      overflow-y: auto;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+      animation: modalPop 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 12px;
+    }
+    .modal-header h2 {
+      font-family: var(--font-display);
+      color: var(--accent);
+      font-size: 1.25rem;
+    }
+    .close-btn {
+      background: transparent;
+      color: var(--text-dim);
+      font-size: 1.4rem;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .close-btn:hover {
+      color: #fff;
+    }
+
+    /* Footer & Credits */
+    .footer {
+      margin-top: 30px;
+      text-align: center;
+      font-size: 0.76rem;
+      color: var(--text-muted);
+      max-width: 600px;
+      line-height: 1.6;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    .bmc-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #ff5e5b;
+      color: #fff;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 0.75rem;
+      padding: 8px 14px;
+      border-radius: 20px;
+      transition: transform 0.2s ease;
+    }
+    .bmc-link:hover {
+      transform: scale(1.04);
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes modalPop {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    @keyframes pulseGlow {
+      from { box-shadow: 0 0 4px rgba(234, 179, 8, 0.3); }
+      to { box-shadow: 0 0 16px rgba(234, 179, 8, 0.7); }
+    }
+    @keyframes bounceIn {
+      0% { transform: scale(0.9); opacity: 0; }
+      70% { transform: scale(1.02); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+  
+    .tag-redpurple { background: linear-gradient(135deg, #ef4444, #a855f7); color: white; border:none; }
+    .tag-green { background: #16a34a; color: white; border:none; }
+    .tag-red { background: #ef4444; color: white; border:none; }
+    .tag-bluegreen { background: linear-gradient(135deg, #3b82f6, #16a34a); color: white; border:none; }
+    .tag-bluered { background: linear-gradient(135deg, #3b82f6, #ef4444); color: white; border:none; }
+    .tag-grey { background: #64748b; color: white; border:none; }
+    .tag-yellow { background: #eab308; color: black; border:none; }
+    .tag-blue { background: #3b82f6; color: white; border:none; }
+    .tag-black { background: #1e293b; color: white; border:none; }
+    .tag-brown { background: #78350f; color: white; border:none; }
+
+    @media (prefers-reduced-motion: no-preference) {
+      .throne-glow { position: fixed; inset: 0; pointer-events: none; z-index: -1; background: radial-gradient(circle at 50% 15%, rgba(203,168,51,0.14) 0%, transparent 45%), radial-gradient(circle at 15% 90%, rgba(203,168,51,0.08) 0%, transparent 40%); animation: throneFlicker 6s ease-in-out infinite alternate; }
+      @keyframes throneFlicker { 0% { opacity: 0.72; } 50% { opacity: 1; } 100% { opacity: 0.86; } }
+      .ember-layer { position: fixed; inset: 0; pointer-events: none; z-index: -1; }
+      .ember { position: absolute; bottom: -12px; width: 4px; height: 4px; border-radius: 50%; background: rgba(203,168,51,0.9); box-shadow: 0 0 6px 2px rgba(203,168,51,0.4); animation: emberRise 11s linear infinite; }
+      @keyframes emberRise { 0% { transform: translate(0,0); opacity: 0; } 15% { opacity: 1; } 90% { opacity: 0.8; } 100% { transform: translate(var(--tx, 20px), -100vh); opacity: 0; } }
+      .ember:nth-child(1) { left: 5%; --tx: 26px; animation-duration: 10s; animation-delay: -2s; }
+      .ember:nth-child(2) { left: 15%; --tx: -20px; animation-duration: 13s; animation-delay: -6s; }
+      .ember:nth-child(3) { left: 25%; --tx: 16px; animation-duration: 9s; animation-delay: -9s; }
+      .ember:nth-child(4) { left: 37%; --tx: -30px; animation-duration: 15s; animation-delay: -3s; }
+      .ember:nth-child(5) { left: 49%; --tx: 22px; animation-duration: 11s; animation-delay: -11s; }
+      .ember:nth-child(6) { left: 61%; --tx: -16px; animation-duration: 12s; animation-delay: -4s; }
+      .ember:nth-child(7) { left: 71%; --tx: 18px; animation-duration: 10s; animation-delay: -7s; }
+      .ember:nth-child(8) { left: 81%; --tx: -24px; animation-duration: 14s; animation-delay: -10s; }
+      .ember:nth-child(9) { left: 90%; --tx: 12px; animation-duration: 11s; animation-delay: -1s; }
+      .ember:nth-child(10) { left: 96%; --tx: -14px; animation-duration: 13s; animation-delay: -8s; }
+    }
+</style>
+</head>
+<body>
+  <div class="throne-glow" aria-hidden="true"></div>
+  <div class="ember-layer" aria-hidden="true">
+    <span class="ember"></span><span class="ember"></span><span class="ember"></span><span class="ember"></span><span class="ember"></span>
+    <span class="ember"></span><span class="ember"></span><span class="ember"></span><span class="ember"></span><span class="ember"></span>
+  </div>
+
+  <!-- Dice Box Container -->
+  <!-- Fixed Dice Tray in Bottom Left -->
+  <div id="dice-tray" style="position:fixed; bottom:20px; left:20px; width:180px; height:180px; z-index:9999; pointer-events:none;">
+    <div id="dice-box" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none;"></div>
+  </div>
+
+
+  <!-- Top Fixed Navigation -->
+  <header class="top-nav">
+    <a href="../index.html" class="nav-brand">
+      <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 21V9l8-6 8 6v12M4 21h16M9 21v-6h6v6"/></svg>
+      <span>Boardbots</span>
+    </a>
+    <div class="nav-actions">
+      <button class="lang-btn" id="langPtBtn" onclick="setLang('pt')">PT</button>
+      <button class="lang-btn" id="langEnBtn" onclick="setLang('en')">EN</button>
+      <button class="icon-btn" onclick="openHelp()" title="Ajuda / Regras">?</button>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <!-- Hero Section -->
+    <section class="hero">
+      <img src="../assets/art/lotr_duel_cover.webp" alt="Lord of the Rings: Duel for Middle-earth" class="hero-bg">
+      <div class="hero-overlay"></div>
+      <div class="hero-content">
+        <h1 class="hero-title" style="display:flex; align-items:center; flex-wrap:wrap; gap:8px;"><span data-i18n="heroTitle">Lord of the Rings: Duel for Middle-earth</span> <span style="background:var(--accent); color:#000; font-size:0.65rem; font-weight:800; padding:3px 8px; border-radius:4px; letter-spacing:1px;">ALPHA</span></h1>
+        <p class="hero-subtitle" data-i18n="heroSubtitle">Automa Duelist • Modo Solo Oficial</p>
+      </div>
+    </section>
+
+    <!-- Supremacy Alert Banners -->
+    <div id="supremacyAlert" class="supremacy-alert"></div>
+
+    <!-- ==================== SETUP SCREEN ==================== -->
+    <section id="setup-screen" class="card">
+      
+      <!-- Card 1: Leader Selection -->
+      <div class="card-title">
+        <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8l4 3 5-6 5 6 4-3-2 11H5L3 8z"/></svg>
+        <span data-i18n="selectLeaderTitle">Escolha o seu Oponente (Líder)</span>
+      </div>
+
+      <div class="leader-grid" id="leaderGrid">
+        <!-- Injected via JS -->
+      </div>
+
+      <!-- Card 2: Physical Table Setup Checklist -->
+      <div class="card-title" style="margin-top: 8px;">
+        <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 4h9a3 3 0 0 1 3 3v13H8a2 2 0 0 1-2-2V4z"/><path d="M6 4a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2"/><path d="M9 8h6M9 12h6"/></svg>
+        <span data-i18n="physicalSetupTitle">Preparação na Mesa</span>
+      </div>
+
+      <details open>
+        <summary><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="3" width="10" height="14" rx="2" transform="rotate(-8 10 10)"/><rect x="9" y="6" width="10" height="14" rx="2"/></svg> <span data-i18n="setupPyramidTitle">Estrutura de Cartas da Chapter 1</span></summary>
+        <div class="setup-desc" data-i18n-html="setupPyramidDesc">
+          Monte a estrutura do Capítulo 1 com as 20 cartas (alternando fileiras viradas para cima e para baixo) conforme as regras padrão.
+        </div>
+      </details>
+
+      <details>
+        <summary><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 4l6 6M18 4l-6 6M4 20l5-5M20 20l-5-5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg> <span data-i18n="setupBoardTitle">Tabuleiro & Marcadores</span></summary>
+        <div class="setup-desc" data-i18n-html="setupBoardDesc">
+          <ul>
+            <li>Coloque o peão de Conflito Militar no centro (posição 0).</li>
+            <li>Coloque os 4 marcadores de Penalidade Militar nos seus espaços.</li>
+            <li>Embaralhe os 10 marcadores de Progresso e coloque 5 virados para cima no tabuleiro.</li>
+            <li>Você começa com <strong>7 moedas</strong>. O Líder começa com <strong>0 moedas</strong>.</li>
+          </ul>
+        </div>
+      </details>
+
+      
+
+      <details>
+        <summary><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="3" width="10" height="14" rx="2" transform="rotate(-8 10 10)"/><rect x="9" y="6" width="10" height="14" rx="2"/></svg> <span data-i18n="setupDeckTitle">Baralho de Decisão</span></summary>
+        <div class="setup-desc" data-i18n="setupDeckDesc">
+          O aplicativo já embaralha digitalmente as 12 Cartas de Decisão oficiais. Você não precisa recortar as cartas físicas.
+        </div>
+      </details>
+
+      <!-- Start Button -->
+      <button class="btn-primary" onclick="startGame()" style="margin-top: 10px;">
+        <span data-i18n="startBtn">Começar Duelo</span>
+        <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 4l6 6M18 4l-6 6M4 20l5-5M20 20l-5-5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>
+      </button>
+
+    </section>
+
+    <!-- ==================== GAME AREA ==================== -->
+    <section id="game-area">
+
+      <!-- Active Leader Bar -->
+      <div class="active-leader-bar">
+        <div class="active-leader-identity">
+          <img id="activeLeaderImg" src="" alt="Leader" class="active-leader-portrait">
+          <div class="active-leader-text">
+            <h3 id="activeLeaderName">Líder</h3>
+            <span id="activeLeaderDetails">Progresso • Cor</span>
+            <span id="activeLeaderEffect" style="color: var(--accent); font-size: 0.8rem; font-weight: bold; margin-top: 2px; display: block; line-height: 1.2;"></span>
+          </div>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button class="btn-secondary" onclick="confirmReset()" title="Abandonar partida e começar de novo" style="padding:8px 12px; font-size:0.8rem; border-color:rgba(239,68,68,0.4); color:#fca5a5;">
+            <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v6h6M20 20v-6h-6"/><path d="M4 10a8 8 0 0 1 14-5.3M20 14a8 8 0 0 1-14 5.3"/></svg> <span data-i18n="abandonBtn">Abandonar</span>
+          </button>
+          <button class="btn-secondary" onclick="openEndAgeModal()" data-i18n="endAgeBtn">Fim do Capítulo</button>
+        </div>
+      </div>
+
+      <!-- Decision Card Display -->
+      <div class="decision-panel">
+        
+        <div class="card-meta-bar">
+          <span id="cardCounter">Carta 1 de 12</span>
+          <span id="deckCounter">12 restantes</span>
+        </div>
+
+        <div id="deckNotice" class="deck-notice">
+          <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v6h6M20 20v-6h-6"/><path d="M4 10a8 8 0 0 1 14-5.3M20 14a8 8 0 0 1-14 5.3"/></svg> <span data-i18n="deckReshuffledNotice">Baralho esgotado! Reembaralhado automaticamente.</span>
+        </div>
+
+        <div class="decision-card-img-wrap">
+          <img id="decisionCardImg" src="../assets/art/lotr_duel/decision_cards/dc_01.webp" alt="Carta de Decisão" class="decision-card-img">
+        </div>
+
+        <!-- Extra Turn Notice -->
+        <div id="extraTurnBadge" class="extra-turn-badge">
+          <svg class="icon-inline" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></svg> <span data-i18n="extraTurnNotice">TURNO EXTRA! O Líder joga outra carta em seguida.</span>
+        </div>
+
+        <!-- Priority Breakdown -->
+        <div style="display:flex; flex-direction:column; gap:6px; width:100%;">
+          <span style="font-size:0.75rem; text-transform:uppercase; font-weight:700; color:var(--text-dim);" data-i18n="priorityOrderLabel">Ordem de Prioridade:</span>
+          <div class="priority-list" id="priorityList">
+            <!-- Dynamic pills -->
+          </div>
+        </div>
+
+        
+        <!-- Landmarks Panel (Always visible check before flip) -->
+        <div style="background:var(--surface-2); border:1px solid var(--accent); border-radius:8px; padding:12px; margin-bottom:16px;">
+          <h3 style="margin-bottom:8px; color:var(--accent); font-size:1rem; display:flex; justify-content:space-between; align-items:center;">
+            <span style="display:inline-flex; align-items:center; gap:6px;"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 21V9l8-6 8 6v12M4 21h16M9 21v-6h6v6"/></svg><span data-i18n="panelLandmarksTitle">Landmarks (Checar Antes!)</span></span>
+            <span id="landmarkCostBadge" style="background:var(--bg); padding:2px 8px; border-radius:12px; font-size:0.8rem;" data-i18n="panelLandmarksCost">Custo: ?</span>
+          </h3>
+          <p style="font-size:0.8rem; margin-bottom:10px; line-height:1.4;" data-i18n-html="panelLandmarksDesc">
+            Se o Bot tiver as moedas necessárias, ele <strong>DEVE</strong> comprar UMA Landmark. Prioriza a que der Vitória Imediata, senão rola o dado (1d6) para escolher.
+          </p>
+          <div style="display:flex; gap:8px;">
+            <button class="btn-secondary" onclick="botBuyLandmark()" style="flex:1; background:var(--accent); color:var(--bg); border:none; padding:8px; font-weight:bold;"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg> <span data-i18n="panelLandmarksBtnBuy">Bot Comprou Landmark</span></button>
+            <button id="btnRollLandmark" class="btn-secondary" onclick="rollDiceBox('landmark')" style="flex:1; padding:8px;"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="8" r="1.2" fill="currentColor"/><circle cx="16" cy="8" r="1.2" fill="currentColor"/><circle cx="8" cy="16" r="1.2" fill="currentColor"/><circle cx="16" cy="16" r="1.2" fill="currentColor"/></svg> <span data-i18n="panelLandmarksBtnRoll">Sortear (1d6)</span></button>
+          </div>
+          <div id="landmarkDiceResult" style="margin-top:8px; font-weight:bold; color:var(--accent); text-align:center; font-size:0.9rem;"></div>
+          
+          <details style="margin-top:10px; font-size:0.8rem;">
+            <summary data-i18n="panelLandmarksDetails">Ver lista de efeitos das Landmarks</summary>
+            <ul style="padding-left:18px; margin-top:6px; color:var(--text-muted);" data-i18n-html="panelLandmarksEffects">
+              <li><strong>Barad-Dur:</strong> Fortaleza em Mordor. Revela Decisão e joga do Descarte.</li>
+              <li><strong>Bree:</strong> Fortaleza + 2 Unidades em Arnor.</li>
+              <li><strong>Erebor:</strong> Fortaleza em Rhovanion. Ganha 5 Moedas. Resolve 1 Unidade.</li>
+              <li><strong>Grey Havens:</strong> Fortaleza em Lindon. Rola dado p/ pegar 1 ficha de Raça (só Ents/Wizards no cap. 3).</li>
+              <li><strong>Helm's Deep:</strong> Fortaleza + 3 Unidades em Rohan.</li>
+              <li><strong>Isengard:</strong> Fortaleza em Enedwaith. Descarta carta Cinza do jogador. Move Anel 1 espaço.</li>
+              <li><strong>Minas Tirith:</strong> Fortaleza + 1 Unidade em Gondor. Move Anel 2 espaços.</li>
+            </ul>
+          </details>
+        </div>
+
+        <!-- Fallback Scan Direction -->
+        <div class="fallback-info" id="fallbackInfo">
+          <!-- Fallback text -->
+        </div>
+        
+        <details style="width:100%; text-align:left; background:var(--bg-1);">
+          <summary><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 4l6 6M18 4l-6 6M4 20l5-5M20 20l-5-5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg> <span data-i18n="armyPriorityTitle">Prioridade de Exército (Vermelhas/Roxas)</span></summary>
+          <div class="setup-desc" data-i18n-html="armyPriorityDesc">
+            <ol style="padding-left:18px;">
+              <li>A 7ª região que o Líder ocupa (Vitória por Conquista)</li>
+              <li>Região onde o Líder não tem Fortaleza nem Unidades</li>
+              <li>Região onde você tem mesmo n.º ou menos unidades que a carta, e <strong>sem</strong> Fortaleza</li>
+              <li>Região onde você tem mesmo n.º ou menos unidades que a carta, e <strong>com</strong> Fortaleza</li>
+              <li>Role o dado para escolher</li>
+            </ol>
+            <p style="margin-top:6px; color:var(--text-dim); font-size:0.8rem;">O Líder <strong>nunca</strong> move a sua última unidade de uma região, a não ser que tenha uma Fortaleza lá.</p>
+          </div>
+        </details>
+
+        
+        
+        
+        
+        
+        <!-- Trilha/Fichas Panel (Always visible below card) -->
+        <div style="background:var(--surface-1); border:1px solid var(--border); border-radius:8px; padding:12px; margin-top:16px; margin-bottom:16px;">
+          <h3 style="margin-bottom:8px; font-size:0.95rem; display:flex; align-items:center; gap:6px;"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="14" r="6"/><path d="M9 8l3-5 3 5"/></svg><span data-i18n="panelRingTokensTitle">Trilha do Anel & Fichas</span></h3>
+          <p style="font-size:0.8rem; line-height:1.4; color:var(--text-muted); margin-bottom:8px;" data-i18n-html="panelRingTokensEffects">
+            <strong>Efeitos da Trilha:</strong> 1 Moeda | ↺ (sem turno extra se símbolo já ativado) | 1 Unidade | ❌ Destruir Fortaleza (em região s/ unidades do jogador).
+          </p>
+          <div style="background:var(--bg); border-radius:6px; padding:8px; font-size:0.8rem;">
+            <strong style="display:flex; align-items:center; gap:6px; margin-bottom:4px; color:var(--accent);"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="8" r="1.2" fill="currentColor"/><circle cx="16" cy="8" r="1.2" fill="currentColor"/><circle cx="8" cy="16" r="1.2" fill="currentColor"/><circle cx="16" cy="16" r="1.2" fill="currentColor"/></svg><span data-i18n="panelRingTokensDraftTitle">Sorteio de Fichas de Raça FÍSICAS:</span></strong>
+            <p style="color:var(--text-muted); margin-bottom:8px;" data-i18n-html="panelRingTokensDraftDesc">Quando o Bot formar uma aliança, use os botões abaixo para sortear qual Ficha Física ele pega da mesa. <strong>O poder da ficha física deve ser resolvido pelo jogador imediatamente ou quando aplicável!</strong></p>
+            <div style="display:flex; gap:8px;">
+              <button class="btn-secondary" onclick="rollDiceBox('race2')" style="flex:1; padding:6px; font-size:0.75rem;" data-i18n="panelRingTokensBtn2">Sortear de 2 iguais (1d2)</button>
+              <button class="btn-secondary" onclick="rollDiceBox('race3')" style="flex:1; padding:6px; font-size:0.75rem;" data-i18n="panelRingTokensBtn3">Sortear de 3 difer. (1d3)</button>
+            </div>
+            <div id="inlineDiceResult" style="margin-top:8px; font-weight:bold; color:var(--accent); text-align:center;"></div>
+          </div>
+        </div>
+
+        <!-- Action Controls -->
+        <div class="action-row">
+          <button class="btn-primary" id="flipBtn" onclick="flipNextCard()">
+            <span data-i18n="flipCardBtn">Virar Carta</span>
+            <span>▶</span>
+          </button>
+          <button class="btn-secondary" id="resolveBtn" onclick="resolveCard()" style="display:none;">
+            <span data-i18n="cardResolvedBtn">Carta Resolvida</span>
+            <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Status Trackers Grid -->
+      <div class="status-grid">
+
+        <!-- Military Pawn Position -->
+        <div class="status-box">
+          <span class="status-label" data-i18n="militaryTrackerLabel">Fortalezas</span>
+          <div class="status-val" id="fortressVal">0</div>
+          <span style="font-size:0.68rem; color:var(--text-muted);" id="fortressSubtext">Neutro</span>
+          <div class="status-controls">
+            <button class="step-btn" onclick="adjustFortress(-1)" title="Você avança militarmente">−</button>
+            <button class="step-btn" onclick="adjustFortress(1)" title="Líder avança militarmente">+</button>
+          </div>
+        </div>
+
+        <!-- Leader VP Tracker -->
+        <div class="status-box">
+          <span class="status-label" data-i18n="leaderVpLabel">Moedas</span>
+          <div class="status-val" id="coinsVal">0</div>
+          <span style="font-size:0.68rem; color:var(--text-muted);" data-i18n="vpSubtext">Cartas Azuis / Bônus</span>
+          <div class="status-controls">
+            <button class="step-btn" onclick="adjustCoins(-1)">−</button>
+            <button class="step-btn" onclick="adjustCoins(1)">+</button>
+          </div>
+        </div>
+
+        <!-- Current Chapter Selector -->
+        <div class="status-box">
+          <span class="status-label" data-i18n="ageTrackerLabel">Capítulo</span>
+          <div class="status-val" id="chapterVal" style="color:var(--accent);">1</div>
+          <div class="status-controls">
+            <button class="step-btn" onclick="setChapter('1')">1</button>
+            <button class="step-btn" onclick="setChapter('2')">2</button>
+            <button class="step-btn" onclick="setChapter('3')">3</button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Science Chips Tracker -->
+      <!-- Supremacy Symbols Panel -->
+      <div class="science-tracker">
+        <div class="science-header" style="flex-direction:column; align-items:flex-start; gap:4px;">
+          <div style="display:flex; justify-content:space-between; width:100%;">
+            <span data-i18n="panelSupremacyTitle">Supremacia (Símbolos)</span>
+            <span id="scienceCountBadge" style="color:var(--accent); font-weight:800; background:var(--surface-2); padding:2px 8px; border-radius:12px; font-size:0.8rem;">0 / 6</span>
+          </div>
+          <span style="font-size:0.75rem; color:var(--text-dim); font-weight:normal;" data-i18n="panelSupremacyDesc">Marque os símbolos de raça presentes nas cartas do bot.</span>
+        </div>
+        <div class="science-chips" id="scienceChips" style="grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));">
+          <!-- Dynamic tokens (now 7 including Eagles) -->
+        </div>
+        <div id="supremacyAlert" class="supremacy-alert" style="display:none; margin-top:12px; font-size:0.85rem;" data-i18n="alertSupremacy">
+          <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 4h10v4a5 5 0 0 1-10 0V4z"/><path d="M7 5H4a3 3 0 0 0 3 5M17 5h3a3 3 0 0 1-3 5"/><path d="M12 13v4M9 21h6M9 21v-2a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg> O Bot venceu por Apoio das Raças! (6 símbolos diferentes)
+        </div>
+      </div>
+
+      <!-- Alliance Tokens Reference Guide -->
+      <div class="science-tracker" style="margin-top:16px;">
+        <div class="science-header" style="flex-direction:column; align-items:flex-start; gap:4px;">
+          <span data-i18n="panelAllianceTitle">Fichas de Aliança (Lembretes)</span>
+          <span style="font-size:0.75rem; color:var(--text-dim); font-weight:normal;" data-i18n="panelAllianceDesc">Clique em uma Raça para ver suas regras passivas.</span>
+        </div>
+        <div class="science-chips" id="allianceButtons" style="grid-template-columns: repeat(3, 1fr);">
+          <!-- Dynamic accordion buttons -->
+        </div>
+        <div id="allianceEffectDetails" class="fallback-info" style="display:none; margin-top:8px; text-align:left;">
+          <!-- Details shown here -->
+        </div>
+      </div>
+
+      <!-- Action Log -->
+      <div class="log-panel">
+        <div class="log-title" data-i18n="actionLogTitle">Histórico de Ações</div>
+        <div id="logList" style="display:flex; flex-direction:column; gap:6px;"></div>
+      </div>
+
+      <!-- End Game Button & Restart Options -->
+      <div style="display:flex; flex-direction:column; gap:10px; width:100%;">
+        <button class="btn-secondary" onclick="openEndGameModal()" style="width:100%; border-color:var(--border); display:flex; align-items:center; justify-content:center; gap:6px;">
+          <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3v18M5 4h13l-2 4 2 4H5"/></svg> <span data-i18n="endGameBtn">Finalizar Jogo & Contar Pontos</span>
+        </button>
+        <button class="btn-secondary" onclick="confirmReset()" style="width:100%; border-color:rgba(239,68,68,0.3); color:#fca5a5; font-size:0.85rem; display:flex; align-items:center; justify-content:center; gap:6px;">
+          <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v6h6M20 20v-6h-6"/><path d="M4 10a8 8 0 0 1 14-5.3M20 14a8 8 0 0 1-14 5.3"/></svg> <span data-i18n="restartMatchBtn">Abandonar e Reiniciar Partida</span>
+        </button>
+      </div>
+
+    </section>
+
+    <!-- Floating Reset Button -->
+    <div class="floating-btn-wrap float-left">
+      <button class="btn-fab" id="resetBtn" onclick="confirmReset()" style="display:none;">
+        <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v6h6M20 20v-6h-6"/><path d="M4 10a8 8 0 0 1 14-5.3M20 14a8 8 0 0 1-14 5.3"/></svg>
+        <span data-i18n="newGameBtn">Novo Jogo</span>
+      </button>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div data-i18n-html="creditsFooter">
+        Baseado no modo solo oficial de <strong>Lord of the Rings: Duel for Middle-earth</strong> (expansão gratuita P&P).<br>
+        Lord of the Rings: Duel for Middle-earth © Repos Production, design de Antoine Bauza e Bruno Cathala.<br>
+        Aplicativo web não-oficial desenvolvido por fãs para a comunidade.
+      </div>
+      <a href="https://ko-fi.com/colletes" target="_blank" rel="noopener" class="bmc-link">
+        <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9h13v5a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V9z"/><path d="M17 10h1.5a2.5 2.5 0 0 1 0 5H17"/><path d="M8 3c0 1-1 1-1 2M12 3c0 1-1 1-1 2"/></svg>
+        <span data-i18n="kofiBtn">Apoie no Ko-fi</span>
+      </a>
+    </footer>
+
+  </main>
+
+  <!-- ==================== HELP MODAL ==================== -->
+    
+
+  <div class="modal-overlay" id="helpModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2 data-i18n="helpModalTitle">Regras & Guia do Automa</h2>
+        <button class="close-btn" onclick="closeHelp()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      </div>
+
+      <details open>
+        <summary><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.5"/><circle cx="12" cy="12" r="0.8" fill="currentColor"/></svg> <span data-i18n="helpHowItWorksTitle">Como o Automa Funciona</span></summary>
+        <div class="setup-desc" data-i18n-html="helpHowItWorksDesc">
+          <p>No turno do Líder:</p>
+          <ol style="padding-left:18px; margin-top:6px;">
+            <li>Vire a Carta de Decisão do topo.</li>
+            <li>Observe a <strong>Ordem de Prioridade</strong> (1ª → 2ª → 3ª cor).</li>
+            <li>O Líder pega a <strong>primeira carta acessível</strong> na pirâmide da cor prioritária, seguindo o sentido da seta (← ou →).</li>
+            <li>Se nenhuma das 3 cores prioritárias estiver acessível, ele pega a primeira carta disponível em qualquer cor seguindo a seta.</li>
+            <li>O Líder <strong>constrói a carta de graça</strong> (não paga recursos nem moedas).</li>
+          </ol>
+        </div>
+      </details>
+
+      <details>
+        <summary><svg class="icon-inline" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></svg> <span data-i18n="helpExtraTurnsTitle">Turnos Extras</span></summary>
+        <div class="setup-desc" data-i18n-html="helpExtraTurnsDesc">
+          Quando a carta virada possuir o símbolo circular <strong>↺</strong> (Cartas 11 e 12), o Líder joga <strong>imediatamente outro turno</strong> após resolver a carta atual!
+        </div>
+      </details>
+
+      <details>
+        <summary><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 4h10v4a5 5 0 0 1-10 0V4z"/><path d="M7 5H4a3 3 0 0 0 3 5M17 5h3a3 3 0 0 1-3 5"/><path d="M12 13v4M9 21h6M9 21v-2a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg> <span data-i18n="helpSupremacyTitle">Condições de Vitória</span></summary>
+        <div class="setup-desc" data-i18n-html="helpSupremacyDesc">
+          <ul>
+            <li><strong>Supremacia Militar:</strong> Se o peão alcançar a capital adversária (posição ±9), o jogo termina imediatamente com vitória de quem invadiu!</li>
+            <li><strong>Supremacia Científica:</strong> Se você ou o Líder reunir <strong>6 símbolos científicos diferentes</strong>, vence imediatamente!</li>
+            <li><strong>Vitória Civil:</strong> Ao fim da Chapter 3, some seus Pontos de Vitória (cartas azuis, maravilhas, moedas, militar, progresso) e compare com os PVs do Líder.</li>
+          </ul>
+        </div>
+      </details>
+
+      <details>
+        <summary><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8l4 3 5-6 5 6 4-3-2 11H5L3 8z"/></svg> <span data-i18n="helpLeadersSummaryTitle">Resumo dos Líderes</span></summary>
+        <div class="leader-grid" id="helpLeadersContainer" style="margin-top: 12px; max-height: 400px; overflow-y: auto; padding-right: 8px;">
+          <!-- dynamically populated by renderHelpLeaders() -->
+        </div>
+      </details>
+
+      <button class="btn-primary" onclick="closeHelp()" style="margin-top:8px;" data-i18n="gotItBtn">Entendido</button>
+    </div>
+  </div>
+
+  <!-- ==================== END AGE MODAL ==================== -->
+  <div class="modal-overlay" id="endAgeModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2 data-i18n="endAgeModalTitle">Transição de Capítulo</h2>
+        <button class="close-btn" onclick="closeEndAgeModal()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      </div>
+
+      <div class="setup-desc" data-i18n-html="endAgeDesc">
+        <p>Ao terminar um Capítulo:</p>
+        <ul>
+          <li>Descarte quaisquer cartas não coletadas da estrutura.</li>
+          <li>Monte a estrutura de cartas da próximo Capítulo (Chapter 2 ou III).</li>
+          <li><strong>Quem joga primeiro:</strong> Na Chapter 1 o Líder sempre começa. Nas Eras II e III, quem estiver perdendo na trilha militar escolhe quem começa (se o Líder tiver a escolha, ele sempre escolhe começar primeiro).</li>
+        </ul>
+      </div>
+
+      <div style="display:flex; gap:10px; margin-top:10px;">
+        <button class="btn-primary" onclick="advanceAge()" style="flex:1;" data-i18n="advanceAgeBtn">Avançar Capítulo</button>
+        <button class="btn-secondary" onclick="closeEndAgeModal()" data-i18n="cancelBtn">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== END GAME MODAL ==================== -->
+  <div class="modal-overlay" id="endGameModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2 data-i18n="endGameModalTitle">Resultado da Partida</h2>
+        <button class="close-btn" onclick="closeEndGameModal()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      </div>
+
+      <div id="endGameContent" style="display:flex; flex-direction:column; gap:12px;">
+        <p data-i18n="enterPlayerVpPrompt">Insira seus Pontos de Vitória totais para comparar com o Líder:</p>
+        <div style="display:flex; gap:10px; align-items:center;">
+          <input type="number" id="playerVpInput" placeholder="Seus PVs" style="flex:1; padding:12px; background:var(--surface-2); border:1px solid var(--border); border-radius:var(--radius-sm); color:#fff; font-size:1.1rem; font-weight:700;">
+          <button class="btn-primary" onclick="calculateCivilVictory()" data-i18n="calcResultBtn">Calcular</button>
+        </div>
+        <div id="finalResultBanner" style="display:none; padding:14px; border-radius:var(--radius-sm); text-align:center; font-weight:700;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== JAVASCRIPT LOGIC ==================== -->
+  <script>
+    /* ==========================================================
+       1. DATA DEFINITIONS
+    ========================================================== */
+    const STORAGE_KEY = 'lotr_duel_solo_state_v1';
+    const LANG_KEY = 'boardbots_lang';
+
+    // Inline SVG icons replacing decorative emoji across race badges, alerts and logs
+    const ICONS = {
+      elf: '<svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3c-3 2-5 6-4 10 1 3 3 5 4 6 1-1 3-3 4-6 1-4-1-8-4-10z"/><path d="M12 8v6"/></svg>',
+      dwarf: '<svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 18l6-6"/><path d="M11 5a7 7 0 0 1 7 7c-2 .5-4 .5-6-1s-1.5-4-1-6z"/></svg>',
+      ring: '<svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="13" r="6"/><path d="M9 5l3-2 3 2-1.5 4h-3z"/></svg>',
+      horseshoe: '<svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 20V12a6 6 0 0 1 12 0v8"/><circle cx="6" cy="20" r="1" fill="currentColor" stroke="none"/><circle cx="18" cy="20" r="1" fill="currentColor" stroke="none"/></svg>',
+      tree: '<svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21v-7"/><path d="M12 14c-4 0-7-2-7-6 2 1 4 1 5-1-1-2 0-4 2-5 2 1 3 3 2 5 1 2 3 2 5 1 0 4-3 6-7 6z"/></svg>',
+      wizard: '<svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l4 12H8l4-12z"/><path d="M5 17h14l-1 2H6l-1-2z"/><circle cx="15" cy="8" r="0.8" fill="currentColor" stroke="none"/></svg>',
+      eagle: '<svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 15c3-5 6-3 9 0 3-3 6-5 9 0"/></svg>',
+      redo: '<svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12a8 8 0 1 0 2.5-5.8"/><path d="M4 4v5h5"/></svg>',
+      cross: '<svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+      fortress: '<svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 21V9l8-6 8 6v12M4 21h16M9 21v-6h6v6"/></svg>',
+      coin: '<svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><path d="M12 7.5v9M9.5 9.5h3.2a1.8 1.8 0 1 1 0 3.6H9.5"/></svg>',
+      cards: '<svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="3" width="10" height="14" rx="2" transform="rotate(-8 10 10)"/><rect x="9" y="6" width="10" height="14" rx="2"/></svg>',
+      dice: '<svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="8" r="1.2" fill="currentColor"/><circle cx="16" cy="8" r="1.2" fill="currentColor"/><circle cx="8" cy="16" r="1.2" fill="currentColor"/><circle cx="16" cy="16" r="1.2" fill="currentColor"/></svg>',
+      sword: '<svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 20L17 9"/><path d="M14 6l4 4-2 2-4-4z"/><path d="M5 21l2-2"/></svg>',
+      fastforward: '<svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 6l6 6-6 6M13 6l6 6-6 6"/></svg>',
+      landmark: '<svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 4h9a3 3 0 0 1 3 3v13H8a2 2 0 0 1-2-2V4z"/><path d="M6 4a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2"/><path d="M9 8h6M9 12h6"/></svg>',
+      bolt: '<svg class="icon-inline" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></svg>',
+      calendar: '<svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>',
+      trophy: '<svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 4h10v4a5 5 0 0 1-10 0V4z"/><path d="M7 5H4a3 3 0 0 0 3 5M17 5h3a3 3 0 0 1-3 5"/><path d="M12 13v4M9 21h6M9 21v-2a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg>',
+      crown: '<svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 18h16l-1-9-4 3-3-6-3 6-4-3-1 9z"/></svg>',
+      defeat: '<svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a7 7 0 0 0-7 7c0 3 2 5 2 7h10c0-2 2-4 2-7a7 7 0 0 0-7-7z"/><circle cx="9.5" cy="10.5" r="1" fill="currentColor" stroke="none"/><circle cx="14.5" cy="10.5" r="1" fill="currentColor" stroke="none"/><path d="M9 18v2a3 3 0 0 0 6 0v-2"/></svg>',
+      scale: '<svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3v18M5 21h14"/><path d="M5 7h14"/><path d="M3 12l2-5 2 5a2 2 0 0 1-4 0z"/><path d="M17 12l2-5 2 5a2 2 0 0 1-4 0z"/></svg>',
+      refresh: '<svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v6h6M20 20v-6h-6"/><path d="M4 10a8 8 0 0 1 14-5.3M20 14a8 8 0 0 1-14 5.3"/></svg>'
+    };
+
+        const LEADERS = {
+      witchking: { name: 'Witch-king', cardColor: 'redpurple', colorNamePt: 'Vermelha / Roxa', colorNameEn: 'Red / Purple', thumb: '../assets/art/lotr_duel/leaders/witchking.webp', repeat: 'tree', powerPt: 'Joga 1 Unidade extra em Carta Vermelha.', powerEn: 'Places 1 additional Unit when playing Red card.' },
+      galadriel: { name: 'Galadriel', cardColor: 'redpurple', colorNamePt: 'Vermelha / Roxa', colorNameEn: 'Red / Purple', thumb: '../assets/art/lotr_duel/leaders/galadriel.webp', repeat: 'tree', powerPt: 'Joga 1 Unidade extra em Carta Vermelha.', powerEn: 'Places 1 additional Unit when playing Red card.' },
+      tombombadil: { name: 'Tom Bombadil', cardColor: 'grey', colorNamePt: 'Cinza', colorNameEn: 'Grey', thumb: '../assets/art/lotr_duel/leaders/tombombadil.webp', repeat: 'none', powerPt: 'Ganha 3 Moedas ao jogar carta com Encadeamento.', powerEn: 'Gains 3 Coins when playing a card with a chaining symbol.' },
+      saruman: { name: 'Saruman', cardColor: 'green', colorNamePt: 'Verde', colorNameEn: 'Green', thumb: '../assets/art/lotr_duel/leaders/saruman.webp', repeat: 'eye', powerPt: 'Executa 2 Movimentos em Carta Verde.', powerEn: 'Executes 2 Unit movements when playing a Green card.' },
+      elrond: { name: 'Elrond', cardColor: 'green', colorNamePt: 'Verde', colorNameEn: 'Green', thumb: '../assets/art/lotr_duel/leaders/elrond.webp', repeat: 'eye', powerPt: 'Executa 2 Movimentos em Carta Verde.', powerEn: 'Executes 2 Unit movements when playing a Green card.' },
+      smaug: { name: 'Smaug', cardColor: 'yellow', colorNamePt: 'Amarela', colorNameEn: 'Yellow', thumb: '../assets/art/lotr_duel/leaders/smaug.webp', repeat: 'none', powerPt: 'Avança 1 espaço na Trilha do Anel em Carta Amarela.', powerEn: 'Advances 1 space on the Quest of the Ring track when playing a Yellow card.' },
+      sauron: { name: 'Sauron', cardColor: 'blue', colorNamePt: 'Azul', colorNameEn: 'Blue', thumb: '../assets/art/lotr_duel/leaders/sauron.webp', repeat: 'both', powerPt: 'Joga 1 Unidade em Carta Azul.', powerEn: 'Places 1 Unit when playing a Blue card.' },
+      gandalf: { name: 'Gandalf', cardColor: 'blue', colorNamePt: 'Azul', colorNameEn: 'Blue', thumb: '../assets/art/lotr_duel/leaders/gandalf.webp', repeat: 'both', powerPt: 'Joga 1 Unidade em Carta Azul.', powerEn: 'Places 1 Unit when playing a Blue card.' },
+      eowynsstew: { name: "Eowyn's Stew", cardColor: 'blue', colorNamePt: 'Azul', colorNameEn: 'Blue', thumb: '../assets/art/lotr_duel/leaders/eowynsstew.webp', repeat: 'both', powerPt: 'Unidade extra em Vermelha. 3 Moedas em Encadeamento.', powerEn: '1 extra Unit on Red card. 3 Coins on chained cards.' }
+    };
+
+    // Verified Decision Cards Data (12 cards)
+    // Priorities strictly follow the arrow direction (1st = largest card nearest arrow, 2nd = middle, 3rd = smallest)
+    const DECISION_CARDS = [
+      { id: 1,  priority: ['leader', 'bluered', 'green'], fallbackDir: 'right', repeat: 'tree' },
+      { id: 2,  priority: ['red', 'bluegreen', 'leader'], fallbackDir: 'left',  repeat: 'eye' },
+      { id: 3,  priority: ['bluered', 'green', 'leader'], fallbackDir: 'right', repeat: 'none' },
+      { id: 4,  priority: ['bluegreen', 'red', 'leader'], fallbackDir: 'left',  repeat: 'none' },
+      { id: 5,  priority: ['bluered', 'green', 'leader'], fallbackDir: 'right', repeat: 'none' },
+      { id: 6,  priority: ['bluegreen', 'red', 'leader'], fallbackDir: 'left',  repeat: 'none' },
+      { id: 7,  priority: ['bluegreen', 'red', 'leader'], fallbackDir: 'right', repeat: 'none' },
+      { id: 8,  priority: ['bluered', 'green', 'leader'], fallbackDir: 'left',  repeat: 'none' },
+      { id: 9,  priority: ['bluegreen', 'red', 'leader'], fallbackDir: 'right', repeat: 'none' },
+      { id: 10, priority: ['bluered', 'green', 'leader'], fallbackDir: 'left',  repeat: 'none' },
+      { id: 11, priority: ['bluegreen', 'red', 'leader'], fallbackDir: 'right', repeat: 'none' },
+      { id: 12, priority: ['bluered', 'green', 'leader'], fallbackDir: 'left',  repeat: 'none' }
+    ];
+
+        const SUPREMACY_SYMBOLS = [
+      { id: 'elves',   icon: ICONS.elf, namePt: 'Elfos', nameEn: 'Elves' },
+      { id: 'dwarves', icon: ICONS.dwarf, namePt: 'Anões', nameEn: 'Dwarves' },
+      { id: 'hobbit',  icon: ICONS.ring, namePt: 'Hobbits', nameEn: 'Hobbits' },
+      { id: 'humans',  icon: ICONS.horseshoe, namePt: 'Humanos', nameEn: 'Humans' },
+      { id: 'ents',    icon: ICONS.tree, namePt: 'Ents', nameEn: 'Ents' },
+      { id: 'wizards', icon: ICONS.wizard, namePt: 'Magos', nameEn: 'Wizards' },
+      { id: 'eagle',   icon: ICONS.eagle, namePt: 'Águias', nameEn: 'Eagles' }
+    ];
+
+    const ALLIANCE_TOKENS = [
+      { id: 'elves', icon: ICONS.elf, namePt: 'Elfos', nameEn: 'Elves', 
+        htmlPt: `
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><span style="background:#eab308; color:#000; padding:2px 6px; border-radius:4px; font-weight:bold; display:inline-flex; gap:2px;">${ICONS.redo}${ICONS.cross}</span> Sem turno extra ao jogar Amarela com símbolo do líder.</div>
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><span style="background:#ef4444; color:#fff; padding:2px 6px; border-radius:4px; font-weight:bold; display:inline-flex; gap:2px;">${ICONS.fortress}</span> Coloca Unidades seguindo as regras de cartas Vermelhas.</div>
+          <div style="display:flex; align-items:center; gap:8px;"><span style="background:#475569; color:#fff; padding:2px 6px; border-radius:4px; font-weight:bold; display:inline-flex; gap:2px;">${ICONS.cross}</span> O bot SEMPRE ignora as fichas de Habilidade (Skills).</div>
+        `,
+        htmlEn: `
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><span style="background:#eab308; color:#000; padding:2px 6px; border-radius:4px; font-weight:bold; display:inline-flex; gap:2px;">${ICONS.redo}${ICONS.cross}</span> No extra turn on yellow if card has symbol.</div>
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><span style="background:#ef4444; color:#fff; padding:2px 6px; border-radius:4px; font-weight:bold; display:inline-flex; gap:2px;">${ICONS.fortress}</span> Places units following Red card rules.</div>
+          <div style="display:flex; align-items:center; gap:8px;"><span style="background:#475569; color:#fff; padding:2px 6px; border-radius:4px; font-weight:bold; display:inline-flex; gap:2px;">${ICONS.cross}</span> The bot ALWAYS ignores Skills.</div>
+        `
+      },
+      { id: 'dwarves', icon: ICONS.dwarf, namePt: 'Anões', nameEn: 'Dwarves',
+        htmlPt: `
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><span style="background:#d97706; color:#fff; padding:2px 6px; border-radius:4px; font-weight:bold; display:inline-flex; gap:2px;">${ICONS.coin}${ICONS.cross}</span> Ignora custo adicional de Fortalezas inimigas nas Landmarks.</div>
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><span style="background:#94a3b8; color:#000; padding:2px 6px; border-radius:4px; font-weight:bold; display:inline-flex; gap:2px;">${ICONS.landmark}${ICONS.redo}</span> Sem turno extra ao comprar Landmark.</div>
+          <div style="display:flex; align-items:center; gap:8px;"><span style="background:#a855f7; color:#fff; padding:2px 6px; border-radius:4px; font-weight:bold; display:inline-flex; gap:2px;">${ICONS.fastforward}</span> Movimentação extra segue a regra das cartas Roxas.</div>
+        `,
+        htmlEn: `
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><span style="background:#d97706; color:#fff; padding:2px 6px; border-radius:4px; font-weight:bold; display:inline-flex; gap:2px;">${ICONS.coin}${ICONS.cross}</span> Removes the additional enemy Fortress cost for Landmarks.</div>
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><span style="background:#94a3b8; color:#000; padding:2px 6px; border-radius:4px; font-weight:bold; display:inline-flex; gap:2px;">${ICONS.landmark}${ICONS.redo}</span> No extra turn when it claims a Landmark.</div>
+          <div style="display:flex; align-items:center; gap:8px;"><span style="background:#a855f7; color:#fff; padding:2px 6px; border-radius:4px; font-weight:bold; display:inline-flex; gap:2px;">${ICONS.fastforward}</span> Follows Purple cards section for movement.</div>
+        `
+      },
+      { id: 'hobbit', icon: ICONS.ring, namePt: 'Hobbits', nameEn: 'Hobbits',
+        htmlPt: `
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><span style="background:#65a30d; color:#fff; padding:2px 6px; border-radius:4px; font-weight:bold; display:inline-flex; gap:2px;">${ICONS.eagle}</span> O Símbolo de Águia conta como uma Raça adicional (para a vitória).</div>
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><span style="background:#3b82f6; color:#fff; padding:2px 6px; border-radius:4px; font-weight:bold; display:inline-flex; gap:2px;">${ICONS.sword}1</span> Ao colocar Unidades, siga a regra de cartas Vermelhas.</div>
+          <div style="display:flex; align-items:center; gap:8px;"><span style="background:#fbbf24; color:#000; padding:2px 6px; border-radius:12px; font-weight:bold; display:inline-flex; gap:2px;">${ICONS.coin}3</span> Ganha 3 moedas (Apenas ao obter esta ficha, sem turno extra).</div>
+        `,
+        htmlEn: `
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><span style="background:#65a30d; color:#fff; padding:2px 6px; border-radius:4px; font-weight:bold; display:inline-flex; gap:2px;">${ICONS.eagle}</span> Eagle symbol counts as an additional Race symbol.</div>
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><span style="background:#3b82f6; color:#fff; padding:2px 6px; border-radius:4px; font-weight:bold; display:inline-flex; gap:2px;">${ICONS.sword}1</span> Follow the Red cards section for bot Unit placement.</div>
+          <div style="display:flex; align-items:center; gap:8px;"><span style="background:#fbbf24; color:#000; padding:2px 6px; border-radius:12px; font-weight:bold; display:inline-flex; gap:2px;">${ICONS.coin}3</span> Gains 3 coins immediately (no extra turn).</div>
+        `
+      },
+      { id: 'humans', icon: ICONS.horseshoe, namePt: 'Humanos', nameEn: 'Humans',
+        htmlPt: `
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><span style="background:#eab308; color:#000; padding:2px 6px; border-radius:4px; font-weight:bold; display:inline-flex; gap:2px;">${ICONS.ring}+1</span> Cartas Amarelas avançam Nazgul/Frodo 1 espaço.</div>
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><span style="background:#ef4444; color:#fff; padding:2px 6px; border-radius:4px; font-weight:bold; display:inline-flex; gap:2px;">+1${ICONS.sword}</span> Cartas Vermelhas colocam +1 Unidade adicional.</div>
+          <div style="display:flex; align-items:center; gap:8px;"><span style="background:#64748b; color:#fff; padding:2px 6px; border-radius:4px; font-weight:bold; display:inline-flex; gap:2px;">${ICONS.cards}${ICONS.cross}</span> NUNCA descarta cartas para ganhar moedas (foco na prioridade).</div>
+        `,
+        htmlEn: `
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><span style="background:#eab308; color:#000; padding:2px 6px; border-radius:4px; font-weight:bold; display:inline-flex; gap:2px;">${ICONS.ring}+1</span> Yellow cards advance Nazgul/Frodo 1 space.</div>
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><span style="background:#ef4444; color:#fff; padding:2px 6px; border-radius:4px; font-weight:bold; display:inline-flex; gap:2px;">+1${ICONS.sword}</span> Red cards place +1 additional Unit.</div>
+          <div style="display:flex; align-items:center; gap:8px;"><span style="background:#64748b; color:#fff; padding:2px 6px; border-radius:4px; font-weight:bold; display:inline-flex; gap:2px;">${ICONS.cards}${ICONS.cross}</span> NEVER discards card to gain Coins.</div>
+        `
+      },
+      { id: 'ents', icon: ICONS.tree, namePt: 'Ents', nameEn: 'Ents',
+        htmlPt: `
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><span style="background:#64748b; color:#fff; padding:2px 6px; border-radius:4px; font-weight:bold; display:inline-flex; gap:2px;">${ICONS.redo}${ICONS.cross}</span> Sem turno extra ao obter esta ficha.</div>
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><span style="background:#1e293b; color:#ef4444; padding:2px 6px; border-radius:4px; font-weight:bold; display:inline-flex; gap:2px;">${ICONS.fortress}${ICONS.cross}</span> Remove 1 Fortaleza do jogador (região com menos unidades do jogador).</div>
+          <div style="display:flex; align-items:center; gap:8px;"><span style="background:#f1f5f9; color:#000; padding:2px 6px; border-radius:4px; font-weight:bold; display:inline-flex; gap:2px;">${ICONS.dice}x3</span> Rola o dado 3 vezes para resolver efeitos de carta Roxa.</div>
+        `,
+        htmlEn: `
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><span style="background:#64748b; color:#fff; padding:2px 6px; border-radius:4px; font-weight:bold; display:inline-flex; gap:2px;">${ICONS.redo}${ICONS.cross}</span> No additional turn when it takes this token.</div>
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><span style="background:#1e293b; color:#ef4444; padding:2px 6px; border-radius:4px; font-weight:bold; display:inline-flex; gap:2px;">${ICONS.fortress}${ICONS.cross}</span> Removes a player Fortress (region with fewest player units).</div>
+          <div style="display:flex; align-items:center; gap:8px;"><span style="background:#f1f5f9; color:#000; padding:2px 6px; border-radius:4px; font-weight:bold; display:inline-flex; gap:2px;">${ICONS.dice}x3</span> Rolls the die 3 times to determine Purple card effects.</div>
+        `
+      },
+      { id: 'wizards', icon: ICONS.wizard, namePt: 'Magos', nameEn: 'Wizards',
+        htmlPt: `
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><span style="background:#fbbf24; color:#000; padding:2px 6px; border-radius:12px; font-weight:bold; display:inline-flex; gap:2px;">${ICONS.ring}${ICONS.ring}</span> Avança Nazgul ou Frodo/Sam 2 espaços.</div>
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><span style="background:#64748b; color:#fff; padding:2px 6px; border-radius:4px; font-weight:bold; display:inline-flex; gap:2px;">1${ICONS.sword} 1${ICONS.sword}</span> Regras de colocação seguem as cartas Vermelhas.</div>
+          <div style="display:flex; align-items:center; gap:8px;"><span style="background:#a855f7; color:#fff; padding:2px 6px; border-radius:4px; font-weight:bold; display:inline-flex; gap:2px;">${ICONS.cards}${ICONS.cross}</span> Revela carta do deck de Decisão para jogar carta do descarte, ignorando símbolo de turno extra.</div>
+        `,
+        htmlEn: `
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><span style="background:#fbbf24; color:#000; padding:2px 6px; border-radius:12px; font-weight:bold; display:inline-flex; gap:2px;">${ICONS.ring}${ICONS.ring}</span> Advances Nazgul or Frodo and Sam 2 spaces.</div>
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><span style="background:#64748b; color:#fff; padding:2px 6px; border-radius:4px; font-weight:bold; display:inline-flex; gap:2px;">1${ICONS.sword} 1${ICONS.sword}</span> Follow Red cards section for bot Units placement.</div>
+          <div style="display:flex; align-items:center; gap:8px;"><span style="background:#a855f7; color:#fff; padding:2px 6px; border-radius:4px; font-weight:bold; display:inline-flex; gap:2px;">${ICONS.cards}${ICONS.cross}</span> Reveal Decision card to play from discard pile (ignoring extra turn symbol).</div>
+        `
+      }
+    ];
+
+    /* ==========================================================
+       2. INTERNATIONALIZATION (i18n)
+    ========================================================== */
+    const I18N = {
+      pt: {
+        docTitle: 'Lord of the Rings: Duel for Middle-earth — Automa Duelist',
+        heroTitle: 'Lord of the Rings: Duel for Middle-earth',
+        heroSubtitle: 'Automa Duelist • Modo Solo Oficial',
+        selectLeaderTitle: 'Escolha o seu Oponente (Líder)',
+        physicalSetupTitle: 'Preparação na Mesa',
+        setupPyramidTitle: 'Estrutura de Cartas do Capítulo 1',
+        setupPyramidDesc: 'Monte a estrutura do Capítulo 1 com as 20 cartas (alternando fileiras viradas para cima e para baixo) conforme as regras padrão.',
+        setupBoardTitle: 'Tabuleiro & Marcadores',
+        setupBoardDesc: '<ul><li>Coloque o peão no centro (posição 0) e as 4 Penalidades Militares.</li><li>Embaralhe as fichas de Raça e revele conforme as regras do jogo base.</li><li>Você começa com moedas do jogo base. O Líder começa com <strong>0 moedas</strong>.</li></ul>',
+        setupDeckTitle: 'Baralho de Decisão',
+        setupDeckDesc: 'O aplicativo já embaralha digitalmente as 12 Cartas de Decisão oficiais. Você não precisa recortar as cartas físicas.',
+        startBtn: 'Começar Duelo',
+        endAgeBtn: 'Fim do Capítulo',
+        deckReshuffledNotice: 'Baralho esgotado! Reembaralhado automaticamente.',
+        extraTurnNotice: 'TURNO EXTRA! O Líder joga outra carta em seguida.',
+        priorityOrderLabel: 'Ordem de Prioridade:',
+        flipCardBtn: 'Virar Carta',
+        cardResolvedBtn: 'Carta Resolvida',
+        militaryTrackerLabel: 'Fortalezas',
+        leaderVpLabel: 'Moedas',
+        vpSubtext: 'Cartas Azuis / Bônus',
+        ageTrackerLabel: 'Capítulo',
+        scienceTrackerTitle: 'Símbolos de Raça (Cartas Verdes)',
+        panelSupremacyTitle: 'Supremacia (Símbolos)',
+        panelSupremacyDesc: 'Marque os símbolos de raça presentes nas cartas do bot.',
+        panelAllianceTitle: 'Fichas de Aliança (Lembretes)',
+        panelAllianceDesc: 'Clique em uma Raça para ver suas regras passivas.',
+        actionLogTitle: 'Histórico de Ações',
+        endGameBtn: 'Finalizar Jogo & Contar Pontos',
+        newGameBtn: 'Novo Jogo',
+        abandonBtn: 'Abandonar',
+        restartMatchBtn: 'Abandonar e Reiniciar Partida',
+        creditsFooter: 'Baseado no modo solo oficial de <strong>Lord of the Rings: Duel for Middle-earth</strong> (expansão gratuita P&P).<br>Lord of the Rings: Duel for Middle-earth © Repos Production, design de Antoine Bauza e Bruno Cathala.<br>Aplicativo web não-oficial desenvolvido por fãs para a comunidade.',
+        kofiBtn: 'Apoie no Ko-fi',
+        helpModalTitle: 'Regras & Guia do Automa',
+        helpHowItWorksTitle: 'Como o Automa Funciona',
+        helpHowItWorksDesc: '<p><strong>ANTES de virar a carta:</strong> O Líder compra <strong>UMA</strong> Landmark se tiver moedas suficientes (Custo = 7/5/2 moedas no Capítulo 1/2/3, mais o número de Fortalezas dele). Ele prioriza a Landmark que der vitória imediata, senão rola o dado. Se ele comprar, o turno dele acaba (não vira carta).</p><p>Se não comprou, no turno do Líder:</p><ol style="padding-left:18px; margin-top:6px;"><li>Vire a Carta de Decisão do topo.</li><li>Observe a <strong>Ordem de Prioridade</strong>.</li><li>O Líder pega a <strong>primeira carta acessível</strong> na estrutura da cor prioritária, seguindo o sentido da seta.</li><li>Se nenhuma estiver acessível, pega a primeira disponível independente da cor, seguindo a seta.</li><li>O Líder <strong>nunca gasta moedas para pegar cartas</strong> e não usa Skills.</li></ol>',
+        helpExtraTurnsTitle: 'Turnos Extras',
+        helpExtraTurnsDesc: 'Quando a carta virada possuir um símbolo que <strong>corresponda a um símbolo na carta do Líder</strong>, o Líder ganha um <strong>turno extra</strong> após resolver a carta atual! (Turno extra universal nas cartas 11 e 12, símbolo ↺).',
+        helpSupremacyTitle: 'Condições de Vitória',
+        helpSupremacyDesc: '<ul><li><strong>Conquista:</strong> Se alguém posicionar sua 7ª Fortaleza (ou Mount Doom / Ring for concluído), vence imediatamente!</li><li><strong>Apoio das Raças:</strong> Se reunir <strong>6 símbolos de Raças diferentes</strong>, vence imediatamente!</li><li><strong>Jornada do Anel:</strong> Caso a trilha do Anel chegue ao fim (Sauron ou Comitiva).</li><li><strong>Desempate:</strong> Se nenhuma vitória imediata ocorrer até o fim do Capítulo 3, vence quem tiver presença (fortaleza ou unidade) no maior número de regiões.</li></ul>',
+        helpLeadersSummaryTitle: 'Resumo dos Líderes',
+        
+        gotItBtn: 'Entendido',
+        btnRollDie: 'Rolar Dado',
+        btnLandmarks: 'Landmarks',
+        btnRingTokens: 'Trilha/Fichas',
+        btnDraftToken: 'Sortear Ficha',
+        endAgeModalTitle: 'Transição de Capítulo',
+        endAgeDesc: '<p>Ao terminar um Capítulo:</p><ul><li>Descarte quaisquer cartas não coletadas da estrutura.</li><li>Monte a estrutura de cartas da próximo Capítulo (Chapter 2 ou III).</li><li><strong>Quem joga primeiro:</strong> Na Chapter 1 o Líder sempre começa. Nas Eras II e III, quem estiver perdendo na trilha militar escolhe quem começa (se o Líder tiver a escolha, ele sempre escolhe começar primeiro).</li></ul>',
+        advanceAgeBtn: 'Avançar Capítulo',
+        cancelBtn: 'Cancelar',
+        endGameModalTitle: 'Resultado da Partida',
+        enterPlayerVpPrompt: 'Insira seus Pontos de Vitória totais para comparar com o Líder:',
+        calcResultBtn: 'Calcular',
+        youWinText: 'Parabéns! Você venceu o duelo por Pontos de Vitória!',
+        youLoseText: 'O Líder venceu o duelo por Pontos de Vitória!',
+        tieText: 'Empate em Pontos de Vitória! Vence quem tiver mais PVs em cartas azuis.',
+        militaryWinAlert: 'VITÓRIA POR SUPREMACIA MILITAR! Você invadiu a capital inimiga!',
+        militaryLoseAlert: 'DERROTA POR SUPREMACIA MILITAR! O Líder conquistou a sua capital!',
+        scienceLoseAlert: 'DERROTA POR APOIO DAS RAÇAS! O Bot reuniu 6 símbolos de raça diferentes!',
+        scanFallbackLeft: 'Se nenhuma cor disponível: pegue a 1ª carta acessível da <strong>DIREITA para a ESQUERDA (←)</strong> a partir da base.',
+        scanFallbackRight: 'Se nenhuma cor disponível: pegue a 1ª carta acessível da <strong>ESQUERDA para a DIREITA (→)</strong> a partir da base.',
+        colorScience: 'Verde (Ciência)',
+        colorMilitary: 'Vermelho (Militar)',
+        armyPriorityTitle: 'Prioridade de Exército (Vermelhas/Roxas)',
+        armyPriorityDesc: '<ol style="padding-left:18px;"><li>A 7ª região que o Líder ocupa (Vitória por Conquista)</li><li>Região onde o Líder não tem Fortaleza nem Unidades</li><li>Região onde você tem mesmo n.º ou menos unidades que a carta, e <strong>sem</strong> Fortaleza</li><li>Região onde você tem mesmo n.º ou menos unidades que a carta, e <strong>com</strong> Fortaleza</li><li>Role o dado para escolher</li></ol><p style="margin-top:6px; color:var(--text-dim); font-size:0.8rem;">O Líder <strong>nunca</strong> move a sua última unidade de uma região, a não ser que tenha uma Fortaleza lá.</p>',
+        cardCounter: 'Carta {id} de 12',
+        deckCounter: '{count} no monte',
+        militaryPlayerLead: 'Você avançou {count}',
+        militaryLeaderLead: 'Líder avançou {count}',
+        militaryNeutral: 'Neutro',
+        logStart: 'A sombra se aproxima: o duelo contra {leader} começa.',
+        logReshuffle: 'O Baralho de Decisão se esgota — o escriba reembaralha as cartas restantes.',
+        logResolved: 'Capítulo {age} | O Líder avança com a Carta #{cardId}.{extra}',
+        logAge: 'As páginas viram — bem-vindo ao Capítulo {age}.',
+        logExtraTurnTag: ' [o Líder age novamente: TURNO EXTRA]',
+        resetConfirmPrompt: 'Tem certeza que deseja reiniciar a partida? O progresso atual será perdido.',
+        panelLandmarksTitle: 'Landmarks (Comprar)',
+        panelRingTokensTitle: 'Trilha do Anel & Fichas',
+        panelRingTokensDraftDesc: 'Quando o Bot formar uma aliança, use os botões abaixo para sortear qual Ficha Física ele pega da mesa. <strong>O poder da ficha física deve ser resolvido pelo jogador imediatamente ou quando aplicável!</strong>',
+        panelRingTokensBtn2: 'Sortear de 2 iguais (1d2)',
+        panelRingTokensBtn3: 'Sortear de 3 difer. (1d3)',
+        logDiceLandmark: 'O destino rola {val} para escolher o Landmark.',
+        logDiceRace: 'O destino rola {val} para a Ficha de Raça: {res}.',
+        diceResultLandmark: 'Dado: {val} (Pegue o Landmark correspondente)',
+        diceResultRace: 'Dado: {val} -> Pegue a {res}',
+        raceLeft: '1ª Ficha (Esquerda)',
+        raceMiddle: '2ª Ficha (Meio)',
+        raceRight: '3ª Ficha (Direita)',
+        logBuyLandmark: 'O Líder ergue um novo Landmark, pagando {cost} moedas!',
+        panelLandmarksDesc: 'O Bot sempre compra o Landmark no início de seu turno se possuir moedas (no cap. 1: 7 moedas, cap. 2: 5 moedas, cap. 3: 2 moedas) + 1 moeda por Fortaleza no tabuleiro. Ele prioriza comprar o que der vitória imediata. Se empatar, clique no botão para rolar o dado (1d6).',
+        panelRingTokensEffects: '<strong>Efeitos da Trilha:</strong> 1 Moeda | ↺ (sem turno extra se símbolo já ativado) | 1 Unidade | ❌ Destruir Fortaleza (em região s/ unidades do jogador).',
+        panelRingTokensDraftTitle: 'Sorteio de Fichas de Raça FÍSICAS:'
+      },
+      en: {
+        docTitle: 'Lord of the Rings: Duel for Middle-earth — Automa Duelist',
+        heroTitle: 'Lord of the Rings: Duel for Middle-earth',
+        heroSubtitle: 'Automa Duelist • Official Solo Mode',
+        selectLeaderTitle: 'Choose your Opponent (Leader)',
+        physicalSetupTitle: 'Table Setup Checklist',
+        setupPyramidTitle: 'Chapter 1 Card Structure',
+        setupPyramidDesc: 'Set up the Chapter 1 structure with the 20 cards (alternating face-up and face-down rows) according to standard rules.',
+        setupBoardTitle: 'Board & Tokens',
+        setupBoardDesc: '<ul><li>Place the Conflict pawn in the center (position 0) and the 4 Military Penalties.</li><li>Shuffle the Race tokens and reveal them according to base game rules.</li><li>You start with standard coins. The Leader starts with <strong>0 coins</strong>.</li></ul>',
+        setupDeckTitle: 'Decision Deck',
+        setupDeckDesc: 'The companion app digitally shuffles the 12 official Decision Cards. No need to cut or sleeve physical solo cards.',
+        startBtn: 'Start Duel',
+        endAgeBtn: 'End of Chapter',
+        deckReshuffledNotice: 'Deck exhausted! Automatically reshuffled.',
+        extraTurnNotice: 'EXTRA TURN! The Leader immediately plays another card next.',
+        priorityOrderLabel: 'Priority Order:',
+        flipCardBtn: 'Flip Card',
+        cardResolvedBtn: 'Card Resolved',
+        militaryTrackerLabel: 'Fortresses',
+        leaderVpLabel: 'Coins',
+        vpSubtext: 'Blue Cards / Bonuses',
+        ageTrackerLabel: 'Chapter',
+        scienceTrackerTitle: 'Leader Race Chips',
+        panelSupremacyTitle: 'Supremacy (Symbols)',
+        panelSupremacyDesc: 'Mark the race symbols present on the bot\'s cards.',
+        panelAllianceTitle: 'Alliance Tokens (Reminders)',
+        panelAllianceDesc: 'Click a Race to see its passive rules.',
+        actionLogTitle: 'Action History',
+        endGameBtn: 'End Game & Tally Score',
+        newGameBtn: 'New Game',
+        abandonBtn: 'Abandon',
+        restartMatchBtn: 'Abandon and Restart Match',
+        creditsFooter: 'Based on the official solo mode of <strong>Lord of the Rings: Duel for Middle-earth</strong> (free P&P expansion).<br>Lord of the Rings: Duel for Middle-earth © Repos Production, designed by Antoine Bauza and Bruno Cathala.<br>Unofficial fan-made web companion for the board game community.',
+        kofiBtn: 'Support on Ko-fi',
+        helpModalTitle: 'Rules & Automa Guide',
+        helpHowItWorksTitle: 'How the Automa Works',
+        helpHowItWorksDesc: '<p><strong>BEFORE flipping a card:</strong> The Leader purchases <strong>ONE</strong> Landmark if they have enough coins (Cost = 7/5/2 coins in Chapter 1/2/3, plus their number of Fortresses). They prioritize a Landmark that grants instant victory, otherwise they roll the die. If they purchase one, their turn ends (do not flip a card).</p><p>If they didn\'t purchase, on the Leader\'s turn:</p><ol style="padding-left:18px; margin-top:6px;"><li>Flip the top Decision Card.</li><li>Check the <strong>Priority Order</strong>.</li><li>The Leader takes the <strong>first accessible card</strong> in the structure of that priority color, following the arrow direction.</li><li>If none are accessible, they take the first available card of any color following the arrow.</li><li>The Leader <strong>never spends coins</strong> to claim cards and ignores Skills.</li></ol>',
+        helpExtraTurnsTitle: 'Extra Turns',
+        helpExtraTurnsDesc: 'When the flipped card has a symbol that <strong>matches a symbol on the Leader’s card</strong>, the Leader gets an <strong>extra turn</strong> after resolving the current card! (Universal extra turn on cards 11 and 12, symbol ↺).',
+        helpSupremacyTitle: 'Victory Conditions',
+        helpSupremacyDesc: '<ul><li><strong>Conquer Victory:</strong> If someone places their 7th Fortress, they win immediately!</li><li><strong>Support of the Races:</strong> If someone collects <strong>6 different Race symbols</strong>, they win immediately!</li><li><strong>Quest of the Ring:</strong> If the Ring track is completed.</li><li><strong>Tiebreaker:</strong> If no immediate victory occurs by the end of Chapter 3, the player present in the most regions (fortress or unit) wins.</li></ul>',
+        helpLeadersSummaryTitle: 'Leaders Summary',
+        
+        gotItBtn: 'Got it',
+        btnRollDie: 'Roll Die',
+        btnLandmarks: 'Landmarks',
+        btnRingTokens: 'Ring/Tokens',
+        btnDraftToken: 'Draft Token',
+        endAgeModalTitle: 'Chapter Transition',
+        endAgeDesc: '<p>At the end of a Chapter:</p><ul><li>Discard any uncollected cards from the pyramid structure.</li><li>Set up the card structure for the next Chapter (Age II or III).</li><li><strong>First Player:</strong> In Age I the Leader always goes first. In Ages II and III, the player trailing on military chooses who goes first (if the Leader has the choice, they always choose to go first).</li></ul>',
+        advanceAgeBtn: 'Advance Chapter',
+        cancelBtn: 'Cancel',
+        endGameModalTitle: 'Game Results',
+        enterPlayerVpPrompt: 'Enter your total Victory Points to compare against the Leader:',
+        calcResultBtn: 'Calculate',
+        youWinText: 'Congratulations! You won the duel by Victory Points!',
+        youLoseText: 'The Leader won the duel by Victory Points!',
+        tieText: 'Tie in Victory Points! The player with the most VPs on Blue cards wins.',
+        panelLandmarksTitle: 'Landmarks (Check Before!)',
+        panelLandmarksCost: 'Cost: ?',
+        panelLandmarksDesc: 'If the Bot has enough coins, it <strong>MUST</strong> buy ONE Landmark. It prioritizes the one that grants Immediate Victory, otherwise rolls the die (1d6) to choose.',
+        panelLandmarksBtnBuy: 'Bot Bought Landmark',
+        panelLandmarksBtnRoll: 'Roll Die (1d6)',
+        panelLandmarksDetails: 'View Landmark effects list',
+        panelLandmarksEffects: '<li><strong>Barad-Dur:</strong> Fortress in Mordor. Reveal Decision and play from Discard.</li><li><strong>Bree:</strong> Fortress + 2 Units in Arnor.</li><li><strong>Erebor:</strong> Fortress in Rhovanion. Gain 5 Coins. Resolve 1 Unit.</li><li><strong>Grey Havens:</strong> Fortress in Lindon. Roll die to take 1 Race token (only Ents/Wizards in chap 3).</li><li><strong>Helm\'s Deep:</strong> Fortress + 3 Units in Rohan.</li><li><strong>Isengard:</strong> Fortress in Enedwaith. Discard player\'s Grey card. Move Ring 1 space.</li><li><strong>Minas Tirith:</strong> Fortress + 1 Unit in Gondor. Move Ring 2 spaces.</li>',
+        panelRingTokensTitle: 'Quest of the Ring & Tokens',
+        panelRingTokensEffects: '<strong>Ring Effects:</strong> 1 Coin | ↺ (no extra turn if symbol active) | 1 Unit | ❌ Destroy Fortress (in region w/o player units).',
+        panelRingTokensDraftTitle: 'PHYSICAL Race Token Draft:',
+        panelRingTokensDraftDesc: 'When the Bot forms an alliance, use the buttons below to draft which Physical Token it takes from the board. <strong>The physical token\'s power must be resolved by the player immediately or when applicable!</strong>',
+        panelRingTokensBtn2: 'Draft from 2 identical (1d2)',
+        panelRingTokensBtn3: 'Draft from 3 distinct (1d3)',
+        logDiceLandmark: 'Fate rolls {val} to choose the Landmark.',
+        logDiceRace: 'Fate rolls {val} for the Race Token: {res}.',
+        diceResultLandmark: 'Die: {val} (Choose corresponding Landmark)',
+        diceResultRace: 'Die: {val} -> Take the {res}',
+        raceLeft: '1st Token (Left)',
+        raceMiddle: '2nd Token (Middle)',
+        raceRight: '3rd Token (Right)',
+        logBuyLandmark: 'The Leader raises a new Landmark, paying {cost} coins!',
+        militaryWinAlert: 'MILITARY SUPREMACY VICTORY! You invaded the enemy capital!',
+        militaryLoseAlert: 'MILITARY SUPREMACY DEFEAT! The Leader conquered your capital!',
+        scienceLoseAlert: 'SUPPORT OF THE RACES DEFEAT! The Bot collected 6 different race symbols!',
+        scanFallbackLeft: 'If no priority color available: take 1st accessible card from <strong>RIGHT to LEFT (←)</strong> starting at the base.',
+        scanFallbackRight: 'If no priority color available: take 1st accessible card from <strong>LEFT to RIGHT (→)</strong> starting at the base.',
+        colorScience: 'Green (Science)',
+        colorMilitary: 'Red (Military)',
+        armyPriorityTitle: 'Army Priority (Red/Purple Cards)',
+        armyPriorityDesc: '<ol style="padding-left:18px;"><li>The 7th region the Leader occupies (Conquer Victory)</li><li>Region where the Leader has no Fortress or Units</li><li>Region where you have same or fewer units than the card, and <strong>no</strong> Fortress</li><li>Region where you have same or fewer units than the card, and <strong>with</strong> Fortress</li><li>Roll the die to choose</li></ol><p style="margin-top:6px; color:var(--text-dim); font-size:0.8rem;">The Leader <strong>never</strong> moves their last unit from a region, unless they already have a Fortress there.</p>',
+        cardCounter: 'Card {id} of 12',
+        deckCounter: '{count} in deck',
+        militaryPlayerLead: 'You advanced {count}',
+        militaryLeaderLead: 'Leader advanced {count}',
+        militaryNeutral: 'Neutral',
+        logStart: 'The shadow draws near: the duel against {leader} begins.',
+        logReshuffle: 'The Decision Deck runs dry — the scribe reshuffles the remaining cards.',
+        logResolved: 'Chapter {age} | The Leader advances with Card #{cardId}.{extra}',
+        logAge: 'The pages turn — welcome to Chapter {age}.',
+        logExtraTurnTag: ' [the Leader acts again: EXTRA TURN]',
+        resetConfirmPrompt: 'Are you sure you want to reset the match? Current progress will be lost.'
+      }
+    };
+
+    /* ==========================================================
+       3. APPLICATION STATE
+    ========================================================== */
+    let state = {
+      lang: localStorage.getItem(LANG_KEY) || 'pt',
+      inGame: false,
+      selectedLeader: 'witchking',
+      deck: [],
+      cardIndex: 0,
+      currentCard: null,
+      extraTurnPending: false,
+      military: 0, // -9 (Player win) to +9 (Leader win)
+      leaderVp: 0,
+      currentAge: 'I',
+      scienceSymbols: {}, // symbolId: true/false
+      logs: []
+    };
+
+    /* ==========================================================
+       4. INITIALIZATION & I18N ENGINE
+    ========================================================== */
+    function init() {
+      loadState();
+      document.getElementById('langPtBtn').classList.toggle('active', state.lang === 'pt');
+      document.getElementById('langEnBtn').classList.toggle('active', state.lang === 'en');
+      applyI18n();
+      renderLeaderGrid();
+      renderScienceChips();
+      if (state.inGame) {
+        showGameScreen();
+      } else {
+        showSetupScreen();
+      }
+    }
+
+    function setLang(lang) {
+      state.lang = lang;
+      localStorage.setItem(LANG_KEY, lang);
+      document.getElementById('langPtBtn').classList.toggle('active', lang === 'pt');
+      document.getElementById('langEnBtn').classList.toggle('active', lang === 'en');
+      applyI18n();
+      renderLeaderGrid();
+      renderScienceChips();
+      if (state.inGame) {
+        showGameScreen();
+        if (state.currentCard) {
+          displayActiveCard(state.currentCard);
+        }
+      }
+      saveState();
+    }
+
+    function applyI18n() {
+      const dict = I18N[state.lang] || I18N.pt;
+      renderHelpLeaders();
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (dict[key]) el.textContent = dict[key];
+      });
+      document.querySelectorAll('[data-i18n-html]').forEach(el => {
+        const key = el.getAttribute('data-i18n-html');
+        if (dict[key]) el.innerHTML = dict[key];
+      });
+      document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        const key = el.getAttribute('data-i18n-placeholder');
+        if (dict[key]) el.setAttribute('placeholder', dict[key]);
+      });
+    }
+
+    /* ==========================================================
+       5. SETUP SCREEN LOGIC
+    ========================================================== */
+
+    function renderHelpLeaders() {
+      const container = document.getElementById('helpLeadersContainer');
+      if (!container) return;
+      container.innerHTML = '';
+      const isPt = state.lang === 'pt';
+
+      Object.entries(LEADERS).forEach(([key, leader]) => {
+        const opt = document.createElement('div');
+        opt.className = 'leader-option';
+        opt.style.cursor = 'default';
+        opt.style.opacity = '1';
+
+        const colorName = isPt ? leader.colorNamePt : leader.colorNameEn;
+        const power = isPt ? leader.powerPt : leader.powerEn;
+
+        opt.innerHTML = `
+          <img src="${leader.thumb}" alt="${leader.name}" class="leader-thumb">
+          <div class="leader-info" style="gap:4px;">
+            <div class="leader-name-row">
+              <span class="leader-name" style="width: 100%;">${leader.name}</span>
+            </div>
+            <div class="leader-meta">
+              <span class="tag tag-${leader.cardColor}"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="3" width="10" height="14" rx="2" transform="rotate(-8 10 10)"/><rect x="9" y="6" width="10" height="14" rx="2"/></svg> ${colorName}</span>
+            </div>
+            <span style="font-size:0.75rem; color:var(--text-muted); margin-top:2px; line-height: 1.2;"><svg class="icon-inline" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></svg> ${power}</span>
+          </div>
+        `;
+        container.appendChild(opt);
+      });
+    }
+
+    function renderLeaderGrid() {
+      const grid = document.getElementById('leaderGrid');
+      grid.innerHTML = '';
+      const isPt = state.lang === 'pt';
+
+      Object.entries(LEADERS).forEach(([key, leader]) => {
+        const opt = document.createElement('div');
+        opt.className = `leader-option ${state.selectedLeader === key ? 'selected' : ''}`;
+        opt.onclick = () => selectLeader(key);
+
+        const colorName = isPt ? leader.colorNamePt : leader.colorNameEn;
+        const power = isPt ? leader.powerPt : leader.powerEn;
+
+        opt.innerHTML = `
+          <img src="${leader.thumb}" alt="${leader.name}" class="leader-thumb">
+          <div class="leader-info" style="gap:4px;">
+            <div class="leader-name-row">
+              <span class="leader-name" style="width: 100%;">${leader.name}</span>
+            </div>
+            <div class="leader-meta">
+              <span class="tag tag-${leader.cardColor}"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="3" width="10" height="14" rx="2" transform="rotate(-8 10 10)"/><rect x="9" y="6" width="10" height="14" rx="2"/></svg> ${colorName}</span>
+            </div>
+            <span style="font-size:0.75rem; color:var(--text-muted); margin-top:2px; line-height: 1.2;"><svg class="icon-inline" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></svg> ${power}</span>
+          </div>
+        `;
+        grid.appendChild(opt);
+      });
+    }
+
+    function selectLeader(key) {
+      state.selectedLeader = key;
+      renderLeaderGrid();
+      saveState();
+    }
+
+    function startGame() {
+      state.inGame = true;
+      state.deck = shuffleArray([...DECISION_CARDS]);
+      state.cardIndex = 0;
+      state.military = 0;
+      state.leaderVp = LEADERS[state.selectedLeader].endBonus || 0;
+      state.currentAge = '1';
+      state.scienceSymbols = {};
+      state.logs = [];
+      
+      addLog({ type: 'start', leader: LEADERS[state.selectedLeader].name });
+      showGameScreen();
+      flipNextCard();
+      saveState();
+    }
+
+    /* ==========================================================
+       6. GAMEPLAY ENGINE & DECISION CARDS
+    ========================================================== */
+    function showSetupScreen() {
+      document.getElementById('setup-screen').style.display = 'flex';
+      document.getElementById('game-area').style.display = 'none';
+      document.getElementById('resetBtn').style.display = 'none';
+    }
+
+    function showGameScreen() {
+      document.getElementById('setup-screen').style.display = 'none';
+      document.getElementById('game-area').style.display = 'flex';
+      document.getElementById('resetBtn').style.display = 'flex';
+
+      const leader = LEADERS[state.selectedLeader];
+      const isPt = state.lang === 'pt';
+      document.getElementById('activeLeaderImg').src = leader.thumb;
+      document.getElementById('activeLeaderName').textContent = leader.name;
+      document.getElementById('activeLeaderDetails').textContent = `${isPt ? leader.colorNamePt : leader.colorNameEn}`;
+      document.getElementById('activeLeaderEffect').innerHTML = `<svg class="icon-inline" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></svg> ${isPt ? leader.powerPt : leader.powerEn}`;
+
+      updateUI();
+      if (state.currentCard) {
+        displayActiveCard(state.currentCard);
+      } else {
+        document.getElementById('flipBtn').style.display = 'inline-flex';
+        document.getElementById('resolveBtn').style.display = 'none';
+        document.getElementById('priorityList').innerHTML = '';
+        document.getElementById('decisionCardImg').src = 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='; // empty
+      }
+    }
+
+    function shuffleArray(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function flipNextCard() {
+      const notice = document.getElementById('deckNotice');
+      notice.style.display = 'none';
+
+      if (state.cardIndex >= state.deck.length) {
+        state.deck = shuffleArray([...DECISION_CARDS]);
+        state.cardIndex = 0;
+        notice.style.display = 'block';
+        addLog({ type: 'reshuffle' });
+      }
+
+      const card = state.deck[state.cardIndex];
+      state.currentCard = card;
+      state.cardIndex++;
+
+      displayActiveCard(card);
+
+      document.getElementById('flipBtn').style.display = 'none';
+      document.getElementById('resolveBtn').style.display = 'inline-flex';
+
+      saveState();
+    }
+
+    function displayActiveCard(card) {
+      const leader = LEADERS[state.selectedLeader];
+      const isPt = state.lang === 'pt';
+      const dict = I18N[state.lang];
+
+      // Update card image
+      const imgPath = `../assets/art/lotr_duel/decision_cards/dc_${String(card.id).padStart(2, '0')}.webp`;
+      document.getElementById('decisionCardImg').src = imgPath;
+
+      // Counters
+      document.getElementById('cardCounter').textContent = dict.cardCounter.replace('{id}', card.id);
+      document.getElementById('deckCounter').textContent = dict.deckCounter.replace('{count}', (12 - state.cardIndex + 1));
+
+      // Priority Pills
+      const priorityContainer = document.getElementById('priorityList');
+      priorityContainer.innerHTML = '';
+
+      card.priority.forEach((slot, idx) => {
+        const isLeaderSlot = slot === 'leader';
+        const colorKey = isLeaderSlot ? leader.cardColor : slot;
+        let colorName = '';
+
+        if (slot === 'green') colorName = isPt ? 'Verde' : 'Green';
+        else if (slot === 'red') colorName = isPt ? 'Vermelha' : 'Red';
+        else if (slot === 'bluered') colorName = isPt ? 'Azul / Vermelha' : 'Blue / Red';
+        else if (slot === 'bluegreen') colorName = isPt ? 'Azul / Verde' : 'Blue / Green';
+        else colorName = isPt ? leader.colorNamePt : leader.colorNameEn;
+
+        const pill = document.createElement('div');
+        pill.className = `priority-item tag-${colorKey}`;
+        pill.innerHTML = `<span>${idx + 1}º</span> <span>${colorName}</span>`;
+        priorityContainer.appendChild(pill);
+
+        if (idx < card.priority.length - 1) {
+          const arrow = document.createElement('span');
+          arrow.className = 'priority-arrow';
+          arrow.textContent = '➔';
+          priorityContainer.appendChild(arrow);
+        }
+      });
+
+      // Fallback description
+      const fallbackEl = document.getElementById('fallbackInfo');
+      fallbackEl.innerHTML = card.fallbackDir === 'left' ? dict.scanFallbackLeft : dict.scanFallbackRight;
+
+      // Extra Turn badge
+      const extraTurnBadge = document.getElementById('extraTurnBadge');
+      const lRepeat = leader.repeat;
+      const cRepeat = card.repeat;
+      let hasExtra = false;
+      if (cRepeat !== 'none' && lRepeat !== 'none') {
+        if (lRepeat === 'both' || cRepeat === lRepeat) {
+          hasExtra = true;
+        }
+      }
+      
+      if (hasExtra) {
+        extraTurnBadge.style.display = 'block';
+        state.extraTurnPending = true;
+      } else {
+        extraTurnBadge.style.display = 'none';
+        state.extraTurnPending = false;
+      }
+    }
+
+    function resolveCard() {
+      const card = state.currentCard;
+      const extra = state.extraTurnPending;
+
+      addLog({ type: 'resolved', age: state.currentAge, cardId: card.id, extra: extra });
+
+      if (extra) {
+        state.extraTurnPending = false;
+        flipNextCard();
+      } else {
+        document.getElementById('flipBtn').style.display = 'inline-flex';
+        document.getElementById('resolveBtn').style.display = 'none';
+      }
+      saveState();
+    }
+
+    /* ==========================================================
+       7. TRACKERS & SUPREMACY CHECKS
+    ========================================================== */
+    function adjustFortress(delta) {
+      state.military = Math.max(0, Math.min(7, state.military + delta));
+      updateUI();
+      checkSupremacy();
+      saveState();
+    }
+
+    function adjustCoins(delta) {
+      state.leaderVp = Math.max(0, state.leaderVp + delta);
+      updateUI();
+      saveState();
+    }
+
+    function setChapter(age) {
+      state.currentAge = age;
+      addLog({ type: 'age', age: age });
+      updateUI();
+      saveState();
+    }
+
+    function renderScienceChips() {
+      const container = document.getElementById('scienceChips');
+      container.innerHTML = '';
+      const isPt = state.lang === 'pt';
+
+      SUPREMACY_SYMBOLS.forEach(item => {
+        const chip = document.createElement('button');
+        const isActive = !!state.scienceSymbols[item.id];
+        chip.className = `science-chip ${isActive ? 'active' : ''}`;
+        chip.innerHTML = `<span>${item.icon}</span> <span>${isPt ? item.namePt : item.nameEn}</span>`;
+        chip.onclick = () => toggleScienceSymbol(item.id);
+        container.appendChild(chip);
+      });
+
+      const count = Object.values(state.scienceSymbols).filter(Boolean).length;
+      document.getElementById('scienceCountBadge').textContent = `${count} / 6`;
+      
+      // Also render alliance buttons
+      renderAllianceButtons();
+    }
+
+    function toggleScienceSymbol(symId) {
+      state.scienceSymbols[symId] = !state.scienceSymbols[symId];
+      renderScienceChips();
+      checkSupremacy();
+      saveState();
+    }
+    
+    function renderAllianceButtons() {
+      const container = document.getElementById('allianceButtons');
+      container.innerHTML = '';
+      const isPt = state.lang === 'pt';
+      
+      ALLIANCE_TOKENS.forEach(item => {
+        const chip = document.createElement('button');
+        const isActive = (state.activeAllianceView === item.id);
+        chip.className = `science-chip ${isActive ? 'active' : ''}`;
+        chip.style.borderColor = isActive ? 'var(--accent)' : 'var(--border)';
+        chip.innerHTML = `<span>${item.icon}</span> <span>${isPt ? item.namePt : item.nameEn}</span>`;
+        chip.onclick = () => toggleAllianceView(item.id);
+        container.appendChild(chip);
+      });
+      
+      const box = document.getElementById('allianceEffectDetails');
+      if (!state.activeAllianceView) {
+        box.style.display = 'none';
+      } else {
+        box.style.display = 'block';
+        const item = ALLIANCE_TOKENS.find(x => x.id === state.activeAllianceView);
+        box.innerHTML = isPt ? item.htmlPt : item.htmlEn;
+      }
+    }
+    
+    function toggleAllianceView(id) {
+      if (state.activeAllianceView === id) {
+        state.activeAllianceView = null;
+      } else {
+        state.activeAllianceView = id;
+      }
+      renderAllianceButtons();
+      saveState();
+    }
+
+    function checkSupremacy() {
+      const alertBox = document.getElementById('supremacyAlert');
+      const dict = I18N[state.lang];
+      alertBox.style.display = 'none';
+      alertBox.className = 'supremacy-alert';
+
+      // Military check (±9)
+      if (false) {
+        alertBox.textContent = dict.militaryWinAlert;
+        alertBox.classList.add('win');
+        alertBox.style.display = 'block';
+        return;
+      }
+      if (state.military >= 7) {
+        alertBox.textContent = dict.conquerLoseAlert;
+        alertBox.classList.add('lose');
+        alertBox.style.display = 'block';
+        return;
+      }
+
+      // Science check (6 distinct symbols)
+      const distinctScience = Object.values(state.scienceSymbols).filter(Boolean).length;
+      if (distinctScience >= 6) {
+        alertBox.textContent = dict.scienceLoseAlert;
+        alertBox.classList.add('lose');
+        alertBox.style.display = 'block';
+      }
+    }
+
+    function updateUI() {
+      document.getElementById('fortressVal').textContent = state.military;
+      const dict = I18N[state.lang] || I18N.pt;
+      const sub = document.getElementById('fortressSubtext');
+      sub.textContent = `${state.military}/7 ${dict.militaryTrackerLabel}`;
+      sub.style.color = state.military >= 6 ? 'var(--red)' : 'var(--text-muted)';
+
+      document.getElementById('coinsVal').textContent = state.leaderVp;
+      
+      
+      const chapVal = document.getElementById('chapterVal');
+      if (chapVal) {
+        chapVal.textContent = state.currentAge;
+      }
+      
+      const costBadge = document.getElementById('landmarkCostBadge');
+      if (costBadge) {
+        let cost = 7;
+        if (state.currentAge === '2') cost = 5;
+        if (state.currentAge === '3') cost = 2;
+        cost += state.military;
+        costBadge.textContent = (dict.panelLandmarksCost || 'Custo: ?').replace('?', cost);
+        costBadge.style.color = state.leaderVp >= cost ? 'var(--green)' : 'var(--text-muted)';
+      }
+
+
+      renderScienceChips();
+      renderLogs();
+    }
+
+    /* ==========================================================
+       8. LOGS & MODALS
+    ========================================================== */
+    
+    let diceBox;
+    let diceInitialized = false;
+    let currentDiceResolve = null;
+
+    let diceFallback = false;
+    async function initDiceBox() {
+      if (diceInitialized) return;
+      try {
+        const { loadDiceBox } = await import('../assets/dice-roller.js');
+        diceBox = await loadDiceBox({ theme: 'onering', themeUrl: new URL('../assets/dice-box/themes/onering', window.location.href).href, themeColor: '#c9a227', scale: 30, timeoutMs: 6000 });
+        diceInitialized = true;
+        
+        diceBox.onRollComplete = (results) => {
+          setTimeout(() => { 
+            diceBox.clear(); 
+            isRolling = false;
+          }, 2500);
+          let val = null;
+          try {
+            const group = Array.isArray(results) ? results[0] : results;
+            if (group && group.rolls && group.rolls.length > 0) val = group.rolls[0].value;
+            else if (group) val = group.value;
+          } catch(e) {}
+          
+          // force integer, if invalid use random
+          val = parseInt(val, 10);
+          if (isNaN(val) || val <= 0) val = Math.floor(Math.random() * 6) + 1;
+
+          if (currentDiceResolve) {
+            currentDiceResolve(val);
+            currentDiceResolve = null;
+          }
+        };
+      } catch (e) {
+        console.error('DiceBox failed to load, falling back to math.random', e);
+        diceFallback = true;
+        diceInitialized = true;
+      }
+    }
+    
+    window.addEventListener('DOMContentLoaded', initDiceBox);
+
+    let isRolling = false;
+    async function rollDiceBox(reason) {
+      if (isRolling) return;
+      isRolling = true;
+      
+      try {
+        if (!diceInitialized) {
+          await Promise.race([
+            initDiceBox(),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('initDiceBox global timeout')), 6000))
+          ]);
+        }
+      } catch (e) {
+        console.error('initDiceBox threw error', e);
+        diceFallback = true;
+      }
+      
+
+      
+      const lColor = LEADERS[state.selectedLeader]?.cardColor;
+      let hex = '#475569';
+      if (lColor === 'green') hex = '#16a34a';
+      else if (lColor === 'blue') hex = '#3b82f6';
+      else if (lColor === 'yellow') hex = '#eab308';
+      else if (lColor === 'redpurple') hex = '#a855f7';
+      else if (lColor === 'grey') hex = '#64748b';
+      const elLandmark = document.getElementById('landmarkDiceResult');
+      const elRace = document.getElementById('inlineDiceResult');
+      
+      if (reason === 'landmark' && elLandmark) {
+        elLandmark.innerHTML = '<span style="color:var(--text-dim);"><span class="spin-icon" style="display:inline-block;"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="8" r="1.2" fill="currentColor"/><circle cx="16" cy="8" r="1.2" fill="currentColor"/><circle cx="8" cy="16" r="1.2" fill="currentColor"/><circle cx="16" cy="16" r="1.2" fill="currentColor"/></svg></span> ' + (state.lang === 'pt' ? 'Rolando...' : 'Rolling...') + '</span>';
+      } else if (elRace) {
+        elRace.innerHTML = '<span style="color:var(--text-dim);"><span class="spin-icon" style="display:inline-block;"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="8" r="1.2" fill="currentColor"/><circle cx="16" cy="8" r="1.2" fill="currentColor"/><circle cx="8" cy="16" r="1.2" fill="currentColor"/><circle cx="16" cy="16" r="1.2" fill="currentColor"/></svg></span> ' + (state.lang === 'pt' ? 'Rolando...' : 'Rolling...') + '</span>';
+      }
+
+      currentDiceResolve = (val) => {
+        const elLandmark = document.getElementById('landmarkDiceResult');
+        const elRace = document.getElementById('inlineDiceResult');
+        const d = I18N[state.lang] || I18N.pt;
+        if (reason === 'landmark') {
+          addLog({ type: 'generic', text: d.logDiceLandmark.replace('{val}', val) });
+          if(elLandmark) elLandmark.textContent = d.diceResultLandmark.replace('{val}', val);
+        } else if (reason === 'race2') {
+          const res = val <= 3 ? d.raceLeft : d.raceRight;
+          addLog({ type: 'generic', text: d.logDiceRace.replace('{val}', val).replace('{res}', res) });
+          if(elRace) elRace.textContent = d.diceResultRace.replace('{val}', val).replace('{res}', res);
+        } else if (reason === 'race3') {
+          let res = d.raceLeft;
+          if (val >= 3 && val <= 4) res = d.raceMiddle;
+          if (val >= 5) res = d.raceRight;
+          addLog({ type: 'generic', text: d.logDiceRace.replace('{val}', val).replace('{res}', res) });
+          if(elRace) elRace.textContent = d.diceResultRace.replace('{val}', val).replace('{res}', res);
+        }
+      };
+
+      if (diceFallback) {
+         currentDiceResolve(Math.floor(Math.random() * 6) + 1);
+         isRolling = false;
+         return;
+      }
+
+      diceBox.updateConfig({ themeColor: hex });
+      diceBox.clear();
+      
+      diceBox.roll('1d6');
+      
+      // Fallback failsafe: If dice don't settle in 4 seconds, force resolve
+      setTimeout(() => {
+        if (isRolling && currentDiceResolve) {
+          console.warn('Dice roll timed out! Forcing fallback.');
+          diceBox.clear();
+          isRolling = false;
+          let maxVal = reason === 'landmark' ? 6 : reason === 'race2' ? 2 : 3;
+          currentDiceResolve(Math.floor(Math.random() * maxVal) + 1);
+          currentDiceResolve = null;
+        }
+      }, 4000);
+    }
+
+    function botBuyLandmark() {
+      let cost = 7;
+      if (state.currentAge === '2') cost = 5;
+      if (state.currentAge === '3') cost = 2;
+      cost += state.military;
+      
+      adjustCoins(-cost);
+      adjustFortress(1);
+      addLog({ type: 'generic', text: (I18N[state.lang] || I18N.pt).logBuyLandmark.replace('{cost}', cost) });
+    }
+
+
+    function addLog(msg) {
+      if (msg.type === 'generic') { state.logs.unshift(msg); if (state.logs.length > 25) state.logs.pop(); renderLogs(); saveState(); return; }
+      state.logs.unshift(msg);
+      if (state.logs.length > 25) state.logs.pop();
+      renderLogs();
+      saveState();
+    }
+
+    function renderLogs() {
+      const container = document.getElementById('logList');
+      container.innerHTML = '';
+      const dict = I18N[state.lang] || I18N.pt;
+
+      state.logs.slice(0, 10).forEach(log => {
+        const item = document.createElement('div');
+        item.className = 'log-item';
+        
+        let text = '';
+        if (typeof log === 'string') {
+          text = log;
+        } else if (log && log.type) {
+          if (log.type === 'start') {
+            text = dict.logStart.replace('{leader}', log.leader);
+          } else if (log.type === 'reshuffle') {
+            text = dict.logReshuffle;
+          } else if (log.type === 'resolved') {
+            text = dict.logResolved
+              .replace('{age}', log.age)
+              .replace('{cardId}', log.cardId)
+              .replace('{extra}', log.extra ? dict.logExtraTurnTag : '');
+          } else if (log.type === 'age') {
+            text = dict.logAge.replace('{age}', log.age);
+          }
+        }
+        item.textContent = text;
+        container.appendChild(item);
+      });
+    }
+
+    
+    
+    
+
+    function openLandmarksModal() { document.getElementById('landmarksModal').classList.add('open'); }
+    function closeLandmarksModal() { document.getElementById('landmarksModal').classList.remove('open'); }
+    function openRingTokensModal() { document.getElementById('ringTokensModal').classList.add('open'); }
+    function closeRingTokensModal() { document.getElementById('ringTokensModal').classList.remove('open'); }
+
+    function openHelp() {
+      document.getElementById('helpModal').classList.add('open');
+    }
+    function closeHelp() {
+      document.getElementById('helpModal').classList.remove('open');
+    }
+
+    function openEndAgeModal() {
+      document.getElementById('endAgeModal').classList.add('open');
+    }
+    function closeEndAgeModal() {
+      document.getElementById('endAgeModal').classList.remove('open');
+    }
+    function advanceAge() {
+      if (state.currentAge === '1') setChapter('2');
+      else if (state.currentAge === '2') setChapter('3');
+      closeEndAgeModal();
+    }
+
+    function openEndGameModal() {
+      document.getElementById('endGameModal').classList.add('open');
+      document.getElementById('finalResultBanner').style.display = 'none';
+      document.getElementById('playerVpInput').value = '';
+    }
+    function closeEndGameModal() {
+      document.getElementById('endGameModal').classList.remove('open');
+    }
+
+    function calculateCivilVictory() {
+      const pVp = parseInt(document.getElementById('playerVpInput').value, 10);
+      if (isNaN(pVp)) return;
+
+      const banner = document.getElementById('finalResultBanner');
+      const dict = I18N[state.lang];
+      banner.style.display = 'block';
+
+      if (pVp > state.leaderVp) {
+        banner.style.background = 'var(--green-soft)';
+        banner.style.color = '#bbf7d0';
+        banner.style.border = '2px solid var(--green)';
+        banner.innerHTML = `${dict.youWinText}<br><small>Você: ${pVp} PVs vs Líder: ${state.leaderVp} PVs</small>`;
+      } else if (pVp < state.leaderVp) {
+        banner.style.background = 'var(--red-soft)';
+        banner.style.color = '#fecaca';
+        banner.style.border = '2px solid var(--red)';
+        banner.innerHTML = `${dict.youLoseText}<br><small>Você: ${pVp} PVs vs Líder: ${state.leaderVp} PVs</small>`;
+      } else {
+        banner.style.background = 'var(--yellow-soft)';
+        banner.style.color = '#fef08a';
+        banner.style.border = '2px solid var(--yellow)';
+        banner.innerHTML = `${dict.tieText}<br><small>Empate em ${pVp} PVs!</small>`;
+      }
+    }
+
+    function confirmReset() {
+      const dict = I18N[state.lang];
+      if (confirm(dict.resetConfirmPrompt)) {
+        localStorage.removeItem(STORAGE_KEY);
+        state.inGame = false;
+        state.deck = [];
+        state.cardIndex = 0;
+        state.currentCard = null;
+        showSetupScreen();
+        saveState();
+      }
+    }
+
+    /* ==========================================================
+       9. LOCAL STORAGE PERSISTENCE
+    ========================================================== */
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          state = { ...state, ...parsed };
+          
+          // Failsafe: if loaded deck has old 7 Wonders tags, invalidate it
+          if (state.deck && state.deck.some(c => c.priority && (c.priority.includes('science') || c.priority.includes('military') || !c.repeat))) {
+             console.warn('Found outdated deck schema in storage. Invalidating state.');
+             state.inGame = false;
+             state.deck = [];
+             state.currentCard = null;
+          }
+          if (state.currentCard && state.currentCard.priority && (state.currentCard.priority.includes('science') || state.currentCard.priority.includes('military') || !state.currentCard.repeat)) {
+             state.inGame = false;
+             state.currentCard = null;
+          }
+        }
+      } catch (e) {
+        console.error('Failed to load state', e);
+      }
+    }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>

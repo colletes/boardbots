@@ -1,0 +1,1367 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>ARNO — Ark Nova Solo Automa</title>
+<link rel="icon" href="../assets/mascot-trimmed.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rye&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/site.css?v=7">
+<style>
+:root{
+  --bg-cork: #8c674b; 
+  --clipboard: #b89363; --clip: #555;
+  --paper: #f7f1dc; --paper-dark: #ded5b8;
+  --border:#423624; --text:#241d15; --text-dim:#544738;
+  --blue:#2d5ca8; --blue-soft:#a2c4f2; --blue-glow:rgba(45,92,168,0.35);
+  --accent:#246a4e; --accent-dim:#174633;
+  --wood:#4e301b; --wood-light:#7a5030;
+  --font-display:'Rye','Segoe UI',serif;
+  --font-body:'Inter','Segoe UI',Tahoma,Geneva,Verdana,sans-serif;
+  --radius: 6px;
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+html{-webkit-text-size-adjust:100%;}
+body{
+  font-family:var(--font-body);
+  background-color: var(--bg-cork);
+  background-image: 
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.4' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.15'/%3E%3C/svg%3E"),
+    linear-gradient(rgba(140,103,75,0.86), rgba(140,103,75,0.86)),
+    url("../assets/textures/cork-board.jpg"),
+    repeating-linear-gradient(45deg, rgba(0,0,0,0.02) 0px, rgba(0,0,0,0.02) 2px, transparent 2px, transparent 4px);
+  background-size: auto, auto, 340px 340px, auto;
+  background-repeat: no-repeat, no-repeat, repeat, repeat;
+  color:var(--text);
+  margin:0 auto;
+  padding-bottom:max(30px, env(safe-area-inset-bottom));
+  -webkit-tap-highlight-color:transparent;
+  min-height: 100vh;
+}
+
+/* Top Sticky Navigation */
+.top-nav {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  background: rgba(78, 48, 27, 0.94);
+  border-bottom: 2px solid var(--border);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+}
+.nav-brand {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  color: var(--paper);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+}
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.nav-btn, .lang-btn {
+  background: rgba(247, 241, 220, 0.15);
+  color: var(--paper);
+  border: 1px solid rgba(247, 241, 220, 0.4);
+  padding: 6px 12px;
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s;
+}
+.nav-btn:hover, .lang-btn:hover {
+  background: var(--paper);
+  color: var(--wood);
+}
+.lang-switch {
+  display: flex;
+  border: 1px solid rgba(247, 241, 220, 0.4);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.lang-btn {
+  border: none;
+  border-radius: 0;
+  padding: 6px 10px;
+}
+.lang-btn.active {
+  background: var(--paper);
+  color: var(--wood);
+  font-weight: 900;
+}
+
+/* Hero Banner */
+.hero-wrapper {
+  width: 100%;
+  max-width: 1200px;
+  margin: 14px auto 18px;
+  padding: 0 16px;
+}
+.hero {
+  position: relative;
+  border-radius: 10px;
+  overflow: hidden;
+  height: 170px;
+  display: flex;
+  align-items: center;
+  border: 3px solid var(--wood);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  background: linear-gradient(135deg, var(--wood-light), var(--wood));
+}
+/* object-fit:cover across a wide/short banner crops portrait box art to an unreadable sliver — show it as a fully-visible contained card instead. */
+.hero-bg {
+  position: absolute;
+  top: 10px; right: 14px; bottom: 10px; left: auto;
+  width: auto; height: calc(100% - 20px);
+  object-fit: contain;
+  object-position: center;
+  border-radius: 6px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.55);
+  filter: none;
+}
+.hero-content {
+  position: relative;
+  z-index: 2;
+  padding: 20px;
+  padding-right: 150px;
+  width: 100%;
+  background: linear-gradient(90deg, rgba(36,29,21,0.92) 0%, rgba(36,29,21,0.75) 55%, rgba(36,29,21,0) 100%);
+}
+@media (max-width: 600px) {
+  .hero-bg { display: none; }
+  .hero-content { padding-right: 20px; }
+}
+.hero-badge {
+  display: inline-block;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  padding: 3px 8px;
+  border-radius: 3px;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+}
+.hero-title {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  color: #fff;
+  margin: 0;
+  text-shadow: 2px 2px 4px #000;
+  letter-spacing: 1px;
+}
+.hero-subtitle {
+  color: var(--paper);
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-top: 2px;
+  opacity: 0.95;
+}
+
+#setup-screen, #game-area {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+@media (min-width: 960px) {
+  #setup-screen { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+  #game-area { display: grid; grid-template-columns: minmax(270px, 1fr) minmax(310px, 1.2fr) minmax(270px, 1fr); gap: 20px; align-items: start; }
+  #game-area > button.btn-reset { grid-column: 1 / span 3; }
+}
+
+button, select, input{ touch-action:manipulation; font-family:inherit; }
+.hidden{ display:none !important; }
+@keyframes fadeSlideUp{ from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);} }
+@keyframes popIn{ 0%{transform:scale(0.85); opacity:0;} 60%{transform:scale(1.04);} 100%{transform:scale(1); opacity:1;} }
+
+h2{ font-family:var(--font-display); font-weight:normal; letter-spacing:0.5px; color:var(--wood); margin:0 0 12px; padding-bottom:6px; font-size:1.25em; display:flex; align-items:center; gap:8px; border-bottom:2px solid rgba(0,0,0,0.12); }
+h2::before{ content:''; width:20px; height:20px; flex-shrink:0; background-color:var(--wood); -webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 3C7 5 3 10 3 15a9 9 0 0 0 9 7 9 9 0 0 0 9-7c0-5-4-10-9-12Z'/%3E%3C/svg%3E"); mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 3C7 5 3 10 3 15a9 9 0 0 0 9 7 9 9 0 0 0 9-7c0-5-4-10-9-12Z'/%3E%3C/svg%3E"); -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat; -webkit-mask-size:contain; mask-size:contain; -webkit-mask-position:center; mask-position:center; }
+h3{ color:var(--wood); font-size:0.95em; margin:14px 0 6px; font-weight: 800; }
+
+/* Clipboard card styling */
+.card{ 
+  background-color: var(--clipboard);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.05' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.3'/%3E%3C/svg%3E");
+  padding: 30px 14px 14px; 
+  border-radius: 8px; 
+  border: 2px solid var(--wood-light); 
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4), inset 0 0 10px rgba(0,0,0,0.3); 
+  margin-bottom:18px; 
+  animation:fadeSlideUp 0.4s ease both; 
+  position: relative;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+/* Metal Clip */
+.card::before {
+  content: '';
+  position: absolute;
+  top: -8px; left: 50%;
+  transform: translateX(-50%);
+  width: 76px; height: 26px;
+  background: linear-gradient(180deg, #ccc 0%, #666 100%);
+  border: 2px solid #444;
+  border-radius: 4px;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.4), inset 0 2px 0 rgba(255,255,255,0.6);
+  z-index: 2;
+}
+/* Paper */
+.card::after {
+  content: '';
+  position: absolute;
+  top: 24px; left: 8px; right: 8px; bottom: 8px;
+  background-color: var(--paper);
+  background-image: repeating-linear-gradient(0deg, transparent, transparent 23px, rgba(0,0,0,0.04) 24px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+  z-index: 0;
+  border-radius: 4px;
+}
+.card > * { position: relative; z-index: 1; padding: 0 4px; }
+.card > h2 { padding: 4px 4px 0; margin-top: 8px; }
+
+label{ display:block; margin:10px 0 4px; font-size:0.85em; color:var(--text-dim); font-weight:bold; }
+select, input[type=number]{ width:100%; padding:10px 12px; font-size:15px; background:#fff; color:#000; border:2px solid var(--border); border-radius:4px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.08); }
+.row{ display:flex; gap:10px; flex-wrap:wrap; }
+.row > *{ flex:1; min-width:120px; }
+.btn{ display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:10px 16px; border-radius:6px; border:2px solid var(--border); background:var(--paper-dark); color:var(--text); font-weight:800; font-size:0.9em; cursor:pointer; min-height:42px; box-shadow: 0 3px 0 rgba(0,0,0,0.2); transition: 0.1s; text-transform: uppercase; }
+.btn:active{ transform:translateY(3px); box-shadow: 0 0 0 rgba(0,0,0,0.2); }
+.btn-primary{ background:linear-gradient(145deg, var(--accent), var(--accent-dim)); border-color:var(--wood); color:#fff; width:100%; text-shadow: 1px 1px 0 rgba(0,0,0,0.5); }
+.btn-block{ width:100%; margin-top:8px; }
+.toggle{ display:flex; align-items:center; justify-content:space-between; background:rgba(0,0,0,0.05); border:1px solid rgba(0,0,0,0.1); border-radius:6px; padding:8px 12px; margin-top:8px; font-weight:bold; font-size:0.9em; }
+.switch{ position:relative; width:44px; height:24px; flex-shrink:0; }
+.switch input{ opacity:0; width:0; height:0; }
+.slider{ position:absolute; inset:0; background:#999; border-radius:24px; transition:.2s; cursor:pointer; box-shadow: inset 0 2px 4px rgba(0,0,0,0.3); }
+.slider::before{ content:''; position:absolute; width:18px; height:18px; left:3px; top:3px; background:#fff; border-radius:50%; transition:.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+input:checked + .slider{ background:var(--accent); }
+input:checked + .slider::before{ transform:translateX(20px); }
+
+/* Stats as overflow-proof tokens */
+.stat-grid{ 
+  display:grid; 
+  grid-template-columns:repeat(auto-fit, minmax(82px, 1fr)); 
+  gap:8px; 
+  padding: 4px 0;
+  width: 100%;
+}
+.stat{ 
+  background:#fff; 
+  border:2px solid var(--border); 
+  border-radius:8px; 
+  padding: 6px 4px; 
+  min-height: 84px; 
+  display: flex; 
+  flex-direction: column; 
+  justify-content: space-between; 
+  align-items: center; 
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15); 
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.stat .lbl{ 
+  font-size:0.68rem; 
+  color:var(--text-dim); 
+  text-transform:uppercase; 
+  letter-spacing:0.3px; 
+  font-weight: 800; 
+  line-height: 1.15;
+  margin-bottom: 2px;
+  word-break: normal;
+  overflow-wrap: break-word;
+  max-width: 100%;
+}
+.stat .val{ 
+  font-size:1.4rem; 
+  font-weight:900; 
+  color: var(--wood); 
+  margin: 1px 0;
+  line-height: 1.1;
+}
+.stat .adj{ 
+  display:flex; 
+  justify-content:center; 
+  gap:4px; 
+  margin-top: 2px;
+}
+.stat .adj button{ 
+  width:22px; 
+  height:22px; 
+  border-radius:4px; 
+  border:1px solid var(--border); 
+  background:var(--paper); 
+  color:var(--text); 
+  font-size:1rem; 
+  font-weight: bold; 
+  line-height: 1; 
+  padding: 0; 
+  box-shadow: 0 1px 2px rgba(0,0,0,0.15); 
+  cursor: pointer;
+}
+.stat .adj button:active { transform: translateY(1px); }
+
+/* Action Cards Grid */
+.cards-grid{ 
+  display:grid; 
+  grid-template-columns:repeat(auto-fit, minmax(88px, 1fr)); 
+  gap:8px; 
+  margin-top:8px; 
+  padding: 4px 0;
+  width: 100%;
+}
+.acard{
+  --ac-color:var(--accent);
+  background:#fff;
+  border:2.5px solid var(--ac-color); 
+  border-radius:8px; 
+  padding:8px 4px; 
+  text-align:center; 
+  position:relative;
+  transition:transform .2s, box-shadow .2s; 
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.acard.active{ transform:scale(1.04) translateY(-3px); box-shadow: 0 6px 14px rgba(0,0,0,0.25); z-index: 10; }
+.acard .slot{ position:absolute; top:-8px; left:-6px; font-size:0.75em; color:#fff; background: var(--wood); width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-weight:900; box-shadow: 0 2px 4px rgba(0,0,0,0.3); border: 2px solid #fff; }
+.acard .ac-icon{ width:32px; height:32px; margin:6px auto 4px; color:var(--ac-color); flex-shrink: 0; }
+.acard .ac-icon svg{ width:100%; height:100%; }
+.acard .name{ font-weight:800; margin:0 0 6px; font-size:0.78rem; line-height:1.15; text-transform: uppercase; word-break: break-word; }
+.acard .side-toggle button{ font-size:0.75em; padding:3px 8px; min-height:24px; border-color:var(--ac-color); background: rgba(0,0,0,0.05); border-radius: 4px; font-weight: 900; }
+
+.roll-box{ text-align:center; }
+.round-indicator{ color:var(--text-dim); font-size:0.9em; margin:6px 0; font-weight: bold; text-transform: uppercase; }
+.round-indicator b{ color:var(--wood); font-size: 1.2em; }
+.die-wrap{ display:flex; justify-content:center; margin:12px 0; }
+.die-face{
+  width:84px; height:84px; border-radius:12px; display:flex; align-items:center; justify-content:center;
+  background:linear-gradient(135deg, #f0f0f0, #ccc); border:2px solid #999;
+  font-size:2.8em; font-weight:900; color:#333; box-shadow: 3px 6px 14px rgba(0,0,0,0.35), inset 0 2px 4px #fff; user-select:none;
+}
+.die-face.spinning{ animation:dieSpin .12s linear infinite; }
+.die-face.settled{ animation:popIn .35s ease; border-color:var(--accent); color: var(--accent); }
+@keyframes dieSpin{ 0%{transform:rotate(-10deg) scale(1);} 50%{transform:rotate(10deg) scale(1.1);} 100%{transform:rotate(-10deg) scale(1);} }
+.reroll-flash{ color:var(--blue); font-weight:900; font-size:0.95em; min-height:1.2em; margin-bottom:8px; text-transform: uppercase; }
+
+/* 3D Dice Tray & Box */
+.dice-tray-container{
+  width:100%; height:160px; background:rgba(0,0,0,0.4); border:2px solid var(--wood);
+  border-radius:8px; position:relative; overflow:hidden; margin:12px 0;
+  box-shadow: inset 0 3px 12px rgba(0,0,0,0.7); display:flex; align-items:center; justify-content:center;
+}
+#dice-box{ width:100%; height:100%; position:absolute; top:0; left:0; z-index:2; }
+#dice-box canvas{ width:100% !important; height:100% !important; display:block; }
+.dice-tray-container .die-wrap{ margin:0; z-index:1; }
+.dice-tray-container.has-3d .die-wrap{ display:none; }
+.manual-roll{ margin-top:16px; text-align:left; background: rgba(0,0,0,0.05); padding: 8px 12px; border-radius: 6px; }
+.manual-roll summary{ cursor:pointer; color:var(--wood); font-size:0.85em; text-align:center; list-style:none; font-weight: bold; }
+.manual-roll summary::-webkit-details-marker{ display:none; }
+.manual-roll[open] summary{ margin-bottom:10px; border-bottom: 1px dashed rgba(0,0,0,0.2); padding-bottom: 8px; }
+.effect-box{ background:#fff; border:2px dashed rgba(0,0,0,0.2); border-radius:6px; padding:12px; margin-top:14px; text-align:left; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+.effect-box .eff-line{ display:flex; justify-content:space-between; flex-wrap:wrap; gap:6px 12px; padding:6px 0; border-bottom:1px solid rgba(0,0,0,0.05); font-size:0.9em; font-weight: 600; }
+.effect-box .eff-line:last-child{ border-bottom:none; }
+.effect-box .eff-note{ font-size:0.82em; color:var(--text-dim); margin-top:4px; }
+.history-list{ margin-top:12px; text-align:left; max-height:260px; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+.history-item{ background:#fff; border:1px solid rgba(0,0,0,0.1); border-radius:6px; padding:8px 10px; margin-bottom:8px; font-size:0.82em; box-shadow: 0 1px 3px rgba(0,0,0,0.08); word-break: break-word; }
+.history-item .h-head{ display:flex; justify-content:space-between; color:var(--text-dim); font-size:0.85em; margin-bottom:4px; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 3px; }
+.history-item .h-head b{ color:var(--wood); }
+.history-item .h-lines{ color:var(--text); font-weight: 600; line-height: 1.35; }
+.history-empty{ color:var(--text-dim); font-size:0.85em; text-align:center; padding:16px 0; font-style: italic; }
+.zoo-log-line{ font-style: italic; color: var(--text-dim); font-size: 0.85em; margin-bottom: 6px; }
+.history-item .zoo-log-line{ margin-bottom: 4px; }
+
+.credits-block{ display:flex; align-items:center; gap:12px; font-size:0.85em; }
+.credits-block img{ width:50px; height:50px; border-radius:8px; object-fit:cover; border: 2px solid var(--wood); }
+.credits-block a{ color:var(--blue); text-decoration:none; font-weight: bold; }
+
+.modal-overlay{ position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:1000; display:flex; align-items:center; justify-content:center; padding:16px; }
+.modal{ background:var(--paper); border:3px solid var(--wood); border-radius:8px; max-width:620px; width:100%; max-height:85vh; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+.modal h3{ color:var(--wood); font-family: var(--font-display); font-size: 1.25em; margin-bottom: 10px; }
+.modal-close{ float:right; background: transparent; border: none; font-size: 1.4em; font-weight: bold; color: var(--wood); padding: 0; box-shadow: none; min-height: 0; cursor: pointer; }
+.icon-inline{ display:inline-flex; vertical-align:-0.15em; }
+.icon-inline svg, svg.icon-inline{ width:1.1em; height:1.1em; }
+.modal p { margin-bottom: 10px; font-size: 0.9em; line-height: 1.5; color: var(--text); }
+
+/* Standard Buy Me a Coffee Button */
+.bmc-btn, .bmc-inline, .bmc-float {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  background: #FFDD00 !important;
+  color: #000000 !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+  font-weight: 700 !important;
+  font-size: 0.92rem !important;
+  padding: 10px 18px !important;
+  border-radius: 8px !important;
+  border: 1px solid rgba(0,0,0,0.15) !important;
+  text-decoration: none !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25) !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+  cursor: pointer !important;
+  margin: 16px auto !important;
+  width: max-content !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+}
+.bmc-btn:hover, .bmc-inline:hover, .bmc-float:hover {
+  transform: translateY(-2px) scale(1.02) !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35) !important;
+  background: #FFE433 !important;
+  color: #000000 !important;
+}
+.bmc-btn svg, .bmc-inline svg, .bmc-float svg {
+  width: 20px !important;
+  height: 20px !important;
+  stroke: #000000 !important;
+  fill: none !important;
+  flex-shrink: 0 !important;
+  vertical-align: middle !important;
+}
+
+/* Ambient thematic flavor: fireflies + canopy-glow flicker (Ark Nova zoo/nature theme) */
+@media (prefers-reduced-motion: no-preference) {
+  .canopy-glow{ position:fixed; inset:0; pointer-events:none; z-index:-1;
+    background: radial-gradient(ellipse at 20% 10%, rgba(36,106,78,0.25), transparent 55%),
+                radial-gradient(ellipse at 85% 85%, rgba(45,92,168,0.18), transparent 60%);
+    animation: canopyFlicker 6s ease-in-out infinite alternate; }
+  @keyframes canopyFlicker { 0%{opacity:0.7;} 50%{opacity:1;} 100%{opacity:0.85;} }
+
+  .firefly-layer{ position:fixed; inset:0; pointer-events:none; z-index:-1; overflow:hidden; }
+  .firefly{ position:absolute; bottom:-10px; width:6px; height:6px; border-radius:50%;
+    background: radial-gradient(circle, rgba(210,255,190,0.95), rgba(210,255,190,0) 70%);
+    box-shadow: 0 0 8px 3px rgba(180,255,150,0.55);
+    animation: fireflyRise linear infinite; }
+  @keyframes fireflyRise {
+    0%{ transform:translate(0,0); opacity:0; }
+    10%{ opacity:0.9; }
+    50%{ transform:translate(18px,-50vh); opacity:0.5; }
+    90%{ opacity:0.8; }
+    100%{ transform:translate(-14px,-100vh); opacity:0; }
+  }
+  .firefly:nth-child(1){ left:6%; animation-duration:13s; animation-delay:-2s; }
+  .firefly:nth-child(2){ left:16%; animation-duration:10s; animation-delay:-6s; }
+  .firefly:nth-child(3){ left:27%; animation-duration:15s; animation-delay:-1s; }
+  .firefly:nth-child(4){ left:38%; animation-duration:11s; animation-delay:-9s; }
+  .firefly:nth-child(5){ left:49%; animation-duration:14s; animation-delay:-4s; }
+  .firefly:nth-child(6){ left:58%; animation-duration:9s; animation-delay:-7s; }
+  .firefly:nth-child(7){ left:68%; animation-duration:16s; animation-delay:-3s; }
+  .firefly:nth-child(8){ left:77%; animation-duration:12s; animation-delay:-10s; }
+  .firefly:nth-child(9){ left:86%; animation-duration:13.5s; animation-delay:-5s; }
+  .firefly:nth-child(10){ left:93%; animation-duration:10.5s; animation-delay:-8s; }
+}
+</style>
+
+    <script src="../assets/logger.js"></script>
+</head>
+<body>
+
+<div class="canopy-glow" aria-hidden="true"></div>
+<div class="firefly-layer" aria-hidden="true">
+  <span class="firefly"></span><span class="firefly"></span><span class="firefly"></span><span class="firefly"></span><span class="firefly"></span>
+  <span class="firefly"></span><span class="firefly"></span><span class="firefly"></span><span class="firefly"></span><span class="firefly"></span>
+</div>
+
+<!-- Top Sticky Navigation -->
+<nav class="top-nav">
+  <a class="nav-brand" href="../index.html">
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
+    <span>Board Bots</span>
+  </a>
+  <div class="nav-actions">
+    <button class="nav-btn" onclick="document.getElementById('helpModal').classList.remove('hidden')">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9.3 9.2a2.7 2.7 0 0 1 5.1 1.2c0 1.8-2.4 2-2.4 3.6"/><circle cx="12" cy="17" r="0.6" fill="currentColor"/></svg>
+      <span data-i18n="btnRules">COMO JOGAR</span>
+    </button>
+    <div class="lang-switch">
+      <button class="lang-btn" id="btnPt" onclick="setLang('pt')">PT</button>
+      <button class="lang-btn" id="btnEn" onclick="setLang('en')">EN</button>
+    </div>
+  </div>
+</nav>
+
+<!-- Hero Banner -->
+<div class="hero-wrapper">
+  <div class="hero">
+    <img src="../assets/art/arknova.webp" alt="Ark Nova" class="hero-bg">
+    <div class="hero-content">
+      <div class="hero-badge" data-i18n="heroBadge">OPONENTE AUTOMA</div>
+      <h1 class="hero-title" data-i18n="title">ARNO</h1>
+      <div class="hero-subtitle" data-i18n="subtitle">Automa Solo Inteligente para Ark Nova</div>
+    </div>
+  </div>
+</div>
+
+<!-- SETUP SCREEN -->
+<div id="setup-screen">
+  <div class="card">
+    <h2 data-i18n="setupTitle">Configuração do ARNO</h2>
+    <label data-i18n="lblLevel">Nível de dificuldade</label>
+    <select id="selLevel"></select>
+
+    <label data-i18n="lblDie">Dado usado</label>
+    <select id="selDie">
+      <option value="6">D6</option>
+      <option value="8">D8</option>
+      <option value="12">D12</option>
+    </select>
+
+    <div class="toggle">
+      <span data-i18n="lblMarine">Expansão Marine Worlds</span>
+      <label class="switch"><input type="checkbox" id="chkMarine"><span class="slider"></span></label>
+    </div>
+    <div class="toggle">
+      <span data-i18n="lblCPModule">Módulo: condição variável do Projeto de Conservação</span>
+      <label class="switch"><input type="checkbox" id="chkCPModule"><span class="slider"></span></label>
+    </div>
+
+    <h3 data-i18n="lblAssign">Distribuição inicial das ações (espaços 2–5)</h3>
+    <p class="eff-note" style="color:var(--text-dim); font-size:0.82em;" data-i18n="assignHelp">O app já sorteou aleatoriamente em qual espaço cada carta de ação caiu — não é preciso embaralhar as cartas físicas.</p>
+    <div class="cards-grid" id="setupSlotsPreview"></div>
+    <button class="btn btn-block" onclick="shuffleSlots()" style="margin-top:10px;"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg> <span data-i18n="btnReshuffle">Sortear novamente</span></button>
+
+    <button class="btn btn-primary btn-block" onclick="startGame()" data-i18n="btnStart" style="margin-top:14px;">Iniciar Automa</button>
+  </div>
+  <div class="card credits-block">
+    <img src="../assets/art/arknova.webp" alt="Ark Nova">
+    <div>
+      <div data-i18n="creditsLine1">Bot criado para uso pessoal — Colletes bots.</div>
+      <div data-i18n="creditsLine2">Automa ARNO original de Ark Nova:</div>
+      <div>ARNO: <a href="https://boardgamegeek.com/profile/anke79" target="_blank" rel="noopener">Andre K. (anke79)</a></div>
+      <div><a href="mailto:colletes@gmail.com">colletes@gmail.com</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- GAME SCREEN -->
+<div id="game-area" class="hidden">
+  <div class="card">
+    <h2 data-i18n="statsTitle">Painel de Recursos</h2>
+    <div class="stat-grid">
+      <div class="stat"><div class="lbl" data-i18n="statAppeal">Atração</div><div class="val" id="vAppeal">0</div><div class="adj"><button onclick="adjust('appeal',-1)">−</button><button onclick="adjust('appeal',1)">+</button></div></div>
+      <div class="stat"><div class="lbl" data-i18n="statRep">Reputação</div><div class="val" id="vRep">0</div><div class="adj"><button onclick="adjust('rep',-1)">−</button><button onclick="adjust('rep',1)">+</button></div></div>
+      <div class="stat"><div class="lbl" data-i18n="statCons">Conservação</div><div class="val" id="vCons">0</div><div class="adj"><button onclick="adjust('cons',-1)">−</button><button onclick="adjust('cons',1)">+</button></div></div>
+      <div class="stat"><div class="lbl" data-i18n="statBreak">Pausa</div><div class="val" id="vBreak">0</div><div class="adj"><button onclick="adjust('brk',-1)">−</button><button onclick="adjust('brk',1)">+</button></div></div>
+      <div class="stat"><div class="lbl" data-i18n="statCards">Cartas</div><div class="val" id="vCards">0</div><div class="adj"><button onclick="adjust('cards',-1)">−</button><button onclick="adjust('cards',1)">+</button></div></div>
+      <div class="stat"><div class="lbl" data-i18n="statZoos">Zoos Parceiros</div><div class="val" id="vZoos">0</div><div class="adj"><button onclick="adjust('zoos',-1)">−</button><button onclick="adjust('zoos',1)">+</button></div></div>
+      <div class="stat"><div class="lbl" data-i18n="statUnis">Universidades</div><div class="val" id="vUnis">0</div><div class="adj"><button onclick="adjust('unis',-1)">−</button><button onclick="adjust('unis',1)">+</button></div></div>
+      <div class="stat"><div class="lbl" data-i18n="statWorkers">Associados</div><div class="val" id="vWorkers">3</div><div class="adj"><button onclick="adjust('workers',-1)">−</button><button onclick="adjust('workers',1)">+</button></div></div>
+      <div class="stat"><div class="lbl" data-i18n="statFsTokens">Pontuação Final</div><div class="val" id="vFsTokens">0/6</div><div class="adj"><button onclick="adjust('fsTokens',-1)">−</button><button onclick="adjust('fsTokens',1)">+</button></div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 data-i18n="cardsTitle">Cartas de Ação (1–5)</h2>
+    <div class="cards-grid" id="cardsGrid"></div>
+  </div>
+
+  <div class="card roll-box">
+    <h2 data-i18n="rollTitle">Turno do ARNO</h2>
+    <p class="round-indicator"><span data-i18n="lblRound">Rodada</span> <b id="roundNo">1</b></p>
+    <p class="eff-note" id="dieHint" style="color:var(--text-dim);"></p>
+    <div id="dice-tray" class="dice-tray-container">
+      <div id="dice-box"></div>
+      <div class="die-wrap"><div class="die-face" id="dieFace">?</div></div>
+    </div>
+    <div class="reroll-flash" id="rerollFlash"></div>
+    <button class="btn btn-primary btn-block" id="btnRoll" onclick="rollDice()"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="8" r="1.3" fill="currentColor"/><circle cx="16" cy="8" r="1.3" fill="currentColor"/><circle cx="8" cy="16" r="1.3" fill="currentColor"/><circle cx="16" cy="16" r="1.3" fill="currentColor"/><circle cx="12" cy="12" r="1.3" fill="currentColor"/></svg> <span data-i18n="btnRoll">Rolar Dado</span></button>
+    <details class="manual-roll">
+      <summary data-i18n="lblManual">Prefere digitar o valor de um dado físico?</summary>
+      <input type="number" id="rollInput" min="1" style="max-width:140px; margin:8px auto; display:block; text-align:center; font-size:1.3em;">
+      <button class="btn btn-block" onclick="resolveManualRoll()" data-i18n="btnResolve">Aplicar valor digitado</button>
+    </details>
+    <div id="rollOut"></div>
+    <h3 data-i18n="lblHistory" style="margin-top:16px;">Histórico de Rodadas</h3>
+    <div class="history-list" id="historyList"></div>
+  </div>
+
+  <button class="btn btn-block btn-reset" onclick="resetGame()" data-i18n="btnReset" style="border-color:#b91c1c; color:#b91c1c;">Reiniciar Automa</button>
+</div>
+
+<div style="text-align:center; margin-top:20px;">
+  <a class="bmc-inline" href="https://www.buymeacoffee.com/colletes" target="_blank" rel="noopener" aria-label="Buy me a coffee"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h13a2 2 0 0 1 2 2v1a3 3 0 0 1-3 3h-1"/><path d="M4 8h13v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V8Z"/><path d="M8 3c-.6 1 .5 1.6 0 3M12 3c-.6 1 .5 1.6 0 3"/></svg><span data-i18n="bmcBtn">Me pague um café</span></a>
+</div>
+
+<div id="helpModal" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
+  <div class="modal">
+    <button class="modal-close" onclick="document.getElementById('helpModal').classList.add('hidden')">✕</button>
+    <h3 data-i18n="helpTitle">Como jogar contra o ARNO</h3>
+    <div data-i18n-html="helpBody"></div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('touchstart', function(){}, {passive:true});
+
+/* ============ ARNO data tables (transcribed from the official ARNO 3.0 action cards + rulebook text) ============
+   Levels are clamped: index 0..5 = L1..L6 ("green" cards L1-3, "red" cards L4-6). Per the rulebook,
+   "At L7+ ARNO is using the values of L6+", so lvlIdx() clamps to index 5 for any level above 6.
+   X = the die-rolled position (2,3,4,5) for this turn.
+   Icon legend confirmed from the cards: black diamond = Reputation, salmon ticket = Appeal,
+   green shield = Conservation, coffee mug = Break, folder"?" = draw a random card,
+   list/box = place Final Scoring token(s). Sponsors and Association cards are marked BLUE and are
+   used unchanged at every difficulty level (only Animals/Cards/Build have green/red level tiers). */
+const ANIMALS = { // Appeal bonus on top of X, per side/level
+  I:  [0,1,1, 1,2,3],   // L1..L6
+  II: [1,1,2, 2,3,4]
+};
+const CARDS = {
+  I:  { appeal:[1,2,2, 3,3,3], cons:1, brk:1, draw:1 },
+  II: { cons:2, brk:1, draw:1 }               // no Appeal on side II
+};
+const BUILD = {
+  I: {
+    pos2_rep:  [1,1,1, 2,2,2],
+    pos3_app:  [2,3,3, 4,4,5],
+    pos5_cons: [2,3,3, 3,3,4]
+    // pos4: draw 1 card + Reputation +1, flat at every level (both tiers)
+  },
+  II: {
+    pos2_rep:  [1,1,1, 2,2,2],   // per the ARNO cards: flat 1 for L1-3, flat 2 for L4-6+, no card draw on side II
+    pos3_app:  [3,3,4, 5,5,5],
+    pos4_fs:   [1,1,1, 2,2,2],   // Final Scoring tokens placed; no card draw on side II
+    pos5_cons: [3,3,3, 4,4,4]
+  }
+};
+const SPONSORS = { // Reputation +1 only on side I; both sides: Break +X, place 1 Final Scoring token
+  I:  { rep:1 },
+  II: {}          // side II additionally grants Appeal +X; the "maxed FS card -> Conservation +2" fallback is side I only
+};
+const ASSOCIATION = {
+  // effect granted by the task slot a worker is placed on (same for side I and II)
+  slotEffect: { 2:'rep2', 3:'zoo', 4:'uni', 5:'project' },
+  na: { cons:1, brk:2 }  // no free worker left: Conservation +1, Break +2, + Partner Zoo OR University
+};
+const ACTION_KEYS = ['cards','build','sponsors','association'];
+
+const LANG_KEY = 'boardbots_lang';
+const STORAGE_KEY = 'arno_state_v1';
+
+const I18N = {
+  pt: {
+    pageTitle: 'ARNO — Automa Solo de Ark Nova',
+    heroBadge: 'OPONENTE AUTOMA',
+    title: 'ARNO',
+    subtitle: 'Automa Solo Inteligente para Ark Nova',
+    btnRules: 'COMO JOGAR',
+    setupTitle: 'Configuração do ARNO',
+    lblLevel: 'Nível de dificuldade',
+    lblDie: 'Dado usado',
+    lblMarine: 'Expansão Marine Worlds',
+    lblCPModule: 'Módulo: condição variável do Projeto de Conservação',
+    lblAssign: 'Distribuição inicial das ações (espaços 2–5)',
+    assignHelp: 'O app já sorteou aleatoriamente em qual espaço cada carta de ação caiu — não é preciso embaralhar as cartas físicas.',
+    btnReshuffle: 'Sortear novamente',
+    bmcBtn: 'Me pague um café',
+    btnStart: 'Iniciar Automa',
+    creditsLine1: 'Bot criado para uso pessoal — Colletes bots.',
+    creditsLine2: 'Automa ARNO original de Ark Nova:',
+    statsTitle: 'Painel de Recursos',
+    statAppeal: 'Atração',
+    statRep: 'Reputação',
+    statCons: 'Conservação',
+    statBreak: 'Pausa',
+    statCards: 'Cartas',
+    statZoos: 'Zoos Parceiros',
+    statUnis: 'Universidades',
+    statWorkers: 'Associados',
+    statFsTokens: 'Pontuação Final',
+    cardsTitle: 'Cartas de Ação (1–5)',
+    rollTitle: 'Turno do ARNO',
+    lblRound: 'Rodada',
+    btnRoll: 'Rolar Dado',
+    lblManual: 'Prefere digitar o valor de um dado físico?',
+    btnResolve: 'Aplicar valor digitado',
+    lblHistory: 'Histórico de Rodadas',
+    btnReset: 'Reiniciar Automa',
+    btnClose: '✕ Fechar',
+    noRoundsYet: 'Nenhuma rodada resolvida ainda.',
+    resetConfirm: 'Reiniciar o automa do zero? O progresso da partida será apagado.',
+    rolledPosition: 'Posição sorteada',
+    roundLabel: 'Rodada',
+    dieHintD6: 'Dado: D6 (rola sozinho, em 1 ou 6 role novamente).',
+    dieHintD8: 'Dado: D8 (1–2→#2, 3–4→#3, 5–6→#4, 7–8→#5).',
+    dieHintD12: 'Dado: D12 (1–3→#2, 4–6→#3, 7–9→#4, 10–12→#5).',
+    helpTitle: 'Como jogar contra o ARNO',
+    helpBody: `<p>Toque em <b>Rolar Dado</b> para o app rolar o dado virtual (com animação) e resolver o turno do ARNO sozinho — inclusive rerolando automaticamente em 1 ou 6 no D6. Se preferir usar um dado físico, abra "Prefere digitar o valor de um dado físico?" para digitar o resultado manualmente.</p>
+      <p>O ARNO sempre executa a ação <b>Animais</b> (Atração +X, onde X é a posição sorteada) e, além dela, a ação que estiver no espaço sorteado (2–5). Todos os valores numéricos (Atração, Reputação, Conservação, Pausa, Cartas, Zoos, Universidades, Associados, Fichas de Pontuação Final) são calculados e aplicados automaticamente ao painel — os botões +/− continuam disponíveis para qualquer correção manual.</p>
+      <p>Os valores já consideram o nível de dificuldade e o lado (I ou II) de cada carta — toque no botão I/II sobre cada carta para marcá-la como melhorada quando isso acontecer no jogo físico.</p>
+      <p>Na ação <b>Patrocinadores</b>, a Pausa aumenta em +X (o valor da posição sorteada, não sempre +1) e o ARNO também coloca uma ficha de Pontuação Final a cada vez; ao atingir 6 fichas, ele passa a ganhar Conservação +2 no lugar da ficha.</p>
+      <p>Na ação <b>Associação</b>, cada associado só pode ocupar uma das 4 tarefas (Reputação/Zoo/Universidade/Projeto). Se a tarefa sorteada já tiver um associado, o app redireciona automaticamente para a próxima tarefa livre (preferindo uma posição maior). Sem associados livres, o ARNO ganha Conservação +1, Pausa +2 e um Zoo Parceiro OU Universidade (escolhido automaticamente, priorizando o tipo que ele tem menos).</p>
+      <p>O <b>histórico de rodadas</b> abaixo do resultado mostra as últimas jogadas resolvidas em tempo real com tradução dinâmica.</p>
+      <p><b>Marine Worlds</b> e o <b>módulo de condição variável do Projeto de Conservação</b> são ativados como lembretes; consulte as regras impressas para os detalhes específicos de cada um.</p>`
+  },
+  en: {
+    pageTitle: 'ARNO — Ark Nova Solo Automa',
+    heroBadge: 'SOLO AUTOMA',
+    title: 'ARNO',
+    subtitle: 'Smart Solo Automa for Ark Nova',
+    btnRules: 'HOW TO PLAY',
+    setupTitle: 'ARNO Setup',
+    lblLevel: 'Difficulty level',
+    lblDie: 'Die used',
+    lblMarine: 'Marine Worlds expansion',
+    lblCPModule: 'Module: variable Conservation Project condition',
+    lblAssign: 'Initial action layout (slots 2–5)',
+    assignHelp: 'The app already randomly assigned each action card to a slot — no need to shuffle physical cards.',
+    btnReshuffle: 'Reshuffle',
+    bmcBtn: 'Buy me a coffee',
+    btnStart: 'Start Automa',
+    creditsLine1: 'Bot built for personal use — Colletes bots.',
+    creditsLine2: 'Original ARNO automa for Ark Nova by:',
+    statsTitle: 'Resource Dashboard',
+    statAppeal: 'Appeal',
+    statRep: 'Reputation',
+    statCons: 'Conservation',
+    statBreak: 'Break',
+    statCards: 'Cards',
+    statZoos: 'Partner Zoos',
+    statUnis: 'Universities',
+    statWorkers: 'Workers',
+    statFsTokens: 'Final Scoring',
+    cardsTitle: 'Action Cards (1–5)',
+    rollTitle: "ARNO's Turn",
+    lblRound: 'Round',
+    btnRoll: 'Roll Die',
+    lblManual: 'Prefer to type in a physical die result?',
+    btnResolve: 'Apply typed value',
+    lblHistory: 'Round History',
+    btnReset: 'Reset Automa',
+    btnClose: '✕ Close',
+    noRoundsYet: 'No rounds resolved yet.',
+    resetConfirm: 'Reset the automa from scratch? Game progress will be lost.',
+    rolledPosition: 'Rolled position',
+    roundLabel: 'Round',
+    dieHintD6: 'Die: D6 (rolls itself, rerolls on 1 or 6).',
+    dieHintD8: 'Die: D8 (1–2→#2, 3–4→#3, 5–6→#4, 7–8→#5).',
+    dieHintD12: 'Die: D12 (1–3→#2, 4–6→#3, 7–9→#4, 10–12→#5).',
+    helpTitle: 'How to play against ARNO',
+    helpBody: `<p>Tap <b>Roll Die</b> for the app to roll the virtual die (with animation) and resolve ARNO's turn automatically — including automatic rerolls on 1 or 6 for D6. If you'd rather use a physical die, open "Prefer to type in a physical die result?" to enter results manually.</p>
+      <p>ARNO always performs the <b>Animals</b> action (Appeal +X, where X is the rolled position) plus the action sitting in the rolled slot (2–5). Every numeric value (Appeal, Reputation, Conservation, Break, Cards, Zoos, Universities, Workers, Final Scoring tokens) is calculated and applied automatically — the +/− buttons remain available for any manual adjustment.</p>
+      <p>Values automatically adjust based on difficulty level and card side (I or II) — tap the I/II button on each card to flip it once upgraded in your physical game.</p>
+      <p>On the <b>Sponsors</b> action, Break increases by +X (the rolled position, not always +1) and ARNO also places a Final Scoring token each time; once 6 tokens are placed, he gains Conservation +2 instead of a token.</p>
+      <p>On the <b>Association</b> action, each worker can only occupy one of the 4 tasks (Reputation/Zoo/University/Project). If the rolled task already has a worker, the app automatically redirects to the next free task. With no free workers left, ARNO gains Conservation +1, Break +2, and a Partner Zoo OR University (auto-picked, favoring whichever he has fewer of).</p>
+      <p>The <b>round history</b> below the result displays all resolved turns with real-time translation.</p>
+      <p><b>Marine Worlds</b> and the <b>variable Conservation Project condition module</b> are enabled as reminders; consult the printed rulebook for specific effects.</p>`
+  }
+};
+
+let lang = localStorage.getItem(LANG_KEY) || 'pt';
+function t(k){ return (I18N[lang] && I18N[lang][k]) || I18N['pt'][k] || k; }
+
+function applyI18n(){
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    el.textContent = t(key);
+  });
+  document.querySelectorAll('[data-i18n-html]').forEach(el => {
+    const key = el.getAttribute('data-i18n-html');
+    el.innerHTML = t(key);
+  });
+  
+  const btnPt = document.getElementById('btnPt');
+  const btnEn = document.getElementById('btnEn');
+  if(btnPt) btnPt.classList.toggle('active', lang==='pt');
+  if(btnEn) btnEn.classList.toggle('active', lang==='en');
+  
+  document.documentElement.lang = lang === 'pt' ? 'pt-BR' : 'en';
+  document.title = t('pageTitle');
+  
+  updateDieHint();
+  renderSetupSlotsPreview();
+  refreshCardsUI();
+  renderStats();
+  renderRollOut();
+  renderHistory();
+}
+
+function setLang(l){
+  lang = l;
+  localStorage.setItem(LANG_KEY, l);
+  applyI18n();
+}
+window.setLang = setLang;
+
+const ACTION_LABEL = {
+  pt: { animals:'Animais', cards:'Cartas', build:'Construção', sponsors:'Patrocinadores', association:'Associação' },
+  en: { animals:'Animals', cards:'Cards', build:'Build', sponsors:'Sponsors', association:'Association' }
+};
+
+// Short in-character "zoo field log" flavor line per action type — narrator voice only, never touches the numeric readout.
+const ZOO_LOG = {
+  animals: {
+    pt: 'Uma nova espécie chega ao recinto e já atrai visitantes ao portão.',
+    en: 'A new species arrives at the enclosure and already draws visitors to the gate.'
+  },
+  cards: {
+    pt: 'A equipe de planejamento arquiva mais uma carta de expansão no plano diretor.',
+    en: 'The planning team files another expansion card into the master plan.'
+  },
+    build: {
+    pt: 'As obras avançam mais um pouco no mapa do zoológico.',
+    en: 'Construction crews make a little more progress on the zoo map.'
+  },
+  sponsors: {
+    pt: 'Um novo patrocinador assina o contrato e a diretoria respira aliviada.',
+    en: 'A new sponsor signs the contract, and the board breathes a little easier.'
+  },
+  association: {
+    pt: 'Mais um associado veste o colete e sai para o turno de trabalho.',
+    en: 'Another volunteer puts on the vest and heads out for their shift.'
+  }
+};
+function zooLogLine(actionKey, L){
+  const e = ZOO_LOG[actionKey];
+  return e ? e[L] : '';
+}
+
+// Simple flat-line icon set (inline SVG, single-color) rendered on each action-card tile.
+const ACTION_ICON = {
+  animals: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="6" r="1.6"/><circle cx="12" cy="4.6" r="1.6"/><circle cx="17" cy="6" r="1.6"/><circle cx="19" cy="10.5" r="1.5"/><path d="M12 10c-2.8 0-5.4 1.9-6.4 4.6-.8 2.1.5 4.4 2.7 4.4.9 0 1.7-.3 2.6-.7.4-.2.7-.3 1.1-.3s.7.1 1.1.3c.9.4 1.7.7 2.6.7 2.2 0 3.5-2.3 2.7-4.4C17.4 11.9 14.8 10 12 10z"/></svg>',
+  cards: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="12" height="15" rx="2"/><rect x="8" y="7" width="12" height="15" rx="2" opacity="0.5"/></svg>',
+  build: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.4-3.4a1 1 0 0 0 0-1.4L19.5 3a1 1 0 0 0-1.4 0z"/><path d="M9 12L3 18v3h3l6-6"/><path d="M13 7l4 4"/></svg>',
+  sponsors: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 7.1-1.01z"/></svg>',
+  association: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.4"/><path d="M15 20c.2-2.5 1.6-4.6 3.6-5.6"/></svg>'
+};
+const ACTION_COLOR = { animals:'#3fae82', cards:'#4f8cff', build:'#e0954a', sponsors:'#d8b34a', association:'#b56ce0' };
+
+let state = null;
+
+function populateSetupSelects(){
+  const selLevel = document.getElementById('selLevel');
+  selLevel.innerHTML='';
+  for(let i=1;i<=12;i++){ const o=document.createElement('option'); o.value=i; o.textContent = i<=6?('L'+i):('L'+i+' (L6+ table)'); selLevel.appendChild(o); }
+  shuffleSlots();
+}
+
+// Randomly assigns the 4 action cards to slots 2-5
+let setupSlots = null;
+function shuffleSlots(){
+  const keys = [...ACTION_KEYS];
+  for(let i=keys.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [keys[i],keys[j]]=[keys[j],keys[i]]; }
+  setupSlots = { 2:keys[0], 3:keys[1], 4:keys[2], 5:keys[3] };
+  renderSetupSlotsPreview();
+}
+window.shuffleSlots = shuffleSlots;
+
+function renderSetupSlotsPreview(){
+  const grid = document.getElementById('setupSlotsPreview');
+  if(!grid || !setupSlots) return;
+  grid.innerHTML='';
+  const actMap = ACTION_LABEL[lang] || ACTION_LABEL['pt'];
+  [2,3,4,5].forEach(p=>{
+    const key = setupSlots[p];
+    const div = document.createElement('div');
+    div.className = 'acard';
+    div.style.setProperty('--ac-color', ACTION_COLOR[key]);
+    div.innerHTML = `<div class="slot">#${p}</div>
+      <div class="ac-icon">${ACTION_ICON[key]}</div>
+      <div class="name">${actMap[key]}</div>`;
+    grid.appendChild(div);
+  });
+}
+
+function startGame(){
+  const level = parseInt(document.getElementById('selLevel').value,10);
+  const die = parseInt(document.getElementById('selDie').value,10);
+  const marine = document.getElementById('chkMarine').checked;
+  const cpModule = document.getElementById('chkCPModule').checked;
+  const slots = { 1:'animals', ...setupSlots };
+
+  let cons = -5 + Math.max(0, level-6);
+  if(marine) cons += 2;
+
+  state = {
+    level, die, marine, cpModule, slots,
+    sides:{ animals:'I', cards:'I', build:'I', sponsors:'I', association:'I' },
+    appeal:0, rep:0, cons, brk:0, cards:0, zoos:0, unis:0, workers:3, fsTokens:0,
+    assocSlots:{2:false,3:false,4:false,5:false},
+    lastPos:null, lastKey:null, pendingCycle:null, round:1, history:[], lastTurn:null
+  };
+  save();
+  document.getElementById('setup-screen').classList.add('hidden');
+  document.getElementById('game-area').classList.remove('hidden');
+  refreshCardsUI(); renderStats(); updateDieHint(); renderHistory();
+}
+window.startGame = startGame;
+
+function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+function load(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return false;
+    state = JSON.parse(raw);
+    if(!state) return false;
+    if(typeof state.round !== 'number') state.round = 1;
+    if(!Array.isArray(state.history)) state.history = [];
+    return true;
+  }catch(e){ return false; }
+}
+
+function resetGame(){
+  if(!confirm(t('resetConfirm'))) return;
+  localStorage.removeItem(STORAGE_KEY);
+  state = null;
+  document.getElementById('game-area').classList.add('hidden');
+  document.getElementById('setup-screen').classList.remove('hidden');
+  populateSetupSelects();
+  applyI18n();
+}
+window.resetGame = resetGame;
+
+function adjust(key,delta){
+  if(!state) return;
+  const map={appeal:'appeal',rep:'rep',cons:'cons',brk:'brk',cards:'cards',zoos:'zoos',unis:'unis',workers:'workers',fsTokens:'fsTokens'};
+  const k=map[key];
+  state[k]+=delta;
+  if(k==='brk'){ if(state.brk<0) state.brk=0; if(state.brk>6) state.brk=6; }
+  if(k==='workers'){ if(state.workers<0) state.workers=0; }
+  if(k==='fsTokens'){ if(state.fsTokens<0) state.fsTokens=0; if(state.fsTokens>6) state.fsTokens=6; }
+  save(); renderStats();
+}
+window.adjust = adjust;
+
+function renderStats(){
+  if(!state) return;
+  document.getElementById('vAppeal').textContent = state.appeal;
+  document.getElementById('vRep').textContent = state.rep;
+  document.getElementById('vCons').textContent = state.cons;
+  document.getElementById('vBreak').textContent = state.brk + '/6';
+  document.getElementById('vCards').textContent = state.cards;
+  document.getElementById('vZoos').textContent = state.zoos;
+  document.getElementById('vUnis').textContent = state.unis;
+  document.getElementById('vWorkers').textContent = state.workers;
+  document.getElementById('vFsTokens').textContent = state.fsTokens + '/6';
+}
+
+function lvlIdx(){ return Math.min(state ? state.level : 1, 6) - 1; }
+
+function refreshCardsUI(){
+  const grid = document.getElementById('cardsGrid');
+  if(!grid) return;
+  const prevRects = {};
+  grid.querySelectorAll('.acard').forEach(el=>{ prevRects[el.dataset.key] = el.getBoundingClientRect(); });
+  grid.innerHTML='';
+  const actMap = ACTION_LABEL[lang] || ACTION_LABEL['pt'];
+  const order = [1,2,3,4,5].map(p=> ({key: state && state.slots ? state.slots[p] : (p===1?'animals':ACTION_KEYS[p-2]), slot:p}));
+  order.forEach(o=>{
+    const div = document.createElement('div');
+    const isActive = state && state.lastKey && o.key===state.lastKey;
+    div.className = 'acard' + (isActive ? ' active' : '');
+    div.dataset.key = o.key;
+    div.style.setProperty('--ac-color', ACTION_COLOR[o.key]);
+    const side = state ? state.sides[o.key] : 'I';
+    div.innerHTML = `<div class="slot">#${o.slot}</div>
+      <div class="ac-icon">${ACTION_ICON[o.key]}</div>
+      <div class="name">${actMap[o.key]}</div>
+      <div class="side-toggle">
+        <button class="btn" onclick="flipSide('${o.key}')">${side}</button>
+      </div>`;
+    grid.appendChild(div);
+  });
+  grid.querySelectorAll('.acard').forEach(el=>{
+    const prev = prevRects[el.dataset.key];
+    if(!prev) return;
+    const next = el.getBoundingClientRect();
+    const dx = prev.left - next.left, dy = prev.top - next.top;
+    if(!dx && !dy) return;
+    el.style.transition = 'none';
+    el.style.transform = `translate(${dx}px, ${dy}px)`;
+    requestAnimationFrame(()=>{
+      el.style.transition = 'transform .4s ease';
+      el.style.transform = '';
+    });
+  });
+}
+
+function flipSide(key){
+  if(!state) return;
+  state.sides[key] = state.sides[key]==='I' ? 'II' : 'I';
+  save(); refreshCardsUI();
+}
+window.flipSide = flipSide;
+
+function updateDieHint(){
+  const hint = document.getElementById('dieHint');
+  if(!state || !hint) return;
+  if(state.die===6) hint.textContent = t('dieHintD6');
+  if(state.die===8) hint.textContent = t('dieHintD8');
+  if(state.die===12) hint.textContent = t('dieHintD12');
+  const rollInput = document.getElementById('rollInput');
+  if(rollInput) rollInput.max = state.die;
+  const roundNo = document.getElementById('roundNo');
+  if(roundNo) roundNo.textContent = state.round || 1;
+}
+
+function positionFromRoll(v){
+  if(state.die===6){
+    if(v<2||v>5) return null; // reroll
+    return v;
+  }
+  if(state.die===8){
+    return Math.min(5, 2 + Math.floor((v-1)/2));
+  }
+  if(state.die===12){
+    return Math.min(5, 2 + Math.floor((v-1)/3));
+  }
+  return null;
+}
+
+function sleep(ms){ return new Promise(r=>setTimeout(r, ms)); }
+function spinFace(face, ms){
+  return new Promise(resolve=>{
+    face.classList.remove('settled'); face.classList.add('spinning');
+    const iv = setInterval(()=>{ face.textContent = 1+Math.floor(Math.random()*state.die); }, 60);
+    setTimeout(()=>{ clearInterval(iv); face.classList.remove('spinning'); resolve(); }, ms);
+  });
+}
+
+// 3D Dice Box Integration
+let diceBox = null;
+let diceBoxReady = false;
+
+async function initDiceBox() {
+  try {
+    const { loadDiceBox } = await import('../assets/dice-roller.js');
+    diceBox = await loadDiceBox({ theme: 'canopy', themeUrl: new URL('../assets/dice-box/themes/canopy', window.location.href).href, themeColor: '#246a4e', scale: 27, timeoutMs: 6000 });
+    diceBoxReady = true;
+    const tray = document.getElementById('dice-tray');
+    if (tray) tray.classList.add('has-3d');
+  } catch (e) {
+    diceBoxReady = false;
+  }
+}
+initDiceBox();
+
+// Physics engine can occasionally never settle (silent hang); guard every roll with a timeout.
+async function rollDiceBoxSafe(notation, timeoutMs = 5000) {
+  const { rollDiceSafe } = await import('../assets/dice-roller.js');
+  return rollDiceSafe(diceBox, notation, timeoutMs);
+}
+
+async function rollDice(){
+  if(!state) return;
+  await performPendingCycle();
+  const btn = document.getElementById('btnRoll');
+  const face = document.getElementById('dieFace');
+  const flash = document.getElementById('rerollFlash');
+  btn.disabled = true;
+  flash.textContent = '';
+  let pos = null, value = null, guard = 0;
+  
+  do {
+    if (diceBoxReady && diceBox) {
+      try {
+        const rollRes = await rollDiceBoxSafe(`1d${state.die}`);
+        if (rollRes && rollRes.length > 0 && rollRes[0].value) {
+          value = rollRes[0].value;
+        } else {
+          value = 1 + Math.floor(Math.random()*state.die);
+        }
+      } catch(e) {
+        value = 1 + Math.floor(Math.random()*state.die);
+      }
+    } else {
+      await spinFace(face, 500 + Math.random()*200);
+      value = 1 + Math.floor(Math.random()*state.die);
+    }
+    
+    face.textContent = value;
+    face.classList.add('settled');
+    pos = positionFromRoll(value);
+    guard++;
+    if(pos===null){
+      flash.textContent = lang==='pt' ? `Rolou ${value} — role novamente!` : `Rolled ${value} — reroll!`;
+      await sleep(700);
+      face.classList.remove('settled');
+      flash.textContent = '';
+    }
+  } while(pos===null && guard<12);
+  
+  btn.disabled = false;
+  applyTurn(pos, value);
+}
+window.rollDice = rollDice;
+
+async function resolveManualRoll(){
+  if(!state) return;
+  await performPendingCycle();
+  const v = parseInt(document.getElementById('rollInput').value,10);
+  if(!v || v<1 || v>state.die) return;
+  const face = document.getElementById('dieFace');
+  face.textContent = v; face.classList.add('settled'); setTimeout(()=>face.classList.remove('settled'),350);
+  const pos = positionFromRoll(v);
+  const flash = document.getElementById('rerollFlash');
+  if(pos===null){ flash.textContent = lang==='pt' ? `Rolou ${v} — role novamente!` : `Rolled ${v} — reroll!`; return; }
+  flash.textContent = '';
+  applyTurn(pos, v);
+}
+window.resolveManualRoll = resolveManualRoll;
+
+function cycleUsedSlot(pos){
+  const order = [1,2,3,4,5].map(p=>state.slots[p]);
+  const used = order.splice(pos-1,1)[0];
+  order.unshift(used);
+  [1,2,3,4,5].forEach((p,k)=>{ state.slots[p]=order[k]; });
+}
+
+async function performPendingCycle(){
+  if(!state || state.pendingCycle==null) return;
+  const pos = state.pendingCycle;
+  state.pendingCycle = null;
+  cycleUsedSlot(pos);
+  save(); refreshCardsUI();
+  await sleep(400);
+}
+
+// Compute dynamic lines for any turn record
+function getTurnLines(turn, targetLang){
+  const L = targetLang || lang;
+  const actMap = ACTION_LABEL[L] || ACTION_LABEL['pt'];
+  const key = turn.actionKey;
+  const side = turn.side;
+  const pos = turn.pos;
+  const idx = Math.min(turn.level || (state ? state.level : 1), 6) - 1;
+  const actName = actMap[key] || key;
+  const lines = [];
+
+  if(key==='animals'){
+    const gain = pos + ANIMALS[side][idx];
+    lines.push({
+      label: `${actName} ${side} (#${pos})`,
+      text: `${L==='pt'?'Atração':'Appeal'} +${gain}`
+    });
+  } else if(key==='cards'){
+    const t = CARDS[side];
+    const parts = [];
+    if(t.appeal) parts.push(`${L==='pt'?'Atração':'Appeal'} +${t.appeal[idx]}`);
+    parts.push(`${L==='pt'?'Conservação':'Conservation'} +${t.cons}`);
+    parts.push(`${L==='pt'?'Pausa':'Break'} +${t.brk}`);
+    parts.push(L==='pt' ? 'compra 1 carta' : 'draw 1 card');
+    lines.push({ label:`${actName} ${side}`, text: parts.join(', ') });
+  } else if(key==='build'){
+    const t = BUILD[side];
+    let extra;
+    if(pos===2){
+      extra = `${L==='pt'?'Reputação':'Reputation'} +${t.pos2_rep[idx]}`;
+    } else if(pos===3){
+      extra = `${L==='pt'?'Atração':'Appeal'} +${t.pos3_app[idx]}`;
+    } else if(pos===4){
+      if(side==='I'){
+        extra = L==='pt' ? 'Compra 1 carta, Reputação +1' : 'Draw 1 card, Reputation +1';
+      } else {
+        const n = t.pos4_fs[idx];
+        extra = L==='pt' ? `Coloca ${n} ficha(s) de Pontuação Final` : `Place ${n} Final Scoring token(s)`;
+      }
+    } else {
+      extra = `${L==='pt'?'Conservação':'Conservation'} +${t.pos5_cons[idx]}`;
+    }
+    lines.push({ label:`${actName} ${side} (#${pos})`, text: extra });
+  } else if(key==='sponsors'){
+    const parts = [];
+    if(side==='I') parts.push(`${L==='pt'?'Reputação':'Reputation'} +1`);
+    parts.push(`${L==='pt'?'Pausa':'Break'} +${pos}`);
+    if(side==='II') parts.push(`${L==='pt'?'Atração':'Appeal'} +${pos}`);
+    if(turn.meta && turn.meta.fsMaxed){
+      parts.push(L==='pt' ? 'Conservação +2 (fichas de Pontuação Final no máximo)' : 'Conservation +2 (Final Scoring tokens maxed)');
+    } else {
+      parts.push(L==='pt' ? 'coloca 1 ficha de Pontuação Final' : 'place 1 Final Scoring token');
+    }
+    lines.push({ label:`${actName} ${side}`, text: parts.join(', ') });
+  } else if(key==='association'){
+    if(turn.meta && turn.meta.noWorker){
+      const gName = turn.meta.gainedType === 'zoo' ? (L==='pt'?'Zoo Parceiro':'Partner Zoo') : (L==='pt'?'Universidade':'University');
+      lines.push({
+        label: `${actName} ${side} (${L==='pt'?'sem associado':'no worker'})`,
+        text: `${L==='pt'?'Conservação':'Conservation'} +${ASSOCIATION.na.cons}, ${L==='pt'?'Pausa':'Break'} +${ASSOCIATION.na.brk}, +${gainedName(turn.meta.gainedType, L)}`
+      });
+    } else {
+      const target = (turn.meta && turn.meta.targetSlot) || pos;
+      let eff = '';
+      if(target===2) eff = L==='pt'?'Reputação +2':'Reputation +2';
+      else if(target===3) eff = L==='pt'?'ganha Zoo Parceiro':'gain Partner Zoo';
+      else if(target===4) eff = L==='pt'?'ganha Universidade':'gain University';
+      else eff = L==='pt'?'avança Projeto de Conservação':'advance Conservation Project';
+      
+      const redir = target!==pos ? (L==='pt'?` (redirecionado do #${pos})`:` (redirected from #${pos})`) : '';
+      let placed = `${eff}, ${L==='pt'?'coloca 1 associado':'places 1 worker'}`;
+      if(side==='II'){
+        placed += L==='pt' ? ', doação: Conservação +1' : ', donation: Conservation +1';
+      }
+      lines.push({ label:`${actName} ${side} (#${target})${redir}`, text: placed });
+    }
+  }
+  return lines;
+}
+
+function gainedName(type, L){
+  return type === 'zoo' ? (L==='pt'?'Zoo Parceiro':'Partner Zoo') : (L==='pt'?'Universidade':'University');
+}
+
+function applyTurn(pos, rolledValue){
+  state.lastPos = pos;
+  const idx = lvlIdx();
+  const actionKey = state.slots[pos];
+  const side = state.sides[actionKey];
+  const meta = {};
+
+  // Execute state adjustments
+  if(actionKey==='animals'){
+    state.appeal += pos + ANIMALS[side][idx];
+  } else if(actionKey==='cards'){
+    const t = CARDS[side];
+    if(t.appeal) state.appeal += t.appeal[idx];
+    state.cons += t.cons;
+    state.brk = Math.min(6, state.brk + t.brk);
+    state.cards += t.draw;
+  } else if(actionKey==='build'){
+    const t = BUILD[side];
+    if(pos===2) state.rep += t.pos2_rep[idx];
+    else if(pos===3) state.appeal += t.pos3_app[idx];
+    else if(pos===4){
+      if(side==='I'){ state.cards += 1; state.rep += 1; }
+      else { state.fsTokens = Math.min(6, state.fsTokens + t.pos4_fs[idx]); }
+    } else {
+      state.cons += t.pos5_cons[idx];
+    }
+  } else if(actionKey==='sponsors'){
+    if(side==='I') state.rep += 1;
+    state.brk = Math.min(6, state.brk + pos);
+    if(side==='II') state.appeal += pos;
+    if(state.fsTokens>=6){
+      if(side==='I') state.cons += 2;
+      meta.fsMaxed = true;
+    } else {
+      state.fsTokens++;
+      meta.fsMaxed = false;
+    }
+  } else if(actionKey==='association'){
+    if(state.workers<=0){
+      meta.noWorker = true;
+      state.cons += ASSOCIATION.na.cons;
+      state.brk = Math.min(6, state.brk + ASSOCIATION.na.brk);
+      let gType = 'zoo';
+      if(state.zoos < state.unis){ state.zoos++; gType = 'zoo'; }
+      else if(state.unis < state.zoos){ state.unis++; gType = 'uni'; }
+      else if(Math.random()<0.5){ state.zoos++; gType = 'zoo'; }
+      else { state.unis++; gType = 'uni'; }
+      meta.gainedType = gType;
+    } else {
+      meta.noWorker = false;
+      const target = findAssocSlot(pos);
+      meta.targetSlot = target;
+      if(target===2) state.rep += 2;
+      else if(target===3) state.zoos++;
+      else if(target===4) state.unis++;
+      
+      state.assocSlots[target] = true;
+      state.workers--;
+      if(side==='II') state.cons += 1;
+    }
+  }
+
+  const turnRecord = {
+    round: state.round,
+    pos,
+    rolledValue,
+    actionKey,
+    side,
+    level: state.level,
+    meta
+  };
+
+  state.lastTurn = turnRecord;
+  state.lastKey = actionKey;
+  state.pendingCycle = pos;
+
+  state.history.unshift(turnRecord);
+  if(state.history.length>20) state.history.pop();
+  state.round++;
+  
+  const roundNo = document.getElementById('roundNo');
+  if(roundNo) roundNo.textContent = state.round;
+
+  save();
+  refreshCardsUI();
+  renderStats();
+  renderRollOut();
+  renderHistory();
+}
+
+function renderRollOut(){
+  const out = document.getElementById('rollOut');
+  if(!out || !state || !state.lastTurn) return;
+  const turn = state.lastTurn;
+  const lines = getTurnLines(turn, lang);
+  const logLine = zooLogLine(turn.actionKey, lang);
+  out.innerHTML = `<div class="effect-box">
+      ${logLine ? `<div class="zoo-log-line">${logLine}</div>` : ''}
+      <div class="eff-line"><b>${t('rolledPosition')}</b><span>#${turn.pos}${turn.rolledValue!=null?` (d${state.die}=${turn.rolledValue})`:''}</span></div>
+      ${lines.map(l=>`<div class="eff-line"><span>${l.label}</span><span>${l.text}</span></div>`).join('')}
+    </div>`;
+}
+
+function renderHistory(){
+  const el = document.getElementById('historyList');
+  if(!el || !state) return;
+  if(!state.history.length){
+    el.innerHTML = `<div class="history-empty">${t('noRoundsYet')}</div>`;
+    return;
+  }
+  const actMap = ACTION_LABEL[lang] || ACTION_LABEL['pt'];
+  el.innerHTML = state.history.map(h=>{
+    const lines = getTurnLines(h, lang);
+    const actName = actMap[h.actionKey] || h.actionKey;
+    const logLine = zooLogLine(h.actionKey, lang);
+    return `
+      <div class="history-item">
+        <div class="h-head"><b>${t('roundLabel')} ${h.round}</b><span>#${h.pos} · ${actName} (${h.side})</span></div>
+        ${logLine ? `<div class="zoo-log-line">${logLine}</div>` : ''}
+        <div class="h-lines">${lines.map(l=>`${l.label}: ${l.text}`).join(' · ')}</div>
+      </div>`;
+  }).join('');
+}
+
+function findAssocSlot(pos){
+  if(!state.assocSlots[pos]) return pos;
+  for(let p=pos+1;p<=5;p++){ if(!state.assocSlots[p]) return p; }
+  for(let p=pos-1;p>=2;p--){ if(!state.assocSlots[p]) return p; }
+  return pos;
+}
+
+// Initialization
+populateSetupSelects();
+document.getElementById('chkMarine').addEventListener('change', ()=>{});
+if(load()){
+  document.getElementById('setup-screen').classList.add('hidden');
+  document.getElementById('game-area').classList.remove('hidden');
+}
+applyI18n();
+</script>
+<script type="module" src="../assets/analytics.js"></script>
+<script type="module" src="../assets/bot-view.js"></script>
+
+</body>
+</html>
