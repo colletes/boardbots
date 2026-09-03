@@ -1782,6 +1782,15 @@ let searchDebounceTimer = null;
 // Curated high-quality database of popular board games (instant 0ms results with verified box covers)
 const BOARD_GAMES_DATABASE = [
   {
+    "title": "Rá",
+    "slug": "ra",
+    "ludoId": 769,
+    "alt": "Ra Rá Reiner Knizia",
+    "image": "https://storage.googleapis.com/ludopedia-capas/769_m.jpg",
+    "year": "1999",
+    "source": "ludopedia"
+  },
+  {
     "title": "Stone Age",
     "slug": "a-idade-da-pedra",
     "bggId": "34635",
@@ -6821,14 +6830,93 @@ function searchCuratedDatabase(query) {
   }));
 }
 
-// String similarity / fuzzy match score
-function similarity(s1, s2) {
-  const str1 = s1.toLowerCase().trim();
-  const str2 = s2.toLowerCase().trim();
-  if (str1 === str2) return 1.0;
-  if (str1.startsWith(str2) || str2.startsWith(str1)) return 0.9;
-  if (str1.includes(str2) || str2.includes(str1)) return 0.8;
-  return 0.5;
+function normalizeSearchStr(str) {
+  return (str || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
+function calculateGameMatchScore(game, query) {
+  const q = normalizeSearchStr(query);
+  if (!q) return 0;
+
+  const title = normalizeSearchStr(game.title);
+  const alt = normalizeSearchStr(game.alt);
+  const slug = normalizeSearchStr(game.slug).replace(/^jogo\//, '');
+
+  // 1. Exact Match (Tier 1: 1500+)
+  if (title === q) return 1500;
+  if (slug === q) return 1450;
+
+  // 2. Exact word boundary match in title (e.g. "Ra", "Ra: The Dice Game")
+  const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const wordRegex = new RegExp('(?:^|[\\s:;\\-_()\\[\\]/])' + escaped + '(?:$|[\\s:;\\-_()\\[\\]/])', 'i');
+
+  if (wordRegex.test(title)) {
+    if (title.startsWith(q + ' ') || title.startsWith(q + ':') || title.startsWith(q + '-')) {
+      return 1100 - title.length;
+    }
+    return 1000 - title.length;
+  }
+
+  // 3. Exact word match in slug or alt
+  if (wordRegex.test(slug)) return 850 - slug.length;
+  if (wordRegex.test(alt)) return 800 - alt.length;
+
+  // 4. Title starts with query (Tier 2: 600+)
+  if (title.startsWith(q)) {
+    return 600 - (title.length - q.length);
+  }
+  if (slug.startsWith(q)) {
+    return 550 - (slug.length - q.length);
+  }
+
+  // 5. One of the words in title starts with query (Tier 3: 400+)
+  const titleWords = title.split(/[\s:;\-_()\[\]/]+/).filter(Boolean);
+  if (titleWords.some(w => w.startsWith(q))) {
+    return 400 - (title.length - q.length);
+  }
+
+  // 6. Substring in title (Tier 4: only for longer queries or short titles)
+  if (title.includes(q)) {
+    // Prevent short queries (e.g. "ra", "go") from spamming unrelated games ("Terraforming Mars", "Dragon")
+    if (q.length < 3 && title.length > 8) return 0;
+    return 150 - Math.min(100, (title.length - q.length) * 2);
+  }
+
+  // 7. Substring in alt
+  if (alt.includes(q)) {
+    if (q.length < 3 && alt.length > 8) return 0;
+    return 100 - Math.min(80, (alt.length - q.length) * 2);
+  }
+
+  return 0;
+}
+
+function searchCuratedDatabase(query) {
+  const qNorm = normalizeSearchStr(query);
+  if (!qNorm) return [];
+
+  return BOARD_GAMES_DATABASE
+    .map(g => ({
+      game: {
+        id: 'db_' + (g.ludoId || g.title.replace(/\s+/g, '_').toLowerCase()),
+        ludoId: g.ludoId || null,
+        title: g.title,
+        slug: g.slug || '',
+        alt: g.alt || '',
+        image: g.image,
+        year: g.year,
+        source: 'ludopedia',
+        link: g.link || (g.slug ? `https://ludopedia.com.br/jogo/${g.slug}` : '')
+      },
+      score: calculateGameMatchScore(g, query)
+    }))
+    .filter(item => item.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .map(item => item.game);
 }
 
 async function performSearch(query) {
@@ -6887,20 +6975,23 @@ async function performSearch(query) {
     const seenTitles = new Set();
     const merged = [];
 
-    curatedMatches.forEach(item => {
-      seenTitles.add(item.title.toLowerCase());
-      merged.push(item);
-    });
-
-    apiMatches.forEach(item => {
-      if (!seenTitles.has(item.title.toLowerCase())) {
-        seenTitles.add(item.title.toLowerCase());
-        merged.push(item);
+    // Helper to add and calculate score
+    const addScored = (game) => {
+      const normTitle = normalizeSearchStr(game.title);
+      if (!seenTitles.has(normTitle)) {
+        seenTitles.add(normTitle);
+        const score = calculateGameMatchScore(game, query);
+        if (score > 0) {
+          merged.push({ game, score });
+        }
       }
-    });
+    };
 
-    // Sort with fuzzy priority matching query
-    merged.sort((a, b) => similarity(b.title, query) - similarity(a.title, query));
+    curatedMatches.forEach(addScored);
+    apiMatches.forEach(addScored);
+
+    // Sort strictly by score: Exact match > Starts With > Word match > Substrings
+    merged.sort((a, b) => b.score - a.score);
 
     spinner.style.display = 'none';
 
@@ -6912,7 +7003,7 @@ async function performSearch(query) {
     dropdown.innerHTML = '';
 
     // Render results
-    merged.slice(0, 10).forEach(game => {
+    merged.slice(0, 10).forEach(({ game }) => {
       const itemRow = document.createElement('div');
       itemRow.className = 'search-result-item';
 
