@@ -1723,8 +1723,16 @@ function tryPlayCard(color, val) {
       if (val > highest) {
         if (numbers.length === 0) {
           // Se a expedição já possui cartas (ex: Apertos de Mão 'H'), ela JÁ ESTÁ ATIVA!
-          // Jamais bloqueie números: ela precisa desesperadamente de números para pontuar os multiplicadores!
+          // No início da partida, segura cartas altas (> 6) na reserva para tentar abrir com números
+          // menores (2 a 6) e não se bloquear cedo. Perto do fim (totalCards >= 10) ou se a reserva
+          // estiver cheia, joga na hora para ativar multiplicadores e pontuar!
           if (col.length > 0) {
+            let totalCards = 0;
+            COLORS.forEach(c => totalCards += expeditions[c].length);
+            const isLate = totalCards >= 10 || botReserve.length >= getReserveCap() - 1;
+            if (val > 6 && !isLate) {
+              return null; // Espera números menores na reserva
+            }
             col.push(val);
             return "PLAY";
           }
@@ -1895,11 +1903,21 @@ function checkReservePlays(triggerColor) {
 // Nao posterga se a partida ja estiver avancada ou se a reserva estiver perto de encher.
 function shouldDeferBigJump(color, val) {
   if (difficulty === 'gods' || optGods || val === 'H') return false;
-  const numbers = expeditions[color].filter(v => v !== 'H');
-  if (numbers.length === 0) return false; // starting fresh is handled by the existing start-up cap
+  const col = expeditions[color];
+  const numbers = col.filter(v => v !== 'H');
+  
   let totalCards = 0;
   COLORS.forEach(c => totalCards += expeditions[c].length);
-  if (totalCards >= 10 || botReserve.length >= getReserveCap() - 1) return false;
+  const isLate = totalCards >= 10 || botReserve.length >= getReserveCap() - 1;
+  if (isLate) return false;
+
+  if (numbers.length === 0) {
+    // Se a coluna já tem Apertos de Mão, segurar números altos (> 6) na reserva
+    // no início da partida para tentar abrir com números menores e não se bloquear
+    if (col.length > 0 && val > 6) return true;
+    return false;
+  }
+
   const highest = numbers[numbers.length - 1];
   return (val - highest) >= 4; // skips 3+ still-possible values
 }
@@ -1977,6 +1995,11 @@ function processCard() {
   let reservePlays = [];
   if (result === "PLAY" || result === "SLOT" || result === "REPLACE") {
     reservePlays = checkReservePlays(selColor);
+    let totalCards = 0;
+    COLORS.forEach(c => totalCards += expeditions[c].length);
+    if (totalCards >= 10) {
+      reservePlays = reservePlays.concat(checkReservePlays());
+    }
   }
   
   // Any expedition change can also make an already-held reserve card permanently dead.
@@ -2112,8 +2135,18 @@ function updateWantedCards() {
           const numbers = arr.filter(v => v !== 'H');
           const lastNum = numbers.length > 0 ? numbers[numbers.length - 1] : null;
           if (lastNum === null) {
-              if (arr.length < 3) wanted.push(HANDSHAKE_ICON + ', 2-10');
-              else wanted.push('2-10');
+              let totalCards = 0;
+              COLORS.forEach(co => totalCards += expeditions[co].length);
+              const isLate = totalCards >= 10 || botReserve.length >= getReserveCap() - 1;
+              const isGods = (difficulty === 'gods' || optGods);
+              
+              if (isGods || isLate) {
+                  if (arr.length < 3) wanted.push(HANDSHAKE_ICON + ', 2-10');
+                  else wanted.push('2-10');
+              } else {
+                  if (arr.length < 3) wanted.push(HANDSHAKE_ICON + ', 2-6');
+                  else wanted.push('2-6');
+              }
           } else {
               if (lastNum < 10) wanted.push((lastNum + 1).toString());
               
