@@ -1056,16 +1056,27 @@ footer {
       <span data-i18n="modal_custom_title">Adicionar Jogo Manual</span>
     </h2>
     <div class="form-group">
+      <label data-i18n="label_game_link">Link da Ludopedia ou BGG (Opcional)</label>
+      <div style="display:flex; gap:8px;">
+        <input type="url" id="customGameLink" class="form-input" placeholder="https://ludopedia.com.br/jogo/... ou https://boardgamegeek.com/boardgame/..." onchange="handleLinkExtraction()">
+        <button type="button" class="tool-btn" onclick="handleLinkExtraction()" style="white-space:nowrap;" data-i18n="btn_extract_link">Extrair Dados</button>
+      </div>
+    </div>
+    <div class="form-group">
       <label data-i18n="label_game_name">Nome do Jogo *</label>
       <input type="text" id="customGameName" class="form-input" placeholder="Ex: Protótipo Incrível, Jogo Caseiro...">
     </div>
     <div class="form-group">
       <label data-i18n="label_game_img_url">URL da Imagem da Capa (Opcional)</label>
-      <input type="url" id="customGameUrl" class="form-input" placeholder="https://exemplo.com/capa.jpg">
+      <input type="url" id="customGameUrl" class="form-input" placeholder="https://exemplo.com/capa.jpg" oninput="previewCustomImage(this.value)">
     </div>
     <div class="form-group">
       <label data-i18n="label_upload_file">Ou Enviar Arquivo de Imagem</label>
       <input type="file" id="customGameFile" class="form-input" accept="image/*" onchange="handleImageUpload(event)">
+    </div>
+    <!-- Preview Box -->
+    <div id="customImagePreview" style="display:none; margin-bottom:14px; text-align:center;">
+      <img id="customPreviewImg" src="" style="width:72px; height:72px; object-fit:cover; border-radius:6px; border:1px solid var(--brass);">
     </div>
     <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
       <button class="tool-btn" onclick="closeModal('customGameModal')" data-i18n="btn_cancel">Cancelar</button>
@@ -1231,8 +1242,11 @@ const I18N = {
     help_step4_d: 'Exporte em PNG, JPG ou PDF, ou gere nos formatos especiais Feed (1:1) e Story (9:16) prontos para postar no Instagram, WhatsApp e Telegram!',
     confirm_reset: 'Tem certeza que deseja reiniciar a Tierlist e remover todos os jogos?',
     confirm_delete_tier: 'Excluir este Tier? Todos os jogos nele voltarão para "Não jogado".',
-    btn_save_json: 'Salvar JSON',
-    btn_load_json: 'Carregar JSON',
+    search_placeholder: 'Buscar jogo ou colar link da Ludopedia / BGG (ex: Catan, Ark Nova)...',
+    label_game_link: 'Link da Ludopedia ou BGG (Opcional)',
+    btn_extract_link: 'Extrair Dados',
+    toast_link_extracted: 'Capa e dados do jogo extraídos com sucesso!',
+    toast_link_error: 'Não foi possível extrair dados automaticamente deste link.',
     toast_json_saved: 'Arquivo JSON da Tierlist salvo!',
     toast_json_loaded: 'Tierlist carregada com sucesso do JSON!',
     toast_added: '"{name}" adicionado a Não Jogado!',
@@ -1254,13 +1268,17 @@ const I18N = {
     footer_credits: 'Credits',
     footer_kofi: 'Buy me a coffee ☕',
     footer_note: 'Unofficial companion tool for board games. Box covers and metadata via Ludopedia & BoardGameGeek.',
-    search_placeholder: 'Search board games on Ludopedia & BGG (e.g. Catan, Ark Nova)...',
+    search_placeholder: 'Search games or paste Ludopedia / BGG link (e.g. Catan, Ark Nova)...',
     search_loading: 'Searching Ludopedia & BGG...',
     search_no_results: 'No games found with this title. Try another search or add a custom game!',
     source_ludopedia: 'Ludopedia',
     source_bgg: 'BGG',
     source_custom: 'Custom',
     modal_custom_title: 'Add Custom Game',
+    label_game_link: 'Ludopedia or BGG Link (Optional)',
+    btn_extract_link: 'Extract Details',
+    toast_link_extracted: 'Game details & cover extracted successfully!',
+    toast_link_error: 'Could not automatically extract details from this link.',
     label_game_name: 'Game Title *',
     label_game_img_url: 'Cover Image URL (Optional)',
     label_upload_file: 'Or Upload Image File',
@@ -1276,7 +1294,7 @@ const I18N = {
     btn_remove_game: 'Remove from Tierlist',
     help_title: 'How to Use Tierlist Maker',
     help_step1_t: '1. Automatic Game Search:',
-    help_step1_d: 'Type any game title in the search box. Searches Ludopedia first, then BoardGameGeek (BGG) with title matching and square covers.',
+    help_step1_d: 'Type any game title in the search box or paste a link from Ludopedia/BGG. Searches databases with title matching and square covers.',
     help_step2_t: '2. Drag & Drop with Magnetic Snap:',
     help_step2_d: 'New games appear in "Unplayed". Drag and drop to sort them into any tier. On mobile devices, tap any game for a quick action menu.',
     help_step3_t: '3. Full Customization:',
@@ -1837,6 +1855,36 @@ async function performSearch(query) {
     return;
   }
 
+  // URL detected in search input (e.g. Ludopedia, BGG, or direct image)
+  const isUrl = query.startsWith('http://') || query.startsWith('https://') || query.includes('ludopedia.com.br') || query.includes('boardgamegeek.com');
+  if (isUrl) {
+    spinner.style.display = 'none';
+    dropdown.innerHTML = `
+      <div class="search-result-item" style="background:rgba(99, 102, 241, 0.15); border-left:3px solid var(--accent-indigo);">
+        <div class="search-result-thumb" style="display:flex;align-items:center;justify-content:center;background:#1e1b4b;color:#a5b4fc;font-size:1.3rem;">🔗</div>
+        <div class="search-result-info">
+          <div class="search-result-title" style="color:#a5b4fc;">Extrair jogo do link</div>
+          <div class="search-result-meta"><span class="source-badge bgg">Link</span> Clique para extrair capa e salvar</div>
+        </div>
+        <button class="search-result-add-btn">+</button>
+      </div>
+    `;
+    dropdown.classList.add('visible');
+    dropdown.querySelector('.search-result-item').onclick = async () => {
+      spinner.style.display = 'block';
+      dropdown.innerHTML = `<div class="search-result-status">Extraindo dados do link...</div>`;
+      const extracted = await extractGameFromLink(query);
+      if (extracted) {
+        addGameToTierlist(extracted);
+      }
+      dropdown.classList.remove('visible');
+      document.getElementById('gameSearchInput').value = '';
+      document.getElementById('searchClearBtn').style.display = 'none';
+      spinner.style.display = 'none';
+    };
+    return;
+  }
+
   spinner.style.display = 'block';
   dropdown.innerHTML = `<div class="search-result-status">${t('search_loading')}</div>`;
   dropdown.classList.add('visible');
@@ -1976,6 +2024,11 @@ function addGameToTierlist(game) {
     source: game.source || 'manual'
   });
 
+  // If game has an image URL and isn't base64, persist to community Firestore DB
+  if (game.image && !game.image.startsWith('data:') && window.persistGameToCommunityDB) {
+    window.persistGameToCommunityDB(game);
+  }
+
   saveState();
   renderBoard();
   showToast(t('toast_added').replace('{name}', game.title));
@@ -2067,9 +2120,21 @@ function resetTierlist() {
 }
 
 /* =======================================================
-   CUSTOM GAME UPLOAD
+   LINK EXTRACTION & CUSTOM GAME UPLOAD
    ======================================================= */
 let uploadedBase64Image = '';
+
+function previewCustomImage(url) {
+  const box = document.getElementById('customImagePreview');
+  const img = document.getElementById('customPreviewImg');
+  if (!box || !img) return;
+  if (url) {
+    img.src = url;
+    box.style.display = 'block';
+  } else {
+    box.style.display = 'none';
+  }
+}
 
 function handleImageUpload(e) {
   const file = e.target.files[0];
@@ -2077,11 +2142,136 @@ function handleImageUpload(e) {
   const reader = new FileReader();
   reader.onload = (event) => {
     uploadedBase64Image = event.target.result;
+    previewCustomImage(uploadedBase64Image);
   };
   reader.readAsDataURL(file);
 }
 
-function submitCustomGame() {
+async function extractGameFromLink(rawUrl) {
+  let url = (rawUrl || '').trim();
+  if (!url) return null;
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    url = 'https://' + url;
+  }
+
+  // 1. Direct Image Link
+  if (url.match(/\.(jpeg|jpg|png|webp|gif)(\?.*)?$/i)) {
+    const filename = url.split('/').pop().split('?')[0];
+    const cleanName = filename.split('.')[0].replace(/[-_]/g, ' ');
+    return {
+      title: cleanName.charAt(0).toUpperCase() + cleanName.slice(1),
+      image: url,
+      year: '',
+      source: 'link',
+      link: url
+    };
+  }
+
+  // 2. Ludopedia Link: https://ludopedia.com.br/jogo/catan
+  const ludoMatch = url.match(/ludopedia\.com\.br\/jogo\/([a-zA-Z0-9\-_]+)/i);
+  if (ludoMatch) {
+    const slug = ludoMatch[1];
+    const prettyTitle = slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+
+    const localMatch = BOARD_GAMES_DATABASE.find(g => g.title.toLowerCase() === prettyTitle.toLowerCase() || (g.alt && g.alt.toLowerCase().includes(slug.replace(/-/g, ' '))));
+    if (localMatch) {
+      return { ...localMatch, source: 'ludopedia', link: url };
+    }
+
+    let title = prettyTitle;
+    let image = '';
+    let year = '';
+
+    // Fetch Open DB / Wiki for this game title
+    const wikiResults = await searchWikipediaOpenDB(prettyTitle);
+    if (wikiResults.length > 0) {
+      image = wikiResults[0].image;
+      title = wikiResults[0].title || prettyTitle;
+    }
+
+    return {
+      title,
+      image,
+      year,
+      source: 'ludopedia',
+      link: url
+    };
+  }
+
+  // 3. BGG Link: https://boardgamegeek.com/boardgame/13/catan
+  const bggMatch = url.match(/boardgamegeek\.com\/boardgame\/(\d+)(?:\/([a-zA-Z0-9\-_]+))?/i);
+  if (bggMatch) {
+    const id = bggMatch[1];
+    const slug = bggMatch[2] || '';
+    const prettyTitle = slug ? slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : `BGG #${id}`;
+
+    const localMatch = BOARD_GAMES_DATABASE.find(g => g.title.toLowerCase() === prettyTitle.toLowerCase());
+    if (localMatch) {
+      return { ...localMatch, source: 'bgg', link: url };
+    }
+
+    let title = prettyTitle;
+    let image = '';
+    let year = '';
+
+    const wikiResults = await searchWikipediaOpenDB(prettyTitle);
+    if (wikiResults.length > 0) {
+      image = wikiResults[0].image;
+      title = wikiResults[0].title || prettyTitle;
+    }
+
+    return {
+      title,
+      image,
+      year,
+      source: 'bgg',
+      link: url
+    };
+  }
+
+  // Fallback for general URL
+  const pathParts = url.split('/').filter(Boolean);
+  const lastPart = pathParts[pathParts.length - 1] || 'Jogo Customizado';
+  return {
+    title: lastPart.replace(/[-_]/g, ' '),
+    image: '',
+    year: '',
+    source: 'link',
+    link: url
+  };
+}
+
+async function handleLinkExtraction() {
+  const linkInput = document.getElementById('customGameLink');
+  const nameInput = document.getElementById('customGameName');
+  const urlInput = document.getElementById('customGameUrl');
+  const rawUrl = linkInput ? linkInput.value.trim() : '';
+
+  if (!rawUrl) return;
+
+  showToast('Extraindo capa e dados do link...');
+  try {
+    const extracted = await extractGameFromLink(rawUrl);
+    if (extracted && (extracted.title || extracted.image)) {
+      if (extracted.title && !nameInput.value.trim()) {
+        nameInput.value = extracted.title;
+      }
+      if (extracted.image) {
+        urlInput.value = extracted.image;
+        previewCustomImage(extracted.image);
+      }
+      showToast(t('toast_link_extracted'));
+    } else {
+      showToast(t('toast_link_error'));
+    }
+  } catch(e) {
+    console.warn('Erro ao extrair link:', e);
+    showToast(t('toast_link_error'));
+  }
+}
+
+async function submitCustomGame() {
+  const linkInput = document.getElementById('customGameLink');
   const nameInput = document.getElementById('customGameName');
   const urlInput = document.getElementById('customGameUrl');
   const title = nameInput.value.trim();
@@ -2092,18 +2282,29 @@ function submitCustomGame() {
   }
 
   const image = uploadedBase64Image || urlInput.value.trim() || '';
+  const link = linkInput ? linkInput.value.trim() : '';
 
-  addGameToTierlist({
+  const gamePayload = {
     title,
     image,
     year: '',
-    source: 'custom'
-  });
+    source: link.includes('ludopedia') ? 'ludopedia' : (link.includes('boardgamegeek') ? 'bgg' : 'custom'),
+    link
+  };
+
+  addGameToTierlist(gamePayload);
+
+  // Persist to Community Firestore DB
+  if (window.persistGameToCommunityDB) {
+    window.persistGameToCommunityDB(gamePayload);
+  }
 
   nameInput.value = '';
   urlInput.value = '';
+  if (linkInput) linkInput.value = '';
   uploadedBase64Image = '';
   document.getElementById('customGameFile').value = '';
+  previewCustomImage('');
   closeModal('customGameModal');
 }
 
@@ -2597,6 +2798,63 @@ window.addEventListener('DOMContentLoaded', () => {
     titleInput.addEventListener('change', saveState);
   }
 });
+</script>
+
+<script type="module">
+import { db, CONFIGURED } from '../assets/firebase-init.js';
+import { collection, doc, setDoc, getDocs, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
+
+// Expose community persist function globally
+window.persistGameToCommunityDB = async function(game) {
+  if (!CONFIGURED || !db || !game || !game.title || !game.image) return;
+  try {
+    const docId = (game.title || 'game').toLowerCase().replace(/[^a-z0-9]/g, '_').substring(0, 60);
+    const ref = doc(db, 'tierlist_games', docId);
+    await setDoc(ref, {
+      title: game.title,
+      image: game.image,
+      year: game.year || '',
+      source: game.source || 'community',
+      link: game.link || '',
+      updatedAt: serverTimestamp()
+    }, { merge: true });
+    console.log('Tierlist: Jogo persistido no Firestore da comunidade:', game.title);
+  } catch (e) {
+    console.warn('Tierlist: Erro ao persistir jogo no Firestore:', e);
+  }
+};
+
+// Load community games from Firestore on boot and inject into in-memory catalog
+async function loadCommunityGames() {
+  if (!CONFIGURED || !db) return;
+  try {
+    const snap = await getDocs(collection(db, 'tierlist_games'));
+    let loadedCount = 0;
+    snap.forEach(docSnap => {
+      const data = docSnap.data();
+      if (data && data.title && data.image) {
+        const exists = BOARD_GAMES_DATABASE.some(g => g.title.toLowerCase() === data.title.toLowerCase());
+        if (!exists) {
+          BOARD_GAMES_DATABASE.unshift({
+            title: data.title,
+            alt: data.alt || '',
+            image: data.image,
+            year: data.year || '',
+            source: data.source || 'community'
+          });
+          loadedCount++;
+        }
+      }
+    });
+    if (loadedCount > 0) {
+      console.log(`Tierlist: ${loadedCount} jogos da comunidade carregados do Firestore.`);
+    }
+  } catch (e) {
+    console.warn('Tierlist: Erro ao carregar jogos da comunidade Firestore:', e);
+  }
+}
+
+loadCommunityGames();
 </script>
 
 <script type="module" src="../assets/analytics.js"></script>
