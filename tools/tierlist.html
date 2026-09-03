@@ -895,38 +895,137 @@ body {
   opacity: 1;
 }
 
-/* Mobile Quick Action Modal for Tap-to-move */
-.tap-actions-list {
+/* Mobile Quick Action & Game Detail Modal */
+.game-detail-header-card {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-top: 10px;
+  gap: 16px;
+  align-items: flex-start;
+  margin-bottom: 12px;
 }
-.tap-action-option {
+.game-detail-cover-box {
+  flex-shrink: 0;
+  width: 140px;
+  height: 140px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1.5px solid var(--brass);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+  background: #150b07;
   display: flex;
   align-items: center;
-  gap: 12px;
+  justify-content: center;
+}
+.game-detail-cover {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.game-detail-info {
+  flex: 1;
+  min-width: 0;
+}
+.game-detail-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  background: rgba(233,200,117,0.12);
+  border: 1px solid var(--brass-dark);
+  border-radius: 4px;
+  font-size: 0.78rem;
+  color: var(--brass-bright);
+}
+.game-detail-meta-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 6px;
+}
+.detail-meta-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 0.82rem;
+  line-height: 1.35;
+  color: #e2e8f0;
+}
+.detail-meta-label {
+  color: var(--brass-bright);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.detail-meta-val {
+  color: #cbd5e1;
+  word-break: break-word;
+}
+.ludopedia-external-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #38bdf8;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: none;
+  background: rgba(56,189,248,0.1);
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(56,189,248,0.3);
+  transition: all 0.2s;
+}
+.ludopedia-external-link:hover {
+  background: rgba(56,189,248,0.2);
+  border-color: #38bdf8;
+}
+.tap-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 8px;
+  margin-top: 6px;
+}
+.tap-tier-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.1);
-  padding: 10px 14px;
-  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.12);
+  padding: 7px 10px;
+  border-radius: 6px;
   color: #fff;
   cursor: pointer;
+  font-size: 0.85rem;
   font-weight: 600;
+  transition: all 0.2s;
 }
-.tap-action-option:hover {
+.tap-tier-btn:hover {
   background: rgba(197, 160, 89, 0.2);
   border-color: var(--brass-bright);
 }
 .tap-action-badge {
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 800;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+@media (max-width: 520px) {
+  .game-detail-header-card {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  .game-detail-info {
+    text-align: center;
+    width: 100%;
+  }
+  .game-detail-info h2 {
+    text-align: center !important;
+  }
+  .detail-meta-row {
+    justify-content: center;
+  }
 }
 
 /* Footer */
@@ -1227,16 +1326,69 @@ footer {
   </div>
 </div>
 
-<!-- Modal: Tap / Quick Action on Mobile -->
+<!-- Modal: Game Details, Expanded Box Art & Tier Actions -->
 <div id="tapActionModal" class="modal-overlay">
-  <div class="modal-card" style="max-width:380px;">
+  <div class="modal-card" style="max-width:520px; max-height:90vh; overflow-y:auto;">
     <button class="modal-close-btn" onclick="closeModal('tapActionModal')">&times;</button>
-    <h2 id="tapActionTitle">Mover Jogo</h2>
-    <div id="tapActionsContainer" class="tap-actions-list"></div>
-    <div style="margin-top:16px;">
-      <button class="tool-btn" style="width:100%; color:#f87171; border-color:#7f1d1d; justify-content:center;" onclick="removeActiveTile()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
-        <span data-i18n="btn_remove_game">Remover da Tierlist</span>
+    
+    <!-- Game Header & Details Flex Container -->
+    <div class="game-detail-header-card">
+      <!-- Expanded Box Art Preview -->
+      <div class="game-detail-cover-box">
+        <img id="detailCoverImg" src="" alt="Capa do Jogo" class="game-detail-cover">
+      </div>
+      
+      <!-- Info Metadata -->
+      <div class="game-detail-info">
+        <h2 id="tapActionTitle" style="margin:0 0 6px 0; font-size:1.3rem; line-height:1.2; text-align:left; color:var(--brass-bright);">Nome do Jogo</h2>
+        <div id="detailYearBadge" class="game-detail-badge" style="display:inline-block; margin-bottom:8px;"></div>
+        
+        <!-- Metadata items (Designers, Artistas, Jogadores, Tempo, Partidas) -->
+        <div class="game-detail-meta-list">
+          <div id="detailDesignerRow" class="detail-meta-row">
+            <span class="detail-meta-label">👤 Designer:</span>
+            <span id="detailDesignerVal" class="detail-meta-val">-</span>
+          </div>
+          <div id="detailArtistRow" class="detail-meta-row">
+            <span class="detail-meta-label">🎨 Artista:</span>
+            <span id="detailArtistVal" class="detail-meta-val">-</span>
+          </div>
+          <div id="detailPlayersRow" class="detail-meta-row">
+            <span class="detail-meta-label">👥 Jogadores:</span>
+            <span id="detailPlayersVal" class="detail-meta-val">-</span>
+          </div>
+          <div id="detailTimeRow" class="detail-meta-row">
+            <span class="detail-meta-label">⏱️ Duração:</span>
+            <span id="detailTimeVal" class="detail-meta-val">-</span>
+          </div>
+          <div id="detailPlaysRow" class="detail-meta-row">
+            <span class="detail-meta-label">🎲 Partidas/Jogaram:</span>
+            <span id="detailPlaysVal" class="detail-meta-val">-</span>
+          </div>
+          <div id="detailLinkRow" class="detail-meta-row" style="margin-top:6px;">
+            <a id="detailLudopediaLink" href="#" target="_blank" rel="noopener" class="ludopedia-external-link">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+              <span>Ver página na Ludopedia</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tier destination selection -->
+    <div style="margin:14px 0 10px 0; border-top:1px solid rgba(233,200,117,0.15); padding-top:12px;">
+      <label style="font-size:0.8rem; font-weight:700; color:var(--brass); text-transform:uppercase; letter-spacing:0.05em; display:block; margin-bottom:8px;">Mover para Tier:</label>
+      <div id="tapActionsContainer" class="tap-actions-grid"></div>
+    </div>
+
+    <!-- Bottom Actions: Edit & Remove -->
+    <div style="display:flex; gap:10px; margin-top:14px;">
+      <button class="tool-btn" style="flex:1; justify-content:center; border-color:var(--brass);" onclick="editCurrentDetailItem()">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+        <span data-i18n="btn_edit_game">Editar Jogo / Capa</span>
+      </button>
+      <button class="tool-btn" style="color:#f87171; border-color:#7f1d1d; justify-content:center; padding:8px 14px;" onclick="removeActiveTile()" title="Remover da Tierlist">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
       </button>
     </div>
   </div>
@@ -7531,36 +7683,88 @@ function saveEditedGame() {
 }
 
 /* =======================================================
-   MOBILE TAP TO MOVE MODAL
+   GAME DETAILS, EXPANDED BOX ART & TIER MOVER MODAL
    ======================================================= */
-function openTapModal(item, currentTierId) {
+const gameDetailsCache = new Map();
+
+async function fetchGameDetails(ludoId) {
+  if (!ludoId) return null;
+  if (gameDetailsCache.has(ludoId)) return gameDetailsCache.get(ludoId);
+
+  try {
+    const url = `https://ludopedia.com.br/api/v1/jogos/${ludoId}?access_token=${LUDOPEDIA_ACCESS_TOKEN}`;
+    const res = await fetch(url, {
+      headers: {
+        'Authorization': `Bearer ${LUDOPEDIA_ACCESS_TOKEN}`,
+        'Accept': 'application/json'
+      }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      gameDetailsCache.set(ludoId, data);
+      return data;
+    }
+  } catch (e) {
+    console.warn('Erro ao carregar detalhes do jogo na Ludopedia:', e);
+  }
+  return null;
+}
+
+function editCurrentDetailItem() {
+  if (activeTileItem) {
+    closeModal('tapActionModal');
+    openEditGameModal(activeTileItem.item, activeTileItem.currentTierId);
+  }
+}
+
+async function openTapModal(item, currentTierId) {
   activeTileItem = { item, currentTierId };
   const modal = document.getElementById('tapActionModal');
   const titleEl = document.getElementById('tapActionTitle');
+  const coverEl = document.getElementById('detailCoverImg');
+  const yearBadge = document.getElementById('detailYearBadge');
+  const designerVal = document.getElementById('detailDesignerVal');
+  const artistVal = document.getElementById('detailArtistVal');
+  const playersVal = document.getElementById('detailPlayersVal');
+  const timeVal = document.getElementById('detailTimeVal');
+  const playsVal = document.getElementById('detailPlaysVal');
+  const ludoLink = document.getElementById('detailLudopediaLink');
   const container = document.getElementById('tapActionsContainer');
 
   titleEl.textContent = item.title;
+  coverEl.src = item.image || '../assets/mascot-trimmed.png';
+  coverEl.alt = item.title;
+
+  if (item.year) {
+    yearBadge.textContent = item.year;
+    yearBadge.style.display = 'inline-block';
+  } else {
+    yearBadge.style.display = 'none';
+  }
+
+  // Set initial placeholders / cached values
+  designerVal.textContent = item.designers || '-';
+  artistVal.textContent = item.artistas || '-';
+  playersVal.textContent = item.players || '-';
+  timeVal.textContent = item.playTime || '-';
+  playsVal.textContent = item.plays ? `${Number(item.plays).toLocaleString()} registraram partidas` : '-';
+
+  // Ludopedia Link
+  let gameUrl = item.link || (item.slug ? `https://ludopedia.com.br/jogo/${item.slug}` : '');
+  if (gameUrl) {
+    ludoLink.href = gameUrl;
+    ludoLink.style.display = 'inline-flex';
+  } else {
+    ludoLink.style.display = 'none';
+  }
+
+  // Populate Tier selection grid
   container.innerHTML = '';
-
-  // 1. Edit Option at top
-  const editOpt = document.createElement('div');
-  editOpt.className = 'tap-action-option';
-  editOpt.style.background = 'rgba(233, 200, 117, 0.12)';
-  editOpt.style.border = '1px solid var(--brass)';
-  editOpt.innerHTML = `
-    <div class="tap-action-badge" style="background:var(--brass); color:#0f172a;">✏️</div>
-    <span style="font-weight:700; color:var(--brass-bright);">${t('tap_edit_game')}</span>
-  `;
-  editOpt.onclick = () => {
-    closeModal('tapActionModal');
-    openEditGameModal(item, currentTierId);
-  };
-  container.appendChild(editOpt);
-
   state.tiers.forEach(tier => {
     if (tier.id === currentTierId) return;
-    const opt = document.createElement('div');
-    opt.className = 'tap-action-option';
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'tap-tier-btn';
 
     const badge = document.createElement('div');
     badge.className = 'tap-action-badge';
@@ -7575,12 +7779,12 @@ function openTapModal(item, currentTierId) {
     }
 
     const label = document.createElement('span');
-    label.textContent = `Mover para ${tier.name}`;
+    label.textContent = tier.name;
 
-    opt.appendChild(badge);
-    opt.appendChild(label);
+    btn.appendChild(badge);
+    btn.appendChild(label);
 
-    opt.onclick = () => {
+    btn.onclick = () => {
       // Move item
       removeItem(item.id, currentTierId);
       if (!state.items[tier.id]) state.items[tier.id] = [];
@@ -7590,10 +7794,47 @@ function openTapModal(item, currentTierId) {
       closeModal('tapActionModal');
     };
 
-    container.appendChild(opt);
+    container.appendChild(btn);
   });
 
   modal.classList.add('visible');
+
+  // Find or fetch full Ludopedia details
+  let ludoId = item.ludoId;
+  if (!ludoId && item.slug) {
+    const dbMatch = BOARD_GAMES_DATABASE.find(g => g.slug === item.slug);
+    if (dbMatch && dbMatch.ludoId) ludoId = dbMatch.ludoId;
+  }
+
+  if (ludoId) {
+    const details = await fetchGameDetails(ludoId);
+    if (details && activeTileItem && activeTileItem.item.id === item.id) {
+      if (details.designers && details.designers.length > 0) {
+        designerVal.textContent = details.designers.map(d => d.nm_profissional).join(', ');
+      }
+      if (details.artistas && details.artistas.length > 0) {
+        artistVal.textContent = details.artistas.map(a => a.nm_profissional).join(', ');
+      }
+      if (details.qt_jogadores_min && details.qt_jogadores_max) {
+        playersVal.textContent = details.qt_jogadores_min === details.qt_jogadores_max 
+          ? `${details.qt_jogadores_min} jogadores`
+          : `${details.qt_jogadores_min} a ${details.qt_jogadores_max} jogadores`;
+      }
+      if (details.vl_tempo_jogo) {
+        timeVal.textContent = `${details.vl_tempo_jogo} min`;
+      }
+      if (details.qt_jogou != null) {
+        playsVal.textContent = `${Number(details.qt_jogou).toLocaleString()} registraram partidas`;
+      }
+      if (details.link) {
+        ludoLink.href = details.link.startsWith('http') ? details.link : `https://ludopedia.com.br/${details.link}`;
+        ludoLink.style.display = 'inline-flex';
+      }
+      if (details.thumb && !item.image) {
+        coverEl.src = details.thumb.replace(/_t\.jpg$/i, '_m.jpg');
+      }
+    }
+  }
 }
 
 function removeActiveTile() {
