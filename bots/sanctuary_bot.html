@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/site.css?v=7">
+<script src="../assets/theme-kit.js"></script>
 <style>
 :root {
   --bg-0: #0f1c16;
@@ -1139,12 +1140,18 @@ function shuffleSlots(){
     end: { mapFull: false, pileEmpty: false },
     history: [], setup: true
   };
+  if(typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
+    window.ThemeKit.playSfx('sanctuary/foliage-shuffle', { volume: 0.65 });
+  }
   renderSetupSlotsPreview();
 }
 
 function startGame(){
   state.setup = false;
   saveState();
+  if(typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
+    window.ThemeKit.playSfx('sanctuary/sanctuary-bell', { volume: 0.65 });
+  }
   initUI();
 }
 
@@ -1162,6 +1169,10 @@ function adjust(stat, amt){
   if(stat === 'objectives' && state.stats.objectives < 0) state.stats.objectives = 0;
   if(stat === 'objectives' && state.stats.objectives > 4) state.stats.objectives = 4;
   if(stat === 'coverage' && state.stats.coverage < 0) state.stats.coverage = 0;
+  if(typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
+    const sfx = stat === 'objectives' ? 'sanctuary/sanctuary-bell' : (stat === 'coverage' ? 'sanctuary/foliage-shuffle' : 'sanctuary/jungle-birds');
+    window.ThemeKit.playSfx(sfx, { volume: 0.55 });
+  }
   saveState();
   renderStats();
 }
@@ -1169,6 +1180,10 @@ function adjust(stat, amt){
 function toggleEndCond(key){
   if(!state) return;
   state.end[key] = !state.end[key];
+  if(typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
+    const anyTrigger = (state.stats.objectives >= 4) || state.end.mapFull || state.end.pileEmpty;
+    window.ThemeKit.playSfx(anyTrigger ? 'sanctuary/sanctuary-dawn' : 'sanctuary/sanctuary-bell', { volume: 0.6 });
+  }
   saveState();
   renderEndConditions();
 }
@@ -1197,7 +1212,14 @@ function renderEndConditions(){
 
 function toggleLevel(id){
   const c = state.cards.find(x => x.id === id);
-  if(c){ c.lvl = c.lvl === 1 ? 2 : 1; saveState(); refreshCardsUI(); }
+  if(c){ 
+    c.lvl = c.lvl === 1 ? 2 : 1; 
+    if(typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
+      window.ThemeKit.playSfx('sanctuary/sanctuary-bell', { volume: 0.5, rate: 1.2 });
+    }
+    saveState(); 
+    refreshCardsUI(); 
+  }
 }
 
 function renderSetupSlotsPreview(){
@@ -1384,6 +1406,16 @@ function resolveTurn(slotVal){
   
   const used = state.cards.splice(idx, 1)[0];
   state.cards.unshift(used);
+  if(typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
+    const sfxMap = {
+      projects: 'sanctuary/jungle-birds',
+      animal_rock: 'sanctuary/animal-roar',
+      animal_forest: 'sanctuary/animal-canopy',
+      animal_water: 'sanctuary/animal-water'
+    };
+    const sfxKey = (card && sfxMap[card.id]) ? sfxMap[card.id] : 'sanctuary/foliage-shuffle';
+    window.ThemeKit.playSfx(sfxKey, { volume: 0.65 });
+  }
   
   state.round++;
   saveState();

@@ -28,15 +28,19 @@
     if (label && labelText != null) label.innerText = labelText;
   }
 
-  // Base path resolution for shared SFX assets
+  // Base path resolution for shared and game-specific SFX assets
+  let sfxRootUrl = '../assets/sfx/';
   let sfxBaseUrl = '../assets/sfx/shared/';
   try {
     const currentScript = document.currentScript;
     if (currentScript && currentScript.src) {
-      sfxBaseUrl = currentScript.src.replace(/theme-kit\.js(\?.*)?$/, 'sfx/shared/');
+      sfxRootUrl = currentScript.src.replace(/theme-kit\.js(\?.*)?$/, 'sfx/');
+      sfxBaseUrl = sfxRootUrl + 'shared/';
     } else if (typeof window !== 'undefined' && window.location) {
       const p = window.location.pathname || '';
-      sfxBaseUrl = (p.includes('/bots/') || p.includes('/tools/')) ? '../assets/sfx/shared/' : 'assets/sfx/shared/';
+      const isSub = p.includes('/bots/') || p.includes('/tools/');
+      sfxRootUrl = isSub ? '../assets/sfx/' : 'assets/sfx/';
+      sfxBaseUrl = sfxRootUrl + 'shared/';
     }
   } catch (_) {}
 
@@ -51,15 +55,23 @@
     'turn-notify': 'turn-notify.mp3'
   };
 
-  const audioPool = new Map(); // key -> Array<HTMLAudioElement>
+  const audioPool = new Map(); // url -> Array<HTMLAudioElement>
   const MAX_POOL_PER_SOUND = 4;
 
   function getSfxUrl(key) {
+    if (!key || typeof key !== 'string') return '';
     if (SFX_MAP[key]) return sfxBaseUrl + SFX_MAP[key];
-    if (typeof key === 'string' && (key.includes('/') || key.endsWith('.mp3') || key.endsWith('.ogg'))) {
+    if (key.startsWith('../') || key.startsWith('/') || key.startsWith('http://') || key.startsWith('https://')) {
       return key;
     }
-    return sfxBaseUrl + key + '.mp3';
+    const ext = (key.endsWith('.mp3') || key.endsWith('.ogg') || key.endsWith('.wav')) ? '' : '.mp3';
+    if (key.includes('/')) {
+      return sfxRootUrl + key + ext;
+    }
+    if (key.includes(':')) {
+      return sfxRootUrl + key.replace(':', '/') + ext;
+    }
+    return sfxBaseUrl + key + ext;
   }
 
   function isSfxMuted() {
