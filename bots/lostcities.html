@@ -812,14 +812,6 @@ h1, h2 { text-transform: uppercase; letter-spacing: 2px; border-bottom: 2px soli
       
       <div class="options-list" style="display: flex; flex-direction: column; gap: 8px;">
         <label class="rule-option-item" style="display: flex; align-items: flex-start; gap: 8px; font-size: 0.85em; cursor: pointer;">
-          <input type="checkbox" id="optStartingCardsCheckbox" onchange="toggleOption('startingCards', this.checked)" style="margin-top: 2px; accent-color: var(--primary); width:16px; height:16px; cursor:pointer;">
-          <div>
-            <strong data-i18n="lc_opt_starting_cards_title">Provisões de Expedição</strong>
-            <div style="font-size: 0.9em; color: var(--text-muted);" data-i18n="lc_opt_starting_cards_desc">O Rival Explorer começa com suprimentos extras (2 cartas no Fácil, 3 no Médio, 4 no Difícil/Desafio), que podem ser jogados ou guardados na reserva.</div>
-          </div>
-        </label>
-        
-        <label class="rule-option-item" style="display: flex; align-items: flex-start; gap: 8px; font-size: 0.85em; cursor: pointer;">
           <input type="checkbox" id="optRetractionCheckbox" onchange="toggleOption('retraction', this.checked)" style="margin-top: 2px; accent-color: var(--primary); width:16px; height:16px; cursor:pointer;">
           <div>
             <strong data-i18n="lc_opt_retraction_title">Retração de Expedição (Expedition Retraction)</strong>
@@ -839,6 +831,25 @@ h1, h2 { text-transform: uppercase; letter-spacing: 2px; border-bottom: 2px soli
   </div>
   
   <button class="start-btn" onclick="startGame()" data-i18n="lc_start">Start Game</button>
+</div>
+
+<!-- RESERVE SETUP SCREEN (MÃO INICIAL DO AUTOMA) -->
+<div class="calc-screen hidden" id="reserveSetupScreen">
+    <h2 style="text-align:center; font-family:'Poppins', sans-serif;"><span data-i18n="lc_res_setup_title">Mão Inicial do Rival Explorer</span></h2>
+    <p style="text-align:center; color:var(--text-muted); margin-top:0; font-size:0.95em;" data-i18n="lc_res_setup_desc">Compre 8 cartas para o Rival Explorer e selecione-as abaixo:</p>
+    
+    <div style="text-align:center; margin: 15px 0;">
+      <span id="reserveSetupCountBadge" style="font-size:1.15em; font-weight:bold; background:rgba(0,0,0,0.2); padding:6px 18px; border-radius:20px; border: 1px solid var(--accent); color:var(--accent);">
+        <strong>0 / 8</strong> <span data-i18n="lc_res_setup_count_label">cartas selecionadas</span>
+      </span>
+    </div>
+
+    <div id="reserveSetupRowsContainer"></div>
+
+    <div style="display:flex; gap:12px; margin-top:20px;">
+      <button class="start-btn" id="btnConfirmReserveSetup" style="flex:2;" disabled onclick="confirmReserveSetup()" data-i18n="lc_res_setup_confirm">Confirmar Mão Inicial (0/8) →</button>
+      <button class="start-btn" style="flex:1; background:#555; border-color:#777;" onclick="clearReserveSetup()" data-i18n="lc_res_setup_clear">Limpar</button>
+    </div>
 </div>
 
 <!-- GAME SCREEN -->
@@ -1012,19 +1023,19 @@ Object.assign(window.I18N.pt, {
   lc_subtitle: "Lost Cities — Automa",
   lc_setup_head: "Preparação",
   lc_setup_1: "Embaralhe as 60 cartas. Dê 8 para você.",
-  lc_setup_2: "O bot começa com {init} cartas em sua reserva. Dê 8 para você e compre {init} cartas para o bot.",
+  lc_setup_2: "Embaralhe as 60 cartas. Distribua 8 cartas para você e compre 8 cartas para a mão inicial do Rival Explorer.",
   lc_setup_3: "Quando o bot comprar uma carta (ou pegar do descarte), informe a carta aqui para ver o que ele faz!",
   lc_setup_cards_prompt: "Preparação do Bot: Informe a carta {curr} de {total}",
   lc_diff_head: "Dificuldade",
   
   lc_diff_easy: "Fácil",
-  lc_diff_easy_desc: "2 cartas iniciais. Joga de forma inteligente, em ordem estritamente crescente.",
+  lc_diff_easy_desc: "Joga em ordem estritamente crescente. Abre até 5 colunas com boa reserva.",
   lc_diff_medium: "Médio",
-  lc_diff_medium_desc: "3 cartas iniciais. Encaixa cartas de até 2 valores abaixo (-1 e -2) sem descartar.",
+  lc_diff_medium_desc: "Encaixa cartas de até 2 valores abaixo (-1 e -2). Abre até 5 colunas com boa reserva.",
   lc_diff_hard: "Difícil",
-  lc_diff_hard_desc: "4 cartas iniciais. Encaixa cartas de até 3 valores abaixo (-1, -2 e -3) sem descartar.",
+  lc_diff_hard_desc: "Encaixa cartas de até 3 valores abaixo (-1, -2 e -3). Abre até 5 colunas com boa reserva.",
   lc_diff_gods: "Desafio dos Deuses",
-  lc_diff_gods_desc: "4 cartas iniciais. Trapaceia: joga toda carta recebida fora de ordem.",
+  lc_diff_gods_desc: "O Automa trapaceia e ordena magicamente todas as cartas.",
   
   lc_start: "Iniciar Partida",
   lc_mode_title: "Modo de Jogo",
@@ -1091,11 +1102,15 @@ Object.assign(window.I18N.pt, {
   lc_end_reason_no_profit: "Expedição virgem geraria prejuízo",
   lc_end_reason_unplayed: "Não aproveitada na sequência",
   
+  lc_res_setup_title: "Mão Inicial do Rival Explorer",
+  lc_res_setup_desc: "Compre 8 cartas para o Rival Explorer e selecione-as abaixo:",
+  lc_res_setup_count_label: "cartas selecionadas",
+  lc_res_setup_confirm: "Confirmar Mão Inicial ({curr}/{total}) →",
+  lc_res_setup_clear: "Limpar Seleção",
+
   lc_options_title: "Regras Especiais / Opções",
   lc_options_locked: "🔒 Fixas no Desafio",
-  lc_options_explanation: "A dificuldade define as opções ativas por padrão: Fácil (todas desmarcadas), Médio (Provisões de Expedição e Retração ativas), Difícil e Desafio (todas ativas). No Desafio dos Deuses, as opções são fixas e o Automa usa a regra Deuses Antigos.",
-  lc_opt_starting_cards_title: "Provisões de Expedição",
-  lc_opt_starting_cards_desc: "O Rival Explorer começa com suprimentos extras (2 cartas no Fácil, 3 no Médio, 4 no Difícil/Desafio), que podem ser jogados ou guardados na reserva.",
+  lc_options_explanation: "A dificuldade define as opções ativas por padrão: Fácil (desmarcadas), Médio (Retração ativa), Difícil e Desafio (todas ativas). No Desafio dos Deuses, as opções são fixas e o Automa usa a regra Deuses Antigos. O bot joga sempre com mão virtual de 8 cartas.",
   lc_opt_retraction_title: "Retração de Expedição Fracassada",
   lc_opt_retraction_desc: "Expedições com até 2 cartas com soma < 20 são abandonadas e pontuam 0 em vez de prejuízo negativo.",
   lc_opt_insurance_title: "Seguro de Aperto de Mão",
@@ -1127,17 +1142,16 @@ Object.assign(window.I18N.en, {
   lc_subtitle: "Lost Cities — Automa",
   lc_setup_head: "Setup",
   lc_setup_1: "Shuffle the 60 cards. Deal 8 cards to yourself.",
-  lc_setup_2: "The bot starts with {init} cards in its reserve. Deal 8 cards to yourself and draw {init} cards for the bot.",
+  lc_setup_2: "Shuffle the 60 cards. Deal 8 cards to yourself and draw 8 cards for the Rival Explorer's starting hand.",
   lc_setup_3: "When the bot draws a card (or snatches one from the discard), input it here to see what the bot does!",
-  lc_setup_cards_prompt: "Bot Setup: Input starting card {curr} of {total}",
   lc_diff_head: "Difficulty",
   
   lc_diff_easy: "Easy",
-  lc_diff_easy_desc: "Plays smartly, in strictly ascending order.",
+  lc_diff_easy_desc: "Plays in strictly ascending order. Opens up to 5 columns with a good reserve.",
   lc_diff_medium: "Medium",
-  lc_diff_medium_desc: "Slots in cards up to 2 values lower (-1 and -2) without discarding.",
+  lc_diff_medium_desc: "Slots in cards up to 2 values lower (-1 and -2). Opens up to 5 columns with a good reserve.",
   lc_diff_hard: "Hard",
-  lc_diff_hard_desc: "Slots in cards up to 3 values lower (-1, -2 and -3) without discarding.",
+  lc_diff_hard_desc: "Slots in cards up to 3 values lower (-1, -2 and -3). Opens up to 5 columns with a good reserve.",
   lc_diff_gods: "Challenge of the Gods",
   lc_diff_gods_desc: "The Automa cheats and magically sorts all cards.",
   
@@ -1206,11 +1220,15 @@ Object.assign(window.I18N.en, {
   lc_end_reason_no_profit: "Unstarted expedition would cause loss",
   lc_end_reason_unplayed: "Not used in sequence",
   
+  lc_res_setup_title: "Rival Explorer Starting Hand",
+  lc_res_setup_desc: "Draw 8 cards for the Rival Explorer and select them below:",
+  lc_res_setup_count_label: "cards selected",
+  lc_res_setup_confirm: "Confirm Starting Hand ({curr}/{total}) →",
+  lc_res_setup_clear: "Clear Selection",
+
   lc_options_title: "Special Rules / Options",
   lc_options_locked: "🔒 Locked in Challenge",
-  lc_options_explanation: "Difficulty defines default active options: Easy (all off), Medium (Expedition Supplies & Retraction on), Hard & Challenge (all on). In Challenge of the Gods, options are locked and the Automa uses the Ancient Gods rule.",
-  lc_opt_starting_cards_title: "Expedition Supplies",
-  lc_opt_starting_cards_desc: "The Rival Explorer begins with extra supplies (2 cards on Easy, 3 on Medium, 4 on Hard/Challenge), which may be played or held in reserve.",
+  lc_options_explanation: "Difficulty defines default active options: Easy (all off), Medium (Retraction on), Hard & Challenge (all on). In Challenge of the Gods, options are locked and the Automa uses the Ancient Gods rule. The bot always starts with a full 8-card hand.",
   lc_opt_retraction_title: "Expedition Retraction",
   lc_opt_retraction_desc: "Expeditions with up to 2 cards summing < 20 are abandoned and score 0 instead of negative penalties.",
   lc_opt_insurance_title: "Handshake Insurance",
@@ -1244,7 +1262,6 @@ Object.assign(window.I18N.en, {
 
 // --- STATE ---
 let difficulty = 'medium';
-let optStartingCards = true;
 let optRetraction = true;
 let optInsurance = false;
 let expeditions = { yellow: [], blue: [], white: [], green: [], red: [] };
@@ -1252,12 +1269,11 @@ let botReserve = [];
 let gameLog = []; renderLog();
 let selColor = null;
 let selVal = null;
-let initialCardsNeeded = 3;
-let initialCardsGiven = 0;
 let normalTurnsCount = 0;
+let reserveSetupState = { yellow: [], blue: [], white: [], green: [], red: [] };
 
 function getEstimatedCardsPlayed() {
-  return 8 + initialCardsNeeded + (normalTurnsCount * 2);
+  return 16 + (normalTurnsCount * 2);
 }
 
 function getEstimatedCardsRemaining() {
@@ -1271,43 +1287,26 @@ function updateDeckDisplay() {
   if (playedEl) playedEl.innerText = `${getEstimatedCardsPlayed()}`;
 }
 
-function getInitialCardsCount() {
-  if (!optStartingCards) return 0;
-  if (difficulty === 'easy') return 2;
-  if (difficulty === 'medium') return 3;
-  if (difficulty === 'hard' || difficulty === 'gods') return 4;
-  return 3;
-}
-
 function applyDifficultyPresets(d) {
   if (d === 'easy') {
-    optStartingCards = false;
     optRetraction = false;
     optInsurance = false;
   } else if (d === 'medium') {
-    optStartingCards = true;
     optRetraction = true;
     optInsurance = false;
   } else if (d === 'hard' || d === 'gods') {
-    optStartingCards = true;
     optRetraction = true;
     optInsurance = true;
   }
-  initialCardsNeeded = getInitialCardsCount();
   updateOptionsUI();
 }
 
 function updateOptionsUI() {
-  const cbStartingCards = document.getElementById('optStartingCardsCheckbox');
   const cbRetraction = document.getElementById('optRetractionCheckbox');
   const cbInsurance = document.getElementById('optInsuranceCheckbox');
   const lockedBadge = document.getElementById('optionsLockedBadge');
   const isChallenge = (difficulty === 'gods');
   
-  if (cbStartingCards) {
-    cbStartingCards.checked = optStartingCards;
-    cbStartingCards.disabled = isChallenge;
-  }
   if (cbRetraction) {
     cbRetraction.checked = optRetraction;
     cbRetraction.disabled = isChallenge;
@@ -1326,11 +1325,6 @@ function toggleOption(opt, checked) {
     updateOptionsUI(); // No Desafio dos Deuses, as opções não podem ser desligadas
     return;
   }
-  if (opt === 'startingCards') {
-    optStartingCards = checked;
-    initialCardsNeeded = getInitialCardsCount();
-    applyI18n();
-  }
   if (opt === 'retraction') optRetraction = checked;
   if (opt === 'insurance') optInsurance = checked;
   renderTableau();
@@ -1340,13 +1334,7 @@ function updateInputPrompt() {
   const promptEl = document.getElementById('inputPromptText');
   if (!promptEl) return;
   const lang = localStorage.getItem('boardbots_lang') || 'pt';
-  if (initialCardsGiven < initialCardsNeeded) {
-    const tpl = (window.I18N[lang] && window.I18N[lang].lc_setup_cards_prompt) || 
-      "Preparação do Bot: Informe a carta {curr} de {total}";
-    promptEl.innerHTML = `<span style="color:var(--accent); font-weight:bold;">${tpl.replace('{curr}', initialCardsGiven + 1).replace('{total}', initialCardsNeeded)}</span>`;
-  } else {
-    promptEl.innerText = (window.I18N[lang] && window.I18N[lang].lc_input_card) || "Mostrar carta ao bot:";
-  }
+  promptEl.innerText = (window.I18N[lang] && window.I18N[lang].lc_input_card) || "Mostrar carta ao bot:";
 }
 
 const COLORS = ['yellow', 'blue', 'white', 'green', 'red'];
@@ -1366,7 +1354,6 @@ function setDifficulty(d, btn) {
   difficulty = d;
   document.querySelectorAll('#diffOptionsContainer .diff-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  initialCardsNeeded = getInitialCardsCount();
   applyDifficultyPresets(d);
   applyI18n();
   renderTableau();
@@ -1394,10 +1381,10 @@ function setRounds(r) {
 }
 
 function showScreen(screenId) {
-    const screens = ['setupScreen', 'gameScreen', 'calcScreen', 'summaryScreen'];
-    // calc/summary screens default to display:none in their own CSS class, so they need an explicit
+    const screens = ['setupScreen', 'reserveSetupScreen', 'gameScreen', 'calcScreen', 'summaryScreen'];
+    // calc/summary/reserveSetup screens default to display:none in their own CSS class, so they need an explicit
     // 'block' value here instead of '' (unlike setup/game, whose classes are visible by default).
-    const blockScreens = ['calcScreen', 'summaryScreen'];
+    const blockScreens = ['calcScreen', 'summaryScreen', 'reserveSetupScreen'];
     screens.forEach(id => {
         const el = document.getElementById(id);
         if (el) {
@@ -1410,11 +1397,10 @@ function showScreen(screenId) {
             }
         }
     });
+    window.scrollTo(0, 0);
 }
 
 function startGame() {
-  showScreen('gameScreen');
-  document.getElementById('btnResetGame').classList.remove('hidden');
   currentRound = 1;
   scoresP1 = [];
   scoresP2 = [];
@@ -1423,20 +1409,138 @@ function startGame() {
 
 function startRound() {
     if (gameMode === 'automa') {
-        showScreen('gameScreen');
         expeditions = { yellow: [], blue: [], white: [], green: [], red: [] };
         botReserve = [];
         gameLog = []; renderLog();
-        initialCardsNeeded = getInitialCardsCount();
-        initialCardsGiven = 0;
         normalTurnsCount = 0;
         updateInputPrompt();
         updateDeckDisplay();
         renderTableau();
+        openReserveSetup();
     } else {
         calcCurrentPlayer = 1;
         openCalculator();
     }
+}
+
+function openReserveSetup() {
+  reserveSetupState = { yellow: [], blue: [], white: [], green: [], red: [] };
+  showScreen('reserveSetupScreen');
+  renderReserveSetupRows();
+  updateReserveSetupUI();
+}
+
+function getReserveSetupCount() {
+  let count = 0;
+  COLORS.forEach(c => count += reserveSetupState[c].length);
+  return count;
+}
+
+function renderReserveSetupRows() {
+  const cont = document.getElementById('reserveSetupRowsContainer');
+  if (!cont) return;
+  cont.innerHTML = '';
+  
+  COLORS.forEach(c => {
+    const arr = reserveSetupState[c];
+    let html = `<div class="calc-row c-${c}"><div class="calc-cards">`;
+    
+    // 3 Handshakes
+    for (let i = 0; i < 3; i++) {
+      let isActive = arr.filter(x => x === 'H').length > i;
+      let activeCls = isActive ? 'active h-btn' : '';
+      html += `<button type="button" class="calc-btn ${activeCls}" onclick="toggleReserveSetupH('${c}', ${i})">${HANDSHAKE_ICON}</button>`;
+    }
+    // Numbers 2 to 10
+    for (let v = 2; v <= 10; v++) {
+      let isActive = arr.includes(v);
+      let activeCls = isActive ? 'active' : '';
+      html += `<button type="button" class="calc-btn ${activeCls}" onclick="toggleReserveSetupNum('${c}', ${v})">${v}</button>`;
+    }
+    
+    html += `</div></div>`;
+    cont.innerHTML += html;
+  });
+}
+
+function toggleReserveSetupH(color, index) {
+  const arr = reserveSetupState[color];
+  const hCount = arr.filter(x => x === 'H').length;
+  if (hCount > index) {
+    const hIdx = arr.indexOf('H');
+    if (hIdx > -1) arr.splice(hIdx, 1);
+  } else {
+    if (getReserveSetupCount() >= 8) return;
+    arr.unshift('H');
+  }
+  renderReserveSetupRows();
+  updateReserveSetupUI();
+}
+
+function toggleReserveSetupNum(color, val) {
+  const arr = reserveSetupState[color];
+  const idx = arr.indexOf(val);
+  if (idx > -1) {
+    arr.splice(idx, 1);
+  } else {
+    if (getReserveSetupCount() >= 8) return;
+    arr.push(val);
+    let hArr = arr.filter(x => x === 'H');
+    let numArr = arr.filter(x => x !== 'H').sort((a,b) => a - b);
+    reserveSetupState[color] = hArr.concat(numArr);
+  }
+  renderReserveSetupRows();
+  updateReserveSetupUI();
+}
+
+function clearReserveSetup() {
+  COLORS.forEach(c => reserveSetupState[c] = []);
+  renderReserveSetupRows();
+  updateReserveSetupUI();
+}
+
+function updateReserveSetupUI() {
+  const count = getReserveSetupCount();
+  const badge = document.getElementById('reserveSetupCountBadge');
+  const btn = document.getElementById('btnConfirmReserveSetup');
+  const lang = localStorage.getItem('boardbots_lang') || 'pt';
+  
+  if (badge) {
+    const label = (window.I18N[lang] && window.I18N[lang].lc_res_setup_count_label) || "cartas selecionadas";
+    badge.innerHTML = `<strong>${count} / 8</strong> <span>${label}</span>`;
+  }
+  
+  if (btn) {
+    btn.disabled = (count !== 8);
+    const confirmTpl = (window.I18N[lang] && window.I18N[lang].lc_res_setup_confirm) || "Confirmar Mão Inicial ({curr}/{total}) →";
+    btn.innerText = confirmTpl.replace('{curr}', count).replace('{total}', 8);
+  }
+}
+
+function confirmReserveSetup() {
+  if (getReserveSetupCount() !== 8) return;
+  
+  botReserve = [];
+  COLORS.forEach(c => {
+    reserveSetupState[c].forEach(v => {
+      botReserve.push({ color: c, value: v });
+    });
+  });
+  
+  const lang = localStorage.getItem('boardbots_lang') || 'pt';
+  const doneMsg = lang === 'pt' 
+    ? "🎒 Preparação concluída! Mão inicial de 8 cartas registrada nas provisões." 
+    : "🎒 Setup complete! Starting hand of 8 cards stashed in supplies.";
+  gameLog.unshift(`[${new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit', second:'2-digit'})}] ${doneMsg}`);
+  
+  showScreen('gameScreen');
+  document.getElementById('btnResetGame').classList.remove('hidden');
+  
+  // Try to play any starting cards from reserve right away
+  checkReservePlays();
+  
+  updateDeckDisplay();
+  renderTableau();
 }
 
 function tryPlayCardEndRound(color, val) {
@@ -1820,13 +1924,14 @@ function resetGameForced() {
     document.getElementById('gameScreen').style.display = 'none';
     document.getElementById('calcScreen').style.display = 'none';
     document.getElementById('summaryScreen').style.display = 'none';
+    const resSetup = document.getElementById('reserveSetupScreen');
+    if (resSetup) resSetup.style.display = 'none';
     showScreen('setupScreen');
     document.getElementById('btnResetGame').classList.add('hidden');
     scoresP1 = []; scoresP2 = []; currentRound = 1;
     expeditions = { yellow:[], blue:[], white:[], green:[], red:[] };
     botReserve = [];
-    initialCardsNeeded = getInitialCardsCount();
-    initialCardsGiven = 0;
+    normalTurnsCount = 0;
     applyDifficultyPresets(difficulty);
     updateInputPrompt();
     renderTableau();
@@ -2008,6 +2113,25 @@ function renderTableau() {
   if (typeof updateWantedCards === 'function') updateWantedCards();
 }
 
+function hasGoodReserveForColor(color, incomingVal = null) {
+  const cards = botReserve.filter(c => c.color === color).map(c => c.value);
+  if (incomingVal !== null) {
+    cards.push(incomingVal);
+  }
+  const hCount = cards.filter(v => v === 'H').length;
+  const numbers = cards.filter(v => typeof v === 'number');
+  const numSum = numbers.reduce((a, b) => a + b, 0);
+
+  // 1. Tem Aperto de Mão E pelo menos um número da mesma cor
+  if (hCount >= 1 && numbers.length >= 1) return true;
+  // 2. Tem 2 ou mais cartas numéricas da mesma cor
+  if (numbers.length >= 2) return true;
+  // 3. Soma dos números é >= 12
+  if (numSum >= 12) return true;
+
+  return false;
+}
+
 function tryPlayCard(color, val) {
   const col = expeditions[color];
   const focusCap = getFocusCap();
@@ -2038,8 +2162,9 @@ function tryPlayCard(color, val) {
       if (col.length === 0) {
         const cardsPlayed = getEstimatedCardsPlayed();
         if (cardsPlayed >= 30) return null; // Metade do baralho ultrapassada
-        if (activeColumnCount() >= focusCap) return null; // Limite de foco de expedições
-        if (activeColumnCount() >= 3 && cardsPlayed >= 20) return null; // Sobrecarga de colunas ativas
+        const currentActive = activeColumnCount();
+        if (currentActive >= focusCap) return null; // Limite de foco de expedições
+        if (currentActive >= 3 && !hasGoodReserveForColor(color, 'H')) return null; // 4ª ou 5ª coluna exige boa reserva
         col.push('H');
         return "PLAY";
       } else if (col.every(x => x === 'H')) {
@@ -2086,17 +2211,28 @@ function tryPlayCard(color, val) {
           const cardsPlayed = getEstimatedCardsPlayed();
           if (cardsPlayed >= 30) {
             return null; // Metade do baralho ultrapassada, não abre novas expedições do zero
-          } else if (activeColumnCount() >= focusCap) {
-            return null; // Mantém foco no teto de colunas
-          } else if (activeColumnCount() >= 3 && val <= 6 && cardsPlayed >= 20) {
-            return null; // Sobrecarga de colunas ativas com carta baixa avançada no jogo
-          } else if (val > 6) {
-            // Alto demais para começar do zero com uma única carta
-            return null;
-          } else {
-            col.push(val);
-            return "PLAY";
           }
+          const currentActive = activeColumnCount();
+          if (currentActive >= focusCap) {
+            return null; // Mantém foco no teto de colunas
+          }
+          if (currentActive >= 3 && !hasGoodReserveForColor(color, val)) {
+            return null; // 4ª ou 5ª coluna exige boa reserva
+          }
+          
+          // Se houver carta menor ou Aperto de Mão na reserva dessa mesma cor, joga a menor primeiro
+          const hasLowerInReserve = botReserve.some(c => c.color === color && (c.value === 'H' || (typeof c.value === 'number' && c.value < val)));
+          if (hasLowerInReserve) {
+            return null;
+          }
+          
+          if (val > 6 && !hasGoodReserveForColor(color, val)) {
+            // Alto demais para começar do zero sem boa reserva
+            return null;
+          }
+          
+          col.push(val);
+          return "PLAY";
         } else {
           col.push(val);
           return "PLAY";
@@ -2147,7 +2283,6 @@ function isPermanentlyDead(color, val) {
     }
     if (col.length === 0) {
       if (cardsPlayed >= 30) return true; // Metade do baralho ultrapassada
-      if (activeColumnCount() >= 3 && cardsPlayed >= 20) return true; // Sobrecarga com 3+ colunas
     }
     return false;
   }
@@ -2158,17 +2293,8 @@ function isPermanentlyDead(color, val) {
     if (col.length > 0) return false;
 
     // Coluna virgem (col.length === 0):
-    // 1. Metade do baralho ultrapassada (>= 30 cartas jogadas): expedição virgem está morta
+    // Metade do baralho ultrapassada (>= 30 cartas jogadas): expedição virgem está morta
     if (cardsPlayed >= 30) return true;
-
-    // 2. Sobrecarga: bot já possui 3 ou mais colunas ativas
-    if (activeColumnCount() >= 3) {
-      const hasHighCard = (val >= 7) || botReserve.some(c => c.color === color && c.value >= 7);
-      if (!hasHighCard && cardsPlayed >= 20) {
-        // Apenas cartas baixas (<= 6) com 3+ colunas e >= 20 cartas jogadas -> expedição virgem morta!
-        return true;
-      }
-    }
     return false;
   }
 
@@ -2219,6 +2345,14 @@ function logReserveEviction(card) {
 }
 
 function checkReservePlays(triggerColor) {
+  // Ordena a reserva para priorizar Apertos de Mão primeiro e depois números menores
+  botReserve.sort((a, b) => {
+    if (a.value === 'H' && b.value !== 'H') return -1;
+    if (b.value === 'H' && a.value !== 'H') return 1;
+    if (a.value === 'H' && b.value === 'H') return 0;
+    return a.value - b.value;
+  });
+
   let played = [];
   let playedAny = false;
   for (let i = 0; i < botReserve.length; i++) {
@@ -2277,17 +2411,13 @@ function shouldDeferBigJump(color, val) {
   return (val - highest) >= 4; // skips 3+ still-possible values
 }
 
-// Harder difficulties already juggle more possibilities, so they get more "virtual hand" slots.
+// All difficulties have a reserve capacity of 8 (matching full player hand)
 function getReserveCap() {
-  if (difficulty === 'easy') return 3;
-  if (difficulty === 'medium') return 5;
-  if (difficulty === 'hard' || difficulty === 'gods') return 6;
-  return 4;
+  return 8;
 }
 
+// Bot can expand up to 5 columns if backed by a good reserve
 function getFocusCap() {
-  if (difficulty === 'easy' || difficulty === 'medium') return 3;
-  if (difficulty === 'hard') return 4;
   return 5;
 }
 
@@ -2298,11 +2428,8 @@ function activeColumnCount() {
 function processCard() {
   if (!selColor || !selVal) return;
   
-  const isInitialCard = (initialCardsGiven < initialCardsNeeded);
-  if (!isInitialCard) {
-    normalTurnsCount++;
-    updateDeckDisplay();
-  }
+  normalTurnsCount++;
+  updateDeckDisplay();
   
   const deferred = shouldDeferBigJump(selColor, selVal);
   let result = deferred ? null : tryPlayCard(selColor, selVal);
@@ -2352,31 +2479,11 @@ function processCard() {
   logAction(result, selColor, selVal, discardReason);
   if (reserveEvicted) logReserveEviction(reserveEvicted);
   
-  // If a card was played or slotted, see if any reserve card can now be chained
-  let reservePlays = [];
-  if (result === "PLAY" || result === "SLOT" || result === "REPLACE") {
-    reservePlays = checkReservePlays(selColor);
-    let totalCards = 0;
-    COLORS.forEach(c => totalCards += expeditions[c].length);
-    if (totalCards >= 10) {
-      reservePlays = reservePlays.concat(checkReservePlays());
-    }
-  }
+  // Qualquer jogada ou nova carta na reserva pode viabilizar cartas da reserva
+  const reservePlays = checkReservePlays();
   
   // Any expedition change can also make an already-held reserve card permanently dead.
   const reservePurges = purgeDeadReserveCards();
-  
-  // Track initial starting cards progression
-  if (initialCardsGiven < initialCardsNeeded) {
-    initialCardsGiven++;
-    updateInputPrompt();
-    if (initialCardsGiven === initialCardsNeeded) {
-      const lang = localStorage.getItem('boardbots_lang') || 'pt';
-      const doneMsg = lang === 'pt' ? "🎒 Preparação inicial concluída! O Rival Explorer está pronto para a partida." : "🎒 Initial setup complete! The Rival Explorer is ready for the game.";
-      gameLog.unshift(`[${new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit', second:'2-digit'})}] ${doneMsg}`);
-      renderLog();
-    }
-  }
   
   showResult(result, selColor, selVal, discardReason, reservePlays, reservePurges, reserveEvicted);
   
@@ -2559,9 +2666,6 @@ function applyI18n() {
     const k = el.getAttribute('data-i18n');
     if (window.I18N[lang][k] !== undefined) {
       let val = window.I18N[lang][k];
-      if (k === 'lc_setup_2') {
-        val = val.replace(/\{init\}/g, getInitialCardsCount());
-      }
       el.textContent = val;
     }
   });
