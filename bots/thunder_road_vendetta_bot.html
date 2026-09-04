@@ -2508,7 +2508,7 @@
         document.getElementById('view-setup').classList.add('hidden');
         document.getElementById('view-game').classList.remove('hidden');
         if (typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
-            window.ThemeKit.playSfx('turn-notify', { volume: 0.65 });
+            window.ThemeKit.playSfx('trv/engine-start', { volume: 0.75 });
         }
         renderAllBots();
     }
@@ -2552,7 +2552,7 @@
         document.getElementById('btn-draw').disabled = true;
         document.getElementById('btn-step').disabled = false;
         if (typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
-            window.ThemeKit.playSfx('card-draw', { volume: 0.6 });
+            window.ThemeKit.playSfx('trv/engine-rev', { volume: 0.7 });
         }
         renderAllBots();
         const panel = document.getElementById('screen-panel');
@@ -2564,7 +2564,23 @@
     function nextStepGlobal() {
         globalStep++;
         if (typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
-            window.ThemeKit.playSfx('card-flip', { volume: 0.55 });
+            let sfxToPlay = 'trv/tire-skid';
+            const stepIdx = globalStep - 1;
+            for (let b of bots) {
+                if (b.currentCard && b.currentCard.order && b.currentCard.order[stepIdx]) {
+                    const size = b.currentCard.order[stepIdx];
+                    const moves = b.currentCard[size];
+                    if (Array.isArray(moves)) {
+                        for (let m of moves) {
+                            if (m && m.cond === 'fire') { sfxToPlay = 'trv/machine-gun'; break; }
+                            if (m && m.cond === 'smoke') { sfxToPlay = 'trv/smoke-hiss'; break; }
+                            if (m && m.cond === 'ignite') { sfxToPlay = 'trv/flame-ignite'; break; }
+                        }
+                    }
+                }
+                if (sfxToPlay !== 'trv/tire-skid') break;
+            }
+            window.ThemeKit.playSfx(sfxToPlay, { volume: 0.7 });
         }
         renderAllBots();
         if (globalStep >= 3) {

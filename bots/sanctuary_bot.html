@@ -1141,7 +1141,7 @@ function shuffleSlots(){
     history: [], setup: true
   };
   if(typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
-    window.ThemeKit.playSfx('card-shuffle', { volume: 0.65 });
+    window.ThemeKit.playSfx('sanctuary/foliage-shuffle', { volume: 0.65 });
   }
   renderSetupSlotsPreview();
 }
@@ -1150,7 +1150,7 @@ function startGame(){
   state.setup = false;
   saveState();
   if(typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
-    window.ThemeKit.playSfx('turn-notify', { volume: 0.6 });
+    window.ThemeKit.playSfx('sanctuary/sanctuary-bell', { volume: 0.65 });
   }
   initUI();
 }
@@ -1170,7 +1170,8 @@ function adjust(stat, amt){
   if(stat === 'objectives' && state.stats.objectives > 4) state.stats.objectives = 4;
   if(stat === 'coverage' && state.stats.coverage < 0) state.stats.coverage = 0;
   if(typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
-    window.ThemeKit.playSfx('token-place', { volume: 0.45 });
+    const sfx = stat === 'objectives' ? 'sanctuary/sanctuary-bell' : (stat === 'coverage' ? 'sanctuary/foliage-shuffle' : 'sanctuary/jungle-birds');
+    window.ThemeKit.playSfx(sfx, { volume: 0.55 });
   }
   saveState();
   renderStats();
@@ -1180,7 +1181,8 @@ function toggleEndCond(key){
   if(!state) return;
   state.end[key] = !state.end[key];
   if(typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
-    window.ThemeKit.playSfx('token-place', { volume: 0.5 });
+    const anyTrigger = (state.stats.objectives >= 4) || state.end.mapFull || state.end.pileEmpty;
+    window.ThemeKit.playSfx(anyTrigger ? 'sanctuary/sanctuary-dawn' : 'sanctuary/sanctuary-bell', { volume: 0.6 });
   }
   saveState();
   renderEndConditions();
@@ -1213,7 +1215,7 @@ function toggleLevel(id){
   if(c){ 
     c.lvl = c.lvl === 1 ? 2 : 1; 
     if(typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
-      window.ThemeKit.playSfx('ui-click', { volume: 0.4 });
+      window.ThemeKit.playSfx('sanctuary/sanctuary-bell', { volume: 0.5, rate: 1.2 });
     }
     saveState(); 
     refreshCardsUI(); 
@@ -1405,7 +1407,14 @@ function resolveTurn(slotVal){
   const used = state.cards.splice(idx, 1)[0];
   state.cards.unshift(used);
   if(typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
-    window.ThemeKit.playSfx('card-flip', { volume: 0.55 });
+    const sfxMap = {
+      projects: 'sanctuary/jungle-birds',
+      animal_rock: 'sanctuary/animal-roar',
+      animal_forest: 'sanctuary/animal-canopy',
+      animal_water: 'sanctuary/animal-water'
+    };
+    const sfxKey = (card && sfxMap[card.id]) ? sfxMap[card.id] : 'sanctuary/foliage-shuffle';
+    window.ThemeKit.playSfx(sfxKey, { volume: 0.65 });
   }
   
   state.round++;
