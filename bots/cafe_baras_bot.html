@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="../assets/theme-kit.js"></script>
 <style>
     :root{
         --bg-wood: #3e2723;
@@ -748,6 +749,9 @@ function startGame(){
     };
     lastSnapshot = null;
     saveState();
+    if(typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
+        window.ThemeKit.playSfx('turn-notify', { volume: 0.6 });
+    }
     document.getElementById('setup-screen').classList.add('hidden');
     document.getElementById('game-area').classList.remove('hidden');
     document.getElementById('btnResetGame').classList.remove('hidden');
@@ -818,11 +822,22 @@ function renderLog(){
     panel.innerHTML = state.log.slice().reverse().map(l => `<div>${l}</div>`).join('');
 }
 
-function adjustCoins(delta){ if (!state) return; state.coins = Math.max(0, state.coins + delta); saveState(); renderStatus(); }
+function adjustCoins(delta){ 
+    if (!state) return; 
+    state.coins = Math.max(0, state.coins + delta); 
+    if(typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
+        window.ThemeKit.playSfx('token-place', { volume: 0.45 });
+    }
+    saveState(); 
+    renderStatus(); 
+}
 function adjustRegulars(delta){
     if (!state) return;
     state.regulars = Math.max(0, state.regulars + delta);
     checkEndGame();
+    if(typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
+        window.ThemeKit.playSfx('token-place', { volume: 0.45 });
+    }
     saveState();
     renderStatus();
 }
@@ -875,6 +890,9 @@ function confirmAdd(){
     }
     state.log.push(S().logAdd(state.turn, cost, type, coinsBefore, state.coins, hasAbility ? (note || '—') : null));
     saveState();
+    if(typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
+        window.ThemeKit.playSfx('card-draw', { volume: 0.6 });
+    }
     cancelForm();
     document.getElementById('addCost').value = 0;
     document.getElementById('addHasAbility').checked = false;
@@ -897,6 +915,9 @@ function confirmServe(){
     }
     state.log.push(S().logServe(state.turn, coinsGained, coinsBefore, state.coins, becomesRegular, state.regulars));
     saveState();
+    if(typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
+        window.ThemeKit.playSfx('token-place', { volume: 0.6 });
+    }
     cancelForm();
     document.getElementById('serveCoins').value = 0;
     document.getElementById('serveBecomesRegular').checked = false;
@@ -910,6 +931,9 @@ function undoLast(){
     lastSnapshot = null;
     state.log.push(S().logUndo(undoneTurn));
     saveState();
+    if(typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
+        window.ThemeKit.playSfx('card-shuffle', { volume: 0.5 });
+    }
     render();
 }
 
@@ -956,6 +980,9 @@ function finalizeScore(){
         <div class="score-line"><span>${isPt ? 'Outros bônus' : 'Other bonuses'}</span><strong>${misc}</strong></div>
         <div class="score-total"><span>${isPt ? 'TOTAL' : 'TOTAL'}</span><strong>${total}</strong></div>
     `;
+    if(typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
+        window.ThemeKit.playSfx('turn-notify', { volume: 0.7 });
+    }
 }
 
 // --- Help modal ---
