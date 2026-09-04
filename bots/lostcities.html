@@ -1804,7 +1804,6 @@ function isPermanentlyDead(color, val) {
     if (isGods) return col.filter(x => x === 'H').length >= 3;
     const hasNumbers = col.some(v => v !== 'H');
     if (hasNumbers) return true; // wagers must precede all numbers; numbers are never removed
-    if (col.length === 0 && activeColumnCount() >= focusCap) return true;
     return col.filter(x => x === 'H').length >= 3; // max 3 wagers; count never decreases
   }
 
@@ -1814,14 +1813,8 @@ function isPermanentlyDead(color, val) {
 
   const numbers = col.filter(v => v !== 'H');
   if (numbers.length === 0) {
-    // Se a coluna já possui cartas (ex: Apertos de Mão 'H'), a expedição já foi iniciada!
-    // Cartas numéricas NUNCA estão mortas para ela - a expedição precisa de números!
-    if (col.length > 0) return false;
-
-    let totalCards = 0;
-    COLORS.forEach(c => totalCards += expeditions[c].length);
-    if (totalCards >= 15) return true;
-    if (activeColumnCount() >= focusCap) return true;
+    // Se a coluna ainda não tem números (está vazia ou contém apenas Apertos de Mão),
+    // qualquer carta numérica é legalmente jogável e nunca está morta.
     return false;
   }
 
