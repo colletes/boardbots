@@ -951,6 +951,19 @@ h1, h2 { text-transform: uppercase; letter-spacing: 2px; border-bottom: 2px soli
   </div>
 </div>
 
+<!-- END ROUND RESERVE RESOLUTION MODAL -->
+<div class="result-overlay" id="endRoundModal">
+  <div class="result-card" style="max-width: 440px; text-align: left;">
+    <div style="text-align: center;">
+      <span class="result-icon" style="font-size: 2.5rem; margin-bottom: 8px;">🎒</span>
+      <h3 class="result-title" data-i18n="lc_end_modal_title">Resolução Final da Reserva</h3>
+      <p class="result-desc" style="margin-bottom: 16px; font-size: 0.9em;" data-i18n="lc_end_modal_desc">Ao fim da rodada, o Rival Explorer avaliou as cartas restantes em sua reserva:</p>
+    </div>
+    <div id="endRoundModalBody" style="margin-bottom: 20px; font-size: 0.92em; max-height: 260px; overflow-y: auto;"></div>
+    <button class="result-btn" onclick="finishEndAutomaRound()" data-i18n="lc_end_proceed_btn">Continuar para a Calculadora →</button>
+  </div>
+</div>
+
 <script src="../assets/site.js"></script>
 
     <div class="credits">
@@ -1065,6 +1078,18 @@ Object.assign(window.I18N.pt, {
   lc_res_extra_reserve_purge_title: "<svg class='icon-inline' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><path d='M4 7h16'/><path d='M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3'/><path d='M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13'/><path d='M10 11v6M14 11v6'/></svg> Além disso, descartou da reserva (carta morta):",
   lc_res_extra_reserve_evicted_title: "<svg class='icon-inline' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><path d='M4 4v6h6M20 20v-6h-6'/><path d='M4 10a8 8 0 0 1 14-5.3M20 14a8 8 0 0 1-14 5.3'/></svg> Além disso, descartou da reserva (menos flexível):",
   lc_ok: "Entendido",
+  lc_end_modal_title: "Resolução Final da Reserva",
+  lc_end_modal_desc: "Ao fim da rodada, o Rival Explorer avaliou as cartas restantes em sua reserva:",
+  lc_end_played_title: "Jogadas na Expedição:",
+  lc_end_discarded_title: "Descartadas da Reserva:",
+  lc_end_proceed_btn: "Continuar para a Calculadora →",
+  lc_end_none_played: "Nenhuma carta pôde ser jogada na mesa.",
+  lc_end_reason_advance: "Avança a expedição",
+  lc_end_reason_slot: "Encaixada na expedição",
+  lc_end_reason_new_exp: "Nova expedição (+{pts} pts)",
+  lc_end_reason_illegal: "Não pode ser jogada nem encaixada",
+  lc_end_reason_no_profit: "Expedição virgem geraria prejuízo",
+  lc_end_reason_unplayed: "Não aproveitada na sequência",
   
   lc_options_title: "Regras Especiais / Opções",
   lc_options_locked: "🔒 Fixas no Desafio",
@@ -1168,6 +1193,18 @@ Object.assign(window.I18N.en, {
   lc_res_extra_reserve_purge_title: "<svg class='icon-inline' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><path d='M4 7h16'/><path d='M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3'/><path d='M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13'/><path d='M10 11v6M14 11v6'/></svg> Also discarded from reserve (dead card):",
   lc_res_extra_reserve_evicted_title: "<svg class='icon-inline' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><path d='M4 4v6h6M20 20v-6h-6'/><path d='M4 10a8 8 0 0 1 14-5.3M20 14a8 8 0 0 1-14 5.3'/></svg> Also discarded from reserve (less flexible):",
   lc_ok: "Got it",
+  lc_end_modal_title: "Final Reserve Resolution",
+  lc_end_modal_desc: "At the end of the round, the Rival Explorer evaluated the remaining cards in its reserve:",
+  lc_end_played_title: "Played to Expedition:",
+  lc_end_discarded_title: "Discarded from Reserve:",
+  lc_end_proceed_btn: "Proceed to Calculator →",
+  lc_end_none_played: "No cards could be played to the board.",
+  lc_end_reason_advance: "Advances expedition",
+  lc_end_reason_slot: "Slotted into expedition",
+  lc_end_reason_new_exp: "New expedition (+{pts} pts)",
+  lc_end_reason_illegal: "Cannot be played or slotted",
+  lc_end_reason_no_profit: "Unstarted expedition would cause loss",
+  lc_end_reason_unplayed: "Not used in sequence",
   
   lc_options_title: "Special Rules / Options",
   lc_options_locked: "🔒 Locked in Challenge",
@@ -1402,7 +1439,241 @@ function startRound() {
     }
 }
 
+function tryPlayCardEndRound(color, val) {
+  const col = expeditions[color];
+  const isGods = (difficulty === 'gods');
+  
+  if (isGods) {
+    if (val === 'H') {
+      if (col.filter(x => x === 'H').length >= 3) return null;
+      col.push('H');
+      return "PLAY";
+    } else {
+      if (col.includes(val)) return null;
+      col.push(val);
+      let hArr = col.filter(x => x === 'H');
+      let numArr = col.filter(x => x !== 'H').sort((a,b) => a - b);
+      expeditions[color] = hArr.concat(numArr);
+      return "PLAY";
+    }
+  }
+
+  if (val === 'H') {
+    const hCount = col.filter(x => x === 'H').length;
+    if (hCount >= 3) return null;
+    if (col.every(x => x === 'H')) {
+      col.push('H');
+      return "PLAY";
+    } else {
+      const maxSlotDiff = (difficulty === 'hard') ? 3 : (difficulty === 'medium' ? 2 : 0);
+      const numbers = col.filter(v => v !== 'H');
+      const highest = numbers[numbers.length - 1];
+      const diff = highest - 1;
+      if (maxSlotDiff > 0 && diff <= maxSlotDiff) {
+        col.push('H');
+        let hArr = col.filter(x => x === 'H');
+        let numArr = col.filter(x => x !== 'H').sort((a,b) => a - b);
+        expeditions[color] = hArr.concat(numArr);
+        return "SLOT";
+      }
+      return null;
+    }
+  } else {
+    const numbers = col.filter(v => v !== 'H');
+    const highest = numbers.length > 0 ? numbers[numbers.length - 1] : 0;
+    if (val > highest) {
+      col.push(val);
+      return "PLAY";
+    } else {
+      if (col.includes(val)) return null;
+      const maxSlotDiff = (difficulty === 'hard') ? 3 : (difficulty === 'medium' ? 2 : 0);
+      const diff = highest - val;
+      if (maxSlotDiff > 0 && diff > 0 && diff <= maxSlotDiff) {
+        col.push(val);
+        let hArr = col.filter(x => x === 'H');
+        let numArr = col.filter(x => x !== 'H').sort((a,b) => a - b);
+        expeditions[color] = hArr.concat(numArr);
+        return "SLOT";
+      }
+      return null;
+    }
+  }
+}
+
+function resolveEndRoundReserve() {
+  const played = [];
+  const discarded = [];
+  const lang = localStorage.getItem('boardbots_lang') || 'pt';
+
+  const reserveByColor = {};
+  COLORS.forEach(c => reserveByColor[c] = []);
+  botReserve.forEach(card => {
+    reserveByColor[card.color].push(card.value);
+  });
+
+  COLORS.forEach(c => {
+    const cards = reserveByColor[c];
+    if (cards.length === 0) return;
+    const col = expeditions[c];
+
+    if (col.length > 0) {
+      cards.sort((a, b) => {
+        if (a === 'H') return -1;
+        if (b === 'H') return 1;
+        return a - b;
+      });
+
+      let changed = true;
+      while (changed) {
+        changed = false;
+        for (let i = 0; i < cards.length; i++) {
+          const val = cards[i];
+          const action = tryPlayCardEndRound(c, val);
+          if (action) {
+            played.push({ color: c, value: val, action });
+            cards.splice(i, 1);
+            changed = true;
+            break;
+          }
+        }
+      }
+
+      cards.forEach(val => {
+        discarded.push({ color: c, value: val, reason: 'illegal' });
+      });
+    } else {
+      // Coluna virgem: só inicia se a sequência de cartas na reserva for lucrativa (> 0 pontos)
+      const hCards = cards.filter(v => v === 'H').slice(0, 3);
+      const numCards = [...new Set(cards.filter(v => typeof v === 'number'))].sort((a,b) => a - b);
+      const candidateSeq = [...hCards, ...numCards];
+      const scoreIfPlayed = candidateSeq.length > 0 ? calculateScore(candidateSeq, true) : 0;
+
+      if (scoreIfPlayed > 0) {
+        expeditions[c] = candidateSeq;
+        candidateSeq.forEach(val => {
+          played.push({ color: c, value: val, action: 'PLAY', profit: scoreIfPlayed });
+          const idx = cards.indexOf(val);
+          if (idx > -1) cards.splice(idx, 1);
+        });
+        cards.forEach(val => {
+          discarded.push({ color: c, value: val, reason: 'unplayed' });
+        });
+      } else {
+        cards.forEach(val => {
+          discarded.push({ color: c, value: val, reason: 'no_profit' });
+        });
+      }
+    }
+  });
+
+  played.forEach(item => {
+    const valText = cardValIcon(item.value);
+    const cName = window.I18N[lang] && window.I18N[lang]['c_' + item.color] ? window.I18N[lang]['c_' + item.color] : item.color;
+    let actText = item.action === 'SLOT' ? (lang === 'pt' ? 'ENCAIXAR' : 'SLOT') : (lang === 'pt' ? 'JOGAR' : 'PLAY');
+    const msg = lang === 'pt' 
+      ? `[Fim da Rodada] Resgata da reserva: ${cName} ${valText} (${actText})`
+      : `[End of Round] Recovers from reserve: ${cName} ${valText} (${actText})`;
+    gameLog.unshift(`[${new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit', second:'2-digit'})}] ${ICON_RESERVE} ${msg}`);
+  });
+
+  discarded.forEach(item => {
+    const valText = cardValIcon(item.value);
+    const cName = window.I18N[lang] && window.I18N[lang]['c_' + item.color] ? window.I18N[lang]['c_' + item.color] : item.color;
+    let reasonText = '';
+    if (item.reason === 'illegal') reasonText = lang === 'pt' ? 'não jogável' : 'unplayable';
+    else if (item.reason === 'no_profit') reasonText = lang === 'pt' ? 'expedição virgem sem lucro' : 'unstarted column no profit';
+    else reasonText = lang === 'pt' ? 'não aproveitada' : 'unused';
+    const msg = lang === 'pt'
+      ? `[Fim da Rodada] Descarta da reserva: ${cName} ${valText} (${reasonText})`
+      : `[End of Round] Discards from reserve: ${cName} ${valText} (${reasonText})`;
+    gameLog.unshift(`[${new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit', second:'2-digit'})}] ${ICON_TRASH} ${msg}`);
+  });
+
+  if (gameLog.length > 30) gameLog.length = 30;
+  renderLog();
+
+  botReserve = [];
+  return { played, discarded };
+}
+
 function endAutomaRound() {
+    if (botReserve.length > 0) {
+        const resolution = resolveEndRoundReserve();
+        renderTableau();
+        showEndRoundModal(resolution);
+    } else {
+        finishEndAutomaRound();
+    }
+}
+
+function showEndRoundModal(resolution) {
+    const modal = document.getElementById('endRoundModal');
+    const body = document.getElementById('endRoundModalBody');
+    if (!modal || !body) {
+        finishEndAutomaRound();
+        return;
+    }
+
+    const lang = localStorage.getItem('boardbots_lang') || 'pt';
+    const colorEmoji = { yellow: colorSwatch('yellow'), blue: colorSwatch('blue'), white: colorSwatch('white'), green: colorSwatch('green'), red: colorSwatch('red') };
+
+    let html = '';
+
+    // Played section
+    html += `<div class="result-extra-title" style="color: #27ae60; display: flex; align-items: center; gap: 6px;">`;
+    html += `<svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> `;
+    html += `${i18n('lc_end_played_title')}</div>`;
+
+    if (resolution.played.length > 0) {
+        resolution.played.forEach(item => {
+            const valText = cardValIcon(item.value);
+            const cName = window.I18N[lang] && window.I18N[lang]['c_' + item.color] ? window.I18N[lang]['c_' + item.color] : item.color;
+            let reasonStr = '';
+            if (item.action === 'SLOT') {
+                reasonStr = i18n('lc_end_reason_slot');
+            } else if (item.profit) {
+                reasonStr = i18n('lc_end_reason_new_exp').replace('{pts}', item.profit);
+            } else {
+                reasonStr = i18n('lc_end_reason_advance');
+            }
+            html += `<div class="result-extra-item" style="display:flex; align-items:center; justify-content:space-between; padding:4px 0; border-bottom:1px dashed rgba(0,0,0,0.1);">`;
+            html += `<span style="display:flex; align-items:center; gap:6px;">${colorEmoji[item.color]} <strong>${cName} ${valText}</strong></span>`;
+            html += `<span style="font-size:0.85em; color:var(--text-muted);">${reasonStr}</span>`;
+            html += `</div>`;
+        });
+    } else {
+        html += `<div style="font-style:italic; color:var(--text-muted); font-size:0.88em; padding:4px 0;">${i18n('lc_end_none_played')}</div>`;
+    }
+
+    // Discarded section
+    if (resolution.discarded.length > 0) {
+        html += `<div class="result-extra-title" style="color: #c0392b; display: flex; align-items: center; gap: 6px; margin-top: 14px;">`;
+        html += `<svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16"/><path d="M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/><path d="M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13"/></svg> `;
+        html += `${i18n('lc_end_discarded_title')}</div>`;
+
+        resolution.discarded.forEach(item => {
+            const valText = cardValIcon(item.value);
+            const cName = window.I18N[lang] && window.I18N[lang]['c_' + item.color] ? window.I18N[lang]['c_' + item.color] : item.color;
+            let reasonStr = '';
+            if (item.reason === 'illegal') reasonStr = i18n('lc_end_reason_illegal');
+            else if (item.reason === 'no_profit') reasonStr = i18n('lc_end_reason_no_profit');
+            else reasonStr = i18n('lc_end_reason_unplayed');
+
+            html += `<div class="result-extra-item" style="display:flex; align-items:center; justify-content:space-between; padding:4px 0; border-bottom:1px dashed rgba(0,0,0,0.1);">`;
+            html += `<span style="display:flex; align-items:center; gap:6px;">${colorEmoji[item.color]} <strong>${cName} ${valText}</strong></span>`;
+            html += `<span style="font-size:0.85em; color:var(--text-muted);">${reasonStr}</span>`;
+            html += `</div>`;
+        });
+    }
+
+    body.innerHTML = html;
+    modal.style.display = 'flex';
+}
+
+function finishEndAutomaRound() {
+    const modal = document.getElementById('endRoundModal');
+    if (modal) modal.style.display = 'none';
+
     let total = 0;
     COLORS.forEach(c => total += calculateScore(expeditions[c], true));
     automaScoreThisRound = total;
@@ -1544,6 +1815,8 @@ function nextRound() {
 }
 
 function resetGameForced() {
+    const endModal = document.getElementById('endRoundModal');
+    if (endModal) endModal.style.display = 'none';
     document.getElementById('gameScreen').style.display = 'none';
     document.getElementById('calcScreen').style.display = 'none';
     document.getElementById('summaryScreen').style.display = 'none';
