@@ -474,15 +474,24 @@
       display: flex; flex-direction: column; align-items: center; justify-content: center;
       cursor: pointer; transition: all 0.2s ease; position: relative;
     }
+    .bay-slot.unrolled {
+      border: 1px dashed rgba(36, 59, 96, 0.8);
+      background: rgba(8, 14, 26, 0.6);
+      cursor: default;
+      opacity: 0.5;
+    }
     .bay-slot.active {
       border-color: var(--cyan); background: rgba(0, 240, 255, 0.15);
       box-shadow: 0 0 15px var(--cyan); transform: scale(1.08);
+      opacity: 1;
     }
     .bay-slot.resolved {
       opacity: 0.45; border-color: #334e70; filter: grayscale(0.5);
+      cursor: default;
     }
     .bay-slot.unusable {
       opacity: 0.3; border-color: var(--red); text-decoration: line-through;
+      cursor: default;
     }
     .bay-slot-num {
       position: absolute; top: 2px; left: 4px; font-size: 0.58rem; color: var(--text-muted);
@@ -816,7 +825,7 @@
               <button class="btn btn-danger btn-sm" onclick="markCurrentDieUnusable()" data-i18n="btnMarkUnusable">
                 Dado Inutilizável
               </button>
-              <button class="btn btn-primary btn-sm" onclick="resolveCurrentDie()" style="margin-left:auto;" data-i18n="btnResolveNext">
+              <button class="btn btn-primary btn-sm" id="btnResolveNext" onclick="resolveCurrentDie()" style="margin-left:auto;" data-i18n="btnResolveNext">
                 Ação Executada / Próximo Dado ➔
               </button>
             </div>
@@ -1453,13 +1462,13 @@
       gameState.turnDice = [];
 
       for (let i = 0; i < diceCount; i++) {
-        let actionIdx = Math.floor(Math.random() * ACTIONS.length);
-        let action = ACTIONS[actionIdx];
         gameState.turnDice.push({
           slotNum: i + 1,
-          action: action,
+          rolled: false,
+          action: null,
           resolved: false,
-          unusable: isBonus && action.id === 'culture'
+          unusable: false,
+          rerolledOnce: false
         });
       }
 
@@ -1468,12 +1477,32 @@
       document.getElementById('currentActionCard').style.display = 'block';
       document.getElementById('btnRollDice').style.display = 'none';
 
-      renderActivationBay();
-      activateCurrentDie();
-
       logTactical(isBonus 
         ? `Rogue acionou TURNO BÔNUS com 3 dados!` 
-        : `Turno do Rogue iniciado: ${diceCount} dados rolados.`);
+        : `Turno do Rogue iniciado (${diceCount} dados). Rolando dado a dado...`);
+
+      rollAndActivateDie(0);
+    }
+
+    function rollAndActivateDie(index) {
+      if (index < 0 || index >= gameState.turnDice.length) {
+        endRogueTurn();
+        return;
+      }
+      gameState.activeDieIndex = index;
+      const die = gameState.turnDice[index];
+
+      if (!die.rolled) {
+        let actionIdx = Math.floor(Math.random() * ACTIONS.length);
+        die.action = ACTIONS[actionIdx];
+        die.rolled = true;
+        die.unusable = (gameState.isBonusTurn && die.action.id === 'culture');
+        logTactical(`Dado #${die.slotNum} rolado: ${currentLang === 'pt' ? die.action.namePt : die.action.nameEn}.`);
+      }
+
+      renderActivationBay();
+      activateCurrentDie();
+      saveGame();
     }
 
     function renderActivationBay() {
@@ -1483,22 +1512,30 @@
       gameState.turnDice.forEach((d, idx) => {
         const slot = document.createElement('div');
         let classes = 'bay-slot';
-        if (idx === gameState.activeDieIndex) classes += ' active';
-        if (d.resolved) classes += ' resolved';
-        if (d.unusable) classes += ' unusable';
+        if (!d.rolled) {
+          classes += ' unrolled';
+        } else {
+          if (idx === gameState.activeDieIndex) classes += ' active';
+          if (d.resolved) classes += ' resolved';
+          if (d.unusable) classes += ' unusable';
+        }
         slot.className = classes;
-        slot.title = `Dado #${d.slotNum}: ${currentLang === 'pt' ? d.action.namePt : d.action.nameEn}`;
-        slot.innerHTML = `
-          <span class="bay-slot-num">${d.slotNum}</span>
-          <span style="font-size:1.4rem;">${d.action.icon}</span>
-        `;
-        slot.onclick = () => {
-          if (!d.resolved) {
-            gameState.activeDieIndex = idx;
-            renderActivationBay();
-            activateCurrentDie();
-          }
-        };
+
+        if (d.rolled) {
+          slot.title = `Dado #${d.slotNum}: ${currentLang === 'pt' ? d.action.namePt : d.action.nameEn}`;
+          slot.innerHTML = `
+            <span class="bay-slot-num">${d.slotNum}</span>
+            <span style="font-size:1.4rem;">${d.action.icon}</span>
+          `;
+        } else {
+          const unrolledTitle = currentLang === 'pt' ? `Dado #${d.slotNum}: A rolar` : `Die #${d.slotNum}: Unrolled`;
+          slot.title = unrolledTitle;
+          slot.innerHTML = `
+            <span class="bay-slot-num">${d.slotNum}</span>
+            <span style="font-size:1.1rem; color:var(--text-muted); opacity:0.6;">?</span>
+          `;
+        }
+
         container.appendChild(slot);
       });
     }
@@ -1510,6 +1547,7 @@
       }
 
       const die = gameState.turnDice[gameState.activeDieIndex];
+      if (!die || !die.action) return;
       const action = die.action;
 
       playDialTick();
@@ -1547,6 +1585,16 @@
         followBox.style.display = 'block';
       }
 
+      const isLastDie = gameState.activeDieIndex === gameState.turnDice.length - 1;
+      const resolveBtn = document.getElementById('btnResolveNext');
+      if (resolveBtn) {
+        if (isLastDie) {
+          resolveBtn.textContent = currentLang === 'pt' ? 'Ação Executada / Finalizar Turno ➔' : 'Action Resolved / End Turn ➔';
+        } else {
+          resolveBtn.textContent = currentLang === 'pt' ? 'Ação Executada / Próximo Dado ➔' : 'Action Resolved / Next Die ➔';
+        }
+      }
+
       renderActivationBay();
     }
 
@@ -1558,7 +1606,7 @@
 
     function confirmResourceGain() {
       const die = gameState.turnDice[gameState.activeDieIndex];
-      if (!die) return;
+      if (!die || !die.action) return;
       const count = gameState.stepperCountVal;
       if (die.action.id === 'energy') {
         adjustResource('energy', count);
@@ -1571,20 +1619,22 @@
     }
 
     function forceRerollCurrentDie() {
-      if (gameState.activeDieIndex < 0) return;
+      if (gameState.activeDieIndex < 0 || !gameState.turnDice[gameState.activeDieIndex]) return;
       initAudio();
       playTone(400, 'sine', 0.08);
       const newActionIdx = Math.floor(Math.random() * ACTIONS.length);
       const newAction = ACTIONS[newActionIdx];
-      gameState.turnDice[gameState.activeDieIndex].action = newAction;
-      gameState.turnDice[gameState.activeDieIndex].unusable = (gameState.isBonusTurn && newAction.id === 'culture');
+      const die = gameState.turnDice[gameState.activeDieIndex];
+      die.action = newAction;
+      die.unusable = (gameState.isBonusTurn && newAction.id === 'culture');
 
-      logTactical(`Humano forçou reroll no Dado #${gameState.activeDieIndex + 1}: virou ${newAction.namePt}.`);
+      logTactical(`Humano forçou reroll no Dado #${die.slotNum}: virou ${currentLang === 'pt' ? newAction.namePt : newAction.nameEn}.`);
       activateCurrentDie();
+      saveGame();
     }
 
     function markCurrentDieUnusable() {
-      if (gameState.activeDieIndex < 0) return;
+      if (gameState.activeDieIndex < 0 || !gameState.turnDice[gameState.activeDieIndex]) return;
       initAudio();
       const die = gameState.turnDice[gameState.activeDieIndex];
 
@@ -1592,8 +1642,9 @@
         die.rerolledOnce = true;
         const newAction = ACTIONS[Math.floor(Math.random() * ACTIONS.length)];
         die.action = newAction;
-        logTactical(`Dado #${die.slotNum} inutilizável — rerolado 1 vez pela variante: virou ${newAction.namePt}.`);
+        logTactical(`Dado #${die.slotNum} inutilizável — rerolado 1 vez pela variante: virou ${currentLang === 'pt' ? newAction.namePt : newAction.nameEn}.`);
         activateCurrentDie();
+        saveGame();
         return;
       }
 
@@ -1605,28 +1656,21 @@
     }
 
     function resolveCurrentDie() {
-      if (gameState.activeDieIndex < 0) return;
+      if (gameState.activeDieIndex < 0 || !gameState.turnDice[gameState.activeDieIndex]) return;
       initAudio();
       const die = gameState.turnDice[gameState.activeDieIndex];
       die.resolved = true;
-      logTactical(`Dado #${die.slotNum} (${die.action.namePt}) executado.`);
+      logTactical(`Dado #${die.slotNum} (${currentLang === 'pt' ? die.action.namePt : die.action.nameEn}) executado.`);
       playTone(660, 'sine', 0.08);
       advanceToNextDie();
     }
 
     function advanceToNextDie() {
-      const nextIdx = gameState.turnDice.findIndex((d, idx) => idx > gameState.activeDieIndex && !d.resolved);
-      if (nextIdx !== -1) {
-        gameState.activeDieIndex = nextIdx;
-        activateCurrentDie();
+      const nextIdx = gameState.activeDieIndex + 1;
+      if (nextIdx < gameState.turnDice.length) {
+        rollAndActivateDie(nextIdx);
       } else {
-        const anyUnresolved = gameState.turnDice.findIndex(d => !d.resolved);
-        if (anyUnresolved !== -1) {
-          gameState.activeDieIndex = anyUnresolved;
-          activateCurrentDie();
-        } else {
-          endRogueTurn();
-        }
+        endRogueTurn();
       }
     }
 
@@ -1753,7 +1797,15 @@
             document.getElementById('screenSetup').classList.remove('active');
             document.getElementById('screenGame').classList.add('active');
             updateHudDisplays();
-            snapCompassTo(0);
+            if (gameState.turnDice && gameState.turnDice.length > 0 && gameState.activeDieIndex >= 0 && gameState.activeDieIndex < gameState.turnDice.length) {
+              document.getElementById('activationBayArea').style.display = 'block';
+              document.getElementById('currentActionCard').style.display = 'block';
+              document.getElementById('btnRollDice').style.display = 'none';
+              renderActivationBay();
+              activateCurrentDie();
+            } else {
+              snapCompassTo(0);
+            }
             return true;
           }
         }
