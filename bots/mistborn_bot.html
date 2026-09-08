@@ -1941,10 +1941,10 @@ function getVillainHp(v) {
 function playSound(type) {
     if (window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
         if (window.ThemeKit.isSfxMuted() || !soundEnabled) return;
-        if (type === 'hit' || type === 'token') {
-            window.ThemeKit.playSfx('token-place', { volume: 0.55 });
+        if (type === 'hit') {
+            window.ThemeKit.playSfx('mistborn/steel-push', { volume: 0.65 });
         } else if (type === 'flare' || type === 'burn') {
-            window.ThemeKit.playSfx('turn-notify', { volume: 0.5 });
+            window.ThemeKit.playSfx('mistborn/iron-pull', { volume: 0.6 });
         } else if (type === 'card' || type === 'draw') {
             window.ThemeKit.playSfx('card-draw', { volume: 0.6 });
         } else if (type === 'flip' || type === 'reveal') {
@@ -1953,12 +1953,18 @@ function playSound(type) {
             window.ThemeKit.playSfx('card-shuffle', { volume: 0.7 });
         } else if (type === 'dice') {
             window.ThemeKit.playSfx('dice-tray', { volume: 0.7 });
-        } else if (type === 'notify' || type === 'turn') {
-            window.ThemeKit.playSfx('turn-notify', { volume: 0.6 });
+        } else if (type === 'notify' || type === 'turn' || type === 'sweep') {
+            window.ThemeKit.playSfx('mistborn/ashfall-sweep', { volume: 0.6 });
+        } else if (type === 'mist') {
+            window.ThemeKit.playSfx('mistborn/mist-whisper', { volume: 0.65 });
+        } else if (type === 'koloss') {
+            window.ThemeKit.playSfx('mistborn/koloss-growl', { volume: 0.7 });
+        } else if (type === 'coin') {
+            window.ThemeKit.playSfx('mistborn/nobility-coin', { volume: 0.65 });
         } else if (type === 'click') {
             window.ThemeKit.playSfx('ui-click', { volume: 0.35 });
         } else {
-            window.ThemeKit.playSfx('token-place', { volume: 0.4 });
+            window.ThemeKit.playSfx('token-place', { volume: 0.45 });
         }
         return;
     }
@@ -2108,7 +2114,9 @@ function renderSetupSelectors() {
 function selectVillain(id) {
     gameState.selectedVillain = id;
     renderSetupSelectors();
-    playSound('flare');
+    if (id === 'koloss') playSound('koloss');
+    else if (id === 'jastes_lekal') playSound('coin');
+    else playSound('flare');
 }
 
 // Basic/Advanced mode: Lord Ruler has no such distinction (follows the official rulebook instead),
@@ -2182,7 +2190,7 @@ function startGame() {
         ? `⚔️ A névoa se ergue: o combate começa contra <strong>${v.name}</strong> (${gameState.playerCount} jogadores).`
         : `⚔️ The mists rise: the battle begins against <strong>${v.name}</strong> (${gameState.playerCount} players).`;
     addLog(initMsg);
-    playSound('flare');
+    playSound('mist');
 }
 
 function setupGameDashboard() {
@@ -2754,6 +2762,7 @@ function applyLordRulerEdictHeal() {
 function applyKolossEdictHeal() {
     const heal = Math.max(0, 8 - 2 * gameState.missionsCompleted);
     adjustGauge('villainHp', heal);
+    playSound('koloss');
 }
 
 // --- Ruin's "End of Ruin" 33-spot (0-32) race track: Ruin's black cube (edict-driven, ignores gates)

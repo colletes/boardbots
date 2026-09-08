@@ -958,6 +958,7 @@ details .setup-list li {
 }
 </style>
     <script src="../assets/logger.js"></script>
+    <script src="../assets/theme-kit.js"></script>
 </head>
 <body class="mode-automa">
 
@@ -1366,6 +1367,7 @@ details .setup-list li {
                         <li><strong>Fim do turno de alocação:</strong> quando todos os seus trabalhadores estiverem alocados, o turno termina, mesmo que o Automa ainda tenha trabalhadores livres.</li>
                         <li><strong>Alimentação:</strong> ao fim de cada rodada, apenas você alimenta sua tribo. O Automa não participa da fase de alimentação.</li>
                         <li><strong>Cartas de civilização:</strong> ao fim de cada rodada, cartas não adquiridas são descartadas e 2 novas são reveladas.</li>
+                        <li><strong>Locais da Aldeia (Regra 2 Jogadores):</strong> em 2 jogadores, apenas 2 dos 3 locais da aldeia (Ferramentas, Cabana de Acasalamento, Agricultura) podem ser ocupados por rodada. Se você e o Automa já ocuparam 2 deles, marque o 3º como ocupado no grid para respeitar o limite oficial.</li>
                         <li><strong>Fim de partida:</strong> a partida termina se o monte de cartas de civilização acabar ou se todas as construções forem adquiridas.</li>
                         <li><strong>Pontuação final:</strong> use as mesmas regras de pontuação final do jogo para 2 jogadores.</li>
                     </ul>
@@ -1625,6 +1627,7 @@ details .setup-list li {
                         <li><strong>End of the allocation turn:</strong> once all your workers are placed, the turn ends, even if the Automa still has free workers.</li>
                         <li><strong>Feeding:</strong> at the end of each round, only you feed your tribe. The Automa doesn't take part in the feeding phase.</li>
                         <li><strong>Civilization cards:</strong> at the end of each round, unclaimed cards are discarded and 2 new ones are revealed.</li>
+                        <li><strong>Village Spaces (2-Player Rule):</strong> in a 2-player game, only 2 of the 3 village places (Toolmaker, Hut of Procreation, Agriculture) can be taken per round. If you and the Automa take 2, mark the 3rd as occupied on the grid to enforce the official 2p limit.</li>
                         <li><strong>End of game:</strong> the game ends if the civilization card deck runs out or all buildings are claimed.</li>
                         <li><strong>Final scoring:</strong> use the same final-scoring rules as the 2-player game.</li>
                     </ul>
@@ -1900,6 +1903,12 @@ details .setup-list li {
 
         function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
 
+        function playStoneAgeSfx(key, opts) {
+            if (typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
+                window.ThemeKit.playSfx(key, opts);
+            }
+        }
+
         function startGame() {
             if (pendingMode === 'official') {
                 const difficulty = parseInt(document.getElementById('officialDifficulty').value) || 1;
@@ -1913,6 +1922,7 @@ details .setup-list li {
                 initDiceBox();
             }
             save();
+            playStoneAgeSfx('stoneage/tribal-drum', { volume: 0.65 });
             document.getElementById('setup-screen').classList.add('hidden');
             document.getElementById('game-area').classList.remove('hidden');
             document.getElementById('btnResetGame').classList.remove('hidden');
@@ -2007,6 +2017,7 @@ details .setup-list li {
 
             const btnRoll = document.getElementById('btnRoll');
             if (btnRoll) btnRoll.disabled = true;
+            playStoneAgeSfx('dice-roll', { volume: 0.5 });
 
             let d1 = 1, d2 = 1;
 
@@ -2057,28 +2068,35 @@ details .setup-list li {
                 state.score += pts;
                 effectText = S().effectPoints(pts, tr(RESOURCE_LABEL[loc.resource]));
                 logMsg(S().logAllocatedResource(landed, locName, pts));
+                const resSfx = loc.resource === 'wood' ? 'stoneage/wood-gather' : loc.resource === 'clay' ? 'stoneage/clay-shaping' : 'stoneage/flint-strike';
+                playStoneAgeSfx(resSfx, { volume: 0.65 });
                 state.pending = null;
             } else if (loc.type === "tool") {
                 state.tools = Math.min(3, state.tools + 1);
                 effectText = S().effectTool(state.tools);
                 logMsg(S().logAllocatedTool(landed, state.tools));
+                playStoneAgeSfx('stoneage/flint-strike', { volume: 0.7 });
                 state.pending = null;
             } else if (loc.type === "mating") {
                 state.workers += 1;
                 effectText = S().effectMating(state.workers);
                 logMsg(S().logAllocatedMating(landed, state.workers));
+                playStoneAgeSfx('token-place', { volume: 0.5 });
                 state.pending = null;
             } else if (loc.type === "agri") {
                 state.agriculture += 1;
                 effectText = S().effectAgri(state.agriculture);
                 logMsg(S().logAllocatedAgri(landed, state.agriculture));
+                playStoneAgeSfx('stoneage/wood-gather', { volume: 0.6 });
                 state.pending = null;
             } else if (loc.type === "civ") {
                 effectText = S().effectCivPending;
                 state.pending = { kind: "civ", pos: landed, name: loc.name };
+                playStoneAgeSfx('card-draw', { volume: 0.5 });
             } else if (loc.type === "building") {
                 effectText = S().effectBuildingPending;
                 state.pending = { kind: "building", pos: landed, name: loc.name };
+                playStoneAgeSfx('card-draw', { volume: 0.5 });
             }
             document.getElementById('effect').innerText = effectText;
 
@@ -2090,6 +2108,7 @@ details .setup-list li {
             const pts = parseInt(document.getElementById('civPointsInput').value) || 0;
             state.score += pts;
             logMsg(S().logCivPoints(tr(state.pending.name), pts));
+            playStoneAgeSfx('token-place', { volume: 0.5 });
             clearPending();
         }
         function resolveCivResource() {
@@ -2098,25 +2117,31 @@ details .setup-list li {
             const pts = RESOURCE_POINTS[resource] * qty;
             state.score += pts;
             logMsg(S().logCivResource(tr(state.pending.name), qty, tr(RESOURCE_LABEL[resource]), pts));
+            const resSfx = resource === 'wood' ? 'stoneage/wood-gather' : resource === 'clay' ? 'stoneage/clay-shaping' : 'stoneage/flint-strike';
+            playStoneAgeSfx(resSfx, { volume: 0.65 });
             clearPending();
         }
         function resolveCivFood() {
             const qty = parseInt(document.getElementById('civFoodQty').value) || 0;
             state.score += qty;
             logMsg(S().logCivFood(tr(state.pending.name), qty));
+            playStoneAgeSfx('stoneage/mammoth-step', { volume: 0.65 });
             clearPending();
         }
         function resolveCivAgri() {
             state.agriculture += 1;
             logMsg(S().logCivAgri(tr(state.pending.name)));
+            playStoneAgeSfx('stoneage/wood-gather', { volume: 0.6 });
             clearPending();
         }
         function resolveCivTool() {
             state.tools = Math.min(3, state.tools + 1);
             logMsg(S().logCivTool(tr(state.pending.name), state.tools));
+            playStoneAgeSfx('stoneage/flint-strike', { volume: 0.65 });
             clearPending();
         }
         async function resolveCivMixedRoll() {
+            playStoneAgeSfx('dice-roll', { volume: 0.5 });
             let d1 = Math.floor(Math.random() * 6) + 1;
             let d2 = Math.floor(Math.random() * 6) + 1;
             if (diceBoxReady && diceBox) {
@@ -2134,20 +2159,25 @@ details .setup-list li {
             const pts = RESOURCE_POINTS[resource];
             state.score += pts;
             logMsg(S().logCivMixed(tr(state.pending.name), tr(RESOURCE_LABEL[resource]), pts));
+            const resSfx = resource === 'wood' ? 'stoneage/wood-gather' : resource === 'clay' ? 'stoneage/clay-shaping' : 'stoneage/flint-strike';
+            playStoneAgeSfx(resSfx, { volume: 0.65 });
             clearPending();
         }
         function resolveCivDraw() {
             logMsg(S().logCivDraw(tr(state.pending.name)));
+            playStoneAgeSfx('card-draw', { volume: 0.55 });
             clearPending();
         }
         function resolveBuildingFixed() {
             const pts = parseInt(document.getElementById('buildingFixedInput').value) || 0;
             state.score += pts;
             logMsg(S().logBuildingFixed(tr(state.pending.name), pts));
+            playStoneAgeSfx('stoneage/flint-strike', { volume: 0.65 });
             clearPending();
         }
         async function resolveBuildingDice() {
             const n = parseInt(document.getElementById('buildingDiceCount').value) || 4;
+            playStoneAgeSfx('dice-roll', { volume: 0.55 });
             let sum = 0, rolls = [];
             if (diceBoxReady && diceBox) {
                 try {
@@ -2177,6 +2207,7 @@ details .setup-list li {
             state.occupied = [];
             state.soloHasWorkers = true;
             state.pending = null;
+            playStoneAgeSfx('stoneage/tribal-drum', { volume: 0.55 });
             if (diceBox && typeof diceBox.clear === 'function') {
                 try { diceBox.clear(); } catch(e) {}
             }
@@ -2345,7 +2376,12 @@ details .setup-list li {
             const paid = Math.min(state.food, owed);
             const shortfall = owed - paid;
             state.food -= paid;
-            if (shortfall > 0) state.exhaustion = Math.max(0, state.exhaustion - shortfall);
+            if (shortfall > 0) {
+                state.exhaustion = Math.max(0, state.exhaustion - shortfall);
+                playStoneAgeSfx('stoneage/mammoth-step', { volume: 0.7 });
+            } else {
+                playStoneAgeSfx('stoneage/fire-crackle', { volume: 0.7 });
+            }
             logMsg(S().officialLogFeedingApplied(owed, paid, shortfall));
             save();
             render();
@@ -2354,6 +2390,7 @@ details .setup-list li {
         function discardBuilding() {
             state.buildingsPile += state.buildingsPerRound;
             logMsg(S().officialLogDiscardBuilding(state.buildingsPerRound, state.buildingsPile));
+            playStoneAgeSfx('card-flip', { volume: 0.5 });
             save();
             render();
         }
@@ -2361,6 +2398,7 @@ details .setup-list li {
         function cantDiscardBuilding() {
             state.exhaustion = Math.max(0, state.exhaustion - 3);
             logMsg(S().officialLogCantDiscard(state.exhaustion));
+            playStoneAgeSfx('stoneage/mammoth-step', { volume: 0.7 });
             save();
             render();
         }
@@ -2369,6 +2407,7 @@ details .setup-list li {
             state.round += 1;
             state.cost4Value = 0;
             logMsg(S().officialLogNewRound(state.round));
+            playStoneAgeSfx('stoneage/tribal-drum', { volume: 0.55 });
             save();
             render();
         }
@@ -2376,6 +2415,7 @@ details .setup-list li {
         function markOfficialWin() {
             state.ended = 'win';
             logMsg(S().officialLogWin());
+            playStoneAgeSfx('stoneage/tribal-drum', { volume: 0.75, rate: 1.1 });
             save();
             render();
         }
