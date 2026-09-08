@@ -243,7 +243,9 @@ h2{ font-family:var(--font-typewriter); color:var(--ink); margin:0 0 14px; borde
 .text-dim { color: var(--ink-soft); font-style: italic; opacity: 0.8; }
 .badge { display: inline-block; padding: 2px 6px; background: var(--seal); color: #fff; font-size: 0.75em; border-radius: 2px; font-family: sans-serif; font-weight: bold; letter-spacing: 1px; }
 </style>
+<link rel="stylesheet" href="../assets/theme-kit.css">
 <script src="../assets/logger.js"></script>
+<script src="../assets/theme-kit.js"></script>
 </head>
 <body>
 <div class="lang-switch">
@@ -944,7 +946,14 @@ function shuffleArray(arr) {
   return arr;
 }
 
+function playAlsSfx(key, opts) {
+  if (typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
+    window.ThemeKit.playSfx(key, opts);
+  }
+}
+
 function startGame() {
+  playAlsSfx('airlandsea/tactical-order', { volume: 0.7 });
   tableau = Array.from({length: maxTheaters}, () => []);
   initRoundLogic();
   document.getElementById('setup-screen').classList.add('hidden');
@@ -997,6 +1006,9 @@ function checkWithdrawalAlerts() {
 
   if (alerts.length > 0) {
     alertBox.innerHTML = alerts.join('<br>');
+    if (alertBox.classList.contains('hidden')) {
+      playAlsSfx('airlandsea/retreat-whistle', { volume: 0.65 });
+    }
     alertBox.classList.remove('hidden');
   } else {
     alertBox.classList.add('hidden');
@@ -1171,6 +1183,12 @@ function displayCardPrompt(card, facedown, isEnhancement = false) {
 
 function placeCard(colIndex) {
     document.getElementById('activePlayArea').classList.add('hidden');
+    const th = selectedTheaters[colIndex];
+    if (th === 'air') playAlsSfx('airlandsea/air-propeller', { volume: 0.7 });
+    else if (th === 'land') playAlsSfx('airlandsea/land-howitzer', { volume: 0.75 });
+    else if (th === 'sea') playAlsSfx('airlandsea/sea-sonar', { volume: 0.75 });
+    else playAlsSfx('token-place', { volume: 0.5 });
+
     tableau[colIndex].push({
         card: currentPendingCard,
         facedown: currentPendingFacedown

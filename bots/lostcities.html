@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/theme-kit.css">
 <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
 <style>
 
@@ -1014,6 +1015,7 @@ h1, h2 { text-transform: uppercase; letter-spacing: 2px; border-bottom: 2px soli
         </div>
     </div>
 
+<script src="../assets/theme-kit.js"></script>
 <script>
 // --- I18N DICTIONARY ---
 window.I18N = window.I18N || { pt: {}, en: {} };
@@ -1400,6 +1402,12 @@ function showScreen(screenId) {
     window.scrollTo(0, 0);
 }
 
+function playLostCitiesSfx(key, opts) {
+  if (typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
+    window.ThemeKit.playSfx(key, opts);
+  }
+}
+
 function startGame() {
   currentRound = 1;
   scoresP1 = [];
@@ -1408,6 +1416,7 @@ function startGame() {
 }
 
 function startRound() {
+    playLostCitiesSfx('lostcities/torch-flare', { volume: 0.65 });
     if (gameMode === 'automa') {
         expeditions = { yellow: [], blue: [], white: [], green: [], red: [] };
         botReserve = [];
@@ -1701,6 +1710,7 @@ function resolveEndRoundReserve() {
 }
 
 function endAutomaRound() {
+    playLostCitiesSfx('lostcities/ruins-echo', { volume: 0.7 });
     if (botReserve.length > 0) {
         const resolution = resolveEndRoundReserve();
         renderTableau();
@@ -1853,6 +1863,7 @@ function toggleCalc(color, val) {
 }
 
 function confirmCalculator() {
+    playLostCitiesSfx('lostcities/golden-relic-chime', { volume: 0.7 });
     let total = parseInt(document.getElementById('calcGrandTotal').innerText);
     if (calcCurrentPlayer === 1) {
         scoresP1[currentRound - 1] = total;
@@ -1941,6 +1952,7 @@ function resetGameForced() {
 
 function selectColor(c) {
   selColor = c;
+  playLostCitiesSfx('card-flip', { volume: 0.45 });
   document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
   document.querySelector(`.color-btn[data-color="${c}"]`).classList.add('active');
   checkReady();
@@ -1948,6 +1960,7 @@ function selectColor(c) {
 
 function selectVal(v) {
   selVal = v === 'H' ? 'H' : parseInt(v);
+  playLostCitiesSfx('card-flip', { volume: 0.45 });
   document.querySelectorAll('.val-btn').forEach(b => b.classList.remove('active'));
   document.querySelector(`.val-btn[data-val="${v}"]`).classList.add('active');
   checkReady();
@@ -2503,6 +2516,22 @@ function showResult(action, color, value, discardReason, reservePlays, reservePu
   const extra = document.getElementById('resExtra');
   const lang = localStorage.getItem('boardbots_lang') || 'pt';
   const colorEmoji = { yellow: colorSwatch('yellow'), blue: colorSwatch('blue'), white: colorSwatch('white'), green: colorSwatch('green'), red: colorSwatch('red') };
+  
+  if (action === 'PLAY' || action === 'SLOT') {
+    if (value === 'H') {
+      playLostCitiesSfx('lostcities/handshake-pact', { volume: 0.7 });
+    } else if (expeditions[color] && expeditions[color].length === 1) {
+      playLostCitiesSfx('lostcities/stone-tomb-slide', { volume: 0.7 });
+    } else if (typeof value === 'number' && value >= 8) {
+      playLostCitiesSfx('lostcities/golden-relic-chime', { volume: 0.65 });
+    } else {
+      playLostCitiesSfx('token-place', { volume: 0.5 });
+    }
+  } else if (action === 'DISCARD') {
+    playLostCitiesSfx('lostcities/sand-brush', { volume: 0.65 });
+  } else if (action === 'RESERVE') {
+    playLostCitiesSfx('lostcities/sand-brush', { volume: 0.5 });
+  }
   
   if (action === 'PLAY') {
     icon.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>';

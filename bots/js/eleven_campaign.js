@@ -68,6 +68,11 @@ const CAMPAIGN_UI = {
 // clubs — those skip the Wikipedia lookup entirely and instead get generic,
 // division/difficulty-based scenarios (see GENERIC_DIVISION_FACTS / generateCampaign).
 const TEAM_DATA = {
+    official: {
+        1: ['Port East', 'Sheepdale Shire', 'Ironford Athletic', 'Northcliff United', "St. Jude's Crown", 'Victoria City', 'Grand Haven FC', 'Apex Metropolitan'],
+        2: ['Brightsbury FC', 'Smokepool City', 'Westbridge FC', 'Riverdale United', 'Northton Albion', 'Oldcastle Wanderers', 'Highland Celtic', 'Kingsbury Town'],
+        3: ['Brickton FC', 'Middleham FC', 'Dafton United', 'Royalford Town', 'Blackston Kings', 'Redbridge Rovers', 'Eastwood City', 'Southgate Athletic']
+    },
     england: {
         1: ['Manchester City', 'Arsenal F.C.', 'Liverpool F.C.', 'Chelsea F.C.', 'Manchester United F.C.', 'Tottenham Hotspur F.C.', 'Newcastle United F.C.', 'Aston Villa F.C.', 'Brighton & Hove Albion F.C.', 'West Ham United F.C.', 'Everton F.C.', 'Wolverhampton Wanderers F.C.'],
         2: ['Leeds United F.C.', 'Sunderland A.F.C.', 'Norwich City F.C.', 'West Bromwich Albion F.C.', 'Middlesbrough F.C.', 'Sheffield United F.C.', 'Watford F.C.', 'Coventry City F.C.', 'Preston North End F.C.', 'Hull City A.F.C.'],
@@ -102,8 +107,8 @@ function populateTeamSelect(preserveSelection) {
     const lang = currentCampaignLang();
     const leagueEl = document.getElementById('camp-league');
     const divisionEl = document.getElementById('camp-division');
-    const league = leagueEl ? leagueEl.value : 'england';
-    const division = divisionEl ? divisionEl.value : '1';
+    const league = leagueEl ? leagueEl.value : 'official';
+    const division = divisionEl ? divisionEl.value : '3';
     const previous = preserveSelection ? select.value : null;
 
     const teams = (TEAM_DATA[league] || {})[division] || [];
@@ -705,12 +710,13 @@ async function generateCampaign() {
     output.style.display = 'none';
     container.innerHTML = '';
 
-    // Real-world grounding only applies to curated real teams — a custom
-    // team skips Wikipedia entirely and uses generic, division/difficulty
-    // scenarios instead (no real facts to look up for a fictional club).
+    // Real-world grounding only applies to curated real teams — custom
+    // or official game clubs skip Wikipedia entirely and use generic, division/difficulty
+    // scenarios instead (no real-world facts for board game canon clubs).
     // Both language editions are fetched up front so a later language
     // switch can re-translate the facts too, with no extra network call.
-    const factByLang = customTeam ? null : {
+    const isOfficial = (league === 'official');
+    const factByLang = (customTeam || isOfficial) ? null : {
         pt: await fetchTeamData(team, 'pt'),
         en: await fetchTeamData(team, 'en')
     };
@@ -748,7 +754,7 @@ async function generateCampaign() {
         chapterPicks.push({ twistIdx, mainPicks, secondaryPicks, setupPicks, failPenaltyPick });
     }
 
-    campaignState = { team, league, division, diff, chapters, canPromote, customTeam, factByLang, arcIdx, chapterPicks };
+    campaignState = { team, league, division, diff, chapters, canPromote, customTeam, isOfficial, factByLang, arcIdx, chapterPicks };
     renderCampaign(lang);
 }
 
@@ -762,18 +768,19 @@ function renderCampaign(lang) {
     const state = campaignState;
     if (!state) return;
     const ui = CAMPAIGN_UI[lang] || CAMPAIGN_UI.pt;
-    const { team, league, division, diff, chapters, canPromote, customTeam, factByLang, arcIdx, chapterPicks } = state;
+    const { team, league, division, diff, chapters, canPromote, customTeam, isOfficial, factByLang, arcIdx, chapterPicks } = state;
 
     const loader = document.getElementById('campaign-loader');
     const output = document.getElementById('campaign-output');
     const container = document.getElementById('pdf-container');
 
-    const factData = customTeam ? null : (factByLang[lang] || factByLang.pt || factByLang.en);
-    const sentences = customTeam
+    const noWiki = customTeam || isOfficial || !factByLang;
+    const factData = noWiki ? null : (factByLang[lang] || factByLang.pt || factByLang.en);
+    const sentences = noWiki
         ? genericFactSentences(lang, division, diff)
         : (factData && factData.extract ? splitSentences(factData.extract) : []);
-    const fallbackThumb = customTeam ? null : ((factByLang.pt && factByLang.pt.thumbnail) || (factByLang.en && factByLang.en.thumbnail));
-    const bgImage = (!customTeam && factData && factData.thumbnail) ? factData.thumbnail.source : (fallbackThumb ? fallbackThumb.source : '');
+    const fallbackThumb = noWiki ? null : ((factByLang.pt && factByLang.pt.thumbnail) || (factByLang.en && factByLang.en.thumbnail));
+    const bgImage = (!noWiki && factData && factData.thumbnail) ? factData.thumbnail.source : (fallbackThumb ? fallbackThumb.source : '');
 
     const arc = STORY_ARCS[arcIdx];
     const arcText = arc[lang] || arc.pt;

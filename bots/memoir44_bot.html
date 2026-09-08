@@ -318,7 +318,9 @@
   vertical-align: middle !important;
 }
 </style>
+    <link rel="stylesheet" href="../assets/theme-kit.css">
     <script src="../assets/logger.js"></script>
+    <script src="../assets/theme-kit.js"></script>
 </head>
 <body id="app-body">
     <div class="stars"></div>
@@ -837,7 +839,13 @@
     }
     initStarfield();
 
-    // --- EFEITOS SONOROS (Web Audio, sem arquivos externos) ---
+    // --- EFEITOS SONOROS (ThemeKit com fallback Web Audio) ---
+    function playMemoirSfx(key, opts) {
+        if (typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
+            window.ThemeKit.playSfx(key, opts);
+        }
+    }
+
     let audioCtxShared, ambientNode = null;
     function getAudioCtx() {
         if (!audioCtxShared) audioCtxShared = new (window.AudioContext || window.webkitAudioContext)();
@@ -845,6 +853,10 @@
     }
 
     function playGunfire() {
+        if (typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
+            window.ThemeKit.playSfx('memoir44/garand-ping', { volume: 0.7 });
+            return;
+        }
         const ctx = getAudioCtx();
         const t = ctx.currentTime;
         const master = ctx.createGain(); master.gain.value = 0.32; master.connect(ctx.destination);
@@ -871,6 +883,10 @@
     }
 
     function playArtilleryBoom() {
+        if (typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
+            window.ThemeKit.playSfx('memoir44/artillery-distant', { volume: 0.75 });
+            return;
+        }
         const ctx = getAudioCtx();
         function boom(delaySec) {
             const t0 = ctx.currentTime + delaySec;
@@ -896,6 +912,10 @@
     }
 
     function playRadioStatic() {
+        if (typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
+            window.ThemeKit.playSfx('memoir44/radio-static', { volume: 0.7 });
+            return;
+        }
         const ctx = getAudioCtx();
         const t0 = ctx.currentTime;
         const duration = 0.5;
@@ -1355,6 +1375,7 @@
 
         updateUI();
         setControlState('idle');
+        playMemoirSfx('memoir44/radio-static', { volume: 0.7 });
     }
 
     function shuffle(array) {
@@ -1506,6 +1527,7 @@
     }
 
     function confirmSectionRatingsAndEvaluate() {
+        playMemoirSfx('token-place', { volume: 0.45 });
         sectionRatings = {
             left: Math.max(0, Math.min(5, parseInt(document.getElementById('turn-sec-rate-left').value, 10) || 0)),
             center: Math.max(0, Math.min(5, parseInt(document.getElementById('turn-sec-rate-center').value, 10) || 0)),
@@ -1547,6 +1569,7 @@
                 executeCard(card);
             }
         } else {
+            playMemoirSfx('token-place', { volume: 0.35 });
             currentEvalIndex++;
             evaluateCurrentCard();
         }
@@ -1575,7 +1598,18 @@
     }
 
     function executeCard(card) {
-        playGunfire();
+        const cardName = card && card.name ? (card.name.en || '') : '';
+        if (cardName.includes('Armor') || cardName.includes('Blindado')) {
+            playMemoirSfx('memoir44/tank-tracks', { volume: 0.7 });
+        } else if (cardName.includes('Artillery') || cardName.includes('Barrage') || cardName.includes('Bombardeio')) {
+            playMemoirSfx('memoir44/artillery-distant', { volume: 0.75 });
+        } else if (cardName.includes('Air') || cardName.includes('Ambush') || cardName.includes('Emboscada') || cardName.includes('Behind Enemy Lines') || cardName.includes('Aéreo')) {
+            playMemoirSfx('memoir44/air-raid-siren', { volume: 0.7 });
+        } else if (cardName.includes('Finest Hour') || cardName.includes('Melhor Hora') || cardName.includes('Direct from HQ') || cardName.includes('Diretamente do QG')) {
+            playMemoirSfx('memoir44/brass-bugle', { volume: 0.75 });
+        } else {
+            playGunfire();
+        }
         hand = hand.filter(c => c !== card);
         discard.push(card);
         drawToLimit();
@@ -1584,6 +1618,7 @@
     }
 
     function discardAndPass() {
+        playMemoirSfx('card-draw', { volume: 0.5 });
         discard.push(...hand);
         hand = [];
         drawToLimit();
@@ -1592,6 +1627,7 @@
     }
 
     function endTurn() {
+        playMemoirSfx('card-draw', { volume: 0.45 });
         updateUI();
         setControlState('idle');
     }

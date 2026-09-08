@@ -281,7 +281,9 @@
   vertical-align: middle !important;
 }
 </style>
+    <link rel="stylesheet" href="../assets/theme-kit.css">
     <script src="../assets/logger.js"></script>
+    <script src="../assets/theme-kit.js"></script>
 </head>
 <body>
 
@@ -473,8 +475,15 @@
     if (event.target == modal) { modal.style.display = "none"; }
   }
 
+  function playHeroscapeSfx(key, opts) {
+    if (typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
+      window.ThemeKit.playSfx(key, opts);
+    }
+  }
+
   // Guia de passos - rola até a seção e destaca o passo atual
   function goToStep(el, sectionId) {
+    playHeroscapeSfx('token-place', { volume: 0.4 });
     document.getElementById(sectionId).scrollIntoView({ behavior: 'smooth', block: 'start' });
     document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
     el.classList.add('active');
@@ -715,6 +724,7 @@
   }
 
   async function rolarIniciativa() {
+    playHeroscapeSfx('heroscape/portal-warp', { volume: 0.7 });
     const el = document.getElementById('resIniciativa');
     el.innerHTML = '<span style="opacity:0.6;">...</span>';
     const dado = await rolarD20();
@@ -731,25 +741,40 @@
     if (tipo === 'visao') {
       if (atacouAntes) {
         res = S().targetAutoAttacked;
+        playHeroscapeSfx('heroscape/plasma-cannon', { volume: 0.7 });
       } else if (dado >= 8) {
         res = S().targetVisionSuccess.replace('{d}', dado);
+        playHeroscapeSfx('heroscape/plasma-cannon', { volume: 0.7 });
       } else {
         res = S().targetVisionFail.replace('{d}', dado);
+        playHeroscapeSfx('heroscape/shield-block', { volume: 0.65 });
       }
     } else if (tipo === 'pontoBlank') {
       res = S().targetPointBlank;
+      playHeroscapeSfx('heroscape/dragon-roar', { volume: 0.7 });
     } else if (tipo === 'cobertura') {
       const limite = atacouAntes ? 8 : 15;
-      if (dado >= limite) res = S().targetCoverSuccess.replace('{d}', dado).replace('{n}', limite);
-      else res = S().targetCoverFail.replace('{d}', dado).replace('{n}', limite);
+      if (dado >= limite) {
+        res = S().targetCoverSuccess.replace('{d}', dado).replace('{n}', limite);
+        playHeroscapeSfx('heroscape/plasma-cannon', { volume: 0.7 });
+      } else {
+        res = S().targetCoverFail.replace('{d}', dado).replace('{n}', limite);
+        playHeroscapeSfx('heroscape/shield-block', { volume: 0.65 });
+      }
     } else if (tipo === 'perda') {
-      if (dado <= 7) res = S().targetLostYes.replace('{d}', dado);
-      else res = S().targetLostNo.replace('{d}', dado);
+      if (dado <= 7) {
+        res = S().targetLostYes.replace('{d}', dado);
+        playHeroscapeSfx('heroscape/wound-marker', { volume: 0.7 });
+      } else {
+        res = S().targetLostNo.replace('{d}', dado);
+        playHeroscapeSfx('heroscape/shield-block', { volume: 0.65 });
+      }
     }
     el.innerHTML = res;
   }
 
   async function sortearMarcadores() {
+    playHeroscapeSfx('heroscape/portal-warp', { volume: 0.7 });
     const resEl = document.getElementById('resMarcadores');
     resEl.innerHTML = '<span style="opacity:0.6;">...</span>';
     const qtd = parseInt(document.getElementById('armyCards').value);
@@ -846,6 +871,7 @@
   buildDial('dialMeander', meanderData);
 
   async function rollMovement(type) {
+    playHeroscapeSfx('heroscape/valhalla-d20', { volume: 0.75 });
     const data = type === 'sweep' ? sweepData : meanderData;
     const needle = document.getElementById(type === 'sweep' ? 'needleSweep' : 'needleMeander');
     const resEl = document.getElementById('resMarcha');

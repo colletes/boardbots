@@ -532,7 +532,9 @@
   vertical-align: middle !important;
 }
 </style>
+    <link rel="stylesheet" href="../assets/theme-kit.css">
     <script src="../assets/logger.js"></script>
+    <script src="../assets/theme-kit.js"></script>
 </head>
 <body>
 
@@ -873,7 +875,14 @@ const bosses = {
         if(currentVal) select.value = currentVal;
     }
 
+    function playMvSfx(key, opts) {
+        if (typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
+            window.ThemeKit.playSfx(key, opts);
+        }
+    }
+
     function changeBoss() {
+        playMvSfx('mysticvale/druid-chant', { volume: 0.65 });
         currentTurn = 0;
         activeAbilitiesList = [];
         totalVP = 0;
@@ -955,6 +964,16 @@ function runNemesisTurn() {
 
     const idx = Math.min(currentTurn, track.length - 1);
     const acao = track[idx];
+
+    if (acao.adv) {
+        playMvSfx('mysticvale/sleeving-craft', { volume: 0.7 });
+    } else if (acao.vale) {
+        playMvSfx('mysticvale/growth-sprout', { volume: 0.65 });
+    } else if (acao.vp > 0) {
+        playMvSfx('mysticvale/corruption-cleanse', { volume: 0.7 });
+    } else {
+        playMvSfx('mysticvale/druid-chant', { volume: 0.6 });
+    }
     
     processarAcao(acao);
     currentTurn++;

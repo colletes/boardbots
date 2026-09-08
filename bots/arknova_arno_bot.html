@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Rye&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/site.css?v=7">
+<link rel="stylesheet" href="../assets/theme-kit.css">
 <style>
 :root{
   --bg-cork: #8c674b; 
@@ -475,6 +476,7 @@ input:checked + .slider::before{ transform:translateX(20px); }
 </style>
 
     <script src="../assets/logger.js"></script>
+    <script src="../assets/theme-kit.js"></script>
 </head>
 <body>
 
@@ -883,6 +885,12 @@ function renderSetupSlotsPreview(){
   });
 }
 
+function playArnoSfx(key, opts) {
+  if (typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
+    window.ThemeKit.playSfx(key, opts);
+  }
+}
+
 function startGame(){
   const level = parseInt(document.getElementById('selLevel').value,10);
   const die = parseInt(document.getElementById('selDie').value,10);
@@ -901,6 +909,7 @@ function startGame(){
     lastPos:null, lastKey:null, pendingCycle:null, round:1, history:[], lastTurn:null
   };
   save();
+  playArnoSfx('arknova/turnstile-click', { volume: 0.65 });
   document.getElementById('setup-screen').classList.add('hidden');
   document.getElementById('game-area').classList.remove('hidden');
   refreshCardsUI(); renderStats(); updateDieHint(); renderHistory();
@@ -936,7 +945,13 @@ function adjust(key,delta){
   const map={appeal:'appeal',rep:'rep',cons:'cons',brk:'brk',cards:'cards',zoos:'zoos',unis:'unis',workers:'workers',fsTokens:'fsTokens'};
   const k=map[key];
   state[k]+=delta;
-  if(k==='brk'){ if(state.brk<0) state.brk=0; if(state.brk>6) state.brk=6; }
+  if(k==='brk'){
+    if(state.brk<0) state.brk=0;
+    if(state.brk>6) state.brk=6;
+    if(delta < 0 && state.brk === 0) playArnoSfx('arknova/kiosk-register', { volume: 0.6 });
+  }
+  if(k==='cons' && delta > 0){ playArnoSfx('arknova/conservation-badge', { volume: 0.6 }); }
+  if(k==='appeal' && delta > 0){ playArnoSfx('arknova/turnstile-click', { volume: 0.5 }); }
   if(k==='workers'){ if(state.workers<0) state.workers=0; }
   if(k==='fsTokens'){ if(state.fsTokens<0) state.fsTokens=0; if(state.fsTokens>6) state.fsTokens=6; }
   save(); renderStats();
@@ -999,6 +1014,7 @@ function refreshCardsUI(){
 function flipSide(key){
   if(!state) return;
   state.sides[key] = state.sides[key]==='I' ? 'II' : 'I';
+  playArnoSfx('card-flip', { volume: 0.55 });
   save(); refreshCardsUI();
 }
 window.flipSide = flipSide;
@@ -1069,6 +1085,7 @@ async function rollDice(){
   const flash = document.getElementById('rerollFlash');
   btn.disabled = true;
   flash.textContent = '';
+  playArnoSfx('dice-roll', { volume: 0.5 });
   let pos = null, value = null, guard = 0;
   
   do {
@@ -1279,6 +1296,24 @@ function applyTurn(pos, rolledValue){
       state.assocSlots[target] = true;
       state.workers--;
       if(side==='II') state.cons += 1;
+    }
+  }
+
+  if(state.brk >= 6) {
+    playArnoSfx('arknova/kiosk-register', { volume: 0.65 });
+  } else if(actionKey === 'animals') {
+    playArnoSfx('arknova/elephant-trumpet', { volume: 0.65 });
+  } else if(actionKey === 'cards') {
+    playArnoSfx('card-draw', { volume: 0.55 });
+  } else if(actionKey === 'build') {
+    playArnoSfx('arknova/habitat-construction', { volume: 0.65 });
+  } else if(actionKey === 'sponsors') {
+    playArnoSfx('arknova/sponsor-applause', { volume: 0.65 });
+  } else if(actionKey === 'association') {
+    if (meta.noWorker || (meta.targetSlot === 5)) {
+      playArnoSfx('arknova/conservation-badge', { volume: 0.65 });
+    } else {
+      playArnoSfx('token-place', { volume: 0.5 });
     }
   }
 

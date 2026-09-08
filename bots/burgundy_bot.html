@@ -368,7 +368,9 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
   .dust-mote:nth-child(10) { left: 96%; --tx: -12px; animation-duration: 17s; animation-delay: -9s; }
 }
 </style>
+    <link rel="stylesheet" href="../assets/theme-kit.css">
     <script src="../assets/logger.js"></script>
+    <script src="../assets/theme-kit.js"></script>
 </head>
 
     
@@ -1241,7 +1243,25 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
         diceBox.roll([{sides:6, themeColor:botColor, count:1}, {sides:6, themeColor:'#ffffff', count:1}]);
     };
 
+    function playBurgundySfx(key, opts) {
+        if (typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
+            window.ThemeKit.playSfx(key, opts);
+        }
+    }
+
     function showSummary(botVal, whiteVal) {
+        if (botVal === 1 || botVal === 6) {
+            playBurgundySfx('burgundy/guild-charter', { volume: 0.65 });
+        } else if (botVal === 2) {
+            playBurgundySfx('burgundy/silverling-clink', { volume: 0.65 });
+        } else if (botVal === 3) {
+            playBurgundySfx('burgundy/river-barge', { volume: 0.65 });
+        } else if (botVal === 4 || botVal === 5) {
+            playBurgundySfx('burgundy/livestock-pasture', { volume: 0.65 });
+        } else {
+            playBurgundySfx('burgundy/wine-cask-roll', { volume: 0.6 });
+        }
+
         const isLeft = whiteVal <= 4;
         const cardStr = isLeft ? t('leftCardName') : t('rightCardName');
         const targetId = isLeft ? 'slotLeft' : 'slotRight';
@@ -1403,6 +1423,7 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
     };
 
     window.openScoringModal = function() {
+        playBurgundySfx('burgundy/silverling-clink', { volume: 0.65 });
         const totalCards = completedCards.reduce((s, c) => s + c.vp, 0);
         const rows = completedCards.map(c => `<tr><td>${t('cardLabel', {id: c.cardId})}</td><td>${c.vp} ${t('scoringVPLabel')}</td></tr>`).join('') || '<tr><td colspan="2">-</td></tr>';
         document.getElementById('scoringCardsSummary').innerHTML = `
