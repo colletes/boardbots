@@ -7,7 +7,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/theme-kit.css">
   <script src="../assets/logger.js"></script>
+  <script src="../assets/theme-kit.js"></script>
 
   <style>
 .hidden { display: none !important; }
@@ -1625,6 +1627,12 @@
       saveState();
     }
 
+    function play7wdSfx(key, opts) {
+      if (typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
+        window.ThemeKit.playSfx(key, opts);
+      }
+    }
+
     function startGame() {
       state.inGame = true;
       state.deck = shuffleArray([...DECISION_CARDS]);
@@ -1636,6 +1644,7 @@
       state.scienceSymbols = {};
       state.logs = [];
       
+      play7wdSfx('7wd/greek-kithara', { volume: 0.7 });
       addLog({ type: 'start', leader: LEADERS[state.selectedLeader].name });
       showGameScreen();
       flipNextCard();
@@ -1689,6 +1698,21 @@
       state.cardIndex++;
 
       displayActiveCard(card);
+
+      const firstPriority = card.priority[0];
+      if (firstPriority === 'red') {
+        play7wdSfx('7wd/roman-salute', { volume: 0.65 });
+      } else if (firstPriority === 'green') {
+        play7wdSfx('7wd/papyrus-scroll', { volume: 0.65 });
+      } else if (firstPriority === 'leader') {
+        const leader = LEADERS[state.selectedLeader];
+        if (leader.cardColor === 'purple') play7wdSfx('7wd/roman-salute', { volume: 0.65 });
+        else if (leader.cardColor === 'grey') play7wdSfx('7wd/marble-sculpt', { volume: 0.65 });
+        else if (leader.cardColor === 'blue') play7wdSfx('7wd/greek-kithara', { volume: 0.65 });
+        else play7wdSfx('7wd/drachma-pouch', { volume: 0.65 });
+      } else {
+        play7wdSfx('card-draw', { volume: 0.55 });
+      }
 
       document.getElementById('flipBtn').style.display = 'none';
       document.getElementById('resolveBtn').style.display = 'inline-flex';
@@ -1754,6 +1778,7 @@
       const card = state.currentCard;
       const extra = state.extraTurnPending;
 
+      play7wdSfx('7wd/drachma-pouch', { volume: 0.55 });
       addLog({ type: 'resolved', age: state.currentAge, cardId: card.id, extra: extra });
 
       if (extra) {
@@ -1771,6 +1796,7 @@
     ========================================================== */
     function adjustMilitary(delta) {
       state.military = Math.max(-9, Math.min(9, state.military + delta));
+      play7wdSfx('7wd/roman-salute', { volume: 0.65 });
       updateUI();
       checkSupremacy();
       saveState();
@@ -1778,11 +1804,15 @@
 
     function adjustLeaderVp(delta) {
       state.leaderVp = Math.max(0, state.leaderVp + delta);
+      play7wdSfx('7wd/marble-sculpt', { volume: 0.6 });
       updateUI();
       saveState();
     }
 
     function setAge(age) {
+      if (state.currentAge !== age) {
+        play7wdSfx('7wd/pantheon-chime', { volume: 0.7 });
+      }
       state.currentAge = age;
       addLog({ type: 'age', age: age });
       updateUI();
@@ -1809,6 +1839,11 @@
 
     function toggleScienceSymbol(symId) {
       state.scienceSymbols[symId] = !state.scienceSymbols[symId];
+      if (state.scienceSymbols[symId]) {
+        play7wdSfx('7wd/papyrus-scroll', { volume: 0.65 });
+      } else {
+        play7wdSfx('token-place', { volume: 0.45 });
+      }
       renderScienceChips();
       checkSupremacy();
       saveState();
@@ -1825,12 +1860,14 @@
         alertBox.textContent = dict.militaryWinAlert;
         alertBox.classList.add('win');
         alertBox.style.display = 'block';
+        play7wdSfx('7wd/roman-salute', { volume: 0.8, rate: 1.1 });
         return;
       }
       if (state.military >= 9) {
         alertBox.textContent = dict.militaryLoseAlert;
         alertBox.classList.add('lose');
         alertBox.style.display = 'block';
+        play7wdSfx('7wd/roman-salute', { volume: 0.75, rate: 0.9 });
         return;
       }
 
@@ -1840,6 +1877,7 @@
         alertBox.textContent = dict.scienceLoseAlert;
         alertBox.classList.add('lose');
         alertBox.style.display = 'block';
+        play7wdSfx('7wd/papyrus-scroll', { volume: 0.75, rate: 1.1 });
       }
     }
 
@@ -1947,16 +1985,19 @@
         banner.style.color = '#bbf7d0';
         banner.style.border = '2px solid var(--green)';
         banner.innerHTML = `${dict.youWinText}<br><small>Você: ${pVp} PVs vs Líder: ${state.leaderVp} PVs</small>`;
+        play7wdSfx('7wd/greek-kithara', { volume: 0.75 });
       } else if (pVp < state.leaderVp) {
         banner.style.background = 'var(--red-soft)';
         banner.style.color = '#fecaca';
         banner.style.border = '2px solid var(--red)';
         banner.innerHTML = `${dict.youLoseText}<br><small>Você: ${pVp} PVs vs Líder: ${state.leaderVp} PVs</small>`;
+        play7wdSfx('7wd/roman-salute', { volume: 0.7 });
       } else {
         banner.style.background = 'var(--yellow-soft)';
         banner.style.color = '#fef08a';
         banner.style.border = '2px solid var(--yellow)';
         banner.innerHTML = `${dict.tieText}<br><small>Empate em ${pVp} PVs!</small>`;
+        play7wdSfx('7wd/pantheon-chime', { volume: 0.7 });
       }
     }
 

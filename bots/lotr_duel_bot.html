@@ -7,7 +7,11 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="icon" href="../assets/mascot-trimmed.png" type="image/png">
+  <link rel="stylesheet" href="../assets/site.css?v=7">
+  <link rel="stylesheet" href="../assets/theme-kit.css">
   <script src="../assets/logger.js"></script>
+  <script src="../assets/theme-kit.js"></script>
 
   <style>
 .hidden { display: none !important; }
@@ -1900,6 +1904,12 @@
       saveState();
     }
 
+    function playLotrSfx(key, opts) {
+      if (typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
+        window.ThemeKit.playSfx(key, opts);
+      }
+    }
+
     function startGame() {
       state.inGame = true;
       state.deck = shuffleArray([...DECISION_CARDS]);
@@ -1910,6 +1920,7 @@
       state.scienceSymbols = {};
       state.logs = [];
       
+      playLotrSfx('lotr/ring-whisper', { volume: 0.7 });
       addLog({ type: 'start', leader: LEADERS[state.selectedLeader].name });
       showGameScreen();
       flipNextCard();
@@ -1970,6 +1981,16 @@
       const card = state.deck[state.cardIndex];
       state.currentCard = card;
       state.cardIndex++;
+
+      if (card.repeat === 'eye') {
+        playLotrSfx('lotr/nazgul-screech', { volume: 0.65 });
+      } else if (card.repeat === 'tree') {
+        playLotrSfx('lotr/elven-harp', { volume: 0.65 });
+      } else if (card.priority && (card.priority[0] === 'red' || card.priority[0] === 'bluered')) {
+        playLotrSfx('lotr/orc-march', { volume: 0.65 });
+      } else {
+        playLotrSfx('card-draw', { volume: 0.55 });
+      }
 
       displayActiveCard(card);
 
@@ -2049,6 +2070,7 @@
       const extra = state.extraTurnPending;
 
       addLog({ type: 'resolved', age: state.currentAge, cardId: card.id, extra: extra });
+      playLotrSfx('token-place', { volume: 0.5 });
 
       if (extra) {
         state.extraTurnPending = false;
@@ -2065,6 +2087,7 @@
     ========================================================== */
     function adjustFortress(delta) {
       state.military = Math.max(0, Math.min(7, state.military + delta));
+      playLotrSfx('lotr/morgul-blade', { volume: 0.65 });
       updateUI();
       checkSupremacy();
       saveState();
@@ -2077,6 +2100,9 @@
     }
 
     function setChapter(age) {
+      if (state.currentAge !== age) {
+        playLotrSfx('lotr/gondor-horn', { volume: 0.7 });
+      }
       state.currentAge = age;
       addLog({ type: 'age', age: age });
       updateUI();
@@ -2106,6 +2132,11 @@
 
     function toggleScienceSymbol(symId) {
       state.scienceSymbols[symId] = !state.scienceSymbols[symId];
+      if (state.scienceSymbols[symId]) {
+        playLotrSfx('lotr/elven-harp', { volume: 0.65 });
+      } else {
+        playLotrSfx('token-place', { volume: 0.45 });
+      }
       renderScienceChips();
       checkSupremacy();
       saveState();
@@ -2157,12 +2188,14 @@
         alertBox.textContent = dict.militaryWinAlert;
         alertBox.classList.add('win');
         alertBox.style.display = 'block';
+        playLotrSfx('lotr/gondor-horn', { volume: 0.75, rate: 1.1 });
         return;
       }
       if (state.military >= 7) {
         alertBox.textContent = dict.conquerLoseAlert;
         alertBox.classList.add('lose');
         alertBox.style.display = 'block';
+        playLotrSfx('lotr/nazgul-screech', { volume: 0.7 });
         return;
       }
 
@@ -2172,6 +2205,7 @@
         alertBox.textContent = dict.scienceLoseAlert;
         alertBox.classList.add('lose');
         alertBox.style.display = 'block';
+        playLotrSfx('lotr/gondor-horn', { volume: 0.75, rate: 1.1 });
       }
     }
 
@@ -2439,16 +2473,19 @@
         banner.style.color = '#bbf7d0';
         banner.style.border = '2px solid var(--green)';
         banner.innerHTML = dict.youWinRegions.replace('{p}', pReg).replace('{b}', bReg);
+        playLotrSfx('lotr/gondor-horn', { volume: 0.75 });
       } else if (bReg > pReg) {
         banner.style.background = 'var(--red-soft)';
         banner.style.color = '#fecaca';
         banner.style.border = '2px solid var(--red)';
         banner.innerHTML = dict.botWinsRegions.replace('{p}', pReg).replace('{b}', bReg);
+        playLotrSfx('lotr/nazgul-screech', { volume: 0.7 });
       } else {
         banner.style.background = 'var(--yellow-soft)';
         banner.style.color = '#fef08a';
         banner.style.border = '2px solid var(--yellow)';
         banner.innerHTML = dict.tieBotWinsRegions.replace('{p}', pReg).replace('{b}', bReg);
+        playLotrSfx('lotr/nazgul-screech', { volume: 0.7 });
       }
     }
 
