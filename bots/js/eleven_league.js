@@ -17,9 +17,9 @@ const ELEVEN_LEAGUE_STORAGE_KEY = 'boardbots_eleven_league_v1';
 
 const ElevenLeague = {
   data: {
-    league: 'england',
-    division: '1',
-    userTeam: 'Manchester City',
+    league: 'official',
+    division: '3',
+    userTeam: 'Brickton FC',
     week: 1,
     teams: [],
     fixtures: [] // 6 rounds of matches
@@ -73,10 +73,10 @@ const ElevenLeague = {
   },
 
   // Initializes or resets the league for given country & division
-  initLeague: function(league = 'england', division = '1', userTeam = null) {
+  initLeague: function(league = 'official', division = '3', userTeam = null) {
     const divisionTeams = (typeof TEAM_DATA !== 'undefined' && TEAM_DATA[league] && TEAM_DATA[league][division])
       ? [...TEAM_DATA[league][division]].slice(0, 8)
-      : ['Time A', 'Time B', 'Time C', 'Time D', 'Time E', 'Time F', 'Time G', 'Time H'];
+      : ['Brickton FC', 'Middleham FC', 'Dafton United', 'Royalford Town', 'Blackston Kings', 'Redbridge Rovers', 'Eastwood City', 'Southgate Athletic'];
 
     const chosenUserTeam = userTeam && divisionTeams.includes(userTeam) 
       ? userTeam 
