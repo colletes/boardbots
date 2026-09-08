@@ -74,8 +74,11 @@ const SITE_I18N = {
     game_mistborn_desc: 'Automa Solo & Co-op — enfrente o Senhor Soberano e mais 7 vilões com árvores de personagens e módulo Duralumin.',
     game_uteg_title: 'Ultra Tiny Epic Galaxies',
     game_uteg_desc: 'Automa Rogue Galaxy — enfrente 5 galáxias com o Scanner Navigational e controle de recursos físicos vs digitais.',
+    game_ted_title: 'Tiny Epic Dinosaurs',
+    game_ted_desc: 'Automa Rival Rancher com a variante rebalanceada — gerencie o bloqueio parcial dos tabuleiros de ação, disputa de contratos e evolução dos dinos.',
     credit_7wd: '<strong>7 Wonders Duel</strong> — baseado no bot Automa Duelist. 7 Wonders Duel © Repos Production.',
     credit_mistborn: '<strong>Mistborn: The Deckbuilding Game</strong> — baseado no jogo de Katie Payne, John D. Clair e Johnny O\'Neal, © Brotherwise Games &amp; Dragonsteel Entertainment. Expansão solo/co-op por Kagan Eden.',
+    credit_ted: '<strong>Tiny Epic Dinosaurs</strong> — Automa Rival Rancher baseado no jogo de Scott Almes e na variante "Re-tuned Solo Mode" por Ryan Lopez DeVinaspre. Tiny Epic Dinosaurs © Gamelyn Games.',
 
     credits_title: 'Créditos',
     back_link: 'Voltar aos bots',
@@ -184,8 +187,11 @@ const SITE_I18N = {
     game_mistborn_desc: 'Solo & Co-op Automa — battle the Lord Ruler and 7 unique villains with character leveling and Duralumin module.',
     game_uteg_title: 'Ultra Tiny Epic Galaxies',
     game_uteg_desc: 'Rogue Galaxy Automa — face 5 hostile galaxies powered by the Navigational Scanner, resource dials, and satellite support.',
+    game_ted_title: 'Tiny Epic Dinosaurs',
+    game_ted_desc: 'Rival Rancher automa with the re-tuned solo variant — manage partial action mat blocking, contract fulfillment, and dino ranching.',
     credit_7wd: '<strong>7 Wonders Duel</strong> — based on the Automa Duelist bot. 7 Wonders Duel © Repos Production.',
     credit_mistborn: '<strong>Mistborn: The Deckbuilding Game</strong> — designed by Katie Payne, John D. Clair, and Johnny O\'Neal, © Brotherwise Games &amp; Dragonsteel Entertainment. Solo/co-op expansion by Kagan Eden.',
+    credit_ted: '<strong>Tiny Epic Dinosaurs</strong> — Rival Rancher automa based on the game by Scott Almes and the "Re-tuned Solo Mode" variant by Ryan Lopez DeVinaspre. Tiny Epic Dinosaurs © Gamelyn Games.',
 
     credits_title: 'Credits',
     back_link: 'Back to bots',

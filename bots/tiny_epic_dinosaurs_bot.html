@@ -1,0 +1,2594 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Tiny Epic Dinosaurs — Rival Rancher Bot</title>
+    <link rel="stylesheet" href="../assets/theme-kit.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-base: #121913;
+            --bg-surface: #1b261d;
+            --bg-card: #223325;
+            --bg-card-hover: #2b402f;
+            --accent-green: #4ade80;
+            --accent-yellow: #facc15;
+            --accent-blue: #60a5fa;
+            --accent-red: #f87171;
+            --accent-amber: #f59e0b;
+            --accent-purple: #c084fc;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --text-dim: #6b7280;
+            --border: #2d4533;
+            --border-highlight: #4ade80;
+            --shadow: rgba(0, 0, 0, 0.5);
+            --font-display: 'Russo One', sans-serif;
+            --font-body: 'Montserrat', sans-serif;
+            
+            --tk-credits-border-top: 1px dashed var(--border);
+            --tk-credits-padding: 16px 0 0;
+            --tk-credits-img-radius: 6px;
+            --tk-credits-img-border: 2px solid var(--border);
+            --tk-credits-font-size: 0.95rem;
+            --tk-credits-color: var(--text-muted);
+            --tk-credits-link-color: var(--accent-green);
+        }
+
+        /* Anti-trap & resets */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { -webkit-text-size-adjust: 100%; overflow-x: hidden; scroll-behavior: smooth; }
+        
+        body {
+            font-family: var(--font-body);
+            background-color: var(--bg-base);
+            background-image: 
+                radial-gradient(circle at 50% 10%, rgba(34, 75, 45, 0.4) 0%, rgba(18, 25, 19, 0.92) 80%),
+                url('../assets/textures/forest-floor.jpg');
+            background-size: cover, 450px 450px;
+            background-repeat: no-repeat, repeat;
+            background-blend-mode: normal, multiply;
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* SVG containment */
+        svg { max-width: 100%; }
+        .icon-inline, .btn-icon, .icon-h1, h1 svg, h2 svg, h3 svg, button svg, .modal-content svg {
+            display: inline-block !important;
+            width: 1.2em !important;
+            height: 1.2em !important;
+            max-width: 24px !important;
+            max-height: 24px !important;
+            flex-shrink: 0 !important;
+            vertical-align: -0.2em !important;
+        }
+
+        button, select, input { font-family: inherit; }
+        button { cursor: pointer; touch-action: manipulation; }
+        .hidden { display: none !important; }
+
+        /* Navigation bar */
+        .top-nav {
+            width: 100%;
+            max-width: 1200px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 20px;
+            position: sticky;
+            top: 0;
+            z-index: 90;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            background: rgba(18, 25, 19, 0.88);
+            border-bottom: 2px solid var(--border);
+            box-shadow: 0 4px 20px var(--shadow);
+        }
+
+        .nav-brand {
+            font-family: var(--font-display);
+            font-size: 1.15rem;
+            color: var(--accent-green);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-nav {
+            background: var(--bg-surface);
+            color: var(--text-main);
+            border: 1px solid var(--border);
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-nav:hover {
+            border-color: var(--accent-green);
+            background: var(--bg-card);
+            color: var(--accent-green);
+        }
+
+        .lang-switch {
+            display: inline-flex;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            overflow: hidden;
+            background: var(--bg-surface);
+        }
+
+        .lang-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 7px 12px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            transition: all 0.15s;
+        }
+
+        .lang-btn.active {
+            background: var(--accent-green);
+            color: #0b1a0e;
+        }
+
+        @media (max-width: 480px) {
+            .top-nav {
+                padding: 10px 12px;
+            }
+            .nav-actions {
+                gap: 6px;
+            }
+            .btn-nav {
+                padding: 6px 10px;
+                font-size: 0.8rem;
+            }
+            .btn-nav span {
+                display: none;
+            }
+            .lang-btn {
+                padding: 6px 9px;
+                font-size: 0.75rem;
+            }
+        }
+
+        /* Container layout */
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            flex: 1;
+        }
+
+        /* Hero Banner */
+        .hero {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #000;
+            border: 2px solid var(--border);
+            box-shadow: 0 8px 30px var(--shadow);
+            max-height: 220px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .hero img {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+            object-position: center 25%;
+            filter: brightness(0.65) contrast(1.15);
+        }
+
+        .hero-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(0deg, rgba(18,25,19,0.95) 0%, rgba(18,25,19,0.2) 60%, transparent 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 20px 24px;
+        }
+
+        .hero-title {
+            font-family: var(--font-display);
+            font-size: clamp(1.5rem, 3.5vw, 2.3rem);
+            color: #fff;
+            text-shadow: 0 3px 10px rgba(0,0,0,0.8);
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .badge-variant {
+            background: var(--accent-amber);
+            color: #121913;
+            font-family: var(--font-body);
+            font-size: 0.75rem;
+            font-weight: 800;
+            padding: 4px 10px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .hero-desc {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+            max-width: 750px;
+        }
+
+        /* Setup View */
+        .setup-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 6px 20px var(--shadow);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .setup-title {
+            font-family: var(--font-display);
+            font-size: 1.4rem;
+            color: var(--accent-green);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .opponents-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 16px;
+        }
+
+        .opponent-card {
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .opponent-card:hover {
+            border-color: var(--border-highlight);
+            transform: translateY(-2px);
+            background: var(--bg-card-hover);
+        }
+
+        .opponent-card.selected {
+            border-color: var(--accent-green);
+            background: rgba(74, 222, 128, 0.08);
+            box-shadow: 0 0 15px rgba(74, 222, 128, 0.2);
+        }
+
+        .opp-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .opp-name {
+            font-family: var(--font-display);
+            font-size: 1.2rem;
+            color: #fff;
+        }
+
+        .opp-stars {
+            color: var(--accent-yellow);
+            font-size: 0.9rem;
+            letter-spacing: 2px;
+        }
+
+        .opp-badge {
+            display: inline-block;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 4px;
+            width: fit-content;
+        }
+
+        .badge-breeder { background: rgba(74, 222, 128, 0.2); color: #86efac; }
+        .badge-contractor { background: rgba(192, 132, 252, 0.2); color: #d8b4fe; }
+        .badge-poacher { background: rgba(248, 113, 113, 0.2); color: #fca5a5; }
+        .badge-scientist { background: rgba(96, 165, 250, 0.2); color: #93c5fd; }
+
+        .opp-desc {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        .opp-spec {
+            font-size: 0.8rem;
+            background: rgba(0, 0, 0, 0.3);
+            border-left: 3px solid var(--accent-amber);
+            padding: 6px 10px;
+            border-radius: 0 4px 4px 0;
+            color: #e5e7eb;
+        }
+
+        /* Details & Checklists */
+        details.custom-details {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            transition: background 0.2s;
+        }
+
+        details.custom-details summary {
+            padding: 14px 18px;
+            font-weight: 700;
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: var(--text-main);
+        }
+
+        details.custom-details[open] summary {
+            border-bottom: 1px solid var(--border);
+            background: rgba(0, 0, 0, 0.2);
+            color: var(--accent-green);
+        }
+
+        .details-body {
+            padding: 16px 20px;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .setup-checklist {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .setup-checklist li {
+            position: relative;
+            padding-left: 26px;
+        }
+
+        .setup-checklist li::before {
+            content: '🦖';
+            position: absolute;
+            left: 0;
+            top: 0;
+            font-size: 0.9rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #15803d 0%, #16a34a 100%);
+            color: #fff;
+            border: none;
+            padding: 16px 28px;
+            font-family: var(--font-display);
+            font-size: 1.15rem;
+            letter-spacing: 0.5px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(22, 163, 74, 0.4);
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            filter: brightness(1.1);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(22, 163, 74, 0.5);
+        }
+
+        /* Game View Layout */
+        .game-layout {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        @media (min-width: 960px) {
+            .game-layout {
+                grid-template-columns: 420px 1fr;
+                align-items: start;
+            }
+        }
+
+        /* Round Bar */
+        .round-bar {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            box-shadow: 0 4px 15px var(--shadow);
+        }
+
+        .round-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .round-badge {
+            font-family: var(--font-display);
+            font-size: 1.3rem;
+            color: var(--accent-green);
+            background: rgba(74, 222, 128, 0.12);
+            padding: 6px 14px;
+            border-radius: 6px;
+            border: 1px solid rgba(74, 222, 128, 0.3);
+        }
+
+        .round-details {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .lead-rancher-tag {
+            background: #9333ea;
+            color: #fff;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .turn-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .btn-action {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 8px 14px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.15s;
+        }
+
+        .btn-action:hover {
+            border-color: var(--accent-green);
+            background: var(--bg-card-hover);
+        }
+
+        /* Rival Console (Left Column) */
+        .rival-console {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .card-display-box {
+            background: var(--bg-surface);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 6px 25px var(--shadow);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            text-align: center;
+        }
+
+        .card-img-wrap {
+            max-width: 250px;
+            margin: 0 auto;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.6);
+            border: 2px solid var(--border);
+            position: relative;
+        }
+
+        .card-img-wrap img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .blocking-banner {
+            background: rgba(0, 0, 0, 0.45);
+            border: 2px solid var(--accent-amber);
+            border-radius: 8px;
+            padding: 12px 14px;
+            text-align: left;
+        }
+
+        .blocking-title {
+            font-family: var(--font-display);
+            color: var(--accent-amber);
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 4px;
+        }
+
+        .blocking-desc {
+            font-size: 0.88rem;
+            color: #e5e7eb;
+            line-height: 1.45;
+        }
+
+        /* Turn Steps Interactive Panel */
+        .step-panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 14px;
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .step-tag {
+            font-size: 0.75rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--accent-green);
+        }
+
+        .step-prompt {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #fff;
+        }
+
+        .step-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .btn-step {
+            padding: 10px 12px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: var(--bg-surface);
+            color: var(--text-main);
+            transition: all 0.15s;
+        }
+
+        .btn-step:hover {
+            border-color: var(--accent-green);
+            background: var(--bg-card-hover);
+        }
+
+        .btn-step.primary {
+            background: var(--accent-green);
+            color: #0b1a0e;
+            border-color: var(--accent-green);
+        }
+
+        .btn-step.secondary {
+            background: #374151;
+            color: #f3f4f6;
+            border-color: #4b5563;
+        }
+
+        /* Rival Ranch Mat (Right Column) */
+        .ranch-mat {
+            background: var(--bg-surface);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 6px 25px var(--shadow);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .ranch-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 14px;
+        }
+
+        .ranch-opp-title {
+            font-family: var(--font-display);
+            font-size: 1.3rem;
+            color: var(--accent-green);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .first-player-badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.15s;
+        }
+
+        .first-player-badge.rival {
+            background: rgba(248, 113, 113, 0.2);
+            color: #fca5a5;
+            border: 1px solid rgba(248, 113, 113, 0.4);
+        }
+
+        .first-player-badge.player {
+            background: rgba(96, 165, 250, 0.2);
+            color: #93c5fd;
+            border: 1px solid rgba(96, 165, 250, 0.4);
+        }
+
+        /* Resource Track 0 - 13 */
+        .resource-tracks {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            background: rgba(0, 0, 0, 0.25);
+            padding: 14px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .resource-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .resource-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            width: 140px;
+        }
+
+        .res-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+
+        .pill-plant { background: rgba(74, 222, 128, 0.15); color: #86efac; }
+        .pill-meat { background: rgba(248, 113, 113, 0.15); color: #fca5a5; }
+        .pill-supplies { background: rgba(250, 204, 21, 0.15); color: #fef08a; }
+
+        .resource-stepper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .step-ctrl {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: #fff;
+            font-weight: 800;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+        }
+
+        .step-ctrl:hover {
+            border-color: var(--accent-green);
+            background: var(--bg-card-hover);
+        }
+
+        .resource-value {
+            font-family: var(--font-display);
+            font-size: 1.25rem;
+            min-width: 38px;
+            text-align: center;
+            color: #fff;
+        }
+
+        .res-max-badge {
+            font-size: 0.7rem;
+            font-weight: 800;
+            color: var(--accent-amber);
+            border: 1px dashed var(--accent-amber);
+            padding: 2px 6px;
+            border-radius: 4px;
+            display: none;
+        }
+
+        .res-max-badge.active { display: inline-block; }
+
+        /* 4 Dino Columns & Enclosures */
+        .dino-columns-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+
+        @media (max-width: 650px) {
+            .dino-columns-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .dino-column {
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            position: relative;
+        }
+
+        .dino-col-header {
+            text-align: center;
+            padding-bottom: 6px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .dino-col-name {
+            font-family: var(--font-display);
+            font-size: 0.85rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .dino-col-vp {
+            font-size: 0.75rem;
+            color: var(--accent-yellow);
+            font-weight: 700;
+        }
+
+        .enclosures-stack {
+            display: flex;
+            flex-direction: column-reverse; /* Bottom enclosure is #1, top is #3 */
+            gap: 6px;
+        }
+
+        .enclosure-slot {
+            background: rgba(0, 0, 0, 0.35);
+            border: 1px dashed var(--border);
+            border-radius: 6px;
+            min-height: 64px;
+            padding: 6px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            position: relative;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .enclosure-slot.occupied {
+            background: rgba(74, 222, 128, 0.15);
+            border: 2px solid var(--accent-green);
+        }
+
+        .enclosure-action-label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            line-height: 1.2;
+            pointer-events: none;
+        }
+
+        .dino-meeple-icon {
+            font-size: 1.4rem;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+        }
+
+        .col-special-action {
+            background: rgba(245, 158, 11, 0.12);
+            border: 1px solid var(--accent-amber);
+            border-radius: 4px;
+            padding: 4px 6px;
+            font-size: 0.68rem;
+            color: #fde68a;
+            text-align: center;
+            line-height: 1.2;
+        }
+
+        /* Stats & Quick Trackers */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 10px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .stat-val-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .stat-number {
+            font-family: var(--font-display);
+            font-size: 1.4rem;
+            color: #fff;
+        }
+
+        .stat-btn {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            color: #fff;
+            width: 26px;
+            height: 26px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            font-weight: 800;
+        }
+
+        /* Log Panel */
+        .log-container {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .log-title {
+            font-family: var(--font-display);
+            font-size: 1rem;
+            color: var(--accent-green);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .log-panel {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 12px;
+            max-height: 180px;
+            overflow-y: auto;
+            font-size: 0.85rem;
+            line-height: 1.5;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .log-entry {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            padding-bottom: 4px;
+        }
+
+        .log-round {
+            color: var(--accent-amber);
+            font-weight: 700;
+            margin-right: 4px;
+        }
+
+        .log-highlight {
+            color: var(--accent-green);
+            font-weight: 600;
+        }
+
+        /* Help & Modals */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: var(--bg-surface);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            width: 100%;
+            max-width: 680px;
+            max-height: 85vh;
+            overflow-y: auto;
+            padding: 24px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            position: relative;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 12px;
+        }
+
+        .modal-title {
+            font-family: var(--font-display);
+            font-size: 1.35rem;
+            color: var(--accent-green);
+        }
+
+        .modal-close {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.4rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .modal-body {
+            font-size: 0.92rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .modal-body h4 {
+            color: #fff;
+            font-family: var(--font-display);
+            margin-top: 6px;
+        }
+
+        /* Scoring Inputs */
+        .score-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+
+        .score-col {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .score-col h5 {
+            font-family: var(--font-display);
+            font-size: 1.1rem;
+            color: var(--accent-green);
+            text-align: center;
+            padding-bottom: 6px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .score-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+        }
+
+        .score-input {
+            width: 60px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: #fff;
+            padding: 4px 6px;
+            text-align: center;
+            font-family: var(--font-display);
+            font-size: 1rem;
+        }
+
+        /* Footer */
+        footer.bot-footer {
+            width: 100%;
+            max-width: 1200px;
+            margin: 20px auto 40px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .bmc-btn {
+            background: #FF813F;
+            color: #fff !important;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 15px rgba(255, 129, 63, 0.4);
+            transition: all 0.2s;
+        }
+
+        .bmc-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 129, 63, 0.6);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sticky Navigation -->
+    <nav class="top-nav">
+        <a href="../index.html" class="nav-brand">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            <span>Boardbots</span>
+        </a>
+        <div class="nav-actions">
+            <button id="btnHelp" class="btn-nav" data-i18n-aria="aria_rules" aria-label="Regras">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                <span data-i18n="btn_rules">Regras</span>
+            </button>
+            <button id="btnReset" class="btn-nav" data-i18n-aria="aria_restart" aria-label="Reiniciar">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                <span data-i18n="btn_restart">Reiniciar</span>
+            </button>
+            <div class="lang-switch">
+                <button class="lang-btn active" data-lang="pt">PT</button>
+                <button class="lang-btn" data-lang="en">EN</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        
+        <!-- Hero Header -->
+        <header class="hero">
+            <img src="../assets/art/ted.webp" alt="Tiny Epic Dinosaurs Box Art">
+            <div class="hero-overlay">
+                <h1 class="hero-title">
+                    <span>Tiny Epic Dinosaurs</span>
+                    <span class="badge-variant" data-i18n="badge_retuned">Re-tuned Solo Mode</span>
+                </h1>
+                <p class="hero-desc" data-i18n="hero_desc">Automa inteligente para gerenciar o Rival Rancher com o aclamado modo rebalanceado: bloqueios parciais e regras dinâmicas de contratos.</p>
+            </div>
+        </header>
+
+        <!-- SETUP SCREEN -->
+        <section id="viewSetup" class="setup-card">
+            <h2 class="setup-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                <span data-i18n="setup_heading">Preparação da Partida</span>
+            </h2>
+
+            <div>
+                <label style="display:block; font-weight: 700; margin-bottom: 12px; color: #fff;" data-i18n="choose_rival_label">Escolha a Personalidade do Rival Rancher:</label>
+                <div class="opponents-grid">
+                    <!-- Breeder -->
+                    <div class="opponent-card selected" data-opponent="breeder">
+                        <div class="opp-header">
+                            <span class="opp-name" data-i18n="opp_breeder_name">Breeder (Criador)</span>
+                            <span class="opp-stars">★★★☆☆</span>
+                        </div>
+                        <span class="opp-badge badge-breeder" data-i18n="opp_breeder_role">Foco: Contratos & Reprodução</span>
+                        <p class="opp-desc" data-i18n="opp_breeder_desc">Especialista voraz em acumular dinossauros para cumprir contratos públicos em sequência veloz.</p>
+                        <div class="opp-spec" data-i18n="opp_breeder_spec">Ação Especial: +1 Planta, +1 Carne, +1 Suprimento</div>
+                    </div>
+
+                    <!-- Contractor -->
+                    <div class="opponent-card" data-opponent="contractor">
+                        <div class="opp-header">
+                            <span class="opp-name" data-i18n="opp_contractor_name">Contractor (Empreiteiro)</span>
+                            <span class="opp-stars">★★★★☆</span>
+                        </div>
+                        <span class="opp-badge badge-contractor" data-i18n="opp_contractor_role">Foco: Mercado de Contratos</span>
+                        <p class="opp-desc" data-i18n="opp_contractor_desc">Prioriza tomar contratos da mesa de forma direta pagando o que tiver no rancho.</p>
+                        <div class="opp-spec" data-i18n="opp_contractor_spec">Ação Especial: Pega o Contrato Público de menor valor</div>
+                    </div>
+
+                    <!-- Poacher -->
+                    <div class="opponent-card" data-opponent="poacher">
+                        <div class="opp-header">
+                            <span class="opp-name" data-i18n="opp_poacher_name">Poacher (Caçador Ilegal)</span>
+                            <span class="opp-stars">★★★★★</span>
+                        </div>
+                        <span class="opp-badge badge-poacher" data-i18n="opp_poacher_role">Foco: Agressão & Roubo</span>
+                        <p class="opp-desc" data-i18n="opp_poacher_desc">Destrói cercas e rouba recursos e dinossauros do seu rancho com extrema hostilidade.</p>
+                        <div class="opp-spec" data-i18n="opp_poacher_spec">Ação Especial: Você deve descartar 1 Barreira sua</div>
+                    </div>
+
+                    <!-- Scientist -->
+                    <div class="opponent-card" data-opponent="scientist">
+                        <div class="opp-header">
+                            <span class="opp-name" data-i18n="opp_scientist_name">Scientist (Cientista)</span>
+                            <span class="opp-stars">★★★★☆</span>
+                        </div>
+                        <span class="opp-badge badge-scientist" data-i18n="opp_scientist_role">Foco: Cartas de Pesquisa</span>
+                        <p class="opp-desc" data-i18n="opp_scientist_desc">Acumula cartas de pesquisa rapidamente, gerando uma pontuação de fim de jogo expressiva.</p>
+                        <div class="opp-spec" data-i18n="opp_scientist_spec">Ação Especial: Pega 1 Carta de Pesquisa</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Physical Setup Checklist -->
+            <details class="custom-details" open>
+                <summary>
+                    <span data-i18n="checklist_title">📋 Checklist de Preparação na Mesa (Jogo Físico)</span>
+                    <span>▼</span>
+                </summary>
+                <div class="details-body">
+                    <ul class="setup-checklist">
+                        <li data-i18n="chk_1">Posicione os 4 Tabuleiros de Ação em linha de A a D (lado de 2 jogadores).</li>
+                        <li data-i18n="chk_2">Tabuleiro de Rodadas: Coloque o marcador na Rodada 1 e posicione o Lead Rancher do Rival na Rodada 4.</li>
+                        <li data-i18n="chk_3">Contratos: Abra 3 Contratos Públicos na mesa. Compre 2 Privados para você, escolha 1 e guarde em segredo.</li>
+                        <li data-i18n="chk_4">Pesquisa: Abra 3 Cartas de Pesquisa em linha.</li>
+                        <li data-i18n="chk_5">Seus Recursos: Comece com 0 Plantas, 0 Carnes e 0 Suprimentos (ou +1 Planta pelo bônus de 2º jogador).</li>
+                        <li data-i18n="chk_6">O Rival Rancher <strong>inicia com o Marcador de Primeiro Jogador</strong>!</li>
+                    </ul>
+                </div>
+            </details>
+
+            <!-- Re-tuned Variant Explanation -->
+            <details class="custom-details">
+                <summary>
+                    <span data-i18n="variant_title">💡 Por que a variante "Re-tuned Solo Mode"?</span>
+                    <span>▼</span>
+                </summary>
+                <div class="details-body">
+                    <p data-i18n="variant_body_1">Nas regras oficiais, cada carta do bot bloqueia o tabuleiro inteiro (A, B, C ou D), tornando o jogo solo punitivo e com pouca margem estratégica. Esta variante (criada por Ryan Lopez DeVinaspre) introduz:</p>
+                    <p data-i18n="variant_body_2"><strong>1. Bloqueio Parcial:</strong> Cada carta bloqueia apenas metade dos espaços (ex: Free Range Esquerda vs Direita; Recursos Esquerda vs Direita; Barreiras vs Contratos/Pesquisa).</p>
+                    <p data-i18n="variant_body_3"><strong>2. Checagem de Contrato Antecipada:</strong> O Rival checa contratos no início do seu turno. Se cumprir um contrato, seu turno termina imediatamente, aliviando a pressão sobre os dinos e ações!</p>
+                </div>
+            </details>
+
+            <button id="btnStartGame" class="btn-primary">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                <span data-i18n="btn_start_match">Iniciar Partida</span>
+            </button>
+        </section>
+
+        <!-- GAMEPLAY SCREEN -->
+        <section id="viewGame" class="hidden">
+            
+            <!-- Round Bar -->
+            <div class="round-bar">
+                <div class="round-info">
+                    <div class="round-badge">
+                        <span data-i18n="round_label">Rodada</span> <span id="roundNum">1</span> / 6
+                    </div>
+                    <div class="round-details">
+                        <span id="leadRancherStatus" class="lead-rancher-tag hidden" data-i18n="lead_active">Lead Rancher Ativo (5 Cartas)</span>
+                        <div id="deckCountLabel" style="margin-top: 4px; font-weight: 600;">Cartas nesta rodada: 0/4</div>
+                    </div>
+                </div>
+                <div class="turn-controls">
+                    <button id="btnNextRound" class="btn-action">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                        <span data-i18n="btn_finish_round">Avançar Rodada</span>
+                    </button>
+                    <button id="btnScoreModal" class="btn-action" style="border-color: var(--accent-yellow);">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
+                        <span data-i18n="btn_scoring">Pontuação</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Two-Column Game Layout -->
+            <div class="game-layout">
+                
+                <!-- Left Column: Turn & Card Action Console -->
+                <div class="rival-console">
+                    
+                    <div class="card-display-box">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span style="font-family:var(--font-display); color:var(--accent-green); font-size:1.1rem;" data-i18n="console_title">Turno do Rival</span>
+                            <span id="turnIndicator" style="font-size:0.8rem; font-weight:700; color:var(--text-muted);">Aguardando ação</span>
+                        </div>
+
+                        <!-- Card Reveal Container -->
+                        <div id="cardPlaceholder" style="padding: 30px 10px; border: 2px dashed var(--border); border-radius: 8px;">
+                            <p style="color:var(--text-muted); font-size:0.9rem;" data-i18n="click_reveal_prompt">Clique abaixo para revelar a próxima carta do Rival Rancher.</p>
+                        </div>
+
+                        <div id="cardActiveWrap" class="card-img-wrap hidden">
+                            <img id="cardImage" src="" alt="Rival Rancher Card">
+                        </div>
+
+                        <!-- Blocking Info Banner -->
+                        <div id="blockingBanner" class="blocking-banner hidden">
+                            <div class="blocking-title">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+                                <span id="blockingMatTitle">Bloqueio no Tabuleiro</span>
+                            </div>
+                            <div id="blockingMatDesc" class="blocking-desc">...</div>
+                        </div>
+
+                        <!-- Step 1: Contract Check -->
+                        <div id="step1Box" class="step-panel hidden">
+                            <div class="step-tag" data-i18n="step1_tag">Passo 1 • Checagem de Contrato</div>
+                            <div class="step-prompt" data-i18n="step1_prompt">O Rival possui os dinos para cumprir algum Contrato Público aberto (da esq. para dir.)?</div>
+                            <div class="step-buttons">
+                                <button id="btnContractYes" class="btn-step primary" data-i18n="btn_contract_yes">Sim, cumpriu contrato!</button>
+                                <button id="btnContractNo" class="btn-step secondary" data-i18n="btn_contract_no">Não cumpre nenhum</button>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Dinos vs Action Check -->
+                        <div id="step2Box" class="step-panel hidden">
+                            <div class="step-tag" data-i18n="step2_tag">Passo 2 • Alocação ou Ação</div>
+                            <div class="step-prompt" data-i18n="step2_prompt">Você já possui algum Rancher seu nos espaços bloqueados desta carta?</div>
+                            <div class="step-buttons">
+                                <button id="btnSpaceFree" class="btn-step primary" data-i18n="btn_space_free">Não (Espaços Livres)</button>
+                                <button id="btnSpaceOccupied" class="btn-step secondary" data-i18n="btn_space_occupied">Sim (Já estou lá)</button>
+                            </div>
+                        </div>
+
+                        <!-- Primary Turn Button -->
+                        <button id="btnDrawCard" class="btn-primary" style="margin-top: 6px;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                            <span id="btnDrawCardText" data-i18n="btn_reveal_turn">Revelar Ação do Rival</span>
+                        </button>
+                    </div>
+
+                    <!-- Thematic Log Panel -->
+                    <div class="log-container">
+                        <div class="log-title">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                            <span data-i18n="log_title">Diário de Campo do Rancho Rival</span>
+                        </div>
+                        <div id="logPanel" class="log-panel">
+                            <div class="log-entry" data-i18n="log_initial">Partida iniciada. Os portões do rancho rival estão abertos!</div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Right Column: Interactive Diegetic Rival Ranch Mat -->
+                <div class="ranch-mat">
+                    
+                    <div class="ranch-header">
+                        <div class="ranch-opp-title">
+                            <span id="ranchOpponentName">Breeder</span>
+                            <span id="ranchOpponentBadge" class="opp-badge badge-breeder">Criador</span>
+                        </div>
+                        <div id="firstPlayerToggle" class="first-player-badge rival" title="Clique para alternar o Primeiro Jogador">
+                            <span>👑</span> <span id="firstPlayerText" data-i18n="first_player_rival">1º Jogador: Rival</span>
+                        </div>
+                    </div>
+
+                    <!-- Resource Track 0 - 13 -->
+                    <div class="resource-tracks">
+                        <div style="font-size:0.8rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px;" data-i18n="res_track_title">Trilha de Recursos do Rival (0 a 13)</div>
+                        
+                        <!-- Plant Track -->
+                        <div class="resource-row">
+                            <div class="resource-label">
+                                <span class="res-pill pill-plant">🌿 <span data-i18n="res_plant">Plantas</span></span>
+                                <span id="maxPlantBadge" class="res-max-badge" data-i18n="badge_max">MAX!</span>
+                            </div>
+                            <div class="resource-stepper">
+                                <button class="step-ctrl" onclick="adjustResource('plant', -1)">-</button>
+                                <span id="valPlant" class="resource-value">0</span>
+                                <button class="step-ctrl" onclick="adjustResource('plant', 1)">+</button>
+                            </div>
+                        </div>
+
+                        <!-- Meat Track -->
+                        <div class="resource-row">
+                            <div class="resource-label">
+                                <span class="res-pill pill-meat">🥩 <span data-i18n="res_meat">Carne</span></span>
+                                <span id="maxMeatBadge" class="res-max-badge" data-i18n="badge_max">MAX!</span>
+                            </div>
+                            <div class="resource-stepper">
+                                <button class="step-ctrl" onclick="adjustResource('meat', -1)">-</button>
+                                <span id="valMeat" class="resource-value">0</span>
+                                <button class="step-ctrl" onclick="adjustResource('meat', 1)">+</button>
+                            </div>
+                        </div>
+
+                        <!-- Supplies Track -->
+                        <div class="resource-row">
+                            <div class="resource-label">
+                                <span class="res-pill pill-supplies">📦 <span data-i18n="res_supplies">Suprimentos</span></span>
+                                <span id="maxSuppliesBadge" class="res-max-badge" data-i18n="badge_max">MAX!</span>
+                            </div>
+                            <div class="resource-stepper">
+                                <button class="step-ctrl" onclick="adjustResource('supplies', -1)">-</button>
+                                <span id="valSupplies" class="resource-value">0</span>
+                                <button class="step-ctrl" onclick="adjustResource('supplies', 1)">+</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 4 Dino Columns -->
+                    <div>
+                        <div style="font-size:0.8rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-bottom:10px;" data-i18n="enclosures_title">Compartimentos de Dinossauros do Rancho (Clique para alternar)</div>
+                        <div class="dino-columns-grid">
+                            
+                            <!-- Stegosaurus (Yellow) -->
+                            <div class="dino-column" data-col="stego">
+                                <div class="dino-col-header">
+                                    <div class="dino-col-name" style="color:var(--accent-yellow);" data-i18n="dino_stego">Estegossauro</div>
+                                    <div class="dino-col-vp">2 VP • A / B</div>
+                                </div>
+                                <div class="enclosures-stack">
+                                    <div class="enclosure-slot" data-slot="1" onclick="toggleEnclosure('stego', 1)">
+                                        <div class="enclosure-action-label" id="lbl_stego_1">+2 Plantas, +2 Carnes</div>
+                                    </div>
+                                    <div class="enclosure-slot" data-slot="2" onclick="toggleEnclosure('stego', 2)">
+                                        <div class="enclosure-action-label" id="lbl_stego_2">+3 Carnes, +1 Suprimento</div>
+                                    </div>
+                                    <div class="enclosure-slot" data-slot="3" onclick="toggleEnclosure('stego', 3)">
+                                        <div class="enclosure-action-label" id="lbl_stego_3">+1 Velociraptor, 👑 1º Jogador</div>
+                                    </div>
+                                </div>
+                                <div class="col-special-action" id="lbl_stego_special" data-i18n="special_label">Se cheio: Ação Especial</div>
+                            </div>
+
+                            <!-- Velociraptor (Green) -->
+                            <div class="dino-column" data-col="raptor">
+                                <div class="dino-col-header">
+                                    <div class="dino-col-name" style="color:var(--accent-green);" data-i18n="dino_raptor">Velociraptor</div>
+                                    <div class="dino-col-vp">3 VP • B / C</div>
+                                </div>
+                                <div class="enclosures-stack">
+                                    <div class="enclosure-slot" data-slot="1" onclick="toggleEnclosure('raptor', 1)">
+                                        <div class="enclosure-action-label" id="lbl_raptor_1">+2 Plantas, +2 Suprimentos</div>
+                                    </div>
+                                    <div class="enclosure-slot" data-slot="2" onclick="toggleEnclosure('raptor', 2)">
+                                        <div class="enclosure-action-label" id="lbl_raptor_2">+1 de Cada, 👑 1º Jogador</div>
+                                    </div>
+                                    <div class="enclosure-slot" data-slot="3" onclick="toggleEnclosure('raptor', 3)">
+                                        <div class="enclosure-action-label" id="lbl_raptor_3">+1 Estegossauro, 1 Pesquisa</div>
+                                    </div>
+                                </div>
+                                <div class="col-special-action" id="lbl_raptor_special" data-i18n="special_label">Se cheio: Ação Especial</div>
+                            </div>
+
+                            <!-- Brachiosaurus (Blue) -->
+                            <div class="dino-column" data-col="brachio">
+                                <div class="dino-col-header">
+                                    <div class="dino-col-name" style="color:var(--accent-blue);" data-i18n="dino_brachio">Braquiossauro</div>
+                                    <div class="dino-col-vp">3 VP • C / D</div>
+                                </div>
+                                <div class="enclosures-stack">
+                                    <div class="enclosure-slot" data-slot="1" onclick="toggleEnclosure('brachio', 1)">
+                                        <div class="enclosure-action-label" id="lbl_brachio_1">+1 Planta, 1 Carne, 1 Suprimento</div>
+                                    </div>
+                                    <div class="enclosure-slot" data-slot="2" onclick="toggleEnclosure('brachio', 2)">
+                                        <div class="enclosure-action-label" id="lbl_brachio_2">+1 de Cada, 👑 1º Jogador</div>
+                                    </div>
+                                    <div class="enclosure-slot" data-slot="3" onclick="toggleEnclosure('brachio', 3)">
+                                        <div class="enclosure-action-label" id="lbl_brachio_3">+1 T-Rex, 1 Pesquisa</div>
+                                    </div>
+                                </div>
+                                <div class="col-special-action" id="lbl_brachio_special" data-i18n="special_label">Se cheio: Ação Especial</div>
+                            </div>
+
+                            <!-- T-Rex (Red) -->
+                            <div class="dino-column" data-col="trex">
+                                <div class="dino-col-header">
+                                    <div class="dino-col-name" style="color:var(--accent-red);" data-i18n="dino_trex">T-Rex</div>
+                                    <div class="dino-col-vp">4 VP • D / A</div>
+                                </div>
+                                <div class="enclosures-stack">
+                                    <div class="enclosure-slot" data-slot="1" onclick="toggleEnclosure('trex', 1)">
+                                        <div class="enclosure-action-label" id="lbl_trex_1">+2 Carnes, +2 Suprimentos</div>
+                                    </div>
+                                    <div class="enclosure-slot" data-slot="2" onclick="toggleEnclosure('trex', 2)">
+                                        <div class="enclosure-action-label" id="lbl_trex_2">+2 Plantas, +1 Suprimento</div>
+                                    </div>
+                                    <div class="enclosure-slot" data-slot="3" onclick="toggleEnclosure('trex', 3)">
+                                        <div class="enclosure-action-label" id="lbl_trex_3">+1 Braquiossauro, 👑 1º Jogador</div>
+                                    </div>
+                                </div>
+                                <div class="col-special-action" id="lbl_trex_special" data-i18n="special_label">Se cheio: Ação Especial</div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- Quick Trackers -->
+                    <div class="stats-row">
+                        <div class="stat-card">
+                            <span class="stat-label" data-i18n="contracts_fulfilled_label">Contratos Cumpridos</span>
+                            <div class="stat-val-row">
+                                <span id="statContracts" class="stat-number">0</span>
+                                <div style="display:flex; gap:4px;">
+                                    <button class="stat-btn" onclick="adjustStat('contracts', -1)">-</button>
+                                    <button class="stat-btn" onclick="adjustStat('contracts', 1)">+</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="stat-card">
+                            <span class="stat-label" data-i18n="research_cards_label">Cartas de Pesquisa</span>
+                            <div class="stat-val-row">
+                                <span id="statResearch" class="stat-number">0</span>
+                                <div style="display:flex; gap:4px;">
+                                    <button class="stat-btn" onclick="adjustStat('research', -1)">-</button>
+                                    <button class="stat-btn" onclick="adjustStat('research', 1)">+</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="stat-card">
+                            <span class="stat-label" data-i18n="contracts_vp_label">VP em Contratos</span>
+                            <div class="stat-val-row">
+                                <span id="statContractsVP" class="stat-number">0</span>
+                                <div style="display:flex; gap:4px;">
+                                    <button class="stat-btn" onclick="adjustStat('contractsVP', -1)">-</button>
+                                    <button class="stat-btn" onclick="adjustStat('contractsVP', 1)">+</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="stat-card">
+                            <span class="stat-label" data-i18n="research_vp_label">VP em Pesquisa</span>
+                            <div class="stat-val-row">
+                                <span id="statResearchVP" class="stat-number">0</span>
+                                <div style="display:flex; gap:4px;">
+                                    <button class="stat-btn" onclick="adjustStat('researchVP', -1)">-</button>
+                                    <button class="stat-btn" onclick="adjustStat('researchVP', 1)">+</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </div>
+
+    <!-- RULES MODAL -->
+    <div id="helpModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" data-i18n="modal_rules_title">Regras do Rival Rancher & Variante</h3>
+                <button class="modal-close" onclick="toggleHelpModal(false)">&times;</button>
+            </div>
+            <div class="modal-body">
+                <details class="custom-details" open>
+                    <summary><strong data-i18n="rule_sec1_title">1. Bloqueios Parciais por Tabuleiro</strong></summary>
+                    <div class="details-body">
+                        <p data-i18n="rule_sec1_desc">Diferente das regras oficiais que bloqueiam o tabuleiro inteiro, cada carta bloqueia apenas parte dele com 1 Rancher:</p>
+                        <ul>
+                            <li><strong>Tabuleiro A:</strong> 1 Dino bloqueia FREE RANGE ESQUERDA (Estego/Raptor). 2 Dinos bloqueia FREE RANGE DIREITA (Braquio/T-Rex). Se ambas as cartas forem jogadas, bloqueia TODO o tabuleiro A.</li>
+                            <li><strong>Tabuleiro D:</strong> 1 Dino bloqueia RECURSOS ESQUERDA. 2 Dinos bloqueia RECURSOS DIREITA.</li>
+                            <li><strong>Tabuleiros B e C:</strong> 1 Dino bloqueia as ações de BARREIRAS (CINZA). 2 Dinos bloqueia as ações de CONTRATOS & PESQUISA (ROXO e AZUL).</li>
+                        </ul>
+                    </div>
+                </details>
+
+                <details class="custom-details">
+                    <summary><strong data-i18n="rule_sec2_title">2. Turno do Rival (Ordem de Resolução)</strong></summary>
+                    <div class="details-body">
+                        <p data-i18n="rule_sec2_1"><strong>Passo 1: Revela a Carta</strong> e coloca acima do tabuleiro correspondente.</p>
+                        <p data-i18n="rule_sec2_2"><strong>Passo 2: Checagem de Contratos</strong> — Verifica a fileira de Contratos Públicos da esquerda para a direita. Se o Rival tiver os dinos no rancho para cumprir um contrato: ele descarta os dinos de cima para baixo, pega a carta e <em>SEU TURNO TERMINA IMEDIATAMENTE</em> (pula o passo 3)!</p>
+                        <p data-i18n="rule_sec2_3"><strong>Passo 3: Dinossauro ou Ação</strong> — Se o jogador tiver Ranchers nos espaços que esta carta bloqueia → o Rival executa a Ação do compartimento livre mais abaixo na coluna do dino. Se o espaço estiver livre → o Rival ganha os dinos da carta!</p>
+                    </div>
+                </details>
+
+                <details class="custom-details">
+                    <summary><strong data-i18n="rule_sec3_title">3. Recursos Máximos (13)</strong></summary>
+                    <div class="details-body">
+                        <p data-i18n="rule_sec3_desc">Quando o Rival atinge 13 em qualquer recurso, ele ativa imediatamente a Ação de Recurso Máximo indicada no seu rancho, e o recurso é zerado (excedentes são perdidos). Se múltiplos atingirem 13 juntos, resolve-se na ordem: Plantas → Carne → Suprimentos.</p>
+                    </div>
+                </details>
+
+                <details class="custom-details">
+                    <summary><strong data-i18n="rule_sec4_title">4. Fim de Jogo & Pontuação</strong></summary>
+                    <div class="details-body">
+                        <p data-i18n="rule_sec4_desc">Após a 6ª Rodada, somam-se os pontos:</p>
+                        <ul>
+                            <li>Dinos no Rancho: Estegossauro = 2 VP | Velociraptor = 3 VP | Braquiossauro = 3 VP | T-Rex = 4 VP.</li>
+                            <li>Cartas de Contrato cumpridas: Valor impresso na carta.</li>
+                            <li>Cartas de Pesquisa obtidas: Valor direto de VP de cada carta (habilidades ignoradas).</li>
+                        </ul>
+                    </div>
+                </details>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCORING MODAL -->
+    <div id="scoreModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" data-i18n="modal_score_title">Calculadora de Pontuação Final</h3>
+                <button class="modal-close" onclick="toggleScoreModal(false)">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="score-grid">
+                    <!-- Rival Score -->
+                    <div class="score-col">
+                        <h5 data-i18n="score_rival_title">Rival Rancher</h5>
+                        <div class="score-item">
+                            <span data-i18n="score_dinos">Dinos no Rancho:</span>
+                            <span id="scoreRivalDinos" style="font-weight:700;">0 VP</span>
+                        </div>
+                        <div class="score-item">
+                            <span data-i18n="score_contracts">Contratos:</span>
+                            <span id="scoreRivalContracts" style="font-weight:700;">0 VP</span>
+                        </div>
+                        <div class="score-item">
+                            <span data-i18n="score_research">Pesquisa:</span>
+                            <span id="scoreRivalResearch" style="font-weight:700;">0 VP</span>
+                        </div>
+                        <div class="score-item" style="border-top:1px solid var(--border); padding-top:8px;">
+                            <strong data-i18n="score_total">Total Rival:</strong>
+                            <strong id="scoreRivalTotal" style="color:var(--accent-red); font-size:1.2rem;">0 VP</strong>
+                        </div>
+                    </div>
+
+                    <!-- Player Score -->
+                    <div class="score-col">
+                        <h5 data-i18n="score_player_title">Seu Rancho</h5>
+                        <div class="score-item">
+                            <span data-i18n="score_dinos">Dinos no Rancho:</span>
+                            <input type="number" id="inpPlayerDinos" class="score-input" value="0" min="0" onchange="calcScores()">
+                        </div>
+                        <div class="score-item">
+                            <span data-i18n="score_contracts">Contratos:</span>
+                            <input type="number" id="inpPlayerContracts" class="score-input" value="0" min="0" onchange="calcScores()">
+                        </div>
+                        <div class="score-item">
+                            <span data-i18n="score_research">Pesquisa:</span>
+                            <input type="number" id="inpPlayerResearch" class="score-input" value="0" min="0" onchange="calcScores()">
+                        </div>
+                        <div class="score-item" style="border-top:1px solid var(--border); padding-top:8px;">
+                            <strong data-i18n="score_total">Seu Total:</strong>
+                            <strong id="scorePlayerTotal" style="color:var(--accent-green); font-size:1.2rem;">0 VP</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="winnerBanner" style="text-align:center; padding:12px; border-radius:8px; font-family:var(--font-display); font-size:1.2rem; background:rgba(0,0,0,0.3); border:1px solid var(--border);">
+                    ...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mandatory Footer -->
+    <footer class="bot-footer">
+        <a href="https://ko-fi.com/thiagocolletes" target="_blank" rel="noopener" class="bmc-btn">
+            ☕ <span data-i18n="bmc_btn">Buy me a coffee</span>
+        </a>
+        <div class="credits">
+            <img src="../assets/art/ted.webp" alt="Tiny Epic Dinosaurs">
+            <div class="credits-text">
+                <p data-i18n-html="footer_credits_text"><strong>Tiny Epic Dinosaurs</strong> — Automa Rival Rancher baseado no jogo de Scott Almes e na variante "Re-tuned Solo Mode" por Ryan Lopez DeVinaspre. © Gamelyn Games.</p>
+                <p style="font-size:0.8rem; margin-top:4px;">Boardbots solo companion platform.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bot Application Script -->
+    <script>
+        /* --- Internationalization Dictionary --- */
+        const I18N = {
+            pt: {
+                btn_rules: "Regras",
+                btn_restart: "Reiniciar",
+                aria_rules: "Regras do jogo",
+                aria_restart: "Reiniciar partida",
+                badge_retuned: "Re-tuned Solo Mode",
+                hero_desc: "Automa inteligente para gerenciar o Rival Rancher com o aclamado modo rebalanceado: bloqueios parciais e regras dinâmicas de contratos.",
+                setup_heading: "Preparação da Partida",
+                choose_rival_label: "Escolha a Personalidade do Rival Rancher:",
+                opp_breeder_name: "Breeder (Criador)",
+                opp_breeder_role: "Foco: Contratos & Reprodução",
+                opp_breeder_desc: "Especialista voraz em acumular dinossauros para cumprir contratos públicos em sequência veloz.",
+                opp_breeder_spec: "Ação Especial: +1 Planta, +1 Carne, +1 Suprimento",
+                opp_contractor_name: "Contractor (Empreiteiro)",
+                opp_contractor_role: "Foco: Mercado de Contratos",
+                opp_contractor_desc: "Prioriza tomar contratos da mesa de forma direta pagando o que tiver no rancho.",
+                opp_contractor_spec: "Ação Especial: Pega o Contrato Público de menor valor",
+                opp_poacher_name: "Poacher (Caçador Ilegal)",
+                opp_poacher_role: "Foco: Agressão & Roubo",
+                opp_poacher_desc: "Destrói cercas e rouba recursos e dinossauros do seu rancho com extrema hostilidade.",
+                opp_poacher_spec: "Ação Especial: Você deve descartar 1 Barreira sua",
+                opp_scientist_name: "Scientist (Cientista)",
+                opp_scientist_role: "Foco: Cartas de Pesquisa",
+                opp_scientist_desc: "Acumula cartas de pesquisa rapidamente, gerando uma pontuação de fim de jogo expressiva.",
+                opp_scientist_spec: "Ação Especial: Pega 1 Carta de Pesquisa",
+                checklist_title: "📋 Checklist de Preparação na Mesa (Jogo Físico)",
+                chk_1: "Posicione os 4 Tabuleiros de Ação em linha de A a D (lado de 2 jogadores).",
+                chk_2: "Tabuleiro de Rodadas: Coloque o marcador na Rodada 1 e posicione o Lead Rancher do Rival na Rodada 4.",
+                chk_3: "Contratos: Abra 3 Contratos Públicos na mesa. Compre 2 Privados para você, escolha 1 e guarde em segredo.",
+                chk_4: "Pesquisa: Abra 3 Cartas de Pesquisa em linha.",
+                chk_5: "Seus Recursos: Comece com 0 Plantas, 0 Carnes e 0 Suprimentos (ou +1 Planta pelo bônus de 2º jogador).",
+                chk_6: "O Rival Rancher inicia com o Marcador de Primeiro Jogador!",
+                variant_title: "💡 Por que a variante \"Re-tuned Solo Mode\"?",
+                variant_body_1: "Nas regras oficiais, cada carta do bot bloqueia o tabuleiro inteiro (A, B, C ou D), tornando o jogo solo punitivo e com pouca margem estratégica. Esta variante (criada por Ryan Lopez DeVinaspre) introduz:",
+                variant_body_2: "1. Bloqueio Parcial: Cada carta bloqueia apenas metade dos espaços (ex: Free Range Esquerda vs Direita; Recursos Esquerda vs Direita; Barreiras vs Contratos/Pesquisa).",
+                variant_body_3: "2. Checagem de Contrato Antecipada: O Rival checa contratos no início do seu turno. Se cumprir um contrato, seu turno termina imediatamente, aliviando a pressão sobre os dinos e ações!",
+                btn_start_match: "Iniciar Partida",
+                round_label: "Rodada",
+                lead_active: "Lead Rancher Ativo (5 Cartas)",
+                btn_finish_round: "Avançar Rodada",
+                btn_scoring: "Pontuação",
+                console_title: "Turno do Rival",
+                click_reveal_prompt: "Clique abaixo para revelar a próxima carta do Rival Rancher.",
+                step1_tag: "Passo 1 • Checagem de Contrato",
+                step1_prompt: "O Rival possui os dinos para cumprir algum Contrato Público aberto (da esq. para dir.)?",
+                btn_contract_yes: "Sim, cumpriu contrato!",
+                btn_contract_no: "Não cumpre nenhum",
+                step2_tag: "Passo 2 • Alocação ou Ação",
+                step2_prompt: "Você já possui algum Rancher seu nos espaços bloqueados desta carta?",
+                btn_space_free: "Não (Espaços Livres)",
+                btn_space_occupied: "Sim (Já estou lá)",
+                btn_reveal_turn: "Revelar Ação do Rival",
+                log_title: "Diário de Campo do Rancho Rival",
+                log_initial: "Partida iniciada. Os portões do rancho rival estão abertos!",
+                first_player_rival: "1º Jogador: Rival",
+                first_player_you: "1º Jogador: Você",
+                res_track_title: "Trilha de Recursos do Rival (0 a 13)",
+                res_plant: "Plantas",
+                res_meat: "Carne",
+                res_supplies: "Suprimentos",
+                badge_max: "MAX!",
+                enclosures_title: "Compartimentos de Dinossauros do Rancho (Clique para alternar)",
+                dino_stego: "Estegossauro",
+                dino_raptor: "Velociraptor",
+                dino_brachio: "Braquiossauro",
+                dino_trex: "T-Rex",
+                special_label: "Se cheio: Ação Especial",
+                contracts_fulfilled_label: "Contratos Cumpridos",
+                research_cards_label: "Cartas de Pesquisa",
+                contracts_vp_label: "VP em Contratos",
+                research_vp_label: "VP em Pesquisa",
+                modal_rules_title: "Regras do Rival Rancher & Variante",
+                rule_sec1_title: "1. Bloqueios Parciais por Tabuleiro",
+                rule_sec1_desc: "Diferente das regras oficiais que bloqueiam o tabuleiro inteiro, cada carta bloqueia apenas parte dele com 1 Rancher:",
+                rule_sec2_title: "2. Turno do Rival (Ordem de Resolução)",
+                rule_sec2_1: "Passo 1: Revela a Carta e coloca acima do tabuleiro correspondente.",
+                rule_sec2_2: "Passo 2: Checagem de Contratos — Verifica a fileira de Contratos Públicos da esquerda para a direita. Se o Rival tiver os dinos no rancho para cumprir um contrato: ele descarta os dinos de cima para baixo, pega a carta e SEU TURNO TERMINA IMEDIATAMENTE (pula o passo 3)!",
+                rule_sec2_3: "Passo 3: Dinossauro ou Ação — Se o jogador tiver Ranchers nos espaços que esta carta bloqueia → o Rival executa a Ação do compartimento livre mais abaixo na coluna do dino. Se o espaço estiver livre → o Rival ganha os dinos da carta!",
+                rule_sec3_title: "3. Recursos Máximos (13)",
+                rule_sec3_desc: "Quando o Rival atinge 13 em qualquer recurso, ele ativa imediatamente a Ação de Recurso Máximo indicada no seu rancho, e o recurso é zerado (excedentes são perdidos). Se múltiplos atingirem 13 juntos, resolve-se na ordem: Plantas → Carne → Suprimentos.",
+                rule_sec4_title: "4. Fim de Jogo & Pontuação",
+                rule_sec4_desc: "Após a 6ª Rodada, somam-se os pontos de dinossauros, contratos e pesquisas.",
+                modal_score_title: "Calculadora de Pontuação Final",
+                score_rival_title: "Rival Rancher",
+                score_player_title: "Seu Rancho",
+                score_dinos: "Dinos no Rancho:",
+                score_contracts: "Contratos:",
+                score_research: "Pesquisa:",
+                score_total: "Total:",
+                bmc_btn: "Buy me a coffee",
+                footer_credits_text: "<strong>Tiny Epic Dinosaurs</strong> — Automa Rival Rancher baseado no jogo de Scott Almes e na variante \"Re-tuned Solo Mode\" por Ryan Lopez DeVinaspre. © Gamelyn Games."
+            },
+            en: {
+                btn_rules: "Rules",
+                btn_restart: "Restart",
+                aria_rules: "Game rules",
+                aria_restart: "Restart match",
+                badge_retuned: "Re-tuned Solo Mode",
+                hero_desc: "Smart AI automa for the Rival Rancher with the acclaimed re-tuned solo variant: partial board blocking and dynamic contract resolution.",
+                setup_heading: "Match Setup",
+                choose_rival_label: "Choose Rival Rancher Personality:",
+                opp_breeder_name: "Breeder",
+                opp_breeder_role: "Focus: Contracts & Breeding",
+                opp_breeder_desc: "A voracious specialist at accumulating dinosaurs to complete public contracts in swift succession.",
+                opp_breeder_spec: "Special Action: +1 Plant, +1 Meat, +1 Supply",
+                opp_contractor_name: "Contractor",
+                opp_contractor_role: "Focus: Contract Market",
+                opp_contractor_desc: "Prioritizes claiming contracts directly from the market, paying with whatever dinosaurs it has.",
+                opp_contractor_spec: "Special Action: Takes lowest-value Public Contract",
+                opp_poacher_name: "Poacher",
+                opp_poacher_role: "Focus: Aggression & Theft",
+                opp_poacher_desc: "Destroys barriers and steals resources and dinosaurs from your ranch with hostility.",
+                opp_poacher_spec: "Special Action: You must discard 1 of your Barriers",
+                opp_scientist_name: "Scientist",
+                opp_scientist_role: "Focus: Research Cards",
+                opp_scientist_desc: "Gathers research cards rapidly, creating a massive endgame victory point challenge.",
+                opp_scientist_spec: "Special Action: Gains 1 Research Card",
+                checklist_title: "📋 Table Setup Checklist (Physical Game)",
+                chk_1: "Place the 4 Action Mats in a row A through D (2-player side).",
+                chk_2: "Round Mat: Place marker on Round 1 and place the Rival's Lead Rancher on Round 4.",
+                chk_3: "Contracts: Reveal 3 Public Contracts. Deal 2 Private Contracts to yourself, keep 1 in secret.",
+                chk_4: "Research: Reveal 3 Research Cards in a row.",
+                chk_5: "Your Resources: Start with 0 Plants, 0 Meat, 0 Supplies (or +1 Plant for 2nd player bonus).",
+                chk_6: "The Rival Rancher starts with the First Player Marker!",
+                variant_title: "💡 Why the \"Re-tuned Solo Mode\" variant?",
+                variant_body_1: "In the official rules, each Rival card blocks an entire mat (A, B, C, or D), making solo play brutally punishing. This variant (created by Ryan Lopez DeVinaspre) provides:",
+                variant_body_2: "1. Partial Blocking: Each card only blocks part of the mat with 1 Rancher (e.g. Free Range Left vs Right; Resources Left vs Right; Barriers vs Contracts/Research).",
+                variant_body_3: "2. Early Contract Check: The Rival checks contracts first. If fulfilled, its turn ends immediately, relieving pressure from additional dinos and actions!",
+                btn_start_match: "Start Match",
+                round_label: "Round",
+                lead_active: "Lead Rancher Active (5 Cards)",
+                btn_finish_round: "Next Round",
+                btn_scoring: "Scoring",
+                console_title: "Rival Turn",
+                click_reveal_prompt: "Click below to reveal the Rival Rancher's next card.",
+                step1_tag: "Step 1 • Check Contracts",
+                step1_prompt: "Can the Rival fulfill any face-up Public Contract (left to right)?",
+                btn_contract_yes: "Yes, fulfilled contract!",
+                btn_contract_no: "No contracts fulfilled",
+                step2_tag: "Step 2 • Dinos or Action",
+                step2_prompt: "Do you have any of your ranchers on the spaces this card blocks?",
+                btn_space_free: "No (Spaces Free)",
+                btn_space_occupied: "Yes (I am there)",
+                btn_reveal_turn: "Reveal Rival Action",
+                log_title: "Rival Ranch Field Log",
+                log_initial: "Match started. The rival ranch gates are open!",
+                first_player_rival: "1st Player: Rival",
+                first_player_you: "1st Player: You",
+                res_track_title: "Rival Resource Track (0 to 13)",
+                res_plant: "Plants",
+                res_meat: "Meat",
+                res_supplies: "Supplies",
+                badge_max: "MAX!",
+                enclosures_title: "Ranch Dinosaur Enclosures (Click to toggle)",
+                dino_stego: "Stegosaurus",
+                dino_raptor: "Velociraptor",
+                dino_brachio: "Brachiosaurus",
+                dino_trex: "T-Rex",
+                special_label: "If full: Special Action",
+                contracts_fulfilled_label: "Contracts Fulfilled",
+                research_cards_label: "Research Cards",
+                contracts_vp_label: "Contracts VP",
+                research_vp_label: "Research VP",
+                modal_rules_title: "Rival Rancher Rules & Variant",
+                rule_sec1_title: "1. Partial Mat Blocking",
+                rule_sec1_desc: "Unlike the official rules where cards block the entire mat, each card only blocks part of it with 1 Rancher:",
+                rule_sec2_title: "2. Rival Turn Resolution Order",
+                rule_sec2_1: "Step 1: Draw & Place card above matching Action Mat.",
+                rule_sec2_2: "Step 2: Check Contracts — Check face-up Public Contracts left to right. If Rival has dinosaurs: discards them top-to-bottom, takes card, and TURN ENDS IMMEDIATELY (skip step 3)!",
+                rule_sec2_3: "Step 3: Dinosaurs or Action — If you have ranchers on the blocked spaces → Rival performs Action in lowest open enclosure of that column. If spaces were free → Rival gains the Dinosaur(s)!",
+                rule_sec3_title: "3. Maximum Resources (13)",
+                rule_sec3_desc: "When the Rival hits 13 in any resource, it triggers its Resource Max Action and resets that resource to 0. Order: Plants → Meat → Supplies.",
+                rule_sec4_title: "4. End Game & Scoring",
+                rule_sec4_desc: "After Round 6, total points from ranch dinosaurs, contracts, and research cards.",
+                modal_score_title: "Final Score Calculator",
+                score_rival_title: "Rival Rancher",
+                score_player_title: "Your Ranch",
+                score_dinos: "Ranch Dinosaurs:",
+                score_contracts: "Contracts:",
+                score_research: "Research:",
+                score_total: "Total:",
+                bmc_btn: "Buy me a coffee",
+                footer_credits_text: "<strong>Tiny Epic Dinosaurs</strong> — Rival Rancher automa based on the game by Scott Almes and the \"Re-tuned Solo Mode\" variant by Ryan Lopez DeVinaspre. © Gamelyn Games."
+            }
+        };
+
+        /* --- Game Data & Verified Models --- */
+        const CARDS = [
+            { id: 1, mat: 'C', dinos: 2, type: 'raptor', img: '../assets/art/ted/cards/card_1.webp' },
+            { id: 2, mat: 'D', dinos: 2, type: 'brachio', img: '../assets/art/ted/cards/card_2.webp' },
+            { id: 3, mat: 'D', dinos: 1, type: 'trex', img: '../assets/art/ted/cards/card_3.webp' },
+            { id: 4, mat: 'B', dinos: 1, type: 'raptor', img: '../assets/art/ted/cards/card_4.webp' },
+            { id: 5, mat: 'A', dinos: 1, type: 'stego', img: '../assets/art/ted/cards/card_5.webp' },
+            { id: 6, mat: 'C', dinos: 1, type: 'brachio', img: '../assets/art/ted/cards/card_6.webp' },
+            { id: 7, mat: 'B', dinos: 2, type: 'stego', img: '../assets/art/ted/cards/card_7.webp' },
+            { id: 8, mat: 'A', dinos: 2, type: 'trex', img: '../assets/art/ted/cards/card_8.webp' }
+        ];
+
+        const OPPONENTS = {
+            breeder: {
+                name: "Breeder",
+                badgeClass: "badge-breeder",
+                specialActionText: { pt: "+1 Planta, +1 Carne, +1 Suprimento", en: "+1 Plant, +1 Meat, +1 Supply" },
+                maxActions: {
+                    plant: { pt: "+2 Estegossauros", en: "+2 Stegosaurus", dinos: [{ type: 'stego', qty: 2 }] },
+                    meat: { pt: "+2 Velociraptores", en: "+2 Velociraptor", dinos: [{ type: 'raptor', qty: 2 }] },
+                    supplies: { pt: "+1 Braquiossauro, +1 T-Rex", en: "+1 Brachiosaurus, +1 T-Rex", dinos: [{ type: 'brachio', qty: 1 }, { type: 'trex', qty: 1 }] }
+                },
+                columnActions: {
+                    stego: [
+                        { pt: "+2 Plantas, +2 Carnes", en: "+2 Plants, +2 Meat", apply: (s) => { addRes('plant', 2); addRes('meat', 2); } },
+                        { pt: "+3 Carnes, +1 Suprimento", en: "+3 Meat, +1 Supply", apply: (s) => { addRes('meat', 3); addRes('supplies', 1); } },
+                        { pt: "+1 Velociraptor, 👑 1º Jogador", en: "+1 Velociraptor, 👑 1st Player", apply: (s) => { addDinos('raptor', 1); setFirstPlayer('rival'); } }
+                    ],
+                    raptor: [
+                        { pt: "+2 Plantas, +2 Suprimentos", en: "+2 Plants, +2 Supplies", apply: (s) => { addRes('plant', 2); addRes('supplies', 2); } },
+                        { pt: "+1 de Cada, 👑 1º Jogador", en: "+1 of Each, 👑 1st Player", apply: (s) => { addRes('plant', 1); addRes('meat', 1); addRes('supplies', 1); setFirstPlayer('rival'); } },
+                        { pt: "+1 Estegossauro, +1 Pesquisa", en: "+1 Stegosaurus, +1 Research", apply: (s) => { addDinos('stego', 1); adjustStat('research', 1); } }
+                    ],
+                    brachio: [
+                        { pt: "+1 Planta, +1 Carne, +1 Suprimento", en: "+1 Plant, +1 Meat, +1 Supply", apply: (s) => { addRes('plant', 1); addRes('meat', 1); addRes('supplies', 1); } },
+                        { pt: "+1 de Cada, 👑 1º Jogador", en: "+1 of Each, 👑 1st Player", apply: (s) => { addRes('plant', 1); addRes('meat', 1); addRes('supplies', 1); setFirstPlayer('rival'); } },
+                        { pt: "+1 T-Rex, +1 Pesquisa", en: "+1 T-Rex, +1 Research", apply: (s) => { addDinos('trex', 1); adjustStat('research', 1); } }
+                    ],
+                    trex: [
+                        { pt: "+2 Carnes, +2 Suprimentos", en: "+2 Meat, +2 Supplies", apply: (s) => { addRes('meat', 2); addRes('supplies', 2); } },
+                        { pt: "+2 Plantas, +1 Suprimento", en: "+2 Plants, +1 Supply", apply: (s) => { addRes('plant', 2); addRes('supplies', 1); } },
+                        { pt: "+1 Braquiossauro, 👑 1º Jogador", en: "+1 Brachiosaurus, 👑 1st Player", apply: (s) => { addDinos('brachio', 1); setFirstPlayer('rival'); } }
+                    ]
+                }
+            },
+            contractor: {
+                name: "Contractor",
+                badgeClass: "badge-contractor",
+                specialActionText: { pt: "Pega o Contrato Público de menor valor (paga o que puder)", en: "Takes lowest-value Public Contract (pays best it can)" },
+                maxActions: {
+                    plant: { pt: "+1 Estegossauro, +1 Braquiossauro", en: "+1 Stegosaurus, +1 Brachiosaurus", dinos: [{ type: 'stego', qty: 1 }, { type: 'brachio', qty: 1 }] },
+                    meat: { pt: "+1 Velociraptor, +1 T-Rex", en: "+1 Velociraptor, +1 T-Rex", dinos: [{ type: 'raptor', qty: 1 }, { type: 'trex', qty: 1 }] },
+                    supplies: { pt: "Pega o Contrato Público de maior valor (paga o que puder)", en: "Takes highest-value Public Contract (pays best it can)", special: true }
+                },
+                columnActions: {
+                    stego: [
+                        { pt: "+3 Plantas", en: "+3 Plants", apply: (s) => { addRes('plant', 3); } },
+                        { pt: "+1 Carta de Pesquisa", en: "+1 Research Card", apply: (s) => { adjustStat('research', 1); } },
+                        { pt: "+1 de Cada Recurso", en: "+1 of Each Resource", apply: (s) => { addRes('plant', 1); addRes('meat', 1); addRes('supplies', 1); } }
+                    ],
+                    raptor: [
+                        { pt: "+3 Suprimentos", en: "+3 Supplies", apply: (s) => { addRes('supplies', 3); } },
+                        { pt: "+2 Plantas, +1 Carne", en: "+2 Plants, +1 Meat", apply: (s) => { addRes('plant', 2); addRes('meat', 1); } },
+                        { pt: "+1 de Cada, 👑 1º Jogador", en: "+1 of Each, 👑 1st Player", apply: (s) => { addRes('plant', 1); addRes('meat', 1); addRes('supplies', 1); setFirstPlayer('rival'); } }
+                    ],
+                    brachio: [
+                        { pt: "+3 Plantas", en: "+3 Plants", apply: (s) => { addRes('plant', 3); } },
+                        { pt: "+3 Carnes", en: "+3 Meat", apply: (s) => { addRes('meat', 3); } },
+                        { pt: "Pega Contrato Público (Menor VP)", en: "Takes Public Contract (Lowest VP)", apply: (s) => { adjustStat('contracts', 1); } }
+                    ],
+                    trex: [
+                        { pt: "+3 Carnes", en: "+3 Meat", apply: (s) => { addRes('meat', 3); } },
+                        { pt: "+3 Suprimentos", en: "+3 Supplies", apply: (s) => { addRes('supplies', 3); } },
+                        { pt: "Pega Contrato Público (Maior VP)", en: "Takes Public Contract (Highest VP)", apply: (s) => { adjustStat('contracts', 1); } }
+                    ]
+                }
+            },
+            poacher: {
+                name: "Poacher",
+                badgeClass: "badge-poacher",
+                specialActionText: { pt: "Você deve descartar 1 Barreira sua no Rancho!", en: "You must discard 1 Barrier from your Ranch!" },
+                maxActions: {
+                    plant: { pt: "Rouba 1 Braquiossauro do seu rancho!", en: "Steals 1 Brachiosaurus from your ranch!", stealDino: 'brachio' },
+                    meat: { pt: "Rouba 1 T-Rex do seu rancho!", en: "Steals 1 T-Rex from your ranch!", stealDino: 'trex' },
+                    supplies: { pt: "Rouba 1 Estego e 1 Raptor do seu rancho!", en: "Steals 1 Stego & 1 Raptor from your ranch!", stealDinos: ['stego', 'raptor'] }
+                },
+                columnActions: {
+                    stego: [
+                        { pt: "+1 Planta, +2 Carnes", en: "+1 Plant, +2 Meat", apply: (s) => { addRes('plant', 1); addRes('meat', 2); } },
+                        { pt: "Rouba 2 Plantas de você!", en: "Steals 2 Plants from you!", apply: (s) => { addRes('plant', 2); } },
+                        { pt: "+1 de Cada, 👑 1º Jogador", en: "+1 of Each, 👑 1st Player", apply: (s) => { addRes('plant', 1); addRes('meat', 1); addRes('supplies', 1); setFirstPlayer('rival'); } }
+                    ],
+                    raptor: [
+                        { pt: "Rouba 2 Carnes de você!", en: "Steals 2 Meat from you!", apply: (s) => { addRes('meat', 2); } },
+                        { pt: "+3 Suprimentos", en: "+3 Supplies", apply: (s) => { addRes('supplies', 3); } },
+                        { pt: "Rouba 1 Dino Herbívoro seu!", en: "Steals 1 Herbivore from you!", apply: (s) => { addDinos('stego', 1); } }
+                    ],
+                    brachio: [
+                        { pt: "+2 Plantas, +1 Suprimento", en: "+2 Plants, +1 Supply", apply: (s) => { addRes('plant', 2); addRes('supplies', 1); } },
+                        { pt: "Rouba 2 Suprimentos de você!", en: "Steals 2 Supplies from you!", apply: (s) => { addRes('supplies', 2); } },
+                        { pt: "Quebra 1 Barreira sua!", en: "Destroys 1 of your Barriers!", apply: (s) => {} }
+                    ],
+                    trex: [
+                        { pt: "+2 Carnes, +1 Suprimento", en: "+2 Meat, +1 Supply", apply: (s) => { addRes('meat', 2); addRes('supplies', 1); } },
+                        { pt: "Rouba 1 Dino seu!", en: "Steals 1 Dino from you!", apply: (s) => { addDinos('raptor', 1); } },
+                        { pt: "Quebra 1 Barreira sua!", en: "Destroys 1 of your Barriers!", apply: (s) => {} }
+                    ]
+                }
+            },
+            scientist: {
+                name: "Scientist",
+                badgeClass: "badge-scientist",
+                specialActionText: { pt: "+1 Carta de Pesquisa", en: "+1 Research Card" },
+                maxActions: {
+                    plant: { pt: "+1 Carta de Pesquisa", en: "+1 Research Card", apply: () => adjustStat('research', 1) },
+                    meat: { pt: "+1 Estegossauro, +1 Velociraptor", en: "+1 Stegosaurus, +1 Velociraptor", dinos: [{ type: 'stego', qty: 1 }, { type: 'raptor', qty: 1 }] },
+                    supplies: { pt: "Você deve descartar 1 Carta de Pesquisa sua!", en: "You must discard 1 of your Research Cards!" }
+                },
+                columnActions: {
+                    stego: [
+                        { pt: "+3 Plantas", en: "+3 Plants", apply: (s) => { addRes('plant', 3); } },
+                        { pt: "+2 Plantas, +1 Carne", en: "+2 Plants, +1 Meat", apply: (s) => { addRes('plant', 2); addRes('meat', 1); } },
+                        { pt: "+1 Planta, +1 Carta de Pesquisa", en: "+1 Plant, +1 Research Card", apply: (s) => { addRes('plant', 1); adjustStat('research', 1); } }
+                    ],
+                    raptor: [
+                        { pt: "+1 de Cada Recurso", en: "+1 of Each Resource", apply: (s) => { addRes('plant', 1); addRes('meat', 1); addRes('supplies', 1); } },
+                        { pt: "+3 Suprimentos", en: "+3 Supplies", apply: (s) => { addRes('supplies', 3); } },
+                        { pt: "+1 de Cada, 👑 1º Jogador", en: "+1 of Each, 👑 1st Player", apply: (s) => { addRes('plant', 1); addRes('meat', 1); addRes('supplies', 1); setFirstPlayer('rival'); } }
+                    ],
+                    brachio: [
+                        { pt: "+3 Carnes", en: "+3 Meat", apply: (s) => { addRes('meat', 3); } },
+                        { pt: "+3 Suprimentos", en: "+3 Supplies", apply: (s) => { addRes('supplies', 3); } },
+                        { pt: "+1 de Cada, 👑 1º Jogador", en: "+1 of Each, 👑 1st Player", apply: (s) => { addRes('plant', 1); addRes('meat', 1); addRes('supplies', 1); setFirstPlayer('rival'); } }
+                    ],
+                    trex: [
+                        { pt: "+3 Suprimentos", en: "+3 Supplies", apply: (s) => { addRes('supplies', 3); } },
+                        { pt: "+2 Plantas, +1 Carne", en: "+2 Plants, +1 Meat", apply: (s) => { addRes('plant', 2); addRes('meat', 1); } },
+                        { pt: "+2 Carnes, +1 Carta de Pesquisa", en: "+2 Meat, +1 Research Card", apply: (s) => { addRes('meat', 2); adjustStat('research', 1); } }
+                    ]
+                }
+            }
+        };
+
+        /* --- Application State --- */
+        let state = {
+            lang: localStorage.getItem('boardbots_lang') || 'pt',
+            opponentKey: 'breeder',
+            round: 1,
+            turnInRound: 0,
+            deck: [],
+            drawnCardsInRound: [],
+            activeCard: null,
+            firstPlayer: 'rival', // 'rival' or 'player'
+            resources: { plant: 0, meat: 0, supplies: 0 },
+            enclosures: {
+                stego: [false, false, false],
+                raptor: [false, false, false],
+                brachio: [false, false, false],
+                trex: [false, false, false]
+            },
+            stats: {
+                contracts: 0,
+                research: 0,
+                contractsVP: 0,
+                researchVP: 0
+            }
+        };
+
+        /* --- Helper Functions --- */
+        function t(key) {
+            return (I18N[state.lang] && I18N[state.lang][key]) || key;
+        }
+
+        function updateTexts() {
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (I18N[state.lang] && I18N[state.lang][key]) {
+                    el.textContent = I18N[state.lang][key];
+                }
+            });
+            document.querySelectorAll('[data-i18n-html]').forEach(el => {
+                const key = el.getAttribute('data-i18n-html');
+                if (I18N[state.lang] && I18N[state.lang][key]) {
+                    el.innerHTML = I18N[state.lang][key];
+                }
+            });
+            document.querySelectorAll('[data-i18n-aria]').forEach(el => {
+                const key = el.getAttribute('data-i18n-aria');
+                if (I18N[state.lang] && I18N[state.lang][key]) {
+                    el.setAttribute('aria-label', I18N[state.lang][key]);
+                }
+            });
+
+            // Update language toggle buttons
+            document.querySelectorAll('.lang-btn').forEach(b => {
+                b.classList.toggle('active', b.getAttribute('data-lang') === state.lang);
+            });
+
+            // Update opponent details in ranch
+            updateRanchLabels();
+        }
+
+        function setLanguage(lang) {
+            state.lang = lang;
+            localStorage.setItem('boardbots_lang', lang);
+            updateTexts();
+            renderUI();
+        }
+
+        function shuffleDeck() {
+            const arr = [...CARDS];
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        function maxCardsForRound() {
+            return state.round >= 4 ? 5 : 4;
+        }
+
+        function logMessage(text, isHighlight = false) {
+            const panel = document.getElementById('logPanel');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = `<span class="log-round">[R${state.round}]</span> <span class="${isHighlight ? 'log-highlight' : ''}">${text}</span>`;
+            panel.prepend(entry);
+        }
+
+        /* --- Game Flow & Turns --- */
+        function startGame() {
+            document.getElementById('viewSetup').classList.add('hidden');
+            document.getElementById('viewGame').classList.remove('hidden');
+            state.round = 1;
+            state.turnInRound = 0;
+            state.deck = shuffleDeck();
+            state.drawnCardsInRound = [];
+            state.activeCard = null;
+            logMessage(state.lang === 'pt' ? `Iniciada disputa contra o Rival ${OPPONENTS[state.opponentKey].name}!` : `Match started against Rival ${OPPONENTS[state.opponentKey].name}!`, true);
+            renderUI();
+        }
+
+        function nextRound() {
+            if (state.round >= 6) {
+                toggleScoreModal(true);
+                return;
+            }
+            state.round++;
+            state.turnInRound = 0;
+            state.deck = shuffleDeck();
+            state.drawnCardsInRound = [];
+            state.activeCard = null;
+            
+            // Hide turn steps
+            document.getElementById('cardActiveWrap').classList.add('hidden');
+            document.getElementById('blockingBanner').classList.add('hidden');
+            document.getElementById('step1Box').classList.add('hidden');
+            document.getElementById('step2Box').classList.add('hidden');
+            document.getElementById('cardPlaceholder').classList.remove('hidden');
+            
+            logMessage(state.lang === 'pt' ? `--- Início da Rodada ${state.round} ---` : `--- Start of Round ${state.round} ---`, true);
+            if (state.round === 4) {
+                logMessage(state.lang === 'pt' ? `⭐ O Rival Rancher ativou seu LEAD RANCHER! Agora joga 5 cartas por rodada.` : `⭐ The Rival Rancher activated its LEAD RANCHER! Now plays 5 cards per round.`, true);
+            }
+            renderUI();
+        }
+
+        function drawRivalCard() {
+            const maxTurns = maxCardsForRound();
+            if (state.turnInRound >= maxTurns) {
+                alert(state.lang === 'pt' ? `O Rival já jogou todas as ${maxTurns} cartas desta rodada! Avance a rodada.` : `The Rival has already played all ${maxTurns} cards for this round! Proceed to next round.`);
+                return;
+            }
+
+            if (state.deck.length === 0) {
+                state.deck = shuffleDeck();
+            }
+
+            const card = state.deck.pop();
+            state.drawnCardsInRound.push(card);
+            state.activeCard = card;
+            state.turnInRound++;
+
+            // Render Card UI
+            document.getElementById('cardPlaceholder').classList.add('hidden');
+            document.getElementById('cardActiveWrap').classList.remove('hidden');
+            document.getElementById('cardImage').src = card.img;
+
+            // Blocking Banner calculation
+            const blocking = getBlockingDescription(card);
+            document.getElementById('blockingBanner').classList.remove('hidden');
+            document.getElementById('blockingMatTitle').textContent = blocking.title;
+            document.getElementById('blockingMatDesc').innerHTML = blocking.desc;
+
+            // Show Step 1: Check Contracts
+            document.getElementById('step1Box').classList.remove('hidden');
+            document.getElementById('step2Box').classList.add('hidden');
+
+            document.getElementById('btnDrawCard').classList.add('hidden');
+            document.getElementById('turnIndicator').textContent = `${state.turnInRound}/${maxTurns}`;
+
+            logMessage(state.lang === 'pt' 
+                ? `Carta revelada: Tabuleiro ${card.mat} (${card.dinos}x ${card.type.toUpperCase()}). Bloqueia: ${blocking.short}.` 
+                : `Revealed card: Mat ${card.mat} (${card.dinos}x ${card.type.toUpperCase()}). Blocks: ${blocking.short}.`
+            );
+        }
+
+        function getBlockingDescription(card) {
+            const isPt = state.lang === 'pt';
+            const countSameMat = state.drawnCardsInRound.filter(c => c.mat === card.mat).length;
+
+            if (card.mat === 'A') {
+                if (countSameMat >= 2) {
+                    return {
+                        title: isPt ? "Tabuleiro A — BLOQUEIO TOTAL!" : "Mat A — FULL BLOCK!",
+                        desc: isPt ? "Ambas as cartas do Tabuleiro A foram jogadas nesta rodada. <strong>TODOS os espaços do Tabuleiro A estão bloqueados por 1 Rancher!</strong>" : "Both Mat A cards were played this round. <strong>ALL spaces on Mat A are blocked by 1 Rancher!</strong>",
+                        short: isPt ? "Todo o Tabuleiro A" : "All of Mat A"
+                    };
+                }
+                if (card.dinos === 1) {
+                    return {
+                        title: isPt ? "Tabuleiro A — Free Range Esquerda" : "Mat A — Free Range Left",
+                        desc: isPt ? "Bloqueia com 1 Rancher os <strong>espaços da ESQUERDA em FREE RANGE</strong> (Estegossauro e Mercado esquerdo)." : "Blocks with 1 Rancher the <strong>LEFT spaces in FREE RANGE</strong> (Stego and Left Market).",
+                        short: isPt ? "Free Range Esquerda" : "Free Range Left"
+                    };
+                } else {
+                    return {
+                        title: isPt ? "Tabuleiro A — Free Range Direita" : "Mat A — Free Range Right",
+                        desc: isPt ? "Bloqueia com 1 Rancher os <strong>espaços da DIREITA em FREE RANGE</strong> (Braquiossauro/T-Rex e Mercado direito)." : "Blocks with 1 Rancher the <strong>RIGHT spaces in FREE RANGE</strong> (Brachio/T-Rex and Right Market).",
+                        short: isPt ? "Free Range Direita" : "Free Range Right"
+                    };
+                }
+            } else if (card.mat === 'D') {
+                if (card.dinos === 1) {
+                    return {
+                        title: isPt ? "Tabuleiro D — Recursos Esquerda" : "Mat D — Resources Left",
+                        desc: isPt ? "Bloqueia com 1 Rancher os <strong>espaços da ESQUERDA em RECURSOS</strong>." : "Blocks with 1 Rancher the <strong>LEFT spaces in RESOURCES</strong>.",
+                        short: isPt ? "Recursos Esquerda" : "Resources Left"
+                    };
+                } else {
+                    return {
+                        title: isPt ? "Tabuleiro D — Recursos Direita" : "Mat D — Resources Right",
+                        desc: isPt ? "Bloqueia com 1 Rancher os <strong>espaços da DIREITA em RECURSOS</strong>." : "Blocks with 1 Rancher the <strong>RIGHT spaces in RESOURCES</strong>.",
+                        short: isPt ? "Recursos Direita" : "Resources Right"
+                    };
+                }
+            } else { // Mat B or C
+                if (card.dinos === 1) {
+                    return {
+                        title: `${isPt ? 'Tabuleiro' : 'Mat'} ${card.mat} — ${isPt ? 'Barreiras (Cinza)' : 'Barriers (Gray)'}`,
+                        desc: isPt ? `Bloqueia com 1 Rancher as ações de <strong>BARREIRAS (Espaços Cinzas)</strong> no Tabuleiro ${card.mat}.` : `Blocks with 1 Rancher the <strong>BARRIERS (Gray spaces)</strong> on Mat ${card.mat}.`,
+                        short: isPt ? "Barreiras (Cinza)" : "Barriers (Gray)"
+                    };
+                } else {
+                    return {
+                        title: `${isPt ? 'Tabuleiro' : 'Mat'} ${card.mat} — ${isPt ? 'Contratos & Pesquisa' : 'Contracts & Research'}`,
+                        desc: isPt ? `Bloqueia com 1 Rancher as ações de <strong>CONTRATOS e PESQUISA (Espaços Roxos e Azuis)</strong> no Tabuleiro ${card.mat}.` : `Blocks with 1 Rancher the <strong>CONTRACTS & RESEARCH (Purple & Blue spaces)</strong> on Mat ${card.mat}.`,
+                        short: isPt ? "Contratos e Pesquisa" : "Contracts & Research"
+                    };
+                }
+            }
+        }
+
+        /* --- Step 1 Contract Resolution --- */
+        function resolveContract(fulfilled) {
+            const isPt = state.lang === 'pt';
+            if (fulfilled) {
+                // Prompt for VP or simple increment
+                const vpStr = prompt(isPt ? "Quantos pontos de vitória (VP) vale o contrato cumprido?" : "How many victory points (VP) is the fulfilled contract worth?", "7");
+                const vp = parseInt(vpStr) || 0;
+                adjustStat('contracts', 1);
+                adjustStat('contractsVP', vp);
+                
+                logMessage(isPt 
+                    ? `📜 CONTRATO CUMPRIDO! O Rival descartou os dinos necessários e pegou o contrato (+${vp} VP). <strong>Seu turno encerra imediatamente!</strong>` 
+                    : `📜 CONTRACT FULFILLED! The Rival discarded the required dinos and claimed the contract (+${vp} VP). <strong>Its turn ends immediately!</strong>`,
+                    true
+                );
+
+                finishTurnStep();
+            } else {
+                // Did not fulfill contract -> Proceed to Step 2
+                document.getElementById('step1Box').classList.add('hidden');
+                document.getElementById('step2Box').classList.remove('hidden');
+            }
+        }
+
+        /* --- Step 2 Dinos vs Action Resolution --- */
+        function resolveDinosOrAction(isOccupied) {
+            const isPt = state.lang === 'pt';
+            const card = state.activeCard;
+            if (!card) return;
+
+            if (!isOccupied) {
+                // Spaces are free -> Rival gains dinosaurs!
+                addDinos(card.type, card.dinos);
+                logMessage(isPt 
+                    ? `🦖 Espaços livres! O Rival alocou +${card.dinos}x ${card.type.toUpperCase()} em seu rancho.` 
+                    : `🦖 Spaces free! The Rival placed +${card.dinos}x ${card.type.toUpperCase()} into its ranch.`,
+                    true
+                );
+            } else {
+                // Player occupied spaces -> Rival performs action!
+                executeRivalColumnAction(card.type);
+            }
+
+            finishTurnStep();
+        }
+
+        function executeRivalColumnAction(dinoType) {
+            const isPt = state.lang === 'pt';
+            const opp = OPPONENTS[state.opponentKey];
+            const slots = state.enclosures[dinoType];
+
+            // Find lowest available (false) enclosure
+            let openSlotIndex = slots.findIndex(occupied => !occupied);
+
+            if (openSlotIndex === -1) {
+                // All 3 slots full -> Perform Special Action at top!
+                const specText = opp.specialActionText[state.lang];
+                logMessage(isPt 
+                    ? `⚡ Coluna de ${dinoType.toUpperCase()} cheia! O Rival executou sua AÇÃO ESPECIAL: ${specText}.` 
+                    : `⚡ ${dinoType.toUpperCase()} column full! The Rival executed its SPECIAL ACTION: ${specText}.`,
+                    true
+                );
+                // Apply breeder special action resources
+                if (state.opponentKey === 'breeder') {
+                    addRes('plant', 1); addRes('meat', 1); addRes('supplies', 1);
+                } else if (state.opponentKey === 'scientist') {
+                    adjustStat('research', 1);
+                }
+            } else {
+                // Execute action for that open slot
+                const actionDef = opp.columnActions[dinoType][openSlotIndex];
+                if (actionDef && actionDef.apply) {
+                    actionDef.apply(state);
+                }
+                const actText = isPt ? actionDef.pt : actionDef.en;
+                logMessage(isPt 
+                    ? `⚙️ Espaço ocupado pelo jogador! O Rival executou a Ação do compartimento ${openSlotIndex + 1} (${dinoType.toUpperCase()}): <strong>${actText}</strong>.` 
+                    : `⚙️ Space occupied by player! The Rival executed Slot ${openSlotIndex + 1} Action (${dinoType.toUpperCase()}): <strong>${actText}</strong>.`,
+                    true
+                );
+            }
+        }
+
+        function finishTurnStep() {
+            document.getElementById('step1Box').classList.add('hidden');
+            document.getElementById('step2Box').classList.add('hidden');
+            document.getElementById('btnDrawCard').classList.remove('hidden');
+            
+            const maxTurns = maxCardsForRound();
+            if (state.turnInRound >= maxTurns) {
+                document.getElementById('turnIndicator').textContent = state.lang === 'pt' ? `Rodada completa (${maxTurns}/${maxTurns})` : `Round complete (${maxTurns}/${maxTurns})`;
+            }
+            renderUI();
+        }
+
+        /* --- Ranch State Modifiers --- */
+        function addDinos(type, qty) {
+            const slots = state.enclosures[type];
+            let added = 0;
+            for (let i = 0; i < 3 && added < qty; i++) {
+                if (!slots[i]) {
+                    slots[i] = true;
+                    added++;
+                }
+            }
+            if (added < qty) {
+                // Overflow -> Trigger Special Action!
+                const opp = OPPONENTS[state.opponentKey];
+                const specText = opp.specialActionText[state.lang];
+                logMessage(state.lang === 'pt' 
+                    ? `⚠️ Sem espaço para ${qty - added} dino(s) em ${type.toUpperCase()}! Disparou AÇÃO ESPECIAL: ${specText}.` 
+                    : `⚠️ No room for ${qty - added} dino(s) in ${type.toUpperCase()}! Triggered SPECIAL ACTION: ${specText}.`,
+                    true
+                );
+                if (state.opponentKey === 'breeder') {
+                    addRes('plant', 1); addRes('meat', 1); addRes('supplies', 1);
+                } else if (state.opponentKey === 'scientist') {
+                    adjustStat('research', 1);
+                }
+            }
+            renderUI();
+        }
+
+        function toggleEnclosure(type, slotNum) {
+            const idx = slotNum - 1;
+            state.enclosures[type][idx] = !state.enclosures[type][idx];
+            renderUI();
+        }
+
+        function addRes(type, amount) {
+            adjustResource(type, amount);
+        }
+
+        function adjustResource(type, delta) {
+            let val = state.resources[type] + delta;
+            if (val < 0) val = 0;
+
+            if (val >= 13) {
+                val = 13;
+                state.resources[type] = 13;
+                renderUI();
+                setTimeout(() => triggerResourceMax(type), 150);
+                return;
+            }
+
+            state.resources[type] = val;
+            renderUI();
+        }
+
+        function triggerResourceMax(type) {
+            const isPt = state.lang === 'pt';
+            const opp = OPPONENTS[state.opponentKey];
+            const maxAction = opp.maxActions[type];
+            const actionText = isPt ? maxAction.pt : maxAction.en;
+
+            logMessage(isPt 
+                ? `🚨 RECURSO MÁXIMO (13) EM ${type.toUpperCase()}! O Rival ativou: <strong>${actionText}</strong>. O recurso foi resetado para 0!` 
+                : `🚨 RESOURCE MAX (13) ON ${type.toUpperCase()}! The Rival triggered: <strong>${actionText}</strong>. Resource reset to 0!`,
+                true
+            );
+
+            // Apply dinos if defined
+            if (maxAction.dinos) {
+                maxAction.dinos.forEach(d => addDinos(d.type, d.qty));
+            } else if (maxAction.apply) {
+                maxAction.apply();
+            }
+
+            state.resources[type] = 0;
+            renderUI();
+        }
+
+        function setFirstPlayer(who) {
+            state.firstPlayer = who;
+            renderUI();
+        }
+
+        function toggleFirstPlayer() {
+            setFirstPlayer(state.firstPlayer === 'rival' ? 'player' : 'rival');
+        }
+
+        function adjustStat(key, delta) {
+            state.stats[key] = Math.max(0, state.stats[key] + delta);
+            renderUI();
+        }
+
+        /* --- UI Renderers --- */
+        function renderUI() {
+            // Round bar
+            document.getElementById('roundNum').textContent = state.round;
+            const maxTurns = maxCardsForRound();
+            document.getElementById('deckCountLabel').textContent = state.lang === 'pt' 
+                ? `Cartas nesta rodada: ${state.turnInRound}/${maxTurns}` 
+                : `Cards this round: ${state.turnInRound}/${maxTurns}`;
+            
+            document.getElementById('leadRancherStatus').classList.toggle('hidden', state.round < 4);
+
+            // First player
+            const fpBadge = document.getElementById('firstPlayerToggle');
+            const fpText = document.getElementById('firstPlayerText');
+            if (state.firstPlayer === 'rival') {
+                fpBadge.className = 'first-player-badge rival';
+                fpText.textContent = t('first_player_rival');
+            } else {
+                fpBadge.className = 'first-player-badge player';
+                fpText.textContent = t('first_player_you');
+            }
+
+            // Resources
+            document.getElementById('valPlant').textContent = state.resources.plant;
+            document.getElementById('valMeat').textContent = state.resources.meat;
+            document.getElementById('valSupplies').textContent = state.resources.supplies;
+
+            document.getElementById('maxPlantBadge').classList.toggle('active', state.resources.plant >= 13);
+            document.getElementById('maxMeatBadge').classList.toggle('active', state.resources.meat >= 13);
+            document.getElementById('maxSuppliesBadge').classList.toggle('active', state.resources.supplies >= 13);
+
+            // Enclosures
+            ['stego', 'raptor', 'brachio', 'trex'].forEach(type => {
+                const slots = state.enclosures[type];
+                slots.forEach((occ, i) => {
+                    const el = document.querySelector(`.dino-column[data-col="${type}"] .enclosure-slot[data-slot="${i+1}"]`);
+                    if (el) {
+                        el.classList.toggle('occupied', occ);
+                        // Meeple icon rendering
+                        let meeple = el.querySelector('.dino-meeple-icon');
+                        if (occ && !meeple) {
+                            meeple = document.createElement('div');
+                            meeple.className = 'dino-meeple-icon';
+                            meeple.textContent = getDinoEmoji(type);
+                            el.appendChild(meeple);
+                        } else if (!occ && meeple) {
+                            meeple.remove();
+                        }
+                    }
+                });
+            });
+
+            // Stats
+            document.getElementById('statContracts').textContent = state.stats.contracts;
+            document.getElementById('statResearch').textContent = state.stats.research;
+            document.getElementById('statContractsVP').textContent = state.stats.contractsVP;
+            document.getElementById('statResearchVP').textContent = state.stats.researchVP;
+
+            calcScores();
+        }
+
+        function getDinoEmoji(type) {
+            switch(type) {
+                case 'stego': return '🦕';
+                case 'raptor': return '🦖';
+                case 'brachio': return '🦕';
+                case 'trex': return '🦖';
+                default: return '🦖';
+            }
+        }
+
+        function updateRanchLabels() {
+            const opp = OPPONENTS[state.opponentKey];
+            const isPt = state.lang === 'pt';
+
+            document.getElementById('ranchOpponentName').textContent = opp.name;
+            const badge = document.getElementById('ranchOpponentBadge');
+            badge.className = `opp-badge ${opp.badgeClass}`;
+            badge.textContent = isPt ? opp.name : opp.name;
+
+            // Enclosure action labels
+            ['stego', 'raptor', 'brachio', 'trex'].forEach(type => {
+                const actions = opp.columnActions[type];
+                actions.forEach((act, i) => {
+                    const lbl = document.getElementById(`lbl_${type}_${i+1}`);
+                    if (lbl) lbl.textContent = isPt ? act.pt : act.en;
+                });
+                const specLbl = document.getElementById(`lbl_${type}_special`);
+                if (specLbl) specLbl.textContent = isPt ? `Se cheio: ${opp.specialActionText.pt}` : `If full: ${opp.specialActionText.en}`;
+            });
+        }
+
+        /* --- Scoring --- */
+        function calcScores() {
+            // Rival Dino points: Stego: 2, Raptor: 3, Brachio: 3, TRex: 4
+            let dinoVP = 0;
+            dinoVP += state.enclosures.stego.filter(Boolean).length * 2;
+            dinoVP += state.enclosures.raptor.filter(Boolean).length * 3;
+            dinoVP += state.enclosures.brachio.filter(Boolean).length * 3;
+            dinoVP += state.enclosures.trex.filter(Boolean).length * 4;
+
+            const rivalTotal = dinoVP + state.stats.contractsVP + state.stats.researchVP;
+
+            document.getElementById('scoreRivalDinos').textContent = `${dinoVP} VP`;
+            document.getElementById('scoreRivalContracts').textContent = `${state.stats.contractsVP} VP`;
+            document.getElementById('scoreRivalResearch').textContent = `${state.stats.researchVP} VP`;
+            document.getElementById('scoreRivalTotal').textContent = `${rivalTotal} VP`;
+
+            // Player score
+            const pDinos = parseInt(document.getElementById('inpPlayerDinos').value) || 0;
+            const pContracts = parseInt(document.getElementById('inpPlayerContracts').value) || 0;
+            const pResearch = parseInt(document.getElementById('inpPlayerResearch').value) || 0;
+            const playerTotal = pDinos + pContracts + pResearch;
+
+            document.getElementById('scorePlayerTotal').textContent = `${playerTotal} VP`;
+
+            const banner = document.getElementById('winnerBanner');
+            if (playerTotal > rivalTotal) {
+                banner.style.color = 'var(--accent-green)';
+                banner.textContent = state.lang === 'pt' ? `🎉 PARABÉNS! Você venceu por ${playerTotal} a ${rivalTotal} VP!` : `🎉 CONGRATULATIONS! You won ${playerTotal} to ${rivalTotal} VP!`;
+            } else if (playerTotal < rivalTotal) {
+                banner.style.color = 'var(--accent-red)';
+                banner.textContent = state.lang === 'pt' ? `💀 VITÓRIA DO RIVAL por ${rivalTotal} a ${playerTotal} VP!` : `💀 RIVAL WINS ${rivalTotal} to ${playerTotal} VP!`;
+            } else {
+                banner.style.color = 'var(--accent-yellow)';
+                banner.textContent = state.lang === 'pt' ? `EMPATE em ${playerTotal} VP! Verifique o desempate por dinossauros.` : `TIE at ${playerTotal} VP! Check dinosaur tiebreaker.`;
+            }
+        }
+
+        /* --- Modals --- */
+        function toggleHelpModal(show) {
+            document.getElementById('helpModal').classList.toggle('hidden', !show);
+        }
+
+        function toggleScoreModal(show) {
+            calcScores();
+            document.getElementById('scoreModal').classList.toggle('hidden', !show);
+        }
+
+        /* --- Event Listeners & Init --- */
+        document.addEventListener('DOMContentLoaded', () => {
+            // Opponent selection
+            document.querySelectorAll('.opponent-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    document.querySelectorAll('.opponent-card').forEach(c => c.classList.remove('selected'));
+                    card.classList.add('selected');
+                    state.opponentKey = card.getAttribute('data-opponent');
+                    updateRanchLabels();
+                });
+            });
+
+            // Language toggles
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    setLanguage(btn.getAttribute('data-lang'));
+                });
+            });
+
+            // Top action buttons
+            document.getElementById('btnHelp').addEventListener('click', () => toggleHelpModal(true));
+            document.getElementById('btnReset').addEventListener('click', () => {
+                if (confirm(state.lang === 'pt' ? 'Tem certeza que deseja reiniciar a partida?' : 'Are you sure you want to restart the match?')) {
+                    location.reload();
+                }
+            });
+
+            // Setup button
+            document.getElementById('btnStartGame').addEventListener('click', startGame);
+
+            // Game buttons
+            document.getElementById('btnDrawCard').addEventListener('click', drawRivalCard);
+            document.getElementById('btnNextRound').addEventListener('click', nextRound);
+            document.getElementById('btnScoreModal').addEventListener('click', () => toggleScoreModal(true));
+            document.getElementById('firstPlayerToggle').addEventListener('click', toggleFirstPlayer);
+
+            // Step buttons
+            document.getElementById('btnContractYes').addEventListener('click', () => resolveContract(true));
+            document.getElementById('btnContractNo').addEventListener('click', () => resolveContract(false));
+            document.getElementById('btnSpaceFree').addEventListener('click', () => resolveDinosOrAction(false));
+            document.getElementById('btnSpaceOccupied').addEventListener('click', () => resolveDinosOrAction(true));
+
+            // Initial text and labels setup
+            updateTexts();
+            renderUI();
+        });
+    </script>
+</body>
+</html>
