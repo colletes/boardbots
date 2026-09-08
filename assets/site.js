@@ -72,6 +72,8 @@ const SITE_I18N = {
     game_7wd_desc: 'Automa Duelist — enfrente 5 Líderes históricos com o baralho de decisão oficial.',
     game_lotrduel_desc: 'Automa Duelist — enfrente 8 Líderes com o baralho de decisão.',
     game_mistborn_desc: 'Automa Solo & Co-op — enfrente o Senhor Soberano e mais 7 vilões com árvores de personagens e módulo Duralumin.',
+    game_uteg_title: 'Ultra Tiny Epic Galaxies',
+    game_uteg_desc: 'Automa Rogue Galaxy — enfrente 5 galáxias com o Scanner Navigational e controle de recursos físicos vs digitais.',
     credit_7wd: '<strong>7 Wonders Duel</strong> — baseado no bot Automa Duelist. 7 Wonders Duel © Repos Production.',
     credit_mistborn: '<strong>Mistborn: The Deckbuilding Game</strong> — baseado no jogo de Katie Payne, John D. Clair e Johnny O\'Neal, © Brotherwise Games &amp; Dragonsteel Entertainment. Expansão solo/co-op por Kagan Eden.',
 
@@ -99,6 +101,7 @@ const SITE_I18N = {
     credit_spacebase: '<strong>Space Base</strong> — Automa "Joanna" é uma variante solo não-oficial de fã do BGG. Assistente de Ataque à Base inspirado nas regras solo. Space Base © AEG.',
     credit_airlandsea: '<strong>Air, Land & Sea</strong> — Automa baseado nas regras solo originais criadas por <a href="https://boardgamegeek.com/profile/I_2orLess_I" target="_blank" rel="noopener">I_2orLess_I</a>. Air, Land & Sea © Arcane Wonders.',
     credit_lotrduel: '<strong>Lord of the Rings: Duel for Middle-earth</strong> — baseado no bot Automa Duelist. Lord of the Rings: Duel for Middle-earth © Repos Production.',
+    credit_uteg: '<strong>Ultra Tiny Epic Galaxies</strong> — baseado no modo solo oficial Rogue Galaxy por Scott Almes. Ultra Tiny Epic Galaxies © Gamelyn Games.',
 
     tools_title: 'Ferramentas',
     tools_desc: 'Utilitários genéricos para qualquer jogo de tabuleiro, sem regras específicas.',
@@ -179,6 +182,8 @@ const SITE_I18N = {
     game_7wd_desc: 'Automa Duelist — face 5 historical Leaders driven by the official decision card deck.',
     game_lotrduel_desc: 'Automa Duelist — face 8 Leaders driven by the decision card deck.',
     game_mistborn_desc: 'Solo & Co-op Automa — battle the Lord Ruler and 7 unique villains with character leveling and Duralumin module.',
+    game_uteg_title: 'Ultra Tiny Epic Galaxies',
+    game_uteg_desc: 'Rogue Galaxy Automa — face 5 hostile galaxies powered by the Navigational Scanner, resource dials, and satellite support.',
     credit_7wd: '<strong>7 Wonders Duel</strong> — based on the Automa Duelist bot. 7 Wonders Duel © Repos Production.',
     credit_mistborn: '<strong>Mistborn: The Deckbuilding Game</strong> — designed by Katie Payne, John D. Clair, and Johnny O\'Neal, © Brotherwise Games &amp; Dragonsteel Entertainment. Solo/co-op expansion by Kagan Eden.',
 
@@ -206,6 +211,7 @@ const SITE_I18N = {
     credit_spacebase: '<strong>Space Base</strong> — "Joanna" Automa is an unofficial fan solo variant from BGG. Base Attack assistant inspired by solo rules. Space Base © AEG.',
     credit_airlandsea: '<strong>Air, Land & Sea</strong> — Automa based on the original solo rules designed by <a href="https://boardgamegeek.com/profile/I_2orLess_I" target="_blank" rel="noopener">I_2orLess_I</a>. Air, Land & Sea © Arcane Wonders.',
     credit_lotrduel: '<strong>Lord of the Rings: Duel for Middle-earth</strong> — based on the Automa Duelist bot. Lord of the Rings: Duel for Middle-earth © Repos Production.',
+    credit_uteg: '<strong>Ultra Tiny Epic Galaxies</strong> — based on the official Rogue Galaxy solo mode by Scott Almes. Ultra Tiny Epic Galaxies © Gamelyn Games.',
 
     tools_title: 'Tools',
     tools_desc: 'Generic utilities for any board game, with no game-specific rules.',

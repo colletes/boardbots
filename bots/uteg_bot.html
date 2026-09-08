@@ -1,0 +1,1780 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title data-i18n="pageTitle">Ultra Tiny Epic Galaxies — Rogue Galaxy Automa</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/theme-kit.css">
+  <style>
+    :root {
+      --bg-space: #070b14;
+      --bg-panel: rgba(14, 22, 38, 0.88);
+      --bg-card: #121c2e;
+      --border-hud: #243b60;
+      --border-glow: #00d2ff;
+      --cyan: #00f0ff;
+      --cyan-dim: rgba(0, 240, 255, 0.18);
+      --cyan-glow: 0 0 15px rgba(0, 240, 255, 0.4);
+      --amber: #ffaa00;
+      --amber-dim: rgba(255, 170, 0, 0.18);
+      --purple: #b388ff;
+      --purple-dim: rgba(179, 136, 255, 0.2);
+      --red: #ff3366;
+      --red-dim: rgba(255, 51, 102, 0.2);
+      --green: #00e676;
+      --text-main: #dce7f5;
+      --text-muted: #8aa0bf;
+      --font-hud: 'Orbitron', monospace, sans-serif;
+      --font-body: 'Rajdhani', sans-serif;
+
+      --tk-credits-gap: 14px;
+      --tk-credits-bg: rgba(11, 18, 32, 0.7);
+      --tk-credits-border: 1px solid rgba(36, 59, 96, 0.6);
+      --tk-credits-radius: 8px;
+      --tk-credits-padding: 12px;
+      --tk-credits-margin-top: 24px;
+      --tk-credits-color: #8aa0bf;
+      --tk-credits-img-border: 2px solid var(--border-hud);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--bg-space);
+      background-image: 
+        radial-gradient(circle at 50% 20%, rgba(18, 38, 70, 0.6) 0%, transparent 60%),
+        radial-gradient(circle at 85% 80%, rgba(70, 20, 60, 0.35) 0%, transparent 50%),
+        url('../assets/textures/hull-panel.jpg');
+      background-repeat: repeat;
+      background-size: auto, auto, 512px 512px;
+      background-blend-mode: screen, screen, multiply;
+      color: var(--text-main);
+      font-family: var(--font-body);
+      font-size: 16px;
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      .star-layer {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: radial-gradient(1.5px 1.5px at 20px 30px, #ffffff, rgba(0,0,0,0)),
+                    radial-gradient(1px 1px at 150px 180px, #00f0ff, rgba(0,0,0,0)),
+                    radial-gradient(1.5px 1.5px at 280px 90px, #ffaa00, rgba(0,0,0,0)),
+                    radial-gradient(1px 1px at 420px 310px, #ffffff, rgba(0,0,0,0)),
+                    radial-gradient(1.5px 1.5px at 580px 220px, #b388ff, rgba(0,0,0,0));
+        background-repeat: repeat;
+        background-size: 600px 600px;
+        opacity: 0.45;
+        pointer-events: none;
+        z-index: 0;
+      }
+    }
+
+    svg { max-width: 100%; }
+    .icon-inline, .btn-icon, h1 svg, h2 svg, h3 svg, button svg, .modal-content svg, .res-header svg, .current-action-title svg {
+      display: inline-block !important;
+      width: 1.2em !important;
+      height: 1.2em !important;
+      max-width: 24px !important;
+      max-height: 24px !important;
+      flex-shrink: 0 !important;
+      vertical-align: -0.2em !important;
+    }
+
+    .floating-bar {
+      position: fixed; top: 12px; right: 12px;
+      display: flex; gap: 8px; z-index: 99;
+    }
+    .float-btn {
+      background: rgba(14, 24, 42, 0.85);
+      border: 1px solid var(--border-hud);
+      color: var(--cyan);
+      width: 42px; height: 42px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; backdrop-filter: blur(8px);
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    }
+    .float-btn:hover {
+      border-color: var(--cyan);
+      box-shadow: 0 0 12px var(--cyan);
+      transform: scale(1.05);
+    }
+    .lang-btn {
+      font-family: var(--font-hud); font-weight: 700; font-size: 0.85rem;
+      color: #fff;
+    }
+
+    .app-container {
+      position: relative; z-index: 1;
+      max-width: 1180px; margin: 0 auto;
+      padding: 16px 14px 60px 14px;
+    }
+
+    .hero {
+      width: 100%; max-height: 150px;
+      overflow: hidden; border-radius: 10px;
+      border: 1px solid var(--border-hud);
+      margin-bottom: 20px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.6);
+      background: #050811;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .hero img {
+      width: 100%; height: 100%;
+      object-fit: cover; object-position: center;
+      display: block;
+    }
+
+    .screen { display: none; animation: fadeSlideUp 0.35s ease; }
+    .screen.active { display: block; }
+
+    .hud-panel {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-hud);
+      border-radius: 10px;
+      padding: 18px; margin-bottom: 18px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+      backdrop-filter: blur(10px);
+      position: relative;
+    }
+    .hud-panel::before {
+      content: ''; position: absolute; top: 0; left: 0; width: 8px; height: 8px;
+      border-top: 2px solid var(--cyan); border-left: 2px solid var(--cyan);
+    }
+    .hud-panel::after {
+      content: ''; position: absolute; bottom: 0; right: 0; width: 8px; height: 8px;
+      border-bottom: 2px solid var(--cyan); border-right: 2px solid var(--cyan);
+    }
+
+    .panel-title {
+      font-family: var(--font-hud);
+      font-size: 1.15rem; font-weight: 700;
+      letter-spacing: 1px; color: var(--cyan);
+      margin-bottom: 14px;
+      display: flex; align-items: center; gap: 8px;
+      text-transform: uppercase;
+    }
+
+    .btn {
+      font-family: var(--font-hud); font-size: 0.95rem; font-weight: 700;
+      letter-spacing: 1px; text-transform: uppercase;
+      padding: 12px 20px; border-radius: 6px;
+      border: 1px solid var(--border-hud);
+      cursor: pointer; transition: all 0.2s ease;
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #0088cc, #004d80);
+      border-color: var(--cyan); color: #fff;
+      box-shadow: 0 4px 15px rgba(0, 180, 255, 0.3);
+    }
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #00aaff, #0066aa);
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.6);
+      transform: translateY(-2px);
+    }
+    .btn-secondary {
+      background: rgba(25, 40, 65, 0.8);
+      border-color: var(--border-hud); color: var(--text-main);
+    }
+    .btn-secondary:hover {
+      background: rgba(35, 55, 90, 0.9);
+      border-color: var(--text-muted);
+    }
+    .btn-reroll {
+      background: linear-gradient(135deg, #995500, #552a00);
+      border-color: var(--amber); color: #ffe6a0;
+    }
+    .btn-reroll:hover {
+      background: linear-gradient(135deg, #cc7700, #773b00);
+      box-shadow: 0 0 15px var(--amber);
+    }
+    .btn-danger {
+      background: linear-gradient(135deg, #b31035, #66051c);
+      border-color: var(--red); color: #fff;
+    }
+    .btn-danger:hover {
+      background: linear-gradient(135deg, #dd1844, #880727);
+      box-shadow: 0 0 15px var(--red);
+    }
+    .btn-sm { padding: 6px 12px; font-size: 0.8rem; }
+    .btn-block { width: 100%; }
+
+    .rogue-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 14px; margin-bottom: 20px;
+    }
+    .rogue-card {
+      background: var(--bg-card);
+      border: 2px solid var(--border-hud);
+      border-radius: 8px; padding: 14px;
+      cursor: pointer; transition: all 0.25s ease;
+      display: flex; flex-direction: column; align-items: center; text-align: center;
+      position: relative; overflow: hidden;
+    }
+    .rogue-card:hover {
+      transform: translateY(-3px);
+      border-color: var(--cyan);
+      box-shadow: 0 6px 16px rgba(0, 240, 255, 0.25);
+    }
+    .rogue-card.selected {
+      border-color: var(--cyan);
+      background: linear-gradient(180deg, rgba(0, 140, 255, 0.15) 0%, rgba(14, 28, 50, 0.95) 100%);
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.4);
+    }
+    .rogue-thumb {
+      width: 100%; height: 110px; object-fit: cover; border-radius: 6px;
+      margin-bottom: 10px; border: 1px solid rgba(255,255,255,0.1);
+    }
+    .rogue-name {
+      font-family: var(--font-hud); font-size: 1.1rem; font-weight: 800;
+      color: #fff; margin-bottom: 4px;
+    }
+    .rogue-diff {
+      font-size: 0.8rem; font-weight: 700; text-transform: uppercase;
+      padding: 3px 8px; border-radius: 4px; margin-bottom: 8px;
+    }
+    .diff-beginner { background: #1976d2; color: #fff; }
+    .diff-easy { background: #fbc02d; color: #111; }
+    .diff-medium { background: #388e3c; color: #fff; }
+    .diff-hard { background: #d32f2f; color: #fff; }
+    .diff-epic { background: #7b1fa2; color: #fff; }
+
+    .rogue-meta {
+      font-size: 0.88rem; color: var(--text-muted); line-height: 1.3;
+    }
+
+    details.checklist {
+      background: rgba(10, 16, 28, 0.8);
+      border: 1px solid var(--border-hud);
+      border-radius: 6px; padding: 12px 14px;
+      margin-bottom: 16px;
+    }
+    details.checklist summary {
+      font-family: var(--font-hud); font-size: 0.95rem; font-weight: 700;
+      color: var(--amber); cursor: pointer; outline: none;
+    }
+    .checklist-content {
+      padding-top: 12px; font-size: 0.95rem; color: var(--text-main);
+      line-height: 1.5;
+    }
+    .checklist-content ul { padding-left: 20px; }
+    .checklist-content li { margin-bottom: 6px; }
+
+    .game-grid {
+      display: grid; grid-template-columns: 1fr;
+      gap: 18px;
+    }
+    @media (min-width: 900px) {
+      .game-grid {
+        grid-template-columns: 340px 1fr;
+        align-items: start;
+      }
+    }
+
+    .rogue-profile {
+      display: flex; gap: 14px; align-items: center; margin-bottom: 16px;
+      padding-bottom: 14px; border-bottom: 1px solid var(--border-hud);
+    }
+    .profile-avatar {
+      width: 70px; height: 70px; border-radius: 8px; object-fit: cover;
+      border: 2px solid var(--cyan);
+    }
+    .profile-info h3 {
+      font-family: var(--font-hud); font-size: 1.25rem; font-weight: 800; color: #fff;
+    }
+    .score-banner {
+      display: flex; justify-content: space-around;
+      background: rgba(8, 14, 26, 0.9);
+      border: 1px solid var(--border-hud);
+      border-radius: 8px; padding: 10px; margin-bottom: 16px;
+    }
+    .score-item { text-align: center; }
+    .score-label { font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted); }
+    .score-val { font-family: var(--font-hud); font-size: 1.5rem; font-weight: 800; color: var(--cyan); }
+    .score-val.vp { color: var(--amber); }
+
+    .resource-row {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;
+    }
+    .res-box {
+      background: rgba(10, 18, 32, 0.9);
+      border: 1px solid var(--border-hud);
+      border-radius: 8px; padding: 12px; text-align: center;
+      position: relative;
+    }
+    .res-box.energy { border-color: rgba(255, 170, 0, 0.4); }
+    .res-box.culture { border-color: rgba(179, 136, 255, 0.4); }
+    .res-header svg { width: 18px !important; height: 18px !important; }
+    .res-header {
+      font-family: var(--font-hud); font-size: 0.85rem; font-weight: 700;
+      margin-bottom: 6px; display: flex; align-items: center; justify-content: center; gap: 4px;
+    }
+    .res-box.energy .res-header svg { width: 18px !important; height: 18px !important; }
+    .res-header { color: var(--amber); }
+    .res-box.culture .res-header svg { width: 18px !important; height: 18px !important; }
+    .res-header { color: var(--purple); }
+    .res-val {
+      font-family: var(--font-hud); font-size: 1.8rem; font-weight: 900;
+      line-height: 1; margin-bottom: 8px;
+    }
+    .res-box.energy .res-val { color: #fff; text-shadow: 0 0 10px var(--amber); }
+    .res-box.culture .res-val { color: #fff; text-shadow: 0 0 10px var(--purple); }
+    .res-max-badge {
+      font-size: 0.75rem; font-weight: 700; padding: 2px 6px; border-radius: 4px;
+      display: inline-block; background: rgba(255,255,255,0.08); color: var(--text-muted);
+    }
+    .res-controls {
+      display: flex; justify-content: center; gap: 8px; margin-top: 8px;
+    }
+    .res-btn {
+      width: 32px; height: 32px; border-radius: 4px; border: 1px solid var(--border-hud);
+      background: rgba(255,255,255,0.06); color: #fff; font-size: 1.1rem;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      font-weight: 700;
+    }
+    .res-btn:hover { background: rgba(255,255,255,0.18); border-color: var(--cyan); }
+
+    .empire-track {
+      background: rgba(10, 18, 32, 0.9);
+      border: 1px solid var(--border-hud);
+      border-radius: 8px; padding: 12px; margin-bottom: 16px;
+    }
+    .empire-track-header {
+      font-family: var(--font-hud); font-size: 0.85rem; font-weight: 700;
+      color: var(--cyan); margin-bottom: 10px; display: flex; justify-content: space-between;
+    }
+    .hex-steps {
+      display: flex; justify-content: space-between; position: relative;
+      margin: 10px 0;
+    }
+    .hex-steps::before {
+      content: ''; position: absolute; top: 50%; left: 10px; right: 10px; height: 3px;
+      background: var(--border-hud); z-index: 0; transform: translateY(-50%);
+    }
+    .hex-node {
+      position: relative; z-index: 1;
+      width: 38px; height: 38px; border-radius: 50%;
+      background: var(--bg-card); border: 2px solid var(--border-hud);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      font-family: var(--font-hud); font-size: 0.85rem; font-weight: 800;
+      color: var(--text-muted); cursor: pointer; transition: all 0.2s ease;
+    }
+    .hex-node.active {
+      border-color: var(--cyan); background: #0077b6; color: #fff;
+      box-shadow: 0 0 15px var(--cyan); transform: scale(1.15);
+    }
+    .hex-node.skull {
+      border-color: var(--red); color: var(--red);
+    }
+    .hex-node.skull.active {
+      background: var(--red); color: #fff; box-shadow: 0 0 20px var(--red);
+    }
+    .hex-node-sub { font-size: 0.6rem; margin-top: -2px; }
+
+    .active-colony-box {
+      background: rgba(40, 15, 25, 0.7);
+      border: 1px solid rgba(255, 51, 102, 0.4);
+      border-radius: 8px; padding: 12px; margin-bottom: 14px;
+    }
+    .colony-box-title {
+      font-family: var(--font-hud); font-size: 0.8rem; font-weight: 700;
+      color: #ff80a0; text-transform: uppercase; margin-bottom: 4px;
+    }
+    .colony-box-text {
+      font-size: 0.95rem; font-weight: 600; color: #fff; line-height: 1.3;
+    }
+
+    .scanner-panel {
+      display: flex; flex-direction: column; align-items: center; text-align: center;
+    }
+    .compass-wrap {
+      position: relative; width: 320px; height: 320px; max-width: 90vw; max-height: 90vw;
+      margin: 10px auto 18px auto;
+    }
+    .compass-dial {
+      position: relative; width: 100%; height: 100%; border-radius: 50%;
+      background: radial-gradient(circle at 50% 50%, #0d1a30 0%, #070e1c 65%, #040810 100%);
+      border: 6px solid #1c3050;
+      box-shadow: 0 0 30px rgba(0, 240, 255, 0.15), inset 0 0 40px rgba(0,0,0,0.8);
+      overflow: hidden; box-sizing: border-box;
+    }
+    .dial-grid {
+      position: absolute; inset: 0; border-radius: 50%;
+      background: repeating-conic-gradient(from 0deg, transparent 0deg 58deg, rgba(0, 240, 255, 0.25) 59deg 60deg);
+      pointer-events: none;
+    }
+    .dial-ring {
+      position: absolute; inset: 26px; border-radius: 50%;
+      border: 1px dashed rgba(0, 240, 255, 0.3);
+      pointer-events: none;
+    }
+
+    .dial-tick {
+      position: absolute; top: 50%; left: 50%; width: 74px; height: 50px;
+      margin-top: -25px; margin-left: -37px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center; font-size: 0.68rem; font-weight: 700; color: var(--cyan);
+      font-family: var(--font-hud); line-height: 1.1; pointer-events: none;
+      text-shadow: 0 0 8px rgba(0, 240, 255, 0.5);
+    }
+    .dial-tick svg {
+      width: 22px !important; height: 22px !important; margin-bottom: 2px;
+      filter: drop-shadow(0 0 6px var(--cyan));
+    }
+    .dial-tick.energy svg { filter: drop-shadow(0 0 6px var(--amber)); color: var(--amber); }
+    .dial-tick.culture svg { filter: drop-shadow(0 0 6px var(--purple)); color: var(--purple); }
+    .dial-tick.colony svg { filter: drop-shadow(0 0 6px var(--red)); color: var(--red); }
+
+    .compass-needle {
+      position: absolute; top: 50%; left: 50%; width: 8px; height: 125px;
+      margin-left: -4px; margin-top: -125px;
+      transform-origin: 50% 100%;
+      background: linear-gradient(to top, rgba(0, 240, 255, 0.1) 0%, #00f0ff 80%, #ffffff 100%);
+      clip-path: polygon(50% 0%, 100% 90%, 50% 100%, 0% 90%);
+      z-index: 10; pointer-events: none;
+      filter: drop-shadow(0 0 10px var(--cyan));
+      transition: transform 1.3s cubic-bezier(0.2, 1.35, 0.35, 1);
+    }
+    .compass-needle::after {
+      content: ''; position: absolute; bottom: -30px; left: 1px; width: 6px; height: 30px;
+      background: linear-gradient(to bottom, #ff3366, transparent);
+      clip-path: polygon(50% 100%, 100% 0%, 0% 0%);
+    }
+
+    .compass-center {
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      width: 86px; height: 86px; border-radius: 50%;
+      background: radial-gradient(circle at 40% 40%, #152642 0%, #091220 100%);
+      border: 3px solid var(--cyan);
+      box-shadow: 0 0 18px rgba(0, 240, 255, 0.5), inset 0 0 10px rgba(0,0,0,0.8);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      z-index: 12; font-family: var(--font-hud); font-size: 0.72rem; font-weight: 800;
+      color: #fff; text-align: center; box-sizing: border-box; padding: 4px;
+    }
+    .compass-center .center-num { font-size: 1.25rem; color: var(--cyan); }
+
+    .activation-bay {
+      width: 100%; margin: 16px 0;
+    }
+    .bay-slots {
+      display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 8px;
+    }
+    .bay-slot {
+      width: 48px; height: 48px; border-radius: 8px;
+      background: rgba(14, 24, 42, 0.9);
+      border: 2px solid var(--border-hud);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      cursor: pointer; transition: all 0.2s ease; position: relative;
+    }
+    .bay-slot.active {
+      border-color: var(--cyan); background: rgba(0, 240, 255, 0.15);
+      box-shadow: 0 0 15px var(--cyan); transform: scale(1.08);
+    }
+    .bay-slot.resolved {
+      opacity: 0.45; border-color: #334e70; filter: grayscale(0.5);
+    }
+    .bay-slot.unusable {
+      opacity: 0.3; border-color: var(--red); text-decoration: line-through;
+    }
+    .bay-slot-num {
+      position: absolute; top: 2px; left: 4px; font-size: 0.58rem; color: var(--text-muted);
+      font-family: var(--font-hud);
+    }
+
+    .current-action-box {
+      width: 100%; background: rgba(12, 22, 38, 0.95);
+      border: 2px solid var(--cyan); border-radius: 10px;
+      padding: 18px; margin: 16px 0; text-align: left;
+      box-shadow: 0 0 25px rgba(0, 240, 255, 0.25);
+    }
+    .current-action-title {
+      font-family: var(--font-hud); font-size: 1.15rem; font-weight: 800;
+      color: var(--cyan); display: flex; align-items: center; gap: 8px;
+      margin-bottom: 8px;
+    }
+    .current-action-desc {
+      font-size: 1.05rem; font-weight: 600; color: #fff; line-height: 1.4;
+      margin-bottom: 14px;
+    }
+    .action-prompt-follow {
+      background: rgba(179, 136, 255, 0.12);
+      border-left: 3px solid var(--purple);
+      padding: 8px 12px; border-radius: 0 4px 4px 0;
+      font-size: 0.9rem; color: #e2d2fe; margin-bottom: 14px;
+    }
+    .action-stepper-row {
+      display: flex; align-items: center; gap: 12px; margin: 12px 0;
+      background: rgba(0,0,0,0.3); padding: 8px 12px; border-radius: 6px;
+    }
+
+    .action-btn-row {
+      display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px;
+    }
+
+    .log-panel {
+      max-height: 180px; overflow-y: auto;
+      background: rgba(6, 10, 18, 0.9);
+      border: 1px solid var(--border-hud); border-radius: 6px;
+      padding: 10px 12px; font-family: monospace; font-size: 0.85rem;
+      text-align: left; line-height: 1.4;
+    }
+    .log-entry { margin-bottom: 5px; border-bottom: 1px dashed rgba(255,255,255,0.06); padding-bottom: 4px; }
+    .log-entry.ai { color: #80d8ff; }
+    .log-entry.upgrade { color: var(--amber); font-weight: bold; }
+    .log-entry.colony { color: #ff80ab; }
+
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(3, 6, 12, 0.85);
+      display: none; align-items: center; justify-content: center;
+      z-index: 999; padding: 16px; backdrop-filter: blur(8px);
+    }
+    .modal-overlay.active { display: flex; }
+    .modal-content {
+      background: #0d182b; border: 2px solid var(--cyan);
+      border-radius: 12px; width: 100%; max-width: 600px;
+      max-height: 85vh; overflow-y: auto; padding: 22px;
+      box-shadow: 0 0 35px rgba(0, 240, 255, 0.35);
+      position: relative;
+    }
+    .modal-close {
+      position: absolute; top: 14px; right: 14px;
+      background: none; border: none; color: var(--text-muted);
+      font-size: 1.4rem; cursor: pointer;
+    }
+    .modal-close:hover { color: #fff; }
+    .modal-title {
+      font-family: var(--font-hud); font-size: 1.3rem; font-weight: 800;
+      color: var(--cyan); margin-bottom: 14px;
+    }
+
+    input[type=number], input[type=text], select {
+      background: #08101e; border: 1px solid var(--border-hud);
+      color: #fff; padding: 10px 14px; border-radius: 6px;
+      font-family: inherit; font-size: 1rem; width: 100%; margin-bottom: 12px;
+    }
+    input[type=number]:focus, input[type=text]:focus, select:focus {
+      outline: none; border-color: var(--cyan);
+      box-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
+    }
+
+    .footer-bar {
+      margin-top: 30px; text-align: center;
+      display: flex; flex-direction: column; align-items: center; gap: 14px;
+    }
+    .btn-home {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(14, 24, 42, 0.85); border: 1px solid var(--border-hud);
+      padding: 10px 20px; border-radius: 6px; color: var(--text-main);
+      text-decoration: none; font-family: var(--font-hud); font-size: 0.88rem;
+      font-weight: 700; letter-spacing: 1px; transition: all 0.2s ease;
+    }
+    .btn-home:hover {
+      border-color: var(--cyan); color: #fff; box-shadow: 0 0 12px var(--cyan-dim);
+    }
+    .bmc-inline {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: #ff813f; color: #fff; text-decoration: none;
+      font-weight: 700; font-size: 0.88rem; padding: 8px 16px; border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div class="star-layer"></div>
+
+  <div class="floating-bar">
+    <button class="float-btn" id="audioToggleBtn" title="Toggle Sound" onclick="toggleAudio()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon-inline">
+        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+        <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+      </svg>
+    </button>
+    <button class="float-btn" id="resetBtn" title="Reset Game" onclick="confirmReset()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon-inline">
+        <path d="M23 4v6h-6"></path><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+      </svg>
+    </button>
+    <button class="float-btn" id="helpBtn" title="Rules & Help" onclick="openHelpModal()">?</button>
+    <button class="float-btn lang-btn" id="langSwitchBtn" onclick="toggleLanguage()">EN</button>
+  </div>
+
+  <div class="app-container">
+    <div class="hero">
+      <img src="../assets/art/uteg/hero.webp" alt="Ultra Tiny Epic Galaxies">
+    </div>
+
+    <!-- SETUP SCREEN -->
+    <div id="screenSetup" class="screen active">
+      <div class="hud-panel">
+        <h2 class="panel-title" data-i18n="setupTitle">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          Missão Solo: Escolha a Galáxia Rogue
+        </h2>
+        <p style="margin-bottom:14px; color:var(--text-muted);" data-i18n="setupSubtitle">
+          Cada cor de jogador possui uma Galáxia Rogue única com sua própria dificuldade e ações de colônia.
+        </p>
+
+        <div class="rogue-grid" id="rogueSelectGrid"></div>
+
+        <details class="checklist">
+          <summary data-i18n="setupChecklistTitle">📋 Checklist de Preparação na Mesa (Componentes Físicos)</summary>
+          <div class="checklist-content">
+            <ul>
+              <li data-i18n="check1"><strong>Naves do Jogador:</strong> Coloque 2 naves na sua carta de Galáxia e 2 na reserva de naves.</li>
+              <li data-i18n="check2"><strong>Naves da Galáxia Rogue:</strong> Coloque <strong>todas as 4 naves</strong> na carta de Galáxia Rogue na mesa.</li>
+              <li data-i18n="check3"><strong>Fileira de Planetas:</strong> Disponha a fileira central com 4 planetas virados para cima.</li>
+              <li data-i18n="check4"><strong>Missões Secretas:</strong> Não distribua cartas de Missão Secreta (mantenha na caixa no modo solo).</li>
+              <li data-i18n="check5"><strong>Primeiro Turno:</strong> Você (Humano) joga primeiro! O Rogue joga em seguida.</li>
+            </ul>
+          </div>
+        </details>
+
+        <div style="background:rgba(0,0,0,0.25); padding:12px; border-radius:6px; margin-bottom:18px;">
+          <label style="display:flex; align-items:center; gap:10px; cursor:pointer; margin-bottom:8px;">
+            <input type="checkbox" id="optRerollUnusable">
+            <span data-i18n="optRerollUnusableText"><strong>Dificuldade Aumentada:</strong> Rerolar cada dado inutilizável uma vez antes de descartá-lo</span>
+          </label>
+          <label style="display:flex; align-items:center; gap:10px; cursor:pointer;">
+            <input type="checkbox" id="optExpansion">
+            <span data-i18n="optExpansionText"><strong>Expansão Satélites & Superarmas:</strong> Ativar auxílio para satélites do Rogue</span>
+          </label>
+        </div>
+
+        <button class="btn btn-primary btn-block" onclick="startGame()" data-i18n="btnStartGame">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          Iniciar Batalha Intergaláctica
+        </button>
+      </div>
+    </div>
+
+    <!-- GAME SCREEN -->
+    <div id="screenGame" class="screen">
+      <div class="game-grid">
+        <!-- LEFT COLUMN -->
+        <div class="hud-panel">
+          <div class="rogue-profile">
+            <img id="hudAvatar" class="profile-avatar" src="" alt="Rogue">
+            <div class="profile-info">
+              <h3 id="hudRogueName">LAISHOM</h3>
+              <span id="hudRogueDiff" class="rogue-diff diff-medium">MEDIUM</span>
+            </div>
+          </div>
+
+          <div class="score-banner">
+            <div class="score-item">
+              <div class="score-label" data-i18n="empireLevelLabel">Nível Imperial</div>
+              <div class="score-val" id="hudEmpireLvl">1</div>
+            </div>
+            <div class="score-item">
+              <div class="score-label" data-i18n="dicePoolLabel">Dados</div>
+              <div class="score-val" id="hudDiceCount">5</div>
+            </div>
+            <div class="score-item">
+              <div class="score-label" data-i18n="vpTotalLabel">Total VP</div>
+              <div class="score-val vp" id="hudTotalVp">0</div>
+            </div>
+          </div>
+
+          <div class="empire-track">
+            <div class="empire-track-header">
+              <span data-i18n="empireTrackTitle">Trilha do Império Rogue</span>
+              <span id="empireVpPreview">+0 VP</span>
+            </div>
+            <div class="hex-steps" id="hexStepsContainer"></div>
+          </div>
+
+          <div class="resource-row">
+            <div class="res-box energy">
+              <div class="res-header">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                <span data-i18n="energyTitle">Energia</span>
+              </div>
+              <div class="res-val" id="valEnergy">0</div>
+              <div class="res-max-badge" id="maxEnergyBadge">Max: 5</div>
+              <div class="res-controls">
+                <button class="res-btn" onclick="adjustResource('energy', -1)">-</button>
+                <button class="res-btn" onclick="adjustResource('energy', 1)">+</button>
+              </div>
+            </div>
+            <div class="res-box culture">
+              <div class="res-header">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                <span data-i18n="cultureTitle">Cultura</span>
+              </div>
+              <div class="res-val" id="valCulture">0</div>
+              <div class="res-max-badge" id="maxCultureBadge">Max: 5</div>
+              <div class="res-controls">
+                <button class="res-btn" onclick="adjustResource('culture', -1)">-</button>
+                <button class="res-btn" onclick="adjustResource('culture', 1)">+</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="active-colony-box">
+            <div class="colony-box-title" data-i18n="activeColonyTitle">Ação de Colônia do Nível Atual:</div>
+            <div class="colony-box-text" id="hudColonyText">—</div>
+          </div>
+
+          <div style="margin-top:14px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-family:var(--font-hud); font-size:0.85rem; color:var(--text-muted);" data-i18n="coloniesTitle">Planetas Colonizados pelo Bot</span>
+              <button class="btn btn-secondary btn-sm" onclick="openAddPlanetModal()">+ Planeta</button>
+            </div>
+            <div id="colonizedList" style="font-size:0.9rem; color:#fff;">
+              <em data-i18n="noPlanetsYet" style="color:var(--text-muted);">Nenhum planeta colonizado ainda.</em>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT COLUMN: Scanner Dial -->
+        <div class="hud-panel scanner-panel">
+          <div class="compass-wrap">
+            <div class="compass-dial">
+              <div class="dial-grid"></div>
+              <div class="dial-ring"></div>
+
+              <div class="dial-tick" style="transform: rotate(0deg) translateY(-108px) rotate(0deg);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-4.05 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4.5c1.47-1.47 4.5-2 4.5-2"/></svg>
+                <span data-i18n="actMove">Mover</span>
+              </div>
+              <div class="dial-tick energy" style="transform: rotate(60deg) translateY(-108px) rotate(-60deg);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                <span data-i18n="actEnergy">Energia</span>
+              </div>
+              <div class="dial-tick culture" style="transform: rotate(120deg) translateY(-108px) rotate(-120deg);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/></svg>
+                <span data-i18n="actCulture">Cultura</span>
+              </div>
+              <div class="dial-tick" style="transform: rotate(180deg) translateY(-108px) rotate(-180deg);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                <span data-i18n="actEconomy">Economia</span>
+              </div>
+              <div class="dial-tick" style="transform: rotate(240deg) translateY(-108px) rotate(-240deg);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                <span data-i18n="actDiplomacy">Diplomacia</span>
+              </div>
+              <div class="dial-tick colony" style="transform: rotate(300deg) translateY(-108px) rotate(-300deg);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 20h20M4 20v-5a8 8 0 0 1 16 0v5M12 4v3"/></svg>
+                <span data-i18n="actColony">Colônia</span>
+              </div>
+
+              <div class="compass-needle" id="compassNeedle"></div>
+
+              <div class="compass-center" id="compassCenter">
+                <span class="center-num" id="centerNum">—</span>
+                <span id="centerActionLabel" style="font-size:0.68rem; text-transform:uppercase;">SCANNER</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-bottom:14px; width:100%; max-width:400px;">
+            <button class="btn btn-primary btn-block" id="btnRollDice" onclick="startRogueTurn()" data-i18n="btnRollRogue">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+              Rolar Dados do Rogue
+            </button>
+          </div>
+
+          <div class="activation-bay" id="activationBayArea" style="display:none;">
+            <div style="font-family:var(--font-hud); font-size:0.85rem; color:var(--text-muted); text-transform:uppercase;" data-i18n="bayTitle">
+              Baía de Ativação de Dados (1 a 7)
+            </div>
+            <div class="bay-slots" id="baySlotsContainer"></div>
+          </div>
+
+          <div class="current-action-box" id="currentActionCard" style="display:none;">
+            <div class="current-action-title">
+              <span id="actionIconSpan">🚀</span>
+              <span id="actionTitleSpan">MOVER UMA NAVE</span>
+            </div>
+            <div class="current-action-desc" id="actionDescSpan">
+              Mova 1 nave da Galáxia Rogue para o planeta mais à esquerda sem nave Rogue em sua órbita.
+            </div>
+
+            <div class="action-stepper-row" id="stepperRow" style="display:none;">
+              <span style="font-weight:700;" data-i18n="stepperShipsCount">Naves produzindo o recurso:</span>
+              <button class="res-btn" onclick="adjustShipStepper(-1)">-</button>
+              <span id="stepperCount" style="font-family:var(--font-hud); font-size:1.3rem; font-weight:800; min-width:24px; text-align:center;">1</span>
+              <button class="res-btn" onclick="adjustShipStepper(1)">+</button>
+              <button class="btn btn-primary btn-sm" onclick="confirmResourceGain()" style="margin-left:auto;" data-i18n="btnConfirmGain">Confirmar Ganho</button>
+            </div>
+
+            <div class="action-prompt-follow" id="followPromptBox">
+              <strong data-i18n="followPromptTitle">Seguir Ação (Humano):</strong> <span data-i18n="followPromptDesc">Você pode gastar 1 Cultura para copiar e executar esta ação imediatamente.</span>
+            </div>
+
+            <div class="action-btn-row">
+              <button class="btn btn-reroll btn-sm" onclick="forceRerollCurrentDie()" data-i18n="btnForceReroll">
+                Forçar Reroll (-1⚡ -1⚛️)
+              </button>
+              <button class="btn btn-danger btn-sm" onclick="markCurrentDieUnusable()" data-i18n="btnMarkUnusable">
+                Dado Inutilizável
+              </button>
+              <button class="btn btn-primary btn-sm" onclick="resolveCurrentDie()" style="margin-left:auto;" data-i18n="btnResolveNext">
+                Ação Executada / Próximo Dado ➔
+              </button>
+            </div>
+          </div>
+
+          <div style="width:100%; margin-top:14px;">
+            <div style="font-family:var(--font-hud); font-size:0.8rem; color:var(--text-muted); text-align:left; margin-bottom:4px;" data-i18n="logTitle">
+              REGISTRO TÁTICO DO COMPUTADOR DE BORDO:
+            </div>
+            <div class="log-panel" id="logPanel">
+              <div class="log-entry">Sistemas de bordo calibrados. Aguardando comando inicial.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HELP MODAL -->
+    <div class="modal-overlay" id="helpModal">
+      <div class="modal-content">
+        <button class="modal-close" onclick="closeHelpModal()">&times;</button>
+        <h2 class="modal-title" data-i18n="modalHelpTitle">Regras & Operação do Rogue Automa</h2>
+        
+        <details class="checklist" open>
+          <summary data-i18n="helpSection1">Como o Rogue Galaxy Funciona</summary>
+          <div class="checklist-content">
+            <p>O jogador joga alternando turnos com a Galáxia Rogue. Você utiliza as naves físicas do Rogue na mesa para marcar suas órbitas nos planetas.</p>
+            <ul>
+              <li><strong>Rolar Dados:</strong> O Rogue rola dados de acordo com seu Nível Imperial (5 dados nos níveis 1-2; 6 nos níveis 3-4; 7 no nível 5).</li>
+              <li><strong>Forçar Reroll:</strong> Antes do Rogue ativar um dado, você pode gastar 1 Energia e 1 Cultura para forçar o Rogue a rerolar aquele dado.</li>
+              <li><strong>Seguir Ação:</strong> Você pode gastar 1 Cultura para seguir qualquer ação ativada pelo Rogue. Se um dado for inutilizável (descartado), ele não pode ser seguido.</li>
+            </ul>
+          </div>
+        </details>
+
+        <details class="checklist">
+          <summary data-i18n="helpSection2">Gatilhos de Recursos Máximos (Fim do Turno)</summary>
+          <div class="checklist-content">
+            <p>No final do turno do Rogue, se um recurso estiver no valor máximo:</p>
+            <ul>
+              <li><strong>Energia no Máximo:</strong> O Rogue aprimora seu Império (+1 Nível Imperial). Zere a Energia do Rogue.</li>
+              <li><strong>Cultura no Máximo:</strong> O Rogue ganha um turno bônus com 3 dados! Zere a Cultura após o turno. O jogador não pode seguir estas 3 ações bônus.</li>
+              <li>Se ambos estiverem no máximo, resolva Energia primeiro, depois Cultura.</li>
+            </ul>
+          </div>
+        </details>
+
+        <details class="checklist">
+          <summary data-i18n="helpSection3">Condições de Vitória</summary>
+          <div class="checklist-content">
+            <ul>
+              <li><strong>Rogue Vence Instantaneamente se:</strong> Atingir 21 ou mais Pontos de Vitória (VP do Nível Imperial + planetas colonizados), OU se o marcador de Império atingir a Caveira (Nível 6).</li>
+              <li><strong>Você Vence Instantaneamente se:</strong> Atingir 21 ou mais Pontos de Vitória!</li>
+            </ul>
+          </div>
+        </details>
+
+        <details class="checklist">
+          <summary data-i18n="helpSection4">Mini-Expansão Satélites & Superarmas (Solo)</summary>
+          <div class="checklist-content">
+            <p>Embora a regra oficial informe que a expansão não foi projetada para solo, esta ferramenta implementa a adaptação equilibrada:</p>
+            <ul>
+              <li>Quando o Rogue atinge o Nível 3 e Nível 5 (onde ganha novos dados), ele posiciona 1 Cubo de Satélite no planeta não colonizado mais à esquerda.</li>
+              <li>Quando um planeta com satélite for colonizado pelo Rogue, o satélite é capturado (+1 VP no fim de jogo).</li>
+            </ul>
+          </div>
+        </details>
+      </div>
+    </div>
+
+    <!-- ADD PLANET MODAL -->
+    <div class="modal-overlay" id="planetModal">
+      <div class="modal-content">
+        <button class="modal-close" onclick="closePlanetModal()">&times;</button>
+        <h2 class="modal-title" data-i18n="modalPlanetTitle">Registrar Planeta Colonizado pelo Rogue</h2>
+        <p style="margin-bottom:12px; color:var(--text-muted);" data-i18n="modalPlanetDesc">Insira o nome do planeta e seus pontos de vitória (VP):</p>
+        
+        <label data-i18n="planetNameLabel">Nome do Planeta (opcional):</label>
+        <input type="text" id="inputPlanetName" placeholder="Ex: Aughmoore, Drewkaiden...">
+
+        <label data-i18n="planetVpLabel">Pontos de Vitória (VP) do Planeta:</label>
+        <input type="number" id="inputPlanetVp" min="1" max="9" value="2">
+
+        <div id="planetSatelliteCheckWrap" style="margin-bottom:14px; display:none;">
+          <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+            <input type="checkbox" id="checkPlanetSatellite">
+            <span data-i18n="checkPlanetSatelliteText">Planeta continha Satélite (+1 VP de Satélite)</span>
+          </label>
+        </div>
+
+        <button class="btn btn-primary btn-block" onclick="saveColonizedPlanet()" data-i18n="btnSavePlanet">
+          Confirmar Planeta Colonizado
+        </button>
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footer-bar">
+      <div class="credits">
+        <img src="../assets/art/uteg/hero.webp" alt="Ultra Tiny Epic Galaxies">
+        <div class="credits-text">
+          <strong>Ultra Tiny Epic Galaxies</strong><br>
+          <span data-i18n="creditGameDesign">Jogo por Scott Almes • Arte por William Bricker &amp; Benjamin Shulman • Gamelyn Games</span><br>
+          <span data-i18n="creditApp">Automa Companion por Thiago Carvalho • Boardbots</span>
+        </div>
+      </div>
+      <div style="display:flex; gap:12px; flex-wrap:wrap; justify-content:center;">
+        <a href="https://ko-fi.com/thiagocarvalho" target="_blank" class="bmc-inline" data-i18n="buyCoffee">☕ Buy me a coffee</a>
+        <a href="../index.html" class="btn-home" data-i18n="btnHome">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon-inline"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          Menu Principal
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const ACTIONS = [
+      { id: 'move', angle: 0, icon: '🚀', namePt: 'Mover Nave', nameEn: 'Move a Ship', descPt: 'Mova 1 nave da Galáxia Rogue para a órbita do planeta mais à esquerda sem naves Rogue. (Se não houver naves na galáxia, a ação é inutilizável).', descEn: 'Move 1 ship from Galaxy to the orbit of the leftmost planet without a Rogue ship. (If no ships in galaxy, action is unusable).' },
+      { id: 'energy', angle: 60, icon: '⚡', namePt: 'Adquirir Energia', nameEn: 'Acquire Energy', descPt: 'Rogue ganha 1 Energia para CADA nave (em sua Galáxia + em planetas de Energia).', descEn: 'Rogue gains 1 Energy for EVERY ship (in its Galaxy + on Energy planets).' },
+      { id: 'culture', angle: 120, icon: '⚛️', namePt: 'Adquirir Cultura', nameEn: 'Acquire Culture', descPt: 'Rogue ganha 1 Cultura para CADA nave (em sua Galáxia + em planetas de Cultura).', descEn: 'Rogue gains 1 Culture for EVERY ship (in its Galaxy + on Culture planets).' },
+      { id: 'economy', angle: 180, icon: '📈', namePt: 'Avançar Economia', nameEn: 'Advance Economy', descPt: 'Avança TODAS as naves Rogue em órbitas de Economia em +1 espaço.', descEn: 'Advance ALL Rogue ships on Economy planet orbits forward 1 space.' },
+      { id: 'diplomacy', angle: 240, icon: '🕊️', namePt: 'Avançar Diplomacia', nameEn: 'Advance Diplomacy', descPt: 'Avança TODAS as naves Rogue em órbitas de Diplomacia em +1 espaço.', descEn: 'Advance ALL Rogue ships on Diplomacy planet orbits forward 1 space.' },
+      { id: 'colony', angle: 300, icon: '🏛️', namePt: 'Utilizar Colônia', nameEn: 'Utilize a Colony', descPt: 'Executa a ação especial de Colônia do Nível Imperial atual do Rogue.', descEn: 'Perform the Rogue Colony Action at the current Empire level.' }
+    ];
+
+    const ROGUES = {
+      lealith: {
+        id: 'lealith', name: 'LEALITH', diffKey: 'diffBeginner', diffClass: 'diff-beginner',
+        maxResource: 6,
+        avatar: '../assets/art/uteg/rogues/lealith.webp',
+        diceByLevel: [5, 5, 6, 6, 7],
+        vpByLevel: [0, 1, 2, 4, 7],
+        colonyActionsPt: [
+          'Você perde 1 Cultura.',
+          'Rogue ganha 2 Culturas.',
+          'Rogue rouba 1 Cultura de você.',
+          'Rogue rouba 1 Energia e 1 Cultura de você.',
+          'Rogue move 2 naves para as órbitas dos planetas mais à esquerda sem naves Rogue.'
+        ],
+        colonyActionsEn: [
+          'You lose 1 Culture.',
+          'Rogue acquires 2 Culture.',
+          'Rogue steals 1 Culture from you.',
+          'Rogue steals 1 Energy and 1 Culture from you.',
+          'Rogue moves 2 ships to leftmost planets without Rogue ships.'
+        ]
+      },
+      brutus: {
+        id: 'brutus', name: 'BRUTUS', diffKey: 'diffEasy', diffClass: 'diff-easy',
+        maxResource: 5,
+        avatar: '../assets/art/uteg/rogues/brutus.webp',
+        diceByLevel: [5, 5, 6, 6, 7],
+        vpByLevel: [0, 1, 3, 5, 7],
+        colonyActionsPt: [
+          'Você perde 1 Energia.',
+          'Você perde 1 Cultura.',
+          'Perca 1 Energia para cada uma das suas naves na superfície de um planeta.',
+          'Perca 1 Energia para cada uma das suas naves na superfície de um planeta.',
+          'Rogue avança sua nave mais à esquerda em +2 espaços na órbita.'
+        ],
+        colonyActionsEn: [
+          'You lose 1 Energy.',
+          'You lose 1 Culture.',
+          'Lose 1 Energy for each of your ships on a planet\'s surface.',
+          'Lose 1 Energy for each of your ships on a planet\'s surface.',
+          'Rogue advances its leftmost ship +2 spaces along its orbit.'
+        ]
+      },
+      laishom: {
+        id: 'laishom', name: 'LAISHOM', diffKey: 'diffMedium', diffClass: 'diff-medium',
+        maxResource: 5,
+        avatar: '../assets/art/uteg/rogues/laishom.webp',
+        diceByLevel: [5, 5, 6, 6, 7],
+        vpByLevel: [0, 1, 3, 5, 8],
+        colonyActionsPt: [
+          'Você perde 1 Energia.',
+          'Rogue ganha 1 Cultura.',
+          'Regrida TODAS as suas naves em órbitas de Diplomacia em -1 espaço.',
+          'Regrida TODAS as suas naves em órbitas de Economia em -1 espaço.',
+          'Rogue avança TODAS as suas naves em +1 espaço de órbita.'
+        ],
+        colonyActionsEn: [
+          'You lose 1 Energy.',
+          'Rogue acquires 1 Culture.',
+          'Regress ALL of your ships on Diplomacy orbits by -1 space.',
+          'Regress ALL of your ships on Economy orbits by -1 space.',
+          'Rogue advances ALL its ships forward +1 space.'
+        ]
+      },
+      ethairna: {
+        id: 'ethairna', name: 'ETHAIRNA', diffKey: 'diffHard', diffClass: 'diff-hard',
+        maxResource: 5,
+        avatar: '../assets/art/uteg/rogues/ethairna.webp',
+        diceByLevel: [5, 5, 6, 6, 7],
+        vpByLevel: [0, 2, 4, 6, 8],
+        colonyActionsPt: [
+          'Rogue rouba 1 Energia de você.',
+          'Rogue rouba 1 Cultura de você.',
+          'Rogue rerola este dado e executa a ação rolada duas vezes! (Apenas uma vez por turno; ignore novo resultado de Colônia; Humano só pode seguir a ação original).',
+          'Rogue rerola este dado e executa a ação rolada duas vezes! (Apenas uma vez por turno; ignore novo resultado de Colônia; Humano só pode seguir a ação original).',
+          'Regrida 2 das suas naves em -2 espaços cada.'
+        ],
+        colonyActionsEn: [
+          'Rogue steals 1 Energy from you.',
+          'Rogue steals 1 Culture from you.',
+          'Rogue rerolls this die, and performs that rolled action twice! (Only once per turn; ignore colony if rerolled; Human may only follow the original action).',
+          'Rogue rerolls this die, and performs that rolled action twice! (Only once per turn; ignore colony if rerolled; Human may only follow the original action).',
+          'Regress 2 of your ships by -2 spaces each.'
+        ]
+      },
+      methusael: {
+        id: 'methusael', name: 'METHUSAEL', diffKey: 'diffEpic', diffClass: 'diff-epic',
+        maxResource: 4,
+        avatar: '../assets/art/uteg/rogues/methusael.webp',
+        diceByLevel: [5, 5, 6, 6, 7],
+        vpByLevel: [0, 2, 4, 6, 9],
+        colonyActionsPt: [
+          'Você perde 2 Energias.',
+          'Rogue rouba 2 Energias de você.',
+          'Regrida uma das suas naves em -1 espaço para cada nave Rogue na galáxia dele.',
+          'Regrida uma das suas naves em -1 espaço para cada nave Rogue na galáxia dele.',
+          'Rogue avança a sua nave mais à esquerda em +3 espaços na órbita.'
+        ],
+        colonyActionsEn: [
+          'You lose 2 Energy.',
+          'Rogue steals 2 Energy from you.',
+          'Regress one of your ships -1 for each Rogue ship in this galaxy.',
+          'Regress one of your ships -1 for each Rogue ship in this galaxy.',
+          'Rogue advances its leftmost ship +3 spaces along its orbit.'
+        ]
+      }
+    };
+
+    let currentLang = localStorage.getItem('boardbots_lang') || 'pt';
+
+    const I18N = {
+      pt: {
+        pageTitle: 'Ultra Tiny Epic Galaxies — Rogue Galaxy Automa',
+        setupTitle: 'Missão Solo: Escolha a Galáxia Rogue',
+        setupSubtitle: 'Cada cor de jogador possui uma Galáxia Rogue única com sua própria dificuldade e ações de colônia.',
+        diffBeginner: 'Iniciante',
+        diffEasy: 'Fácil',
+        diffMedium: 'Médio',
+        diffHard: 'Difícil',
+        diffEpic: 'Épico',
+        setupChecklistTitle: '📋 Checklist de Preparação na Mesa (Componentes Físicos)',
+        check1: '<strong>Naves do Jogador:</strong> Coloque 2 naves na sua carta de Galáxia e 2 na reserva de naves.',
+        check2: '<strong>Naves da Galáxia Rogue:</strong> Coloque <strong>todas as 4 naves</strong> na carta de Galáxia Rogue na mesa.',
+        check3: '<strong>Fileira de Planetas:</strong> Disponha a fileira central com 4 planetas virados para cima.',
+        check4: '<strong>Missões Secretas:</strong> Não distribua cartas de Missão Secreta (mantenha na caixa no modo solo).',
+        check5: '<strong>Primeiro Turno:</strong> Você (Humano) joga primeiro! O Rogue joga em seguida.',
+        optRerollUnusableText: '<strong>Dificuldade Aumentada:</strong> Rerolar cada dado inutilizável uma vez antes de descartá-lo',
+        optExpansionText: '<strong>Expansão Satélites & Superarmas:</strong> Ativar auxílio para satélites do Rogue',
+        btnStartGame: 'Iniciar Batalha Intergaláctica',
+        empireLevelLabel: 'Nível Imperial',
+        dicePoolLabel: 'Dados',
+        vpTotalLabel: 'Total VP',
+        empireTrackTitle: 'Trilha do Império Rogue',
+        energyTitle: 'Energia',
+        cultureTitle: 'Cultura',
+        activeColonyTitle: 'Ação de Colônia do Nível Atual:',
+        coloniesTitle: 'Planetas Colonizados pelo Bot',
+        noPlanetsYet: 'Nenhum planeta colonizado ainda.',
+        actMove: 'Mover',
+        actEnergy: 'Energia',
+        actCulture: 'Cultura',
+        actEconomy: 'Economia',
+        actDiplomacy: 'Diplomacia',
+        actColony: 'Colônia',
+        btnRollRogue: 'Rolar Dados do Rogue',
+        bayTitle: 'Baía de Ativação de Dados (1 a 7)',
+        stepperShipsCount: 'Naves produzindo o recurso:',
+        btnConfirmGain: 'Confirmar Ganho',
+        followPromptTitle: 'Seguir Ação (Humano):',
+        followPromptDesc: 'Você pode gastar 1 Cultura para copiar e executar esta ação imediatamente.',
+        btnForceReroll: 'Forçar Reroll (-1⚡ -1⚛️)',
+        btnMarkUnusable: 'Dado Inutilizável',
+        btnResolveNext: 'Ação Executada / Próximo Dado ➔',
+        logTitle: 'REGISTRO TÁTICO DO COMPUTADOR DE BORDO:',
+        modalHelpTitle: 'Regras & Operação do Rogue Automa',
+        helpSection1: 'Como o Rogue Galaxy Funciona',
+        helpSection2: 'Gatilhos de Recursos Máximos (Fim do Turno)',
+        helpSection3: 'Condições de Vitória',
+        helpSection4: 'Mini-Expansão Satélites & Superarmas (Solo)',
+        modalPlanetTitle: 'Registrar Planeta Colonizado pelo Rogue',
+        modalPlanetDesc: 'Insira o nome do planeta e seus pontos de vitória (VP):',
+        planetNameLabel: 'Nome do Planeta (opcional):',
+        planetVpLabel: 'Pontos de Vitória (VP) do Planeta:',
+        checkPlanetSatelliteText: 'Planeta continha Satélite (+1 VP de Satélite)',
+        btnSavePlanet: 'Confirmar Planeta Colonizado',
+        creditGameDesign: 'Jogo por Scott Almes • Arte por William Bricker & Benjamin Shulman • Gamelyn Games',
+        creditApp: 'Automa Companion por Thiago Carvalho • Boardbots',
+        buyCoffee: '☕ Buy me a coffee',
+        btnHome: 'Menu Principal',
+        msgMaxEnergy: '⚡ ENERGIA NO MÁXIMO! O Rogue aprimorou o Império para o Nível ',
+        msgMaxCulture: '⚛️ CULTURA NO MÁXIMO! O Rogue acionou 3 AÇÕES BÔNUS!',
+        msgRogueWinSkull: '☠️ DERROTA! O Império Rogue atingiu a Caveira e conquistou o Universo!',
+        msgRogueWinVp: '🏆 DERROTA! O Rogue atingiu 21+ Pontos de Vitória!',
+        msgPlayerWin: '🎉 VITÓRIA! O Humano atingiu 21+ Pontos de Vitória!'
+      },
+      en: {
+        pageTitle: 'Ultra Tiny Epic Galaxies — Rogue Galaxy Automa',
+        setupTitle: 'Solo Mission: Select Rogue Galaxy',
+        setupSubtitle: 'Each player color features a unique Rogue Galaxy with distinct difficulty and colony actions.',
+        diffBeginner: 'Beginner',
+        diffEasy: 'Easy',
+        diffMedium: 'Medium',
+        diffHard: 'Hard',
+        diffEpic: 'Epic',
+        setupChecklistTitle: '📋 Physical Table Setup Checklist',
+        check1: '<strong>Human Ships:</strong> Place 2 ships in your Galaxy Card and 2 in your reserve.',
+        check2: '<strong>Rogue Galaxy Ships:</strong> Place <strong>all 4 ships</strong> on the Rogue Galaxy Card on the table.',
+        check3: '<strong>Planet Row:</strong> Deal 4 face-up Planet Cards in the center row.',
+        check4: '<strong>Secret Missions:</strong> Do not deal Secret Mission Cards (keep in box for solo mode).',
+        check5: '<strong>First Turn:</strong> You (Human) take the first turn! The Rogue plays next.',
+        optRerollUnusableText: '<strong>Increased Challenge:</strong> Reroll unusable dice once before discarding',
+        optExpansionText: '<strong>Satellites & Super Weapons:</strong> Enable Rogue satellite handling',
+        btnStartGame: 'Launch Intergalactic Battle',
+        empireLevelLabel: 'Empire Level',
+        dicePoolLabel: 'Dice',
+        vpTotalLabel: 'Total VP',
+        empireTrackTitle: 'Rogue Empire Track',
+        energyTitle: 'Energy',
+        cultureTitle: 'Culture',
+        activeColonyTitle: 'Current Level Colony Action:',
+        coloniesTitle: 'Planets Colonized by Bot',
+        noPlanetsYet: 'No planets colonized yet.',
+        actMove: 'Move',
+        actEnergy: 'Energy',
+        actCulture: 'Culture',
+        actEconomy: 'Economy',
+        actDiplomacy: 'Diplomacy',
+        actColony: 'Colony',
+        btnRollRogue: 'Roll Rogue Dice',
+        bayTitle: 'Dice Activation Bay (1 to 7)',
+        stepperShipsCount: 'Ships producing resource:',
+        btnConfirmGain: 'Confirm Gain',
+        followPromptTitle: 'Follow Action (Human):',
+        followPromptDesc: 'You may spend 1 Culture to copy and perform this action immediately.',
+        btnForceReroll: 'Force Reroll (-1⚡ -1⚛️)',
+        btnMarkUnusable: 'Mark Unusable',
+        btnResolveNext: 'Action Executed / Next Die ➔',
+        logTitle: 'SHIP COMPUTER TACTICAL LOG:',
+        modalHelpTitle: 'Rogue Automa Rules & Operation',
+        helpSection1: 'How the Rogue Galaxy Works',
+        helpSection2: 'Max Resource Triggers (End of Turn)',
+        helpSection3: 'Victory Conditions',
+        helpSection4: 'Satellites & Super Weapons Expansion (Solo)',
+        modalPlanetTitle: 'Record Planet Colonized by Rogue',
+        modalPlanetDesc: 'Enter planet name and victory points (VP):',
+        planetNameLabel: 'Planet Name (optional):',
+        planetVpLabel: 'Planet Victory Points (VP):',
+        checkPlanetSatelliteText: 'Planet had Satellite (+1 Satellite VP)',
+        btnSavePlanet: 'Confirm Colonized Planet',
+        creditGameDesign: 'Game by Scott Almes • Art by William Bricker & Benjamin Shulman • Gamelyn Games',
+        creditApp: 'Automa Companion by Thiago Carvalho • Boardbots',
+        buyCoffee: '☕ Buy me a coffee',
+        btnHome: 'Home Menu',
+        msgMaxEnergy: '⚡ MAX ENERGY! Rogue upgraded Empire to Level ',
+        msgMaxCulture: '⚛️ MAX CULTURE! Rogue triggered 3 BONUS ACTIONS!',
+        msgRogueWinSkull: '☠️ DEFEAT! Rogue Empire reached the Skull & Crossbones and conquered the Universe!',
+        msgRogueWinVp: '🏆 DEFEAT! Rogue reached 21+ Victory Points!',
+        msgPlayerWin: '🎉 VICTORY! Human reached 21+ Victory Points!'
+      }
+    };
+
+    function applyI18n() {
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (I18N[currentLang] && I18N[currentLang][key]) {
+          el.innerHTML = I18N[currentLang][key];
+        }
+      });
+      const langBtn = document.getElementById('langSwitchBtn');
+      if (langBtn) langBtn.textContent = currentLang === 'pt' ? 'EN' : 'PT';
+      document.documentElement.lang = currentLang;
+
+      if (gameState.activeRogue) {
+        updateHudDisplays();
+      }
+    }
+
+    function toggleLanguage() {
+      currentLang = currentLang === 'pt' ? 'en' : 'pt';
+      localStorage.setItem('boardbots_lang', currentLang);
+      applyI18n();
+    }
+
+    let audioEnabled = true;
+    let audioCtx = null;
+
+    function initAudio() {
+      if (!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (AudioContext) audioCtx = new AudioContext();
+      }
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    function toggleAudio() {
+      audioEnabled = !audioEnabled;
+      const btn = document.getElementById('audioToggleBtn');
+      if (btn) btn.style.opacity = audioEnabled ? '1' : '0.4';
+      if (audioEnabled) playTone(580, 'sine', 0.08);
+    }
+
+    function playTone(freq, type, duration, vol=0.15) {
+      if (!audioEnabled) return;
+      initAudio();
+      if (!audioCtx) return;
+      try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (e) {}
+    }
+
+    function playDialTick() { playTone(880, 'triangle', 0.04, 0.08); }
+    function playDialLock() { playTone(440, 'sine', 0.12, 0.2); setTimeout(() => playTone(880, 'sine', 0.15, 0.2), 60); }
+    function playAlert() { playTone(330, 'sawtooth', 0.25, 0.18); }
+    function playUpgrade() {
+      playTone(440, 'sine', 0.1, 0.18);
+      setTimeout(() => playTone(660, 'sine', 0.12, 0.2), 100);
+      setTimeout(() => playTone(880, 'sine', 0.25, 0.22), 200);
+    }
+
+    const STORAGE_KEY = 'boardbots_uteg_state';
+
+    let gameState = {
+      selectedRogueId: 'laishom',
+      activeRogue: null,
+      empireLevel: 1,
+      energy: 0,
+      culture: 0,
+      colonizedPlanets: [],
+      satelliteCount: 0,
+      satellitesPlaced: 0,
+      turnDice: [],
+      activeDieIndex: -1,
+      isBonusTurn: false,
+      rerollUnusable: false,
+      expansionEnabled: false,
+      stepperCountVal: 1,
+      logs: []
+    };
+
+    let compassRotation = 0;
+
+    function initSetup() {
+      const grid = document.getElementById('rogueSelectGrid');
+      grid.innerHTML = '';
+      Object.values(ROGUES).forEach(rogue => {
+        const card = document.createElement('div');
+        card.className = `rogue-card ${rogue.id === gameState.selectedRogueId ? 'selected' : ''}`;
+        card.onclick = () => selectRogue(rogue.id);
+
+        const diffText = I18N[currentLang][rogue.diffKey] || rogue.diffKey;
+        card.innerHTML = `
+          <img src="${rogue.avatar}" class="rogue-thumb" alt="${rogue.name}">
+          <div class="rogue-name">${rogue.name}</div>
+          <span class="rogue-diff ${rogue.diffClass}">${diffText}</span>
+          <div class="rogue-meta">Max: ${rogue.maxResource}⚡/${rogue.maxResource}⚛️</div>
+        `;
+        grid.appendChild(card);
+      });
+      applyI18n();
+    }
+
+    function selectRogue(id) {
+      gameState.selectedRogueId = id;
+      initSetup();
+      playTone(600, 'sine', 0.08);
+    }
+
+    function startGame() {
+      initAudio();
+      gameState.activeRogue = ROGUES[gameState.selectedRogueId];
+      gameState.empireLevel = 1;
+      gameState.energy = 0;
+      gameState.culture = 0;
+      gameState.colonizedPlanets = [];
+      gameState.satelliteCount = 0;
+      gameState.satellitesPlaced = 0;
+      gameState.turnDice = [];
+      gameState.activeDieIndex = -1;
+      gameState.isBonusTurn = false;
+      gameState.rerollUnusable = document.getElementById('optRerollUnusable').checked;
+      gameState.expansionEnabled = document.getElementById('optExpansion').checked;
+      gameState.logs = [];
+
+      document.getElementById('screenSetup').classList.remove('active');
+      document.getElementById('screenGame').classList.add('active');
+
+      logTactical(`Rogue Galaxy ${gameState.activeRogue.name} iniciou a partida. Nível Imperial 1.`);
+      if (gameState.expansionEnabled) {
+        logTactical(`Mini-Expansão Satélites & Superarmas ATIVADA.`);
+        document.getElementById('planetSatelliteCheckWrap').style.display = 'block';
+      }
+
+      snapCompassTo(0);
+      updateHudDisplays();
+      saveGame();
+      playUpgrade();
+    }
+
+    function updateHudDisplays() {
+      const rogue = gameState.activeRogue;
+      if (!rogue) return;
+
+      document.getElementById('hudAvatar').src = rogue.avatar;
+      document.getElementById('hudRogueName').textContent = rogue.name;
+
+      const diffBadge = document.getElementById('hudRogueDiff');
+      diffBadge.className = `rogue-diff ${rogue.diffClass}`;
+      diffBadge.textContent = I18N[currentLang][rogue.diffKey] || rogue.diffKey;
+
+      document.getElementById('hudEmpireLvl').textContent = gameState.empireLevel;
+      const dicePool = rogue.diceByLevel[gameState.empireLevel - 1] || 7;
+      document.getElementById('hudDiceCount').textContent = dicePool;
+
+      const empireVp = rogue.vpByLevel[gameState.empireLevel - 1] || 0;
+      const planetsVp = gameState.colonizedPlanets.reduce((sum, p) => sum + p.vp + (p.satellite ? 1 : 0), 0);
+      const totalVp = empireVp + planetsVp;
+
+      document.getElementById('hudTotalVp').textContent = totalVp;
+      document.getElementById('empireVpPreview').textContent = `+${empireVp} VP`;
+
+      document.getElementById('valEnergy').textContent = gameState.energy;
+      document.getElementById('valCulture').textContent = gameState.culture;
+      document.getElementById('maxEnergyBadge').textContent = `Max: ${rogue.maxResource}`;
+      document.getElementById('maxCultureBadge').textContent = `Max: ${rogue.maxResource}`;
+
+      const colonyActionList = currentLang === 'pt' ? rogue.colonyActionsPt : rogue.colonyActionsEn;
+      const colonyText = colonyActionList[gameState.empireLevel - 1] || colonyActionList[colonyActionList.length - 1];
+      document.getElementById('hudColonyText').textContent = colonyText;
+
+      renderEmpireTrackHexes();
+      renderColonizedPlanetsList();
+    }
+
+    function renderEmpireTrackHexes() {
+      const container = document.getElementById('hexStepsContainer');
+      container.innerHTML = '';
+      const rogue = gameState.activeRogue;
+
+      for (let lvl = 1; lvl <= 6; lvl++) {
+        const hex = document.createElement('div');
+        if (lvl === 6) {
+          hex.className = `hex-node skull ${gameState.empireLevel === 6 ? 'active' : ''}`;
+          hex.innerHTML = '☠️';
+          hex.title = 'Game Over (Rogue Victory)';
+        } else {
+          hex.className = `hex-node ${gameState.empireLevel === lvl ? 'active' : ''}`;
+          const vp = rogue.vpByLevel[lvl - 1];
+          const dice = rogue.diceByLevel[lvl - 1];
+          hex.innerHTML = `<span>${lvl}</span><span class="hex-node-sub">${dice}🎲</span>`;
+          hex.title = `Nível ${lvl}: ${dice} dados, ${vp} VP`;
+        }
+        container.appendChild(hex);
+      }
+    }
+
+    function renderColonizedPlanetsList() {
+      const container = document.getElementById('colonizedList');
+      if (gameState.colonizedPlanets.length === 0) {
+        container.innerHTML = `<em style="color:var(--text-muted);">${I18N[currentLang].noPlanetsYet}</em>`;
+        return;
+      }
+      container.innerHTML = gameState.colonizedPlanets.map((p, idx) => `
+        <div style="display:flex; justify-content:space-between; margin-bottom:4px; padding:3px 6px; background:rgba(255,255,255,0.04); border-radius:4px;">
+          <span>🪐 ${p.name || ('Planeta #' + (idx+1))} ${p.satellite ? '🛰️' : ''}</span>
+          <strong style="color:var(--amber);">+${p.vp + (p.satellite ? 1 : 0)} VP</strong>
+        </div>
+      `).join('');
+    }
+
+    function adjustResource(type, delta) {
+      const rogue = gameState.activeRogue;
+      if (!rogue) return;
+      initAudio();
+      if (type === 'energy') {
+        gameState.energy = Math.max(0, Math.min(rogue.maxResource, gameState.energy + delta));
+        playTone(550, 'sine', 0.05);
+      } else if (type === 'culture') {
+        gameState.culture = Math.max(0, Math.min(rogue.maxResource, gameState.culture + delta));
+        playTone(650, 'sine', 0.05);
+      }
+      updateHudDisplays();
+      saveGame();
+    }
+
+    function rotateNeedleTo(targetAngle, extraSpins = 2, transition = 'transform 1.3s cubic-bezier(0.2, 1.35, 0.35, 1)') {
+      const needle = document.getElementById('compassNeedle');
+      if (!needle) return;
+      const current = ((compassRotation % 360) + 360) % 360;
+      let delta = targetAngle - current;
+      if (delta <= 0) delta += 360;
+      compassRotation += delta + 360 * extraSpins;
+      needle.style.transition = transition;
+      needle.style.transform = `rotate(${compassRotation}deg)`;
+    }
+
+    function snapCompassTo(targetAngle) {
+      const needle = document.getElementById('compassNeedle');
+      if (!needle) return;
+      compassRotation = targetAngle;
+      needle.style.transition = 'none';
+      needle.style.transform = `rotate(${compassRotation}deg)`;
+      needle.offsetHeight;
+      needle.style.transition = 'transform 1.3s cubic-bezier(0.2, 1.35, 0.35, 1)';
+    }
+
+    function setCenterReadout(num, label) {
+      document.getElementById('centerNum').textContent = num;
+      document.getElementById('centerActionLabel').textContent = label;
+    }
+
+    function startRogueTurn(isBonus = false) {
+      initAudio();
+      const rogue = gameState.activeRogue;
+      gameState.isBonusTurn = isBonus;
+
+      const diceCount = isBonus ? 3 : (rogue.diceByLevel[gameState.empireLevel - 1] || 5);
+      gameState.turnDice = [];
+
+      for (let i = 0; i < diceCount; i++) {
+        let actionIdx = Math.floor(Math.random() * ACTIONS.length);
+        let action = ACTIONS[actionIdx];
+        gameState.turnDice.push({
+          slotNum: i + 1,
+          action: action,
+          resolved: false,
+          unusable: isBonus && action.id === 'culture'
+        });
+      }
+
+      gameState.activeDieIndex = 0;
+      document.getElementById('activationBayArea').style.display = 'block';
+      document.getElementById('currentActionCard').style.display = 'block';
+      document.getElementById('btnRollDice').style.display = 'none';
+
+      renderActivationBay();
+      activateCurrentDie();
+
+      logTactical(isBonus 
+        ? `Rogue acionou TURNO BÔNUS com 3 dados!` 
+        : `Turno do Rogue iniciado: ${diceCount} dados rolados.`);
+    }
+
+    function renderActivationBay() {
+      const container = document.getElementById('baySlotsContainer');
+      container.innerHTML = '';
+
+      gameState.turnDice.forEach((d, idx) => {
+        const slot = document.createElement('div');
+        let classes = 'bay-slot';
+        if (idx === gameState.activeDieIndex) classes += ' active';
+        if (d.resolved) classes += ' resolved';
+        if (d.unusable) classes += ' unusable';
+        slot.className = classes;
+        slot.title = `Dado #${d.slotNum}: ${currentLang === 'pt' ? d.action.namePt : d.action.nameEn}`;
+        slot.innerHTML = `
+          <span class="bay-slot-num">${d.slotNum}</span>
+          <span style="font-size:1.4rem;">${d.action.icon}</span>
+        `;
+        slot.onclick = () => {
+          if (!d.resolved) {
+            gameState.activeDieIndex = idx;
+            renderActivationBay();
+            activateCurrentDie();
+          }
+        };
+        container.appendChild(slot);
+      });
+    }
+
+    function activateCurrentDie() {
+      if (gameState.activeDieIndex < 0 || gameState.activeDieIndex >= gameState.turnDice.length) {
+        endRogueTurn();
+        return;
+      }
+
+      const die = gameState.turnDice[gameState.activeDieIndex];
+      const action = die.action;
+
+      playDialTick();
+      rotateNeedleTo(action.angle, 1);
+      setTimeout(() => {
+        playDialLock();
+        setCenterReadout(die.slotNum, action.id);
+      }, 700);
+
+      const actionTitle = currentLang === 'pt' ? action.namePt.toUpperCase() : action.nameEn.toUpperCase();
+      document.getElementById('actionIconSpan').textContent = action.icon;
+      document.getElementById('actionTitleSpan').textContent = `DADO #${die.slotNum}: ${actionTitle}`;
+
+      let desc = currentLang === 'pt' ? action.descPt : action.descEn;
+      if (action.id === 'colony') {
+        const rogue = gameState.activeRogue;
+        const colonyList = currentLang === 'pt' ? rogue.colonyActionsPt : rogue.colonyActionsEn;
+        desc = colonyList[gameState.empireLevel - 1] || colonyList[colonyList.length - 1];
+      }
+      document.getElementById('actionDescSpan').textContent = desc;
+
+      const stepper = document.getElementById('stepperRow');
+      if (action.id === 'energy' || action.id === 'culture') {
+        stepper.style.display = 'flex';
+        gameState.stepperCountVal = 1;
+        document.getElementById('stepperCount').textContent = gameState.stepperCountVal;
+      } else {
+        stepper.style.display = 'none';
+      }
+
+      const followBox = document.getElementById('followPromptBox');
+      if (gameState.isBonusTurn || die.unusable) {
+        followBox.style.display = 'none';
+      } else {
+        followBox.style.display = 'block';
+      }
+
+      renderActivationBay();
+    }
+
+    function adjustShipStepper(delta) {
+      gameState.stepperCountVal = Math.max(0, gameState.stepperCountVal + delta);
+      document.getElementById('stepperCount').textContent = gameState.stepperCountVal;
+      playTone(600, 'sine', 0.04);
+    }
+
+    function confirmResourceGain() {
+      const die = gameState.turnDice[gameState.activeDieIndex];
+      if (!die) return;
+      const count = gameState.stepperCountVal;
+      if (die.action.id === 'energy') {
+        adjustResource('energy', count);
+        logTactical(`Rogue adquiriu +${count} de Energia.`);
+      } else if (die.action.id === 'culture') {
+        adjustResource('culture', count);
+        logTactical(`Rogue adquiriu +${count} de Cultura.`);
+      }
+      resolveCurrentDie();
+    }
+
+    function forceRerollCurrentDie() {
+      if (gameState.activeDieIndex < 0) return;
+      initAudio();
+      playTone(400, 'sine', 0.08);
+      const newActionIdx = Math.floor(Math.random() * ACTIONS.length);
+      const newAction = ACTIONS[newActionIdx];
+      gameState.turnDice[gameState.activeDieIndex].action = newAction;
+      gameState.turnDice[gameState.activeDieIndex].unusable = (gameState.isBonusTurn && newAction.id === 'culture');
+
+      logTactical(`Humano forçou reroll no Dado #${gameState.activeDieIndex + 1}: virou ${newAction.namePt}.`);
+      activateCurrentDie();
+    }
+
+    function markCurrentDieUnusable() {
+      if (gameState.activeDieIndex < 0) return;
+      initAudio();
+      const die = gameState.turnDice[gameState.activeDieIndex];
+
+      if (gameState.rerollUnusable && !die.rerolledOnce) {
+        die.rerolledOnce = true;
+        const newAction = ACTIONS[Math.floor(Math.random() * ACTIONS.length)];
+        die.action = newAction;
+        logTactical(`Dado #${die.slotNum} inutilizável — rerolado 1 vez pela variante: virou ${newAction.namePt}.`);
+        activateCurrentDie();
+        return;
+      }
+
+      die.unusable = true;
+      die.resolved = true;
+      logTactical(`Dado #${die.slotNum} marcado como INUTILIZÁVEL e descartado.`);
+      playTone(250, 'sawtooth', 0.15);
+      advanceToNextDie();
+    }
+
+    function resolveCurrentDie() {
+      if (gameState.activeDieIndex < 0) return;
+      initAudio();
+      const die = gameState.turnDice[gameState.activeDieIndex];
+      die.resolved = true;
+      logTactical(`Dado #${die.slotNum} (${die.action.namePt}) executado.`);
+      playTone(660, 'sine', 0.08);
+      advanceToNextDie();
+    }
+
+    function advanceToNextDie() {
+      const nextIdx = gameState.turnDice.findIndex((d, idx) => idx > gameState.activeDieIndex && !d.resolved);
+      if (nextIdx !== -1) {
+        gameState.activeDieIndex = nextIdx;
+        activateCurrentDie();
+      } else {
+        const anyUnresolved = gameState.turnDice.findIndex(d => !d.resolved);
+        if (anyUnresolved !== -1) {
+          gameState.activeDieIndex = anyUnresolved;
+          activateCurrentDie();
+        } else {
+          endRogueTurn();
+        }
+      }
+    }
+
+    function endRogueTurn() {
+      const rogue = gameState.activeRogue;
+      document.getElementById('currentActionCard').style.display = 'none';
+      document.getElementById('activationBayArea').style.display = 'none';
+      document.getElementById('btnRollDice').style.display = 'block';
+      setCenterReadout('✓', 'PRONTO');
+
+      if (gameState.energy >= rogue.maxResource) {
+        gameState.energy = 0;
+        upgradeEmpireLevel();
+        alert(I18N[currentLang].msgMaxEnergy + gameState.empireLevel);
+      }
+
+      if (gameState.culture >= rogue.maxResource) {
+        gameState.culture = 0;
+        alert(I18N[currentLang].msgMaxCulture);
+        updateHudDisplays();
+        saveGame();
+        setTimeout(() => startRogueTurn(true), 600);
+        return;
+      }
+
+      checkVictoryConditions();
+      updateHudDisplays();
+      saveGame();
+      logTactical(`Turno do Rogue finalizado. Vez do jogador humano!`);
+    }
+
+    function upgradeEmpireLevel() {
+      gameState.empireLevel = Math.min(6, gameState.empireLevel + 1);
+      playUpgrade();
+      logTactical(`Império Rogue subiu para o Nível ${gameState.empireLevel}!`);
+
+      if (gameState.expansionEnabled && (gameState.empireLevel === 3 || gameState.empireLevel === 5)) {
+        logTactical(`🛰️ EXPANSÃO: Posicione 1 Satélite do Rogue no planeta não colonizado mais à esquerda!`);
+        alert(currentLang === 'pt' 
+          ? '🛰️ Expansão: Coloque 1 Cubo de Satélite do Rogue no planeta não colonizado mais à esquerda na mesa!' 
+          : '🛰️ Expansion: Place 1 Rogue Satellite onto the leftmost uncolonized planet on the table!');
+      }
+
+      checkVictoryConditions();
+    }
+
+    function checkVictoryConditions() {
+      const rogue = gameState.activeRogue;
+      if (!rogue) return;
+
+      if (gameState.empireLevel >= 6) {
+        playAlert();
+        alert(I18N[currentLang].msgRogueWinSkull);
+        logTactical(`☠️ FIM DE JOGO: O Império Rogue atingiu a Caveira e venceu o jogo!`);
+        return;
+      }
+
+      const empireVp = rogue.vpByLevel[gameState.empireLevel - 1] || 0;
+      const planetsVp = gameState.colonizedPlanets.reduce((sum, p) => sum + p.vp + (p.satellite ? 1 : 0), 0);
+      const totalVp = empireVp + planetsVp;
+
+      if (totalVp >= 21) {
+        playAlert();
+        alert(I18N[currentLang].msgRogueWinVp);
+        logTactical(`🏆 FIM DE JOGO: O Rogue atingiu ${totalVp} VP e venceu a partida!`);
+      }
+    }
+
+    function openAddPlanetModal() {
+      document.getElementById('inputPlanetName').value = '';
+      document.getElementById('inputPlanetVp').value = 2;
+      document.getElementById('checkPlanetSatellite').checked = false;
+      document.getElementById('planetModal').classList.add('active');
+    }
+
+    function closePlanetModal() {
+      document.getElementById('planetModal').classList.remove('active');
+    }
+
+    function saveColonizedPlanet() {
+      const name = document.getElementById('inputPlanetName').value.trim();
+      const vp = parseInt(document.getElementById('inputPlanetVp').value, 10) || 1;
+      const satellite = document.getElementById('checkPlanetSatellite').checked;
+
+      gameState.colonizedPlanets.push({ name, vp, satellite });
+      logTactical(`Rogue colonizou planeta: ${name || 'Planeta'} (+${vp + (satellite ? 1 : 0)} VP).`);
+      closePlanetModal();
+      updateHudDisplays();
+      checkVictoryConditions();
+      saveGame();
+    }
+
+    function openHelpModal() {
+      document.getElementById('helpModal').classList.add('active');
+    }
+    function closeHelpModal() {
+      document.getElementById('helpModal').classList.remove('active');
+    }
+
+    function logTactical(msg) {
+      const panel = document.getElementById('logPanel');
+      if (!panel) return;
+      const entry = document.createElement('div');
+      entry.className = 'log-entry ai';
+      entry.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+      panel.appendChild(entry);
+      panel.scrollTop = panel.scrollHeight;
+      gameState.logs.push(msg);
+    }
+
+    function saveGame() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(gameState));
+      } catch (e) {}
+    }
+
+    function loadGame() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const saved = JSON.parse(raw);
+          if (saved && saved.activeRogue) {
+            gameState = saved;
+            document.getElementById('screenSetup').classList.remove('active');
+            document.getElementById('screenGame').classList.add('active');
+            updateHudDisplays();
+            snapCompassTo(0);
+            return true;
+          }
+        }
+      } catch (e) {}
+      return false;
+    }
+
+    function confirmReset() {
+      const msg = currentLang === 'pt' ? 'Tem certeza de que deseja reiniciar a partida?' : 'Are you sure you want to reset the game?';
+      if (confirm(msg)) {
+        localStorage.removeItem(STORAGE_KEY);
+        location.reload();
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      initSetup();
+      if (!loadGame()) {
+        applyI18n();
+      }
+    });
+  </script>
+</body>
+</html>
