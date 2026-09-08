@@ -99,42 +99,7 @@ Ao criar o HTML do bot, **você DEVE copiar e utilizar os seguintes elementos pa
 - Adicione chaves de i18n em `assets/site.js` (pt e en): `game_{key}_title`, `game_{key}_desc`, `credit_{key}`.
 - Adicione `<li data-i18n-html="credit_{key}">` em `credits.html`.
 
-## 7. Trello — Gestão de Tarefas
-
-O projeto usa Trello: https://trello.com/b/98ErrGT4/boardbots
-
-- **Credenciais:** `tools/trello.env` no repositório (gitignored via `*.env`). Também em `/Users/thiagocarvalho/Documents/Board games/tools/trello.env`.
-- **Formato do arquivo `trello.env`:**
-  ```
-  # trello API key
-  7c36db0487fb2e6d9727a2965d73b33c
-  # trello token
-  ATTAd11813f38743311d8d636adbd241cd6f25fcf8e1481403b0da49be22ac76f5ffB70D18DC
-  ```
-- **Colunas do quadro (list IDs):**
-  | Coluna | ID |
-  |--------|-----|
-  | Backlog | `6a8f03d44d7de4aad6f8b2e8` |
-  | Design | `6a8f03d44d7de4aad6f8b2e9` |
-  | A Fazer | `6a8f03d44d7de4aad6f8b2ea` |
-  | Em andamento | `6a8f03d44d7de4aad6f8b2eb` |
-  | Revisão e QA | `6a8f03d44d7de4aad6f8b2ec` |
-  | Fase de teste | `6a8f03d44d7de4aad6f8b2ed` |
-  | Concluído 🎉 | `6a8f03d44d7de4aad6f8b2ee` |
-
-- **Mover card para Design:**
-  ```bash
-  curl -X PUT "https://api.trello.com/1/cards/{CARD_ID}?key={API_KEY}&token={TOKEN}&idList=6a8f03d44d7de4aad6f8b2e9"
-  ```
-- **Atualizar descrição:**
-  ```bash
-  curl -X PUT "https://api.trello.com/1/cards/{CARD_ID}?key={API_KEY}&token={TOKEN}" \
-    --data-urlencode "desc=Texto aqui"
-  ```
-- Card ID = parte da URL do card: `https://trello.com/c/{CARD_ID}/...`
-- Ao criar/atualizar plano de implementação: **sempre** atualizar o card Trello correspondente + mover para a coluna correta.
-
-## 8. Prompt de Geração de Código (para modelos de menor capacidade)
+## 7. Prompt de Geração de Código (para modelos de menor capacidade)
 
 Ao finalizar o `implementation_plan.md`, inclua sempre uma seção **"Code Generation Prompt"** com um prompt detalhado para delegar a implementação. O prompt deve conter:
 
@@ -147,7 +112,7 @@ Ao finalizar o `implementation_plan.md`, inclua sempre uma seção **"Code Gener
 - Textos de crédito para embutir
 - Instrução de output: "Produza o arquivo HTML completo e auto-contido"
 
-## 9. Auditoria de Tarefas
+## 8. Auditoria de Tarefas
 
 Ao atualizar um plano existente, sempre inclua uma seção **"Task Status Audit"** com:
 
@@ -156,7 +121,7 @@ Ao atualizar um plano existente, sempre inclua uma seção **"Task Status Audit"
 - 🚫 Removido do plano (não faz mais sentido) com justificativa
 - 🆕 Novo / adicionado ao plano
 
-## 10. Conhecimento Específico: 7 Wonders Duel Solo Mode
+## 9. Conhecimento Específico: 7 Wonders Duel Solo Mode
 
 ### Mecânica de Cartas de Decisão (verificado no PDF)
 
@@ -192,7 +157,7 @@ assets/art/7wd/leaders/bilkis.webp
 assets/art/7wd/decision_cards/dc_01.webp … dc_12.webp
 ```
 
-## 11. Conhecimento Específico: 3D Dice Box via Módulo Centralizado (`assets/dice-roller.js`)
+## 10. Conhecimento Específico: 3D Dice Box via Módulo Centralizado (`assets/dice-roller.js`)
 
 Ao integrar rolagem física 3D de dados em qualquer bot:
 
@@ -229,14 +194,14 @@ Ao integrar rolagem física 3D de dados em qualquer bot:
 5. **Validação Obrigatória com Screenshot dos Dados Renderizados:**
    - Ao testar ou validar bots com dados 3D via scripts Playwright, **não valide apenas flags booleanas ou variáveis de estado**. É mandatório capturar um screenshot dos dados efetivamente renderizados na tela durante a rolagem para confirmar ausência de bugs visuais (como o bug da tela preta).
 
-## 12. Lições Críticas de Implementação e Boas Práticas (Aprendizados Recentes)
+## 11. Lições Críticas de Implementação e Boas Práticas (Aprendizados Recentes)
 
-### 12.1 Regra de Estilo Único (Anti-Duplicate Stylesheet Trap)
+### 11.1 Regra de Estilo Único (Anti-Duplicate Stylesheet Trap)
 - **NUNCA** adicione blocos `<style>` secundários ou duplicados no final do arquivo HTML (próximo ao `</body>`).
 - O CSS no final do arquivo tem maior especificidade e sobrescreve todas as variáveis do `<head>`, reativando acidentalmente temas legados (como o tema neon ou regras antigas de layout).
 - Todas as regras de componentes (incluindo `.btn-home`, `.bmc-float`, modais e botões flutuantes) devem residir exclusivamente dentro do bloco `<style>` principal no `<head>`.
 
-### 12.2 Contenção Universal de SVGs (Prevenção de Ícones Gigantes)
+### 11.2 Contenção Universal de SVGs (Prevenção de Ícones Gigantes)
 - Ícones SVG inline sem dimensões explícitas se expandem para 100% da largura do contêiner flex/block no WebKit/Blink (como aconteceu em modais e cabeçalhos).
 - Todo SVG deve ter atributos explícitos (ex: `width="22" height="22"`) e classes padrão (`class="icon-inline"`, `class="btn-icon"`, `class="icon-h1"`).
 - Inclua sempre a regra global de contenção no CSS:
@@ -253,7 +218,7 @@ Ao integrar rolagem física 3D de dados em qualquer bot:
   }
   ```
 
-### 12.3 Dials, Bússolas e Mostradores Circulares (Transformações Polares)
+### 11.3 Dials, Bússolas e Mostradores Circulares (Transformações Polares)
 - Ao construir seletores circulares, roletas ou bússolas (ex: 12 posições de Tiny Epic Kingdoms ou mostradores de movimento em Heroscape), **evite** aninhar rotações em elementos com `inset: 0` ou `width: 100%`, pois o cálculo da caixa delimitadora colapsa para `0x0` em navegadores mobile/WebKit, agrupando todos os rótulos no topo (12 horas).
 - Use o padrão de **Coordenadas Polares** ancorado no centro do mostrador:
   ```html
@@ -273,17 +238,17 @@ Ao integrar rolagem física 3D de dados em qualquer bot:
   ```
   A rotação `rotate(θ) translateY(-R) rotate(-θ)` garante que o item viaje ao raio $R$ no ângulo exato $\theta$ e mantenha o texto perfeitamente horizontal e legível.
 
-### 12.4 Chips de Ação (Separação de Textos e Cores por Jogador)
+### 11.4 Chips de Ação (Separação de Textos e Cores por Jogador)
 - Em jogos onde o jogador e o bot compartilham ou disputam fichas de ação na tela (ex: Tiny Epic Kingdoms), diferencie as cores dos chips ativados:
   - Jogador: Bordô / Carmesim (`.by-you`).
   - Bot: Verde Floresta / Musgo (`.by-ai`).
 - O nome da ação e o nome de quem executou **devem** ser renderizados em tags de bloco separadas (`.chip-name` e `.chip-tag`), impedindo que textos concatenados se unam (ex: `"COMERCIARO JOGADOR BOT"`).
 
-### 12.5 Layouts de Mão e Grid de Jogo
+### 11.5 Layouts de Mão e Grid de Jogo
 - Nunca aplique `display: grid; grid-template-columns: 1fr 1fr;` no contêiner raiz de jogo (`#view-game`) caso ele contenha a mão de cartas (`.hand-container`), pois isso esmaga as cartas em uma coluna única.
 - O `#view-game` deve manter fluxo vertical flexível com `overflow-y: auto`, deixando a grade interna de cartas se autoajustar via `repeat(auto-fit, minmax(240px, 1fr))`.
 
-## 13. Regra de Ambientes e Git Workflow Obrigatório (Staging-First)
+## 12. Regra de Ambientes e Git Workflow Obrigatório (Staging-First)
 
 Para evitar incidentes em produção, o projeto adota um fluxo estrito de dois ambientes:
 
@@ -307,7 +272,7 @@ Para evitar incidentes em produção, o projeto adota um fluxo estrito de dois a
 3. **Deploy em Produção (Somente com a skill `deploy-to-prod`)**:
    - Apenas promova código para `main` quando o usuário testar e autorizar expressamente a publicação em produção, utilizando a skill dedicada `deploy-to-prod`.
 
-## 14. Kit de Tema Compartilhado e Regressão Visual (Obrigatório)
+## 13. Kit de Tema Compartilhado e Regressão Visual (Obrigatório)
 
 Para evitar os bugs recorrentes de "o redesign quebrou o layout de novo" (botões gigantes, ícones estourados, CSS duplicado sobrescrevendo o tema), qualquer agente de IA que crie ou atualize um bot **DEVE**:
 
