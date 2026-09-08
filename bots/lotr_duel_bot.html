@@ -954,6 +954,117 @@
       border-color: transparent;
     }
 
+    /* Setup Allies Picker */
+    .setup-allies-picker {
+      margin-top: 14px;
+      background: var(--surface-2);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .setup-allies-picker-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+    .setup-allies-picker-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #38bdf8;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .allies-count-badge {
+      background: var(--bg);
+      border: 1px solid #38bdf8;
+      color: #38bdf8;
+      font-size: 0.78rem;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: 12px;
+    }
+    .allies-count-badge.valid {
+      border-color: var(--green);
+      color: var(--green);
+    }
+    .allies-count-badge.invalid {
+      border-color: var(--red);
+      color: #fca5a5;
+    }
+    .setup-allies-picker-hint {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      line-height: 1.35;
+      margin: 0;
+    }
+    .setup-allies-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .setup-ally-card {
+      background: var(--surface-1);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      cursor: pointer;
+      user-select: none;
+      transition: border-color 0.2s, transform 0.15s, background-color 0.2s;
+    }
+    .setup-ally-card:hover {
+      border-color: rgba(56, 189, 248, 0.6);
+      transform: translateY(-1px);
+    }
+    .setup-ally-card.selected {
+      background: rgba(56, 189, 248, 0.12);
+      border-color: #38bdf8;
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.25);
+    }
+    .setup-ally-card-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #f0f9ff;
+    }
+    .setup-ally-checkbox {
+      width: 18px;
+      height: 18px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg);
+      transition: all 0.2s;
+    }
+    .setup-ally-card.selected .setup-ally-checkbox {
+      background: #0284c7;
+      border-color: #38bdf8;
+      color: #fff;
+    }
+    .setup-ally-card-preview {
+      font-size: 0.72rem;
+      line-height: 1.3;
+      color: var(--text-dim);
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .setup-ally-card-preview strong {
+      color: #bae6fd;
+    }
+
     /* Allies Compendium Modal */
     .compendium-tabs {
       display: flex;
@@ -1322,6 +1433,25 @@
       <details id="setupAlliesSection" style="display:none;" open>
         <summary><svg class="icon-inline" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></svg> <span data-i18n="setupAlliesTitle">6. Expansão Aliados (Poder & Aliados)</span></summary>
         <div class="setup-desc" data-i18n-html="setupAlliesDesc"></div>
+        <div class="setup-allies-picker">
+          <div class="setup-allies-picker-header">
+            <span class="setup-allies-picker-title">
+              <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              <span data-i18n="setupAlliesPickerTitle">Aliados do Bot (Escolha 3)</span>
+            </span>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span id="alliesSelectedCountBadge" class="allies-count-badge">3 / 3</span>
+              <button class="btn-secondary" type="button" onclick="randomizeBotAllies()" style="padding:4px 8px; font-size:0.75rem; display:inline-flex; align-items:center; gap:4px;">
+                <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v6h6M20 20v-6h-6"/><path d="M4 10a8 8 0 0 1 14-5.3M20 14a8 8 0 0 1-14 5.3"/></svg>
+                <span data-i18n="btnRandomizeAllies">Sortear</span>
+              </button>
+            </div>
+          </div>
+          <p class="setup-allies-picker-hint" data-i18n="setupAlliesPickerHint">Selecione as 3 cartas de Aliados sorteadas para o Bot na mesa física (ou use o botão Sortear):</p>
+          <div id="setupAlliesGrid" class="setup-allies-grid">
+            <!-- Dynamic selection cards -->
+          </div>
+        </div>
       </details>
 
       <!-- Start Button -->
@@ -2221,7 +2351,11 @@
         alliesToggleTitle: 'Expansão Aliados (Allies)',
         alliesToggleDesc: 'Habilita os 14 Aliados da Sociedade e de Sauron com Fichas de Poder e regras automáticas para o Automa.',
         setupAlliesTitle: '6. Expansão Aliados (Poder & Aliados)',
-        setupAlliesDesc: '<ul><li><strong>Fichas de Poder Iniciais:</strong> O jogador humano recebe <strong>1 ficha de Poder</strong> e o Bot recebe <strong>1 ficha de Poder</strong>.</li><li><strong>Aliados Secretos:</strong> O jogador humano sorteia <strong>3 cartas de Aliados</strong> da sua facção (viradas para baixo). O aplicativo já sorteia automaticamente 3 Aliados secretos para o Bot!</li><li><strong>Fichas de Poder no Capítulo 1:</strong> Posicione <strong>2 fichas de Poder</strong> na Fileira 2 (3 cartas viradas para baixo): coloque 1 ficha na 1ª carta (esquerda) e 1 ficha na 3ª carta (direita).</li><li><strong>Como pegar Poder:</strong> Sempre que qualquer jogador revelar uma carta da estrutura que possua uma ficha de Poder em cima, ele <strong>pega a ficha de Poder</strong> para sua reserva antes de virar a carta.</li></ul>',
+        setupAlliesDesc: '<ul><li><strong>Fichas de Poder Iniciais:</strong> O jogador humano recebe <strong>1 ficha de Poder</strong> e o Bot recebe <strong>1 ficha de Poder</strong>.</li><li><strong>Aliados Secretos:</strong> O jogador humano sorteia <strong>3 cartas de Aliados</strong> da sua facção (viradas para baixo). Para o Bot, selecione abaixo as 3 cartas sorteadas ou use o botão Sortear!</li><li><strong>Fichas de Poder no Capítulo 1:</strong> Posicione <strong>2 fichas de Poder</strong> na Fileira 2 (3 cartas viradas para baixo): coloque 1 ficha na 1ª carta (esquerda) e 1 ficha na 3ª carta (direita).</li><li><strong>Como pegar Poder:</strong> Sempre que qualquer jogador revelar uma carta da estrutura que possua uma ficha de Poder em cima, ele <strong>pega a ficha de Poder</strong> para sua reserva antes de virar a carta.</li></ul>',
+        setupAlliesPickerTitle: 'Aliados do Bot (Escolha 3)',
+        setupAlliesPickerHint: 'Selecione as 3 cartas de Aliados sorteadas para o Bot na mesa física (ou use o botão Sortear):',
+        btnRandomizeAllies: 'Sortear 3',
+        alliesSelectedCount: '{count} / 3 selecionados',
         powerTrackerLabel: 'Poder',
         powerSubtext: 'Fichas de Poder',
         botAlliesTitle: 'Aliados do Líder (Automa)',
@@ -2271,28 +2405,27 @@
         leaderVpLabel: 'Coins',
         vpSubtext: 'Reserve for Landmarks',
         ageTrackerLabel: 'Chapter',
-        scienceTrackerTitle: 'Leader Race Chips',
+        scienceTrackerTitle: 'Race Symbols (Green Cards)',
         panelSupremacyTitle: 'Supremacy (Symbols)',
-        panelSupremacyDesc: 'Mark the race symbols present on the bot\'s cards.',
+        panelSupremacyDesc: 'Track the race symbols collected by the bot.',
         panelAllianceTitle: 'Alliance Tokens (Reminders)',
-        panelAllianceDesc: 'Click a Race to see its passive rules.',
-        actionLogTitle: 'Action History',
-        endGameBtn: 'End Match / Region Majority',
+        panelAllianceDesc: 'Click a Race to review its passive rules.',
+        actionLogTitle: 'Action Log',
+        endGameBtn: 'End Match / Region Tiebreak',
         newGameBtn: 'New Game',
         abandonBtn: 'Abandon',
         restartMatchBtn: 'Abandon and Restart Match',
-        creditsFooter: 'Based on the official solo mode of <strong>Lord of the Rings: Duel for Middle-earth</strong> (free P&P expansion).<br>Lord of the Rings: Duel for Middle-earth © Repos Production, designed by Antoine Bauza and Bruno Cathala.<br>Unofficial fan-made web companion for the board game community.',
+        creditsFooter: 'Based on the official solo mode for <strong>Lord of the Rings: Duel for Middle-earth</strong> (free P&P expansion).<br>Lord of the Rings: Duel for Middle-earth © Repos Production, designed by Antoine Bauza and Bruno Cathala.<br>Unofficial web app made by fans for the community.',
         kofiBtn: 'Support on Ko-fi',
-        helpModalTitle: 'Rules & Automa Guide',
+        helpModalTitle: 'Automa Rules & Guide',
         helpHowItWorksTitle: 'How the Automa Works',
-        helpHowItWorksDesc: '<p><strong>BEFORE flipping a card:</strong> The Bot buys <strong>ONE</strong> Landmark tile if it has enough coins (Cost = 7 / 5 / 2 coins in Chapter 1 / 2 / 3 + 1 coin per Bot Fortress pawn on the board; the Dwarves token waives the Fortress surcharge). It prioritizes a Landmark granting instant Conquer Victory (7th region); otherwise rolls a 1d6. If it buys a Landmark, its turn ends immediately without revealing a Decision card.</p><p>If it did not purchase a Landmark, on the Bot\'s turn:</p><ol style="padding-left:18px; margin-top:6px;"><li>Reveal the top card of the Decision deck.</li><li>Check the <strong>Priority Order</strong> of the indicated colors.</li><li>The Bot takes the <strong>first accessible card</strong> in the structure of that priority color, following the arrow direction (← or →).</li><li>If no priority color is accessible, it takes the first available card regardless of color following the arrow from the bottom row.</li><li>The Bot <strong>never spends coins to acquire cards</strong>, ignores chaining icons, and needs no Skills.</li><li>Check for repeat turn: if the card\'s circular symbol (White Tree or Eye) matches the Leader, the Bot takes another turn immediately!</li></ol>',
+        helpHowItWorksDesc: '<p><strong>BEFORE flipping a card:</strong> The Bot buys <strong>ONE</strong> Landmark if it has enough coins (Cost: 7 / 5 / 2 coins in Chapter 1 / 2 / 3 + 1 coin per Bot Fortress on the board; Dwarves token waives Fortress costs). It prioritizes the Landmark granting Immediate Victory (7th region); otherwise roll the die (1d6). If it buys, the bot\'s turn ends immediately without revealing a Decision card.</p><p>If it does not buy a Landmark, on the Bot\'s turn:</p><ol style="padding-left:18px; margin-top:6px;"><li>Reveal the top card of the Decision Deck.</li><li>Observe the <strong>Priority Order</strong> of indicated colors.</li><li>The Bot takes the <strong>first accessible card</strong> in the structure matching priority, scanning along the arrow (← or →).</li><li>If none of the 3 priority colors are accessible, it takes the first accessible card regardless of color, scanning along the arrow from the base.</li><li>The Bot <strong>acquires the card for free</strong> (ignores coin costs, chain symbols, and Skills).</li><li><strong>Extra Turn:</strong> If Card 1 (White Tree) or Card 2 (Eye) shares the same symbol as the Bot\'s Leader, it takes another turn immediately!</li></ol>',
         helpExtraTurnsTitle: 'Extra Turns',
-        helpExtraTurnsDesc: 'If the revealed Decision card displays a repeat turn symbol (Card 1 with the <strong>White Tree</strong> or Card 2 with the <strong>Eye of Sauron</strong>) and this symbol matches the symbol(s) on the Bot Leader card (or both, for Sauron, Gandalf, and Eowyn\'s Stew), the Bot takes <strong>another turn immediately</strong> after resolving the current card!',
+        helpExtraTurnsDesc: 'If the revealed Decision Card has the repeat turn symbol (Card 1 with <strong>White Tree</strong> or Card 2 with <strong>Eye of Sauron</strong>) and that symbol matches the Bot Leader\'s card (or both, for Sauron, Gandalf, and Eowyn\'s Stew), the Bot plays <strong>another turn immediately</strong> after resolving the current card!',
         helpSupremacyTitle: 'Victory Conditions',
-        helpSupremacyDesc: '<ul><li><strong>Quest of the Ring:</strong> For the Fellowship, reach Mount Doom with Frodo and Sam to destroy the One Ring and win immediately. For Sauron, catch Frodo and Sam with the Nazgûl to seize the Ring and win immediately!</li><li><strong>Support of the Races:</strong> Gather <strong>6 different Race symbols</strong> on your green cards (or Eagle token) to rally Middle-earth and win immediately!</li><li><strong>Conquering Middle-earth:</strong> Be present in all <strong>7 regions</strong> (with a Fortress and/or at least 1 Unit) to dominate Middle-earth and win immediately!</li><li><strong>End of Chapter 3:</strong> If no immediate victory occurs, the player present in the most regions wins (in solo mode, ties are won by the Bot).</li></ul>',
+        helpSupremacyDesc: '<ul><li><strong>Quest of the Ring:</strong> For the Fellowship, guide Frodo and Sam to Mount Doom to destroy the Ring and win immediately. For Sauron, reach Frodo and Sam with the Nazgûl to capture the Ring and win immediately!</li><li><strong>Support of the Races:</strong> Gather <strong>6 distinct Race symbols</strong> across green cards (or Eagle token) to win immediately!</li><li><strong>Conquest of Middle-earth:</strong> If you are present in all <strong>7 regions</strong> (with a Fortress and/or at least 1 Unit), you conquer Middle-earth and win immediately!</li><li><strong>Game End (Chapter 3):</strong> If no immediate victory occurred by the end of Chapter 3, whoever has presence in the most regions wins (in solo mode, the Bot wins ties).</li></ul>',
         helpLeadersSummaryTitle: 'Leaders Summary',
-        
-        gotItBtn: 'Got it',
+        gotItBtn: 'Understood',
         btnRollDie: 'Roll Die',
         btnLandmarks: 'Landmarks',
         btnRingTokens: 'Ring/Tokens',
@@ -2352,7 +2485,11 @@
         alliesToggleTitle: 'Allies Expansion',
         alliesToggleDesc: 'Enables 14 Fellowship and Sauron Allies with Power tokens and automated Automa triggers.',
         setupAlliesTitle: '6. Allies Expansion (Power & Allies)',
-        setupAlliesDesc: '<ul><li><strong>Starting Power Tokens:</strong> The human player receives <strong>1 Power token</strong> and the Bot receives <strong>1 Power token</strong>.</li><li><strong>Secret Allies:</strong> The human player draws <strong>3 Ally cards</strong> of their faction facedown. The app automatically draws 3 secret Allies for the Bot!</li><li><strong>Chapter 1 Power Tokens:</strong> Place <strong>2 Power tokens</strong> on Row 2 (3 facedown cards): 1 token on the 1st card (left) and 1 token on the 3rd card (right).</li><li><strong>Claiming Power:</strong> Whenever a card with a Power token is revealed from the pyramid, whoever reveals it <strong>takes the Power token</strong> into their pool before flipping the card.</li></ul>',
+        setupAlliesDesc: '<ul><li><strong>Starting Power Tokens:</strong> The human player receives <strong>1 Power token</strong> and the Bot receives <strong>1 Power token</strong>.</li><li><strong>Secret Allies:</strong> The human player draws <strong>3 Ally cards</strong> of their faction facedown. For the Bot, select the 3 physically drawn Ally cards below or use the Randomize button!</li><li><strong>Chapter 1 Power Tokens:</strong> Place <strong>2 Power tokens</strong> on Row 2 (3 facedown cards): 1 token on the 1st card (left) and 1 token on the 3rd card (right).</li><li><strong>Claiming Power:</strong> Whenever a card with a Power token is revealed from the pyramid, whoever reveals it <strong>takes the Power token</strong> into their pool before flipping the card.</li></ul>',
+        setupAlliesPickerTitle: "Bot's Allies (Choose 3)",
+        setupAlliesPickerHint: 'Select the 3 Ally cards drawn for the Bot on the physical table (or use the Randomize button):',
+        btnRandomizeAllies: 'Randomize 3',
+        alliesSelectedCount: '{count} / 3 selected',
         powerTrackerLabel: 'Power',
         powerSubtext: 'Power Tokens',
         botAlliesTitle: "Leader's Allies (Automa)",
@@ -2393,6 +2530,7 @@
       useAllies: false,
       botPowerTokens: 1,
       botAllies: [],
+      selectedBotAllyIds: [],
       suggestedAllyAction: null,
       compendiumTab: 'fellowship',
       logs: []
@@ -2432,6 +2570,7 @@
       renderLeaderGrid();
       renderScienceChips();
       if (state.useAllies) {
+        renderSetupAlliesPicker();
         renderBotAllies();
       }
       updateUI();
@@ -2526,8 +2665,17 @@
     }
 
     function selectLeader(key) {
+      const oldFaction = LEADERS[state.selectedLeader]?.faction;
       state.selectedLeader = key;
+      const newFaction = LEADERS[key]?.faction;
       renderLeaderGrid();
+      if (oldFaction !== newFaction) {
+        state.selectedBotAllyIds = [];
+        ensureSetupAlliesSelected();
+      }
+      if (state.useAllies) {
+        renderSetupAlliesPicker();
+      }
       saveState();
     }
 
@@ -2570,6 +2718,10 @@
       document.getElementById('setup-screen').style.display = 'flex';
       document.getElementById('game-area').style.display = 'none';
       document.getElementById('resetBtn').style.display = 'none';
+      if (state.useAllies) {
+        ensureSetupAlliesSelected();
+        renderSetupAlliesPicker();
+      }
     }
 
     function showGameScreen() {
@@ -2743,15 +2895,104 @@
       const botPanel = document.getElementById('botAlliesPanel');
       if (botPanel) botPanel.style.display = checked ? 'flex' : 'none';
 
+      if (checked) {
+        ensureSetupAlliesSelected();
+        renderSetupAlliesPicker();
+      }
+
       if (shouldSave) saveState();
+    }
+
+    function ensureSetupAlliesSelected() {
+      const faction = LEADERS[state.selectedLeader]?.faction || 'sauron';
+      const available = ALLIES_DATA[faction] || [];
+      const validIds = new Set(available.map(a => a.id));
+
+      let current = (state.selectedBotAllyIds || []).filter(id => validIds.has(id));
+
+      if (current.length < 3) {
+        const remaining = available.filter(a => !current.includes(a.id));
+        const shuffled = shuffleArray([...remaining]);
+        current = current.concat(shuffled.slice(0, 3 - current.length).map(a => a.id));
+      } else if (current.length > 3) {
+        current = current.slice(0, 3);
+      }
+      state.selectedBotAllyIds = current;
+    }
+
+    function randomizeBotAllies() {
+      const faction = LEADERS[state.selectedLeader]?.faction || 'sauron';
+      const available = ALLIES_DATA[faction] || [];
+      const shuffled = shuffleArray([...available]);
+      state.selectedBotAllyIds = shuffled.slice(0, 3).map(a => a.id);
+      playLotrSfx('card-draw', { volume: 0.5 });
+      renderSetupAlliesPicker();
+      saveState();
+    }
+
+    function toggleSelectBotAlly(allyId) {
+      if (!state.selectedBotAllyIds) state.selectedBotAllyIds = [];
+      const idx = state.selectedBotAllyIds.indexOf(allyId);
+      if (idx > -1) {
+        state.selectedBotAllyIds.splice(idx, 1);
+      } else {
+        if (state.selectedBotAllyIds.length >= 3) {
+          state.selectedBotAllyIds.shift();
+        }
+        state.selectedBotAllyIds.push(allyId);
+      }
+      playLotrSfx('token-place', { volume: 0.4 });
+      renderSetupAlliesPicker();
+      saveState();
+    }
+
+    function renderSetupAlliesPicker() {
+      const container = document.getElementById('setupAlliesGrid');
+      if (!container) return;
+      container.innerHTML = '';
+
+      const faction = LEADERS[state.selectedLeader]?.faction || 'sauron';
+      const allies = ALLIES_DATA[faction] || [];
+      const isPt = state.lang === 'pt';
+      const selected = new Set(state.selectedBotAllyIds || []);
+
+      const countBadge = document.getElementById('alliesSelectedCountBadge');
+      if (countBadge) {
+        countBadge.textContent = `${selected.size} / 3`;
+        countBadge.className = `allies-count-badge ${selected.size === 3 ? 'valid' : 'invalid'}`;
+      }
+
+      allies.forEach(ally => {
+        const isSelected = selected.has(ally.id);
+        const card = document.createElement('div');
+        card.className = `setup-ally-card ${isSelected ? 'selected' : ''}`;
+        card.onclick = () => toggleSelectBotAlly(ally.id);
+
+        const name = isPt ? ally.namePt : ally.nameEn;
+        const enterRule = isPt ? ally.botEnterRulePt : ally.botEnterRuleEn;
+        const exitRule = isPt ? ally.botExitRulePt : ally.botExitRuleEn;
+
+        card.innerHTML = `
+          <div class="setup-ally-card-head">
+            <span>${name}</span>
+            <div class="setup-ally-checkbox">
+              ${isSelected ? '<svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="width:12px;height:12px;"><path d="M20 6L9 17l-5-5"/></svg>' : ''}
+            </div>
+          </div>
+          <div class="setup-ally-card-preview">
+            <div><strong>${isPt ? 'Entrada (1 Poder):' : 'Enter (1 Power):'}</strong> ${enterRule}</div>
+            <div><strong>${isPt ? 'Saída (2 Poderes):' : 'Exit (2 Power):'}</strong> ${exitRule}</div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
     }
 
     function initBotAllies() {
       const faction = LEADERS[state.selectedLeader]?.faction || 'sauron';
-      const pool = [...ALLIES_DATA[faction]];
-      const shuffled = shuffleArray(pool);
-      state.botAllies = shuffled.slice(0, 3).map(a => ({
-        id: a.id,
+      ensureSetupAlliesSelected();
+      state.botAllies = state.selectedBotAllyIds.map(id => ({
+        id: id,
         faction: faction,
         status: 'hidden'
       }));
