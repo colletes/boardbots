@@ -2397,14 +2397,6 @@
       compendiumTab: 'fellowship',
       logs: []
     };
-      currentCard: null,
-      extraTurnPending: false,
-      military: 0, // -9 (Player win) to +9 (Leader win)
-      leaderVp: 0,
-      currentAge: '1',
-      scienceSymbols: {}, // symbolId: true/false
-      logs: []
-    };
 
     /* ==========================================================
        4. INITIALIZATION & I18N ENGINE
@@ -2416,6 +2408,13 @@
       applyI18n();
       renderLeaderGrid();
       renderScienceChips();
+
+      const toggleEl = document.getElementById('alliesExpansionToggle');
+      if (toggleEl) {
+        toggleEl.checked = !!state.useAllies;
+        toggleAlliesExpansion(!!state.useAllies, false);
+      }
+
       updateUI();
       if (state.inGame) {
         showGameScreen();
@@ -2432,6 +2431,9 @@
       applyI18n();
       renderLeaderGrid();
       renderScienceChips();
+      if (state.useAllies) {
+        renderBotAllies();
+      }
       updateUI();
       if (state.inGame) {
         showGameScreen();
@@ -2544,6 +2546,15 @@
       state.currentAge = '1';
       state.scienceSymbols = {};
       state.logs = [];
+
+      if (state.useAllies) {
+        state.botPowerTokens = 1;
+        initBotAllies();
+      } else {
+        state.botPowerTokens = 0;
+        state.botAllies = [];
+        state.suggestedAllyAction = null;
+      }
       
       playLotrSfx('lotr/ring-whisper', { volume: 0.7 });
       addLog({ type: 'start', leader: LEADERS[state.selectedLeader].name });
@@ -2689,6 +2700,14 @@
         extraTurnBadge.style.display = 'none';
         state.extraTurnPending = false;
       }
+
+      // Allies Expansion: Check if Bot calls upon an ally
+      if (state.useAllies) {
+        checkBotAllySuggestion(card);
+      } else {
+        const allyBadge = document.getElementById('allyActionBadge');
+        if (allyBadge) allyBadge.style.display = 'none';
+      }
     }
 
     function resolveCard() {
@@ -2698,6 +2717,10 @@
       addLog({ type: 'resolved', age: state.currentAge, cardId: card.id, extra: extra });
       playLotrSfx('token-place', { volume: 0.5 });
 
+      if (state.useAllies) {
+        dismissAllySuggestion();
+      }
+
       if (extra) {
         state.extraTurnPending = false;
         flipNextCard();
@@ -2706,6 +2729,311 @@
         document.getElementById('resolveBtn').style.display = 'none';
       }
       saveState();
+    }
+
+    /* ==========================================================
+       ALLIES EXPANSION ENGINE
+    ========================================================== */
+    function toggleAlliesExpansion(checked, shouldSave = true) {
+      state.useAllies = checked;
+      const section = document.getElementById('setupAlliesSection');
+      if (section) section.style.display = checked ? 'block' : 'none';
+      const powerBox = document.getElementById('powerBox');
+      if (powerBox) powerBox.style.display = checked ? 'flex' : 'none';
+      const botPanel = document.getElementById('botAlliesPanel');
+      if (botPanel) botPanel.style.display = checked ? 'flex' : 'none';
+
+      if (shouldSave) saveState();
+    }
+
+    function initBotAllies() {
+      const faction = LEADERS[state.selectedLeader]?.faction || 'sauron';
+      const pool = [...ALLIES_DATA[faction]];
+      const shuffled = shuffleArray(pool);
+      state.botAllies = shuffled.slice(0, 3).map(a => ({
+        id: a.id,
+        faction: faction,
+        status: 'hidden'
+      }));
+      state.botPowerTokens = 1;
+      state.suggestedAllyAction = null;
+    }
+
+    function adjustPower(delta) {
+      state.botPowerTokens = Math.max(0, (state.botPowerTokens || 0) + delta);
+      playLotrSfx('token-place', { volume: 0.5 });
+      updateUI();
+      if (state.currentCard) {
+        checkBotAllySuggestion(state.currentCard);
+      }
+      saveState();
+    }
+
+    function checkBotAllySuggestion(card) {
+      if (!state.useAllies) return;
+      const banner = document.getElementById('allyActionBadge');
+      if (!banner) return;
+
+      // Rule approved by user: Bot attempts to play ally when repeat symbol appears on card (tree or eye), even if not leader's repeat symbol
+      const hasRepeat = card && card.repeat && card.repeat !== 'none';
+      if (!hasRepeat) {
+        banner.style.display = 'none';
+        state.suggestedAllyAction = null;
+        return;
+      }
+
+      // Check if Bot can do an Exit action (costs 2 power tokens, requires active ally)
+      const activeAllies = (state.botAllies || []).filter(a => a.status === 'active');
+      const hiddenAllies = (state.botAllies || []).filter(a => a.status === 'hidden');
+      const power = state.botPowerTokens || 0;
+
+      if (power >= 2 && activeAllies.length > 0) {
+        // Exit action takes precedence
+        const ally = activeAllies[0];
+        state.suggestedAllyAction = {
+          type: 'exit',
+          allyId: ally.id,
+          cost: 2,
+          faction: ally.faction
+        };
+      } else if (power >= 1 && hiddenAllies.length > 0) {
+        // Enter action
+        const ally = hiddenAllies[0];
+        state.suggestedAllyAction = {
+          type: 'enter',
+          allyId: ally.id,
+          cost: 1,
+          faction: ally.faction
+        };
+      } else {
+        banner.style.display = 'none';
+        state.suggestedAllyAction = null;
+        return;
+      }
+
+      // Display banner
+      const isPt = state.lang === 'pt';
+      const dict = I18N[state.lang] || I18N.pt;
+      const action = state.suggestedAllyAction;
+      const cardData = ALLIES_DATA[action.faction]?.find(a => a.id === action.allyId);
+      if (!cardData) return;
+
+      const allyName = isPt ? cardData.namePt : cardData.nameEn;
+      const isEnter = action.type === 'enter';
+      const effectText = isEnter ? (isPt ? cardData.enterPt : cardData.enterEn) : (isPt ? cardData.exitPt : cardData.exitEn);
+      const ruleText = isEnter ? (isPt ? cardData.botEnterRulePt : cardData.botEnterRuleEn) : (isPt ? cardData.botExitRulePt : cardData.botExitRuleEn);
+
+      let customHelper = '';
+      if (cardData.id === 'cavetroll') {
+        customHelper = `<div style="margin-top:6px; background:rgba(0,0,0,0.3); padding:6px 8px; border-radius:4px; font-size:0.78rem;">
+          🎲 <strong>${isPt ? 'Alvo do Cave-Troll (1d3):' : 'Cave-Troll Target (1d3):'}</strong>
+          <button class="btn-secondary" onclick="rollDiceBox('race3')" style="margin-left:6px; padding:2px 8px; font-size:0.75rem;">${isPt ? 'Sortear 1d3' : 'Roll 1d3'}</button>
+        </div>`;
+      } else if (cardData.id === 'grima') {
+        const arrowDir = card.fallbackDir === 'left' ? '← ' + (isPt ? 'Direita para Esquerda' : 'Right to Left') : '→ ' + (isPt ? 'Esquerda para Direita' : 'Left to Right');
+        customHelper = `<div style="margin-top:6px; background:rgba(0,0,0,0.3); padding:6px 8px; border-radius:4px; font-size:0.78rem;">
+          ➔ <strong>${isPt ? 'Carta Alvo na Estrutura (Seta):' : 'Target Card in Pyramid (Arrow):'}</strong> ${arrowDir}
+        </div>`;
+      }
+
+      const repeatName = card.repeat === 'eye' ? (isPt ? 'Olho de Sauron' : 'Eye of Sauron') : (isPt ? 'Árvore Branca' : 'White Tree');
+      document.getElementById('allyActionTitle').textContent = `${dict.allyActionBannerTitle} • ${repeatName}`;
+      document.getElementById('allyActionContent').innerHTML = `
+        <div><strong>${isEnter ? (isPt ? 'Convocar Entrada:' : 'Call upon Enter:') : (isPt ? 'Ativar Saída:' : 'Trigger Exit:')}</strong> <span style="color:#bae6fd; font-weight:700;">${allyName}</span> (${action.cost} ${isPt ? 'Poder' : 'Power'})</div>
+        <div style="margin-top:4px; color:#f0f9ff;">${effectText}</div>
+        <div style="margin-top:4px; color:#93c5fd; font-size:0.76rem;"><em>${ruleText}</em></div>
+        ${customHelper}
+      `;
+      document.getElementById('btnExecuteAllyText').textContent = isEnter
+        ? `${isPt ? 'Convocar' : 'Call'} ${allyName} (-${action.cost})`
+        : `${isPt ? 'Finalizar' : 'Exit'} ${allyName} (-${action.cost})`;
+
+      banner.style.display = 'block';
+    }
+
+    function executeSuggestedAlly() {
+      if (!state.suggestedAllyAction) return;
+      const { type, allyId, cost, faction } = state.suggestedAllyAction;
+
+      state.botPowerTokens = Math.max(0, (state.botPowerTokens || 0) - cost);
+      const ally = (state.botAllies || []).find(a => a.id === allyId);
+      if (ally) {
+        ally.status = type === 'enter' ? 'active' : 'discarded';
+      }
+
+      const cardData = ALLIES_DATA[faction]?.find(a => a.id === allyId);
+      const isPt = state.lang === 'pt';
+      const allyName = cardData ? (isPt ? cardData.namePt : cardData.nameEn) : allyId;
+      addLog({ type: 'ally', allyName: allyName, actionType: type, cost: cost });
+
+      // Special automated bonus if Tom Bombadil
+      if (allyId === 'tombombadil') {
+        if (type === 'enter') adjustCoins(3);
+        else if (type === 'exit') adjustCoins(5);
+      }
+
+      playLotrSfx('lotr/ring-whisper', { volume: 0.7 });
+      state.suggestedAllyAction = null;
+      document.getElementById('allyActionBadge').style.display = 'none';
+      updateUI();
+      saveState();
+    }
+
+    function dismissAllySuggestion() {
+      state.suggestedAllyAction = null;
+      const banner = document.getElementById('allyActionBadge');
+      if (banner) banner.style.display = 'none';
+      saveState();
+    }
+
+    function manualTriggerAlly(allyId, type) {
+      const ally = (state.botAllies || []).find(a => a.id === allyId);
+      if (!ally) return;
+
+      const cost = type === 'enter' ? 1 : 2;
+      if ((state.botPowerTokens || 0) < cost) return;
+
+      state.botPowerTokens -= cost;
+      ally.status = type === 'enter' ? 'active' : 'discarded';
+
+      const cardData = ALLIES_DATA[ally.faction]?.find(a => a.id === allyId);
+      const isPt = state.lang === 'pt';
+      const allyName = cardData ? (isPt ? cardData.namePt : cardData.nameEn) : allyId;
+      addLog({ type: 'ally', allyName: allyName, actionType: type, cost: cost });
+
+      if (allyId === 'tombombadil') {
+        if (type === 'enter') adjustCoins(3);
+        else if (type === 'exit') adjustCoins(5);
+      }
+
+      playLotrSfx('lotr/ring-whisper', { volume: 0.7 });
+      if (state.suggestedAllyAction && state.suggestedAllyAction.allyId === allyId) {
+        dismissAllySuggestion();
+      }
+
+      updateUI();
+      saveState();
+    }
+
+    function renderBotAllies() {
+      const container = document.getElementById('botAlliesGrid');
+      if (!container) return;
+      container.innerHTML = '';
+      if (!state.useAllies || !state.botAllies || state.botAllies.length === 0) return;
+
+      const isPt = state.lang === 'pt';
+      const dict = I18N[state.lang] || I18N.pt;
+      const power = state.botPowerTokens || 0;
+
+      state.botAllies.forEach(ally => {
+        const cardData = ALLIES_DATA[ally.faction]?.find(a => a.id === ally.id);
+        if (!cardData) return;
+
+        const allyName = isPt ? cardData.namePt : cardData.nameEn;
+        const cardEl = document.createElement('div');
+        const statusClass = ally.status === 'active' ? 'active-in-play' : ally.status === 'discarded' ? 'discarded-used' : '';
+        cardEl.className = `ally-card ${statusClass}`;
+
+        let statusTag = '';
+        let bodyHtml = '';
+        let actionsHtml = '';
+
+        if (ally.status === 'hidden') {
+          statusTag = `<span class="ally-status-tag ally-tag-hidden">${dict.allyStatusHidden}</span>`;
+          bodyHtml = `
+            <div style="font-weight:600; color:#38bdf8; margin-bottom:2px;">${isPt ? 'Entrada (1 Poder):' : 'Enter (1 Power):'}</div>
+            <div>${isPt ? cardData.enterPt : cardData.enterEn}</div>
+            <div style="color:var(--text-dim); margin-top:3px; font-size:0.74rem;"><em>${isPt ? cardData.botEnterRulePt : cardData.botEnterRuleEn}</em></div>
+          `;
+          actionsHtml = `
+            <button class="btn-ally-action btn-ally-enter" ${power < 1 ? 'disabled' : ''} onclick="manualTriggerAlly('${ally.id}', 'enter')">
+              <svg class="icon-inline" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></svg> ${dict.allyEnterBtn}
+            </button>
+          `;
+        } else if (ally.status === 'active') {
+          statusTag = `<span class="ally-status-tag ally-tag-active">${dict.allyStatusActive}</span>`;
+          bodyHtml = `
+            <div style="font-weight:600; color:#4ade80; margin-bottom:2px;">${isPt ? 'Saída (2 Poder):' : 'Exit (2 Power):'}</div>
+            <div>${isPt ? cardData.exitPt : cardData.exitEn}</div>
+            <div style="color:var(--text-dim); margin-top:3px; font-size:0.74rem;"><em>${isPt ? cardData.botExitRulePt : cardData.botExitRuleEn}</em></div>
+          `;
+          actionsHtml = `
+            <button class="btn-ally-action btn-ally-exit" ${power < 2 ? 'disabled' : ''} onclick="manualTriggerAlly('${ally.id}', 'exit')">
+              <svg class="icon-inline" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></svg> ${dict.allyExitBtn}
+            </button>
+          `;
+        } else {
+          statusTag = `<span class="ally-status-tag ally-tag-discarded">${dict.allyStatusDiscarded}</span>`;
+          bodyHtml = `<div style="color:var(--text-dim);">${isPt ? 'Efeito de Saída executado. Aliado fora do jogo.' : 'Exit effect executed. Ally out of play.'}</div>`;
+        }
+
+        cardEl.innerHTML = `
+          <div class="ally-card-head">
+            <span class="ally-card-name">
+              <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              ${allyName}
+            </span>
+            ${statusTag}
+          </div>
+          <div class="ally-card-body">
+            ${bodyHtml}
+          </div>
+          ${actionsHtml ? `<div class="ally-card-actions">${actionsHtml}</div>` : ''}
+        `;
+        container.appendChild(cardEl);
+      });
+    }
+
+    function openAlliesCompendium() {
+      document.getElementById('alliesCompendiumModal').classList.add('open');
+      renderAlliesCompendium();
+    }
+    function closeAlliesCompendium() {
+      document.getElementById('alliesCompendiumModal').classList.remove('open');
+    }
+    function switchCompendiumTab(tab) {
+      state.compendiumTab = tab;
+      document.getElementById('tabFellowshipAllies').classList.toggle('active', tab === 'fellowship');
+      document.getElementById('tabSauronAllies').classList.toggle('active', tab === 'sauron');
+      renderAlliesCompendium();
+    }
+
+    function renderAlliesCompendium() {
+      const container = document.getElementById('compendiumList');
+      if (!container) return;
+      container.innerHTML = '';
+      const tab = state.compendiumTab || 'fellowship';
+      const allies = ALLIES_DATA[tab] || [];
+      const isPt = state.lang === 'pt';
+
+      allies.forEach(card => {
+        const el = document.createElement('div');
+        el.className = 'compendium-card';
+        const name = isPt ? card.namePt : card.nameEn;
+        el.innerHTML = `
+          <div class="compendium-card-name">
+            <span>${name}</span>
+            <span style="font-size:0.75rem; color:var(--text-dim); text-transform:uppercase;">${tab === 'fellowship' ? (isPt ? 'Sociedade' : 'Fellowship') : 'Sauron'}</span>
+          </div>
+          <div class="compendium-effect-box" style="border-left:3px solid #38bdf8;">
+            <div class="compendium-effect-tag" style="color:#38bdf8;">
+              <svg class="icon-inline" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></svg>
+              ${isPt ? 'Entrada (1 Poder):' : 'Enter (1 Power):'}
+            </div>
+            <div>${isPt ? card.enterPt : card.enterEn}</div>
+            <div style="font-size:0.74rem; color:var(--text-dim); margin-top:2px;"><strong>${isPt ? 'Regra do Bot:' : 'Bot Rule:'}</strong> ${isPt ? card.botEnterRulePt : card.botEnterRuleEn}</div>
+          </div>
+          <div class="compendium-effect-box" style="border-left:3px solid #4ade80;">
+            <div class="compendium-effect-tag" style="color:#4ade80;">
+              <svg class="icon-inline" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></svg>
+              ${isPt ? 'Saída (2 Poder):' : 'Exit (2 Power):'}
+            </div>
+            <div>${isPt ? card.exitPt : card.exitEn}</div>
+            <div style="font-size:0.74rem; color:var(--text-dim); margin-top:2px;"><strong>${isPt ? 'Regra do Bot:' : 'Bot Rule:'}</strong> ${isPt ? card.botExitRulePt : card.botExitRuleEn}</div>
+          </div>
+        `;
+        container.appendChild(el);
+      });
     }
 
     /* ==========================================================
@@ -2870,6 +3198,20 @@
           : `Chapter ${state.currentAge}: ${baseCost} base coins + ${fortressCost} per Fortress${hasDwarves ? ' (Dwarves: exempt)' : ''}`;
       }
 
+
+      const powerBox = document.getElementById('powerBox');
+      if (powerBox) {
+        powerBox.style.display = state.useAllies ? 'flex' : 'none';
+        const powerVal = document.getElementById('powerVal');
+        if (powerVal) powerVal.textContent = state.botPowerTokens || 0;
+      }
+      const botPanel = document.getElementById('botAlliesPanel');
+      if (botPanel) {
+        botPanel.style.display = state.useAllies ? 'flex' : 'none';
+      }
+      if (state.useAllies) {
+        renderBotAllies();
+      }
 
       renderScienceChips();
       renderLogs();
@@ -3046,6 +3388,10 @@
               .replace('{extra}', log.extra ? dict.logExtraTurnTag : '');
           } else if (log.type === 'age') {
             text = dict.logAge.replace('{age}', log.age);
+          } else if (log.type === 'ally') {
+            text = log.actionType === 'enter'
+              ? dict.logAllyEnter.replace('{name}', log.allyName)
+              : dict.logAllyExit.replace('{name}', log.allyName);
           }
         }
         item.textContent = text;
@@ -3070,6 +3416,19 @@
     }
 
     function openEndAgeModal() {
+      const box = document.getElementById('endAgeAlliesBox');
+      const txt = document.getElementById('endAgeAlliesText');
+      const dict = I18N[state.lang] || I18N.pt;
+      if (box) {
+        if (state.useAllies && state.currentAge !== '3') {
+          box.style.display = 'block';
+          if (txt) {
+            txt.innerHTML = state.currentAge === '1' ? dict.endAgeAlliesCh2 : dict.endAgeAlliesCh3;
+          }
+        } else {
+          box.style.display = 'none';
+        }
+      }
       document.getElementById('endAgeModal').classList.add('open');
     }
     function closeEndAgeModal() {
@@ -3131,6 +3490,11 @@
         state.deck = [];
         state.cardIndex = 0;
         state.currentCard = null;
+        state.botPowerTokens = 1;
+        state.botAllies = [];
+        state.suggestedAllyAction = null;
+        const banner = document.getElementById('allyActionBadge');
+        if (banner) banner.style.display = 'none';
         showSetupScreen();
         saveState();
       }
