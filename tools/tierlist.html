@@ -7654,6 +7654,56 @@ class TournamentEngine {
     this.comparisonCount = data.comparisonCount;
   }
 
+  calcRemainingBattles() {
+    let rem = 0;
+    let nextRuns = [];
+
+    // 1. Current active pair
+    if (this.left && this.right) {
+      const remL = Math.max(0, this.left.length - this.i);
+      const remR = Math.max(0, this.right.length - this.j);
+      if (remL > 0 && remR > 0) {
+        rem += (remL + remR - (remL / (remR + 1)) - (remR / (remL + 1)));
+      }
+      nextRuns.push(this.left.length + this.right.length);
+    }
+
+    // 2. Already completed runs in nextPass
+    for (const list of this.nextPass) {
+      if (list && list.length > 0) nextRuns.push(list.length);
+    }
+
+    // 3. Pending runs in sublists
+    for (let k = 0; k < this.sublists.length; k += 2) {
+      if (k + 1 < this.sublists.length) {
+        const len1 = this.sublists[k].length;
+        const len2 = this.sublists[k + 1].length;
+        rem += (len1 + len2 - (len1 / (len2 + 1)) - (len2 / (len1 + 1)));
+        nextRuns.push(len1 + len2);
+      } else {
+        nextRuns.push(this.sublists[k].length);
+      }
+    }
+
+    // 4. Future passes
+    while (nextRuns.length > 1) {
+      const futureRuns = [];
+      for (let k = 0; k < nextRuns.length; k += 2) {
+        if (k + 1 < nextRuns.length) {
+          const len1 = nextRuns[k];
+          const len2 = nextRuns[k + 1];
+          rem += (len1 + len2 - (len1 / (len2 + 1)) - (len2 / (len1 + 1)));
+          futureRuns.push(len1 + len2);
+        } else {
+          futureRuns.push(nextRuns[k]);
+        }
+      }
+      nextRuns = futureRuns;
+    }
+
+    return Math.max(1, Math.round(rem));
+  }
+
   getNextPair() {
     while (true) {
       if (!this.left && !this.right) {
@@ -7694,13 +7744,18 @@ class TournamentEngine {
         continue;
       }
 
+      const remaining = this.calcRemainingBattles();
+      const currentTotal = this.comparisonCount + remaining;
+      const progress = currentTotal > 0 ? Math.min(99, Math.round((this.comparisonCount / currentTotal) * 100)) : 100;
+
       return {
         done: false,
         itemA: this.left[this.i],
         itemB: this.right[this.j],
-        progress: Math.min(99, Math.round((this.comparisonCount / this.estimatedTotal) * 100)),
+        progress: progress,
         round: this.comparisonCount + 1,
-        total: this.estimatedTotal
+        remaining: remaining,
+        total: currentTotal
       };
     }
   }
@@ -8168,6 +8223,7 @@ function startRankingBattle() {
 }
 
 function renderCurrentMatchup() {
+  if (!currentTournament && window.currentTournament) currentTournament = window.currentTournament;
   if (!currentTournament) return;
   const step = currentTournament.getNextPair();
 
@@ -8180,7 +8236,13 @@ function renderCurrentMatchup() {
   const roundText = document.getElementById('arenaRoundText');
   const percentText = document.getElementById('arenaPercentText');
   const progBar = document.getElementById('arenaProgressBar');
-  if (roundText) roundText.textContent = `Batalha ${step.round} de ~${step.total}`;
+  if (roundText) {
+    if (currentLang === 'en') {
+      roundText.textContent = `Battle ${step.round} of ~${step.total} (~${step.remaining} left)`;
+    } else {
+      roundText.textContent = `Batalha ${step.round} de ~${step.total} (~${step.remaining} restantes)`;
+    }
+  }
   if (percentText) percentText.textContent = `${step.progress}%`;
   if (progBar) progBar.style.width = `${step.progress}%`;
 
@@ -8221,6 +8283,7 @@ function renderCurrentMatchup() {
 }
 
 function chooseFighter(winnerSide) {
+  if (!currentTournament && window.currentTournament) currentTournament = window.currentTournament;
   if (!currentTournament || currentTournament.isAnimating) return;
 
   const isFx = currentTournament.options.fxEnabled;
@@ -8357,6 +8420,7 @@ function executeFightAnimation(winnerSide, attackType, onComplete) {
 }
 
 function chooseTie() {
+  if (!currentTournament && window.currentTournament) currentTournament = window.currentTournament;
   if (!currentTournament || currentTournament.isAnimating) return;
   ArcadeAudio.playTie();
   currentTournament.recordTie();
@@ -8364,6 +8428,7 @@ function chooseTie() {
 }
 
 function undoFighterChoice() {
+  if (!currentTournament && window.currentTournament) currentTournament = window.currentTournament;
   if (!currentTournament || currentTournament.isAnimating) return;
   const ok = currentTournament.undo();
   if (ok) {
