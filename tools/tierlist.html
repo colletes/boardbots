@@ -975,6 +975,24 @@ body {
   background: rgba(56,189,248,0.2);
   border-color: #38bdf8;
 }
+.bgg-external-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #ff9b85;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: none;
+  background: rgba(255,107,74,0.12);
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(255,107,74,0.35);
+  transition: all 0.2s;
+}
+.bgg-external-link:hover {
+  background: rgba(255,107,74,0.22);
+  border-color: #ff9b85;
+}
 .tap-actions-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
@@ -1419,13 +1437,29 @@ footer {
             <span id="detailPlaysVal" class="detail-meta-val">-</span>
           </div>
           <div id="detailScoreRow" class="detail-meta-row" style="display:none;">
-            <span class="detail-meta-label">⭐ Nota Ludopedia:</span>
+            <span id="detailScoreLabel" class="detail-meta-label">⭐ Nota:</span>
             <span id="detailScoreVal" class="detail-meta-val">-</span>
           </div>
-          <div id="detailLinkRow" class="detail-meta-row" style="margin-top:6px;">
-            <a id="detailLudopediaLink" href="#" target="_blank" rel="noopener" class="ludopedia-external-link">
+          <div id="detailBggRankRow" class="detail-meta-row" style="display:none;">
+            <span class="detail-meta-label">🏆 Ranking Geral:</span>
+            <span id="detailBggRankVal" class="detail-meta-val">-</span>
+          </div>
+          <div id="detailBggSubranksRow" class="detail-meta-row" style="display:none;">
+            <span class="detail-meta-label">🎖️ Categorias:</span>
+            <span id="detailBggSubranksVal" class="detail-meta-val">-</span>
+          </div>
+          <div id="detailBggWeightRow" class="detail-meta-row" style="display:none;">
+            <span class="detail-meta-label">⚖️ Peso:</span>
+            <span id="detailBggWeightVal" class="detail-meta-val">-</span>
+          </div>
+          <div id="detailLinksRow" class="detail-meta-row" style="margin-top:8px; display:flex; flex-wrap:wrap; gap:8px;">
+            <a id="detailLudopediaLink" href="#" target="_blank" rel="noopener" class="ludopedia-external-link" style="display:none;">
               <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-              <span>Ver página na Ludopedia</span>
+              <span>Ver na Ludopedia</span>
+            </a>
+            <a id="detailBggLink" href="#" target="_blank" rel="noopener" class="bgg-external-link" style="display:none;">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+              <span>Ver no BGG</span>
             </a>
           </div>
         </div>
@@ -2165,6 +2199,63 @@ function parseBggThingItem(item) {
     .filter(Boolean)
     .join(', ');
 
+  // Extract BGG statistics: Geek Rating (bayesaverage), Overall Rank, Category Ranks, Weight
+  const ratingsEl = item.querySelector('statistics ratings');
+  let bggScore = null;
+  let bggRank = null;
+  let bggSubranks = [];
+  let bggWeight = null;
+  let usersRated = null;
+
+  if (ratingsEl) {
+    const bayesEl = ratingsEl.querySelector('bayesaverage');
+    if (bayesEl && bayesEl.getAttribute('value')) {
+      const val = parseFloat(bayesEl.getAttribute('value'));
+      if (!isNaN(val) && val > 0) bggScore = Math.round(val * 100) / 100;
+    }
+    const rankEl = ratingsEl.querySelector('ranks rank[name="boardgame"]');
+    if (rankEl) {
+      const rankVal = rankEl.getAttribute('value');
+      if (rankVal && rankVal !== 'Not Ranked') {
+        const parsedRank = parseInt(rankVal, 10);
+        if (!isNaN(parsedRank)) bggRank = parsedRank;
+      }
+    }
+    const familyRanks = Array.from(ratingsEl.querySelectorAll('ranks rank[type="family"]'));
+    familyRanks.forEach(r => {
+      const val = r.getAttribute('value');
+      if (val && val !== 'Not Ranked') {
+        const parsed = parseInt(val, 10);
+        if (!isNaN(parsed)) {
+          let name = r.getAttribute('friendlyname') || r.getAttribute('name') || '';
+          name = name.replace(/\s+Rank$/i, '').trim();
+          const nameMap = {
+            'Strategy Game': 'Estratégia',
+            'Family Game': 'Familiar',
+            'Thematic': 'Temático',
+            'Party Game': 'Party Game',
+            'Abstract Game': 'Abstrato',
+            'Customizable': 'Customizável',
+            'Wargames': 'Wargame',
+            'Children\'s Game': 'Infantil'
+          };
+          const prettyName = nameMap[name] || name;
+          bggSubranks.push({ name: prettyName, rank: parsed });
+        }
+      }
+    });
+    const weightEl = ratingsEl.querySelector('averageweight');
+    if (weightEl && weightEl.getAttribute('value')) {
+      const val = parseFloat(weightEl.getAttribute('value'));
+      if (!isNaN(val) && val > 0) bggWeight = Math.round(val * 100) / 100;
+    }
+    const usersRatedEl = ratingsEl.querySelector('usersrated');
+    if (usersRatedEl && usersRatedEl.getAttribute('value')) {
+      const val = parseInt(usersRatedEl.getAttribute('value'), 10);
+      if (!isNaN(val)) usersRated = val;
+    }
+  }
+
   return {
     bggId: item.getAttribute('id'),
     title: nameEl ? nameEl.getAttribute('value') : '',
@@ -2177,7 +2268,14 @@ function parseBggThingItem(item) {
     domain: domains,
     players: players,
     time: time,
-    link: `https://boardgamegeek.com/boardgame/${item.getAttribute('id')}`
+    score: bggScore,
+    bggScore: bggScore,
+    bggRank: bggRank,
+    bggSubranks: bggSubranks,
+    bggWeight: bggWeight,
+    usersRated: usersRated,
+    link: `https://boardgamegeek.com/boardgame/${item.getAttribute('id')}`,
+    bggLink: `https://boardgamegeek.com/boardgame/${item.getAttribute('id')}`
   };
 }
 
@@ -2207,7 +2305,7 @@ async function fetchBggThings(bggIds) {
   });
 
   if (missingIds.length > 0) {
-    const xml = await fetchBggXml(`/thing?id=${encodeURIComponent(missingIds.join(','))}`);
+    const xml = await fetchBggXml(`/thing?id=${encodeURIComponent(missingIds.join(','))}&stats=1`);
     if (xml) {
       const things = parseBggThingsXml(xml);
       things.forEach(t => {
@@ -2268,8 +2366,14 @@ async function searchBGGAPI(query) {
         domain: (detail && detail.domain) || '',
         players: (detail && detail.players) || '',
         time: (detail && detail.time) || '',
+        score: (detail && detail.score != null) ? detail.score : null,
+        bggScore: (detail && detail.bggScore != null) ? detail.bggScore : null,
+        bggRank: (detail && detail.bggRank != null) ? detail.bggRank : null,
+        bggSubranks: (detail && detail.bggSubranks) || [],
+        bggWeight: (detail && detail.bggWeight != null) ? detail.bggWeight : null,
         source: 'bgg',
-        link: (detail && detail.link) || `https://boardgamegeek.com/boardgame/${g.bggId}`
+        link: (detail && detail.link) || `https://boardgamegeek.com/boardgame/${g.bggId}`,
+        bggLink: (detail && detail.bggLink) || `https://boardgamegeek.com/boardgame/${g.bggId}`
       };
     });
 
@@ -2538,6 +2642,16 @@ async function performSearch(query) {
         meta.appendChild(yearSpan);
       }
 
+      if (game.bggRank) {
+        const rankSpan = document.createElement('span');
+        rankSpan.textContent = `• 🏆 #${game.bggRank.toLocaleString()}`;
+        meta.appendChild(rankSpan);
+      } else if (game.bggScore) {
+        const scoreSpan = document.createElement('span');
+        scoreSpan.textContent = `• ⭐ ${Number(game.bggScore).toFixed(1)}`;
+        meta.appendChild(scoreSpan);
+      }
+
       if (game.designer) {
         const designerSpan = document.createElement('span');
         designerSpan.textContent = `• 👤 ${game.designer}`;
@@ -2628,8 +2742,13 @@ function addGameToTierlist(game) {
     time: game.time || '',
     plays: game.plays || 0,
     score: game.score != null ? game.score : null,
+    bggScore: game.bggScore != null ? game.bggScore : null,
+    bggRank: game.bggRank != null ? game.bggRank : null,
+    bggSubranks: game.bggSubranks || [],
+    bggWeight: game.bggWeight != null ? game.bggWeight : null,
     slug: game.slug || '',
     link: game.link || '',
+    bggLink: game.bggLink || (game.bggId ? `https://boardgamegeek.com/boardgame/${game.bggId}` : ''),
     source: game.source || 'manual'
   };
 
@@ -2685,7 +2804,12 @@ function addGameToLocalDatabase(game) {
     time: game.time || '',
     plays: game.plays || 0,
     score: game.score != null ? game.score : null,
+    bggScore: game.bggScore != null ? game.bggScore : null,
+    bggRank: game.bggRank != null ? game.bggRank : null,
+    bggSubranks: game.bggSubranks || [],
+    bggWeight: game.bggWeight != null ? game.bggWeight : null,
     link: game.link || '',
+    bggLink: game.bggLink || (game.bggId ? `https://boardgamegeek.com/boardgame/${game.bggId}` : ''),
     source: game.source || 'manual'
   });
 }
@@ -2799,6 +2923,12 @@ async function enrichItemInBackgroundBGG(itemId, bggId) {
     if (details.time) item.time = details.time;
     if (details.image && !item.image) item.image = details.image;
     if (details.link && !item.link) item.link = details.link;
+    if (details.bggLink && !item.bggLink) item.bggLink = details.bggLink;
+    if (details.bggScore != null) item.bggScore = details.bggScore;
+    if (details.bggRank != null) item.bggRank = details.bggRank;
+    if (details.bggSubranks) item.bggSubranks = details.bggSubranks;
+    if (details.bggWeight != null) item.bggWeight = details.bggWeight;
+    if (details.score != null && item.score == null) item.score = details.score;
 
     const dbEntry = BOARD_GAMES_DATABASE.find(g => g.bggId === bggId);
     if (dbEntry) {
@@ -2811,6 +2941,12 @@ async function enrichItemInBackgroundBGG(itemId, bggId) {
       if (details.time) dbEntry.time = details.time;
       if (details.image && !dbEntry.image) dbEntry.image = details.image;
       if (details.link && !dbEntry.link) dbEntry.link = details.link;
+      if (details.bggLink && !dbEntry.bggLink) dbEntry.bggLink = details.bggLink;
+      if (details.bggScore != null) dbEntry.bggScore = details.bggScore;
+      if (details.bggRank != null) dbEntry.bggRank = details.bggRank;
+      if (details.bggSubranks) dbEntry.bggSubranks = details.bggSubranks;
+      if (details.bggWeight != null) dbEntry.bggWeight = details.bggWeight;
+      if (details.score != null && dbEntry.score == null) dbEntry.score = details.score;
     }
 
     if (window.persistGameToCommunityDB) {
@@ -3062,8 +3198,14 @@ async function extractGameFromLink(rawUrl) {
           mechanics: thing.mechanics || '',
           players: thing.players || '',
           time: thing.time || '',
+          score: thing.score != null ? thing.score : null,
+          bggScore: thing.bggScore != null ? thing.bggScore : null,
+          bggRank: thing.bggRank != null ? thing.bggRank : null,
+          bggSubranks: thing.bggSubranks || [],
+          bggWeight: thing.bggWeight != null ? thing.bggWeight : null,
           source: 'bgg',
-          link: url
+          link: url,
+          bggLink: url
         };
       }
     } catch (thingErr) {
@@ -3412,7 +3554,14 @@ async function openTapModal(item, currentTierId) {
   const playsVal = document.getElementById('detailPlaysVal');
   const scoreRow = document.getElementById('detailScoreRow');
   const scoreVal = document.getElementById('detailScoreVal');
+  const bggRankRow = document.getElementById('detailBggRankRow');
+  const bggRankVal = document.getElementById('detailBggRankVal');
+  const bggSubranksRow = document.getElementById('detailBggSubranksRow');
+  const bggSubranksVal = document.getElementById('detailBggSubranksVal');
+  const bggWeightRow = document.getElementById('detailBggWeightRow');
+  const bggWeightVal = document.getElementById('detailBggWeightVal');
   const ludoLink = document.getElementById('detailLudopediaLink');
+  const bggLink = document.getElementById('detailBggLink');
   const container = document.getElementById('tapActionsContainer');
 
   titleEl.textContent = item.title;
@@ -3429,6 +3578,7 @@ async function openTapModal(item, currentTierId) {
   // Find corresponding metadata in curated database
   const dbMatch = BOARD_GAMES_DATABASE.find(g => {
     if (item.ludoId && g.ludoId === item.ludoId) return true;
+    if (item.bggId && g.bggId === item.bggId) return true;
     if (item.slug && g.slug === item.slug) return true;
     if (g.title && item.title && g.title.toLowerCase() === item.title.toLowerCase()) return true;
     if (g.alt && item.title && g.alt.toLowerCase().includes(item.title.toLowerCase())) return true;
@@ -3444,8 +3594,16 @@ async function openTapModal(item, currentTierId) {
   const finalPlayers = item.players || dbMatch.players || '-';
   const finalTime = item.time || item.playTime || dbMatch.time || '-';
   const finalPlays = item.plays || dbMatch.plays;
+
   const finalScore = item.score != null ? item.score : (dbMatch.score != null ? dbMatch.score : null);
-  const finalLink = item.link || dbMatch.link || (item.slug ? `https://ludopedia.com.br/jogo/${item.slug}` : (dbMatch.slug ? `https://ludopedia.com.br/jogo/${dbMatch.slug}` : ''));
+  const finalBggScore = item.bggScore != null ? item.bggScore : (dbMatch.bggScore != null ? dbMatch.bggScore : null);
+  const finalBggRank = item.bggRank != null ? item.bggRank : (dbMatch.bggRank != null ? dbMatch.bggRank : null);
+  const finalBggSubranks = (item.bggSubranks && item.bggSubranks.length > 0) ? item.bggSubranks : (dbMatch.bggSubranks || []);
+  const finalBggWeight = item.bggWeight != null ? item.bggWeight : (dbMatch.bggWeight != null ? dbMatch.bggWeight : null);
+
+  const finalLudoLink = (item.link && item.link.includes('ludopedia')) ? item.link : (dbMatch.link && dbMatch.link.includes('ludopedia') ? dbMatch.link : (item.slug ? `https://ludopedia.com.br/jogo/${item.slug}` : (dbMatch.slug ? `https://ludopedia.com.br/jogo/${dbMatch.slug}` : '')));
+  const bggId = item.bggId || dbMatch.bggId || (item.id && item.id.startsWith('bgg_') ? item.id.replace('bgg_', '') : null) || (item.link && item.link.includes('boardgamegeek.com/boardgame/') ? (item.link.match(/boardgame\/(\d+)/) || [])[1] : null);
+  const finalBggLink = item.bggLink || dbMatch.bggLink || (bggId ? `https://boardgamegeek.com/boardgame/${bggId}` : (item.link && item.link.includes('boardgamegeek') ? item.link : ''));
 
   designerVal.textContent = finalDesigner;
   artistVal.textContent = finalArtist;
@@ -3481,18 +3639,52 @@ async function openTapModal(item, currentTierId) {
   timeVal.textContent = finalTime;
   playsVal.textContent = finalPlays ? `${Number(finalPlays).toLocaleString()} registraram partidas` : '-';
 
-  if (finalScore != null) {
-    scoreVal.textContent = Number(finalScore).toLocaleString(undefined, { maximumFractionDigits: 2 });
+  // 1. Nota (Nota Geek se disponível, ou Nota geral)
+  const displayScore = finalBggScore != null ? finalBggScore : finalScore;
+  if (displayScore != null) {
+    scoreVal.textContent = Number(displayScore).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     scoreRow.style.display = 'flex';
   } else {
     scoreRow.style.display = 'none';
   }
 
-  if (finalLink) {
-    ludoLink.href = finalLink;
+  // 2. Ranking Geral BGG
+  if (finalBggRank != null) {
+    bggRankVal.textContent = `#${finalBggRank.toLocaleString()}`;
+    bggRankRow.style.display = 'flex';
+  } else {
+    bggRankRow.style.display = 'none';
+  }
+
+  // 3. Rankings por categoria BGG
+  if (finalBggSubranks && finalBggSubranks.length > 0) {
+    bggSubranksVal.textContent = finalBggSubranks.map(s => `#${s.rank.toLocaleString()} em ${s.name}`).join(' • ');
+    bggSubranksRow.style.display = 'flex';
+  } else {
+    bggSubranksRow.style.display = 'none';
+  }
+
+  // 4. Peso / Complexidade BGG
+  if (finalBggWeight != null) {
+    bggWeightVal.textContent = `${Number(finalBggWeight).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / 5`;
+    bggWeightRow.style.display = 'flex';
+  } else {
+    bggWeightRow.style.display = 'none';
+  }
+
+  // 5. Links
+  if (finalLudoLink) {
+    ludoLink.href = finalLudoLink;
     ludoLink.style.display = 'inline-flex';
   } else {
     ludoLink.style.display = 'none';
+  }
+
+  if (finalBggLink) {
+    bggLink.href = finalBggLink;
+    bggLink.style.display = 'inline-flex';
+  } else {
+    bggLink.style.display = 'none';
   }
 
   // Populate Tier selection grid
@@ -3621,13 +3813,7 @@ async function openTapModal(item, currentTierId) {
   }
 
   // 2. Live BGG Enrichment
-  let bggId = item.bggId || (item.id && item.id.startsWith('bgg_') ? item.id.replace('bgg_', '') : null);
-  if (!bggId && item.link && item.link.includes('boardgamegeek.com/boardgame/')) {
-    const m = item.link.match(/boardgame\/(\d+)/);
-    if (m) bggId = m[1];
-  }
-
-  if (bggId && (!item.designer || item.designer === '-' || !item.artist || item.artist === '-' || !item.category || !item.mechanics || !item.domain)) {
+  if (bggId && (!item.designer || item.designer === '-' || !item.artist || item.artist === '-' || !item.category || !item.mechanics || !item.domain || item.bggRank == null || item.bggWeight == null || item.bggScore == null)) {
     const bggThing = await fetchBggThing(bggId);
     if (bggThing && activeTileItem && activeTileItem.item.id === item.id) {
       if (bggThing.designer) {
@@ -3671,11 +3857,30 @@ async function openTapModal(item, currentTierId) {
         item.image = bggThing.image;
         coverEl.src = item.image;
       }
+      if (bggThing.bggScore != null) {
+        item.bggScore = bggThing.bggScore;
+        scoreVal.textContent = Number(bggThing.bggScore).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        scoreRow.style.display = 'flex';
+      }
+      if (bggThing.bggRank != null) {
+        item.bggRank = bggThing.bggRank;
+        bggRankVal.textContent = `#${bggThing.bggRank.toLocaleString()}`;
+        bggRankRow.style.display = 'flex';
+      }
+      if (bggThing.bggSubranks && bggThing.bggSubranks.length > 0) {
+        item.bggSubranks = bggThing.bggSubranks;
+        bggSubranksVal.textContent = bggThing.bggSubranks.map(s => `#${s.rank.toLocaleString()} em ${s.name}`).join(' • ');
+        bggSubranksRow.style.display = 'flex';
+      }
+      if (bggThing.bggWeight != null) {
+        item.bggWeight = bggThing.bggWeight;
+        bggWeightVal.textContent = `${Number(bggThing.bggWeight).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / 5`;
+        bggWeightRow.style.display = 'flex';
+      }
       if (bggThing.link) {
-        ludoLink.href = bggThing.link;
-        const linkSpan = ludoLink.querySelector('span');
-        if (linkSpan) linkSpan.textContent = 'Ver página no BoardGameGeek';
-        ludoLink.style.display = 'inline-flex';
+        item.bggLink = bggThing.link;
+        bggLink.href = bggThing.link;
+        bggLink.style.display = 'inline-flex';
       }
       saveState();
       renderBoard();
