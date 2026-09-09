@@ -2554,7 +2554,7 @@ footer {
       <div class="form-group" style="margin-bottom:10px;">
         <label style="font-size:0.85rem; font-weight:600; color:var(--brass-bright);" data-i18n="label_ludopedia_link">Link ou Usuário na Ludopedia:</label>
         <div style="display:flex; gap:8px; margin-top:4px;">
-          <input type="text" id="ludoRankUsername" class="form-input" placeholder="Ex: colletes ou https://ludopedia.com.br/colecao?..." value="colletes" onkeydown="if(event.key==='Enter') fetchLudopediaForRanking()">
+          <input type="text" id="ludoRankUsername" class="form-input" placeholder="Ex: colletes ou https://ludopedia.com.br/colecao?..." value="" onkeydown="if(event.key==='Enter') fetchLudopediaForRanking()">
           <button type="button" class="tool-btn primary" onclick="fetchLudopediaForRanking()" id="btnFetchLudoRank" style="white-space:nowrap;">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
             <span data-i18n="btn_fetch_ludopedia">Buscar</span>
@@ -6283,22 +6283,31 @@ function parseLudopediaCollectionUrl(input) {
 
   try {
     const url = new URL(str.startsWith('http') ? str : 'https://' + str);
-    if (url.hostname.includes('ludopedia.com.br')) {
-      const usuario = url.searchParams.get('usuario');
-      const lista = url.searchParams.get('lista') || 'colecao';
+    if (url.hostname.toLowerCase().includes('ludopedia.com.br')) {
+      let usuario = null;
+      let idUsuario = null;
+      let lista = 'colecao';
+
+      for (const [k, v] of url.searchParams.entries()) {
+        const kLow = k.toLowerCase();
+        if (kLow === 'usuario' || kLow === 'user') usuario = v.trim();
+        else if (kLow === 'id_usuario') idUsuario = parseInt(v.trim(), 10);
+        else if (kLow === 'lista') lista = v.trim();
+      }
+
+      if (idUsuario) {
+        return { username: String(idUsuario), idUsuario, lista };
+      }
       if (usuario) {
-        return { username: usuario.trim(), lista };
+        return { username: usuario, lista };
       }
       const matchUser = url.pathname.match(/\/usuario\/([^/?#]+)/i);
       if (matchUser) {
-        return { username: matchUser[1].trim(), lista: 'colecao' };
+        return { username: decodeURIComponent(matchUser[1].trim()), lista: 'colecao' };
       }
       const matchCol = url.pathname.match(/\/colecao\/([^/?#]+)/i);
       if (matchCol) {
-        return { username: matchCol[1].trim(), lista: 'colecao' };
-      }
-      if (url.pathname === '/colecao' && url.searchParams.has('usuario')) {
-        return { username: url.searchParams.get('usuario').trim(), lista };
+        return { username: decodeURIComponent(matchCol[1].trim()), lista: 'colecao' };
       }
     }
   } catch (e) {}
@@ -6310,24 +6319,73 @@ function parseLudopediaCollectionUrl(input) {
 
   // If user typed only a raw username (letters, digits, underscores, dashes, optional leading @)
   const cleanStr = str.replace(/^@/, '');
-  if (/^[a-zA-Z0-9_.-]{3,35}$/.test(cleanStr) && !cleanStr.includes('/') && !cleanStr.includes(':')) {
+  if (/^[a-zA-Z0-9_.-]{2,40}$/.test(cleanStr) && !cleanStr.includes('/') && !cleanStr.includes(':')) {
     return { username: cleanStr, lista: 'colecao' };
   }
 
   return null;
 }
 
-async function fetchLudopediaCollection(username, options = {}) {
-  if (!username) throw new Error('Nome de usuário não informado.');
-  const cleanUser = username.trim().replace(/^@/, '');
+// Resolves a Ludopedia username to their numeric id_usuario using Ludopedia API search
+async function resolveLudopediaUserId(input) {
+  if (!input) return null;
+  const clean = String(input).trim().replace(/^@/, '');
+  if (/^\d+$/.test(clean)) return parseInt(clean, 10);
 
-  const firstUrl = `${LUDOPEDIA_PROXY_BASE}/api/v1/colecao?usuario=${encodeURIComponent(cleanUser)}&rows=100&page=1`;
+  try {
+    const url = `${LUDOPEDIA_PROXY_BASE}/api/v1/usuarios?search=${encodeURIComponent(clean)}`;
+    const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data || !Array.isArray(data.usuarios) || data.usuarios.length === 0) return null;
+
+    // 1. Exact match case-insensitive
+    const exact = data.usuarios.find(u => u.usuario && u.usuario.trim().toLowerCase() === clean.toLowerCase());
+    if (exact && exact.id_usuario) return exact.id_usuario;
+
+    // 2. Exact match ignoring spaces
+    const exactNoSpaces = data.usuarios.find(u => u.usuario && u.usuario.replace(/\s+/g, '').toLowerCase() === clean.replace(/\s+/g, '').toLowerCase());
+    if (exactNoSpaces && exactNoSpaces.id_usuario) return exactNoSpaces.id_usuario;
+
+    // 3. Match where username starts with clean
+    const startsWith = data.usuarios.find(u => u.usuario && u.usuario.trim().toLowerCase().startsWith(clean.toLowerCase()));
+    if (startsWith && startsWith.id_usuario) return startsWith.id_usuario;
+
+    // 4. First result if only 1 user returned
+    if (data.usuarios.length === 1 && data.usuarios[0].id_usuario) {
+      return data.usuarios[0].id_usuario;
+    }
+  } catch (e) {
+    console.warn('Erro ao resolver id_usuario na Ludopedia:', e);
+  }
+
+  return null;
+}
+
+async function fetchLudopediaCollection(usernameOrUrl, options = {}) {
+  if (!usernameOrUrl) throw new Error(currentLang === 'en' ? 'Username or link not provided.' : 'Nome de usuário ou link não informado.');
+  let cleanUser = String(usernameOrUrl).trim().replace(/^@/, '');
+  const parsed = parseLudopediaCollectionUrl(cleanUser);
+  if (parsed && parsed.username) {
+    cleanUser = parsed.username;
+  }
+
+  const userId = await resolveLudopediaUserId(cleanUser);
+  if (!userId) {
+    throw new Error(currentLang === 'en'
+      ? `User "${cleanUser}" not found on Ludopedia. Please verify the username or link.`
+      : `Usuário "${cleanUser}" não encontrado na Ludopedia. Verifique o nome de usuário ou link.`);
+  }
+
+  const firstUrl = `${LUDOPEDIA_PROXY_BASE}/api/v1/colecao?id_usuario=${userId}&rows=100&page=1`;
   const res = await fetch(firstUrl, { headers: { 'Accept': 'application/json' } });
   if (!res.ok) {
     if (res.status === 404) {
-      throw new Error(`Usuário "${cleanUser}" não encontrado na Ludopedia.`);
+      throw new Error(currentLang === 'en'
+        ? `Collection for "${cleanUser}" not found on Ludopedia.`
+        : `Coleção de "${cleanUser}" não encontrada na Ludopedia.`);
     }
-    throw new Error(`Falha ao consultar coleção na Ludopedia (HTTP ${res.status}). Verifique o usuário.`);
+    throw new Error(`Falha ao consultar coleção na Ludopedia (HTTP ${res.status}).`);
   }
 
   const data = await res.json();
@@ -6342,16 +6400,16 @@ async function fetchLudopediaCollection(username, options = {}) {
   const extraPagePromises = [];
   for (let p = 2; p <= totalPages; p++) {
     extraPagePromises.push(
-      fetch(`${LUDOPEDIA_PROXY_BASE}/api/v1/colecao?usuario=${encodeURIComponent(cleanUser)}&rows=100&page=${p}`, {
+      fetch(`${LUDOPEDIA_PROXY_BASE}/api/v1/colecao?id_usuario=${userId}&rows=100&page=${p}`, {
         headers: { 'Accept': 'application/json' }
       }).then(r => r.ok ? r.json() : null).catch(() => null)
     );
   }
 
-  // Fetch expansions (tp_jogo=e) to ensure 100% accurate classification
+  // Fetch expansions (tp_jogo=e) with id_usuario to ensure 100% accurate classification
   const expPromise = (async () => {
     try {
-      const expRes = await fetch(`${LUDOPEDIA_PROXY_BASE}/api/v1/colecao?usuario=${encodeURIComponent(cleanUser)}&tp_jogo=e&rows=100&page=1`, {
+      const expRes = await fetch(`${LUDOPEDIA_PROXY_BASE}/api/v1/colecao?id_usuario=${userId}&tp_jogo=e&rows=100&page=1`, {
         headers: { 'Accept': 'application/json' }
       });
       if (!expRes.ok) return [];
@@ -6362,7 +6420,7 @@ async function fetchLudopediaCollection(username, options = {}) {
         const extraExpPromises = [];
         for (let ep = 2; ep <= expPages; ep++) {
           extraExpPromises.push(
-            fetch(`${LUDOPEDIA_PROXY_BASE}/api/v1/colecao?usuario=${encodeURIComponent(cleanUser)}&tp_jogo=e&rows=100&page=${ep}`, {
+            fetch(`${LUDOPEDIA_PROXY_BASE}/api/v1/colecao?id_usuario=${userId}&tp_jogo=e&rows=100&page=${ep}`, {
               headers: { 'Accept': 'application/json' }
             }).then(r => r.ok ? r.json() : null).catch(() => null)
           );
@@ -7800,7 +7858,7 @@ function updateBggFilterPreview() {
 // Ludopedia Collection Fetch for 1v1 Battle Arena
 async function fetchLudopediaForRanking() {
   const usernameInput = document.getElementById('ludoRankUsername');
-  const rawInput = (usernameInput ? usernameInput.value : 'colletes').trim();
+  const rawInput = (usernameInput ? usernameInput.value : '').trim();
   if (!rawInput) {
     alert(currentLang === 'en' ? 'Please enter a Ludopedia link or username.' : 'Digite um link ou usuário da Ludopedia.');
     return;
@@ -8562,6 +8620,7 @@ window.parseBggUserCollectionXml = parseBggUserCollectionXml;
 window.openImportSourceModal = openImportSourceModal;
 window.setOnlineImportExample = setOnlineImportExample;
 window.parseLudopediaCollectionUrl = parseLudopediaCollectionUrl;
+window.resolveLudopediaUserId = resolveLudopediaUserId;
 window.fetchLudopediaCollection = fetchLudopediaCollection;
 window.importLudopediaCollection = importLudopediaCollection;
 window.executeOnlineImportFromInput = executeOnlineImportFromInput;
