@@ -613,11 +613,11 @@ body {
 
 /* ==================== NATIVE DIEGETIC CARD STYLING ==================== */
 .native-card {
-    background: #fbf7ee;
+    background: #fbf6ec;
     color: #2b251d;
     border-radius: 14px;
-    border: 3px solid #6b5840;
-    box-shadow: 0 8px 28px rgba(0,0,0,0.6), inset 0 0 15px rgba(184, 150, 99, 0.2);
+    border: 3px solid #735e45;
+    box-shadow: 0 10px 32px rgba(0,0,0,0.65), 0 2px 6px rgba(0,0,0,0.3), inset 0 0 20px rgba(184, 150, 99, 0.25);
     overflow: hidden;
     position: relative;
     user-select: none;
@@ -627,9 +627,10 @@ body {
     position: absolute;
     inset: 0;
     background: url('../assets/textures/old-parchment.jpg');
-    background-size: 300px 300px;
-    opacity: 0.12;
+    background-size: 360px 360px;
+    opacity: 0.20;
     pointer-events: none;
+    mix-blend-mode: multiply;
 }
 .card-header-bar {
     background: linear-gradient(90deg, #3d3122 0%, #2b2217 100%);
@@ -822,9 +823,15 @@ body {
 
 /* ==================== PHYSICAL BIRDFEEDER ASSISTANT ==================== */
 .feeder-assistant-card {
-    background: var(--surface);
-    border: 2px solid var(--border);
-    border-radius: var(--radius);
+    background-color: #231a13;
+    background-image: 
+        linear-gradient(rgba(26, 19, 13, 0.88), rgba(26, 19, 13, 0.88)),
+        url('../assets/textures/dark-walnut.jpg');
+    background-size: auto, 340px 340px;
+    background-repeat: no-repeat, repeat;
+    border: 2px solid #5a412b;
+    border-radius: var(--radius-lg);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.15);
     padding: 16px 18px;
     margin-top: 14px;
 }
@@ -1137,11 +1144,16 @@ body {
 /* ==================== HUMMINGBIRD GARDEN STAGE BOX ==================== */
 .hummingbird-stage-box {
     margin-top: 14px;
-    background: #1c1815;
-    border: 1px solid rgba(212, 67, 122, 0.45);
+    background-color: #1a1614;
+    background-image: 
+        linear-gradient(rgba(24, 18, 16, 0.90), rgba(24, 18, 16, 0.90)),
+        url('../assets/textures/old-parchment.jpg');
+    background-size: auto, 320px 320px;
+    background-repeat: no-repeat, repeat;
+    border: 1px solid rgba(212, 67, 122, 0.5);
     border-radius: var(--radius);
     padding: 14px;
-    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 6px 22px rgba(0, 0, 0, 0.45);
     position: relative;
     overflow: hidden;
 }
@@ -1441,9 +1453,47 @@ body {
     }
 }
 
+
+/* ==================== DIEGETIC NEXT LEVEL TEXTURES & AMBIANCE ==================== */
+.canopy-particles {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+    opacity: 0.25;
+}
+@media (prefers-reduced-motion: no-preference) {
+    .feather-particle {
+        position: absolute;
+        width: 8px;
+        height: 8px;
+        background: radial-gradient(circle, rgba(229, 169, 59, 0.6) 0%, rgba(229, 169, 59, 0) 70%);
+        border-radius: 50%;
+        animation: floatDrift 20s infinite linear;
+    }
+    .feather-particle:nth-child(1) { left: 12%; animation-duration: 22s; animation-delay: 0s; }
+    .feather-particle:nth-child(2) { left: 38%; animation-duration: 18s; animation-delay: 4s; }
+    .feather-particle:nth-child(3) { left: 68%; animation-duration: 26s; animation-delay: 1s; }
+    .feather-particle:nth-child(4) { left: 88%; animation-duration: 20s; animation-delay: 7s; }
+    @keyframes floatDrift {
+        0% { transform: translateY(-20px) rotate(0deg); opacity: 0; }
+        20% { opacity: 0.7; }
+        80% { opacity: 0.7; }
+        100% { transform: translateY(105vh) rotate(360deg); opacity: 0; }
+    }
+}
+
 </style>
 </head>
 <body>
+    <!-- Subtle Diegetic Canopy Atmosphere Particles -->
+    <div class="canopy-particles" aria-hidden="true">
+        <div class="feather-particle"></div>
+        <div class="feather-particle"></div>
+        <div class="feather-particle"></div>
+        <div class="feather-particle"></div>
+    </div>
 
     <!-- Sticky Navigation -->
     <nav class="top-nav">
@@ -2493,6 +2543,26 @@ let STATE = {
     history: []
 };
 
+/* ==================== AUTHENTIC DIEGETIC AUDIO (THEMEKIT & HAPTICS) ==================== */
+function playWingspanSfx(key, opts) {
+    if (typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
+        window.ThemeKit.playSfx(key, opts);
+    }
+    if (opts && opts.haptic && typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+        try { navigator.vibrate(25); } catch(_) {}
+    }
+}
+
+// Preload sampled audio for instant latency-free playback
+if (typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.preloadSfx === 'function') {
+    window.ThemeKit.preloadSfx([
+        'card-draw', 'card-flip', 'card-shuffle',
+        'token-place', 'dice-tray', 'dice-roll',
+        'turn-notify', 'ui-click',
+        'wingspan/bird-chirp', 'wingspan/wings-flutter', 'wingspan/morning-chorus'
+    ]);
+}
+
 /* ==================== PROCEDURAL AUDIO SYNTHESIZER ==================== */
 let audioCtx = null;
 let isAmbientPlaying = false;
@@ -2573,7 +2643,8 @@ function toggleAmbientSound() {
             // Periodic subtle chirps
             window.ambientChirpTimer = setInterval(() => {
                 if (isAmbientPlaying && Math.random() > 0.45) {
-                    playBirdChirp();
+                    playWingspanSfx('wingspan/bird-chirp', { volume: 0.65, haptic: true });
+    playWingspanSfx('card-draw', { volume: 0.45 });
                 }
             }, 3500);
         } catch(e) {}
@@ -2751,6 +2822,7 @@ function setLanguage(lang) {
 /* ==================== SETUP CONTROLLERS ==================== */
 function selectMode(m) {
     STATE.mode = m;
+    playWingspanSfx('ui-click', { volume: 0.35 });
     document.getElementById('opt-mode-standard').classList.toggle('selected', m === 'standard');
     document.getElementById('opt-mode-duet').classList.toggle('selected', m === 'duet');
     document.getElementById('opt-mode-razzi').classList.toggle('selected', m === 'razzi');
@@ -2779,6 +2851,7 @@ function toggleExpansion(exp) {
     }
     
     STATE.expansions[exp] = !STATE.expansions[exp];
+    playWingspanSfx('ui-click', { volume: 0.35 });
     const box = document.getElementById(`box-${exp}`);
     if (box) box.classList.toggle('active', STATE.expansions[exp]);
     const sw = document.getElementById(`sw-${exp}`);
@@ -2813,6 +2886,7 @@ function toggleRAOUtoma() {
 
 function selectDifficulty(d) {
     STATE.difficulty = d;
+    playWingspanSfx('ui-click', { volume: 0.35 });
     document.getElementById('diff-eaglet').classList.toggle('selected', d === 'eaglet');
     document.getElementById('diff-eagle').classList.toggle('selected', d === 'eagle');
     document.getElementById('diff-eyed').classList.toggle('selected', d === 'eyed');
@@ -2820,6 +2894,7 @@ function selectDifficulty(d) {
 
 function selectBenefitMode(b) {
     STATE.benefitMode = b;
+    playWingspanSfx('ui-click', { volume: 0.35 });
     document.getElementById('opt-ben-cache').classList.toggle('selected', b === 'cache');
     document.getElementById('opt-ben-hoard').classList.toggle('selected', b === 'hoard');
     document.getElementById('opt-ben-none').classList.toggle('selected', b === 'none');
@@ -2846,7 +2921,7 @@ function shuffle(arr) {
 
 function startGame() {
     initAudio();
-    if (window.ThemeKit) ThemeKit.playSfx('card-shuffle');
+    playWingspanSfx('card-shuffle', { volume: 0.5 });
     
     STATE.gameStarted = true;
     STATE.round = 1;
@@ -2940,6 +3015,8 @@ function startGame() {
     
     // Draw first card
     drawAutomaCard();
+    playWingspanSfx('wingspan/morning-chorus', { volume: 0.65, haptic: true });
+    playWingspanSfx('card-shuffle', { volume: 0.5 });
     addLog("PARTIDA INICIADA", "O diário de campo está aberto. Baralho preparado para a Rodada 1.");
     saveState();
 }
@@ -2953,13 +3030,13 @@ function drawAutomaCard() {
     if (STATE.activeDeck.length === 0) {
         STATE.activeDeck = shuffle(STATE.discardPile);
         STATE.discardPile = [];
-        if (window.ThemeKit) ThemeKit.playSfx('card-shuffle');
+        playWingspanSfx('card-shuffle', { volume: 0.5 });
     }
     
     if (STATE.activeDeck.length > 0) {
         STATE.currentCard = STATE.activeDeck.pop();
         STATE.discardPile.push(STATE.currentCard);
-        if (window.ThemeKit) ThemeKit.playSfx('card-draw');
+        playWingspanSfx('card-draw', { volume: 0.5 });
     }
     
     // Hummingbird draw if Americas
@@ -3015,7 +3092,8 @@ function executeCurrentCardAction() {
 
 function nextTurn() {
     saveHistory();
-    playBirdChirp();
+    playWingspanSfx('wingspan/bird-chirp', { volume: 0.65, haptic: true });
+    playWingspanSfx('card-draw', { volume: 0.45 });
     
     const maxTurns = getTurnsInRound(STATE.round);
     if (STATE.turnInRound >= maxTurns) {
@@ -3063,6 +3141,8 @@ function endRound() {
     STATE.turnInRound = 1;
     STATE.cubesOnCurrentGoal = 0;
     
+    playWingspanSfx('turn-notify', { volume: 0.65, haptic: true });
+    playWingspanSfx('card-shuffle', { volume: 0.5 });
     addLog(`RODADA ${STATE.round}`, `Iniciando Rodada ${STATE.round}. Baralho reembaralhado.`);
     drawAutomaCard();
     saveState();
@@ -3509,6 +3589,8 @@ function buildHummingbirdTrack() {
 
 function advanceHbirdTrack(key) {
     saveHistory();
+    playWingspanSfx('wingspan/wings-flutter', { volume: 0.6, haptic: true });
+    playWingspanSfx('token-place', { volume: 0.5 });
     if (!STATE.hbirdTracks) STATE.hbirdTracks = { bees: 0, brilliants: 0, emeralds: 0, mangoes: 0, topazes: 0 };
     
     const grp = HBIRD_GROUPS[key];
@@ -3554,9 +3636,12 @@ function advanceHbirdTrack(key) {
 
 function decreaseHbirdTrack(key) {
     saveHistory();
+    playWingspanSfx('wingspan/wings-flutter', { volume: 0.6, haptic: true });
+    playWingspanSfx('token-place', { volume: 0.5 });
     if (!STATE.hbirdTracks) return;
     if (STATE.hbirdTracks[key] > 0) {
         STATE.hbirdTracks[key] -= 1;
+        playWingspanSfx('ui-click', { volume: 0.4 });
         buildHummingbirdTrack();
         saveState();
     }
@@ -3623,6 +3708,7 @@ function undoLastTurn() {
     renderHummingbirdStage();
     buildDuetMapSVG();
     updateUI();
+    playWingspanSfx('card-flip', { volume: 0.5, haptic: true });
     addLog("DESFAZER", "Última ação revertida com sucesso.");
     saveState();
 }
