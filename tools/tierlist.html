@@ -1537,7 +1537,7 @@ footer {
 
       <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-size:0.88rem; color:var(--text-main);">
         <input type="checkbox" id="importOptFetchBgg" checked style="width:18px; height:18px; accent-color:var(--brass); cursor:pointer;">
-        <span data-i18n="import_opt_fetch_bgg">Buscar capas e notas no BGG automaticamente em segundo plano</span>
+        <span data-i18n="import_opt_fetch_bgg">Buscar capas na Ludopedia e BGG em segundo plano</span>
       </label>
     </div>
 
@@ -1620,7 +1620,7 @@ const I18N = {
     btn_download_txt: 'TXT (Lista)',
     modal_import_title: 'Importar Coleção / Partidas',
     import_opt_skip_duplicates: 'Ignorar jogos já adicionados à Tierlist',
-    import_opt_fetch_bgg: 'Buscar capas e notas no BGG automaticamente em segundo plano',
+    import_opt_fetch_bgg: 'Buscar capas na Ludopedia e BGG em segundo plano',
     btn_import_confirm: 'Importar para Não Jogados',
     toast_link_extracted: 'Capa e dados do jogo extraídos com sucesso da Ludopedia!',
     toast_link_error: 'Não foi possível extrair dados automaticamente deste link.',
@@ -1645,7 +1645,7 @@ const I18N = {
     btn_download_txt: 'TXT (List)',
     modal_import_title: 'Import Collection / Plays',
     import_opt_skip_duplicates: 'Skip games already in Tierlist',
-    import_opt_fetch_bgg: 'Fetch covers and stats from BGG automatically in background',
+    import_opt_fetch_bgg: 'Search covers on Ludopedia & BGG in background',
     btn_import_confirm: 'Import to Unplayed',
     label_size: 'Tile:',
     btn_reset: 'Reset',
@@ -4892,19 +4892,82 @@ function executeCollectionImport() {
   showToast(`${toAdd.length} jogos importados para "${unplayedTier.name}"!`);
 
   if (fetchBgg) {
-    enrichImportedGamesWithBgg(toAdd);
+    enrichImportedGames(toAdd);
   }
 }
 
+async function findLudopediaCover(game) {
+  if (!game || !game.title) return null;
+
+  // 1. If game has a direct Ludopedia URL (e.g. from Ludohall collection export)
+  if (game.link && game.link.includes('ludopedia.com.br/jogo/')) {
+    try {
+      const extracted = await extractGameFromLink(game.link);
+      if (extracted && extracted.image) {
+        return {
+          image: extracted.image,
+          ludoId: extracted.ludoId || null,
+          slug: extracted.slug || '',
+          link: extracted.link || game.link
+        };
+      }
+    } catch (e) {
+      console.warn('Erro ao extrair capa por link da Ludopedia:', game.title, e);
+    }
+  }
+
+  // 2. Check local in-memory curated catalog
+  const normTitle = normalizeSearchStr(game.title);
+  const dbMatch = BOARD_GAMES_DATABASE.find(g => {
+    if (!g.image) return false;
+    if (normalizeSearchStr(g.title) === normTitle) return true;
+    if (g.slug && normalizeSearchStr(g.slug) === normTitle) return true;
+    return false;
+  });
+  if (dbMatch && dbMatch.image) {
+    return {
+      image: dbMatch.image,
+      ludoId: dbMatch.ludoId || null,
+      slug: dbMatch.slug || '',
+      link: dbMatch.link || ''
+    };
+  }
+
+  // 3. Search Ludopedia API Live
+  try {
+    const results = await searchLudopediaAPI(game.title);
+    if (results && results.length > 0) {
+      const scored = results
+        .map(r => ({ res: r, score: calculateGameMatchScore(r, game.title) }))
+        .sort((a, b) => b.score - a.score);
+
+      const top = scored[0];
+      if (top && top.res && top.res.image && top.score >= 100) {
+        return {
+          image: top.res.image,
+          ludoId: top.res.ludoId || null,
+          slug: top.res.slug || '',
+          link: top.res.link || ''
+        };
+      }
+    }
+  } catch (e) {
+    console.warn('Erro ao buscar jogo na Ludopedia:', game.title, e);
+  }
+
+  return null;
+}
+
 let isEnrichingImport = false;
-async function enrichImportedGamesWithBgg(items) {
+async function enrichImportedGames(items) {
   if (!items || !items.length) return;
   if (isEnrichingImport) return;
   isEnrichingImport = true;
 
   try {
-    // 1. Items with BGG ID but no cover image
-    const withBggId = items.filter(i => i.bggId && !i.image);
+    // 1. Batch pre-fetch BGG XML details for items that have a bggId (e.g. from BGG CSV)
+    // This populates ratings, weight, rank and caches BGG images as fallback
+    const withBggId = items.filter(i => i.bggId);
     if (withBggId.length > 0) {
       const BATCH_SIZE = 20;
       for (let i = 0; i < withBggId.length; i += BATCH_SIZE) {
@@ -4915,7 +4978,6 @@ async function enrichImportedGamesWithBgg(items) {
           chunk.forEach(item => {
             const detail = BGG_THING_CACHE.get(String(item.bggId));
             if (detail) {
-              if (detail.image && !item.image) item.image = detail.image;
               if (detail.bggScore != null && item.bggScore == null) item.bggScore = detail.bggScore;
               if (detail.bggRank != null && item.bggRank == null) item.bggRank = detail.bggRank;
               if (detail.bggSubranks && (!item.bggSubranks || !item.bggSubranks.length)) item.bggSubranks = detail.bggSubranks;
@@ -4927,55 +4989,90 @@ async function enrichImportedGamesWithBgg(items) {
               if (detail.players && !item.players) item.players = detail.players;
             }
           });
-          saveState();
-          renderBoard();
         } catch (err) {
-          console.warn('Erro ao atualizar lote de capas do BGG:', err);
+          console.warn('Erro ao pré-carregar lote BGG:', err);
         }
-        await new Promise(r => setTimeout(r, 350));
+        await new Promise(r => setTimeout(r, 180));
       }
     }
 
-    // 2. Items without BGG ID and without cover image (e.g. from Ludohall)
-    const withoutBgg = items.filter(i => !i.bggId && !i.image);
-    if (withoutBgg.length > 0) {
-      for (let i = 0; i < withoutBgg.length; i++) {
-        const item = withoutBgg[i];
-        try {
-          const results = await searchBGGAPI(item.title);
-          if (results && results.length > 0) {
-            const best = results[0];
-            if (best) {
-              item.bggId = best.bggId;
-              item.bggLink = `https://boardgamegeek.com/boardgame/${best.bggId}`;
-              if (best.image && !item.image) item.image = best.image;
-              if (best.score != null && item.bggScore == null) item.bggScore = best.score;
-              if (best.bggRank != null && item.bggRank == null) item.bggRank = best.bggRank;
-              if (best.bggWeight != null && item.bggWeight == null) item.bggWeight = best.bggWeight;
-              if (best.bggSubranks && (!item.bggSubranks || !item.bggSubranks.length)) item.bggSubranks = best.bggSubranks;
-              if (best.designer && !item.designer) item.designer = best.designer;
-              if (best.artist && !item.artist) item.artist = best.artist;
-            }
+    // 2. COVER SEARCH PIPELINE: LUDOPEDIA FIRST, THEN BGG!
+    const needsCover = items.filter(i => !i.image);
+
+    for (let i = 0; i < needsCover.length; i++) {
+      const item = needsCover[i];
+      let coverFound = false;
+
+      // STEP A: Try Ludopedia FIRST
+      try {
+        const ludoMatch = await findLudopediaCover(item);
+        if (ludoMatch && ludoMatch.image) {
+          item.image = ludoMatch.image;
+          if (!item.ludoId && ludoMatch.ludoId) item.ludoId = ludoMatch.ludoId;
+          if (!item.slug && ludoMatch.slug) item.slug = ludoMatch.slug;
+          if (!item.link && ludoMatch.link) item.link = ludoMatch.link;
+          coverFound = true;
+        }
+      } catch (ludoErr) {
+        console.warn('Erro ao buscar na Ludopedia:', item.title, ludoErr);
+      }
+
+      // STEP B: If not found on Ludopedia, fall back to BGG!
+      if (!coverFound) {
+        if (item.bggId) {
+          const detail = BGG_THING_CACHE.get(String(item.bggId)) || await fetchBggThing(item.bggId);
+          if (detail && detail.image) {
+            item.image = detail.image;
+            coverFound = true;
           }
-        } catch (e) {
-          console.warn('Erro ao buscar BGG para:', item.title, e);
+        } else {
+          // No BGG ID yet, search BGG API by title
+          try {
+            const bggResults = await searchBGGAPI(item.title);
+            if (bggResults && bggResults.length > 0) {
+              const best = bggResults[0];
+              if (best) {
+                item.bggId = best.bggId;
+                item.bggLink = `https://boardgamegeek.com/boardgame/${best.bggId}`;
+                if (best.image) {
+                  item.image = best.image;
+                  coverFound = true;
+                }
+                if (best.score != null && item.bggScore == null) item.bggScore = best.score;
+                if (best.bggRank != null && item.bggRank == null) item.bggRank = best.bggRank;
+                if (best.bggWeight != null && item.bggWeight == null) item.bggWeight = best.bggWeight;
+                if (best.bggSubranks && (!item.bggSubranks || !item.bggSubranks.length)) item.bggSubranks = best.bggSubranks;
+                if (best.designer && !item.designer) item.designer = best.designer;
+                if (best.artist && !item.artist) item.artist = best.artist;
+              }
+            }
+          } catch (e) {
+            console.warn('Erro ao buscar BGG para:', item.title, e);
+          }
         }
-
-        if ((i + 1) % 5 === 0 || i === withoutBgg.length - 1) {
-          saveState();
-          renderBoard();
-        }
-        await new Promise(r => setTimeout(r, 450));
       }
+
+      // Incrementally save state and update UI every 4 items or on completion
+      if ((i + 1) % 4 === 0 || i === needsCover.length - 1) {
+        saveState();
+        renderBoard();
+      }
+
+      // Modest pause between search requests to be respectful of rate limits
+      await new Promise(r => setTimeout(r, 200));
     }
+
   } catch (err) {
-    console.error('Erro na sincronização de dados BGG:', err);
+    console.error('Erro na sincronização de capas e dados:', err);
   } finally {
     isEnrichingImport = false;
     saveState();
     renderBoard();
   }
 }
+
+// Alias for backwards compatibility
+const enrichImportedGamesWithBgg = enrichImportedGames;
 
 // Window Drag & Drop for file imports
 window.addEventListener('dragover', (e) => {
