@@ -1196,9 +1196,9 @@ body {
                     <div class="opt-card" id="opt-mode-duet" onclick="selectMode('duet')">
                         <div class="opt-card-header">
                             <span class="opt-card-title">☯️ <span data-i18n="mode_duet_title">Solo Dueto (Ásia)</span></span>
-                            <span class="badge-pill" data-i18n="badge_duet">Dueto</span>
+                            <span class="badge-pill" data-i18n="badge_duet">Dueto • Standalone</span>
                         </div>
-                        <p class="opt-card-desc" data-i18n="mode_duet_desc">Confronto territorial no Mapa de Dueto da Ásia. A Automa navega por quadrantes e compete pelo maior grupo contíguo de fichas.</p>
+                        <p class="opt-card-desc" data-i18n="mode_duet_desc">Confronto territorial no Mapa de Dueto da Ásia. Jogo independente para 1-2 jogadores (não requer o jogo base). A Automa navega por quadrantes e compete pelo maior grupo contíguo de fichas.</p>
                     </div>
 
                     <div class="opt-card" id="opt-mode-razzi" onclick="selectMode('razzi')">
@@ -1216,14 +1216,14 @@ body {
                     
                     <!-- Base Game Box (with Automubon nested) -->
                     <div class="exp-box active" id="box-base">
-                        <div class="exp-box-head" style="cursor:default;">
+                        <div class="exp-box-head" onclick="toggleExpansion('base')">
                             <div class="exp-info">
                                 <span class="exp-name">🪶 <span data-i18n="exp_base_name">Jogo Base (Wingspan)</span></span>
                                 <span class="exp-sub" data-i18n="exp_base_sub">Baralho de 10 cartas oficiais, comedouro de 5 dados e esteira de objetivos</span>
                             </div>
-                            <span class="badge-pill" style="background:var(--accent); color:#121711;">Ativo</span>
+                            <div class="switch-indicator" id="sw-base">✓</div>
                         </div>
-                        <div class="exp-nested-body">
+                        <div class="exp-nested-body" id="nested-base">
                             <div class="nested-sub-toggle" id="tog-automubon" onclick="toggleAutomubon()">
                                 <div>
                                     <div class="nested-title">
@@ -1983,7 +1983,7 @@ const STORAGE_KEY = "wingspan_bot_state_v2";
 let STATE = {
     lang: 'pt',
     mode: 'standard', // standard | duet | razzi
-    expansions: { ee: false, oe: false, asia: false, ae: false },
+    expansions: { base: true, ee: false, oe: false, asia: false, ae: false },
     difficulty: 'eagle', // eaglet | eagle | eyed
     benefitMode: 'cache', // none | cache | hoard
     useAutomubon: false,
@@ -2288,6 +2288,19 @@ function selectMode(m) {
 }
 
 function toggleExpansion(exp) {
+    if (exp === 'base') {
+        if (STATE.expansions.base && !STATE.expansions.asia) {
+            alert(STATE.lang === 'pt' ? "Para jogar sem o Jogo Base, ative primeiro a Expansão Ásia (jogo independente)." : "To play without Base Game, first activate Asia Expansion (standalone game).");
+            return;
+        }
+    }
+    if (exp === 'asia') {
+        if (STATE.expansions.asia && !STATE.expansions.base) {
+            alert(STATE.lang === 'pt' ? "Você precisa de pelo menos uma caixa ativa (Jogo Base ou Ásia)." : "You need at least one game active (Base Game or Asia).");
+            return;
+        }
+    }
+    
     STATE.expansions[exp] = !STATE.expansions[exp];
     const box = document.getElementById(`box-${exp}`);
     if (box) box.classList.toggle('active', STATE.expansions[exp]);
@@ -2297,6 +2310,10 @@ function toggleExpansion(exp) {
     if (exp === 'oe') {
         const nested = document.getElementById('nested-oe');
         if (nested) nested.style.display = STATE.expansions.oe ? 'block' : 'none';
+    }
+    if (exp === 'base') {
+        const nested = document.getElementById('nested-base');
+        if (nested) nested.style.display = STATE.expansions.base ? 'block' : 'none';
     }
     updateChecklistVisibility();
 }
@@ -2373,17 +2390,19 @@ function startGame() {
     
     // Build Automa action deck
     let baseDeck;
-    if (STATE.mode === 'duet' || (STATE.expansions.asia && !STATE.expansions.oe)) {
+    if (!STATE.expansions.base || STATE.mode === 'duet' || (STATE.expansions.asia && !STATE.expansions.oe)) {
+        // Asia deck (10 cards) + Aliança Automa-Ásia (in Duet mode)
         baseDeck = AUTOMA_CARDS_ASIA.filter(c => {
             if (c.isAlliance) return STATE.mode === 'duet';
             return true;
         }).map(c => ({...c}));
     } else {
+        // Base Game deck (10 cards)
         baseDeck = AUTOMA_CARDS_BASE.filter(c => !c.isAutomubon).map(c => ({...c}));
     }
     
-    // Add Automubon Society if enabled
-    if (STATE.useAutomubon) {
+    // Add Automubon Society if enabled AND base game active
+    if (STATE.useAutomubon && STATE.expansions.base) {
         const automubonCard = AUTOMA_CARDS_BASE.find(c => c.isAutomubon);
         if (automubonCard && !baseDeck.some(c => c.id === automubonCard.id)) {
             baseDeck.push({...automubonCard});
