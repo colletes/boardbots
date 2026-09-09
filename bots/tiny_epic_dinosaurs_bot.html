@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Tiny Epic Dinosaurs — Rival Rancher Bot</title>
     <link rel="stylesheet" href="../assets/theme-kit.css">
+    <script src="../assets/theme-kit.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -840,8 +841,9 @@
         }
 
         .enclosure-slot.occupied {
-            background: rgba(74, 222, 128, 0.15);
+            background: rgba(74, 222, 128, 0.18);
             border: 2px solid var(--accent-green);
+            box-shadow: 0 0 10px rgba(74, 222, 128, 0.35), inset 0 0 8px rgba(74, 222, 128, 0.2);
         }
 
         .enclosure-action-label {
@@ -1111,9 +1113,67 @@
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(255, 129, 63, 0.6);
         }
+
+        /* Ambient thematic flavor: Jurassic canopy glow + tropical fireflies/spores */
+        @media (prefers-reduced-motion: no-preference) {
+            .canopy-glow {
+                position: fixed;
+                inset: 0;
+                pointer-events: none;
+                z-index: -1;
+                background: radial-gradient(ellipse at 50% 12%, rgba(74, 222, 128, 0.16) 0%, rgba(245, 158, 11, 0.06) 40%, transparent 70%);
+                animation: canopyBreathe 8s ease-in-out infinite alternate;
+            }
+            @keyframes canopyBreathe {
+                0% { opacity: 0.55; transform: scale(0.98); }
+                100% { opacity: 1.0; transform: scale(1.02); }
+            }
+
+            .firefly-layer {
+                position: fixed;
+                inset: 0;
+                pointer-events: none;
+                z-index: -1;
+                overflow: hidden;
+            }
+            .firefly {
+                position: absolute;
+                bottom: -12px;
+                width: 5px;
+                height: 5px;
+                border-radius: 50%;
+                background: rgba(250, 204, 21, 0.95);
+                box-shadow: 0 0 8px 3px rgba(250, 204, 21, 0.75), 0 0 16px 6px rgba(74, 222, 128, 0.4);
+                animation: fireflyRise linear infinite;
+            }
+            @keyframes fireflyRise {
+                0% { transform: translateY(0) translateX(0); opacity: 0; }
+                10% { opacity: 0.9; }
+                50% { transform: translateY(-50vh) translateX(var(--tx, 25px)); opacity: 0.85; }
+                90% { opacity: 0.7; }
+                100% { transform: translateY(-105vh) translateX(calc(var(--tx, 25px) * -0.6)); opacity: 0; }
+            }
+            .firefly:nth-child(1) { left: 6%; --tx: 30px; animation-duration: 14s; animation-delay: -2s; }
+            .firefly:nth-child(2) { left: 16%; --tx: -24px; animation-duration: 11s; animation-delay: -6s; }
+            .firefly:nth-child(3) { left: 28%; --tx: 18px; animation-duration: 16s; animation-delay: -1s; }
+            .firefly:nth-child(4) { left: 39%; --tx: -32px; animation-duration: 12s; animation-delay: -9s; }
+            .firefly:nth-child(5) { left: 51%; --tx: 22px; animation-duration: 15s; animation-delay: -4s; }
+            .firefly:nth-child(6) { left: 63%; --tx: -18px; animation-duration: 10s; animation-delay: -7s; }
+            .firefly:nth-child(7) { left: 74%; --tx: 26px; animation-duration: 17s; animation-delay: -3s; }
+            .firefly:nth-child(8) { left: 83%; --tx: -20px; animation-duration: 13s; animation-delay: -10s; }
+            .firefly:nth-child(9) { left: 91%; --tx: 14px; animation-duration: 14.5s; animation-delay: -5s; }
+            .firefly:nth-child(10) { left: 96%; --tx: -16px; animation-duration: 11.5s; animation-delay: -8s; }
+        }
     </style>
 </head>
 <body>
+
+    <!-- Ambient Diegetic Layers -->
+    <div class="canopy-glow" aria-hidden="true"></div>
+    <div class="firefly-layer" aria-hidden="true">
+        <span class="firefly"></span><span class="firefly"></span><span class="firefly"></span><span class="firefly"></span><span class="firefly"></span>
+        <span class="firefly"></span><span class="firefly"></span><span class="firefly"></span><span class="firefly"></span><span class="firefly"></span>
+    </div>
 
     <!-- Sticky Navigation -->
     <nav class="top-nav">
@@ -1122,6 +1182,11 @@
             <span>Boardbots</span>
         </a>
         <div class="nav-actions">
+            <button id="btnSound" class="btn-nav" data-i18n-aria="aria_sound" aria-label="Som">
+                <svg id="iconSoundOn" class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+                <svg id="iconSoundOff" class="icon-inline hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+                <span id="soundLabel" data-i18n="btn_sound">Som</span>
+            </button>
             <button id="btnHelp" class="btn-nav" data-i18n-aria="aria_rules" aria-label="Regras">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                 <span data-i18n="btn_rules">Regras</span>
@@ -1669,6 +1734,8 @@
         /* --- Internationalization Dictionary --- */
         const I18N = {
             pt: {
+                btn_sound: "Som",
+                aria_sound: "Alternar som",
                 btn_rules: "Regras",
                 btn_restart: "Reiniciar",
                 aria_rules: "Regras do jogo",
@@ -1761,6 +1828,8 @@
                 footer_credits_text: "<strong>Tiny Epic Dinosaurs</strong> — Automa Rival Rancher baseado no jogo de Scott Almes e na variante \"Re-tuned Solo Mode\" por Ryan Lopez DeVinaspre. © Gamelyn Games."
             },
             en: {
+                btn_sound: "Sound",
+                aria_sound: "Toggle sound",
                 btn_rules: "Rules",
                 btn_restart: "Restart",
                 aria_rules: "Game rules",
@@ -2054,6 +2123,7 @@
 
             // Update opponent details in ranch
             updateRanchLabels();
+            updateSoundButtonUI();
         }
 
         function setLanguage(lang) {
@@ -2061,6 +2131,44 @@
             localStorage.setItem('boardbots_lang', lang);
             updateTexts();
             renderUI();
+        }
+
+        /* --- Audio & Sensory Layer (ThemeKit SFX & Haptics) --- */
+        function playTedSfx(key, opts) {
+            if (typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
+                window.ThemeKit.playSfx(key, opts);
+            }
+        }
+
+        function triggerHaptic(pattern = [25]) {
+            try {
+                if (typeof navigator !== 'undefined' && 'vibrate' in navigator && typeof navigator.vibrate === 'function') {
+                    navigator.vibrate(pattern);
+                    return;
+                }
+                if (typeof document !== 'undefined' && document.body) {
+                    const sw = document.createElement('input');
+                    sw.type = 'checkbox';
+                    sw.setAttribute('switch', '');
+                    sw.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0.001;pointer-events:none;';
+                    document.body.appendChild(sw);
+                    sw.click();
+                    setTimeout(() => { try { sw.remove(); } catch (_) {} }, 100);
+                }
+            } catch (_) {}
+        }
+
+        function updateSoundButtonUI() {
+            const isMuted = typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.isSfxMuted === 'function' ? window.ThemeKit.isSfxMuted() : false;
+            const iconOn = document.getElementById('iconSoundOn');
+            const iconOff = document.getElementById('iconSoundOff');
+            const label = document.getElementById('soundLabel');
+            if (iconOn) iconOn.classList.toggle('hidden', isMuted);
+            if (iconOff) iconOff.classList.toggle('hidden', !isMuted);
+            if (label) {
+                const tDict = I18N[state.lang] || I18N.pt;
+                label.textContent = tDict.btn_sound || (state.lang === 'pt' ? 'Som' : 'Sound');
+            }
         }
 
         function shuffleDeck() {
@@ -2093,7 +2201,15 @@
             state.deck = shuffleDeck();
             state.drawnCardsInRound = [];
             state.activeCard = null;
-            logMessage(state.lang === 'pt' ? `Iniciada disputa contra o Rival ${OPPONENTS[state.opponentKey].name}!` : `Match started against Rival ${OPPONENTS[state.opponentKey].name}!`, true);
+
+            playTedSfx('stoneage/mammoth-step', { volume: 0.7 });
+            triggerHaptic([30, 40, 30]);
+
+            logMessage(state.lang === 'pt' 
+                ? `🌿 Os portões do rancho rival se abrem na ilha! Disputa territorial iniciada contra o Rival ${OPPONENTS[state.opponentKey].name}.` 
+                : `🌿 The rival ranch gates swing open on the island! Territorial dispute underway against Rival ${OPPONENTS[state.opponentKey].name}.`, 
+                true
+            );
             renderUI();
         }
 
@@ -2115,9 +2231,14 @@
             document.getElementById('step2Box').classList.add('hidden');
             document.getElementById('cardPlaceholder').classList.remove('hidden');
             
-            logMessage(state.lang === 'pt' ? `--- Início da Rodada ${state.round} ---` : `--- Start of Round ${state.round} ---`, true);
+            playTedSfx('turn-notify', { volume: 0.65 });
+            triggerHaptic([25]);
+
+            logMessage(state.lang === 'pt' ? `📅 --- Alvorada na Ilha: Início da Rodada ${state.round} de 6 ---` : `📅 --- Island Dawn: Start of Round ${state.round} of 6 ---`, true);
             if (state.round === 4) {
-                logMessage(state.lang === 'pt' ? `⭐ O Rival Rancher ativou seu LEAD RANCHER! Agora joga 5 cartas por rodada.` : `⭐ The Rival Rancher activated its LEAD RANCHER! Now plays 5 cards per round.`, true);
+                playTedSfx('heroscape/dragon-roar', { volume: 0.6 });
+                triggerHaptic([40, 50, 40]);
+                logMessage(state.lang === 'pt' ? `⭐ O Rival despacha seu LEAD RANCHER! O capataz experiente assume o comando e jogará 5 cartas por rodada.` : `⭐ The Rival dispatches its LEAD RANCHER! The seasoned foreman takes command, playing 5 cards per round.`, true);
             }
             renderUI();
         }
@@ -2138,6 +2259,9 @@
             state.activeCard = card;
             state.turnInRound++;
 
+            playTedSfx('card-draw', { volume: 0.65 });
+            triggerHaptic([20]);
+
             // Render Card UI
             document.getElementById('cardPlaceholder').classList.add('hidden');
             document.getElementById('cardActiveWrap').classList.remove('hidden');
@@ -2157,8 +2281,8 @@
             document.getElementById('turnIndicator').textContent = `${state.turnInRound}/${maxTurns}`;
 
             logMessage(state.lang === 'pt' 
-                ? `Carta revelada: Tabuleiro ${card.mat} (${card.dinos}x ${card.type.toUpperCase()}). Bloqueia: ${blocking.short}.` 
-                : `Revealed card: Mat ${card.mat} (${card.dinos}x ${card.type.toUpperCase()}). Blocks: ${blocking.short}.`
+                ? `📋 Relatório dos vigias: Movimentação no Tabuleiro ${card.mat} (${card.dinos}x ${card.type.toUpperCase()}). Bloqueio ordenado em: ${blocking.short}.` 
+                : `📋 Scout report: Movement spotted on Mat ${card.mat} (${card.dinos}x ${card.type.toUpperCase()}). Block ordered on: ${blocking.short}.`
             );
         }
 
@@ -2228,15 +2352,19 @@
                 adjustStat('contracts', 1);
                 adjustStat('contractsVP', vp);
                 
+                playTedSfx('sanctuary/bonus-chime', { volume: 0.75 });
+                triggerHaptic([20, 30, 40]);
+
                 logMessage(isPt 
-                    ? `📜 CONTRATO CUMPRIDO! O Rival descartou os dinos necessários e pegou o contrato (+${vp} VP). <strong>Seu turno encerra imediatamente!</strong>` 
-                    : `📜 CONTRACT FULFILLED! The Rival discarded the required dinos and claimed the contract (+${vp} VP). <strong>Its turn ends immediately!</strong>`,
+                    ? `📜 CONTRATO EXPEDIDO! O Rival carrega os engradados, despacha os espécimes e fatura o contrato (+${vp} VP). <strong>Seu turno encerra com sucesso!</strong>` 
+                    : `📜 CONTRACT SHIPPED! The Rival crates the specimens and fulfills the contract (+${vp} VP). <strong>Its turn concludes with success!</strong>`,
                     true
                 );
 
                 finishTurnStep();
             } else {
                 // Did not fulfill contract -> Proceed to Step 2
+                playTedSfx('ui-click', { volume: 0.4 });
                 document.getElementById('step1Box').classList.add('hidden');
                 document.getElementById('step2Box').classList.remove('hidden');
             }
@@ -2250,14 +2378,18 @@
 
             if (!isOccupied) {
                 // Spaces are free -> Rival gains dinosaurs!
+                playTedSfx('token-place', { volume: 0.65 });
+                triggerHaptic([25]);
                 addDinos(card.type, card.dinos);
                 logMessage(isPt 
-                    ? `🦖 Espaços livres! O Rival alocou +${card.dinos}x ${card.type.toUpperCase()} em seu rancho.` 
-                    : `🦖 Spaces free! The Rival placed +${card.dinos}x ${card.type.toUpperCase()} into its ranch.`,
+                    ? `🦖 Pastos desimpedidos! O Rival cerca a área e laça +${card.dinos}x ${card.type.toUpperCase()} para os currais do rancho.` 
+                    : `🦖 Clear pastures! The Rival fences the sector and wrangles +${card.dinos}x ${card.type.toUpperCase()} into ranch paddocks.`,
                     true
                 );
             } else {
                 // Player occupied spaces -> Rival performs action!
+                playTedSfx('ui-click', { volume: 0.5 });
+                triggerHaptic([20]);
                 executeRivalColumnAction(card.type);
             }
 
@@ -2275,9 +2407,11 @@
             if (openSlotIndex === -1) {
                 // All 3 slots full -> Perform Special Action at top!
                 const specText = opp.specialActionText[state.lang];
+                playTedSfx('heroscape/dragon-roar', { volume: 0.65 });
+                triggerHaptic([40, 50, 40]);
                 logMessage(isPt 
-                    ? `⚡ Coluna de ${dinoType.toUpperCase()} cheia! O Rival executou sua AÇÃO ESPECIAL: ${specText}.` 
-                    : `⚡ ${dinoType.toUpperCase()} column full! The Rival executed its SPECIAL ACTION: ${specText}.`,
+                    ? `⚡ Currais de ${dinoType.toUpperCase()} em capacidade máxima! O Rival dispara sua AÇÃO ESPECIAL: <strong>${specText}</strong>.` 
+                    : `⚡ ${dinoType.toUpperCase()} paddocks at maximum capacity! The Rival triggers its SPECIAL ACTION: <strong>${specText}</strong>.`,
                     true
                 );
                 // Apply breeder special action resources
@@ -2293,9 +2427,11 @@
                     actionDef.apply(state);
                 }
                 const actText = isPt ? actionDef.pt : actionDef.en;
+                playTedSfx('token-place', { volume: 0.55 });
+                triggerHaptic([20]);
                 logMessage(isPt 
-                    ? `⚙️ Espaço ocupado pelo jogador! O Rival executou a Ação do compartimento ${openSlotIndex + 1} (${dinoType.toUpperCase()}): <strong>${actText}</strong>.` 
-                    : `⚙️ Space occupied by player! The Rival executed Slot ${openSlotIndex + 1} Action (${dinoType.toUpperCase()}): <strong>${actText}</strong>.`,
+                    ? `⚙️ Território contestado pelos seus vaqueiros! O Rival recua e opera a baía ${openSlotIndex + 1} (${dinoType.toUpperCase()}): <strong>${actText}</strong>.` 
+                    : `⚙️ Territory contested by your ranch hands! The Rival falls back to slot ${openSlotIndex + 1} (${dinoType.toUpperCase()}): <strong>${actText}</strong>.`,
                     true
                 );
             }
@@ -2327,9 +2463,11 @@
                 // Overflow -> Trigger Special Action!
                 const opp = OPPONENTS[state.opponentKey];
                 const specText = opp.specialActionText[state.lang];
+                playTedSfx('heroscape/dragon-roar', { volume: 0.65 });
+                triggerHaptic([40, 50, 40]);
                 logMessage(state.lang === 'pt' 
-                    ? `⚠️ Sem espaço para ${qty - added} dino(s) em ${type.toUpperCase()}! Disparou AÇÃO ESPECIAL: ${specText}.` 
-                    : `⚠️ No room for ${qty - added} dino(s) in ${type.toUpperCase()}! Triggered SPECIAL ACTION: ${specText}.`,
+                    ? `⚠️ ALERTA DE SUPERLOTAÇÃO! Sem espaço para acomodar ${qty - added} dino(s) em ${type.toUpperCase()} — os animais forçam as cercas e ativam a AÇÃO ESPECIAL: <strong>${specText}</strong>.` 
+                    : `⚠️ OVERCROWDING ALERT! No room for ${qty - added} dino(s) in ${type.toUpperCase()} — beasts breach the perimeter, triggering SPECIAL ACTION: <strong>${specText}</strong>.`,
                     true
                 );
                 if (state.opponentKey === 'breeder') {
@@ -2344,6 +2482,8 @@
         function toggleEnclosure(type, slotNum) {
             const idx = slotNum - 1;
             state.enclosures[type][idx] = !state.enclosures[type][idx];
+            playTedSfx('token-place', { volume: 0.5 });
+            triggerHaptic([15]);
             renderUI();
         }
 
@@ -2352,6 +2492,8 @@
         }
 
         function adjustResource(type, delta) {
+            playTedSfx('ui-click', { volume: 0.35 });
+            triggerHaptic([12]);
             let val = state.resources[type] + delta;
             if (val < 0) val = 0;
 
@@ -2373,9 +2515,12 @@
             const maxAction = opp.maxActions[type];
             const actionText = isPt ? maxAction.pt : maxAction.en;
 
+            playTedSfx('stoneage/wood-gather', { volume: 0.7 });
+            triggerHaptic([30, 40, 30]);
+
             logMessage(isPt 
-                ? `🚨 RECURSO MÁXIMO (13) EM ${type.toUpperCase()}! O Rival ativou: <strong>${actionText}</strong>. O recurso foi resetado para 0!` 
-                : `🚨 RESOURCE MAX (13) ON ${type.toUpperCase()}! The Rival triggered: <strong>${actionText}</strong>. Resource reset to 0!`,
+                ? `🚨 SILOS EM CAPACIDADE MÁXIMA (13) EM ${type.toUpperCase()}! O Rival esvazia o armazém e ativa: <strong>${actionText}</strong>! Recursos redefinidos para zero.` 
+                : `🚨 STORAGE AT MAXIMUM CAPACITY (13) ON ${type.toUpperCase()}! The Rival empties the silos and triggers: <strong>${actionText}</strong>! Resources reset to zero.`,
                 true
             );
 
@@ -2396,10 +2541,14 @@
         }
 
         function toggleFirstPlayer() {
+            playTedSfx('token-place', { volume: 0.45 });
+            triggerHaptic([15]);
             setFirstPlayer(state.firstPlayer === 'rival' ? 'player' : 'rival');
         }
 
         function adjustStat(key, delta) {
+            playTedSfx('ui-click', { volume: 0.35 });
+            triggerHaptic([12]);
             state.stats[key] = Math.max(0, state.stats[key] + delta);
             renderUI();
         }
@@ -2535,19 +2684,51 @@
 
         /* --- Modals --- */
         function toggleHelpModal(show) {
+            playTedSfx('ui-click', { volume: 0.35 });
             document.getElementById('helpModal').classList.toggle('hidden', !show);
         }
 
         function toggleScoreModal(show) {
+            playTedSfx('ui-click', { volume: 0.4 });
             calcScores();
             document.getElementById('scoreModal').classList.toggle('hidden', !show);
         }
 
         /* --- Event Listeners & Init --- */
         document.addEventListener('DOMContentLoaded', () => {
+            // Sound button setup
+            const btnSound = document.getElementById('btnSound');
+            if (btnSound) {
+                btnSound.addEventListener('click', () => {
+                    if (window.ThemeKit && ThemeKit.toggleSfx) {
+                        ThemeKit.toggleSfx();
+                        updateSoundButtonUI();
+                        playTedSfx('ui-click', { volume: 0.4 });
+                    }
+                });
+                updateSoundButtonUI();
+            }
+
+            // Preload SFX assets
+            if (window.ThemeKit && ThemeKit.preloadSfx) {
+                ThemeKit.preloadSfx([
+                    'card-draw',
+                    'card-flip',
+                    'token-place',
+                    'ui-click',
+                    'turn-notify',
+                    'stoneage/mammoth-step',
+                    'stoneage/wood-gather',
+                    'heroscape/dragon-roar',
+                    'sanctuary/bonus-chime'
+                ]);
+            }
+
             // Opponent selection
             document.querySelectorAll('.opponent-card').forEach(card => {
                 card.addEventListener('click', () => {
+                    playTedSfx('ui-click', { volume: 0.4 });
+                    triggerHaptic([15]);
                     document.querySelectorAll('.opponent-card').forEach(c => c.classList.remove('selected'));
                     card.classList.add('selected');
                     state.opponentKey = card.getAttribute('data-opponent');
@@ -2558,6 +2739,8 @@
             // Language toggles
             document.querySelectorAll('.lang-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
+                    playTedSfx('ui-click', { volume: 0.3 });
+                    triggerHaptic([12]);
                     setLanguage(btn.getAttribute('data-lang'));
                 });
             });
@@ -2565,6 +2748,7 @@
             // Top action buttons
             document.getElementById('btnHelp').addEventListener('click', () => toggleHelpModal(true));
             document.getElementById('btnReset').addEventListener('click', () => {
+                playTedSfx('ui-click', { volume: 0.4 });
                 if (confirm(state.lang === 'pt' ? 'Tem certeza que deseja reiniciar a partida?' : 'Are you sure you want to restart the match?')) {
                     location.reload();
                 }
