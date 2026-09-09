@@ -3407,6 +3407,7 @@ function loadState() {
     console.warn('Erro ao carregar estado salvo:', e);
   }
   initItemSlots();
+  cleanupDuplicateBoardItems();
   if (state.tileSize) {
     document.documentElement.style.setProperty('--tile-size', state.tileSize + 'px');
     const slider = document.getElementById('tileSizeSlider');
@@ -3416,6 +3417,49 @@ function loadState() {
   }
   const titleInput = document.getElementById('tierlistCustomTitle');
   if (titleInput && state.title) titleInput.value = state.title;
+}
+
+function cleanupDuplicateBoardItems() {
+  if (!state || !state.items) return;
+  const seenIds = new Set();
+  const seenTitles = new Set();
+  let hadDuplicates = false;
+
+  const unplayedTier = (state.tiers || []).find(t => t.isUnplayed);
+  const unplayedTierId = unplayedTier ? unplayedTier.id : null;
+
+  const tierIds = Object.keys(state.items);
+  // Process ranked tiers first, unplayed tier last
+  tierIds.sort((a, b) => {
+    if (a === unplayedTierId) return 1;
+    if (b === unplayedTierId) return -1;
+    return 0;
+  });
+
+  tierIds.forEach(tierId => {
+    const list = state.items[tierId] || [];
+    const dedupedList = [];
+    list.forEach(item => {
+      if (!item || !item.title) return;
+      const bggKey = item.bggId ? `bgg_${item.bggId}` : null;
+      const ludoKey = item.ludoId ? `ludo_${item.ludoId}` : null;
+      const normTitle = typeof normalizeTitle === 'function' ? normalizeTitle(item.title) : item.title.toLowerCase().trim();
+
+      if (bggKey && seenIds.has(bggKey)) { hadDuplicates = true; return; }
+      if (ludoKey && seenIds.has(ludoKey)) { hadDuplicates = true; return; }
+      if (normTitle && seenTitles.has(normTitle)) { hadDuplicates = true; return; }
+
+      if (bggKey) seenIds.add(bggKey);
+      if (ludoKey) seenIds.add(ludoKey);
+      if (normTitle) seenTitles.add(normTitle);
+      dedupedList.push(item);
+    });
+    state.items[tierId] = dedupedList;
+  });
+
+  if (hadDuplicates) {
+    saveState();
+  }
 }
 
 function saveState() {
@@ -6291,10 +6335,13 @@ function transformRowsToCollection(format, rows, fileName) {
     sourceLabel = 'BGG Coleção';
     badgeClass = 'bgg';
 
+    const seenMap = new Map();
+
     rows.forEach(r => {
       const title = (r.objectname || r.originalname || '').trim();
       if (!title) return;
       const bggId = parseInt(r.objectid, 10) || null;
+      const dedupKey = bggId ? `bgg_${bggId}` : `title_${normalizeTitle(title)}`;
       const isExp = String(r.itemtype || '').trim().toLowerCase() === 'expansion';
       const minp = r.minplayers;
       const maxp = r.maxplayers;
@@ -6305,6 +6352,16 @@ function transformRowsToCollection(format, rows, fileName) {
       const bggScore = r.baverage && r.baverage !== 'N/A' && !isNaN(parseFloat(r.baverage)) ? Math.round(parseFloat(r.baverage) * 10) / 10 : null;
       const bggRank = r.rank && r.rank !== 'N/A' && !isNaN(parseInt(r.rank, 10)) ? parseInt(r.rank, 10) : null;
       const bggWeight = r.avgweight && r.avgweight !== 'N/A' && !isNaN(parseFloat(r.avgweight)) ? Math.round(parseFloat(r.avgweight) * 100) / 100 : null;
+
+      if (seenMap.has(dedupKey)) {
+        const existing = seenMap.get(dedupKey);
+        if (plays > existing.plays) existing.plays = plays;
+        if (score != null && existing.score == null) existing.score = score;
+        if (bggScore != null && existing.bggScore == null) existing.bggScore = bggScore;
+        if (bggRank != null && existing.bggRank == null) existing.bggRank = bggRank;
+        if (bggWeight != null && existing.bggWeight == null) existing.bggWeight = bggWeight;
+        return;
+      }
 
       const item = {
         title,
@@ -6323,6 +6380,7 @@ function transformRowsToCollection(format, rows, fileName) {
         source: 'bgg'
       };
 
+      seenMap.set(dedupKey, item);
       allGames.push(item);
       if (isExp) expansions.push(item);
       else baseGames.push(item);
@@ -7001,11 +7059,18 @@ function executeCollectionImport() {
   }
 
   const toAdd = [];
+  const seenBatchIds = new Set();
+  const seenBatchTitles = new Set();
 
   for (const game of candidates) {
     const gBggId = game.bggId ? String(game.bggId) : null;
     const gLudoId = game.ludoId ? Number(game.ludoId) : null;
     const norm = normalizeTitle(game.title);
+
+    // Intra-batch deduplication
+    if (gBggId && seenBatchIds.has('bgg_' + gBggId)) continue;
+    if (gLudoId && seenBatchIds.has('ludo_' + gLudoId)) continue;
+    if (norm && seenBatchTitles.has(norm)) continue;
 
     if (skipDuplicates) {
       if (gBggId && existingBggIds.has(gBggId)) continue;
@@ -7013,9 +7078,18 @@ function executeCollectionImport() {
       if (existingTitles.has(norm)) continue;
     }
 
-    if (gBggId) existingBggIds.add(gBggId);
-    if (gLudoId) existingLudoIds.add(gLudoId);
-    existingTitles.add(norm);
+    if (gBggId) {
+      seenBatchIds.add('bgg_' + gBggId);
+      existingBggIds.add(gBggId);
+    }
+    if (gLudoId) {
+      seenBatchIds.add('ludo_' + gLudoId);
+      existingLudoIds.add(gLudoId);
+    }
+    if (norm) {
+      seenBatchTitles.add(norm);
+      existingTitles.add(norm);
+    }
 
     const newItem = {
       id: 'item_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
@@ -8118,12 +8192,16 @@ function parseBggUserCollectionXml(xmlText) {
   if (doc.querySelector('parsererror')) return [];
   const items = Array.from(doc.querySelectorAll('items > item'));
 
-  return items.map(item => {
+  const parsedMap = new Map();
+
+  items.forEach(item => {
     const bggId = item.getAttribute('objectid');
     const subtype = item.getAttribute('subtype');
     const isExpansion = subtype === 'boardgameexpansion';
     const nameEl = item.querySelector('name');
     const title = nameEl ? nameEl.textContent.trim() : '';
+    if (!title) return;
+
     const yearEl = item.querySelector('yearpublished');
     const year = yearEl ? yearEl.textContent.trim() : '';
     const imgEl = item.querySelector('image');
@@ -8160,29 +8238,69 @@ function parseBggUserCollectionXml(xmlText) {
       if (!isNaN(val) && val > 0) userRating = Math.round(val * 10) / 10;
     }
 
-    return {
-      id: 'bgg_' + bggId + '_' + Math.random().toString(36).substr(2, 5),
-      bggId,
-      title,
-      year,
-      image,
-      players,
-      time,
-      plays,
-      score: userRating,
-      userRating: userRating,
-      own,
-      wantToPlay,
-      wishlist,
-      isExpansion,
-      bggScore,
-      bggRank,
-      bggWeight,
-      link: `https://boardgamegeek.com/boardgame/${bggId}`,
-      bggLink: `https://boardgamegeek.com/boardgame/${bggId}`,
-      source: 'bgg'
-    };
-  }).filter(g => g.title);
+    const dedupKey = bggId ? `bgg_${bggId}` : `title_${normalizeTitle(title)}`;
+    const normTitleKey = `title_${normalizeTitle(title)}`;
+
+    let existing = parsedMap.get(dedupKey);
+    if (!existing && normTitleKey) {
+      existing = parsedMap.get(normTitleKey);
+    }
+
+    if (existing) {
+      if (!existing.image && image) existing.image = image;
+      if (!existing.year && year) existing.year = year;
+      if (!existing.players && players) existing.players = players;
+      if (!existing.time && time) existing.time = time;
+      existing.plays = Math.max(existing.plays || 0, plays);
+      if (userRating !== null && (existing.score === null || userRating > existing.score)) {
+        existing.score = userRating;
+        existing.userRating = userRating;
+      }
+      if (bggScore !== null && (existing.bggScore === null || bggScore > existing.bggScore)) {
+        existing.bggScore = bggScore;
+      }
+      if (bggRank !== null && (existing.bggRank === null || bggRank < existing.bggRank)) {
+        existing.bggRank = bggRank;
+      }
+      if (own) existing.own = true;
+      if (wantToPlay) existing.wantToPlay = true;
+      if (wishlist) existing.wishlist = true;
+      if (!existing.bggId && bggId) {
+        existing.bggId = bggId;
+        existing.link = `https://boardgamegeek.com/boardgame/${bggId}`;
+        existing.bggLink = `https://boardgamegeek.com/boardgame/${bggId}`;
+      }
+    } else {
+      const entry = {
+        id: 'bgg_' + (bggId || Math.random().toString(36).substr(2, 7)),
+        bggId,
+        title,
+        year,
+        image,
+        players,
+        time,
+        plays,
+        score: userRating,
+        userRating: userRating,
+        own,
+        wantToPlay,
+        wishlist,
+        isExpansion,
+        bggScore,
+        bggRank,
+        bggWeight,
+        link: bggId ? `https://boardgamegeek.com/boardgame/${bggId}` : '',
+        bggLink: bggId ? `https://boardgamegeek.com/boardgame/${bggId}` : '',
+        source: 'bgg'
+      };
+      parsedMap.set(dedupKey, entry);
+      if (normTitleKey && normTitleKey !== dedupKey) {
+        parsedMap.set(normTitleKey, entry);
+      }
+    }
+  });
+
+  return Array.from(new Set(parsedMap.values()));
 }
 
 // BGG Collection Fetch with Retry Loop
@@ -8196,7 +8314,6 @@ async function fetchBggForRanking() {
   const statusEl = document.getElementById('bggRankStatusText');
   const btn = document.getElementById('btnFetchBggRank');
   if (btn) btn.disabled = true;
-  if (statusEl) statusEl.innerHTML = '<span class="search-spinner" style="display:inline-block; margin-right:6px;"></span> Conectando ao BoardGameGeek...';
 
   try {
     let xmlText = null;
@@ -8511,8 +8628,35 @@ function startRankingBattle() {
     }));
   }
 
+  // Universal candidate deduplication across all tabs (BGG, Ludopedia, board tiers, custom)
+  const uniqueCandidates = [];
+  const seenCandidateIds = new Set();
+  const seenCandidateTitles = new Set();
+
+  for (const c of candidates) {
+    if (!c || !c.title) continue;
+    const bggKey = c.bggId ? `bgg_${c.bggId}` : null;
+    const ludoKey = c.ludoId ? `ludo_${c.ludoId}` : null;
+    const idKey = c.id || null;
+    const normTitle = typeof normalizeTitle === 'function' ? normalizeTitle(c.title) : c.title.toLowerCase().trim();
+
+    if (bggKey && seenCandidateIds.has(bggKey)) continue;
+    if (ludoKey && seenCandidateIds.has(ludoKey)) continue;
+    if (idKey && seenCandidateIds.has(idKey)) continue;
+    if (normTitle && seenCandidateTitles.has(normTitle)) continue;
+
+    if (bggKey) seenCandidateIds.add(bggKey);
+    if (ludoKey) seenCandidateIds.add(ludoKey);
+    if (idKey) seenCandidateIds.add(idKey);
+    if (normTitle) seenCandidateTitles.add(normTitle);
+
+    uniqueCandidates.push(c);
+  }
+
+  candidates = uniqueCandidates;
+
   if (candidates.length < 2) {
-    alert('É necessário ter pelo menos 2 jogos selecionados para realizar o rankeamento 1x1.');
+    alert(currentLang === 'en' ? 'At least 2 unique games are required for 1v1 ranking.' : 'É necessário ter pelo menos 2 jogos selecionados para realizar o rankeamento 1x1.');
     return;
   }
 
