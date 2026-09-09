@@ -2859,7 +2859,7 @@ footer {
               <span>↩️ Desfazer [Z]</span>
             </button>
             <button class="arena-sub-btn danger" onclick="eliminateCurrentFightersPrompt()" title="Remover um destes jogos do torneio">
-              <span>🗑️ Eliminar</span>
+              <span>🗑️ Eliminar [E]</span>
             </button>
           </div>
         </div>
@@ -2878,6 +2878,46 @@ footer {
           <button class="fighter-select-btn" data-i18n="btn_choose_game">Escolher Este 👑</button>
         </div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Eliminate Fighter from Tournament -->
+<div id="arenaEliminateModal" class="modal-overlay" style="z-index: 300;">
+  <div class="modal-card" style="max-width: 520px; text-align: center;">
+    <button class="modal-close-btn" onclick="closeModal('arenaEliminateModal')">&times;</button>
+    
+    <div style="font-size: 2.2rem; margin-bottom: 6px;">🗑️</div>
+    <h2 style="font-family: var(--font-display); color: var(--brass-bright); margin: 0 0 6px;" data-i18n="arena_elim_title">Eliminar do Torneio</h2>
+    <p style="color: var(--text-dim); font-size: 0.9rem; margin: 0 0 20px;" data-i18n="arena_elim_desc">Escolha qual jogo você deseja remover definitivamente deste rankeamento:</p>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px;">
+      <!-- Option Left -->
+      <div id="elimCardLeft" style="background: rgba(26,15,10,0.85); border: 1.5px solid rgba(197,160,89,0.3); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+        <img id="elimImgLeft" src="" alt="Fighter Left" style="width: 72px; height: 72px; object-fit: cover; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2);">
+        <div id="elimTitleLeft" style="font-weight: 700; font-size: 0.85rem; color: #fff; text-align: center; word-break: break-word; min-height: 38px; display: flex; align-items: center; justify-content: center;"></div>
+        <button type="button" class="tool-btn danger" onclick="confirmEliminateFighter('left')" style="width: 100%; font-size: 0.82rem; padding: 8px 10px; justify-content: center; gap: 6px;">
+          <span>🗑️</span> <span data-i18n="arena_elim_left">Eliminar Este</span>
+        </button>
+      </div>
+
+      <!-- Option Right -->
+      <div id="elimCardRight" style="background: rgba(26,15,10,0.85); border: 1.5px solid rgba(197,160,89,0.3); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+        <img id="elimImgRight" src="" alt="Fighter Right" style="width: 72px; height: 72px; object-fit: cover; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2);">
+        <div id="elimTitleRight" style="font-weight: 700; font-size: 0.85rem; color: #fff; text-align: center; word-break: break-word; min-height: 38px; display: flex; align-items: center; justify-content: center;"></div>
+        <button type="button" class="tool-btn danger" onclick="confirmEliminateFighter('right')" style="width: 100%; font-size: 0.82rem; padding: 8px 10px; justify-content: center; gap: 6px;">
+          <span>🗑️</span> <span data-i18n="arena_elim_right">Eliminar Este</span>
+        </button>
+      </div>
+    </div>
+
+    <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+      <button type="button" class="tool-btn" onclick="confirmEliminateFighter('both')" style="border-color: rgba(220,38,38,0.5); color: #fca5a5; font-size: 0.82rem;">
+        <span>⚠️</span> <span data-i18n="arena_elim_both">Eliminar Ambos os Jogos</span>
+      </button>
+      <button type="button" class="tool-btn" onclick="closeModal('arenaEliminateModal')" style="font-size: 0.82rem;">
+        <span data-i18n="btn_cancel">Cancelar</span>
+      </button>
     </div>
   </div>
 </div>
@@ -3066,6 +3106,11 @@ const I18N = {
     toast_recalculated: 'Cores dos Tiers recalculadas no gradiente!',
     drag_scroll_up: '▲ Rolar para o topo (Tier S)',
     drag_scroll_down: '▼ Rolar para baixo (Não jogado)',
+    arena_elim_title: 'Eliminar do Torneio',
+    arena_elim_desc: 'Escolha qual jogo você deseja remover definitivamente deste rankeamento:',
+    arena_elim_left: 'Eliminar Este',
+    arena_elim_right: 'Eliminar Este',
+    arena_elim_both: 'Eliminar Ambos os Jogos',
     unplayed_name: 'Não jogado',
     btn_battle_1v1: 'Batalha 1x1',
     modal_ranking_setup_title: 'Rankeamento 1x1 — Batalha de Jogos',
@@ -3216,6 +3261,11 @@ const I18N = {
     toast_recalculated: 'Tier colors recalculated along the gradient spectrum!',
     drag_scroll_up: '▲ Scroll to top (Tier S)',
     drag_scroll_down: '▼ Scroll down (Unplayed)',
+    arena_elim_title: 'Eliminate from Tournament',
+    arena_elim_desc: 'Choose which game you want to permanently remove from this ranking session:',
+    arena_elim_left: 'Eliminate This',
+    arena_elim_right: 'Eliminate This',
+    arena_elim_both: 'Eliminate Both Games',
     unplayed_name: 'Unplayed',
     btn_battle_1v1: '1v1 Battle',
     modal_ranking_setup_title: '1v1 Ranking — Game Battle',
@@ -7334,6 +7384,15 @@ window.addEventListener('DOMContentLoaded', () => {
     if (!arena || !arena.classList.contains('visible')) return;
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
 
+    const elimModal = document.getElementById('arenaEliminateModal');
+    if (elimModal && elimModal.classList.contains('visible')) {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        closeModal('arenaEliminateModal');
+      }
+      return;
+    }
+
     if (e.key === 'a' || e.key === 'A' || e.key === 'ArrowLeft') {
       e.preventDefault();
       chooseFighter('left');
@@ -7346,6 +7405,9 @@ window.addEventListener('DOMContentLoaded', () => {
     } else if (e.key === 'z' || e.key === 'Z' || e.key === 'u' || e.key === 'U') {
       e.preventDefault();
       undoFighterChoice();
+    } else if (e.key === 'e' || e.key === 'E' || e.key === 'Delete') {
+      e.preventDefault();
+      eliminateCurrentFightersPrompt();
     } else if (e.key === 'Escape') {
       e.preventDefault();
       exitArenaPrompt();
@@ -7853,6 +7915,7 @@ class TournamentEngine {
 
   saveSnapshot() {
     return JSON.stringify({
+      items: this.items,
       sublists: this.sublists,
       nextPass: this.nextPass,
       left: this.left,
@@ -7866,6 +7929,7 @@ class TournamentEngine {
 
   restoreSnapshot(jsonStr) {
     const data = JSON.parse(jsonStr);
+    if (data.items) this.items = data.items;
     this.sublists = data.sublists;
     this.nextPass = data.nextPass;
     this.left = data.left;
@@ -7928,9 +7992,16 @@ class TournamentEngine {
 
   getNextPair() {
     while (true) {
+      // Clean up any empty sublists that might have occurred from eliminations
+      this.sublists = (this.sublists || []).filter(s => s && s.length > 0);
+      this.nextPass = (this.nextPass || []).filter(s => s && s.length > 0);
+
       if (!this.left && !this.right) {
         if (this.sublists.length === 0) {
-          if (this.nextPass.length <= 1) {
+          if (this.nextPass.length === 0) {
+            return { done: true, result: [] };
+          }
+          if (this.nextPass.length === 1) {
             return { done: true, result: this.nextPass[0] || [] };
           }
           this.sublists = this.nextPass;
@@ -7939,13 +8010,13 @@ class TournamentEngine {
         if (this.sublists.length === 1) {
           this.nextPass.push(this.sublists.shift());
           if (this.nextPass.length === 1 && this.sublists.length === 0) {
-            return { done: true, result: this.nextPass[0] };
+            return { done: true, result: this.nextPass[0] || [] };
           }
           this.sublists = this.nextPass;
           this.nextPass = [];
         }
-        this.left = this.sublists.shift();
-        this.right = this.sublists.shift();
+        this.left = this.sublists.shift() || [];
+        this.right = this.sublists.shift() || [];
         this.i = 0;
         this.j = 0;
         this.merged = [];
@@ -7953,14 +8024,14 @@ class TournamentEngine {
 
       if (this.i >= this.left.length) {
         this.merged.push(...this.right.slice(this.j));
-        this.nextPass.push(this.merged);
+        if (this.merged.length > 0) this.nextPass.push(this.merged);
         this.left = null;
         this.right = null;
         continue;
       }
       if (this.j >= this.right.length) {
         this.merged.push(...this.left.slice(this.i));
-        this.nextPass.push(this.merged);
+        if (this.merged.length > 0) this.nextPass.push(this.merged);
         this.left = null;
         this.right = null;
         continue;
@@ -7997,6 +8068,39 @@ class TournamentEngine {
     this.comparisonCount++;
     this.merged.push(this.left[this.i++]);
     this.merged.push(this.right[this.j++]);
+  }
+
+  eliminateFighter(side) {
+    if (!this.left || !this.right) return null;
+    this.undoHistory.push(this.saveSnapshot());
+
+    let eliminated = null;
+
+    if (side === 'left') {
+      eliminated = this.left[this.i];
+      if (eliminated) {
+        const targetId = eliminated.id;
+        this.items = this.items.filter(it => it.id !== targetId);
+      }
+      this.left.splice(this.i, 1);
+    } else if (side === 'right') {
+      eliminated = this.right[this.j];
+      if (eliminated) {
+        const targetId = eliminated.id;
+        this.items = this.items.filter(it => it.id !== targetId);
+      }
+      this.right.splice(this.j, 1);
+    } else if (side === 'both') {
+      const itemA = this.left[this.i];
+      const itemB = this.right[this.j];
+      eliminated = [itemA, itemB];
+      const ids = [itemA ? itemA.id : null, itemB ? itemB.id : null].filter(Boolean);
+      this.items = this.items.filter(it => !ids.includes(it.id));
+      this.left.splice(this.i, 1);
+      this.right.splice(this.j, 1);
+    }
+
+    return eliminated;
   }
 
   undo() {
@@ -8660,16 +8764,43 @@ function undoFighterChoice() {
 }
 
 function eliminateCurrentFightersPrompt() {
-  if (!currentTournament) return;
-  const pair = currentTournament.getNextPair();
-  if (pair.done) return;
+  if (!currentTournament && window.currentTournament) currentTournament = window.currentTournament;
+  if (!currentTournament || currentTournament.isAnimating) return;
+  const step = currentTournament.getNextPair();
+  if (step.done) return;
 
-  const pick = confirm(`Deseja remover "${pair.itemB.title}" do torneio? (Pressione Cancelar para remover "${pair.itemA.title}")`);
-  if (pick) {
-    currentTournament.recordChoice('left');
-  } else {
-    currentTournament.recordChoice('right');
+  const titleA = document.getElementById('elimTitleLeft');
+  const titleB = document.getElementById('elimTitleRight');
+  const imgA = document.getElementById('elimImgLeft');
+  const imgB = document.getElementById('elimImgRight');
+
+  if (titleA) titleA.textContent = step.itemA ? step.itemA.title : '';
+  if (titleB) titleB.textContent = step.itemB ? step.itemB.title : '';
+  if (imgA) imgA.src = (step.itemA && step.itemA.image) ? step.itemA.image : '../assets/mascot-trimmed.png';
+  if (imgB) imgB.src = (step.itemB && step.itemB.image) ? step.itemB.image : '../assets/mascot-trimmed.png';
+
+  openModal('arenaEliminateModal');
+}
+
+function confirmEliminateFighter(side) {
+  if (!currentTournament && window.currentTournament) currentTournament = window.currentTournament;
+  if (!currentTournament) return;
+
+  closeModal('arenaEliminateModal');
+  const eliminated = currentTournament.eliminateFighter(side);
+
+  if (eliminated) {
+    ArcadeAudio.playClick();
+    if (Array.isArray(eliminated)) {
+      showToast(currentLang === 'en' ? 'Both games were eliminated from the tournament.' : 'Ambos os jogos foram eliminados do torneio.');
+    } else {
+      const msg = currentLang === 'en'
+        ? `"${eliminated.title}" was eliminated from the tournament.`
+        : `"${eliminated.title}" foi eliminado do torneio.`;
+      showToast(msg);
+    }
   }
+
   renderCurrentMatchup();
 }
 
@@ -8945,6 +9076,7 @@ window.executeFightAnimation = executeFightAnimation;
 window.chooseTie = chooseTie;
 window.undoFighterChoice = undoFighterChoice;
 window.eliminateCurrentFightersPrompt = eliminateCurrentFightersPrompt;
+window.confirmEliminateFighter = confirmEliminateFighter;
 window.toggleArenaSound = toggleArenaSound;
 window.toggleArenaFx = toggleArenaFx;
 window.changeArenaAttack = changeArenaAttack;
