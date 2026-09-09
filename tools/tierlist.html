@@ -1934,7 +1934,7 @@ footer {
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
           <span data-i18n="btn_save_json">Salvar lista</span>
         </button>
-        <button class="tool-btn" onclick="document.getElementById('importAnyFileInput').click()" title="Carregar lista (.json) ou importar coleção / partidas (.csv, .xlsx)">
+        <button class="tool-btn" onclick="openImportSourceModal()" title="Carregar lista (.json) ou importar coleção por link / arquivo (.csv, .xlsx)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
           <span data-i18n="btn_load_json">Carregar / Importar</span>
         </button>
@@ -2370,6 +2370,62 @@ footer {
   </div>
 </div>
 
+<!-- Modal: Import Options (File or Online Link) -->
+<div id="importSourceModal" class="modal-overlay">
+  <div class="modal-card" style="max-width: 540px;">
+    <button class="modal-close-btn" onclick="closeModal('importSourceModal')">&times;</button>
+    <h2>
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      <span data-i18n="modal_import_source_title">Carregar ou Importar Coleção</span>
+    </h2>
+
+    <!-- Option 1: Online via Link / Username (Ludopedia or BGG) -->
+    <div style="background: rgba(233, 200, 117, 0.08); border: 1px solid rgba(233, 200, 117, 0.25); border-radius: 10px; padding: 16px; margin-bottom: 16px;">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px; color:var(--brass-bright); font-weight:700; font-size:0.95rem;">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        <span data-i18n="import_online_heading">Importar por Link ou Usuário</span>
+      </div>
+      <p style="font-size:0.83rem; color:var(--text-dim); margin-top:0; margin-bottom:12px;" data-i18n="import_online_desc">
+        Cole o link da sua coleção na Ludopedia ou digite seu usuário do BGG para importar tudo diretamente:
+      </p>
+      <div style="display:flex; gap:8px;">
+        <input type="text" id="importOnlineInput" class="form-input" placeholder="https://ludopedia.com.br/colecao?lista=colecao&usuario=... ou usuário" style="flex:1; font-size:0.88rem;" onkeydown="if(event.key==='Enter') executeOnlineImportFromInput()">
+        <button id="btnFetchOnlineCollection" class="tool-btn primary" onclick="executeOnlineImportFromInput()" style="white-space:nowrap; padding:0 14px;">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <span data-i18n="btn_fetch_online">Buscar</span>
+        </button>
+      </div>
+      <div id="importOnlineSpinner" style="display:none; font-size:0.82rem; color:var(--brass-bright); margin-top:10px; align-items:center; gap:8px;">
+        <div class="search-spinner" style="display:inline-block; position:static; width:14px; height:14px; border-width:2px;"></div>
+        <span id="importOnlineStatusText">Carregando jogos da coleção...</span>
+      </div>
+      <div style="margin-top:10px; font-size:0.78rem; color:var(--text-muted); display:flex; flex-wrap:wrap; gap:6px; align-items:center;">
+        <span>Exemplos:</span>
+        <button type="button" class="tool-btn" style="padding:2px 8px; font-size:0.75rem; border-radius:4px;" onclick="setOnlineImportExample('https://ludopedia.com.br/colecao?lista=colecao&usuario=colletes')">Ludopedia: colletes</button>
+        <button type="button" class="tool-btn" style="padding:2px 8px; font-size:0.75rem; border-radius:4px;" onclick="setOnlineImportExample('bgg:Collth')">BGG: Collth</button>
+      </div>
+    </div>
+
+    <!-- Divider -->
+    <div style="display:flex; align-items:center; gap:10px; margin: 16px 0; color:var(--text-dim); font-size:0.8rem; text-transform:uppercase; letter-spacing:0.05em;">
+      <div style="flex:1; height:1px; background:rgba(233,200,117,0.2);"></div>
+      <span data-i18n="import_or_separator">Ou carregar arquivo</span>
+      <div style="flex:1; height:1px; background:rgba(233,200,117,0.2);"></div>
+    </div>
+
+    <!-- Option 2: Local File -->
+    <div style="background: rgba(0,0,0,0.3); border: 1px dashed rgba(233, 200, 117, 0.3); border-radius: 10px; padding: 18px; text-align: center; cursor:pointer;" onclick="closeModal('importSourceModal'); document.getElementById('importAnyFileInput').click()">
+      <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--brass); margin-bottom:8px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      <div style="font-weight:700; color:var(--text-main); font-size:0.92rem; margin-bottom:4px;" data-i18n="import_file_heading">Selecionar Arquivo do Computador</div>
+      <div style="font-size:0.8rem; color:var(--text-muted);" data-i18n="import_file_formats">Formatos aceitos: Backup (.json), BGG (.csv), Ludopedia/Ludohall (.csv, .xlsx), BGStats (.csv)</div>
+    </div>
+
+    <div style="display:flex; justify-content:flex-end; margin-top:16px;">
+      <button class="tool-btn" onclick="closeModal('importSourceModal')" data-i18n="btn_cancel">Cancelar</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal: Import Collection / Plays -->
 <div id="importCollectionModal" class="modal-overlay">
   <div class="modal-card" style="max-width: 580px;">
@@ -2461,6 +2517,9 @@ footer {
       <button id="rankTabUnplayed" class="ranking-tab active" onclick="switchRankingTab('unplayed')">
         <span data-i18n="rank_tab_unplayed">🎮 Não Jogados (<span id="rankUnplayedCount">0</span>)</span>
       </button>
+      <button id="rankTabLudopedia" class="ranking-tab" onclick="switchRankingTab('ludopedia')">
+        <span data-i18n="rank_tab_ludopedia">📚 Ludopedia</span>
+      </button>
       <button id="rankTabBgg" class="ranking-tab" onclick="switchRankingTab('bgg')">
         <span data-i18n="rank_tab_bgg">🎲 BGG Usuário</span>
       </button>
@@ -2480,7 +2539,44 @@ footer {
       </div>
     </div>
 
-    <!-- Tab 2: BGG Collection by username -->
+    <!-- Tab 2: Ludopedia Collection by URL or username -->
+    <div id="rankPanelLudopedia" class="rank-panel" style="display:none;">
+      <div class="form-group" style="margin-bottom:10px;">
+        <label style="font-size:0.85rem; font-weight:600; color:var(--brass-bright);" data-i18n="label_ludopedia_link">Link ou Usuário na Ludopedia:</label>
+        <div style="display:flex; gap:8px; margin-top:4px;">
+          <input type="text" id="ludoRankUsername" class="form-input" placeholder="Ex: colletes ou https://ludopedia.com.br/colecao?..." value="colletes" onkeydown="if(event.key==='Enter') fetchLudopediaForRanking()">
+          <button type="button" class="tool-btn primary" onclick="fetchLudopediaForRanking()" id="btnFetchLudoRank" style="white-space:nowrap;">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <span data-i18n="btn_fetch_ludopedia">Buscar</span>
+          </button>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-bottom:10px; background:rgba(0,0,0,0.25); padding:10px; border-radius:8px; border:1px solid rgba(233,200,117,0.15);">
+        <label style="display:flex; align-items:center; gap:8px; font-size:0.82rem; cursor:pointer; color:var(--text-main);">
+          <input type="checkbox" id="ludoFilterUnplayed" checked style="accent-color:var(--brass); cursor:pointer;" onchange="updateLudoFilterPreview()">
+          <span data-i18n="ludo_filter_unplayed">Apenas Não Jogados (0 partidas)</span>
+        </label>
+        <label style="display:flex; align-items:center; gap:8px; font-size:0.82rem; cursor:pointer; color:var(--text-main);">
+          <input type="checkbox" id="ludoFilterOwned" checked style="accent-color:var(--brass); cursor:pointer;" onchange="updateLudoFilterPreview()">
+          <span data-i18n="ludo_filter_owned">Apenas Possuídos (fl_tem)</span>
+        </label>
+        <label style="display:flex; align-items:center; gap:8px; font-size:0.82rem; cursor:pointer; color:var(--text-main);">
+          <input type="checkbox" id="ludoFilterExpansions" style="accent-color:var(--brass); cursor:pointer;" onchange="updateLudoFilterPreview()">
+          <span data-i18n="ludo_filter_exp">Incluir Expansões</span>
+        </label>
+        <label style="display:flex; align-items:center; gap:8px; font-size:0.82rem; cursor:pointer; color:var(--text-main);">
+          <input type="checkbox" id="ludoFilterFavorites" style="accent-color:var(--brass); cursor:pointer;" onchange="updateLudoFilterPreview()">
+          <span data-i18n="ludo_filter_favorites">Apenas Favoritos</span>
+        </label>
+      </div>
+
+      <div id="ludoRankStatus" style="font-size:0.85rem; color:var(--text-dim); padding:8px 10px; background:rgba(233,200,117,0.06); border-radius:6px; margin-bottom:10px; min-height:36px; display:flex; align-items:center; gap:8px;">
+        <span id="ludoRankStatusText">Clique em "Buscar" para carregar a coleção da Ludopedia.</span>
+      </div>
+    </div>
+
+    <!-- Tab 3: BGG Collection by username -->
     <div id="rankPanelBgg" class="rank-panel" style="display:none;">
       <div class="form-group" style="margin-bottom:10px;">
         <label style="font-size:0.85rem; font-weight:600; color:var(--brass-bright);" data-i18n="label_bgg_username">Nome de Usuário no BoardGameGeek (BGG):</label>
@@ -2835,6 +2931,13 @@ const I18N = {
     btn_load_json: 'Carregar / Importar',
     btn_download_txt: 'TXT (Lista)',
     modal_import_title: 'Importar Coleção / Partidas',
+    modal_import_source_title: 'Carregar ou Importar Coleção',
+    import_online_heading: 'Importar por Link ou Usuário',
+    import_online_desc: 'Cole o link da sua coleção na Ludopedia ou digite seu usuário do BGG para importar tudo diretamente:',
+    btn_fetch_online: 'Buscar',
+    import_or_separator: 'Ou carregar arquivo',
+    import_file_heading: 'Selecionar Arquivo do Computador',
+    import_file_formats: 'Formatos aceitos: Backup (.json), BGG (.csv), Ludopedia/Ludohall (.csv, .xlsx), BGStats (.csv)',
     import_guide_title: 'Como funciona a importação de jogos:',
     import_guide_dest_t: 'Destino:',
     import_guide_dest_d: 'Os jogos entrarão no tier <em>"Não jogado"</em> (pool de reserva). De lá, você pode arrastá-los para qualquer tier ou utilizá-los na <strong>Batalha 1x1</strong>.',
@@ -2862,10 +2965,17 @@ const I18N = {
     modal_ranking_setup_title: 'Rankeamento 1x1 — Batalha de Jogos',
     modal_ranking_setup_desc: 'Compare jogos dois a dois no formato 1x1 para descobrir seu ranking definitivo de preferências de toda a sua coleção, com efeitos visuais de luta épicos!',
     rank_tab_unplayed: '🎮 Não Jogados',
+    rank_tab_ludopedia: '📚 Ludopedia',
     rank_tab_bgg: '🎲 BGG Usuário',
     rank_tab_other: '📊 Outro Tier',
     rank_tab_custom: '📝 Manual',
     rank_unplayed_heading: 'Jogos do Tier "Não jogado"',
+    label_ludopedia_link: 'Link ou Usuário na Ludopedia:',
+    btn_fetch_ludopedia: 'Buscar',
+    ludo_filter_unplayed: 'Apenas Não Jogados (0 partidas)',
+    ludo_filter_owned: 'Apenas Possuídos (fl_tem)',
+    ludo_filter_exp: 'Incluir Expansões',
+    ludo_filter_favorites: 'Apenas Favoritos',
     label_bgg_username: 'Nome de Usuário no BoardGameGeek (BGG):',
     btn_fetch_bgg: 'Buscar no BGG',
     bgg_filter_unplayed: 'Apenas Não Jogados (0 partidas)',
@@ -2908,6 +3018,13 @@ const I18N = {
     btn_load_json: 'Load / Import',
     btn_download_txt: 'TXT (List)',
     modal_import_title: 'Import Collection / Plays',
+    modal_import_source_title: 'Load or Import Collection',
+    import_online_heading: 'Import via Link or Username',
+    import_online_desc: 'Paste your Ludopedia collection link or enter your BGG username to import directly:',
+    btn_fetch_online: 'Fetch',
+    import_or_separator: 'Or load a file',
+    import_file_heading: 'Choose File from Computer',
+    import_file_formats: 'Supported formats: Backup (.json), BGG (.csv), Ludopedia/Ludohall (.csv, .xlsx), BGStats (.csv)',
     import_guide_title: 'How collection import works:',
     import_guide_dest_t: 'Destination:',
     import_guide_dest_d: 'All imported games enter the <em>"Unplayed"</em> tier (reserve pool). From there, you can drag them to any tier or pit them in the <strong>1v1 Battle</strong>.',
@@ -2985,10 +3102,17 @@ const I18N = {
     modal_ranking_setup_title: '1v1 Ranking — Game Battle',
     modal_ranking_setup_desc: 'Compare board games head-to-head in 1v1 matchups to discover your definitive preference rankings across your collection, with epic battle animations!',
     rank_tab_unplayed: '🎮 Unplayed',
+    rank_tab_ludopedia: '📚 Ludopedia',
     rank_tab_bgg: '🎲 BGG User',
     rank_tab_other: '📊 Other Tier',
     rank_tab_custom: '📝 Custom',
     rank_unplayed_heading: 'Games from "Unplayed" tier',
+    label_ludopedia_link: 'Ludopedia Link or Username:',
+    btn_fetch_ludopedia: 'Fetch',
+    ludo_filter_unplayed: 'Only Unplayed (0 plays)',
+    ludo_filter_owned: 'Only Owned games',
+    ludo_filter_exp: 'Include Expansions',
+    ludo_filter_favorites: 'Only Favorites',
     label_bgg_username: 'BoardGameGeek (BGG) Username:',
     btn_fetch_bgg: 'Fetch from BGG',
     bgg_filter_unplayed: 'Only Unplayed (0 plays)',
@@ -3923,7 +4047,39 @@ async function performSearch(query) {
     return;
   }
 
-  // URL detected in search input (e.g. Ludopedia or direct image)
+  // URL detected in search input (e.g. Ludopedia collection, game page, or direct image)
+  const ludoCol = parseLudopediaCollectionUrl(query);
+  if (ludoCol && ludoCol.username) {
+    spinner.style.display = 'none';
+    dropdown.innerHTML = `
+      <div class="search-result-item" style="background:rgba(233, 200, 117, 0.15); border-left:3px solid var(--brass);">
+        <div class="search-result-thumb" style="display:flex;align-items:center;justify-content:center;background:#2a1b0c;color:var(--brass-bright);font-size:1.3rem;">📚</div>
+        <div class="search-result-info">
+          <div class="search-result-title" style="color:var(--brass-bright);">Importar Coleção Ludopedia (@${escapeHtml(ludoCol.username)})</div>
+          <div class="search-result-meta"><span class="source-badge ludopedia">Ludopedia</span> Clique para carregar os jogos online</div>
+        </div>
+        <button class="search-result-add-btn">📥</button>
+      </div>
+    `;
+    dropdown.classList.add('visible');
+    dropdown.querySelector('.search-result-item').onclick = async () => {
+      spinner.style.display = 'block';
+      dropdown.innerHTML = `<div class="search-result-status">Consultando coleção de @${escapeHtml(ludoCol.username)} na Ludopedia...</div>`;
+      try {
+        const payload = await fetchLudopediaCollection(ludoCol.username);
+        dropdown.classList.remove('visible');
+        document.getElementById('gameSearchInput').value = '';
+        document.getElementById('searchClearBtn').style.display = 'none';
+        openImportCollectionModal(payload);
+      } catch (err) {
+        alert('Erro ao importar coleção da Ludopedia: ' + (err.message || err));
+      } finally {
+        spinner.style.display = 'none';
+      }
+    };
+    return;
+  }
+
   const isUrl = query.startsWith('http://') || query.startsWith('https://') || query.includes('ludopedia.com.br');
   if (isUrl) {
     spinner.style.display = 'none';
@@ -6075,6 +6231,263 @@ function importTierlistJson(event) {
   handleAnyImportFile(event);
 }
 
+function openImportSourceModal() {
+  const input = document.getElementById('importOnlineInput');
+  const spinner = document.getElementById('importOnlineSpinner');
+  if (input) input.value = '';
+  if (spinner) spinner.style.display = 'none';
+  openModal('importSourceModal');
+}
+
+function setOnlineImportExample(val) {
+  const input = document.getElementById('importOnlineInput');
+  if (input) {
+    input.value = val;
+    input.focus();
+  }
+}
+
+function parseLudopediaCollectionUrl(input) {
+  if (!input) return null;
+  const str = String(input).trim();
+
+  try {
+    const url = new URL(str.startsWith('http') ? str : 'https://' + str);
+    if (url.hostname.includes('ludopedia.com.br')) {
+      const usuario = url.searchParams.get('usuario');
+      const lista = url.searchParams.get('lista') || 'colecao';
+      if (usuario) {
+        return { username: usuario.trim(), lista };
+      }
+      const matchUser = url.pathname.match(/\/usuario\/([^/?#]+)/i);
+      if (matchUser) {
+        return { username: matchUser[1].trim(), lista: 'colecao' };
+      }
+      const matchCol = url.pathname.match(/\/colecao\/([^/?#]+)/i);
+      if (matchCol) {
+        return { username: matchCol[1].trim(), lista: 'colecao' };
+      }
+      if (url.pathname === '/colecao' && url.searchParams.has('usuario')) {
+        return { username: url.searchParams.get('usuario').trim(), lista };
+      }
+    }
+  } catch (e) {}
+
+  if (/^(?:ludo|ludopedia):([a-zA-Z0-9_.-]+)$/i.test(str)) {
+    const m = str.match(/^(?:ludo|ludopedia):([a-zA-Z0-9_.-]+)$/i);
+    return { username: m[1].trim(), lista: 'colecao' };
+  }
+
+  // If user typed only a raw username (letters, digits, underscores, dashes, optional leading @)
+  const cleanStr = str.replace(/^@/, '');
+  if (/^[a-zA-Z0-9_.-]{3,35}$/.test(cleanStr) && !cleanStr.includes('/') && !cleanStr.includes(':')) {
+    return { username: cleanStr, lista: 'colecao' };
+  }
+
+  return null;
+}
+
+async function fetchLudopediaCollection(username, options = {}) {
+  if (!username) throw new Error('Nome de usuário não informado.');
+  const cleanUser = username.trim().replace(/^@/, '');
+
+  const firstUrl = `${LUDOPEDIA_PROXY_BASE}/api/v1/colecao?usuario=${encodeURIComponent(cleanUser)}&rows=100&page=1`;
+  const res = await fetch(firstUrl, { headers: { 'Accept': 'application/json' } });
+  if (!res.ok) {
+    if (res.status === 404) {
+      throw new Error(`Usuário "${cleanUser}" não encontrado na Ludopedia.`);
+    }
+    throw new Error(`Falha ao consultar coleção na Ludopedia (HTTP ${res.status}). Verifique o usuário.`);
+  }
+
+  const data = await res.json();
+  if (!data || !Array.isArray(data.colecao)) {
+    throw new Error('Nenhum dado retornado para este usuário na Ludopedia.');
+  }
+
+  let rawGames = [...data.colecao];
+  const total = data.total || rawGames.length;
+  const totalPages = Math.ceil(total / 100);
+
+  const extraPagePromises = [];
+  for (let p = 2; p <= totalPages; p++) {
+    extraPagePromises.push(
+      fetch(`${LUDOPEDIA_PROXY_BASE}/api/v1/colecao?usuario=${encodeURIComponent(cleanUser)}&rows=100&page=${p}`, {
+        headers: { 'Accept': 'application/json' }
+      }).then(r => r.ok ? r.json() : null).catch(() => null)
+    );
+  }
+
+  // Fetch expansions (tp_jogo=e) to ensure 100% accurate classification
+  const expPromise = (async () => {
+    try {
+      const expRes = await fetch(`${LUDOPEDIA_PROXY_BASE}/api/v1/colecao?usuario=${encodeURIComponent(cleanUser)}&tp_jogo=e&rows=100&page=1`, {
+        headers: { 'Accept': 'application/json' }
+      });
+      if (!expRes.ok) return [];
+      const expData = await expRes.json();
+      let expList = expData.colecao || [];
+      const expPages = Math.ceil((expData.total || 0) / 100);
+      if (expPages > 1) {
+        const extraExpPromises = [];
+        for (let ep = 2; ep <= expPages; ep++) {
+          extraExpPromises.push(
+            fetch(`${LUDOPEDIA_PROXY_BASE}/api/v1/colecao?usuario=${encodeURIComponent(cleanUser)}&tp_jogo=e&rows=100&page=${ep}`, {
+              headers: { 'Accept': 'application/json' }
+            }).then(r => r.ok ? r.json() : null).catch(() => null)
+          );
+        }
+        const extraRes = await Promise.all(extraExpPromises);
+        extraRes.forEach(er => {
+          if (er && Array.isArray(er.colecao)) expList.push(...er.colecao);
+        });
+      }
+      return expList;
+    } catch (e) {
+      return [];
+    }
+  })();
+
+  const [extraPagesData, expansionsList] = await Promise.all([
+    Promise.all(extraPagePromises),
+    expPromise
+  ]);
+
+  extraPagesData.forEach(pageData => {
+    if (pageData && Array.isArray(pageData.colecao)) {
+      rawGames.push(...pageData.colecao);
+    }
+  });
+
+  const expansionIdSet = new Set((expansionsList || []).map(g => Number(g.id_jogo)));
+
+  const seenLudoIds = new Set();
+  const allGames = [];
+  const baseGames = [];
+  const expansions = [];
+
+  for (const g of rawGames) {
+    const ludoId = Number(g.id_jogo);
+    if (ludoId && seenLudoIds.has(ludoId)) continue;
+    if (ludoId) seenLudoIds.add(ludoId);
+
+    const isExp = expansionIdSet.has(ludoId);
+    const item = {
+      title: g.nm_jogo,
+      image: (g.thumb || '').replace('_t.jpg', '_m.jpg'),
+      year: g.ano_publicacao || '',
+      ludoId: ludoId || null,
+      bggId: null,
+      designer: '',
+      artist: '',
+      category: '',
+      domain: '',
+      mechanics: '',
+      players: '',
+      time: '',
+      plays: g.qt_partidas || 0,
+      score: g.vl_nota != null ? Number(g.vl_nota) : null,
+      bggScore: null,
+      bggRank: null,
+      bggSubranks: [],
+      bggWeight: null,
+      slug: '',
+      link: g.link || (ludoId ? `https://ludopedia.com.br/jogo/${ludoId}` : ''),
+      bggLink: '',
+      isExpansion: isExp,
+      source: 'ludopedia',
+      fl_tem: g.fl_tem,
+      fl_jogou: g.fl_jogou,
+      fl_favorito: g.fl_favorito,
+      fl_quer: g.fl_quer
+    };
+
+    allGames.push(item);
+    if (isExp) expansions.push(item);
+    else baseGames.push(item);
+  }
+
+  return {
+    fileName: `Ludopedia (@${cleanUser})`,
+    sourceLabel: 'Ludopedia Coleção',
+    badgeClass: 'ludopedia',
+    allGames,
+    baseGames,
+    expansions
+  };
+}
+
+async function importLudopediaCollection(usernameOrUrl) {
+  let username = usernameOrUrl;
+  const parsed = parseLudopediaCollectionUrl(usernameOrUrl);
+  if (parsed && parsed.username) {
+    username = parsed.username;
+  }
+  username = (username || '').trim().replace(/^@/, '');
+  if (!username) {
+    throw new Error('Nome de usuário da Ludopedia não informado.');
+  }
+
+  showToast(`Buscando coleção de @${username} na Ludopedia...`);
+  const payload = await fetchLudopediaCollection(username);
+  openImportCollectionModal(payload);
+}
+
+async function executeOnlineImportFromInput() {
+  const input = document.getElementById('importOnlineInput');
+  const spinner = document.getElementById('importOnlineSpinner');
+  const statusText = document.getElementById('importOnlineStatusText');
+  const btn = document.getElementById('btnFetchOnlineCollection');
+  const raw = (input ? input.value : '').trim();
+  if (!raw) {
+    alert(currentLang === 'en'
+      ? 'Please enter a Ludopedia collection link or username.'
+      : 'Por favor, insira o link da coleção da Ludopedia ou nome de usuário.');
+    return;
+  }
+
+  if (raw.toLowerCase().startsWith('bgg:') || raw.includes('boardgamegeek.com')) {
+    let bggUser = raw.replace(/^bgg:/i, '').trim();
+    if (raw.includes('boardgamegeek.com')) {
+      try {
+        const u = new URL(raw.startsWith('http') ? raw : 'https://' + raw);
+        const match = u.pathname.match(/\/user\/([^/?#]+)/i) || u.searchParams.get('username');
+        if (match) bggUser = (typeof match === 'string' ? match : match[1]).trim();
+      } catch (e) {}
+    }
+    closeModal('importSourceModal');
+    openRankingSetupModal();
+    const bggInput = document.getElementById('bggRankUsername');
+    if (bggInput && bggUser) bggInput.value = bggUser;
+    switchRankingTab('bgg');
+    fetchBggForRanking();
+    return;
+  }
+
+  try {
+    if (btn) btn.disabled = true;
+    if (spinner) {
+      spinner.style.display = 'flex';
+      if (statusText) statusText.textContent = currentLang === 'en'
+        ? 'Connecting to Ludopedia and loading games...'
+        : 'Conectando à Ludopedia e carregando jogos...';
+    }
+
+    const parsed = parseLudopediaCollectionUrl(raw);
+    const username = parsed ? parsed.username : raw.replace(/^@/, '').trim();
+    const payload = await fetchLudopediaCollection(username);
+
+    closeModal('importSourceModal');
+    openImportCollectionModal(payload);
+  } catch (err) {
+    console.error('Erro ao importar coleção da Ludopedia:', err);
+    alert(err.message || 'Erro ao consultar coleção na Ludopedia.');
+  } finally {
+    if (btn) btn.disabled = false;
+    if (spinner) spinner.style.display = 'none';
+  }
+}
+
 function openImportCollectionModal(payload) {
   currentImportPayload = payload;
   const modal = document.getElementById('importCollectionModal');
@@ -6128,19 +6541,24 @@ function updateImportModalCounts() {
   if (skipDupes) {
     const existing = getExistingBoardItems();
     const existingBggIds = new Set(existing.filter(i => i.bggId).map(i => String(i.bggId)));
+    const existingLudoIds = new Set(existing.filter(i => i.ludoId).map(i => Number(i.ludoId)));
     const existingTitles = new Set(existing.map(i => normalizeTitle(i.title)));
 
     const seenIds = new Set();
+    const seenLudoIds = new Set();
     const seenTitles = new Set();
     let finalCount = 0;
 
     for (const g of candidates) {
       const gId = g.bggId ? String(g.bggId) : null;
+      const gLudoId = g.ludoId ? Number(g.ludoId) : null;
       const norm = normalizeTitle(g.title);
       if (gId && (existingBggIds.has(gId) || seenIds.has(gId))) continue;
+      if (gLudoId && (existingLudoIds.has(gLudoId) || seenLudoIds.has(gLudoId))) continue;
       if (existingTitles.has(norm) || seenTitles.has(norm)) continue;
 
       if (gId) seenIds.add(gId);
+      if (gLudoId) seenLudoIds.add(gLudoId);
       seenTitles.add(norm);
       finalCount++;
     }
@@ -6172,6 +6590,7 @@ function executeCollectionImport() {
 
   const existingItems = getExistingBoardItems();
   const existingBggIds = new Set(existingItems.filter(i => i.bggId).map(i => String(i.bggId)));
+  const existingLudoIds = new Set(existingItems.filter(i => i.ludoId).map(i => Number(i.ludoId)));
   const existingTitles = new Set(existingItems.map(i => normalizeTitle(i.title)));
 
   const candidates = includeExpansions ? currentImportPayload.allGames : currentImportPayload.baseGames;
@@ -6179,14 +6598,17 @@ function executeCollectionImport() {
 
   for (const game of candidates) {
     const gBggId = game.bggId ? String(game.bggId) : null;
+    const gLudoId = game.ludoId ? Number(game.ludoId) : null;
     const norm = normalizeTitle(game.title);
 
     if (skipDuplicates) {
       if (gBggId && existingBggIds.has(gBggId)) continue;
+      if (gLudoId && existingLudoIds.has(gLudoId)) continue;
       if (existingTitles.has(norm)) continue;
     }
 
     if (gBggId) existingBggIds.add(gBggId);
+    if (gLudoId) existingLudoIds.add(gLudoId);
     existingTitles.add(norm);
 
     const newItem = {
@@ -7043,6 +7465,7 @@ function spawnComicPopup(text = 'POW!') {
 let currentTournament = null;
 let currentRankingTab = 'unplayed';
 let bggCachedGames = [];
+let ludoCachedGames = [];
 
 class TournamentEngine {
   constructor(items, options = {}) {
@@ -7314,6 +7737,60 @@ function updateBggFilterPreview() {
   }
 }
 
+// Ludopedia Collection Fetch for 1v1 Battle Arena
+async function fetchLudopediaForRanking() {
+  const usernameInput = document.getElementById('ludoRankUsername');
+  const rawInput = (usernameInput ? usernameInput.value : 'colletes').trim();
+  if (!rawInput) {
+    alert(currentLang === 'en' ? 'Please enter a Ludopedia link or username.' : 'Digite um link ou usuário da Ludopedia.');
+    return;
+  }
+  const parsed = parseLudopediaCollectionUrl(rawInput);
+  const user = (parsed && parsed.username) ? parsed.username : rawInput.replace(/^@/, '').trim();
+
+  const statusEl = document.getElementById('ludoRankStatusText');
+  const btn = document.getElementById('btnFetchLudoRank');
+  if (btn) btn.disabled = true;
+  if (statusEl) statusEl.innerHTML = `<span class="search-spinner" style="display:inline-block; margin-right:6px;"></span> ${currentLang === 'en' ? 'Connecting to Ludopedia...' : 'Conectando à Ludopedia...'}`;
+
+  try {
+    const payload = await fetchLudopediaCollection(user);
+    ludoCachedGames = payload.allGames || [];
+    if (statusEl) {
+      statusEl.innerHTML = `✅ ${ludoCachedGames.length} ${currentLang === 'en' ? 'games loaded successfully from Ludopedia!' : 'jogos carregados com sucesso da Ludopedia!'}`;
+    }
+    updateLudoFilterPreview();
+  } catch (err) {
+    if (statusEl) statusEl.innerHTML = `❌ Erro: ${err.message}`;
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+function updateLudoFilterPreview() {
+  const countEl = document.getElementById('rankCandidateCount');
+  if (!ludoCachedGames || ludoCachedGames.length === 0) {
+    if (countEl && currentRankingTab === 'ludopedia') countEl.textContent = currentLang === 'en' ? '0 games selected' : '0 jogos selecionados';
+    return;
+  }
+  const onlyUnplayed = document.getElementById('ludoFilterUnplayed')?.checked;
+  const onlyOwned = document.getElementById('ludoFilterOwned')?.checked;
+  const incExp = document.getElementById('ludoFilterExpansions')?.checked;
+  const onlyFav = document.getElementById('ludoFilterFavorites')?.checked;
+
+  const filtered = ludoCachedGames.filter(g => {
+    if (!incExp && g.isExpansion) return false;
+    if (onlyUnplayed && (g.plays > 0 || g.fl_jogou == 1)) return false;
+    if (onlyOwned && !(g.fl_tem == 1 || g.fl_tem === true)) return false;
+    if (onlyFav && !(g.fl_favorito == 1 || g.fl_favorito === true)) return false;
+    return true;
+  });
+
+  if (countEl && currentRankingTab === 'ludopedia') {
+    countEl.textContent = `${filtered.length} ${currentLang === 'en' ? 'games selected' : 'jogos selecionados'}`;
+  }
+}
+
 // Ranking Setup Modal Handlers
 function openRankingSetupModal(defaultTierId = null) {
   ArcadeAudio.init();
@@ -7327,7 +7804,7 @@ function openRankingSetupModal(defaultTierId = null) {
   if (unplayedDesc) {
     unplayedDesc.innerHTML = unplayedItems.length > 0
       ? `Existem <strong>${unplayedItems.length}</strong> jogos esperando para serem rankeados no tier <em>"${unplayedTier.name}"</em>.`
-      : `O tier <em>"${unplayedTier.name}"</em> está vazio. Você pode importar jogos do BGG ou digitar uma lista.`;
+      : `O tier <em>"${unplayedTier.name}"</em> está vazio. Você pode importar jogos da Ludopedia, BGG ou digitar uma lista.`;
   }
 
   const tierSelect = document.getElementById('rankTierSelect');
@@ -7351,8 +7828,10 @@ function openRankingSetupModal(defaultTierId = null) {
     switchRankingTab('other');
   } else if (unplayedItems.length > 0) {
     switchRankingTab('unplayed');
+  } else if (ludoCachedGames.length > 0) {
+    switchRankingTab('ludopedia');
   } else {
-    switchRankingTab('bgg');
+    switchRankingTab('ludopedia');
   }
 
   openModal('rankingSetupModal');
@@ -7360,10 +7839,16 @@ function openRankingSetupModal(defaultTierId = null) {
 
 function switchRankingTab(tabId) {
   currentRankingTab = tabId;
-  const tabs = ['unplayed', 'bgg', 'other', 'custom'];
+  const tabs = ['unplayed', 'ludopedia', 'bgg', 'other', 'custom'];
   tabs.forEach(tName => {
-    const tabBtn = document.getElementById('rankTab' + tName.charAt(0).toUpperCase() + tName.slice(1));
-    const panel = document.getElementById('rankPanel' + tName.charAt(0).toUpperCase() + tName.slice(1));
+    let tabBtn = document.getElementById('rankTab' + tName.charAt(0).toUpperCase() + tName.slice(1));
+    if (!tabBtn && tName === 'other') {
+      tabBtn = document.getElementById('rankTabOtherTier') || document.getElementById('rankTabOther');
+    }
+    let panel = document.getElementById('rankPanel' + tName.charAt(0).toUpperCase() + tName.slice(1));
+    if (!panel && tName === 'other') {
+      panel = document.getElementById('rankPanelOther');
+    }
     if (tabBtn) tabBtn.classList.toggle('active', tName === tabId);
     if (panel) {
       panel.style.display = tName === tabId ? 'block' : 'none';
@@ -7378,6 +7863,8 @@ function switchRankingTab(tabId) {
     const unplayedTier = state.tiers.find(t => t.isUnplayed) || state.tiers[state.tiers.length - 1];
     const items = (unplayedTier && state.items[unplayedTier.id]) || [];
     countEl.textContent = `${items.length} jogos selecionados`;
+  } else if (tabId === 'ludopedia') {
+    updateLudoFilterPreview();
   } else if (tabId === 'bgg') {
     updateBggFilterPreview();
   } else if (tabId === 'other') {
@@ -7419,6 +7906,22 @@ function startRankingBattle() {
   if (currentRankingTab === 'unplayed') {
     const unplayedTier = state.tiers.find(t => t.isUnplayed) || state.tiers[state.tiers.length - 1];
     candidates = (unplayedTier && state.items[unplayedTier.id]) ? [...state.items[unplayedTier.id]] : [];
+  } else if (currentRankingTab === 'ludopedia') {
+    const onlyUnplayed = document.getElementById('ludoFilterUnplayed')?.checked;
+    const onlyOwned = document.getElementById('ludoFilterOwned')?.checked;
+    const incExp = document.getElementById('ludoFilterExpansions')?.checked;
+    const onlyFav = document.getElementById('ludoFilterFavorites')?.checked;
+
+    candidates = ludoCachedGames.filter(g => {
+      if (!incExp && g.isExpansion) return false;
+      if (onlyUnplayed && (g.plays > 0 || g.fl_jogou == 1)) return false;
+      if (onlyOwned && !(g.fl_tem == 1 || g.fl_tem === true)) return false;
+      if (onlyFav && !(g.fl_favorito == 1 || g.fl_favorito === true)) return false;
+      return true;
+    }).map(g => ({
+      ...g,
+      id: g.id || ('ludo_' + (g.ludoId || Math.random().toString(36).substr(2, 7)))
+    }));
   } else if (currentRankingTab === 'bgg') {
     const onlyUnplayed = document.getElementById('bggFilterUnplayed').checked;
     const onlyOwned = document.getElementById('bggFilterOwned').checked;
@@ -7990,6 +8493,14 @@ window.resolveGameToItem = resolveGameToItem;
 window.copyRankingText = copyRankingText;
 window.downloadRankingCsv = downloadRankingCsv;
 window.parseBggUserCollectionXml = parseBggUserCollectionXml;
+window.openImportSourceModal = openImportSourceModal;
+window.setOnlineImportExample = setOnlineImportExample;
+window.parseLudopediaCollectionUrl = parseLudopediaCollectionUrl;
+window.fetchLudopediaCollection = fetchLudopediaCollection;
+window.importLudopediaCollection = importLudopediaCollection;
+window.executeOnlineImportFromInput = executeOnlineImportFromInput;
+window.fetchLudopediaForRanking = fetchLudopediaForRanking;
+window.updateLudoFilterPreview = updateLudoFilterPreview;
 window.state = state;
 window.renderBoard = renderBoard;
 
