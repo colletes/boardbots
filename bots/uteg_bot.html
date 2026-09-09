@@ -276,6 +276,11 @@
       margin: 12px 0;
       display: none;
     }
+    #dice-box canvas {
+      width: 100% !important;
+      height: 100% !important;
+      display: block;
+    }
 
     .d6-result-box {
       background: rgba(14, 28, 52, 0.95);
@@ -987,7 +992,9 @@
             </div>
 
             <!-- 3D DICE BOX TRAY (Used for d6 rolls in Solo d6 Variant) -->
-            <div id="dice-box"></div>
+            <div id="gameDiceTray" style="width:100%; min-height:170px; margin:10px 0; display:none;">
+              <div id="dice-box"></div>
+            </div>
             <div id="d6ResultBox" class="d6-result-box" style="display:none;"></div>
 
             <div class="action-stepper-row" id="stepperRow" style="display:none;">
@@ -1530,37 +1537,63 @@
     let compassRotation = 0;
     let diceBox = null;
     let diceBoxReady = false;
+    let diceBoxInitPromise = null;
     let rollSafeModule = null;
 
-    async function initDiceBox() {
-      if (diceBox) return;
-      try {
-        const mod = await import('../assets/dice-roller.js');
-        rollSafeModule = mod;
-        diceBox = await mod.loadDiceBox({
-          container: '#dice-box',
-          theme: 'stellar',
-          themeUrl: new URL('../assets/dice-box/themes/stellar', window.location.href).href,
-          scale: 18,
-          gravity: 2.5,
-          friction: 0.8,
-          restitution: 0.5,
-          timeoutMs: 8000
-        });
-        diceBoxReady = true;
-      } catch (err) {
-        console.warn("Dice-box fallback active:", err);
-        diceBoxReady = false;
+    async function ensureDiceBox(containerEl) {
+      const boxEl = document.getElementById('dice-box');
+      if (!boxEl) return null;
+      if (containerEl && !containerEl.contains(boxEl)) {
+        containerEl.appendChild(boxEl);
       }
+      if (containerEl) containerEl.style.display = 'block';
+      boxEl.style.display = 'block';
+      boxEl.offsetHeight; // force reflow so container client dimensions are computed
+
+      if (!diceBox) {
+        if (!diceBoxInitPromise) {
+          diceBoxInitPromise = (async () => {
+            try {
+              const mod = await import('../assets/dice-roller.js');
+              rollSafeModule = mod;
+              diceBox = await mod.loadDiceBox({
+                container: '#dice-box',
+                theme: 'stellar',
+                themeUrl: new URL('../assets/dice-box/themes/stellar', window.location.href).href,
+                scale: 18,
+                gravity: 2.5,
+                friction: 0.8,
+                restitution: 0.5,
+                timeoutMs: 12000
+              });
+              diceBoxReady = true;
+              return diceBox;
+            } catch (err) {
+              console.warn("Dice-box fallback active:", err);
+              diceBoxReady = false;
+              return null;
+            }
+          })();
+        }
+        await diceBoxInitPromise;
+      }
+
+      if (diceBox && typeof diceBox.resizeWorld === 'function') {
+        diceBox.resizeWorld();
+      }
+      return diceBox;
     }
 
-    async function rollD6SafeWith3D() {
-      const boxEl = document.getElementById('dice-box');
-      if (boxEl) boxEl.style.display = 'block';
+    async function initDiceBox() {
+      const tray = document.getElementById('gameDiceTray') || document.getElementById('setupDiceTray');
+      return ensureDiceBox(tray);
+    }
 
-      if (diceBoxReady && diceBox && rollSafeModule) {
+    async function rollD6SafeWith3D(targetContainer) {
+      const box = await ensureDiceBox(targetContainer);
+      if (diceBoxReady && box && rollSafeModule) {
         try {
-          const results = await rollSafeModule.rollDiceSafe(diceBox, '1d6', 5000);
+          const results = await rollSafeModule.rollDiceSafe(box, '1d6', 5000);
           let val = 1;
           if (results && results[0]) {
             if (results[0].rolls && results[0].rolls[0]) {
@@ -1614,7 +1647,6 @@
         if (radD6) radD6.checked = true;
         if (optsOff) optsOff.style.display = 'none';
         if (optsD6) optsD6.style.display = 'block';
-        initDiceBox();
       } else {
         if (cardOff) cardOff.classList.add('selected');
         if (cardD6) cardD6.classList.remove('selected');
@@ -1640,6 +1672,7 @@
               <div style="margin-top:4px; font-size:0.88rem; color:var(--text-muted);">${t.checkD6_2_sub}</div>
               <div style="margin-top:6px;">
                 <button type="button" class="btn btn-secondary btn-sm" onclick="rollD6ForSetupCultureShip()">${t.btnRollD6Setup}</button>
+                <div id="setupDiceTray" style="width:100%; min-height:170px; margin:10px 0; display:none;"></div>
                 <div id="setupD6Result" style="margin-top:6px; font-weight:700; color:var(--cyan); min-height:18px;"></div>
               </div>
             </li>
@@ -1664,9 +1697,11 @@
     }
 
     async function rollD6ForSetupCultureShip() {
+      const tray = document.getElementById('setupDiceTray');
+      if (tray) tray.style.display = 'block';
       const resEl = document.getElementById('setupD6Result');
       if (resEl) resEl.textContent = '🎲 Rolando d6...';
-      const val = await rollD6SafeWith3D();
+      const val = await rollD6SafeWith3D(tray);
       if (!resEl) return;
       if (val === 6) {
         resEl.innerHTML = `🎲 Resultado <strong>[6]</strong> ➔ Coloque a nave na <strong>superfície do planeta mais valioso (maior VP)</strong>.`;
@@ -1965,7 +2000,7 @@
 
       let desc = currentLang === 'pt' ? action.descPt : action.descEn;
 
-      const diceBoxEl = document.getElementById('dice-box');
+      const gameTray = document.getElementById('gameDiceTray');
       const d6ResBoxEl = document.getElementById('d6ResultBox');
       const btnAhead = document.getElementById('btnD6RerollPlayerAhead');
 
@@ -1975,13 +2010,14 @@
             ? 'Ação Mover Nave com rolagem de d6 tático. Siga as coordenadas e regras abaixo:'
             : 'Move a Ship action with tactical d6 roll. Follow the coordinates and rules below:';
           if (btnAhead) btnAhead.style.display = 'inline-flex';
+          if (gameTray) gameTray.style.display = 'block';
           if (!die.d6Val) {
             await rollMoveD6(die);
           } else {
             renderD6MoveResult(die.d6Val);
           }
         } else {
-          if (diceBoxEl) diceBoxEl.style.display = 'none';
+          if (gameTray) gameTray.style.display = 'none';
           if (d6ResBoxEl) d6ResBoxEl.style.display = 'none';
           if (btnAhead) btnAhead.style.display = 'none';
         }
@@ -1991,20 +2027,21 @@
           desc = currentLang === 'pt'
             ? 'Ação de Colônia no Nível 6 (Caveira): role o d6 para sortear o nível executado (ou todos!).'
             : 'Colony Action on Level 6 (Skull): roll d6 to trigger executed level (or all!).';
+          if (gameTray) gameTray.style.display = 'block';
           if (!die.d6ColonyVal) {
             await rollSkullColonyD6(die);
           } else {
             renderD6SkullColonyResult(die.d6ColonyVal);
           }
         } else {
-          if (diceBoxEl) diceBoxEl.style.display = 'none';
+          if (gameTray) gameTray.style.display = 'none';
           if (d6ResBoxEl) d6ResBoxEl.style.display = 'none';
           const rogue = gameState.activeRogue;
           const colonyList = currentLang === 'pt' ? rogue.colonyActionsPt : rogue.colonyActionsEn;
           desc = colonyList[gameState.empireLevel - 1] || colonyList[colonyList.length - 1];
         }
       } else {
-        if (diceBoxEl) diceBoxEl.style.display = 'none';
+        if (gameTray) gameTray.style.display = 'none';
         if (d6ResBoxEl) d6ResBoxEl.style.display = 'none';
         if (btnAhead) btnAhead.style.display = 'none';
       }
@@ -2041,12 +2078,14 @@
     }
 
     async function rollMoveD6(die) {
+      const gameTray = document.getElementById('gameDiceTray');
+      if (gameTray) gameTray.style.display = 'block';
       const d6ResBoxEl = document.getElementById('d6ResultBox');
       if (d6ResBoxEl) {
         d6ResBoxEl.style.display = 'block';
         d6ResBoxEl.innerHTML = `<div style="color:var(--cyan); font-weight:700;">🎲 Rolando d6 para determinar planeta alvo...</div>`;
       }
-      const val = await rollD6SafeWith3D();
+      const val = await rollD6SafeWith3D(gameTray);
       die.d6Val = val;
       renderD6MoveResult(val);
       logTactical(`Dado #${die.slotNum} (Mover Nave) tirou [${val}] no d6 ➔ ${val === 6 ? 'Planeta Mais Valioso' : 'Planeta #' + val}.`);
@@ -2085,12 +2124,14 @@
     }
 
     async function rollSkullColonyD6(die) {
+      const gameTray = document.getElementById('gameDiceTray');
+      if (gameTray) gameTray.style.display = 'block';
       const d6ResBoxEl = document.getElementById('d6ResultBox');
       if (d6ResBoxEl) {
         d6ResBoxEl.style.display = 'block';
         d6ResBoxEl.innerHTML = `<div style="color:var(--cyan); font-weight:700;">🎲 Rolando d6 para Ação de Colônia Nível 6...</div>`;
       }
-      const val = await rollD6SafeWith3D();
+      const val = await rollD6SafeWith3D(gameTray);
       die.d6ColonyVal = val;
       renderD6SkullColonyResult(val);
       logTactical(`Dado #${die.slotNum} (Colônia Nível 6) tirou [${val}] no d6.`);
