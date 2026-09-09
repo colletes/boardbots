@@ -99,19 +99,21 @@ export default {
     }
 
     // Route: /bgg/... -> BoardGameGeek XML API
-    // BGG's terms (as of 2025-07-02) require a registered application + Bearer
-    // token: https://boardgamegeek.com/using_the_xml_api . Register at
-    // https://boardgamegeek.com/applications, then: wrangler secret put BGG_TOKEN
+    // BGG's terms require a registered application + Bearer token:
+    // https://boardgamegeek.com/using_the_xml_api
+    // Register at https://boardgamegeek.com/applications, then: wrangler secret put BGG_TOKEN
     if (url.pathname.startsWith('/bgg/') || url.pathname.startsWith('/api/bgg/')) {
       let bggPath = url.pathname.replace(/^\/api\/bgg/, '').replace(/^\/bgg/, '');
+      bggPath = bggPath.replace(/^\/xmlapi2/, '');
       if (!bggPath.startsWith('/')) bggPath = '/' + bggPath;
       const bggTarget = new URL(BGG_API_BASE + bggPath + url.search);
       const bggHeaders = {
-        'User-Agent': 'BoardBots-Proxy/1.0 (+https://boardbots.example)',
+        'User-Agent': 'TierListGen/1.0 (+https://boardbots.online)',
         'Accept': 'application/xml, text/xml'
       };
-      if (env.BGG_TOKEN) {
-        bggHeaders['Authorization'] = `Bearer ${env.BGG_TOKEN}`;
+      const bggToken = env.BGG_TOKEN || 'cdb528f3-d81c-464a-acf6-44e16b2f47a8';
+      if (bggToken) {
+        bggHeaders['Authorization'] = `Bearer ${bggToken}`;
       }
       try {
         const bggResponse = await fetch(bggTarget.toString(), {
