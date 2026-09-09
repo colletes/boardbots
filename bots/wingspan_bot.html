@@ -1,0 +1,3775 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Wingspan — Automa & Companion</title>
+    <link rel="icon" href="../assets/mascot-trimmed.png" type="image/png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Inter:wght@400;500;600;700;800&family=PT+Serif:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/site.css?v=7">
+    <link rel="stylesheet" href="../assets/theme-kit.css">
+    <style>
+:root {
+    --bg-0: #141c15;
+    --bg-1: #0d130e;
+    --surface: rgba(26, 36, 27, 0.96);
+    --surface-2: rgba(36, 48, 38, 0.90);
+    --surface-card: #202b21;
+    --border: #3f5242;
+    --border-light: #5a755e;
+    --text: #f5efe6;
+    --text-dim: #c9bea9;
+    --accent: #e5a93b;
+    --accent-dim: #b88022;
+    --accent-glow: rgba(229, 169, 59, 0.35);
+
+    /* 3 Wingspan Habitats */
+    --forest: #2f6b3a;
+    --forest-light: #449252;
+    --forest-bg: rgba(47, 107, 58, 0.22);
+    --forest-border: rgba(68, 146, 82, 0.4);
+
+    --grassland: #c69427;
+    --grassland-light: #e0ad3d;
+    --grassland-bg: rgba(198, 148, 39, 0.22);
+    --grassland-border: rgba(224, 173, 61, 0.4);
+
+    --wetland: #2c6e91;
+    --wetland-light: #3f95c2;
+    --wetland-bg: rgba(44, 110, 145, 0.22);
+    --wetland-border: rgba(63, 149, 194, 0.4);
+
+    /* Elements */
+    --nectar: #c9405d;
+    --nectar-glow: rgba(201, 64, 93, 0.4);
+    --egg-blue: #8fc6d4;
+    --egg-cream: #eedfc5;
+    --egg-pink: #d9a4a7;
+    --egg-green: #9fc19f;
+
+    --radius: 8px;
+    --radius-lg: 14px;
+    --font-hand: 'Caveat', cursive, serif;
+    --font-display: 'PT Serif', Georgia, serif;
+    --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --tk-credits-border-top: 1px dashed var(--border);
+    --tk-credits-padding: 16px 0 0;
+    --tk-credits-img-border: 2px solid var(--border);
+    --tk-credits-font-size: 0.85rem;
+    --tk-credits-color: var(--text-dim);
+    --tk-credits-link-color: var(--accent);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+    font-family: var(--font-body);
+    font-size: 1rem;
+    line-height: 1.5;
+    background-color: var(--bg-0);
+    background-image: 
+        radial-gradient(circle at 50% 10%, rgba(229, 169, 59, 0.08) 0%, transparent 65%),
+        linear-gradient(rgba(13, 19, 14, 0.90), rgba(13, 19, 14, 0.90)),
+        url('../assets/textures/forest-floor.jpg'),
+        url('../assets/textures/old-parchment.jpg');
+    background-size: auto, auto, 400px 400px, 512px 512px;
+    background-repeat: no-repeat, no-repeat, repeat, repeat;
+    background-blend-mode: normal, normal, multiply, overlay;
+    background-attachment: fixed;
+    color: var(--text);
+    margin: 0 auto;
+    padding-bottom: max(36px, env(safe-area-inset-bottom));
+    -webkit-tap-highlight-color: transparent;
+    min-height: 100vh;
+}
+.hidden { display: none !important; }
+
+/* Sticky Top Navigation */
+.top-nav {
+    width: 100%;
+    max-width: 1300px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 18px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    background: rgba(20, 28, 21, 0.95);
+    border-bottom: 2px solid var(--border);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+}
+.nav-brand {
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    letter-spacing: 0.5px;
+}
+.nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.nav-btn {
+    background: var(--surface-2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 6px 12px;
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    border-radius: var(--radius);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.15s ease-in-out;
+}
+.nav-btn:hover {
+    background: var(--surface);
+    border-color: var(--accent);
+    color: var(--accent);
+    box-shadow: 0 0 10px var(--accent-glow);
+}
+.lang-btn {
+    padding: 6px 9px;
+    font-weight: 800;
+}
+.lang-btn.active {
+    background: var(--accent);
+    color: #121711;
+    border-color: var(--accent);
+}
+
+/* Redesigned Responsive Hero Banner (No clipping!) */
+.hero {
+    position: relative;
+    max-width: 1300px;
+    margin: 14px auto 18px;
+    padding: 0 18px;
+}
+.hero-card {
+    background: linear-gradient(135deg, rgba(32, 43, 33, 0.94) 0%, rgba(20, 28, 21, 0.96) 100%);
+    border: 2px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 6px 24px rgba(0,0,0,0.45);
+    padding: 18px 22px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    position: relative;
+    overflow: hidden;
+}
+.hero-card::after {
+    content: '';
+    position: absolute;
+    right: -20px;
+    bottom: -20px;
+    width: 180px;
+    height: 180px;
+    background: radial-gradient(circle, rgba(229, 169, 59, 0.12) 0%, transparent 70%);
+    pointer-events: none;
+}
+.hero-thumb {
+    width: 82px;
+    height: 82px;
+    min-width: 82px;
+    border-radius: 10px;
+    object-fit: cover;
+    border: 2px solid var(--border-light);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+.hero-text-wrap {
+    flex: 1;
+    min-width: 0;
+}
+.hero-title {
+    font-family: var(--font-display);
+    font-size: clamp(1.4rem, 3.8vw, 2.1rem);
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.2;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-shadow: 0 2px 6px rgba(0,0,0,0.6);
+}
+.hero-sub {
+    font-family: var(--font-hand);
+    font-size: clamp(1.05rem, 2.8vw, 1.35rem);
+    color: var(--accent);
+    font-weight: 700;
+    margin-top: 2px;
+    line-height: 1.3;
+}
+.hero-habitats-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+}
+.habitat-tag {
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+}
+.habitat-tag.forest {
+    background: var(--forest-bg);
+    color: #8ed69a;
+    border: 1px solid var(--forest-border);
+}
+.habitat-tag.grassland {
+    background: var(--grassland-bg);
+    color: #f0c765;
+    border: 1px solid var(--grassland-border);
+}
+.habitat-tag.wetland {
+    background: var(--wetland-bg);
+    color: #85caea;
+    border: 1px solid var(--wetland-border);
+}
+
+/* Layout Containers */
+.container {
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 0 18px;
+}
+
+/* Setup Card & Form */
+.setup-card {
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+}
+.section-title {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    color: var(--accent);
+    border-bottom: 2px solid var(--border);
+    padding-bottom: 8px;
+    margin: 24px 0 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.section-title:first-child { margin-top: 0; }
+
+/* Option Cards (Grid) */
+.option-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 14px;
+}
+.opt-card {
+    background: var(--surface-card);
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    position: relative;
+}
+.opt-card:hover {
+    border-color: var(--border-light);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+}
+.opt-card.selected {
+    border-color: var(--accent);
+    background: linear-gradient(145deg, rgba(32, 43, 33, 0.98), rgba(46, 61, 47, 0.95));
+    box-shadow: 0 0 14px var(--accent-glow);
+}
+.opt-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+.opt-card-title {
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.badge-pill {
+    font-size: 0.72rem;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 12px;
+    background: var(--border);
+    color: var(--text);
+    text-transform: uppercase;
+}
+.opt-card.selected .badge-pill {
+    background: var(--accent);
+    color: #121711;
+}
+.opt-card-desc {
+    font-size: 0.88rem;
+    color: var(--text-dim);
+    line-height: 1.45;
+}
+
+/* Expansion Cards with Nested Options */
+.expansion-group {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+.exp-box {
+    background: var(--surface-card);
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
+.exp-box.active {
+    border-color: var(--border-light);
+}
+.exp-box-head {
+    padding: 14px 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    background: rgba(0, 0, 0, 0.15);
+    user-select: none;
+}
+.exp-box-head:hover {
+    background: rgba(255, 255, 255, 0.04);
+}
+.exp-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.exp-name {
+    font-weight: 700;
+    font-size: 1.02rem;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.exp-sub {
+    font-size: 0.84rem;
+    color: var(--text-dim);
+}
+.switch-indicator {
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    border: 2px solid var(--border-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    font-size: 14px;
+    color: transparent;
+    transition: all 0.2s;
+    background: rgba(0,0,0,0.3);
+}
+.exp-box.active .switch-indicator {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #121711;
+}
+.exp-nested-body {
+    padding: 14px 18px 18px;
+    border-top: 1px solid var(--border);
+    background: rgba(0, 0, 0, 0.22);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.nested-sub-toggle {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 14px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.nested-sub-toggle:hover {
+    background: rgba(255,255,255,0.06);
+    border-color: var(--border-light);
+}
+.nested-sub-toggle.active {
+    border-color: var(--accent);
+    background: rgba(229, 169, 59, 0.08);
+}
+.nested-title {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.nested-desc {
+    font-size: 0.84rem;
+    color: var(--text-dim);
+    line-height: 1.4;
+    margin-top: 4px;
+}
+.impact-badge {
+    display: inline-block;
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: #fca5a5;
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    padding: 2px 8px;
+    border-radius: 6px;
+    margin-top: 6px;
+}
+
+/* Detailed Physical Setup Checklist */
+.setup-checklist {
+    margin-top: 24px;
+    background: var(--surface-card);
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+}
+.setup-checklist summary {
+    font-family: var(--font-display);
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--accent);
+    cursor: pointer;
+    outline: none;
+    user-select: none;
+}
+.setup-step-list {
+    list-style: none;
+    margin-top: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.setup-step-item {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    font-size: 0.92rem;
+    line-height: 1.5;
+    color: var(--text-dim);
+}
+.setup-step-item strong {
+    color: var(--text);
+}
+.step-num {
+    background: var(--border);
+    color: var(--accent);
+    font-weight: 800;
+    font-size: 0.8rem;
+    min-width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+/* Start Game Button */
+.btn-start-game {
+    width: 100%;
+    padding: 16px;
+    margin-top: 24px;
+    background: linear-gradient(135deg, #2e6939 0%, #1c4424 100%);
+    color: #fff;
+    border: 2px solid var(--forest-light);
+    border-radius: var(--radius-lg);
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: all 0.2s ease;
+}
+.btn-start-game:hover {
+    background: linear-gradient(135deg, #377a44 0%, #23542c 100%);
+    box-shadow: 0 0 20px rgba(68, 146, 82, 0.5);
+    transform: translateY(-2px);
+}
+
+/* ==================== GAME VIEW ==================== */
+/* Status Ribbon */
+.status-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 18px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 10px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+}
+.round-pill {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.round-badge {
+    background: var(--accent);
+    color: #121711;
+    font-weight: 800;
+    font-size: 0.95rem;
+    padding: 4px 12px;
+    border-radius: 14px;
+    letter-spacing: 0.5px;
+}
+.turn-counter {
+    font-weight: 700;
+    color: var(--text-dim);
+    font-size: 0.92rem;
+}
+.score-ticker {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+.ticker-item {
+    font-weight: 700;
+    font-size: 0.92rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(0,0,0,0.3);
+    padding: 4px 10px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+}
+.ticker-item span {
+    color: var(--accent);
+    font-size: 1.05rem;
+}
+.btn-undo {
+    background: var(--surface-2);
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+    padding: 6px 12px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.15s;
+}
+.btn-undo:hover {
+    color: #fff;
+    border-color: var(--text);
+}
+
+/* Two Column Game Layout */
+.game-layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 18px;
+}
+@media (min-width: 960px) {
+    .game-layout {
+        grid-template-columns: 460px 1fr;
+    }
+}
+
+/* ==================== NATIVE DIEGETIC CARD STYLING ==================== */
+.native-card {
+    background: #fbf7ee;
+    color: #2b251d;
+    border-radius: 14px;
+    border: 3px solid #6b5840;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.6), inset 0 0 15px rgba(184, 150, 99, 0.2);
+    overflow: hidden;
+    position: relative;
+    user-select: none;
+}
+.native-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url('../assets/textures/old-parchment.jpg');
+    background-size: 300px 300px;
+    opacity: 0.12;
+    pointer-events: none;
+}
+.card-header-bar {
+    background: linear-gradient(90deg, #3d3122 0%, #2b2217 100%);
+    color: #f7ede1;
+    padding: 8px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #6b5840;
+}
+.card-brand-tag {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.85rem;
+    letter-spacing: 0.8px;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.card-id-tag {
+    font-weight: 800;
+    font-size: 0.78rem;
+    padding: 2px 8px;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+    letter-spacing: 0.5px;
+}
+
+/* Native Card Round Rows */
+.card-rows-wrap {
+    display: flex;
+    flex-direction: column;
+}
+.native-card-row {
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px dashed #d1c4b0;
+    transition: all 0.2s ease;
+    position: relative;
+}
+.native-card-row:last-child {
+    border-bottom: none;
+}
+.native-card-row.active-row {
+    background: linear-gradient(90deg, rgba(229, 169, 59, 0.22) 0%, rgba(229, 169, 59, 0.08) 100%);
+    box-shadow: inset 4px 0 0 var(--accent);
+}
+.row-marker {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    min-width: 44px;
+}
+.row-num-badge {
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: #7a6a55;
+    letter-spacing: 0.5px;
+}
+.native-card-row.active-row .row-num-badge {
+    color: #925c0a;
+    font-weight: 900;
+}
+.row-active-pointer {
+    font-size: 14px;
+    color: var(--accent);
+    line-height: 1;
+    margin-top: 2px;
+    visibility: hidden;
+}
+.native-card-row.active-row .row-active-pointer {
+    visibility: visible;
+}
+
+.row-action-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.row-act-title {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #2b2217;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.native-card-row.active-row .row-act-title {
+    color: #12100d;
+    font-size: 1.15rem;
+}
+.row-act-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+}
+.native-badge {
+    font-size: 0.78rem;
+    font-weight: 800;
+    padding: 3px 8px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+.native-badge.eggs {
+    background: #e4d8c3;
+    color: #4a3c28;
+    border: 1px solid #c2b39b;
+}
+.native-badge.cube-plus {
+    background: #d0e8f2;
+    color: #185a73;
+    border: 1px solid #99c9dc;
+}
+.native-badge.cube-minus {
+    background: #fadcd9;
+    color: #8a2424;
+    border: 1px solid #e8a9a4;
+}
+.native-badge.pink {
+    background: #f5d6dc;
+    color: #8c2443;
+    border: 1px solid #e5a4b5;
+}
+
+/* Card Sidebar/Footer Elements */
+.card-duet-strip {
+    background: #ede3d1;
+    border-top: 2px solid #d1c4b0;
+    padding: 8px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: #4a3e2e;
+}
+.duet-quad-pill {
+    background: #4a3e2e;
+    color: #fff;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+}
+.card-nectar-strip {
+    background: #f2e7d5;
+    border-top: 1px solid #d1c4b0;
+    padding: 6px 14px;
+    display: flex;
+    justify-content: space-around;
+    font-size: 0.8rem;
+    font-weight: 800;
+}
+
+/* Primary Turn Next Button */
+.btn-next-turn {
+    width: 100%;
+    margin-top: 14px;
+    padding: 16px;
+    background: linear-gradient(135deg, var(--accent) 0%, #b88022 100%);
+    color: #121711;
+    border: 2px solid #f4c265;
+    border-radius: var(--radius-lg);
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 800;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+    transition: all 0.2s;
+}
+.btn-next-turn:hover {
+    background: linear-gradient(135deg, #f0b74f 0%, #c48b29 100%);
+    box-shadow: 0 0 24px var(--accent-glow);
+    transform: translateY(-2px);
+}
+
+/* ==================== PHYSICAL BIRDFEEDER ASSISTANT ==================== */
+.feeder-assistant-card {
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    margin-top: 14px;
+}
+.feeder-card-title {
+    font-family: var(--font-display);
+    font-size: 1.05rem;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+.feeder-rule-box {
+    background: rgba(0, 0, 0, 0.25);
+    border-left: 4px solid var(--accent);
+    padding: 10px 14px;
+    border-radius: 0 8px 8px 0;
+    font-size: 0.88rem;
+    color: var(--text);
+    line-height: 1.45;
+    margin-bottom: 12px;
+}
+.priority-strip {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 12px;
+    margin-bottom: 12px;
+}
+.prio-tag {
+    font-size: 0.82rem;
+    font-weight: 800;
+    padding: 4px 10px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--surface-card);
+    border: 1px solid var(--border-light);
+    color: var(--text);
+}
+.prio-tag.first-prio {
+    background: rgba(229, 169, 59, 0.22);
+    border-color: var(--accent);
+    color: #fff;
+    box-shadow: 0 0 8px var(--accent-glow);
+}
+.prio-arrow {
+    color: var(--border-light);
+    font-size: 0.85rem;
+    font-weight: 900;
+}
+.feeder-quick-log {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+.feeder-quick-log span {
+    font-size: 0.82rem;
+    color: var(--text-dim);
+    font-weight: 700;
+    width: 100%;
+    margin-bottom: 2px;
+}
+.die-food-btn {
+    background: var(--surface-card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.15s;
+}
+.die-food-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+/* Secondary Panels (Duet, Nectar, Hummingbird, Automarazzi) */
+.side-panel {
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+    margin-bottom: 18px;
+}
+.side-panel:last-child { margin-bottom: 0; }
+.panel-title {
+    font-family: var(--font-display);
+    font-size: 1.12rem;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 6px;
+}
+
+/* Duet Map Styling */
+.duet-map-svg-wrap {
+    width: 100%;
+    overflow-x: auto;
+    background: #172419;
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px;
+    text-align: center;
+}
+.duet-hud-stats {
+    display: flex;
+    justify-content: space-around;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px;
+    margin-top: 10px;
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+/* Nectar Counters */
+.nectar-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    text-align: center;
+}
+.nectar-box {
+    background: var(--surface-card);
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 6px;
+}
+.nectar-box.forest { border-color: var(--forest-border); }
+.nectar-box.grassland { border-color: var(--grassland-border); }
+.nectar-box.wetland { border-color: var(--wetland-border); }
+.nectar-count {
+    font-size: 1.6rem;
+    font-weight: 900;
+    color: var(--nectar);
+    margin: 4px 0;
+}
+.nectar-label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--text-dim);
+}
+.btn-nectar-adj {
+    width: 100%;
+    margin-top: 12px;
+    padding: 10px;
+    background: var(--surface-2);
+    border: 1px solid var(--nectar);
+    color: #ff94aa;
+    border-radius: var(--radius);
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.btn-nectar-adj:hover {
+    background: rgba(201, 64, 93, 0.2);
+}
+
+/* Hummingbird Track */
+.hbird-track-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.hbird-steps {
+    display: grid;
+    grid-template-columns: repeat(11, 1fr);
+    gap: 4px;
+    background: rgba(0,0,0,0.3);
+    padding: 8px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+}
+.hbird-step {
+    height: 36px;
+    border-radius: 4px;
+    background: var(--surface-card);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 800;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.hbird-step.active {
+    background: var(--accent);
+    color: #121711;
+    border-color: var(--accent);
+    box-shadow: 0 0 10px var(--accent-glow);
+}
+
+/* Action Log Panel */
+.log-box {
+    max-height: 220px;
+    overflow-y: auto;
+    background: rgba(0,0,0,0.35);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 0.86rem;
+}
+.log-entry {
+    padding-bottom: 8px;
+    border-bottom: 1px dashed var(--border);
+    line-height: 1.4;
+}
+.log-entry:last-child { border-bottom: none; padding-bottom: 0; }
+.log-entry strong { color: var(--accent); }
+
+/* Modals */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.78);
+    backdrop-filter: blur(6px);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+}
+.modal-window {
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: var(--radius-lg);
+    max-width: 600px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.7);
+    padding: 24px;
+}
+.modal-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid var(--border);
+    padding-bottom: 12px;
+    margin-bottom: 16px;
+}
+.modal-title {
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    color: var(--accent);
+}
+.modal-close {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-size: 1.4rem;
+    cursor: pointer;
+}
+.score-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 16px;
+    font-size: 0.92rem;
+}
+.score-table th, .score-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+}
+.score-table th { color: var(--accent); }
+.score-input {
+    width: 65px;
+    background: var(--surface-card);
+    border: 1px solid var(--border);
+    color: #fff;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: 700;
+}
+.winner-banner {
+    background: var(--surface-card);
+    border: 2px solid var(--accent);
+    border-radius: var(--radius);
+    padding: 14px;
+    text-align: center;
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    margin-bottom: 16px;
+}
+    
+/* ==================== HUMMINGBIRD GARDEN STAGE BOX ==================== */
+.hummingbird-stage-box {
+    margin-top: 14px;
+    background: #1c1815;
+    border: 1px solid rgba(212, 67, 122, 0.45);
+    border-radius: var(--radius);
+    padding: 14px;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
+    position: relative;
+    overflow: hidden;
+}
+.hummingbird-stage-box::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #ec4899, #f97316, #eab308, #10b981, #06b6d4);
+}
+.hbird-box-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.hbird-box-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.hbird-icon-badge {
+    font-size: 1.5rem;
+    line-height: 1;
+}
+.hbird-title-main {
+    display: block;
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #ffd2e2;
+    letter-spacing: 0.3px;
+}
+.hbird-card-sub {
+    display: block;
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    font-family: 'Courier New', monospace;
+}
+
+/* Card Body */
+.hbird-card-body {
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius);
+    padding: 12px;
+    margin-bottom: 14px;
+}
+
+/* Rainy Day */
+.hbird-rain-bar {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(51, 65, 85, 0.85));
+    border: 1px solid #64748b;
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    color: #e2e8f0;
+}
+.rain-cloud-icon {
+    font-size: 2.2rem;
+    line-height: 1;
+    animation: rainPulse 2s infinite ease-in-out;
+}
+@keyframes rainPulse {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
+}
+.rain-title {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #93c5fd;
+    margin-bottom: 3px;
+}
+.rain-desc {
+    font-size: 0.84rem;
+    color: #cbd5e1;
+    line-height: 1.35;
+}
+
+/* Garden Movement Strip */
+.hbird-strip-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.hbird-strip-visual {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+    background: #12100e;
+    padding: 8px;
+    border-radius: var(--radius);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.hbird-slot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 4px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    position: relative;
+    transition: all 0.2s;
+    min-height: 72px;
+    text-align: center;
+}
+.hbird-slot.slot-from {
+    background: rgba(234, 179, 8, 0.15);
+    border-color: #eab308;
+    box-shadow: 0 0 10px rgba(234, 179, 8, 0.3);
+}
+.hbird-slot.slot-to {
+    background: #fffdf5;
+    border: 2px solid #d97706;
+    color: #121711;
+    box-shadow: 0 0 16px rgba(245, 158, 11, 0.5);
+}
+.hbird-slot-num {
+    font-size: 0.72rem;
+    font-weight: 800;
+    opacity: 0.75;
+    margin-bottom: 2px;
+}
+.hbird-slot.slot-to .hbird-slot-num {
+    color: #78350f;
+    opacity: 1;
+}
+.hbird-slot-flower {
+    font-size: 1.45rem;
+    line-height: 1.1;
+}
+.hbird-slot-name {
+    font-size: 0.68rem;
+    font-weight: 700;
+    margin-top: 3px;
+}
+.hbird-slot.slot-to .hbird-slot-name {
+    color: #451a03;
+}
+.hbird-slot-badge {
+    position: absolute;
+    top: -8px;
+    right: -6px;
+    background: #eab308;
+    color: #121711;
+    font-size: 0.65rem;
+    font-weight: 900;
+    padding: 2px 6px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+}
+.hbird-slot.slot-to .hbird-target-badge {
+    background: #dc2626;
+    color: #fff;
+}
+.hbird-action-guidance {
+    font-size: 0.88rem;
+    line-height: 1.45;
+    color: #f1f5f9;
+    background: rgba(212, 67, 122, 0.14);
+    border-left: 3px solid #ec4899;
+    padding: 10px 14px;
+    border-radius: 0 6px 6px 0;
+}
+.hbird-action-guidance strong {
+    color: #fbcfe8;
+}
+
+/* 5-Tracks Companion */
+.hbird-tracks-companion {
+    background: rgba(0, 0, 0, 0.22);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius);
+    padding: 12px;
+}
+.hbird-tracks-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+.hbird-tracks-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #e2e8f0;
+}
+.hbird-total-pts-badge {
+    font-size: 0.85rem;
+    font-weight: 800;
+    background: rgba(16, 185, 129, 0.2);
+    color: #6ee7b7;
+    border: 1px solid rgba(16, 185, 129, 0.4);
+    padding: 2px 8px;
+    border-radius: 12px;
+}
+.hbird-columns-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+}
+.hbird-col-card {
+    background: var(--surface-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    transition: transform 0.15s, border-color 0.15s;
+}
+.hbird-col-card:hover {
+    border-color: rgba(255, 255, 255, 0.25);
+}
+.hbird-col-icon {
+    font-size: 1.3rem;
+    line-height: 1;
+    margin-bottom: 2px;
+}
+.hbird-col-name {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--text-dim);
+    line-height: 1.15;
+    min-height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.hbird-col-val {
+    font-size: 0.85rem;
+    font-weight: 800;
+    margin: 4px 0;
+    color: #f1f5f9;
+}
+.hbird-col-btns {
+    display: flex;
+    width: 100%;
+    gap: 4px;
+    margin-top: 4px;
+}
+.btn-hbird-advance {
+    flex: 1;
+    padding: 6px 2px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid currentColor;
+    border-radius: 4px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.btn-hbird-advance:hover {
+    background: currentColor;
+    color: #121711 !important;
+}
+.btn-hbird-decrease {
+    width: 22px;
+    padding: 6px 0;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: var(--text-dim);
+    border-radius: 4px;
+    font-size: 0.72rem;
+    cursor: pointer;
+}
+.btn-hbird-decrease:hover {
+    background: rgba(239, 68, 68, 0.2);
+    color: #fca5a5;
+    border-color: #ef4444;
+}
+
+@media (max-width: 600px) {
+    .hbird-columns-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    .hbird-strip-visual {
+        gap: 3px;
+        padding: 5px;
+    }
+    .hbird-slot {
+        padding: 5px 2px;
+        min-height: 60px;
+    }
+    .hbird-slot-flower {
+        font-size: 1.1rem;
+    }
+    .hbird-slot-name {
+        font-size: 0.6rem;
+    }
+}
+
+</style>
+</head>
+<body>
+
+    <!-- Sticky Navigation -->
+    <nav class="top-nav">
+        <a class="nav-brand" href="../index.html">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:20px; height:20px;"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            <span>Boardbots</span>
+        </a>
+        <div class="nav-actions">
+            <button class="nav-btn lang-btn" id="btn-lang-pt" onclick="setLanguage('pt')">PT</button>
+            <button class="nav-btn lang-btn" id="btn-lang-en" onclick="setLanguage('en')">EN</button>
+            <button class="nav-btn" id="btn-ambient-toggle" onclick="toggleAmbientSound()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px; height:16px;"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                <span data-i18n="btn_sound">Ambiente</span>
+            </button>
+            <button class="nav-btn" onclick="openHelpModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px; height:16px;"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            </button>
+            <button class="nav-btn" id="btn-reset" onclick="confirmResetMatch()" data-i18n="btn_reset">Reiniciar</button>
+        </div>
+    </nav>
+
+    <!-- Header Hero Banner (Responsive, Unclipped) -->
+    <header class="hero">
+        <div class="hero-card">
+            <img src="../assets/art/wingspan.webp" alt="Wingspan Box Art" class="hero-thumb">
+            <div class="hero-text-wrap">
+                <h1 class="hero-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:28px; height:28px;"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"/></svg>
+                    <span>Wingspan</span>
+                </h1>
+                <p class="hero-sub" data-i18n="hero_subtitle">Diário de Campo & Companheiro Automa Oficial</p>
+                <div class="hero-habitats-bar">
+                    <span class="habitat-tag forest">🌲 Floresta</span>
+                    <span class="habitat-tag grassland">🌾 Pradaria</span>
+                    <span class="habitat-tag wetland">🌊 Pantanal</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+
+        <!-- ==================== SETUP VIEW ==================== -->
+        <div id="view-setup">
+            <div class="setup-card">
+                
+                <!-- 1. Mode Select -->
+                <h2 class="section-title" data-i18n="title_mode_select">1. Escolha o Modo de Jogo Principal</h2>
+                <div class="option-grid">
+                    <div class="opt-card selected" id="opt-mode-standard" onclick="selectMode('standard')">
+                        <div class="opt-card-header">
+                            <span class="opt-card-title">🦅 <span data-i18n="mode_std_title">Solo Padrão</span></span>
+                            <span class="badge-pill" data-i18n="badge_classic">Oficial</span>
+                        </div>
+                        <p class="opt-card-desc" data-i18n="mode_std_desc">Partida solo clássica contra o baralho Automa através de 4 rodadas com contagem regressiva de turnos (8, 7, 6, 5) e disputa de objetivos.</p>
+                    </div>
+
+                    <div class="opt-card" id="opt-mode-duet" onclick="selectMode('duet')">
+                        <div class="opt-card-header">
+                            <span class="opt-card-title">☯️ <span data-i18n="mode_duet_title">Solo Dueto (Ásia)</span></span>
+                            <span class="badge-pill" data-i18n="badge_duet">Dueto • Standalone</span>
+                        </div>
+                        <p class="opt-card-desc" data-i18n="mode_duet_desc">Confronto territorial no Mapa de Dueto da Ásia. Jogo independente para 1-2 jogadores (não requer o jogo base). A Automa navega por quadrantes e compete pelo maior grupo contíguo de fichas.</p>
+                    </div>
+
+                    <div class="opt-card" id="opt-mode-razzi" onclick="selectMode('razzi')">
+                        <div class="opt-card-header">
+                            <span class="opt-card-title">📸 <span data-i18n="mode_razzi_title">Automarazzi</span></span>
+                            <span class="badge-pill" data-i18n="badge_coop">Co-op 2–4p</span>
+                        </div>
+                        <p class="opt-card-desc" data-i18n="mode_razzi_desc">Variante cooperativa oficial da Oceania para 2 a 4 jogadores jogando abertamente e compartilhando recursos contra uma Automa rival.</p>
+                    </div>
+                </div>
+
+                <!-- 2. Expansions & Nested Advanced Modules -->
+                <h2 class="section-title" data-i18n="title_exp_select">2. Expansões & Módulos Adicionais</h2>
+                <div class="expansion-group">
+                    
+                    <!-- Base Game Box (with Automubon nested) -->
+                    <div class="exp-box active" id="box-base">
+                        <div class="exp-box-head" onclick="toggleExpansion('base')">
+                            <div class="exp-info">
+                                <span class="exp-name">🪶 <span data-i18n="exp_base_name">Jogo Base (Wingspan)</span></span>
+                                <span class="exp-sub" data-i18n="exp_base_sub">Baralho de 10 cartas oficiais, comedouro de 5 dados e esteira de objetivos</span>
+                            </div>
+                            <div class="switch-indicator" id="sw-base">✓</div>
+                        </div>
+                        <div class="exp-nested-body" id="nested-base">
+                            <div class="nested-sub-toggle" id="tog-automubon" onclick="toggleAutomubon()">
+                                <div>
+                                    <div class="nested-title">
+                                        <span>🏛️</span> <span data-i18n="opt_automubon_title">Sociedade Automubon (Automubon Society)</span>
+                                        <span class="badge-pill" data-i18n="badge_expert">Perito</span>
+                                    </div>
+                                    <div class="nested-desc" data-i18n="opt_automubon_desc">
+                                        Adiciona a carta oficial de nível perito (base_12) ao baralho. A Automa ganha cubos de objetivo em praticamente todas as ações (+1 cubo constante).
+                                    </div>
+                                    <div class="impact-badge" data-i18n="impact_automubon">
+                                        ⚡ Impacto na Dificuldade: Aumenta muito o desafio dos objetivos de fim de rodada.
+                                    </div>
+                                </div>
+                                <div class="switch-indicator" id="sw-automubon"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- European Expansion -->
+                    <div class="exp-box" id="box-ee">
+                        <div class="exp-box-head" onclick="toggleExpansion('ee')">
+                            <div class="exp-info">
+                                <span class="exp-name">🇪🇺 <span data-i18n="exp_ee_name">Expansão Europa (EE)</span></span>
+                                <span class="exp-sub" data-i18n="exp_ee_sub">Objetivos de fim de rodada europeus e poderes cianos</span>
+                            </div>
+                            <div class="switch-indicator" id="sw-ee"></div>
+                        </div>
+                    </div>
+
+                    <!-- Oceania Expansion (with RAOUtoma nested) -->
+                    <div class="exp-box" id="box-oe">
+                        <div class="exp-box-head" onclick="toggleExpansion('oe')">
+                            <div class="exp-info">
+                                <span class="exp-name">🌊 <span data-i18n="exp_oe_name">Expansão Oceania (OE)</span></span>
+                                <span class="exp-sub" data-i18n="exp_oe_sub">Dados com néctar, disputa de néctar gasto e nova ação</span>
+                            </div>
+                            <div class="switch-indicator" id="sw-oe"></div>
+                        </div>
+                        <div class="exp-nested-body" id="nested-oe" style="display:none;">
+                            <div class="nested-sub-toggle" id="tog-raoutoma" onclick="toggleRAOUtoma()">
+                                <div>
+                                    <div class="nested-title">
+                                        <span>🦤</span> <span data-i18n="opt_raoutoma_title">Carta de Ação RAOUtoma</span>
+                                        <span class="badge-pill" data-i18n="badge_extra_card">Carta Extra</span>
+                                    </div>
+                                    <div class="nested-desc" data-i18n="opt_raoutoma_desc">
+                                        Adiciona a carta oficial RAOUtoma (oceania_10) ao baralho da Automa, aumentando o ritmo de ovos (2 na R3, 3 na R4) e cubos.
+                                    </div>
+                                    <div class="impact-badge" data-i18n="impact_raoutoma">
+                                        ⚡ Impacto: Deixa a Automa mais produtiva nas rodadas finais.
+                                    </div>
+                                </div>
+                                <div class="switch-indicator" id="sw-raoutoma">✓</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Asia Expansion -->
+                    <div class="exp-box" id="box-asia">
+                        <div class="exp-box-head" onclick="toggleExpansion('asia')">
+                            <div class="exp-info">
+                                <span class="exp-name">🌏 <span data-i18n="exp_asia_name">Expansão Ásia</span></span>
+                                <span class="exp-sub" data-i18n="exp_asia_sub">Aves asiáticas, baralho próprio de 10 cartas e Aliança Automa-Ásia</span>
+                            </div>
+                            <div class="switch-indicator" id="sw-asia"></div>
+                        </div>
+                    </div>
+
+                    <!-- Americas Expansion -->
+                    <div class="exp-box" id="box-ae">
+                        <div class="exp-box-head" onclick="toggleExpansion('ae')">
+                            <div class="exp-info">
+                                <span class="exp-name">🌺 <span data-i18n="exp_ae_name">Expansão Américas (AE)</span></span>
+                                <span class="exp-sub" data-i18n="exp_ae_sub">Esteira do Jardim de Beija-flores e cartas de dificuldade Swift/Sloth</span>
+                            </div>
+                            <div class="switch-indicator" id="sw-ae"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Difficulty Level -->
+                <h2 class="section-title" data-i18n="title_diff_select">3. Nível de Dificuldade da Automa</h2>
+                <div class="option-grid">
+                    <div class="opt-card" id="diff-eaglet" onclick="selectDifficulty('eaglet')">
+                        <div class="opt-card-header">
+                            <span class="opt-card-title">🐣 <span data-i18n="diff_eaglet_title">Filhote de Águia</span></span>
+                            <span class="badge-pill">Fácil</span>
+                        </div>
+                        <p class="opt-card-desc" data-i18n="diff_eaglet_desc">3 VP por ave virada para baixo • 1 ovo a cada 5 fichas de reserva • 3 néctares iniciais.</p>
+                    </div>
+
+                    <div class="opt-card selected" id="diff-eagle" onclick="selectDifficulty('eagle')">
+                        <div class="opt-card-header">
+                            <span class="opt-card-title">🦅 <span data-i18n="diff_eagle_title">Águia</span></span>
+                            <span class="badge-pill">Normal</span>
+                        </div>
+                        <p class="opt-card-desc" data-i18n="diff_eagle_desc">4 VP por ave virada para baixo • 1 ovo a cada 4 fichas de reserva • 4 néctares iniciais.</p>
+                    </div>
+
+                    <div class="opt-card" id="diff-eyed" onclick="selectDifficulty('eyed')">
+                        <div class="opt-card-header">
+                            <span class="opt-card-title">🦅✨ <span data-i18n="diff_eyed_title">Olhos de Águia</span></span>
+                            <span class="badge-pill">Difícil</span>
+                        </div>
+                        <p class="opt-card-desc" data-i18n="diff_eyed_desc">5 VP por ave virada para baixo • 1 ovo a cada 3 fichas de reserva • 5 néctares iniciais.</p>
+                    </div>
+                </div>
+
+                <!-- 4. Benefit Rule -->
+                <h2 class="section-title" data-i18n="title_benefit_select">4. Regra de Interação de Poderes (Benefícios à Automa)</h2>
+                <div class="option-grid">
+                    <div class="opt-card selected" id="opt-ben-cache" onclick="selectBenefitMode('cache')">
+                        <div class="opt-card-header">
+                            <span class="opt-card-title">📦 <span data-i18n="ben_cache_title">Reserva da Automa (Cache)</span></span>
+                            <span class="badge-pill" data-i18n="badge_rec">Recomendada</span>
+                        </div>
+                        <p class="opt-card-desc" data-i18n="ben_cache_desc">Regra oficial ágil: +2 fichas se ganhar grátis, +1 se exigir custo. Fichas viram ovos ao final.</p>
+                    </div>
+
+                    <div class="opt-card" id="opt-ben-hoard" onclick="selectBenefitMode('hoard')">
+                        <div class="opt-card-header">
+                            <span class="opt-card-title">💰 <span data-i18n="ben_hoard_title">Acúmulo da Automa (Hoard)</span></span>
+                            <span class="badge-pill">Detalhada</span>
+                        </div>
+                        <p class="opt-card-desc" data-i18n="ben_hoard_desc">Variante detalhada: valores específicos (+1 comida, +2 carta/néctar, +3 ovo/beija-flor, +6 bônus).</p>
+                    </div>
+
+                    <div class="opt-card" id="opt-ben-none" onclick="selectBenefitMode('none')">
+                        <div class="opt-card-header">
+                            <span class="opt-card-title">🌾 <span data-i18n="ben_none_title">Sem Interação</span></span>
+                            <span class="badge-pill">Clássico</span>
+                        </div>
+                        <p class="opt-card-desc" data-i18n="ben_none_desc">A Automa não participa de poderes que beneficiam outros jogadores.</p>
+                    </div>
+                </div>
+
+                <!-- 5. Complete Physical Setup Checklist -->
+                <details class="setup-checklist" open>
+                    <summary data-i18n="setup_check_title">📋 Checklist de Preparação Física da Mesa (Manual Oficial)</summary>
+                    <ul class="setup-step-list">
+                        <li class="setup-step-item">
+                            <span class="step-num">1</span>
+                            <div><strong>Seu Tabuleiro & Mão Inicial:</strong> Receba 5 cartas de ave e 1 ficha de cada uma das 5 comidas. Escolha quais aves manter e descarte 1 comida por ave mantida (a soma total deve ser exatamente 5).</div>
+                        </li>
+                        <li class="setup-step-item">
+                            <span class="step-num">2</span>
+                            <div><strong>Cartas Bônus:</strong> Compre 2 cartas de bônus do baralho, escolha 1 para você e descarte a outra virada para baixo.</div>
+                        </li>
+                        <li class="setup-step-item">
+                            <span class="step-num">3</span>
+                            <div><strong>Bandeja de Aves:</strong> Embaralhe o baralho de aves e posicione 3 cartas viradas para cima nos espaços da esteira da bandeja.</div>
+                        </li>
+                        <li class="setup-step-item">
+                            <span class="step-num">4</span>
+                            <div><strong>Torre de Dados (Comedouro):</strong> Jogue os 5 dados de madeira na torre do comedouro físico sobre a mesa.</div>
+                        </li>
+                        <li class="setup-step-item">
+                            <span class="step-num">5</span>
+                            <div><strong>Objetivos de Fim de Rodada:</strong> Use o lado verde da esteira de objetivos (recomendado para o modo solo). Sorteie 4 peças de objetivo aleatórias e coloque uma em cada rodada.</div>
+                        </li>
+                        <li class="setup-step-item">
+                            <span class="step-num">6</span>
+                            <div><strong>Suprimento da Automa:</strong> Entregue 8 cubos de ação de uma cor livre para a Automa. Compre e revele 1 carta bônus exclusiva da Automa (ela pontuará aves viradas para cima com esses critérios). Posicione a carta rastreadora de rodada.</div>
+                        </li>
+                        <li class="setup-step-item" id="check-step-oe" style="display:none;">
+                            <span class="step-num">★</span>
+                            <div><strong>Módulo Oceania:</strong> Substitua os dados normais pelos dados com néctar. Separe o suprimento de néctar e entregue o néctar inicial à Automa (3 em Filhote, 4 em Águia, 5 em Olhos de Águia).</div>
+                        </li>
+                        <li class="setup-step-item" id="check-step-duet" style="display:none;">
+                            <span class="step-num">★</span>
+                            <div><strong>Modo Dueto (Ásia):</strong> Posicione o Mapa de Dueto no centro com 15 marcadores de dueto seus e 15 da Automa. Posicione a carta rastreadora do mapa de dueto.</div>
+                        </li>
+                        <li class="setup-step-item" id="check-step-ae" style="display:none;">
+                            <span class="step-num">★</span>
+                            <div><strong>Módulo Américas:</strong> Coloque a esteira do Jardim de Beija-flores na mesa com o marcador da Automa na posição inicial 0.</div>
+                        </li>
+                    </ul>
+                </details>
+
+                <button class="btn-start-game" onclick="startGame()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:24px; height:24px;"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    <span data-i18n="btn_start_match">Começar Partida no Diário de Campo</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- ==================== GAME VIEW ==================== -->
+        <div id="view-game" class="hidden">
+
+            <!-- Top Status Ribbon -->
+            <div class="status-bar">
+                <div class="round-pill">
+                    <span class="round-badge" id="hud-round">RODADA 1</span>
+                    <span class="turn-counter" id="hud-turn">Turno 1 / 8</span>
+                </div>
+                <div class="score-ticker">
+                    <span class="ticker-item eggs" title="Ovos Coletados pela Automa">🥚 <span id="hud-eggs">0</span></span>
+                    <span class="ticker-item cards" title="Aves Viradas para Baixo (Pontos de Fim de Jogo)">🎴 <span id="hud-facedown">0</span></span>
+                    <span class="ticker-item cubes" title="Cubos de Ação no Objetivo da Rodada Atual">⬛ <span id="hud-cubes">0</span></span>
+                    <span class="ticker-item hbird" id="hud-hbird-wrap" style="display:none;" title="Pontos de Beija-flores da Automa">🌺 <span id="hud-hbird-pts">-15</span> VP</span>
+                    <span class="ticker-item nectar" id="hud-nectar-wrap" style="display:none;" title="Néctar Gasto Total da Automa">🌺 <span id="hud-nectar">0</span></span>
+                    <span class="ticker-item hoard" id="hud-hoard-wrap" style="display:none;" title="Fichas de Reserva/Acúmulo da Automa">🪙 <span id="hud-hoard">0</span></span>
+                    <span class="ticker-item" id="hud-automubon-badge" style="display:none; background:#5a3622; border-color:#8b5235; color:#fff;" title="Sociedade Automubon Ativa">🏛️ Automubon</span>
+                </div>
+                <button class="btn-undo" onclick="undoLastTurn()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px; height:16px;"><path d="M3 7v6h6M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13"/></svg>
+                    <span data-i18n="btn_undo">Desfazer</span>
+                </button>
+            </div>
+
+            <!-- Two Column Layout -->
+            <div class="game-layout">
+
+                <!-- Left Column: Native Card & Feeder Assistant -->
+                <div class="card-column">
+                    
+
+                    <!-- Native Diegetic HTML/CSS Card Component -->
+                    <div id="native-card-container">
+                        <!-- Rendered dynamically by renderCurrentNativeCard() -->
+                    </div>
+
+                    <!-- Americas Hummingbird Garden Stage Box (Directly below Automa Card) -->
+                    <div class="hummingbird-stage-box" id="hummingbird-stage-box" style="display:none;">
+                        <div class="hbird-box-header">
+                            <div class="hbird-box-title">
+                                <span class="hbird-icon-badge">🌺</span>
+                                <div>
+                                    <span class="hbird-title-main" data-i18n="hbird_stage_title">Jardim de Beija-flores • Expansão Américas</span>
+                                    <span class="hbird-card-sub" id="hbird-card-code">Carta 01 • Rodada 1</span>
+                                </div>
+                            </div>
+                            <span class="badge-pill" id="hbird-diff-pill" style="background:rgba(212,67,122,0.25); color:#ff94be; border:1px solid rgba(212,67,122,0.5);">Américas</span>
+                        </div>
+
+                        <!-- Card Body (Rain or Movement) -->
+                        <div class="hbird-card-body" id="hbird-card-body">
+                            <!-- Rendered dynamically -->
+                        </div>
+
+                        <!-- 5-Tracks Companion -->
+                        <div class="hbird-tracks-companion">
+                            <div class="hbird-tracks-head">
+                                <span class="hbird-tracks-title" data-i18n="hbird_tracks_title">📊 Trilhas de Beija-flores da Automa (Clique no clã movido):</span>
+                                <span class="hbird-total-pts-badge" id="hbird-total-pts">Total: -15 VP</span>
+                            </div>
+                            <div class="hbird-columns-grid" id="hbird-columns-grid">
+                                <!-- Populated dynamically by buildHummingbirdTrack() -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Next Turn Button -->
+                    <button class="btn-next-turn" onclick="nextTurn()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:24px; height:24px;"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                        <span data-i18n="btn_next_turn">Confirmar Ação & Próximo Turno</span>
+                    </button>
+
+                    <!-- Physical Feeder Priority Assistant -->
+                    <div class="feeder-assistant-card">
+                        <div class="feeder-card-title">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px; height:18px;"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h.01M15 9h.01M9 15h.01M15 15h.01"/></svg>
+                            <span data-i18n="feeder_prio_title">Comedouro Físico • Ordem de Remoção</span>
+                        </div>
+                        <div class="feeder-rule-box" data-i18n="feeder_rule_text">
+                            A Automa retira <strong>TODOS os dados</strong> do 1º tipo de comida disponível no seu comedouro físico. Se todos os dados disponíveis forem iguais (ou o comedouro estiver vazio), jogue todos os 5 dados novamente antes de retirar.
+                        </div>
+                        <div class="priority-strip" id="feeder-priority-strip">
+                            <!-- Populated by JS: Invertebrate, Seed, Fish, Fruit, Rodent, Nectar -->
+                        </div>
+                        <div class="feeder-quick-log">
+                            <span data-i18n="quick_log_prompt">Clique na comida retirada para registrar no diário:</span>
+                            <button class="die-food-btn" onclick="logFoodRemoval('invertebrate')">🪱 Invertebrado</button>
+                            <button class="die-food-btn" onclick="logFoodRemoval('seed')">🌾 Semente</button>
+                            <button class="die-food-btn" onclick="logFoodRemoval('fish')">🐟 Peixe</button>
+                            <button class="die-food-btn" onclick="logFoodRemoval('fruit')">🍒 Fruta</button>
+                            <button class="die-food-btn" onclick="logFoodRemoval('rodent')">🐭 Roedor</button>
+                            <button class="die-food-btn" id="btn-food-nectar" style="display:none;" onclick="logFoodRemoval('nectar')">🌺 Néctar</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Secondary Panels (Duet, Nectar, Hummingbird, Automarazzi, Log) -->
+                <div class="panels-column">
+                    
+                    <!-- Duet Map Panel (Asia) -->
+                    <div class="side-panel hidden" id="panel-duet">
+                        <div class="panel-title">
+                            <span>☯️</span> <span data-i18n="duet_map_title">Mapa de Dueto da Ásia (Interativo)</span>
+                        </div>
+                        <div class="duet-map-svg-wrap">
+                            <svg id="duet-map-svg" viewBox="0 0 620 440" style="max-width:100%; height:auto;"></svg>
+                        </div>
+                        <div class="duet-hud-stats">
+                            <div>Automa (Maior Grupo): <span id="duet-automa-cluster" style="color:var(--accent);">0</span></div>
+                            <div>Você (Maior Grupo): <span id="duet-player-cluster" style="color:#85caea;">0</span></div>
+                        </div>
+                    </div>
+
+                    <!-- Oceania Nectar Panel -->
+                    <div class="side-panel hidden" id="panel-nectar">
+                        <div class="panel-title">
+                            <span>🌺</span> <span data-i18n="nectar_title">Néctar Gasto da Automa (Oceania)</span>
+                        </div>
+                        <div class="nectar-grid">
+                            <div class="nectar-box forest">
+                                <div class="nectar-label">🌲 Floresta</div>
+                                <div class="nectar-count" id="nectar-forest-count">0</div>
+                                <div style="display:flex; justify-content:center; gap:4px;">
+                                    <button class="nav-btn" style="padding:2px 8px;" onclick="adjustNectar('forest', -1)">-</button>
+                                    <button class="nav-btn" style="padding:2px 8px;" onclick="adjustNectar('forest', 1)">+</button>
+                                </div>
+                            </div>
+                            <div class="nectar-box grassland">
+                                <div class="nectar-label">🌾 Campo</div>
+                                <div class="nectar-count" id="nectar-grassland-count">0</div>
+                                <div style="display:flex; justify-content:center; gap:4px;">
+                                    <button class="nav-btn" style="padding:2px 8px;" onclick="adjustNectar('grassland', -1)">-</button>
+                                    <button class="nav-btn" style="padding:2px 8px;" onclick="adjustNectar('grassland', 1)">+</button>
+                                </div>
+                            </div>
+                            <div class="nectar-box wetland">
+                                <div class="nectar-label">🌊 Pantanal</div>
+                                <div class="nectar-count" id="nectar-wetland-count">0</div>
+                                <div style="display:flex; justify-content:center; gap:4px;">
+                                    <button class="nav-btn" style="padding:2px 8px;" onclick="adjustNectar('wetland', -1)">-</button>
+                                    <button class="nav-btn" style="padding:2px 8px;" onclick="adjustNectar('wetland', 1)">+</button>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="btn-nectar-adj" onclick="executeNectarEndRoundAdjustment()" data-i18n="btn_adjust_nectar">
+                            Ajustar Fim de Rodada (Adicionar néctar até 2x a rodada)
+                        </button>
+                    </div>
+
+
+
+                    <!-- Automarazzi Panel -->
+                    <div class="side-panel hidden" id="panel-razzi">
+                        <div class="panel-title">
+                            <span>📸</span> <span data-i18n="razzi_title">Painel de Equipe (Automarazzi)</span>
+                        </div>
+                        <div style="font-size:0.88rem; color:var(--text-dim); line-height:1.45;">
+                            Jogadores jogam de cartas abertas. A Automarazzi joga sempre por último. Troquem recursos descartando 1 comida para doar cartas, ou remova 2 ovos de um parceiro (1 para você, 1 para a Automarazzi).
+                        </div>
+                    </div>
+
+                    <!-- Hoard / Cache Quick Controls -->
+                    <div class="side-panel" id="panel-hoard-controls" style="display:none;">
+                        <div class="panel-title">
+                            <span>🪙</span> <span data-i18n="ben_panel_title">Reserva / Acúmulo de Fichas</span>
+                        </div>
+                        <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+                            <span>Total de Fichas: <strong id="val-hoard-count" style="color:var(--accent); font-size:1.1rem;">0</strong></span>
+                            <div style="display:flex; gap:6px;">
+                                <button class="nav-btn" onclick="addHoardTokens(1)">+1 Grátis</button>
+                                <button class="nav-btn" onclick="addHoardTokens(2)">+2 Recurso</button>
+                                <button class="nav-btn" onclick="addHoardTokens(-1)">-1</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Field Guide Journal (Action Log) -->
+                    <div class="side-panel">
+                        <div class="panel-title">
+                            <span>📖</span> <span data-i18n="log_title">Diário de Campo (Histórico de Turnos)</span>
+                        </div>
+                        <div class="log-box" id="action-log">
+                            <div class="log-entry">O diário de campo está aberto para registro das observações ornitológicas.</div>
+                        </div>
+                    </div>
+
+                    <!-- Final Score Button -->
+                    <button class="btn-start-game" style="margin-top:0; background:linear-gradient(135deg, #2b4530, #182b1d);" onclick="openScoreModal()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px; height:20px;"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                        <span data-i18n="btn_score_calc">Calcular Pontuação Final da Partida</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== SCORE MODAL ==================== -->
+        <div class="modal-overlay hidden" id="modal-score">
+            <div class="modal-window">
+                <div class="modal-head">
+                    <h3 class="modal-title" data-i18n="score_modal_title">Calculadora de Pontuação Final</h3>
+                    <button class="modal-close" onclick="closeScoreModal()">&times;</button>
+                </div>
+                <div class="winner-banner" id="score-winner-banner">Preencha os pontos para conferir o resultado.</div>
+                <table class="score-table">
+                    <thead>
+                        <tr>
+                            <th data-i18n="score_col_category">Categoria</th>
+                            <th data-i18n="score_col_player">Você</th>
+                            <th data-i18n="score_col_automa">Automa</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Aves na Mesa (Pontos Impressos)</td>
+                            <td><input type="number" class="score-input" id="sc-p-birds" value="0" oninput="calcTotalScore()"></td>
+                            <td><input type="number" class="score-input" id="sc-a-birds" value="0" oninput="calcTotalScore()"></td>
+                        </tr>
+                        <tr>
+                            <td>Cartas Bônus</td>
+                            <td><input type="number" class="score-input" id="sc-p-bonus" value="0" oninput="calcTotalScore()"></td>
+                            <td><span style="color:var(--text-dim); font-size:0.85rem;">(Critério incluso em aves)</span></td>
+                        </tr>
+                        <tr>
+                            <td>Objetivos de Fim de Rodada</td>
+                            <td><input type="number" class="score-input" id="sc-p-goals" value="0" oninput="calcTotalScore()"></td>
+                            <td><input type="number" class="score-input" id="sc-a-goals" value="0" oninput="calcTotalScore()"></td>
+                        </tr>
+                        <tr>
+                            <td>Ovos Coletados (1 VP cada)</td>
+                            <td><input type="number" class="score-input" id="sc-p-eggs" value="0" oninput="calcTotalScore()"></td>
+                            <td><span id="sc-a-eggs-val" style="font-weight:700; color:var(--accent);">0</span></td>
+                        </tr>
+                        <tr>
+                            <td>Comida Armazenada (Cache)</td>
+                            <td><input type="number" class="score-input" id="sc-p-cache" value="0" oninput="calcTotalScore()"></td>
+                            <td><span id="sc-a-hoard-val" style="font-weight:700; color:var(--accent);">0</span></td>
+                        </tr>
+                        <tr>
+                            <td>Cartas Enfiadas (Tucked Cards)</td>
+                            <td><input type="number" class="score-input" id="sc-p-tucked" value="0" oninput="calcTotalScore()"></td>
+                            <td><span style="color:var(--text-dim);">-</span></td>
+                        </tr>
+                        <tr>
+                            <td>Aves Viradas para Baixo da Automa (<span id="lbl-facedown-rate">4</span> VP cada)</td>
+                            <td><span style="color:var(--text-dim);">-</span></td>
+                            <td><span id="sc-a-facedown-val" style="font-weight:700; color:var(--accent);">0</span></td>
+                        </tr>
+                        <tr id="row-sc-nectar" style="display:none;">
+                            <td>Maiorias de Néctar (Oceania)</td>
+                            <td><input type="number" class="score-input" id="sc-p-nectar" value="0" oninput="calcTotalScore()"></td>
+                            <td><input type="number" class="score-input" id="sc-a-nectar" value="0" oninput="calcTotalScore()"></td>
+                        </tr>
+                        <tr id="row-sc-duet" style="display:none;">
+                            <td>Maior Grupo Contíguo de Dueto (Ásia)</td>
+                            <td><input type="number" class="score-input" id="sc-p-duet" value="0" oninput="calcTotalScore()"></td>
+                            <td><span id="sc-a-duet-val" style="font-weight:700; color:var(--accent);">0</span></td>
+                        </tr>
+                        <tr id="row-sc-hbird" style="display:none;">
+                            <td>Jardim de Beija-flores (Américas)</td>
+                            <td><input type="number" class="score-input" id="sc-p-hbird" value="0" oninput="calcTotalScore()"></td>
+                            <td><span id="sc-a-hbird-val" style="font-weight:700; color:var(--accent);">0</span></td>
+                        </tr>
+                    </tbody>
+                    <tfoot>
+                        <tr style="font-size:1.15rem; font-weight:800; border-top:2px solid var(--accent);">
+                            <td>PONTUAÇÃO TOTAL</td>
+                            <td><span id="sc-p-total" style="color:#85caea;">0</span></td>
+                            <td><span id="sc-a-total" style="color:var(--accent);">0</span></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+
+        <!-- ==================== HELP MODAL ==================== -->
+        <div class="modal-overlay hidden" id="modal-help">
+            <div class="modal-window">
+                <div class="modal-head">
+                    <h3 class="modal-title" data-i18n="help_modal_title">Regras da Automa & Guia de Consulta</h3>
+                    <button class="modal-close" onclick="closeHelpModal()">&times;</button>
+                </div>
+                <div style="font-size:0.92rem; line-height:1.55; display:flex; flex-direction:column; gap:14px;">
+                    <div>
+                        <strong style="color:var(--accent);">🦅 Como a Automa Joga:</strong>
+                        A Automa não possui tabuleiro pessoal nem recursos em mão. Ela executa apenas a linha correspondente à rodada atual da carta revelada. Aves compradas por ela vão viradas para baixo (valendo pontos no fim do jogo).
+                    </div>
+                    <div>
+                        <strong style="color:var(--accent);">🏛️ Sociedade Automubon (Expert):</strong>
+                        Carta especial que adiciona competição feroz pelos objetivos de fim de rodada, colocando cubos em praticamente todas as ações.
+                    </div>
+                    <div>
+                        <strong style="color:var(--accent);">🦤 RAOUtoma (Oceania):</strong>
+                        Carta de ação acelerada da Oceania que dispara postura de ovos maciça em rodadas avançadas e manipulação de néctar.
+                    </div>
+                    <div>
+                        <strong style="color:var(--accent);">🎲 Torre de Dados / Comedouro:</strong>
+                        O jogador rola os dados reais na mesa. O bot orienta a prioridade de remoção (Invertebrado ➔ Semente ➔ Peixe ➔ Fruta ➔ Roedor ➔ Néctar). A Automa sempre remove todos os dados disponíveis da primeira comida da fila.
+                    </div>
+                    <div>
+                        <strong style="color:var(--accent);">🌸 Poderes Rosas:</strong>
+                        Quando o selo rosa é exibido na carta, você pode ativar os poderes rosas de suas aves no seu tabuleiro antes de concluir o turno.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Page Footer -->
+    <footer class="container" style="margin-top:36px;">
+        <div class="credits">
+            <img src="../assets/art/wingspan.webp" alt="Wingspan Thumb" style="width:48px; height:48px; border-radius:8px; object-fit:cover;">
+            <div class="credits-text">
+                <p><strong>Wingspan</strong> criado por <strong>Elizabeth Hargrave</strong>, publicado por <strong>Stonemaier Games</strong>.</p>
+                <p>Regras do Automa criadas por <strong>David Studley</strong> e <strong>Automa Factory</strong>.</p>
+                <p>Adaptação diegética e digital independente desenvolvida para a plataforma <strong>Boardbots</strong>.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Theme Kit Scripts -->
+    <script src="../assets/theme-kit.js"></script>
+
+    <!-- Companion Engine Logic -->
+    <script>
+/* ==================== CARD DATA STRUCTURES ==================== */
+const AUTOMA_CARDS_BASE = [
+    {
+        id: "base_04",
+        rounds: {
+            1: { action: "draw_cards", eggs: 0, cube: "+", pink: false, desc_pt: "Comprar Cartas", desc_en: "Draw Cards" },
+            2: { action: "lay_eggs", eggs: 2, cube: "-", pink: false, desc_pt: "Botar 2 Ovos", desc_en: "Lay 2 Eggs" },
+            3: { action: "play_bird", eggs: 0, cube: "+", pink: false, desc_pt: "Baixar Ave", desc_en: "Play a Bird" },
+            4: { action: "draw_cards", eggs: 0, cube: "+", pink: false, desc_pt: "Comprar Cartas", desc_en: "Draw Cards" }
+        },
+        nectar: { forest: 1, grassland: -1, wetland: 1 }
+    },
+    {
+        id: "base_05",
+        removeAfter: 2,
+        rounds: {
+            1: { action: "draw_cards", eggs: 0, cube: "+", pink: false, desc_pt: "Comprar Cartas", desc_en: "Draw Cards" },
+            2: { action: "lay_eggs", eggs: 2, cube: "-", pink: false, desc_pt: "Botar 2 Ovos", desc_en: "Lay 2 Eggs" },
+            3: { action: "play_bird", eggs: 0, cube: "-", pink: false, desc_pt: "Baixar Ave", desc_en: "Play a Bird" },
+            4: { action: "draw_cards", eggs: 0, cube: "-", pink: false, desc_pt: "Comprar Cartas", desc_en: "Draw Cards" }
+        },
+        nectar: { forest: 0, grassland: 1, wetland: -1 }
+    },
+    {
+        id: "base_06",
+        rounds: {
+            1: { action: "play_bird", eggs: 0, cube: null, pink: false, desc_pt: "Baixar Ave", desc_en: "Play a Bird" },
+            2: { action: "draw_cards", eggs: 0, cube: null, pink: false, desc_pt: "Comprar Cartas", desc_en: "Draw Cards" },
+            3: { action: "gain_food", eggs: 0, cube: null, pink: true, desc_pt: "Pegar Comida", desc_en: "Gain Food" },
+            4: { action: "play_bird", eggs: 0, cube: null, pink: false, desc_pt: "Baixar Ave", desc_en: "Play a Bird" }
+        },
+        nectar: { forest: -1, grassland: 1, wetland: 0 }
+    },
+    {
+        id: "base_07",
+        rounds: {
+            1: { action: "draw_cards", eggs: 0, cube: "-", pink: false, desc_pt: "Comprar Cartas", desc_en: "Draw Cards" },
+            2: { action: "play_bird", eggs: 0, cube: "+", pink: false, desc_pt: "Baixar Ave", desc_en: "Play a Bird" },
+            3: { action: "gain_food", eggs: 0, cube: null, pink: true, desc_pt: "Pegar Comida", desc_en: "Gain Food" },
+            4: { action: "play_bird", eggs: 0, cube: "+", pink: false, desc_pt: "Baixar Ave", desc_en: "Play a Bird" }
+        },
+        nectar: { forest: 1, grassland: 0, wetland: -1 }
+    },
+    {
+        id: "base_10",
+        rounds: {
+            1: { action: "play_bird", eggs: 0, cube: null, pink: false, desc_pt: "Baixar Ave", desc_en: "Play a Bird" },
+            2: { action: "gain_food", eggs: 0, cube: null, pink: true, desc_pt: "Pegar Comida", desc_en: "Gain Food" },
+            3: { action: "draw_cards", eggs: 0, cube: null, pink: false, desc_pt: "Comprar Cartas", desc_en: "Draw Cards" },
+            4: { action: "play_bird", eggs: 0, cube: "+", pink: false, desc_pt: "Baixar Ave", desc_en: "Play a Bird" }
+        },
+        nectar: { forest: -1, grassland: -1, wetland: 0 }
+    },
+    {
+        id: "base_11",
+        rounds: {
+            1: { action: "gain_food", eggs: 0, cube: null, pink: true, desc_pt: "Pegar Comida", desc_en: "Gain Food" },
+            2: { action: "draw_cards", eggs: 0, cube: null, pink: false, desc_pt: "Comprar Cartas", desc_en: "Draw Cards" },
+            3: { action: "lay_eggs", eggs: 2, cube: "-", pink: false, desc_pt: "Botar 2 Ovos", desc_en: "Lay 2 Eggs" },
+            4: { action: "play_bird", eggs: 0, cube: "+", pink: false, desc_pt: "Baixar Ave", desc_en: "Play a Bird" }
+        },
+        nectar: { forest: 0, grassland: -1, wetland: 1 }
+    },
+    {
+        id: "base_13",
+        rounds: {
+            1: { action: "play_bird", eggs: 0, cube: "+", pink: false, desc_pt: "Baixar Ave", desc_en: "Play a Bird" },
+            2: { action: "lay_eggs", eggs: 1, cube: null, pink: false, desc_pt: "Botar 1 Ovo", desc_en: "Lay 1 Egg" },
+            3: { action: "gain_food", eggs: 0, cube: null, pink: true, desc_pt: "Pegar Comida", desc_en: "Gain Food" },
+            4: { action: "draw_cards", eggs: 0, cube: "+", pink: false, desc_pt: "Comprar Cartas", desc_en: "Draw Cards" }
+        },
+        nectar: { forest: 1, grassland: 1, wetland: 0 }
+    },
+    {
+        id: "base_15",
+        rounds: {
+            1: { action: "gain_food", eggs: 0, cube: null, pink: true, desc_pt: "Pegar Comida", desc_en: "Gain Food" },
+            2: { action: "play_bird", eggs: 0, cube: "+", pink: false, desc_pt: "Baixar Ave", desc_en: "Play a Bird" },
+            3: { action: "lay_eggs", eggs: 3, cube: null, pink: false, desc_pt: "Botar 3 Ovos", desc_en: "Lay 3 Eggs" },
+            4: { action: "draw_cards", eggs: 0, cube: "+", pink: false, desc_pt: "Comprar Cartas", desc_en: "Draw Cards" }
+        },
+        nectar: { forest: -1, grassland: 0, wetland: 1 }
+    },
+    {
+        id: "base_16",
+        removeAfter: 1,
+        rounds: {
+            1: { action: "draw_cards", eggs: 0, cube: "-", pink: false, desc_pt: "Comprar Cartas", desc_en: "Draw Cards" },
+            2: { action: "gain_food", eggs: 0, cube: null, pink: true, desc_pt: "Pegar Comida", desc_en: "Gain Food" },
+            3: { action: "draw_cards", eggs: 0, cube: null, pink: false, desc_pt: "Comprar Cartas", desc_en: "Draw Cards" },
+            4: { action: "play_bird", eggs: 0, cube: "+", pink: false, desc_pt: "Baixar Ave", desc_en: "Play a Bird" }
+        },
+        nectar: { forest: -1, grassland: -1, wetland: 0 }
+    },
+    {
+        id: "base_17",
+        rounds: {
+            1: { action: "draw_cards", eggs: 0, cube: "-", pink: false, desc_pt: "Comprar Cartas", desc_en: "Draw Cards" },
+            2: { action: "gain_food", eggs: 0, cube: null, pink: true, desc_pt: "Pegar Comida", desc_en: "Gain Food" },
+            3: { action: "play_bird", eggs: 0, cube: "+", pink: false, desc_pt: "Baixar Ave", desc_en: "Play a Bird" },
+            4: { action: "play_bird", eggs: 0, cube: null, pink: false, desc_pt: "Baixar Ave", desc_en: "Play a Bird" }
+        },
+        nectar: { forest: 1, grassland: 0, wetland: -1 }
+    },
+    {
+        id: "base_12",
+        isAutomubon: true,
+        rounds: {
+            1: { action: "play_bird", eggs: 0, cube: "+", pink: false, desc_pt: "Baixar Ave", desc_en: "Play a Bird" },
+            2: { action: "gain_food", eggs: 0, cube: "+", pink: false, desc_pt: "Pegar Comida", desc_en: "Gain Food" },
+            3: { action: "play_bird", eggs: 0, cube: "+", pink: false, desc_pt: "Baixar Ave", desc_en: "Play a Bird" },
+            4: { action: "play_bird", eggs: 0, cube: "+", pink: false, desc_pt: "Baixar Ave", desc_en: "Play a Bird" }
+        },
+        nectar: { forest: 1, grassland: 1, wetland: 1 }
+    }
+];
+
+const RAOUTOMA_CARD = {
+    id: "oceania_10",
+    isRAOUtoma: true,
+    rounds: {
+        1: { action: "play_bird", eggs: 0, cube: "+", pink: false, desc_pt: "Baixar Ave", desc_en: "Play a Bird" },
+        2: { action: "gain_food", eggs: 0, cube: "+", pink: false, desc_pt: "Pegar Comida", desc_en: "Gain Food" },
+        3: { action: "lay_eggs", eggs: 2, cube: "+", pink: false, desc_pt: "Botar 2 Ovos", desc_en: "Lay 2 Eggs" },
+        4: { action: "lay_eggs", eggs: 3, cube: "+", pink: false, desc_pt: "Botar 3 Ovos", desc_en: "Lay 3 Eggs" }
+    },
+    nectar: { forest: 1, grassland: -1, wetland: 1 }
+};
+
+const AUTOMA_CARDS_ASIA = [
+    {
+        id: "asia_01",
+        rounds: {
+            1: { action: "draw_cards", eggs: 0, cube: "+", pink: false, desc_pt: "Comprar Cartas", desc_en: "Draw Cards" },
+            2: { action: "lay_eggs", eggs: 2, cube: "-", pink: false, desc_pt: "Botar 2 Ovos", desc_en: "Lay 2 Eggs" },
+            3: { action: "play_bird", eggs: 0, cube: "+", pink: false, desc_pt: "Baixar Ave", desc_en: "Play a Bird" },
+            4: { action: "draw_cards", eggs: 0, cube: "+", pink: false, desc_pt: "Comprar Cartas", desc_en: "Draw Cards" }
+        },
+        duet: { corner: "NW", type: "nest", habitat: "forest" }
+    },
+    {
+        id: "asia_02",
+        removeAfter: 2,
+        rounds: {
+            1: { action: "draw_cards", eggs: 0, cube: "+", pink: false, desc_pt: "Comprar Cartas", desc_en: "Draw Cards" },
+            2: { action: "lay_eggs", eggs: 2, cube: "-", pink: false, desc_pt: "Botar 2 Ovos", desc_en: "Lay 2 Eggs" },
+            3: { action: "play_bird", eggs: 0, cube: "-", pink: false, desc_pt: "Baixar Ave", desc_en: "Play a Bird" },
+            4: { action: "draw_cards", eggs: 0, cube: "-", pink: false, desc_pt: "Comprar Cartas", desc_en: "Draw Cards" }
+        },
+        duet: { corner: "NE", type: "food", habitat: "grassland" }
+    },
+    {
+        id: "asia_03",
+        rounds: {
+            1: { action: "play_bird", eggs: 0, cube: null, pink: false, desc_pt: "Baixar Ave", desc_en: "Play a Bird" },
+            2: { action: "draw_cards", eggs: 0, cube: null, pink: false, desc_pt: "Comprar Cartas", desc_en: "Draw Cards" },
+            3: { action: "gain_food", eggs: 0, cube: null, pink: true, desc_pt: "Pegar Comida", desc_en: "Gain Food" },
+            4: { action: "play_bird", eggs: 0, cube: null, pink: false, desc_pt: "Baixar Ave", desc_en: "Play a Bird" }
+        },
+        duet: { corner: "SW", type: "other", habitat: "wetland" }
+    },
+    {
+        id: "asia_04",
+        rounds: {
+            1: { action: "draw_cards", eggs: 0, cube: "-", pink: false, desc_pt: "Comprar Cartas", desc_en: "Draw Cards" },
+            2: { action: "play_bird", eggs: 0, cube: "+", pink: false, desc_pt: "Baixar Ave", desc_en: "Play a Bird" },
+            3: { action: "gain_food", eggs: 0, cube: null, pink: true, desc_pt: "Pegar Comida", desc_en: "Gain Food" },
+            4: { action: "play_bird", eggs: 0, cube: "+", pink: false, desc_pt: "Baixar Ave", desc_en: "Play a Bird" }
+        },
+        duet: { corner: "SE", type: "nest", habitat: "forest" }
+    },
+    {
+        id: "asia_05",
+        rounds: {
+            1: { action: "play_bird", eggs: 0, cube: null, pink: false, desc_pt: "Baixar Ave", desc_en: "Play a Bird" },
+            2: { action: "gain_food", eggs: 0, cube: null, pink: true, desc_pt: "Pegar Comida", desc_en: "Gain Food" },
+            3: { action: "draw_cards", eggs: 0, cube: null, pink: false, desc_pt: "Comprar Cartas", desc_en: "Draw Cards" },
+            4: { action: "play_bird", eggs: 0, cube: "+", pink: false, desc_pt: "Baixar Ave", desc_en: "Play a Bird" }
+        },
+        duet: { corner: "NW", type: "food", habitat: "grassland" }
+    },
+    {
+        id: "asia_07",
+        rounds: {
+            1: { action: "gain_food", eggs: 0, cube: null, pink: true, desc_pt: "Pegar Comida", desc_en: "Gain Food" },
+            2: { action: "draw_cards", eggs: 0, cube: null, pink: false, desc_pt: "Comprar Cartas", desc_en: "Draw Cards" },
+            3: { action: "lay_eggs", eggs: 2, cube: "-", pink: false, desc_pt: "Botar 2 Ovos", desc_en: "Lay 2 Eggs" },
+            4: { action: "play_bird", eggs: 0, cube: "+", pink: false, desc_pt: "Baixar Ave", desc_en: "Play a Bird" }
+        },
+        duet: { corner: "NE", type: "other", habitat: "wetland" }
+    },
+    {
+        id: "asia_12",
+        rounds: {
+            1: { action: "play_bird", eggs: 0, cube: "+", pink: false, desc_pt: "Baixar Ave", desc_en: "Play a Bird" },
+            2: { action: "lay_eggs", eggs: 1, cube: null, pink: false, desc_pt: "Botar 1 Ovo", desc_en: "Lay 1 Egg" },
+            3: { action: "gain_food", eggs: 0, cube: null, pink: true, desc_pt: "Pegar Comida", desc_en: "Gain Food" },
+            4: { action: "draw_cards", eggs: 0, cube: "+", pink: false, desc_pt: "Comprar Cartas", desc_en: "Draw Cards" }
+        },
+        duet: { corner: "SW", type: "nest", habitat: "forest" }
+    },
+    {
+        id: "asia_13",
+        rounds: {
+            1: { action: "gain_food", eggs: 0, cube: null, pink: true, desc_pt: "Pegar Comida", desc_en: "Gain Food" },
+            2: { action: "play_bird", eggs: 0, cube: "+", pink: false, desc_pt: "Baixar Ave", desc_en: "Play a Bird" },
+            3: { action: "lay_eggs", eggs: 3, cube: null, pink: false, desc_pt: "Botar 3 Ovos", desc_en: "Lay 3 Eggs" },
+            4: { action: "draw_cards", eggs: 0, cube: "+", pink: false, desc_pt: "Comprar Cartas", desc_en: "Draw Cards" }
+        },
+        duet: { corner: "SE", type: "food", habitat: "grassland" }
+    },
+    {
+        id: "asia_16",
+        removeAfter: 1,
+        rounds: {
+            1: { action: "draw_cards", eggs: 0, cube: "-", pink: false, desc_pt: "Comprar Cartas", desc_en: "Draw Cards" },
+            2: { action: "gain_food", eggs: 0, cube: null, pink: true, desc_pt: "Pegar Comida", desc_en: "Gain Food" },
+            3: { action: "draw_cards", eggs: 0, cube: null, pink: false, desc_pt: "Comprar Cartas", desc_en: "Draw Cards" },
+            4: { action: "play_bird", eggs: 0, cube: "+", pink: false, desc_pt: "Baixar Ave", desc_en: "Play a Bird" }
+        },
+        duet: { corner: "NW", type: "nest", habitat: "wetland" }
+    },
+    {
+        id: "asia_19",
+        rounds: {
+            1: { action: "lay_eggs", eggs: 1, cube: null, pink: false, desc_pt: "Botar 1 Ovo", desc_en: "Lay 1 Egg" },
+            2: { action: "play_bird", eggs: 0, cube: "+", pink: false, desc_pt: "Baixar Ave", desc_en: "Play a Bird" },
+            3: { action: "gain_food", eggs: 0, cube: null, pink: true, desc_pt: "Pegar Comida", desc_en: "Gain Food" },
+            4: { action: "play_bird", eggs: 0, cube: "+", pink: false, desc_pt: "Baixar Ave", desc_en: "Play a Bird" }
+        },
+        duet: { corner: "NE", type: "food", habitat: "forest" }
+    },
+    {
+        id: "asia_21",
+        isAlliance: true,
+        rounds: {
+            1: { action: "play_bird", eggs: 0, cube: "+", pink: false, desc_pt: "Baixar Ave", desc_en: "Play a Bird" },
+            2: { action: "play_bird", eggs: 0, cube: "+", pink: false, desc_pt: "Baixar Ave", desc_en: "Play a Bird" },
+            3: { action: "play_bird", eggs: 0, cube: "+", pink: false, desc_pt: "Baixar Ave", desc_en: "Play a Bird" },
+            4: { action: "play_bird", eggs: 0, cube: "+", pink: false, desc_pt: "Baixar Ave", desc_en: "Play a Bird" }
+        },
+        duet: { corner: "SE", type: "nest", habitat: "forest" }
+    }
+];
+
+/* ==================== HUMMINGBIRD DECK & 5 TRACKS (AMERICAS EXPANSION) ==================== */
+const HBIRD_POINTS_SCALE = [-3, 0, 1, 2, 3, 4, 6, 8, 10];
+const HBIRD_STEP_NAMES = ['START (-3)', '0 VP', '1 VP', '2 VP', '3 VP', '4 VP', '6 VP', '8 VP', '10 VP'];
+
+const HBIRD_GROUPS = {
+    bees: {
+        id: 'bees',
+        name_pt: 'Abelhas & Gemas',
+        name_en: 'Bees & Mountaingems',
+        icon: '🐝',
+        color: '#eab308',
+        bonus: [4, 8] // 3 VP and 10 VP
+    },
+    brilliants: {
+        id: 'brilliants',
+        name_pt: 'Brilhantes & Topetes',
+        name_en: 'Brilliants & Coquettes',
+        icon: '🌸',
+        color: '#ec4899',
+        bonus: [2, 6] // 1 VP and 6 VP
+    },
+    emeralds: {
+        id: 'emeralds',
+        name_pt: 'Esmeraldas',
+        name_en: 'Emeralds',
+        icon: '🟩',
+        color: '#10b981',
+        bonus: [4, 6] // 3 VP and 6 VP
+    },
+    mangoes: {
+        id: 'mangoes',
+        name_pt: 'Mangos',
+        name_en: 'Mangoes',
+        icon: '🥭',
+        color: '#f97316',
+        bonus: [3, 7] // 2 VP and 8 VP
+    },
+    topazes: {
+        id: 'topazes',
+        name_pt: 'Topázios & Jacubins',
+        name_en: 'Topazes & Hermits',
+        icon: '💎',
+        color: '#06b6d4',
+        bonus: [4, 8] // 3 VP and 10 VP
+    }
+};
+
+const HBIRD_GARDEN_SLOTS = [
+    { num: 1, name_pt: 'Folhagens', name_en: 'Foliage', icon: '🌿' },
+    { num: 2, name_pt: 'Helicônia', name_en: 'Heliconia', icon: '🌺' },
+    { num: 3, name_pt: 'Estrelícia', name_en: 'Strelitzia', icon: '🦜' },
+    { num: 4, name_pt: 'Bromélia', name_en: 'Bromeliad', icon: '🪷' },
+    { num: 5, name_pt: 'Fúcsia', name_en: 'Fuchsia', icon: '🌸' }
+];
+
+const HUMMINGBIRD_CARDS = [
+    {
+        id: 1,
+        removeAfterRound: 1,
+        rounds: {
+            1: { from: 5, to: 1 }
+        }
+    },
+    {
+        id: 2,
+        removeAfterRound: 2,
+        rounds: {
+            1: { from: 5, to: 4 },
+            2: { from: 4, to: 3 }
+        }
+    },
+    {
+        id: 3,
+        removeAfterRound: 3,
+        rounds: {
+            1: { from: 1, to: 2 },
+            2: { from: 1, to: 3 },
+            3: { from: 1, to: 5 }
+        }
+    },
+    {
+        id: 4,
+        rounds: {
+            1: { from: 4, to: 1 },
+            2: { rain: true },
+            3: { from: 4, to: 5 },
+            4: { from: 2, to: 4 }
+        }
+    },
+    {
+        id: 5,
+        rounds: {
+            1: { rain: true },
+            2: { from: 2, to: 5 },
+            3: { rain: true },
+            4: { from: 5, to: 2 }
+        }
+    },
+    {
+        id: 6,
+        rounds: {
+            1: { from: 4, to: 3 },
+            2: { from: 2, to: 1 },
+            3: { from: 5, to: 1 },
+            4: { rain: true }
+        }
+    },
+    {
+        id: 7,
+        rounds: {
+            1: { from: 4, to: 2 },
+            2: { rain: true },
+            3: { from: 1, to: 4 },
+            4: { from: 4, to: 1 }
+        }
+    },
+    {
+        id: 8,
+        rounds: {
+            1: { rain: true },
+            2: { from: 2, to: 3 },
+            3: { from: 5, to: 3 },
+            4: { from: 3, to: 5 }
+        }
+    },
+    {
+        id: 9,
+        rounds: {
+            1: { from: 3, to: 4 },
+            2: { from: 3, to: 2 },
+            3: { from: 2, to: 1 },
+            4: { from: 5, to: 1 }
+        }
+    },
+    {
+        id: 10,
+        rounds: {
+            1: { rain: true },
+            2: { rain: true },
+            3: { rain: true },
+            4: { rain: true }
+        }
+    },
+    {
+        id: '9_eaglet',
+        isEaglet: true,
+        rounds: {
+            1: { rain: true },
+            2: { rain: true },
+            3: { rain: true },
+            4: { rain: true }
+        }
+    },
+    {
+        id: '10_eyed',
+        isEyed: true,
+        rounds: {
+            1: { from: 3, to: 5 },
+            2: { from: 2, to: 4 },
+            3: { from: 4, to: 2 },
+            4: { from: 1, to: 3 }
+        }
+    }
+];
+
+/* ==================== STATE ==================== */
+const STORAGE_KEY = "wingspan_bot_state_v2";
+
+let STATE = {
+    lang: 'pt',
+    mode: 'standard', // standard | duet | razzi
+    expansions: { base: true, ee: false, oe: false, asia: false, ae: false },
+    difficulty: 'eagle', // eaglet | eagle | eyed
+    benefitMode: 'cache', // none | cache | hoard
+    useAutomubon: false,
+    useRAOUtoma: true,
+    
+    // Lifecycle
+    round: 1,
+    turnInRound: 1,
+    gameStarted: false,
+    
+    // Automa Stats
+    eggs: 0,
+    faceDownCards: 0,
+    cubesOnCurrentGoal: 0,
+    nectar: { forest: 0, grassland: 0, wetland: 0 },
+    hbirdTracks: { bees: 0, brilliants: 0, emeralds: 0, mangoes: 0, topazes: 0 },
+    hoardTokens: 0,
+    
+    // Decks
+    activeDeck: [],
+    discardPile: [],
+    currentCard: null,
+    hbirdDeck: [],
+    hbirdDiscard: [],
+    currentHbirdCard: null,
+    
+    // Duet Map (30 spaces)
+    duetSpaces: {},
+    
+    // Undo History
+    history: []
+};
+
+/* ==================== PROCEDURAL AUDIO SYNTHESIZER ==================== */
+let audioCtx = null;
+let isAmbientPlaying = false;
+let ambientNodes = [];
+
+function initAudio() {
+    if (!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContext();
+    }
+    if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+}
+
+function playBirdChirp() {
+    initAudio();
+    if (!audioCtx) return;
+    try {
+        const now = audioCtx.currentTime;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(2200, now);
+        osc.frequency.exponentialRampToValueAtTime(3200, now + 0.08);
+        osc.frequency.exponentialRampToValueAtTime(2400, now + 0.16);
+        
+        gain.gain.setValueAtTime(0.01, now);
+        gain.gain.linearRampToValueAtTime(0.08, now + 0.04);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+        
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.2);
+    } catch(e) {}
+}
+
+function toggleAmbientSound() {
+    initAudio();
+    if (!audioCtx) return;
+    isAmbientPlaying = !isAmbientPlaying;
+    
+    const btn = document.getElementById('btn-ambient-toggle');
+    if (btn) btn.classList.toggle('active', isAmbientPlaying);
+    
+    if (isAmbientPlaying) {
+        try {
+            // Soft white noise buffer for gentle forest leaves/wind
+            const bufferSize = audioCtx.sampleRate * 2;
+            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                data[i] = Math.random() * 2 - 1;
+            }
+            
+            const noise = audioCtx.createBufferSource();
+            noise.buffer = buffer;
+            noise.loop = true;
+            
+            // Bandpass filter for soft wind
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = 'bandpass';
+            filter.frequency.value = 450;
+            filter.Q.value = 1.2;
+            
+            const gain = audioCtx.createGain();
+            gain.gain.setValueAtTime(0.02, audioCtx.currentTime);
+            
+            noise.connect(filter);
+            filter.connect(gain);
+            gain.connect(audioCtx.destination);
+            noise.start();
+            
+            ambientNodes = [noise, gain];
+            
+            // Periodic subtle chirps
+            window.ambientChirpTimer = setInterval(() => {
+                if (isAmbientPlaying && Math.random() > 0.45) {
+                    playBirdChirp();
+                }
+            }, 3500);
+        } catch(e) {}
+    } else {
+        if (window.ambientChirpTimer) clearInterval(window.ambientChirpTimer);
+        ambientNodes.forEach(node => {
+            try { node.stop ? node.stop() : node.disconnect(); } catch(e) {}
+        });
+        ambientNodes = [];
+    }
+}
+
+/* ==================== I18N DICTIONARY ==================== */
+const I18N = {
+    pt: {
+        hero_subtitle: "Diário de Campo & Companheiro Automa Oficial",
+        title_mode_select: "1. Escolha o Modo de Jogo Principal",
+        mode_std_title: "Solo Padrão",
+        mode_std_desc: "Partida solo clássica contra o baralho Automa através de 4 rodadas com contagem regressiva de turnos (8, 7, 6, 5) e disputa de objetivos.",
+        mode_duet_title: "Solo Dueto (Ásia)",
+        mode_duet_desc: "Confronto territorial no Mapa de Dueto da Ásia. A Automa navega por quadrantes e compete pelo maior grupo contíguo de fichas.",
+        mode_razzi_title: "Automarazzi",
+        mode_razzi_desc: "Variante cooperativa oficial da Oceania para 2 a 4 jogadores jogando abertamente e compartilhando recursos contra uma Automa rival.",
+        badge_classic: "Oficial",
+        badge_duet: "Dueto",
+        badge_coop: "Co-op 2–4p",
+        title_exp_select: "2. Expansões & Módulos Adicionais",
+        exp_base_name: "Jogo Base (Wingspan)",
+        exp_base_sub: "Baralho de 10 cartas oficiais, comedouro de 5 dados e esteira de objetivos",
+        opt_automubon_title: "Sociedade Automubon (Automubon Society)",
+        opt_automubon_desc: "Adiciona a carta oficial de nível perito (base_12) ao baralho. A Automa ganha cubos de objetivo em praticamente todas as ações (+1 cubo constante).",
+        impact_automubon: "⚡ Impacto na Dificuldade: Aumenta muito o desafio dos objetivos de fim de rodada.",
+        exp_ee_name: "Expansão Europa (EE)",
+        exp_ee_sub: "Objetivos de fim de rodada europeus e poderes cianos",
+        exp_oe_name: "Expansão Oceania (OE)",
+        exp_oe_sub: "Dados com néctar, disputa de néctar gasto e nova ação",
+        opt_raoutoma_title: "Carta de Ação RAOUtoma",
+        opt_raoutoma_desc: "Adiciona a carta oficial RAOUtoma (oceania_10) ao baralho da Automa, aumentando o ritmo de ovos (2 na R3, 3 na R4) e cubos.",
+        impact_raoutoma: "⚡ Impacto: Deixa a Automa mais produtiva nas rodadas finais.",
+        badge_extra_card: "Carta Extra",
+        exp_asia_name: "Expansão Ásia",
+        exp_asia_sub: "Aves asiáticas, baralho próprio de 10 cartas e Aliança Automa-Ásia",
+        exp_ae_name: "Expansão Américas (AE)",
+        exp_ae_sub: "Esteira do Jardim de Beija-flores e cartas de dificuldade Swift/Sloth",
+        title_diff_select: "3. Nível de Dificuldade da Automa",
+        diff_eaglet_title: "Filhote de Águia",
+        diff_eaglet_desc: "3 VP por ave virada para baixo • 1 ovo a cada 5 fichas de reserva • 3 néctares iniciais.",
+        diff_eagle_title: "Águia",
+        diff_eagle_desc: "4 VP por ave virada para baixo • 1 ovo a cada 4 fichas de reserva • 4 néctares iniciais.",
+        diff_eyed_title: "Olhos de Águia",
+        diff_eyed_desc: "5 VP por ave virada para baixo • 1 ovo a cada 3 fichas de reserva • 5 néctares iniciais.",
+        title_benefit_select: "4. Regra de Interação de Poderes (Benefícios à Automa)",
+        ben_cache_title: "Reserva da Automa (Cache)",
+        ben_cache_desc: "Regra oficial ágil: +2 fichas se ganhar grátis, +1 se exigir custo. Fichas viram ovos ao final.",
+        ben_hoard_title: "Acúmulo da Automa (Hoard)",
+        ben_hoard_desc: "Variante detalhada: valores específicos (+1 comida, +2 carta/néctar, +3 ovo/beija-flor, +6 bônus).",
+        ben_none_title: "Sem Interação",
+        ben_none_desc: "A Automa não participa de poderes que beneficiam outros jogadores.",
+        badge_rec: "Recomendada",
+        badge_expert: "Perito",
+        setup_check_title: "📋 Checklist de Preparação Física da Mesa (Manual Oficial)",
+        btn_start_match: "Começar Partida no Diário de Campo",
+        btn_next_turn: "Confirmar Ação & Próximo Turno",
+        btn_undo: "Desfazer",
+        feeder_prio_title: "Comedouro Físico • Ordem de Remoção",
+        feeder_rule_text: "A Automa retira TODOS os dados do 1º tipo de comida disponível no seu comedouro físico. Se todos os dados disponíveis forem iguais (ou o comedouro estiver vazio), jogue todos os 5 dados novamente antes de retirar.",
+        quick_log_prompt: "Clique na comida retirada para registrar no diário:",
+        duet_map_title: "Mapa de Dueto da Ásia (Interativo)",
+        nectar_title: "Néctar Gasto da Automa (Oceania)",
+        btn_adjust_nectar: "Ajustar Fim de Rodada (Adicionar néctar até 2x a rodada)",
+        hbird_title: "Jardim de Beija-flores (Américas)",
+        razzi_title: "Painel de Equipe (Automarazzi)",
+        ben_panel_title: "Reserva / Acúmulo de Fichas",
+        log_title: "Diário de Campo (Histórico de Turnos)",
+        btn_score_calc: "Calcular Pontuação Final da Partida",
+        score_modal_title: "Calculadora de Pontuação Final",
+        score_col_category: "Categoria",
+        score_col_player: "Você",
+        score_col_automa: "Automa",
+        help_modal_title: "Regras da Automa & Guia de Consulta",
+        btn_reset: "Reiniciar",
+        btn_sound: "Ambiente"
+    },
+    en: {
+        hero_subtitle: "Field Guide & Official Automa Companion",
+        title_mode_select: "1. Select Primary Game Mode",
+        mode_std_title: "Standard Solo",
+        mode_std_desc: "Classic solo match against the Automa deck across 4 rounds with countdown turns (8, 7, 6, 5) and goal competition.",
+        mode_duet_title: "Asia Duet Solo",
+        mode_duet_desc: "Territorial contest on the Asia Duet Map. Automa navigates by quadrant and competes for the largest token cluster.",
+        mode_razzi_title: "Automarazzi",
+        mode_razzi_desc: "Official Oceania cooperative variant for 2 to 4 players playing open-handed and sharing resources against a rival Automa.",
+        badge_classic: "Official",
+        badge_duet: "Duet",
+        badge_coop: "Co-op 2–4p",
+        title_exp_select: "2. Expansions & Additional Modules",
+        exp_base_name: "Base Game (Wingspan)",
+        exp_base_sub: "Deck of 10 official cards, 5-dice feeder and goal board",
+        opt_automubon_title: "Automubon Society",
+        opt_automubon_desc: "Adds the official expert-level card (base_12) to the deck. Automa gains round-goal cubes on nearly every action (+1 cube constantly).",
+        impact_automubon: "⚡ Difficulty Impact: Greatly increases the competitiveness of round-end goals.",
+        exp_ee_name: "European Expansion (EE)",
+        exp_ee_sub: "European round-end goals and teal powers",
+        exp_oe_name: "Oceania Expansion (OE)",
+        exp_oe_sub: "Nectar dice, spent nectar competition, and new action",
+        opt_raoutoma_title: "RAOUtoma Action Card",
+        opt_raoutoma_desc: "Adds the official RAOUtoma card (oceania_10) to the deck, increasing egg output (2 in R3, 3 in R4) and cubes.",
+        impact_raoutoma: "⚡ Impact: Boosts Automa productivity in later rounds.",
+        badge_extra_card: "Extra Card",
+        exp_asia_name: "Asia Expansion",
+        exp_asia_sub: "Asian birds, dedicated 10-card deck, and Automasian Alliance",
+        exp_ae_name: "Americas Expansion (AE)",
+        exp_ae_sub: "Hummingbird Garden track and Swift/Sloth difficulty cards",
+        title_diff_select: "3. Automa Difficulty Level",
+        diff_eaglet_title: "Eaglet",
+        diff_eaglet_desc: "3 VP per face-down bird • 1 egg per 5 reserve tokens • 3 starting nectar.",
+        diff_eagle_title: "Eagle",
+        diff_eagle_desc: "4 VP per face-down bird • 1 egg per 4 reserve tokens • 4 starting nectar.",
+        diff_eyed_title: "Eagle-eyed Eagle",
+        diff_eyed_desc: "5 VP per face-down bird • 1 egg per 3 reserve tokens • 5 starting nectar.",
+        title_benefit_select: "4. Power Interaction Rule (Benefits to Automa)",
+        ben_cache_title: "Automa's Cache",
+        ben_cache_desc: "Official streamlined rule: +2 tokens if gained for free, +1 if with cost. Converted to eggs at game end.",
+        ben_hoard_title: "Automa's Hoard",
+        ben_hoard_desc: "Detailed variant: specific values (+1 food, +2 card/nectar, +3 egg/hbird, +6 bonus).",
+        ben_none_title: "None",
+        ben_none_desc: "Automa does not participate in powers benefiting other players.",
+        badge_rec: "Recommended",
+        badge_expert: "Expert",
+        setup_check_title: "📋 Physical Tabletop Setup Checklist (Official Manual)",
+        btn_start_match: "Start Match in Field Guide",
+        btn_next_turn: "Confirm Action & Next Turn",
+        btn_undo: "Undo",
+        feeder_prio_title: "Physical Birdfeeder • Removal Priority",
+        feeder_rule_text: "Automa removes ALL dice of the 1st available food type in your physical feeder. If all remaining dice are identical (or feeder is empty), reroll all 5 dice before taking.",
+        quick_log_prompt: "Click the food removed to log it in the journal:",
+        duet_map_title: "Asia Duet Map (Interactive)",
+        nectar_title: "Automa's Spent Nectar (Oceania)",
+        btn_adjust_nectar: "End of Round Adjustment (Add nectar up to 2x round)",
+        hbird_title: "Hummingbird Garden (Americas)",
+        razzi_title: "Team Dashboard (Automarazzi)",
+        ben_panel_title: "Reserve / Hoard Tokens",
+        log_title: "Field Guide Journal (Turn History)",
+        btn_score_calc: "Calculate Final Match Score",
+        score_modal_title: "Final Score Calculator",
+        score_col_category: "Category",
+        score_col_player: "You",
+        score_col_automa: "Automa",
+        help_modal_title: "Automa Rules & Quick Reference",
+        btn_reset: "Reset",
+        btn_sound: "Ambience"
+    }
+};
+
+function S() {
+    return I18N[STATE.lang] || I18N.pt;
+}
+
+function setLanguage(lang) {
+    STATE.lang = lang;
+    document.documentElement.lang = lang === 'pt' ? 'pt-BR' : 'en';
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const k = el.getAttribute('data-i18n');
+        if (S()[k]) el.innerText = S()[k];
+    });
+    document.getElementById('btn-lang-pt').classList.toggle('active', lang === 'pt');
+    document.getElementById('btn-lang-en').classList.toggle('active', lang === 'en');
+    localStorage.setItem('boardbots_lang', lang);
+    updatePriorityStrip();
+    if (STATE.gameStarted && STATE.currentCard) {
+        renderCurrentNativeCard();
+    }
+}
+
+/* ==================== SETUP CONTROLLERS ==================== */
+function selectMode(m) {
+    STATE.mode = m;
+    document.getElementById('opt-mode-standard').classList.toggle('selected', m === 'standard');
+    document.getElementById('opt-mode-duet').classList.toggle('selected', m === 'duet');
+    document.getElementById('opt-mode-razzi').classList.toggle('selected', m === 'razzi');
+    
+    if (m === 'duet') {
+        STATE.expansions.asia = true;
+        document.getElementById('box-asia').classList.add('active');
+        const sw = document.getElementById('sw-asia');
+        if (sw) sw.innerText = '✓';
+    }
+    updateChecklistVisibility();
+}
+
+function toggleExpansion(exp) {
+    if (exp === 'base') {
+        if (STATE.expansions.base && !STATE.expansions.asia) {
+            alert(STATE.lang === 'pt' ? "Para jogar sem o Jogo Base, ative primeiro a Expansão Ásia (jogo independente)." : "To play without Base Game, first activate Asia Expansion (standalone game).");
+            return;
+        }
+    }
+    if (exp === 'asia') {
+        if (STATE.expansions.asia && !STATE.expansions.base) {
+            alert(STATE.lang === 'pt' ? "Você precisa de pelo menos uma caixa ativa (Jogo Base ou Ásia)." : "You need at least one game active (Base Game or Asia).");
+            return;
+        }
+    }
+    
+    STATE.expansions[exp] = !STATE.expansions[exp];
+    const box = document.getElementById(`box-${exp}`);
+    if (box) box.classList.toggle('active', STATE.expansions[exp]);
+    const sw = document.getElementById(`sw-${exp}`);
+    if (sw) sw.innerText = STATE.expansions[exp] ? '✓' : '';
+    
+    if (exp === 'oe') {
+        const nested = document.getElementById('nested-oe');
+        if (nested) nested.style.display = STATE.expansions.oe ? 'block' : 'none';
+    }
+    if (exp === 'base') {
+        const nested = document.getElementById('nested-base');
+        if (nested) nested.style.display = STATE.expansions.base ? 'block' : 'none';
+    }
+    updateChecklistVisibility();
+}
+
+function toggleAutomubon() {
+    STATE.useAutomubon = !STATE.useAutomubon;
+    const card = document.getElementById('tog-automubon');
+    if (card) card.classList.toggle('active', STATE.useAutomubon);
+    const ind = document.getElementById('sw-automubon');
+    if (ind) ind.innerText = STATE.useAutomubon ? '✓' : '';
+}
+
+function toggleRAOUtoma() {
+    STATE.useRAOUtoma = !STATE.useRAOUtoma;
+    const card = document.getElementById('tog-raoutoma');
+    if (card) card.classList.toggle('active', STATE.useRAOUtoma);
+    const ind = document.getElementById('sw-raoutoma');
+    if (ind) ind.innerText = STATE.useRAOUtoma ? '✓' : '';
+}
+
+function selectDifficulty(d) {
+    STATE.difficulty = d;
+    document.getElementById('diff-eaglet').classList.toggle('selected', d === 'eaglet');
+    document.getElementById('diff-eagle').classList.toggle('selected', d === 'eagle');
+    document.getElementById('diff-eyed').classList.toggle('selected', d === 'eyed');
+}
+
+function selectBenefitMode(b) {
+    STATE.benefitMode = b;
+    document.getElementById('opt-ben-cache').classList.toggle('selected', b === 'cache');
+    document.getElementById('opt-ben-hoard').classList.toggle('selected', b === 'hoard');
+    document.getElementById('opt-ben-none').classList.toggle('selected', b === 'none');
+}
+
+function updateChecklistVisibility() {
+    const isDuet = STATE.mode === 'duet' || STATE.expansions.asia;
+    const isOE = STATE.expansions.oe;
+    const isAE = STATE.expansions.ae;
+    document.getElementById('check-step-duet').style.display = isDuet ? 'flex' : 'none';
+    document.getElementById('check-step-oe').style.display = isOE ? 'flex' : 'none';
+    document.getElementById('check-step-ae').style.display = isAE ? 'flex' : 'none';
+}
+
+/* ==================== GAME LIFECYCLE ==================== */
+function shuffle(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+}
+
+function startGame() {
+    initAudio();
+    if (window.ThemeKit) ThemeKit.playSfx('card-shuffle');
+    
+    STATE.gameStarted = true;
+    STATE.round = 1;
+    STATE.turnInRound = 1;
+    STATE.eggs = 0;
+    STATE.faceDownCards = 0;
+    STATE.cubesOnCurrentGoal = 0;
+    STATE.hoardTokens = 0;
+    STATE.history = [];
+    
+    // Set starting nectar if Oceania active
+    if (STATE.expansions.oe) {
+        const startNectar = STATE.difficulty === 'eaglet' ? 3 : (STATE.difficulty === 'eyed' ? 5 : 4);
+        STATE.nectar = { forest: startNectar, grassland: startNectar, wetland: startNectar };
+    } else {
+        STATE.nectar = { forest: 0, grassland: 0, wetland: 0 };
+    }
+    
+    // Build Automa action deck
+    let baseDeck;
+    if (!STATE.expansions.base || STATE.mode === 'duet' || (STATE.expansions.asia && !STATE.expansions.oe)) {
+        // Asia deck (10 cards) + Aliança Automa-Ásia (in Duet mode)
+        baseDeck = AUTOMA_CARDS_ASIA.filter(c => {
+            if (c.isAlliance) return STATE.mode === 'duet';
+            return true;
+        }).map(c => ({...c}));
+    } else {
+        // Base Game deck (10 cards)
+        baseDeck = AUTOMA_CARDS_BASE.filter(c => !c.isAutomubon).map(c => ({...c}));
+    }
+    
+    // Add Automubon Society if enabled AND base game active
+    if (STATE.useAutomubon && STATE.expansions.base) {
+        const automubonCard = AUTOMA_CARDS_BASE.find(c => c.isAutomubon);
+        if (automubonCard && !baseDeck.some(c => c.id === automubonCard.id)) {
+            baseDeck.push({...automubonCard});
+        }
+    }
+        
+    // Add RAOUtoma if Oceania and option active
+    if (STATE.expansions.oe && STATE.useRAOUtoma) {
+        baseDeck.push({...RAOUTOMA_CARD});
+    }
+    
+    STATE.activeDeck = shuffle(baseDeck);
+    STATE.discardPile = [];
+    
+    // Americas Hummingbird deck with difficulty substitutions
+    if (STATE.expansions.ae) {
+        let hDeck = HUMMINGBIRD_CARDS.filter(c => typeof c.id === 'number').map(c => ({...c}));
+        if (STATE.difficulty === 'eaglet') {
+            hDeck = hDeck.filter(c => c.id !== 9);
+            const eagletCard = HUMMINGBIRD_CARDS.find(c => c.isEaglet);
+            if (eagletCard) hDeck.push({...eagletCard});
+        } else if (STATE.difficulty === 'eyed') {
+            hDeck = hDeck.filter(c => c.id !== 10);
+            const eyedCard = HUMMINGBIRD_CARDS.find(c => c.isEyed);
+            if (eyedCard) hDeck.push({...eyedCard});
+        }
+        STATE.hbirdDeck = shuffle(hDeck);
+        STATE.hbirdDiscard = [];
+        STATE.hbirdTracks = { bees: 0, brilliants: 0, emeralds: 0, mangoes: 0, topazes: 0 };
+    }
+    
+    // Initialize Duet spaces
+    STATE.duetSpaces = {};
+    for (let i = 1; i <= 30; i++) {
+        STATE.duetSpaces[i] = null;
+    }
+    
+    document.getElementById('view-setup').classList.add('hidden');
+    document.getElementById('view-game').classList.remove('hidden');
+    
+    // Toggle secondary panel visibility
+    document.getElementById('panel-duet').classList.toggle('hidden', STATE.mode !== 'duet');
+    document.getElementById('panel-nectar').classList.toggle('hidden', !STATE.expansions.oe);
+    const hbBox = document.getElementById('hummingbird-stage-box');
+    if (hbBox) hbBox.style.display = STATE.expansions.ae ? 'block' : 'none';
+    const hudHb = document.getElementById('hud-hbird-wrap');
+    if (hudHb) hudHb.style.display = STATE.expansions.ae ? 'inline-flex' : 'none';
+    document.getElementById('panel-razzi').classList.toggle('hidden', STATE.mode !== 'razzi');
+    document.getElementById('hud-nectar-wrap').style.display = STATE.expansions.oe ? 'inline-flex' : 'none';
+    document.getElementById('hud-hoard-wrap').style.display = STATE.benefitMode !== 'none' ? 'inline-flex' : 'none';
+    document.getElementById('panel-hoard-controls').style.display = STATE.benefitMode !== 'none' ? 'block' : 'none';
+    document.getElementById('hud-automubon-badge').style.display = STATE.useAutomubon ? 'inline-flex' : 'none';
+    document.getElementById('btn-food-nectar').style.display = STATE.expansions.oe ? 'inline-flex' : 'none';
+    
+    buildDuetMapSVG();
+    buildHummingbirdTrack();
+    updatePriorityStrip();
+    
+    // Draw first card
+    drawAutomaCard();
+    addLog("PARTIDA INICIADA", "O diário de campo está aberto. Baralho preparado para a Rodada 1.");
+    saveState();
+}
+
+function getTurnsInRound(r) {
+    const turns = { 1: 8, 2: 7, 3: 6, 4: 5 };
+    return turns[r] || 8;
+}
+
+function drawAutomaCard() {
+    if (STATE.activeDeck.length === 0) {
+        STATE.activeDeck = shuffle(STATE.discardPile);
+        STATE.discardPile = [];
+        if (window.ThemeKit) ThemeKit.playSfx('card-shuffle');
+    }
+    
+    if (STATE.activeDeck.length > 0) {
+        STATE.currentCard = STATE.activeDeck.pop();
+        STATE.discardPile.push(STATE.currentCard);
+        if (window.ThemeKit) ThemeKit.playSfx('card-draw');
+    }
+    
+    // Hummingbird draw if Americas
+    if (STATE.expansions.ae) {
+        if (STATE.hbirdDeck.length === 0) {
+            STATE.hbirdDeck = shuffle(STATE.hbirdDiscard);
+            STATE.hbirdDiscard = [];
+        }
+        if (STATE.hbirdDeck.length > 0) {
+            STATE.currentHbirdCard = STATE.hbirdDeck.pop();
+            STATE.hbirdDiscard.push(STATE.currentHbirdCard);
+        }
+        renderHummingbirdStage();
+    }
+    
+    executeCurrentCardAction();
+    renderCurrentNativeCard();
+    updateUI();
+}
+
+function executeCurrentCardAction() {
+    if (!STATE.currentCard) return;
+    const roundData = STATE.currentCard.rounds[STATE.round];
+    if (!roundData) return;
+    
+    if (STATE.currentCard.isAutomubon) {
+        addLog(STATE.lang === 'pt' ? "🏛️ SOCIEDADE AUTOMUBON" : "🏛️ AUTOMUBON SOCIETY",
+               STATE.lang === 'pt' ? "Carta oficial de perito revelada! A Automa disputa agressivamente os objetivos desta rodada (+1 cubo)."
+                                  : "Official expert card revealed! Automa aggressively contends for round-end goals (+1 cube).");
+    }
+    
+    // Handle action effects
+    if (roundData.action === 'draw_cards') {
+        STATE.faceDownCards += 1;
+    } else if (roundData.action === 'lay_eggs') {
+        STATE.eggs += (roundData.eggs || 1);
+    }
+    
+    // Cube effect
+    if (roundData.cube === '+') {
+        STATE.cubesOnCurrentGoal += 1;
+    } else if (roundData.cube === '-') {
+        STATE.cubesOnCurrentGoal = Math.max(0, STATE.cubesOnCurrentGoal - 1);
+    }
+    
+    // Duet placement highlight / auto-target
+    if (STATE.mode === 'duet') {
+        autoTargetDuetSpace(roundData.action);
+    }
+    
+
+}
+
+function nextTurn() {
+    saveHistory();
+    playBirdChirp();
+    
+    const maxTurns = getTurnsInRound(STATE.round);
+    if (STATE.turnInRound >= maxTurns) {
+        endRound();
+    } else {
+        STATE.turnInRound += 1;
+        drawAutomaCard();
+        logTurnAction();
+    }
+    saveState();
+}
+
+function endRound() {
+    if (STATE.round >= 4) {
+        addLog("FIM DE JOGO", "Todas as 4 rodadas foram concluídas! Abra o calculador para conferir a pontuação.");
+        openScoreModal();
+        return;
+    }
+    
+    if (STATE.expansions.oe) {
+        addLog("FIM DA RODADA", `Fim da Rodada ${STATE.round}. Ajuste o néctar gasto duas vezes se necessário.`);
+    }
+    
+    const currentR = STATE.round;
+    STATE.activeDeck = STATE.activeDeck.filter(c => c.removeAfter !== currentR);
+    STATE.discardPile = STATE.discardPile.filter(c => c.removeAfter !== currentR);
+    STATE.activeDeck = shuffle([...STATE.activeDeck, ...STATE.discardPile]);
+    STATE.discardPile = [];
+    
+    if (STATE.expansions.ae) {
+        const allCards = [...STATE.hbirdDeck, ...STATE.hbirdDiscard];
+        const removed = allCards.filter(h => h.removeAfterRound === currentR);
+        if (removed.length > 0) {
+            const rId = removed[0].id;
+            addLog(STATE.lang === 'pt' ? "🌺 BEIJA-FLOR REMOVIDO" : "🌺 HUMMINGBIRD REMOVED",
+                   STATE.lang === 'pt' ? `Carta ${rId} removida permanentemente do jogo conforme regra oficial da Rodada ${currentR}.`
+                                      : `Card ${rId} permanently removed from game per Round ${currentR} official rules.`);
+        }
+        const remaining = allCards.filter(h => h.removeAfterRound !== currentR);
+        STATE.hbirdDeck = shuffle(remaining);
+        STATE.hbirdDiscard = [];
+    }
+    
+    STATE.round += 1;
+    STATE.turnInRound = 1;
+    STATE.cubesOnCurrentGoal = 0;
+    
+    addLog(`RODADA ${STATE.round}`, `Iniciando Rodada ${STATE.round}. Baralho reembaralhado.`);
+    drawAutomaCard();
+    saveState();
+}
+
+/* ==================== NATIVE DIEGETIC CARD RENDERER ==================== */
+function renderCurrentNativeCard() {
+    const card = STATE.currentCard;
+    if (!card) return;
+    
+    let cardTitle = "AUTOMA";
+    let moduleBadge = "BASE";
+    if (card.isAutomubon) {
+        cardTitle = "SOCIEDADE AUTOMUBON";
+        moduleBadge = "PERITO";
+    } else if (card.isRAOUtoma) {
+        cardTitle = "RAOUTOMA";
+        moduleBadge = "OCEANIA";
+    } else if (card.isAlliance) {
+        cardTitle = "ALIANÇA AUTOMA-ÁSIA";
+        moduleBadge = "DUETO";
+    } else if (STATE.mode === 'duet' || STATE.expansions.asia) {
+        moduleBadge = "ÁSIA";
+    }
+    
+    let rowsHtml = '';
+    for (let r = 1; r <= 4; r++) {
+        const rData = card.rounds[r];
+        const isActive = (r === STATE.round);
+        
+        let actIcon = "🦅";
+        if (rData.action === "draw_cards") actIcon = "🃏";
+        else if (rData.action === "lay_eggs") actIcon = "🥚";
+        else if (rData.action === "gain_food") actIcon = "🌾";
+        
+        const actName = STATE.lang === 'pt' ? rData.desc_pt : rData.desc_en;
+        
+        let badgesHtml = '';
+        if (rData.eggs > 0) {
+            badgesHtml += `<span class="native-badge eggs">🥚 x${rData.eggs}</span>`;
+        }
+        if (rData.cube === '+') {
+            badgesHtml += `<span class="native-badge cube-plus">⬛ +1 Cubo</span>`;
+        } else if (rData.cube === '-') {
+            badgesHtml += `<span class="native-badge cube-minus">⬛ -1 Cubo</span>`;
+        }
+        if (rData.pink) {
+            badgesHtml += `<span class="native-badge pink">🌸 Rosas</span>`;
+        }
+        
+        rowsHtml += `
+            <div class="native-card-row ${isActive ? 'active-row' : ''}">
+                <div class="row-marker">
+                    <span class="row-num-badge">R${r}</span>
+                    <span class="row-active-pointer">▶</span>
+                </div>
+                <div class="row-action-body">
+                    <div class="row-act-title">
+                        <span>${actIcon}</span>
+                        <span>${actName}</span>
+                    </div>
+                    <div class="row-act-badges">
+                        ${badgesHtml}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    let duetHtml = '';
+    if (card.duet) {
+        duetHtml = `
+            <div class="card-duet-strip">
+                <span>📍 Mapa de Dueto: <strong>${card.duet.habitat.toUpperCase()}</strong></span>
+                <span class="duet-quad-pill">Quadrante ${card.duet.corner}</span>
+            </div>
+        `;
+    }
+    
+    let nectarHtml = '';
+    if (card.nectar && STATE.expansions.oe) {
+        nectarHtml = `
+            <div class="card-nectar-strip">
+                <span>🌲 ${card.nectar.forest > 0 ? '+1' : (card.nectar.forest < 0 ? '-1' : '0')}</span>
+                <span>🌾 ${card.nectar.grassland > 0 ? '+1' : (card.nectar.grassland < 0 ? '-1' : '0')}</span>
+                <span>🌊 ${card.nectar.wetland > 0 ? '+1' : (card.nectar.wetland < 0 ? '-1' : '0')}</span>
+            </div>
+        `;
+    }
+    
+    const html = `
+        <div class="native-card">
+            <div class="card-header-bar">
+                <div class="card-brand-tag">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:16px; height:16px;"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"/></svg>
+                    <span>${cardTitle}</span>
+                </div>
+                <div class="card-id-tag">${card.id.toUpperCase()} • ${moduleBadge}</div>
+            </div>
+            <div class="card-rows-wrap">
+                ${rowsHtml}
+            </div>
+            ${duetHtml}
+            ${nectarHtml}
+        </div>
+    `;
+    
+    document.getElementById('native-card-container').innerHTML = html;
+}
+
+/* ==================== BIRDFEEDER PRIORITY ==================== */
+function updatePriorityStrip() {
+    const strip = document.getElementById('feeder-priority-strip');
+    if (!strip) return;
+    
+    const foods = [
+        { key: 'invertebrate', label: 'Invertebrado', icon: '🪱' },
+        { key: 'seed', label: 'Semente', icon: '🌾' },
+        { key: 'fish', label: 'Peixe', icon: '🐟' },
+        { key: 'fruit', label: 'Fruta', icon: '🍒' },
+        { key: 'rodent', label: 'Roedor', icon: '🐭' }
+    ];
+    if (STATE.expansions.oe) {
+        foods.push({ key: 'nectar', label: 'Néctar', icon: '🌺' });
+    }
+    
+    let html = '';
+    foods.forEach((f, idx) => {
+        html += `<span class="prio-tag ${idx === 0 ? 'first-prio' : ''}">${idx + 1}º ${f.icon} ${f.label}</span>`;
+        if (idx < foods.length - 1) {
+            html += `<span class="prio-arrow">➔</span>`;
+        }
+    });
+    strip.innerHTML = html;
+}
+
+function logFoodRemoval(type) {
+    const icons = { invertebrate: '🪱', seed: '🌾', fish: '🐟', fruit: '🍒', rodent: '🐭', nectar: '🌺' };
+    addLog("COMEDOURO FÍSICO", `Automa retirou dados de ${icons[type] || ''} ${type.toUpperCase()} da mesa.`);
+}
+
+/* ==================== DUET MAP (SVG) ==================== */
+function buildDuetMapSVG() {
+    const svg = document.getElementById('duet-map-svg');
+    if (!svg) return;
+    
+    const cols = 6;
+    const rows = 5;
+    const cellW = 85;
+    const cellH = 75;
+    
+    let html = '';
+    
+    // Background habitats
+    html += `<rect x="5" y="5" width="580" height="120" rx="8" fill="rgba(47,107,58,0.25)" stroke="#3f6e47" stroke-dasharray="4"/>`;
+    html += `<text x="18" y="28" fill="#8ed69a" font-size="12" font-weight="bold">FLORESTA</text>`;
+    
+    html += `<rect x="5" y="135" width="580" height="120" rx="8" fill="rgba(198,148,39,0.25)" stroke="#7a6226" stroke-dasharray="4"/>`;
+    html += `<text x="18" y="158" fill="#f0c765" font-size="12" font-weight="bold">PRADARIA</text>`;
+    
+    html += `<rect x="5" y="265" width="580" height="120" rx="8" fill="rgba(44,110,145,0.25)" stroke="#325a70" stroke-dasharray="4"/>`;
+    html += `<text x="18" y="288" fill="#85caea" font-size="12" font-weight="bold">PANTANAL</text>`;
+    
+    let id = 1;
+    for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+            const cx = 50 + c * cellW;
+            const cy = 60 + r * cellH;
+            
+            const spaceOwner = STATE.duetSpaces[id];
+            let fill = "#223023";
+            let stroke = "#5a755e";
+            let text = id.toString();
+            
+            if (spaceOwner === 'automa') {
+                fill = "#b88022";
+                stroke = "#e5a93b";
+                text = "🦅";
+            } else if (spaceOwner === 'player') {
+                fill = "#2c6e91";
+                stroke = "#85caea";
+                text = "👤";
+            }
+            
+            html += `
+                <g onclick="toggleDuetSpace(${id})" style="cursor:pointer;">
+                    <circle cx="${cx}" cy="${cy}" r="26" fill="${fill}" stroke="${stroke}" stroke-width="2.5"/>
+                    <text x="${cx}" y="${cy + 5}" fill="#fff" font-size="13" font-weight="bold" text-anchor="middle">${text}</text>
+                </g>
+            `;
+            id++;
+        }
+    }
+    svg.innerHTML = html;
+    calculateDuetClusters();
+}
+
+function toggleDuetSpace(id) {
+    const current = STATE.duetSpaces[id];
+    if (!current) STATE.duetSpaces[id] = 'automa';
+    else if (current === 'automa') STATE.duetSpaces[id] = 'player';
+    else STATE.duetSpaces[id] = null;
+    
+    buildDuetMapSVG();
+    saveState();
+}
+
+function autoTargetDuetSpace(action) {
+    let targetId = null;
+    for (let i = 1; i <= 30; i++) {
+        if (!STATE.duetSpaces[i]) {
+            targetId = i;
+            break;
+        }
+    }
+    if (targetId) {
+        STATE.duetSpaces[targetId] = 'automa';
+        buildDuetMapSVG();
+        addLog("MAPA DE DUETO", `Automa posicionou ficha de Dueto no espaço ${targetId}.`);
+    }
+}
+
+function calculateDuetClusters() {
+    const getNeighbors = (id) => {
+        const n = [];
+        const idx = id - 1;
+        const row = Math.floor(idx / 6);
+        const col = idx % 6;
+        if (col > 0) n.push(id - 1);
+        if (col < 5) n.push(id + 1);
+        if (row > 0) n.push(id - 6);
+        if (row < 4) n.push(id + 6);
+        return n;
+    };
+    
+    const getLargest = (owner) => {
+        const visited = new Set();
+        let maxCluster = 0;
+        
+        for (let i = 1; i <= 30; i++) {
+            if (STATE.duetSpaces[i] === owner && !visited.has(i)) {
+                let count = 0;
+                const queue = [i];
+                visited.add(i);
+                while (queue.length > 0) {
+                    const cur = queue.shift();
+                    count++;
+                    for (const neighbor of getNeighbors(cur)) {
+                        if (STATE.duetSpaces[neighbor] === owner && !visited.has(neighbor)) {
+                            visited.add(neighbor);
+                            queue.push(neighbor);
+                        }
+                    }
+                }
+                if (count > maxCluster) maxCluster = count;
+            }
+        }
+        return maxCluster;
+    };
+    
+    const aCount = getLargest('automa');
+    const pCount = getLargest('player');
+    
+    const aEl = document.getElementById('duet-automa-cluster');
+    const pEl = document.getElementById('duet-player-cluster');
+    if (aEl) aEl.innerText = aCount;
+    if (pEl) pEl.innerText = pCount;
+}
+
+/* ==================== NECTAR & HOARD ==================== */
+function adjustNectar(hab, amt) {
+    STATE.nectar[hab] = Math.max(0, STATE.nectar[hab] + amt);
+    updateUI();
+    saveState();
+}
+
+function executeNectarEndRoundAdjustment() {
+    const target = STATE.round * 2;
+    ['forest', 'grassland', 'wetland'].forEach(hab => {
+        if (STATE.nectar[hab] < target) {
+            STATE.nectar[hab] = target;
+        }
+    });
+    updateUI();
+    addLog("AJUSTE DE NÉCTAR", `Néctar da Automa ajustado para no mínimo ${target} em todos os habitats.`);
+    saveState();
+}
+
+function addHoardTokens(amt) {
+    STATE.hoardTokens = Math.max(0, STATE.hoardTokens + amt);
+    updateUI();
+    saveState();
+}
+
+/* ==================== HUMMINGBIRD GARDEN & 5-TRACK SYSTEM ==================== */
+function calcTotalHbirdPoints() {
+    if (!STATE.hbirdTracks) return -15;
+    return Object.values(STATE.hbirdTracks).reduce((acc, stepIdx) => {
+        return acc + (HBIRD_POINTS_SCALE[stepIdx] ?? -3);
+    }, 0);
+}
+
+function renderHummingbirdStage() {
+    const box = document.getElementById('hummingbird-stage-box');
+    if (!box) return;
+    if (!STATE.expansions.ae) {
+        box.style.display = 'none';
+        return;
+    }
+    box.style.display = 'block';
+    
+    const card = STATE.currentHbirdCard;
+    const body = document.getElementById('hbird-card-body');
+    const codeEl = document.getElementById('hbird-card-code');
+    const diffEl = document.getElementById('hbird-diff-pill');
+    
+    if (!card) {
+        body.innerHTML = '<div style="color:var(--text-dim); text-align:center; padding:15px;">Nenhuma carta de beija-flor sacada ainda.</div>';
+        return;
+    }
+    
+    // Label card code
+    let cardName = `Carta ${card.id}`;
+    if (card.isEaglet) cardName = "Carta 9 • Filhote de Águia";
+    if (card.isEyed) cardName = "Carta 10 • Olhos de Águia";
+    codeEl.innerText = `${cardName} • Rodada ${STATE.round}`;
+    
+    if (diffEl) {
+        if (card.removeAfterRound) {
+            diffEl.innerText = STATE.lang === 'pt' ? `Remover após R${card.removeAfterRound}` : `Remove after R${card.removeAfterRound}`;
+            diffEl.style.background = 'rgba(234, 179, 8, 0.2)';
+            diffEl.style.color = '#fde047';
+            diffEl.style.borderColor = 'rgba(234, 179, 8, 0.5)';
+        } else {
+            diffEl.innerText = 'Américas';
+            diffEl.style.background = 'rgba(212,67,122,0.25)';
+            diffEl.style.color = '#ff94be';
+            diffEl.style.borderColor = 'rgba(212,67,122,0.5)';
+        }
+    }
+    
+    const roundAction = card.rounds[STATE.round];
+    if (!roundAction || roundAction.rain) {
+        // Rainy Day Render
+        body.innerHTML = `
+            <div class="hbird-rain-bar">
+                <div class="rain-cloud-icon">⛈️⚡</div>
+                <div class="rain-info">
+                    <div class="rain-title">${STATE.lang === 'pt' ? 'Dia Chuvoso (Tempestade Tropical)' : 'Rainy Day (Tropical Storm)'}</div>
+                    <div class="rain-desc">${STATE.lang === 'pt' ? 'A tempestade atinge o jardim. A Automa não realiza ação de beija-flor nesta rodada.' : 'A storm hits the garden. Automa takes no hummingbird action this round.'}</div>
+                </div>
+            </div>
+        `;
+    } else {
+        // Movement Strip Render
+        const fromSlot = roundAction.from;
+        const toSlot = roundAction.to;
+        
+        let slotsHtml = '';
+        for (const slot of HBIRD_GARDEN_SLOTS) {
+            const isFrom = (slot.num === fromSlot);
+            const isTo = (slot.num === toSlot);
+            let slotClass = 'hbird-slot';
+            if (isFrom) slotClass += ' slot-from';
+            if (isTo) slotClass += ' slot-to';
+            
+            let badge = '';
+            if (isFrom) {
+                badge = `<span class="hbird-slot-badge">🕊️ Origem</span>`;
+            } else if (isTo) {
+                badge = `<span class="hbird-slot-badge hbird-target-badge">🎯 Destino</span>`;
+            }
+            
+            const slotName = STATE.lang === 'pt' ? slot.name_pt : slot.name_en;
+            slotsHtml += `
+                <div class="${slotClass}">
+                    ${badge}
+                    <span class="hbird-slot-num">Espaço ${slot.num}</span>
+                    <span class="hbird-slot-flower">${slot.icon}</span>
+                    <span class="hbird-slot-name">${slotName}</span>
+                </div>
+            `;
+        }
+        
+        const arrowSymbol = fromSlot < toSlot ? '➔' : '➔';
+        const guidanceText = STATE.lang === 'pt'
+            ? `🌸 <strong>Ação de Beija-flor:</strong> No tabuleiro físico da mesa, mova o beija-flor do <strong>Espaço ${fromSlot}</strong> ${arrowSymbol} para o <strong>Espaço ${toSlot}</strong>.<br>Em seguida, veja o grupo do beija-flor movido e clique no botão <strong>+1 Subir</strong> daquele clã abaixo.`
+            : `🌸 <strong>Hummingbird Action:</strong> On your physical board, move the hummingbird from <strong>Space ${fromSlot}</strong> ${arrowSymbol} to <strong>Space ${toSlot}</strong>.<br>Then, identify the moved hummingbird group and click <strong>+1 Advance</strong> on that column below.`;
+            
+        body.innerHTML = `
+            <div class="hbird-strip-container">
+                <div class="hbird-strip-visual">
+                    ${slotsHtml}
+                </div>
+                <div class="hbird-action-guidance">
+                    ${guidanceText}
+                </div>
+            </div>
+        `;
+    }
+    
+    buildHummingbirdTrack();
+}
+
+function buildHummingbirdTrack() {
+    const grid = document.getElementById('hbird-columns-grid');
+    if (!grid) return;
+    
+    let html = '';
+    const groupKeys = ['bees', 'brilliants', 'emeralds', 'mangoes', 'topazes'];
+    
+    for (const key of groupKeys) {
+        const grp = HBIRD_GROUPS[key];
+        const stepIdx = (STATE.hbirdTracks && STATE.hbirdTracks[key] !== undefined) ? STATE.hbirdTracks[key] : 0;
+        const pts = HBIRD_POINTS_SCALE[stepIdx] ?? -3;
+        const stepName = HBIRD_STEP_NAMES[stepIdx];
+        const grpName = STATE.lang === 'pt' ? grp.name_pt : grp.name_en;
+        const isBonus = grp.bonus.includes(stepIdx);
+        
+        html += `
+            <div class="hbird-col-card" style="border-top: 3px solid ${grp.color};">
+                <div class="hbird-col-icon">${grp.icon}</div>
+                <div class="hbird-col-name" title="${grpName}">${grpName}</div>
+                <div class="hbird-col-val" style="color:${grp.color};">
+                    ${stepName}
+                </div>
+                ${isBonus ? '<span style="font-size:0.6rem; color:#fde047; font-weight:800;">★ BÔNUS ATIVO</span>' : ''}
+                <div class="hbird-col-btns">
+                    <button class="btn-hbird-advance" style="color:${grp.color};" onclick="advanceHbirdTrack('${key}')" title="Avançar 1 espaço no clã ${grpName}">+1 Subir</button>
+                    <button class="btn-hbird-decrease" onclick="decreaseHbirdTrack('${key}')" title="Recuar 1 espaço">-</button>
+                </div>
+            </div>
+        `;
+    }
+    grid.innerHTML = html;
+    
+    const totalPts = calcTotalHbirdPoints();
+    const badge = document.getElementById('hbird-total-pts');
+    if (badge) badge.innerText = `Total: ${totalPts >= 0 ? '+' : ''}${totalPts} VP`;
+    
+    const hudPts = document.getElementById('hud-hbird-pts');
+    if (hudPts) hudPts.innerText = totalPts;
+}
+
+function advanceHbirdTrack(key) {
+    saveHistory();
+    if (!STATE.hbirdTracks) STATE.hbirdTracks = { bees: 0, brilliants: 0, emeralds: 0, mangoes: 0, topazes: 0 };
+    
+    const grp = HBIRD_GROUPS[key];
+    const grpName = STATE.lang === 'pt' ? grp.name_pt : grp.name_en;
+    let curr = STATE.hbirdTracks[key];
+    
+    if (curr < 8) {
+        curr += 1;
+        STATE.hbirdTracks[key] = curr;
+        
+        // Check bonus space
+        if (grp.bonus.includes(curr)) {
+            if (curr < 8) {
+                curr += 1;
+                STATE.hbirdTracks[key] = curr;
+                addLog(STATE.lang === 'pt' ? "🕊️ BÔNUS DE BEIJA-FLOR!" : "🕊️ HUMMINGBIRD BONUS!",
+                       STATE.lang === 'pt' ? `O marcador de ${grpName} atingiu espaço com silhueta de beija-flor e avançou mais 1 espaço bônus (${HBIRD_STEP_NAMES[curr]})!`
+                                          : `${grpName} token landed on hummingbird silhouette space and advanced an extra bonus step (${HBIRD_STEP_NAMES[curr]})!`);
+            }
+        } else {
+            addLog(STATE.lang === 'pt' ? "🌺 TRILHA DE BEIJA-FLOR" : "🌺 HUMMINGBIRD TRACK",
+                   STATE.lang === 'pt' ? `Automa avançou em ${grpName} para ${HBIRD_STEP_NAMES[curr]}.`
+                                      : `Automa advanced ${grpName} to ${HBIRD_STEP_NAMES[curr]}.`);
+        }
+    } else {
+        // Wrap-around to the right column!
+        const groupKeys = ['bees', 'brilliants', 'emeralds', 'mangoes', 'topazes'];
+        const nextIdx = (groupKeys.indexOf(key) + 1) % groupKeys.length;
+        const nextKey = groupKeys[nextIdx];
+        const nextGrp = HBIRD_GROUPS[nextKey];
+        const nextName = STATE.lang === 'pt' ? nextGrp.name_pt : nextGrp.name_en;
+        
+        addLog(STATE.lang === 'pt' ? "🌺 TOPO DA TRILHA ALCANÇADO" : "🌺 TOP OF TRACK REACHED",
+               STATE.lang === 'pt' ? `${grpName} já está no topo (10 VP)! Conforme a regra oficial, avançou o marcador da coluna à direita (${nextName}).`
+                                  : `${grpName} is already at the top (10 VP)! Per official rules, advanced right column (${nextName}).`);
+        advanceHbirdTrack(nextKey);
+        return;
+    }
+    
+    buildHummingbirdTrack();
+    saveState();
+}
+
+function decreaseHbirdTrack(key) {
+    saveHistory();
+    if (!STATE.hbirdTracks) return;
+    if (STATE.hbirdTracks[key] > 0) {
+        STATE.hbirdTracks[key] -= 1;
+        buildHummingbirdTrack();
+        saveState();
+    }
+}
+
+/* ==================== LOG & UI UPDATE ==================== */
+function addLog(title, desc) {
+    const log = document.getElementById('action-log');
+    if (!log) return;
+    const entry = document.createElement('div');
+    entry.className = 'log-entry';
+    entry.innerHTML = `<strong>${title}:</strong> ${desc}`;
+    log.prepend(entry);
+}
+
+function logTurnAction() {
+    if (!STATE.currentCard) return;
+    const rData = STATE.currentCard.rounds[STATE.round];
+    if (!rData) return;
+    const desc = STATE.lang === 'pt' ? rData.desc_pt : rData.desc_en;
+    addLog(`R${STATE.round} • Turno ${STATE.turnInRound}`, `Automa executou: ${desc}.`);
+}
+
+function updateUI() {
+    document.getElementById('hud-round').innerText = `RODADA ${STATE.round}`;
+    document.getElementById('hud-turn').innerText = `Turno ${STATE.turnInRound} / ${getTurnsInRound(STATE.round)}`;
+    document.getElementById('hud-eggs').innerText = STATE.eggs;
+    document.getElementById('hud-facedown').innerText = STATE.faceDownCards;
+    document.getElementById('hud-cubes').innerText = STATE.cubesOnCurrentGoal;
+    
+    if (STATE.expansions.oe) {
+        const totalNectar = STATE.nectar.forest + STATE.nectar.grassland + STATE.nectar.wetland;
+        document.getElementById('hud-nectar').innerText = totalNectar;
+        document.getElementById('nectar-forest-count').innerText = STATE.nectar.forest;
+        document.getElementById('nectar-grassland-count').innerText = STATE.nectar.grassland;
+        document.getElementById('nectar-wetland-count').innerText = STATE.nectar.wetland;
+    }
+    
+    if (STATE.benefitMode !== 'none') {
+        document.getElementById('hud-hoard').innerText = STATE.hoardTokens;
+        const hc = document.getElementById('val-hoard-count');
+        if (hc) hc.innerText = STATE.hoardTokens;
+    }
+    
+    if (STATE.expansions.ae) {
+        buildHummingbirdTrack();
+        const tot = calcTotalHbirdPoints();
+        const hudHbird = document.getElementById('hud-hbird-pts');
+        if (hudHbird) hudHbird.innerText = tot;
+    }
+}
+
+/* ==================== UNDO HISTORY ==================== */
+function saveHistory() {
+    STATE.history.push(JSON.stringify(STATE));
+    if (STATE.history.length > 10) STATE.history.shift();
+}
+
+function undoLastTurn() {
+    if (STATE.history.length === 0) return;
+    const prev = JSON.parse(STATE.history.pop());
+    STATE = { ...STATE, ...prev };
+    renderCurrentNativeCard();
+    renderHummingbirdStage();
+    buildDuetMapSVG();
+    updateUI();
+    addLog("DESFAZER", "Última ação revertida com sucesso.");
+    saveState();
+}
+
+function saveState() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(STATE));
+}
+
+function confirmResetMatch() {
+    if (confirm(STATE.lang === 'pt' ? "Deseja reiniciar a partida e voltar para a tela inicial?" : "Reset match and return to setup screen?")) {
+        STATE.gameStarted = false;
+        localStorage.removeItem(STORAGE_KEY);
+        document.getElementById('view-game').classList.add('hidden');
+        document.getElementById('view-setup').classList.remove('hidden');
+    }
+}
+
+/* ==================== SCORING CALCULATOR ==================== */
+function openScoreModal() {
+    document.getElementById('modal-score').classList.remove('hidden');
+    
+    const rate = STATE.difficulty === 'eaglet' ? 3 : (STATE.difficulty === 'eyed' ? 5 : 4);
+    document.getElementById('lbl-facedown-rate').innerText = rate;
+    
+    document.getElementById('sc-a-facedown-val').innerText = `${STATE.faceDownCards * rate} (${STATE.faceDownCards} aves x ${rate})`;
+    document.getElementById('sc-a-eggs-val').innerText = STATE.eggs;
+    
+    const hoardDiv = STATE.difficulty === 'eaglet' ? 5 : (STATE.difficulty === 'eyed' ? 3 : 4);
+    const hoardEggs = Math.floor(STATE.hoardTokens / hoardDiv);
+    document.getElementById('sc-a-hoard-val').innerText = `${hoardEggs} (${STATE.hoardTokens} fichas / ${hoardDiv})`;
+    
+    document.getElementById('row-sc-nectar').style.display = STATE.expansions.oe ? 'table-row' : 'none';
+    document.getElementById('row-sc-duet').style.display = STATE.mode === 'duet' ? 'table-row' : 'none';
+    document.getElementById('row-sc-hbird').style.display = STATE.expansions.ae ? 'table-row' : 'none';
+    
+    if (STATE.mode === 'duet') {
+        const aDuet = parseInt(document.getElementById('duet-automa-cluster').innerText) || 0;
+        document.getElementById('sc-a-duet-val').innerText = aDuet;
+        document.getElementById('sc-p-duet').value = document.getElementById('duet-player-cluster').innerText || 0;
+    }
+    
+    if (STATE.expansions.ae) {
+        const pts = calcTotalHbirdPoints();
+        document.getElementById('sc-a-hbird-val').innerText = `${pts} VP`;
+    }
+    
+    calcTotalScore();
+}
+
+function closeScoreModal() {
+    document.getElementById('modal-score').classList.add('hidden');
+}
+
+function calcTotalScore() {
+    const rate = STATE.difficulty === 'eaglet' ? 3 : (STATE.difficulty === 'eyed' ? 5 : 4);
+    const hoardDiv = STATE.difficulty === 'eaglet' ? 5 : (STATE.difficulty === 'eyed' ? 3 : 4);
+    const hoardEggs = Math.floor(STATE.hoardTokens / hoardDiv);
+    
+    let aTotal = 0;
+    aTotal += (parseInt(document.getElementById('sc-a-birds').value) || 0);
+    aTotal += (STATE.faceDownCards * rate);
+    aTotal += STATE.eggs;
+    aTotal += (parseInt(document.getElementById('sc-a-goals').value) || 0);
+    if (STATE.expansions.oe) aTotal += (parseInt(document.getElementById('sc-a-nectar').value) || 0);
+    if (STATE.mode === 'duet') aTotal += (parseInt(document.getElementById('sc-a-duet-val').innerText) || 0);
+    if (STATE.expansions.ae) aTotal += calcTotalHbirdPoints();
+    aTotal += hoardEggs;
+    
+    let pTotal = 0;
+    pTotal += (parseInt(document.getElementById('sc-p-birds').value) || 0);
+    pTotal += (parseInt(document.getElementById('sc-p-bonus').value) || 0);
+    pTotal += (parseInt(document.getElementById('sc-p-eggs').value) || 0);
+    pTotal += (parseInt(document.getElementById('sc-p-cache').value) || 0);
+    pTotal += (parseInt(document.getElementById('sc-p-tucked').value) || 0);
+    pTotal += (parseInt(document.getElementById('sc-p-goals').value) || 0);
+    if (STATE.expansions.oe) pTotal += (parseInt(document.getElementById('sc-p-nectar').value) || 0);
+    if (STATE.mode === 'duet') pTotal += (parseInt(document.getElementById('sc-p-duet').value) || 0);
+    if (STATE.expansions.ae) pTotal += (parseInt(document.getElementById('sc-p-hbird').value) || 0);
+    
+    document.getElementById('sc-p-total').innerText = pTotal;
+    document.getElementById('sc-a-total').innerText = aTotal;
+    
+    const banner = document.getElementById('score-winner-banner');
+    if (STATE.mode === 'razzi') {
+        if (pTotal > aTotal) {
+            banner.innerHTML = "🏆 <span style='color:#4ade80;'>A Equipe Venceu a Automarazzi!</span> Suas fotos foram compartilhadas com sucesso!";
+        } else {
+            banner.innerHTML = "📸 <span style='color:#f87171;'>A Automarazzi Venceu!</span> Ela vendeu suas fotos com exclusividade para os tablóides.";
+        }
+    } else {
+        if (pTotal > aTotal) {
+            banner.innerHTML = `🏆 <span style='color:#4ade80;'>Vitória do Jogador!</span> Você superou a Automa por ${pTotal - aTotal} pontos!`;
+        } else if (pTotal < aTotal) {
+            banner.innerHTML = `🦅 <span style='color:#f87171;'>Vitória da Automa!</span> A Automa superou você por ${aTotal - pTotal} pontos.`;
+        } else {
+            banner.innerHTML = "⚖️ <span style='color:#facc15;'>Empate!</span> No desempate oficial, a Automa possui 2 comidas restantes.";
+        }
+    }
+}
+
+/* ==================== HELP MODAL ==================== */
+function openHelpModal() {
+    document.getElementById('modal-help').classList.remove('hidden');
+}
+function closeHelpModal() {
+    document.getElementById('modal-help').classList.add('hidden');
+}
+
+/* ==================== INITIALIZATION ==================== */
+window.addEventListener('DOMContentLoaded', () => {
+    const savedLang = localStorage.getItem('boardbots_lang') || 'pt';
+    setLanguage(savedLang);
+    updateChecklistVisibility();
+    
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+        try {
+            const parsed = JSON.parse(saved);
+            if (parsed && parsed.gameStarted) {
+                STATE = { ...STATE, ...parsed };
+                document.getElementById('view-setup').classList.add('hidden');
+                document.getElementById('view-game').classList.remove('hidden');
+                
+                document.getElementById('panel-duet').classList.toggle('hidden', STATE.mode !== 'duet');
+                document.getElementById('panel-nectar').classList.toggle('hidden', !STATE.expansions.oe);
+                const hbBox = document.getElementById('hummingbird-stage-box');
+                if (hbBox) hbBox.style.display = STATE.expansions.ae ? 'block' : 'none';
+                const hudHb = document.getElementById('hud-hbird-wrap');
+                if (hudHb) hudHb.style.display = STATE.expansions.ae ? 'inline-flex' : 'none';
+                document.getElementById('panel-razzi').classList.toggle('hidden', STATE.mode !== 'razzi');
+                document.getElementById('hud-nectar-wrap').style.display = STATE.expansions.oe ? 'inline-flex' : 'none';
+                document.getElementById('hud-hoard-wrap').style.display = STATE.benefitMode !== 'none' ? 'inline-flex' : 'none';
+                document.getElementById('panel-hoard-controls').style.display = STATE.benefitMode !== 'none' ? 'block' : 'none';
+                document.getElementById('hud-automubon-badge').style.display = STATE.useAutomubon ? 'inline-flex' : 'none';
+                document.getElementById('btn-food-nectar').style.display = STATE.expansions.oe ? 'inline-flex' : 'none';
+                
+                renderCurrentNativeCard();
+                renderHummingbirdStage();
+                buildDuetMapSVG();
+                buildHummingbirdTrack();
+                updatePriorityStrip();
+                updateUI();
+                addLog("RETOMADA", "Partida recuperada com sucesso.");
+            }
+        } catch(e) {}
+    }
+});
+    </script>
+</body>
+</html>

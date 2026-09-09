@@ -14,6 +14,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <!-- SheetJS for BGG / Ludohall CSV & XLSX collection parsing -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<!-- Shared BoardBots ThemeKit for high-quality audio SFX -->
+<script src="../assets/theme-kit.js"></script>
 
 <style>
 :root {
@@ -1082,6 +1084,786 @@ footer {
   .tier-unplayed-finish .tier-name { font-size: 0.8rem; letter-spacing: -0.2px; }
   :root { --tile-size: 74px; }
 }
+
+/* =======================================================
+   1V1 BATTLE ARENA & RANKING ENGINE STYLES
+   ======================================================= */
+.ranking-btn {
+  background: linear-gradient(135deg, rgba(68, 42, 27, 0.9), rgba(122, 95, 39, 0.8)) !important;
+  border-color: var(--brass-bright) !important;
+  color: var(--brass-bright) !important;
+  box-shadow: 0 0 12px rgba(233, 200, 117, 0.3) !important;
+  font-weight: 700;
+}
+.ranking-btn:hover {
+  background: linear-gradient(135deg, #7a5f27, #c5a059) !important;
+  color: #120a06 !important;
+  box-shadow: 0 0 20px rgba(233, 200, 117, 0.6) !important;
+}
+
+.tier-rank-btn {
+  background: rgba(197, 160, 89, 0.18) !important;
+  border: 1px solid var(--brass) !important;
+  color: var(--brass-bright) !important;
+  border-radius: 4px;
+}
+.tier-rank-btn:hover {
+  background: var(--brass) !important;
+  color: #120a06 !important;
+}
+
+/* Setup Modal Tabs */
+.ranking-tabs {
+  display: flex;
+  gap: 6px;
+  border-bottom: 1.5px solid rgba(233, 200, 117, 0.25);
+  margin-bottom: 14px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+.ranking-tab {
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: var(--text-dim);
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.85rem;
+  padding: 8px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+.ranking-tab:hover {
+  color: var(--text-main);
+}
+.ranking-tab.active {
+  color: var(--brass-bright);
+  border-bottom-color: var(--brass-bright);
+  font-weight: 700;
+}
+.rank-panel {
+  display: none;
+}
+.rank-panel.active {
+  display: block;
+}
+.rank-info-box {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(233, 200, 117, 0.2);
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+}
+
+/* Arena Modal Card & Stage */
+.arena-modal-card {
+  max-width: 900px !important;
+  width: 95vw !important;
+  padding: 16px 20px !important;
+  background: linear-gradient(135deg, rgba(26, 15, 9, 0.98), rgba(16, 10, 6, 0.98)), url('../assets/textures/dark-walnut.jpg') !important;
+  border: 2px solid var(--brass) !important;
+  box-shadow: 0 0 50px rgba(0, 0, 0, 0.9), 0 0 30px rgba(233, 200, 117, 0.2) !important;
+  overflow: hidden;
+  position: relative;
+}
+.arena-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(233, 200, 117, 0.2);
+}
+.arena-progress-wrap {
+  flex: 1;
+}
+.arena-progress-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.84rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: var(--brass-bright);
+}
+.arena-progress-track {
+  width: 100%;
+  height: 10px;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(233, 200, 117, 0.3);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.arena-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #38bdf8, #818cf8, #e9c875);
+  border-radius: 10px;
+  transition: width 0.35s ease-out;
+  box-shadow: 0 0 10px rgba(233, 200, 117, 0.5);
+}
+.arena-controls-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.arena-mini-btn {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(233, 200, 117, 0.3);
+  color: var(--brass-bright);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.arena-mini-btn:hover {
+  background: var(--brass-dark);
+  border-color: var(--brass-bright);
+}
+.arena-mini-select {
+  background: rgba(18, 10, 6, 0.9);
+  border: 1px solid rgba(233, 200, 117, 0.35);
+  color: var(--brass-bright);
+  font-size: 0.8rem;
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+/* Arena Stage & Fighters Grid */
+.arena-stage {
+  position: relative;
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  perspective: 1000px;
+  padding: 10px 0;
+  border-radius: 12px;
+  background: radial-gradient(circle at center, rgba(46, 28, 18, 0.5) 0%, rgba(10, 6, 4, 0.85) 100%);
+}
+.arena-fx-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 10;
+}
+.arena-comic-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 25;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.comic-popup {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 3.2rem;
+  color: #fff;
+  text-shadow: 4px 4px 0 #000, 0 0 30px #f59e0b, 0 0 50px #ef4444;
+  letter-spacing: 2px;
+  transform: scale(0.2) rotate(-12deg);
+  animation: comicPop 0.65s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  pointer-events: none;
+}
+@keyframes comicPop {
+  0% { transform: scale(0.2) rotate(-15deg); opacity: 0; }
+  30% { transform: scale(1.3) rotate(-5deg); opacity: 1; }
+  70% { transform: scale(1.05) rotate(4deg); opacity: 1; }
+  100% { transform: scale(1.4) rotate(8deg); opacity: 0; }
+}
+
+.arena-fighters-grid {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 16px;
+  align-items: stretch;
+  width: 100%;
+  z-index: 5;
+  position: relative;
+}
+
+/* Fighter Cards */
+.fighter-card {
+  background: rgba(22, 13, 8, 0.95);
+  border-radius: 14px;
+  padding: 16px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+  position: relative;
+  user-select: none;
+}
+.fighter-left {
+  border: 2px solid rgba(56, 189, 248, 0.45);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6), inset 0 0 20px rgba(56, 189, 248, 0.1);
+}
+.fighter-left:hover {
+  transform: translateY(-4px) scale(1.02);
+  border-color: #38bdf8;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.8), 0 0 30px rgba(56, 189, 248, 0.45);
+}
+.fighter-right {
+  border: 2px solid rgba(239, 68, 68, 0.45);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6), inset 0 0 20px rgba(239, 68, 68, 0.1);
+}
+.fighter-right:hover {
+  transform: translateY(-4px) scale(1.02);
+  border-color: #ef4444;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.8), 0 0 30px rgba(239, 68, 68, 0.45);
+}
+.fighter-key-hint {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+  color: var(--text-dim);
+  background: rgba(0, 0, 0, 0.4);
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+.fighter-img-wrap {
+  width: 170px;
+  height: 170px;
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.7);
+  background: #0d0805;
+  margin-bottom: 12px;
+}
+.fighter-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s;
+}
+.fighter-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+.fighter-title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.15rem;
+  color: #fff;
+  line-height: 1.25;
+  margin-bottom: 6px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.fighter-meta {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: center;
+}
+.fighter-meta-tag {
+  background: rgba(255, 255, 255, 0.08);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+.fighter-select-btn {
+  width: 100%;
+  background: linear-gradient(135deg, var(--brass), var(--brass-dark));
+  color: #120a06;
+  border: 1.5px solid var(--brass-bright);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-family: var(--font-body);
+  font-weight: 800;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+.fighter-select-btn:hover {
+  background: linear-gradient(135deg, var(--brass-bright), var(--brass));
+  box-shadow: 0 0 16px rgba(233, 200, 117, 0.6);
+  transform: translateY(-1px);
+}
+
+/* VS Center Emblem & Controls */
+.arena-vs-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  min-width: 110px;
+}
+.vs-emblem {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #e9c875, #c5a059, #543d14);
+  border: 2px solid #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 25px rgba(233, 200, 117, 0.8), 0 6px 15px rgba(0, 0, 0, 0.6);
+  user-select: none;
+}
+.vs-text {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 1.4rem;
+  color: #120a06;
+  letter-spacing: 1px;
+}
+.vs-pulse-ring {
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 2px solid rgba(233, 200, 117, 0.6);
+  animation: vsPulse 2s infinite;
+  pointer-events: none;
+}
+@keyframes vsPulse {
+  0% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.25); opacity: 0; }
+  100% { transform: scale(1); opacity: 0; }
+}
+
+.arena-action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+.arena-sub-btn {
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(233, 200, 117, 0.3);
+  color: var(--text-main);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.arena-sub-btn:hover:not(:disabled) {
+  background: rgba(197, 160, 89, 0.25);
+  border-color: var(--brass-bright);
+  color: #fff;
+}
+.arena-sub-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.arena-sub-btn.danger:hover:not(:disabled) {
+  background: rgba(220, 38, 38, 0.35);
+  border-color: #ef4444;
+}
+
+/* =======================================================
+   FIGHT ATTACK ANIMATIONS (CSS + Hit-Stop)
+   ======================================================= */
+.arena-hitstop {
+  animation: hitStopFreeze 0.08s linear !important;
+}
+@keyframes hitStopFreeze {
+  0% { transform: scale(1.02); filter: brightness(1.8) contrast(1.2); }
+  100% { transform: scale(1.02); filter: brightness(1.8) contrast(1.2); }
+}
+
+.screen-shake-light {
+  animation: screenShakeLight 0.35s ease-out;
+}
+@keyframes screenShakeLight {
+  0% { transform: translate(0, 0); }
+  20% { transform: translate(-4px, 3px); }
+  40% { transform: translate(4px, -3px); }
+  60% { transform: translate(-3px, -2px); }
+  80% { transform: translate(2px, 1px); }
+  100% { transform: translate(0, 0); }
+}
+
+.screen-shake-heavy {
+  animation: screenShakeHeavy 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+@keyframes screenShakeHeavy {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  15% { transform: translate(-10px, 8px) rotate(-1.5deg); }
+  30% { transform: translate(9px, -8px) rotate(1.2deg); }
+  45% { transform: translate(-7px, 6px) rotate(-0.8deg); }
+  60% { transform: translate(5px, -4px) rotate(0.6deg); }
+  75% { transform: translate(-3px, 2px) rotate(-0.3deg); }
+  100% { transform: translate(0, 0) rotate(0deg); }
+}
+
+/* Attack 1: Hadouken */
+.anim-hadouken-winner {
+  animation: hadoukenLunge 0.5s ease-out;
+}
+@keyframes hadoukenLunge {
+  0% { transform: scale(1); }
+  30% { transform: translateX(-15px) scale(0.95); }
+  60% { transform: translateX(35px) scale(1.08); box-shadow: 0 0 35px #38bdf8; }
+  100% { transform: scale(1); }
+}
+.anim-hadouken-loser {
+  animation: hadoukenKnockback 0.65s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+@keyframes hadoukenKnockback {
+  0% { transform: scale(1); filter: none; }
+  20% { filter: brightness(2) drop-shadow(0 0 25px #38bdf8); }
+  40% { transform: translateX(45px) scale(0.92) rotate(6deg); filter: brightness(1.5) invert(0.2); }
+  70% { transform: translateX(65px) scale(0.85) rotate(12deg); opacity: 0.6; }
+  100% { transform: translateX(90px) scale(0.7) rotate(18deg); opacity: 0; }
+}
+
+/* Attack 2: Kamehameha */
+.anim-kamehameha-winner {
+  animation: kameChargeFire 0.75s ease-out;
+}
+@keyframes kameChargeFire {
+  0% { transform: scale(1); }
+  35% { transform: scale(0.92); filter: drop-shadow(0 0 25px #38bdf8) brightness(1.3); }
+  60% { transform: scale(1.1) translateX(25px); filter: drop-shadow(0 0 45px #60a5fa) brightness(1.6); }
+  100% { transform: scale(1); }
+}
+.anim-kamehameha-loser {
+  animation: kameDisintegrate 0.75s ease-out forwards;
+}
+@keyframes kameDisintegrate {
+  0% { transform: scale(1); filter: none; }
+  25% { filter: brightness(3) contrast(1.5) drop-shadow(0 0 40px #60a5fa); transform: scale(1.05); }
+  50% { transform: translateX(60px) scale(0.9) skewX(-15deg); filter: blur(2px) brightness(2); }
+  75% { transform: translateX(110px) scale(0.7) skewX(-25deg); filter: blur(6px) brightness(3); opacity: 0.5; }
+  100% { transform: translateX(160px) scale(0.4) skewX(-35deg); filter: blur(12px); opacity: 0; }
+}
+
+/* Attack 3: Dragon Punch (Shoryuken) */
+.anim-dragon-winner {
+  animation: shoryuLunge 0.65s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+@keyframes shoryuLunge {
+  0% { transform: scale(1); }
+  30% { transform: translateY(15px) scale(0.95); }
+  60% { transform: translate(30px, -25px) scale(1.1) rotate(5deg); box-shadow: 0 0 40px #f59e0b; }
+  100% { transform: scale(1); }
+}
+.anim-dragon-loser {
+  animation: dragonUppercut 0.7s cubic-bezier(0.215, 0.61, 0.355, 1) forwards;
+}
+@keyframes dragonUppercut {
+  0% { transform: scale(1); }
+  20% { filter: brightness(2) drop-shadow(0 0 35px #f59e0b); transform: translateY(-10px); }
+  50% { transform: translateY(-90px) rotate(-18deg) scale(0.85); filter: drop-shadow(0 0 25px #ef4444); }
+  80% { transform: translateY(-150px) rotate(-35deg) scale(0.65); opacity: 0.4; }
+  100% { transform: translateY(-220px) rotate(-55deg) scale(0.4); opacity: 0; }
+}
+
+/* Attack 4: Lightning Strike */
+.anim-lightning-loser {
+  animation: lightningShock 0.7s ease-out forwards;
+}
+@keyframes lightningShock {
+  0% { transform: scale(1); }
+  10% { filter: brightness(4) invert(0.8); transform: translate(-6px, 4px) scale(1.05); }
+  25% { filter: brightness(1) invert(0); transform: translate(6px, -4px); }
+  40% { filter: brightness(3.5) drop-shadow(0 0 40px #a855f7); transform: translate(-4px, -3px); }
+  60% { filter: brightness(1.5) drop-shadow(0 0 20px #818cf8); transform: translateY(20px) rotate(8deg); }
+  80% { transform: translateY(50px) rotate(15deg) scale(0.8); opacity: 0.5; }
+  100% { transform: translateY(80px) rotate(22deg) scale(0.5); opacity: 0; }
+}
+
+/* Attack 5: Lightsaber Slash */
+.anim-lightsaber-loser {
+  animation: lightsaberCut 0.65s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+@keyframes lightsaberCut {
+  0% { transform: scale(1); clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); }
+  35% { filter: drop-shadow(0 0 35px #10b981) brightness(2.5); transform: scale(1.02); }
+  60% { transform: translate(15px, 15px) rotate(8deg); filter: drop-shadow(0 0 15px #10b981); opacity: 0.7; }
+  100% { transform: translate(40px, 40px) rotate(20deg) scale(0.6); opacity: 0; }
+}
+
+/* Attack 6: Battleaxe Chop */
+.anim-battleaxe-loser {
+  animation: axeCleave 0.65s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+@keyframes axeCleave {
+  0% { transform: scale(1); }
+  25% { filter: brightness(2.5); transform: translateY(10px) scale(0.95); }
+  50% { transform: translateY(40px) rotate(-12deg) scale(0.85); filter: contrast(1.5); }
+  75% { transform: translateY(80px) rotate(-24deg) scale(0.65); opacity: 0.5; }
+  100% { transform: translateY(120px) rotate(-35deg) scale(0.4); opacity: 0; }
+}
+
+/* Attack 7: Rasengan */
+.anim-rasengan-loser {
+  animation: rasenganVortex 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+@keyframes rasenganVortex {
+  0% { transform: scale(1) rotate(0deg); }
+  30% { filter: brightness(2) drop-shadow(0 0 35px #06b6d4); transform: scale(1.1) rotate(45deg); }
+  60% { transform: scale(0.7) rotate(270deg) translate(30px, 20px); filter: blur(3px); opacity: 0.6; }
+  100% { transform: scale(0.2) rotate(720deg) translate(80px, 50px); filter: blur(8px); opacity: 0; }
+}
+
+/* Attack 8: Cosmic Meteor */
+.anim-meteor-loser {
+  animation: meteorCrater 0.75s ease-out forwards;
+}
+@keyframes meteorCrater {
+  0% { transform: scale(1); }
+  25% { filter: brightness(3) drop-shadow(0 0 50px #ea580c); transform: scale(1.08); }
+  50% { transform: translateY(30px) scale(0.85) skewX(10deg); filter: contrast(1.8) drop-shadow(0 0 30px #b91c1c); }
+  75% { transform: translateY(70px) scale(0.6) skewX(20deg); opacity: 0.4; }
+  100% { transform: translateY(110px) scale(0.3) skewX(30deg); opacity: 0; }
+}
+
+/* Attack 9: Volley of Arrows */
+.anim-arrows-loser {
+  animation: arrowsBarrage 0.7s ease-out forwards;
+}
+@keyframes arrowsBarrage {
+  0% { transform: scale(1); }
+  20% { transform: translate(-3px, -2px) rotate(-1deg); filter: brightness(1.5) drop-shadow(0 0 20px #f59e0b); }
+  40% { transform: translate(4px, 2px) rotate(2deg); }
+  60% { transform: translate(-2px, 5px) rotate(-3deg); filter: drop-shadow(0 0 25px #ef4444); opacity: 0.7; }
+  80% { transform: translateY(30px) rotate(8deg) scale(0.75); opacity: 0.4; }
+  100% { transform: translateY(60px) rotate(15deg) scale(0.5); opacity: 0; }
+}
+
+/* Attack 10: Katana Iaijutsu */
+.katana-monochrome {
+  filter: grayscale(1) contrast(2.5) brightness(0.7) !important;
+  transition: filter 0.05s ease;
+}
+.anim-katana-loser {
+  animation: katanaSlash 0.65s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@keyframes katanaSlash {
+  0% { transform: scale(1); }
+  30% { transform: scale(1.03); filter: drop-shadow(0 0 30px #dc2626) invert(0.3); }
+  60% { transform: translate(25px, -15px) rotate(10deg); opacity: 0.7; }
+  100% { transform: translate(60px, -30px) rotate(25deg) scale(0.5); opacity: 0; }
+}
+
+/* =======================================================
+   RESULTS & PODIUM STYLES
+   ======================================================= */
+.results-confetti-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 5;
+}
+.results-podium {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 12px;
+  margin: 20px 0;
+  min-height: 220px;
+  position: relative;
+  z-index: 10;
+}
+.podium-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: 130px;
+}
+.podium-medal {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 0.88rem;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+.rank-1 .podium-medal { color: #f59e0b; font-size: 0.95rem; text-shadow: 0 0 10px rgba(245, 158, 11, 0.5); }
+.rank-2 .podium-medal { color: #cbd5e1; }
+.rank-3 .podium-medal { color: #d97706; }
+.podium-crown {
+  font-size: 1.5rem;
+  margin-bottom: -4px;
+  animation: crownBounce 2s infinite ease-in-out;
+}
+@keyframes crownBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+.podium-img-wrap {
+  width: 90px;
+  height: 90px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.6);
+  border: 2px solid rgba(233, 200, 117, 0.4);
+  margin-bottom: 8px;
+  background: #120a06;
+}
+.champion-wrap {
+  width: 110px;
+  height: 110px;
+  border: 3px solid #e9c875;
+  box-shadow: 0 0 25px rgba(233, 200, 117, 0.7), 0 8px 25px rgba(0, 0, 0, 0.8);
+}
+.podium-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.podium-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: #fff;
+  max-width: 120px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 8px;
+}
+.champion-title {
+  font-size: 0.92rem;
+  color: var(--brass-bright);
+}
+.podium-pedestal {
+  width: 100%;
+  border-radius: 8px 8px 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 2px 10px rgba(255, 255, 255, 0.15), 0 4px 15px rgba(0, 0, 0, 0.6);
+}
+.pedestal-1 {
+  height: 85px;
+  background: linear-gradient(180deg, #d97706, #78350f);
+  border: 2px solid #fbbf24;
+  border-bottom: none;
+}
+.pedestal-2 {
+  height: 60px;
+  background: linear-gradient(180deg, #64748b, #334155);
+  border: 2px solid #94a3b8;
+  border-bottom: none;
+}
+.pedestal-3 {
+  height: 42px;
+  background: linear-gradient(180deg, #92400e, #451a03);
+  border: 2px solid #b45309;
+  border-bottom: none;
+}
+
+.results-list-scroll {
+  max-height: 240px;
+  overflow-y: auto;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(233, 200, 117, 0.2);
+  border-radius: 8px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.results-rank-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+.results-rank-row:hover {
+  background: rgba(197, 160, 89, 0.12);
+}
+.results-rank-num {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 0.95rem;
+  width: 32px;
+  color: var(--brass-bright);
+  text-align: center;
+}
+.results-rank-img {
+  width: 38px;
+  height: 38px;
+  border-radius: 5px;
+  object-fit: cover;
+  border: 1px solid rgba(233, 200, 117, 0.3);
+}
+.results-rank-name {
+  flex: 1;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.results-rank-info {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+}
+
+.results-actions-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+@media (max-width: 600px) {
+  .arena-fighters-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .arena-vs-column {
+    flex-direction: row;
+    justify-content: center;
+    min-width: unset;
+  }
+  .fighter-img-wrap {
+    width: 120px;
+    height: 120px;
+  }
+  .results-podium {
+    gap: 6px;
+  }
+  .podium-col {
+    width: 100px;
+  }
+  .podium-img-wrap {
+    width: 70px;
+    height: 70px;
+  }
+  .champion-wrap {
+    width: 85px;
+    height: 85px;
+  }
+  .results-actions-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -1155,6 +1937,10 @@ footer {
         <button class="tool-btn" onclick="document.getElementById('importAnyFileInput').click()" title="Carregar lista (.json) ou importar coleção / partidas (.csv, .xlsx)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
           <span data-i18n="btn_load_json">Carregar / Importar</span>
+        </button>
+        <button class="tool-btn ranking-btn" onclick="openRankingSetupModal()" title="Rankeamento 1x1 estilo Pub Meeple (Jogos não jogados, BGG)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 17.5 3 6V3h3l11.5 11.5"/><path d="m13 19 6 2 2-2-2-6"/><path d="m5 11 4-4"/><path d="m19 13-4 4"/></svg>
+          <span data-i18n="btn_battle_1v1">Batalha 1x1</span>
         </button>
         <input type="file" id="importAnyFileInput" accept=".json,.csv,.xlsx,.xls,application/json,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" style="display:none;" onchange="handleAnyImportFile(event)">
         <input type="file" id="importJsonInput" accept=".json,application/json" style="display:none;" onchange="handleAnyImportFile(event)">
@@ -1553,6 +2339,331 @@ footer {
   </div>
 </div>
 
+<!-- Modal: Setup Ranking 1v1 (Pub Meeple style) -->
+<div id="rankingSetupModal" class="modal-overlay">
+  <div class="modal-card" style="max-width: 640px;">
+    <button class="modal-close-btn" onclick="closeModal('rankingSetupModal')">&times;</button>
+    <h2>
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 17.5 3 6V3h3l11.5 11.5"/><path d="m13 19 6 2 2-2-2-6"/><path d="m5 11 4-4"/><path d="m19 13-4 4"/></svg>
+      <span data-i18n="modal_ranking_setup_title">Rankeamento 1x1 — Batalha de Jogos</span>
+    </h2>
+    <p style="font-size:0.85rem; color:var(--text-dim); margin-top:-4px; margin-bottom:14px;" data-i18n="modal_ranking_setup_desc">
+      Compare jogos dois a dois no formato 1x1 (estilo Pub Meeple) para descobrir seu ranking definitivo de preferências, com efeitos visuais de luta épicos!
+    </p>
+
+    <!-- Source Tabs -->
+    <div class="ranking-tabs">
+      <button id="rankTabUnplayed" class="ranking-tab active" onclick="switchRankingTab('unplayed')">
+        <span data-i18n="rank_tab_unplayed">🎮 Não Jogados (<span id="rankUnplayedCount">0</span>)</span>
+      </button>
+      <button id="rankTabBgg" class="ranking-tab" onclick="switchRankingTab('bgg')">
+        <span data-i18n="rank_tab_bgg">🎲 BGG Usuário</span>
+      </button>
+      <button id="rankTabOtherTier" class="ranking-tab" onclick="switchRankingTab('other')">
+        <span data-i18n="rank_tab_other">📊 Outro Tier</span>
+      </button>
+      <button id="rankTabCustom" class="ranking-tab" onclick="switchRankingTab('custom')">
+        <span data-i18n="rank_tab_custom">📝 Manual</span>
+      </button>
+    </div>
+
+    <!-- Tab 1: Unplayed tier from tierlist -->
+    <div id="rankPanelUnplayed" class="rank-panel active">
+      <div class="rank-info-box">
+        <div style="font-weight:700; color:var(--brass-bright); margin-bottom:4px;" data-i18n="rank_unplayed_heading">Jogos do Tier "Não jogado"</div>
+        <div id="rankUnplayedDesc" style="font-size:0.85rem; color:var(--text-dim);">Carregando itens...</div>
+      </div>
+    </div>
+
+    <!-- Tab 2: BGG Collection by username -->
+    <div id="rankPanelBgg" class="rank-panel" style="display:none;">
+      <div class="form-group" style="margin-bottom:10px;">
+        <label style="font-size:0.85rem; font-weight:600; color:var(--brass-bright);" data-i18n="label_bgg_username">Nome de Usuário no BoardGameGeek (BGG):</label>
+        <div style="display:flex; gap:8px; margin-top:4px;">
+          <input type="text" id="bggRankUsername" class="form-input" placeholder="Ex: Collth" value="Collth">
+          <button type="button" class="tool-btn primary" onclick="fetchBggForRanking()" id="btnFetchBggRank" style="white-space:nowrap;">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <span data-i18n="btn_fetch_bgg">Buscar no BGG</span>
+          </button>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-bottom:10px; background:rgba(0,0,0,0.25); padding:10px; border-radius:8px; border:1px solid rgba(233,200,117,0.15);">
+        <label style="display:flex; align-items:center; gap:8px; font-size:0.82rem; cursor:pointer; color:var(--text-main);">
+          <input type="checkbox" id="bggFilterUnplayed" checked style="accent-color:var(--brass); cursor:pointer;" onchange="updateBggFilterPreview()">
+          <span data-i18n="bgg_filter_unplayed">Apenas Não Jogados (0 partidas)</span>
+        </label>
+        <label style="display:flex; align-items:center; gap:8px; font-size:0.82rem; cursor:pointer; color:var(--text-main);">
+          <input type="checkbox" id="bggFilterOwned" checked style="accent-color:var(--brass); cursor:pointer;" onchange="updateBggFilterPreview()">
+          <span data-i18n="bgg_filter_owned">Apenas Possuídos (Owned)</span>
+        </label>
+        <label style="display:flex; align-items:center; gap:8px; font-size:0.82rem; cursor:pointer; color:var(--text-main);">
+          <input type="checkbox" id="bggFilterWishlist" style="accent-color:var(--brass); cursor:pointer;" onchange="updateBggFilterPreview()">
+          <span data-i18n="bgg_filter_wishlist">Incluir Desejados / Want to Play</span>
+        </label>
+        <label style="display:flex; align-items:center; gap:8px; font-size:0.82rem; cursor:pointer; color:var(--text-main);">
+          <input type="checkbox" id="bggFilterExpansions" style="accent-color:var(--brass); cursor:pointer;" onchange="updateBggFilterPreview()">
+          <span data-i18n="bgg_filter_exp">Incluir Expansões</span>
+        </label>
+      </div>
+
+      <div id="bggRankStatus" style="font-size:0.85rem; color:var(--text-dim); padding:8px 10px; background:rgba(233,200,117,0.06); border-radius:6px; margin-bottom:10px; min-height:36px; display:flex; align-items:center; gap:8px;">
+        <span id="bggRankStatusText">Clique em "Buscar no BGG" para carregar a coleção do usuário.</span>
+      </div>
+    </div>
+
+    <!-- Tab 3: Other Tier -->
+    <div id="rankPanelOther" class="rank-panel" style="display:none;">
+      <div class="form-group">
+        <label style="font-size:0.85rem; font-weight:600; color:var(--brass-bright);" data-i18n="label_select_tier">Selecione o Tier para Rankear:</label>
+        <select id="rankTierSelect" class="form-input" style="background:#1a100a; color:#fff;" onchange="updateOtherTierPreview()">
+        </select>
+        <div id="rankOtherTierDesc" style="font-size:0.82rem; color:var(--text-dim); margin-top:6px;"></div>
+      </div>
+    </div>
+
+    <!-- Tab 4: Custom Text List -->
+    <div id="rankPanelCustom" class="rank-panel" style="display:none;">
+      <div class="form-group">
+        <label style="font-size:0.85rem; font-weight:600; color:var(--brass-bright);" data-i18n="label_custom_list">Lista de Jogos (um por linha):</label>
+        <textarea id="rankCustomTextarea" class="form-input" rows="5" placeholder="Ark Nova&#10;Dune: Imperium&#10;Brass: Birmingham&#10;Terraforming Mars&#10;Castles of Burgundy..." oninput="updateCustomListPreview()"></textarea>
+        <div id="rankCustomDesc" style="font-size:0.82rem; color:var(--text-dim); margin-top:4px;"></div>
+      </div>
+    </div>
+
+    <!-- Battle & Animation Options -->
+    <div style="background:rgba(20,12,8,0.7); border:1px solid rgba(233,200,117,0.25); border-radius:10px; padding:12px 14px; margin-top:14px; margin-bottom:18px;">
+      <div style="font-size:0.88rem; font-weight:700; color:var(--brass-bright); margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+        <span>💥 Opções da Arena de Luta & Efeitos</span>
+      </div>
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+        <label style="display:flex; align-items:center; gap:8px; font-size:0.84rem; cursor:pointer; color:var(--text-main);">
+          <input type="checkbox" id="rankOptFxEnabled" checked style="accent-color:var(--brass); cursor:pointer;">
+          <span data-i18n="opt_fx_enabled">💥 Animações de Luta Ativadas</span>
+        </label>
+        <label style="display:flex; align-items:center; gap:8px; font-size:0.84rem; cursor:pointer; color:var(--text-main);">
+          <input type="checkbox" id="rankOptAudioEnabled" checked style="accent-color:var(--brass); cursor:pointer;">
+          <span data-i18n="opt_audio_enabled">🔊 Sons Arcade (Web Audio)</span>
+        </label>
+      </div>
+
+      <div style="display:flex; align-items:center; gap:10px;">
+        <label style="font-size:0.82rem; color:var(--text-dim); white-space:nowrap;" data-i18n="label_attack_effect">Golpe Especial:</label>
+        <select id="rankAttackEffect" class="form-input" style="font-size:0.82rem; padding:6px 10px; background:#180f0a; color:#fff;">
+          <option value="random" selected>🎲 Aleatório (Arsenal Completo)</option>
+          <option value="hadouken">🌀 Hadouken (Street Fighter)</option>
+          <option value="kamehameha">⚡ Kamehameha (Dragon Ball)</option>
+          <option value="dragon_punch">🐉 Dragon Punch (Shoryuken Flamejante)</option>
+          <option value="lightning">⚡ Ataque de Raio (Fúria de Thor)</option>
+          <option value="lightsaber">🗡️ Sabre de Luz Duplo (Plasma Cut)</option>
+          <option value="battleaxe">🪓 Machados Vikings (Cleave Brutal)</option>
+          <option value="rasengan">🌀 Rasengan (Vórtice Espiral)</option>
+          <option value="meteor">☄️ Meteoro Cósmico (Extinção)</option>
+          <option value="arrows">🏹 Chuva de Flechas de Fogo</option>
+          <option value="katana">⚔️ Corte Dimensional (Katana Iaijutsu)</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <div id="rankCandidateCount" style="font-size:0.88rem; font-weight:700; color:var(--brass-bright);">0 jogos selecionados</div>
+      <div style="display:flex; gap:10px;">
+        <button class="tool-btn" onclick="closeModal('rankingSetupModal')" data-i18n="btn_cancel">Cancelar</button>
+        <button class="tool-btn primary" onclick="startRankingBattle()" id="btnStartBattle">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          <span data-i18n="btn_enter_arena">🔥 Iniciar Batalha 1x1</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: 1v1 Battle Arena (Pub Meeple style) -->
+<div id="rankingArenaModal" class="modal-overlay">
+  <div class="modal-card arena-modal-card">
+    <!-- Arena Header -->
+    <div class="arena-header">
+      <div class="arena-progress-wrap">
+        <div class="arena-progress-info">
+          <span id="arenaRoundText" class="arena-round-text">Batalha 1 de ~20</span>
+          <span id="arenaPercentText" class="arena-percent-text">5%</span>
+        </div>
+        <div class="arena-progress-track">
+          <div id="arenaProgressBar" class="arena-progress-fill" style="width: 5%;"></div>
+        </div>
+      </div>
+
+      <div class="arena-controls-row">
+        <button id="arenaBtnSound" class="arena-mini-btn" onclick="toggleArenaSound()" title="Ativar/Desativar Som">
+          <span id="arenaSoundIcon">🔊</span>
+        </button>
+        <button id="arenaBtnFx" class="arena-mini-btn" onclick="toggleArenaFx()" title="Ativar/Desativar Efeitos Visuais">
+          <span id="arenaFxIcon">💥</span>
+        </button>
+        <select id="arenaAttackQuickSelect" class="arena-mini-select" onchange="changeArenaAttack(this.value)" title="Escolher Ataque">
+          <option value="random">🎲 Aleatório</option>
+          <option value="hadouken">🌀 Hadouken</option>
+          <option value="kamehameha">⚡ Kamehameha</option>
+          <option value="dragon_punch">🐉 Dragon Punch</option>
+          <option value="lightning">⚡ Raio de Thor</option>
+          <option value="lightsaber">🗡️ Sabre de Luz</option>
+          <option value="battleaxe">🪓 Machados</option>
+          <option value="rasengan">🌀 Rasengan</option>
+          <option value="meteor">☄️ Meteoro</option>
+          <option value="arrows">🏹 Flechas</option>
+          <option value="katana">⚔️ Katana Iai</option>
+        </select>
+        <button class="arena-mini-btn" onclick="exitArenaPrompt()" title="Sair da Arena">✕</button>
+      </div>
+    </div>
+
+    <!-- Arena Stage -->
+    <div id="arenaStage" class="arena-stage">
+      <!-- Particle & FX Canvas Overlay -->
+      <canvas id="arenaFxCanvas" class="arena-fx-canvas"></canvas>
+
+      <!-- Comic Popups Layer (POW!, K.O.!, CRITICAL!) -->
+      <div id="arenaComicLayer" class="arena-comic-layer"></div>
+
+      <!-- Fighters Row -->
+      <div class="arena-fighters-grid">
+        <!-- Fighter A (Left) -->
+        <div id="fighterCardLeft" class="fighter-card fighter-left" onclick="chooseFighter('left')" tabindex="0">
+          <div class="fighter-key-hint">Tecla [ A ] ou [ ← ]</div>
+          <div class="fighter-img-wrap">
+            <img id="fighterImgLeft" src="" alt="Game A" class="fighter-img">
+            <div class="fighter-aura"></div>
+          </div>
+          <div class="fighter-details">
+            <div id="fighterTitleLeft" class="fighter-title">Game A</div>
+            <div id="fighterMetaLeft" class="fighter-meta"></div>
+          </div>
+          <button class="fighter-select-btn" data-i18n="btn_choose_game">Escolher Este 👑</button>
+        </div>
+
+        <!-- Center VS & Quick Actions -->
+        <div class="arena-vs-column">
+          <div class="vs-emblem">
+            <span class="vs-text">VS</span>
+            <div class="vs-pulse-ring"></div>
+          </div>
+
+          <div class="arena-action-buttons">
+            <button class="arena-sub-btn" onclick="chooseTie()" title="Empate (ambos possuem a mesma preferência)">
+              <span>🤝 Empate [T]</span>
+            </button>
+            <button id="arenaUndoBtn" class="arena-sub-btn" onclick="undoFighterChoice()" title="Desfazer última escolha" disabled>
+              <span>↩️ Desfazer [Z]</span>
+            </button>
+            <button class="arena-sub-btn danger" onclick="eliminateCurrentFightersPrompt()" title="Remover um destes jogos do torneio">
+              <span>🗑️ Eliminar</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Fighter B (Right) -->
+        <div id="fighterCardRight" class="fighter-card fighter-right" onclick="chooseFighter('right')" tabindex="0">
+          <div class="fighter-key-hint">Tecla [ L ] ou [ → ]</div>
+          <div class="fighter-img-wrap">
+            <img id="fighterImgRight" src="" alt="Game B" class="fighter-img">
+            <div class="fighter-aura"></div>
+          </div>
+          <div class="fighter-details">
+            <div id="fighterTitleRight" class="fighter-title">Game B</div>
+            <div id="fighterMetaRight" class="fighter-meta"></div>
+          </div>
+          <button class="fighter-select-btn" data-i18n="btn_choose_game">Escolher Este 👑</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Tournament Results & Podium -->
+<div id="rankingResultsModal" class="modal-overlay">
+  <div class="modal-card" style="max-width: 720px; position:relative; overflow:hidden;">
+    <button class="modal-close-btn" onclick="closeModal('rankingResultsModal')">&times;</button>
+    
+    <!-- Confetti Canvas -->
+    <canvas id="resultsConfettiCanvas" class="results-confetti-canvas"></canvas>
+
+    <div style="text-align:center; margin-bottom:16px;">
+      <div style="font-size:2rem; margin-bottom:4px;">🏆</div>
+      <h2 style="font-family:var(--font-display); font-weight:900; color:var(--brass-bright); margin:0;" data-i18n="results_title">Ranking 1x1 Concluído!</h2>
+      <p style="color:var(--text-dim); font-size:0.88rem; margin:4px 0 0;" data-i18n="results_subtitle">Aqui está a classificação final dos seus jogos ordenada pelos confrontos diretos.</p>
+    </div>
+
+    <!-- Podium for Top 3 -->
+    <div id="resultsPodium" class="results-podium">
+      <!-- 2nd Place -->
+      <div id="podium2" class="podium-col rank-2">
+        <div class="podium-medal">🥈 2º</div>
+        <div class="podium-img-wrap">
+          <img id="podiumImg2" src="" class="podium-img">
+        </div>
+        <div id="podiumTitle2" class="podium-title">Jogo 2</div>
+        <div class="podium-pedestal pedestal-2"></div>
+      </div>
+
+      <!-- 1st Place (Champion) -->
+      <div id="podium1" class="podium-col rank-1">
+        <div class="podium-crown">👑</div>
+        <div class="podium-medal">🥇 1º CAMPEÃO</div>
+        <div class="podium-img-wrap champion-wrap">
+          <img id="podiumImg1" src="" class="podium-img">
+        </div>
+        <div id="podiumTitle1" class="podium-title champion-title">Jogo 1</div>
+        <div class="podium-pedestal pedestal-1"></div>
+      </div>
+
+      <!-- 3rd Place -->
+      <div id="podium3" class="podium-col rank-3">
+        <div class="podium-medal">🥉 3º</div>
+        <div class="podium-img-wrap">
+          <img id="podiumImg3" src="" class="podium-img">
+        </div>
+        <div id="podiumTitle3" class="podium-title">Jogo 3</div>
+        <div class="podium-pedestal pedestal-3"></div>
+      </div>
+    </div>
+
+    <!-- Full Ranking List -->
+    <div style="margin-top:20px; margin-bottom:16px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <span style="font-size:0.88rem; font-weight:700; color:var(--brass-bright);" data-i18n="results_full_list">Classificação Geral:</span>
+        <span id="resultsTotalCount" style="font-size:0.8rem; color:var(--text-dim);">0 jogos</span>
+      </div>
+      <div id="resultsListScroll" class="results-list-scroll">
+        <!-- Rendered by JS -->
+      </div>
+    </div>
+
+    <!-- Destination Actions -->
+    <div class="results-actions-grid">
+      <button class="tool-btn primary" onclick="applyRankingToUnplayedTier()" id="btnApplyUnplayed">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="20 6 9 17 4 12"/></svg>
+        <span data-i18n="btn_apply_to_unplayed">Reordenar Tier "Não Jogado"</span>
+      </button>
+
+      <button class="tool-btn" onclick="distributeRankingToTiers()">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg>
+        <span data-i18n="btn_distribute_tiers">Distribuir em Tiers (S, A, B...)</span>
+      </button>
+
+      <button class="tool-btn" onclick="copyRankingText()">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        <span data-i18n="btn_copy_ranking">Copiar Texto</span>
+      </button>
+
+      <button class="tool-btn" onclick="downloadRankingCsv()">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <span data-i18n="btn_download_csv">Baixar CSV</span>
+      </button>
+    </div>
+  </div>
+</div>
+
 <script>
 /* =======================================================
    i18n DICTIONARY
@@ -1631,7 +2742,35 @@ const I18N = {
     toast_exported: 'Imagem exportada com sucesso!',
     toast_txt_exported: 'Lista em texto exportada com sucesso!',
     toast_recalculated: 'Cores dos Tiers recalculadas no gradiente!',
-    unplayed_name: 'Não jogado'
+    unplayed_name: 'Não jogado',
+    btn_battle_1v1: 'Batalha 1x1',
+    modal_ranking_setup_title: 'Rankeamento 1x1 — Batalha de Jogos',
+    modal_ranking_setup_desc: 'Compare jogos dois a dois no formato 1x1 (estilo Pub Meeple) para descobrir seu ranking definitivo de preferências, com efeitos visuais de luta épicos!',
+    rank_tab_unplayed: '🎮 Não Jogados',
+    rank_tab_bgg: '🎲 BGG Usuário',
+    rank_tab_other: '📊 Outro Tier',
+    rank_tab_custom: '📝 Manual',
+    rank_unplayed_heading: 'Jogos do Tier "Não jogado"',
+    label_bgg_username: 'Nome de Usuário no BoardGameGeek (BGG):',
+    btn_fetch_bgg: 'Buscar no BGG',
+    bgg_filter_unplayed: 'Apenas Não Jogados (0 partidas)',
+    bgg_filter_owned: 'Apenas Possuídos (Owned)',
+    bgg_filter_wishlist: 'Incluir Desejados / Want to Play',
+    bgg_filter_exp: 'Incluir Expansões',
+    label_select_tier: 'Selecione o Tier para Rankear:',
+    label_custom_list: 'Lista de Jogos (um por linha):',
+    opt_fx_enabled: '💥 Animações de Luta Ativadas',
+    opt_audio_enabled: '🔊 Sons Arcade (Web Audio)',
+    label_attack_effect: 'Golpe Especial:',
+    btn_enter_arena: '🔥 Iniciar Batalha 1x1',
+    btn_choose_game: 'Escolher Este 👑',
+    results_title: 'Ranking 1x1 Concluído!',
+    results_subtitle: 'Aqui está a classificação final dos seus jogos ordenada pelos confrontos diretos.',
+    results_full_list: 'Classificação Geral:',
+    btn_apply_to_unplayed: 'Reordenar Tier "Não Jogado"',
+    btn_distribute_tiers: 'Distribuir em Tiers (S, A, B...)',
+    btn_copy_ranking: 'Copiar Texto',
+    btn_download_csv: 'Baixar CSV'
   },
   en: {
     back_home: 'Board Bots',
@@ -1706,11 +2845,43 @@ const I18N = {
     toast_exported: 'Image exported successfully!',
     toast_txt_exported: 'Text list exported successfully!',
     toast_recalculated: 'Tier colors recalculated along the gradient spectrum!',
-    unplayed_name: 'Unplayed'
+    unplayed_name: 'Unplayed',
+    btn_battle_1v1: '1v1 Battle',
+    modal_ranking_setup_title: '1v1 Ranking — Game Battle',
+    modal_ranking_setup_desc: 'Compare board games head-to-head in 1v1 matchups (Pub Meeple style) to discover your definitive preference rankings, with epic battle animations!',
+    rank_tab_unplayed: '🎮 Unplayed',
+    rank_tab_bgg: '🎲 BGG User',
+    rank_tab_other: '📊 Other Tier',
+    rank_tab_custom: '📝 Custom',
+    rank_unplayed_heading: 'Games from "Unplayed" tier',
+    label_bgg_username: 'BoardGameGeek (BGG) Username:',
+    btn_fetch_bgg: 'Fetch from BGG',
+    bgg_filter_unplayed: 'Only Unplayed (0 plays)',
+    bgg_filter_owned: 'Only Owned games',
+    bgg_filter_wishlist: 'Include Wishlist / Want to Play',
+    bgg_filter_exp: 'Include Expansions',
+    label_select_tier: 'Select Tier to Rank:',
+    label_custom_list: 'List of Games (one per line):',
+    opt_fx_enabled: '💥 Battle Animations Enabled',
+    opt_audio_enabled: '🔊 Arcade Sounds (Web Audio)',
+    label_attack_effect: 'Special Move:',
+    btn_enter_arena: '🔥 Start 1v1 Battle',
+    btn_choose_game: 'Choose This 👑',
+    results_title: '1v1 Ranking Completed!',
+    results_subtitle: 'Here is the final ranking of your games determined by head-to-head battles.',
+    results_full_list: 'Overall Standings:',
+    btn_apply_to_unplayed: 'Reorder "Unplayed" Tier',
+    btn_distribute_tiers: 'Distribute across Tiers (S, A, B...)',
+    btn_copy_ranking: 'Copy Text',
+    btn_download_csv: 'Download CSV'
   }
 };
 
-let currentLang = localStorage.getItem('boardbots_lang') || 'pt';
+let currentLang = 'pt';
+try {
+  const savedLang = localStorage.getItem('boardbots_lang');
+  if (savedLang) currentLang = savedLang;
+} catch (e) {}
 function t(key) {
   return (I18N[currentLang] && I18N[currentLang][key]) || (I18N.pt && I18N.pt[key]) || key;
 }
@@ -1900,6 +3071,16 @@ function renderBoard() {
         delBtn.onclick = () => deleteTier(tier.id);
         actions.appendChild(delBtn);
       }
+    } else {
+      const rankBtn = document.createElement('button');
+      rankBtn.className = 'tier-action-btn tier-rank-btn';
+      rankBtn.title = 'Rankear jogos deste tier em 1x1 (Battle Arena)';
+      rankBtn.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 17.5 3 6V3h3l11.5 11.5"/><path d="m13 19 6 2 2-2-2-6"/></svg>';
+      rankBtn.onclick = (e) => {
+        e.stopPropagation();
+        openRankingSetupModal(tier.id);
+      };
+      actions.appendChild(rankBtn);
     }
 
     labelBox.appendChild(nameSpan);
@@ -5196,7 +6377,1460 @@ window.addEventListener('DOMContentLoaded', () => {
   if (titleInput) {
     titleInput.addEventListener('change', saveState);
   }
+
+  // Keyboard navigation for 1v1 Battle Arena
+  window.addEventListener('keydown', (e) => {
+    const arena = document.getElementById('rankingArenaModal');
+    if (!arena || !arena.classList.contains('visible')) return;
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+
+    if (e.key === 'a' || e.key === 'A' || e.key === 'ArrowLeft') {
+      e.preventDefault();
+      chooseFighter('left');
+    } else if (e.key === 'l' || e.key === 'L' || e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+      e.preventDefault();
+      chooseFighter('right');
+    } else if (e.key === 't' || e.key === 'T') {
+      e.preventDefault();
+      chooseTie();
+    } else if (e.key === 'z' || e.key === 'Z' || e.key === 'u' || e.key === 'U') {
+      e.preventDefault();
+      undoFighterChoice();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      exitArenaPrompt();
+    }
+  });
 });
+
+/* =======================================================
+   1V1 BATTLE ARENA & RANKING ENGINE JAVASCRIPT
+   ======================================================= */
+
+// Sound System: Powered by ThemeKit (sampled audio) with Web Audio API procedural synthesis fallback
+const ArcadeAudio = {
+  ctx: null,
+  enabled: true,
+  preloaded: false,
+  init() {
+    // Preload ThemeKit real audio samples
+    if (!this.preloaded && typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.preloadSfx === 'function') {
+      try {
+        window.ThemeKit.preloadSfx([
+          'heroscape/plasma-cannon',
+          'spacebase/quantum-drive',
+          'heroscape/dragon-roar',
+          'spacebase/sector-alert',
+          'hoth/lightsaber',
+          'utek/sword-clash',
+          'trv/flame-ignite',
+          'memoir44/artillery-distant',
+          'airlandsea/retreat-whistle',
+          'lotr/morgul-blade',
+          'heroscape/portal-warp',
+          'heroscape/shield-block',
+          'turn-notify',
+          'card-flip',
+          'card-draw',
+          'card-shuffle',
+          'ui-click',
+          '7wd/pantheon-chime',
+          'eleven/stadium-roar',
+          'lostcities/golden-relic-chime'
+        ]);
+        this.preloaded = true;
+      } catch (e) {}
+    }
+
+    if (!this.ctx) {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtx) this.ctx = new AudioCtx();
+    }
+    if (this.ctx && this.ctx.state === 'suspended') {
+      this.ctx.resume();
+    }
+  },
+  playSample(key, opts = {}, fallbackFn = null) {
+    if (!this.enabled) return null;
+    this.init();
+    if (typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
+      try {
+        const audio = window.ThemeKit.playSfx(key, opts);
+        if (audio) return audio;
+      } catch (e) {}
+    }
+    if (typeof fallbackFn === 'function') {
+      fallbackFn();
+    }
+    return null;
+  },
+  playTone(freq, duration, type = 'sine', decay = true, gain = 0.15) {
+    if (!this.enabled) return;
+    this.init();
+    if (!this.ctx) return;
+    try {
+      const osc = this.ctx.createOscillator();
+      const g = this.ctx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+      g.gain.setValueAtTime(gain, this.ctx.currentTime);
+      if (decay) {
+        g.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+      }
+      osc.connect(g);
+      g.connect(this.ctx.destination);
+      osc.start();
+      osc.stop(this.ctx.currentTime + duration);
+    } catch (e) {}
+  },
+  playNoise(duration, filterFreq = 1200, gain = 0.18) {
+    if (!this.enabled) return;
+    this.init();
+    if (!this.ctx) return;
+    try {
+      const bufferSize = Math.floor(this.ctx.sampleRate * duration);
+      const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = Math.random() * 2 - 1;
+      }
+      const noise = this.ctx.createBufferSource();
+      noise.buffer = buffer;
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(filterFreq, this.ctx.currentTime);
+      filter.frequency.exponentialRampToValueAtTime(80, this.ctx.currentTime + duration);
+      const g = this.ctx.createGain();
+      g.gain.setValueAtTime(gain, this.ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+      noise.connect(filter);
+      filter.connect(g);
+      g.connect(this.ctx.destination);
+      noise.start();
+    } catch (e) {}
+  },
+  playHadouken() {
+    this.playSample('heroscape/plasma-cannon', { volume: 0.85, rate: 1.05 }, () => {
+      this.playTone(380, 0.35, 'sawtooth', true, 0.18);
+      setTimeout(() => this.playNoise(0.4, 1800, 0.22), 100);
+    });
+  },
+  playKamehameha() {
+    this.playSample('spacebase/quantum-drive', { volume: 0.7, rate: 1.25 });
+    setTimeout(() => {
+      this.playSample('heroscape/plasma-cannon', { volume: 0.95, rate: 0.85 }, () => {
+        this.playTone(320, 0.45, 'sawtooth', false, 0.24);
+        this.playNoise(0.65, 3000, 0.26);
+      });
+    }, 120);
+  },
+  playDragonPunch() {
+    this.playSample('heroscape/dragon-roar', { volume: 0.85 });
+    setTimeout(() => {
+      this.playSample('utek/sword-clash', { volume: 0.75, rate: 1.2 }, () => {
+        this.playNoise(0.35, 2000, 0.22);
+      });
+    }, 80);
+  },
+  playLightning() {
+    this.playSample('spacebase/sector-alert', { volume: 0.65, rate: 1.5 });
+    this.playSample('heroscape/plasma-cannon', { volume: 0.85, rate: 1.35 }, () => {
+      this.playNoise(0.12, 8000, 0.35);
+      setTimeout(() => {
+        this.playTone(85, 0.5, 'square', true, 0.25);
+        this.playNoise(0.55, 700, 0.28);
+      }, 60);
+    });
+  },
+  playLightsaber() {
+    this.playSample('hoth/lightsaber', { volume: 0.9 }, () => {
+      this.playTone(130, 0.2, 'sawtooth', true, 0.18);
+      setTimeout(() => {
+        this.playTone(880, 0.3, 'sine', true, 0.22);
+        this.playNoise(0.25, 4500, 0.18);
+      }, 80);
+    });
+  },
+  playBattleaxe() {
+    this.playSample('utek/sword-clash', { volume: 0.9, rate: 0.9 }, () => {
+      this.playTone(1100, 0.15, 'sine', true, 0.28);
+      this.playTone(70, 0.45, 'square', true, 0.3);
+      this.playNoise(0.35, 1400, 0.24);
+    });
+  },
+  playRasengan() {
+    this.playSample('spacebase/quantum-drive', { volume: 0.65, rate: 1.6 });
+    this.playSample('trv/flame-ignite', { volume: 0.75, rate: 1.2 }, () => {
+      this.playTone(460, 0.3, 'triangle', true, 0.2);
+      this.playNoise(0.45, 3200, 0.24);
+    });
+  },
+  playMeteor() {
+    this.playSample('trv/flame-ignite', { volume: 0.85, rate: 0.9 });
+    setTimeout(() => {
+      this.playSample('memoir44/artillery-distant', { volume: 0.95 }, () => {
+        this.playTone(50, 0.6, 'sine', true, 0.35);
+        this.playNoise(0.7, 850, 0.35);
+      });
+    }, 130);
+  },
+  playArrows() {
+    this.playSample('airlandsea/retreat-whistle', { volume: 0.65, rate: 1.35 });
+    setTimeout(() => {
+      this.playSample('utek/sword-clash', { volume: 0.55, rate: 1.5 }, () => {
+        this.playNoise(0.12, 2200, 0.15);
+      });
+    }, 90);
+  },
+  playKatana() {
+    this.playSample('heroscape/portal-warp', { volume: 0.7, rate: 1.4 });
+    setTimeout(() => {
+      this.playSample('lotr/morgul-blade', { volume: 0.9, rate: 1.1 }, () => {
+        this.playTone(1750, 0.22, 'sine', true, 0.26);
+        this.playNoise(0.2, 4800, 0.22);
+      });
+    }, 60);
+  },
+  playTie() {
+    this.playSample('heroscape/shield-block', { volume: 0.85 }, () => {
+      this.playTone(320, 0.12, 'triangle', true, 0.15);
+    });
+  },
+  playClick() {
+    this.playSample('ui-click', { volume: 0.55 }, () => {
+      this.playTone(520, 0.05, 'triangle', true, 0.08);
+    });
+  },
+  playCardSelect() {
+    this.playSample('card-flip', { volume: 0.65 }, () => {
+      this.playTone(600, 0.04, 'triangle', true, 0.07);
+    });
+  },
+  playCardDraw() {
+    this.playSample('card-draw', { volume: 0.5 });
+  },
+  playUndo() {
+    this.playSample('card-shuffle', { volume: 0.6 }, () => {
+      this.playTone(300, 0.09, 'sine', true, 0.1);
+    });
+  },
+  playGong() {
+    this.playSample('turn-notify', { volume: 0.7 });
+  },
+  playFanfare() {
+    this.playSample('7wd/pantheon-chime', { volume: 0.8 });
+    setTimeout(() => {
+      this.playSample('lostcities/golden-relic-chime', { volume: 0.85 });
+      this.playSample('eleven/stadium-roar', { volume: 0.65 });
+    }, 220);
+    const notes = [261.63, 329.63, 392.00, 523.25];
+    notes.forEach((freq, idx) => {
+      setTimeout(() => {
+        this.playTone(freq, idx === 3 ? 0.9 : 0.2, 'triangle', true, 0.2);
+      }, idx * 130);
+    });
+  }
+};
+
+// Canvas Particle Engine for Battle FX & Confetti
+const ArenaFxEngine = {
+  canvas: null,
+  ctx: null,
+  particles: [],
+  animId: null,
+
+  init(canvasId = 'arenaFxCanvas') {
+    this.canvas = document.getElementById(canvasId);
+    if (!this.canvas) return;
+    this.ctx = this.canvas.getContext('2d');
+    this.resize();
+  },
+
+  resize() {
+    if (!this.canvas) return;
+    this.canvas.width = this.canvas.offsetWidth || 800;
+    this.canvas.height = this.canvas.offsetHeight || 400;
+  },
+
+  start() {
+    if (this.animId) cancelAnimationFrame(this.animId);
+    const loop = () => {
+      this.update();
+      this.draw();
+      if (this.particles.length > 0) {
+        this.animId = requestAnimationFrame(loop);
+      } else {
+        this.animId = null;
+        if (this.ctx && this.canvas) {
+          this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        }
+      }
+    };
+    this.animId = requestAnimationFrame(loop);
+  },
+
+  update() {
+    for (let i = this.particles.length - 1; i >= 0; i--) {
+      const p = this.particles[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += p.gravity || 0;
+      p.life -= p.decay || 0.02;
+      if (p.life <= 0) {
+        this.particles.splice(i, 1);
+      }
+    }
+  },
+
+  draw() {
+    if (!this.ctx || !this.canvas) return;
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+    this.particles.forEach(p => {
+      this.ctx.save();
+      this.ctx.globalAlpha = Math.max(0, p.life);
+
+      if (p.type === 'confetti') {
+        this.ctx.translate(p.x, p.y);
+        this.ctx.rotate(p.rot || 0);
+        this.ctx.fillStyle = p.color;
+        this.ctx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2);
+      } else if (p.type === 'beam') {
+        this.ctx.strokeStyle = p.color;
+        this.ctx.lineWidth = p.size;
+        this.ctx.shadowColor = p.color;
+        this.ctx.shadowBlur = 15;
+        this.ctx.beginPath();
+        this.ctx.moveTo(p.x1, p.y1);
+        this.ctx.lineTo(p.x2, p.y2);
+        this.ctx.stroke();
+      } else if (p.type === 'lightning') {
+        this.ctx.strokeStyle = p.color;
+        this.ctx.lineWidth = p.size;
+        this.ctx.shadowColor = '#c084fc';
+        this.ctx.shadowBlur = 12;
+        this.ctx.beginPath();
+        p.points.forEach((pt, idx) => {
+          if (idx === 0) this.ctx.moveTo(pt.x, pt.y);
+          else this.ctx.lineTo(pt.x, pt.y);
+        });
+        this.ctx.stroke();
+      } else {
+        this.ctx.fillStyle = p.color;
+        this.ctx.shadowColor = p.color;
+        this.ctx.shadowBlur = p.blur || 6;
+        this.ctx.beginPath();
+        this.ctx.arc(p.x, p.y, Math.max(0.5, p.size * p.life), 0, Math.PI * 2);
+        this.ctx.fill();
+      }
+      this.ctx.restore();
+    });
+  },
+
+  spawnBlast(x, y, color = '#38bdf8', count = 30) {
+    this.resize();
+    for (let i = 0; i < count; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 2 + Math.random() * 8;
+      this.particles.push({
+        x,
+        y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        gravity: 0.1,
+        size: 3 + Math.random() * 5,
+        color,
+        life: 1,
+        decay: 0.025 + Math.random() * 0.03
+      });
+    }
+    this.start();
+  },
+
+  spawnBeam(fromX, fromY, toX, toY, color = '#60a5fa') {
+    this.resize();
+    this.particles.push({
+      type: 'beam',
+      x1: fromX,
+      y1: fromY,
+      x2: toX,
+      y2: toY,
+      size: 24,
+      color: '#fff',
+      life: 1,
+      decay: 0.06
+    });
+    this.particles.push({
+      type: 'beam',
+      x1: fromX,
+      y1: fromY,
+      x2: toX,
+      y2: toY,
+      size: 55,
+      color,
+      life: 1,
+      decay: 0.05
+    });
+    this.spawnBlast(toX, toY, color, 45);
+  },
+
+  spawnLightning(targetX, targetY) {
+    this.resize();
+    const startX = targetX + (Math.random() * 80 - 40);
+    const startY = 0;
+    const points = [{ x: startX, y: startY }];
+    let curX = startX;
+    let curY = startY;
+    const segments = 10;
+    const dy = (targetY - startY) / segments;
+
+    for (let k = 1; k < segments; k++) {
+      curY += dy;
+      curX += (Math.random() - 0.5) * 50;
+      points.push({ x: curX, y: curY });
+    }
+    points.push({ x: targetX, y: targetY });
+
+    this.particles.push({
+      type: 'lightning',
+      points,
+      size: 4,
+      color: '#ffffff',
+      life: 1,
+      decay: 0.08
+    });
+    this.particles.push({
+      type: 'lightning',
+      points,
+      size: 10,
+      color: '#c084fc',
+      life: 1,
+      decay: 0.06
+    });
+
+    this.spawnBlast(targetX, targetY, '#e879f9', 35);
+  },
+
+  spawnConfetti(canvasId = 'resultsConfettiCanvas') {
+    const cvs = document.getElementById(canvasId);
+    if (!cvs) return;
+    const ctx = cvs.getContext('2d');
+    cvs.width = cvs.offsetWidth || 600;
+    cvs.height = cvs.offsetHeight || 400;
+
+    const colors = ['#f59e0b', '#ef4444', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899', '#facc15'];
+    const confs = [];
+    for (let i = 0; i < 90; i++) {
+      confs.push({
+        x: Math.random() * cvs.width,
+        y: -10 - Math.random() * 50,
+        vx: (Math.random() - 0.5) * 4,
+        vy: 2 + Math.random() * 5,
+        rot: Math.random() * Math.PI * 2,
+        vRot: (Math.random() - 0.5) * 0.15,
+        size: 7 + Math.random() * 7,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        life: 1,
+        decay: 0.008
+      });
+    }
+
+    const run = () => {
+      ctx.clearRect(0, 0, cvs.width, cvs.height);
+      for (let i = confs.length - 1; i >= 0; i--) {
+        const c = confs[i];
+        c.x += c.vx;
+        c.y += c.vy;
+        c.rot += c.vRot;
+        c.life -= c.decay;
+
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, c.life);
+        ctx.translate(c.x, c.y);
+        ctx.rotate(c.rot);
+        ctx.fillStyle = c.color;
+        ctx.fillRect(-c.size / 2, -c.size / 4, c.size, c.size / 2);
+        ctx.restore();
+
+        if (c.y > cvs.height || c.life <= 0) {
+          confs.splice(i, 1);
+        }
+      }
+      if (confs.length > 0) {
+        requestAnimationFrame(run);
+      } else {
+        ctx.clearRect(0, 0, cvs.width, cvs.height);
+      }
+    };
+    requestAnimationFrame(run);
+  }
+};
+
+// Spawn Pop-up Comic Text
+function spawnComicPopup(text = 'POW!') {
+  const layer = document.getElementById('arenaComicLayer');
+  if (!layer) return;
+  const popup = document.createElement('div');
+  popup.className = 'comic-popup';
+  popup.textContent = text;
+  layer.appendChild(popup);
+  setTimeout(() => popup.remove(), 700);
+}
+
+// Global Tournament State & Engine
+let currentTournament = null;
+let currentRankingTab = 'unplayed';
+let bggCachedGames = [];
+
+class TournamentEngine {
+  constructor(items, options = {}) {
+    this.originalItems = [...items];
+    this.items = [...items];
+    this.options = options;
+    this.sublists = this.items.map(item => [item]);
+    this.nextPass = [];
+    this.left = null;
+    this.right = null;
+    this.i = 0;
+    this.j = 0;
+    this.merged = [];
+    this.comparisonCount = 0;
+    this.estimatedTotal = Math.max(1, Math.round(this.items.length * Math.log2(Math.max(2, this.items.length))));
+    this.undoHistory = [];
+    this.isAnimating = false;
+  }
+
+  saveSnapshot() {
+    return JSON.stringify({
+      sublists: this.sublists,
+      nextPass: this.nextPass,
+      left: this.left,
+      right: this.right,
+      i: this.i,
+      j: this.j,
+      merged: this.merged,
+      comparisonCount: this.comparisonCount
+    });
+  }
+
+  restoreSnapshot(jsonStr) {
+    const data = JSON.parse(jsonStr);
+    this.sublists = data.sublists;
+    this.nextPass = data.nextPass;
+    this.left = data.left;
+    this.right = data.right;
+    this.i = data.i;
+    this.j = data.j;
+    this.merged = data.merged;
+    this.comparisonCount = data.comparisonCount;
+  }
+
+  getNextPair() {
+    while (true) {
+      if (!this.left && !this.right) {
+        if (this.sublists.length === 0) {
+          if (this.nextPass.length <= 1) {
+            return { done: true, result: this.nextPass[0] || [] };
+          }
+          this.sublists = this.nextPass;
+          this.nextPass = [];
+        }
+        if (this.sublists.length === 1) {
+          this.nextPass.push(this.sublists.shift());
+          if (this.nextPass.length === 1 && this.sublists.length === 0) {
+            return { done: true, result: this.nextPass[0] };
+          }
+          this.sublists = this.nextPass;
+          this.nextPass = [];
+        }
+        this.left = this.sublists.shift();
+        this.right = this.sublists.shift();
+        this.i = 0;
+        this.j = 0;
+        this.merged = [];
+      }
+
+      if (this.i >= this.left.length) {
+        this.merged.push(...this.right.slice(this.j));
+        this.nextPass.push(this.merged);
+        this.left = null;
+        this.right = null;
+        continue;
+      }
+      if (this.j >= this.right.length) {
+        this.merged.push(...this.left.slice(this.i));
+        this.nextPass.push(this.merged);
+        this.left = null;
+        this.right = null;
+        continue;
+      }
+
+      return {
+        done: false,
+        itemA: this.left[this.i],
+        itemB: this.right[this.j],
+        progress: Math.min(99, Math.round((this.comparisonCount / this.estimatedTotal) * 100)),
+        round: this.comparisonCount + 1,
+        total: this.estimatedTotal
+      };
+    }
+  }
+
+  recordChoice(winnerSide) {
+    this.undoHistory.push(this.saveSnapshot());
+    this.comparisonCount++;
+    if (winnerSide === 'left') {
+      this.merged.push(this.left[this.i++]);
+    } else {
+      this.merged.push(this.right[this.j++]);
+    }
+  }
+
+  recordTie() {
+    this.undoHistory.push(this.saveSnapshot());
+    this.comparisonCount++;
+    this.merged.push(this.left[this.i++]);
+    this.merged.push(this.right[this.j++]);
+  }
+
+  undo() {
+    if (this.undoHistory.length === 0) return false;
+    const snap = this.undoHistory.pop();
+    this.restoreSnapshot(snap);
+    return true;
+  }
+}
+
+// BGG XML Collection Parser
+function parseBggUserCollectionXml(xmlText) {
+  if (!xmlText) return [];
+  const doc = new DOMParser().parseFromString(xmlText, 'text/xml');
+  if (doc.querySelector('parsererror')) return [];
+  const items = Array.from(doc.querySelectorAll('items > item'));
+
+  return items.map(item => {
+    const bggId = item.getAttribute('objectid');
+    const subtype = item.getAttribute('subtype');
+    const isExpansion = subtype === 'boardgameexpansion';
+    const nameEl = item.querySelector('name');
+    const title = nameEl ? nameEl.textContent.trim() : '';
+    const yearEl = item.querySelector('yearpublished');
+    const year = yearEl ? yearEl.textContent.trim() : '';
+    const imgEl = item.querySelector('image');
+    const thumbEl = item.querySelector('thumbnail');
+    const image = (imgEl && imgEl.textContent.trim()) || (thumbEl && thumbEl.textContent.trim()) || '';
+    const statusEl = item.querySelector('status');
+    const own = statusEl ? statusEl.getAttribute('own') === '1' : false;
+    const wantToPlay = statusEl ? statusEl.getAttribute('wanttoplay') === '1' : false;
+    const wishlist = statusEl ? statusEl.getAttribute('wishlist') === '1' : false;
+    const playsEl = item.querySelector('numplays');
+    const plays = playsEl ? parseInt(playsEl.textContent.trim(), 10) || 0 : 0;
+
+    const statsEl = item.querySelector('stats');
+    const minp = statsEl ? statsEl.getAttribute('minplayers') : '';
+    const maxp = statsEl ? statsEl.getAttribute('maxplayers') : '';
+    const players = minp && maxp ? (minp === maxp ? minp : `${minp}-${maxp}`) : (minp || maxp || '');
+    const time = statsEl && statsEl.getAttribute('playingtime') ? `${statsEl.getAttribute('playingtime')} min` : '';
+
+    let bggScore = null;
+    let bggRank = null;
+    let bggWeight = null;
+    const rankEl = item.querySelector('ranks rank[type="subtype"]');
+    if (rankEl) {
+      const rv = parseInt(rankEl.getAttribute('value'), 10);
+      if (!isNaN(rv)) bggRank = rv;
+      const bAvg = parseFloat(rankEl.getAttribute('bayesaverage'));
+      if (!isNaN(bAvg) && bAvg > 0) bggScore = Math.round(bAvg * 10) / 10;
+    }
+
+    return {
+      id: 'bgg_' + bggId + '_' + Math.random().toString(36).substr(2, 5),
+      bggId,
+      title,
+      year,
+      image,
+      players,
+      time,
+      plays,
+      own,
+      wantToPlay,
+      wishlist,
+      isExpansion,
+      bggScore,
+      bggRank,
+      bggWeight,
+      link: `https://boardgamegeek.com/boardgame/${bggId}`,
+      bggLink: `https://boardgamegeek.com/boardgame/${bggId}`,
+      source: 'bgg'
+    };
+  }).filter(g => g.title);
+}
+
+// BGG Collection Fetch with Retry Loop
+async function fetchBggForRanking() {
+  const usernameInput = document.getElementById('bggRankUsername');
+  const user = (usernameInput ? usernameInput.value : 'Collth').trim();
+  if (!user) {
+    alert('Digite o nome de usuário do BGG.');
+    return;
+  }
+  const statusEl = document.getElementById('bggRankStatusText');
+  const btn = document.getElementById('btnFetchBggRank');
+  if (btn) btn.disabled = true;
+  if (statusEl) statusEl.innerHTML = '<span class="search-spinner" style="display:inline-block; margin-right:6px;"></span> Conectando ao BoardGameGeek...';
+
+  try {
+    let xmlText = null;
+    let attempts = 0;
+    const maxAttempts = 6;
+
+    while (attempts < maxAttempts) {
+      attempts++;
+      if (statusEl) statusEl.innerHTML = `<span class="search-spinner" style="display:inline-block; margin-right:6px;"></span> Solicitando coleção de "${user}" no BGG (tentativa ${attempts}/${maxAttempts})...`;
+
+      let raw = await fetchBggXml(`/collection?username=${encodeURIComponent(user)}&stats=1`);
+      if (!raw || raw.includes('not allowed by policy')) {
+        try {
+          const directRes = await fetch(`https://boardgamegeek.com/xmlapi2/collection?username=${encodeURIComponent(user)}&stats=1`, {
+            headers: {
+              'Accept': 'application/xml',
+              'Authorization': 'Bearer cdb528f3-d81c-464a-acf6-44e16b2f47a8'
+            }
+          });
+          if (directRes.ok) raw = await directRes.text();
+        } catch (err) {}
+      }
+
+      if (raw) {
+        if (raw.includes('<message>') && raw.includes('accepted')) {
+          if (statusEl) statusEl.innerHTML = `<span class="search-spinner" style="display:inline-block; margin-right:6px;"></span> O BGG está gerando a coleção de "${user}". Aguardando 2 segundos...`;
+          await new Promise(r => setTimeout(r, 2200));
+          continue;
+        }
+        if (raw.includes('<items')) {
+          xmlText = raw;
+          break;
+        }
+        if (raw.includes('<errors>') || raw.includes('Invalid username')) {
+          throw new Error('Usuário não encontrado no BoardGameGeek.');
+        }
+      }
+      await new Promise(r => setTimeout(r, 1800));
+    }
+
+    if (!xmlText) {
+      throw new Error('Tempo limite excedido ao aguardar o BGG. Tente novamente em instantes.');
+    }
+
+    bggCachedGames = parseBggUserCollectionXml(xmlText);
+    if (statusEl) statusEl.innerHTML = `✅ ${bggCachedGames.length} jogos carregados com sucesso do BGG!`;
+    updateBggFilterPreview();
+  } catch (err) {
+    if (statusEl) statusEl.innerHTML = `❌ Erro: ${err.message}`;
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+function updateBggFilterPreview() {
+  if (!bggCachedGames || bggCachedGames.length === 0) return;
+  const onlyUnplayed = document.getElementById('bggFilterUnplayed').checked;
+  const onlyOwned = document.getElementById('bggFilterOwned').checked;
+  const incWishlist = document.getElementById('bggFilterWishlist').checked;
+  const incExp = document.getElementById('bggFilterExpansions').checked;
+
+  const filtered = bggCachedGames.filter(g => {
+    if (!incExp && g.isExpansion) return false;
+    if (onlyUnplayed && g.plays > 0) return false;
+    if (onlyOwned && !g.own && !(incWishlist && (g.wantToPlay || g.wishlist))) return false;
+    return true;
+  });
+
+  const countEl = document.getElementById('rankCandidateCount');
+  if (countEl && currentRankingTab === 'bgg') {
+    countEl.textContent = `${filtered.length} jogos selecionados`;
+  }
+}
+
+// Ranking Setup Modal Handlers
+function openRankingSetupModal(defaultTierId = null) {
+  ArcadeAudio.init();
+  const unplayedTier = state.tiers.find(t => t.isUnplayed) || state.tiers[state.tiers.length - 1];
+  const unplayedItems = (unplayedTier && state.items[unplayedTier.id]) || [];
+
+  const unplayedCountEl = document.getElementById('rankUnplayedCount');
+  if (unplayedCountEl) unplayedCountEl.textContent = unplayedItems.length;
+
+  const unplayedDesc = document.getElementById('rankUnplayedDesc');
+  if (unplayedDesc) {
+    unplayedDesc.innerHTML = unplayedItems.length > 0
+      ? `Existem <strong>${unplayedItems.length}</strong> jogos esperando para serem rankeados no tier <em>"${unplayedTier.name}"</em>.`
+      : `O tier <em>"${unplayedTier.name}"</em> está vazio. Você pode importar jogos do BGG ou digitar uma lista.`;
+  }
+
+  const tierSelect = document.getElementById('rankTierSelect');
+  if (tierSelect) {
+    tierSelect.innerHTML = '';
+    state.tiers.forEach(tr => {
+      const opt = document.createElement('option');
+      opt.value = tr.id;
+      const count = (state.items[tr.id] || []).length;
+      opt.textContent = `${tr.name} (${count} jogos)`;
+      if (defaultTierId && defaultTierId === tr.id) opt.selected = true;
+      tierSelect.appendChild(opt);
+    });
+    const allOpt = document.createElement('option');
+    allOpt.value = 'all';
+    allOpt.textContent = `🌟 Todos os Jogos da Tierlist (${getExistingBoardItems().length} jogos)`;
+    tierSelect.appendChild(allOpt);
+  }
+
+  if (defaultTierId && defaultTierId !== unplayedTier.id) {
+    switchRankingTab('other');
+  } else if (unplayedItems.length > 0) {
+    switchRankingTab('unplayed');
+  } else {
+    switchRankingTab('bgg');
+  }
+
+  openModal('rankingSetupModal');
+}
+
+function switchRankingTab(tabId) {
+  currentRankingTab = tabId;
+  const tabs = ['unplayed', 'bgg', 'other', 'custom'];
+  tabs.forEach(tName => {
+    const tabBtn = document.getElementById('rankTab' + tName.charAt(0).toUpperCase() + tName.slice(1));
+    const panel = document.getElementById('rankPanel' + tName.charAt(0).toUpperCase() + tName.slice(1));
+    if (tabBtn) tabBtn.classList.toggle('active', tName === tabId);
+    if (panel) {
+      panel.style.display = tName === tabId ? 'block' : 'none';
+      panel.classList.toggle('active', tName === tabId);
+    }
+  });
+
+  const countEl = document.getElementById('rankCandidateCount');
+  if (!countEl) return;
+
+  if (tabId === 'unplayed') {
+    const unplayedTier = state.tiers.find(t => t.isUnplayed) || state.tiers[state.tiers.length - 1];
+    const items = (unplayedTier && state.items[unplayedTier.id]) || [];
+    countEl.textContent = `${items.length} jogos selecionados`;
+  } else if (tabId === 'bgg') {
+    updateBggFilterPreview();
+  } else if (tabId === 'other') {
+    updateOtherTierPreview();
+  } else if (tabId === 'custom') {
+    updateCustomListPreview();
+  }
+}
+
+function updateOtherTierPreview() {
+  const sel = document.getElementById('rankTierSelect');
+  const desc = document.getElementById('rankOtherTierDesc');
+  const countEl = document.getElementById('rankCandidateCount');
+  if (!sel) return;
+
+  let count = 0;
+  if (sel.value === 'all') {
+    count = getExistingBoardItems().length;
+  } else {
+    count = (state.items[sel.value] || []).length;
+  }
+  if (desc) desc.textContent = `${count} jogos encontrados para batalha neste grupo.`;
+  if (countEl && currentRankingTab === 'other') countEl.textContent = `${count} jogos selecionados`;
+}
+
+function updateCustomListPreview() {
+  const textarea = document.getElementById('rankCustomTextarea');
+  const desc = document.getElementById('rankCustomDesc');
+  const countEl = document.getElementById('rankCandidateCount');
+  const lines = (textarea ? textarea.value : '').split('\n').map(l => l.trim()).filter(l => l.length > 0);
+  if (desc) desc.textContent = `${lines.length} jogos identificados na lista.`;
+  if (countEl && currentRankingTab === 'custom') countEl.textContent = `${lines.length} jogos selecionados`;
+}
+
+// Start Ranking Battle
+function startRankingBattle() {
+  let candidates = [];
+
+  if (currentRankingTab === 'unplayed') {
+    const unplayedTier = state.tiers.find(t => t.isUnplayed) || state.tiers[state.tiers.length - 1];
+    candidates = (unplayedTier && state.items[unplayedTier.id]) ? [...state.items[unplayedTier.id]] : [];
+  } else if (currentRankingTab === 'bgg') {
+    const onlyUnplayed = document.getElementById('bggFilterUnplayed').checked;
+    const onlyOwned = document.getElementById('bggFilterOwned').checked;
+    const incWishlist = document.getElementById('bggFilterWishlist').checked;
+    const incExp = document.getElementById('bggFilterExpansions').checked;
+
+    candidates = bggCachedGames.filter(g => {
+      if (!incExp && g.isExpansion) return false;
+      if (onlyUnplayed && g.plays > 0) return false;
+      if (onlyOwned && !g.own && !(incWishlist && (g.wantToPlay || g.wishlist))) return false;
+      return true;
+    });
+  } else if (currentRankingTab === 'other') {
+    const sel = document.getElementById('rankTierSelect').value;
+    if (sel === 'all') {
+      candidates = getExistingBoardItems();
+    } else {
+      candidates = (state.items[sel] || []).slice();
+    }
+  } else if (currentRankingTab === 'custom') {
+    const lines = (document.getElementById('rankCustomTextarea').value || '').split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    candidates = lines.map((name, idx) => ({
+      id: 'custom_' + Date.now() + '_' + idx,
+      title: name,
+      image: '',
+      year: '',
+      source: 'custom'
+    }));
+  }
+
+  if (candidates.length < 2) {
+    alert('É necessário ter pelo menos 2 jogos selecionados para realizar o rankeamento 1x1.');
+    return;
+  }
+
+  const fxCheck = document.getElementById('rankOptFxEnabled');
+  const audioCheck = document.getElementById('rankOptAudioEnabled');
+  const atkSelect = document.getElementById('rankAttackEffect');
+
+  ArcadeAudio.enabled = audioCheck ? audioCheck.checked : true;
+  const isFx = fxCheck ? fxCheck.checked : true;
+  const attackEffect = atkSelect ? atkSelect.value : 'random';
+
+  currentTournament = new TournamentEngine(candidates, {
+    fxEnabled: isFx,
+    attackEffect
+  });
+  window.currentTournament = currentTournament;
+
+  const quickSelect = document.getElementById('arenaAttackQuickSelect');
+  if (quickSelect) quickSelect.value = attackEffect;
+  const soundIcon = document.getElementById('arenaSoundIcon');
+  if (soundIcon) soundIcon.textContent = ArcadeAudio.enabled ? '🔊' : '🔇';
+  const fxIcon = document.getElementById('arenaFxIcon');
+  if (fxIcon) fxIcon.textContent = isFx ? '💥' : '🚫';
+
+  closeModal('rankingSetupModal');
+  openModal('rankingArenaModal');
+
+  ArenaFxEngine.init('arenaFxCanvas');
+
+  ArcadeAudio.init();
+  ArcadeAudio.playGong();
+
+  renderCurrentMatchup();
+}
+
+function renderCurrentMatchup() {
+  if (!currentTournament) return;
+  const step = currentTournament.getNextPair();
+
+  if (step.done) {
+    closeModal('rankingArenaModal');
+    showTournamentResults(step.result);
+    return;
+  }
+
+  const roundText = document.getElementById('arenaRoundText');
+  const percentText = document.getElementById('arenaPercentText');
+  const progBar = document.getElementById('arenaProgressBar');
+  if (roundText) roundText.textContent = `Batalha ${step.round} de ~${step.total}`;
+  if (percentText) percentText.textContent = `${step.progress}%`;
+  if (progBar) progBar.style.width = `${step.progress}%`;
+
+  const undoBtn = document.getElementById('arenaUndoBtn');
+  if (undoBtn) undoBtn.disabled = currentTournament.undoHistory.length === 0;
+
+  const leftCard = document.getElementById('fighterCardLeft');
+  const imgLeft = document.getElementById('fighterImgLeft');
+  const titleLeft = document.getElementById('fighterTitleLeft');
+  const metaLeft = document.getElementById('fighterMetaLeft');
+  if (leftCard) leftCard.className = 'fighter-card fighter-left';
+  if (imgLeft) imgLeft.src = step.itemA.image || '../assets/mascot-trimmed.png';
+  if (titleLeft) titleLeft.textContent = step.itemA.title;
+  if (metaLeft) {
+    metaLeft.innerHTML = `
+      ${step.itemA.year ? `<span class="fighter-meta-tag">📅 ${step.itemA.year}</span>` : ''}
+      ${step.itemA.players ? `<span class="fighter-meta-tag">👥 ${step.itemA.players}p</span>` : ''}
+      ${step.itemA.time ? `<span class="fighter-meta-tag">⏱️ ${step.itemA.time}</span>` : ''}
+      ${step.itemA.bggScore ? `<span class="fighter-meta-tag" style="color:#e9c875;">⭐ ${step.itemA.bggScore}</span>` : ''}
+    `;
+  }
+
+  const rightCard = document.getElementById('fighterCardRight');
+  const imgRight = document.getElementById('fighterImgRight');
+  const titleRight = document.getElementById('fighterTitleRight');
+  const metaRight = document.getElementById('fighterMetaRight');
+  if (rightCard) rightCard.className = 'fighter-card fighter-right';
+  if (imgRight) imgRight.src = step.itemB.image || '../assets/mascot-trimmed.png';
+  if (titleRight) titleRight.textContent = step.itemB.title;
+  if (metaRight) {
+    metaRight.innerHTML = `
+      ${step.itemB.year ? `<span class="fighter-meta-tag">📅 ${step.itemB.year}</span>` : ''}
+      ${step.itemB.players ? `<span class="fighter-meta-tag">👥 ${step.itemB.players}p</span>` : ''}
+      ${step.itemB.time ? `<span class="fighter-meta-tag">⏱️ ${step.itemB.time}</span>` : ''}
+      ${step.itemB.bggScore ? `<span class="fighter-meta-tag" style="color:#e9c875;">⭐ ${step.itemB.bggScore}</span>` : ''}
+    `;
+  }
+}
+
+function chooseFighter(winnerSide) {
+  if (!currentTournament || currentTournament.isAnimating) return;
+
+  const isFx = currentTournament.options.fxEnabled;
+  if (!isFx) {
+    ArcadeAudio.playCardSelect();
+    currentTournament.recordChoice(winnerSide);
+    renderCurrentMatchup();
+    return;
+  }
+
+  currentTournament.isAnimating = true;
+
+  let atk = currentTournament.options.attackEffect || 'random';
+  if (atk === 'random') {
+    const attacks = ['hadouken', 'kamehameha', 'dragon_punch', 'lightning', 'lightsaber', 'battleaxe', 'rasengan', 'meteor', 'arrows', 'katana'];
+    atk = attacks[Math.floor(Math.random() * attacks.length)];
+  }
+
+  executeFightAnimation(winnerSide, atk, () => {
+    currentTournament.recordChoice(winnerSide);
+    currentTournament.isAnimating = false;
+    renderCurrentMatchup();
+  });
+}
+
+function executeFightAnimation(winnerSide, attackType, onComplete) {
+  const stage = document.getElementById('arenaStage');
+  const leftCard = document.getElementById('fighterCardLeft');
+  const rightCard = document.getElementById('fighterCardRight');
+
+  const winnerCard = winnerSide === 'left' ? leftCard : rightCard;
+  const loserCard = winnerSide === 'left' ? rightCard : leftCard;
+
+  const leftRect = leftCard ? leftCard.getBoundingClientRect() : { x: 200, y: 200, width: 200, height: 200 };
+  const rightRect = rightCard ? rightCard.getBoundingClientRect() : { x: 500, y: 200, width: 200, height: 200 };
+  const stageRect = stage ? stage.getBoundingClientRect() : { left: 0, top: 0 };
+
+  const winnerCenter = {
+    x: (winnerSide === 'left' ? leftRect.left + leftRect.width / 2 : rightRect.left + rightRect.width / 2) - stageRect.left,
+    y: (winnerSide === 'left' ? leftRect.top + leftRect.height / 2 : rightRect.top + rightRect.height / 2) - stageRect.top
+  };
+  const loserCenter = {
+    x: (winnerSide === 'left' ? rightRect.left + rightRect.width / 2 : leftRect.left + leftRect.width / 2) - stageRect.left,
+    y: (winnerSide === 'left' ? rightRect.top + rightRect.height / 2 : leftRect.top + leftRect.height / 2) - stageRect.top
+  };
+
+  const popups = ['POW!', 'K.O.!', 'CRITICAL!', 'SMASH!', 'BOOM!', 'FATALITY!', 'SUPER!'];
+  const popText = popups[Math.floor(Math.random() * popups.length)];
+
+  if (attackType === 'hadouken') {
+    ArcadeAudio.playHadouken();
+    winnerCard.classList.add('anim-hadouken-winner');
+    setTimeout(() => {
+      ArenaFxEngine.spawnBlast(loserCenter.x, loserCenter.y, '#38bdf8', 40);
+      loserCard.classList.add('anim-hadouken-loser');
+      spawnComicPopup(popText);
+      stage.classList.add('screen-shake-light');
+    }, 150);
+  } else if (attackType === 'kamehameha') {
+    ArcadeAudio.playKamehameha();
+    winnerCard.classList.add('anim-kamehameha-winner');
+    setTimeout(() => {
+      ArenaFxEngine.spawnBeam(winnerCenter.x, winnerCenter.y, loserCenter.x, loserCenter.y, '#60a5fa');
+      loserCard.classList.add('anim-kamehameha-loser');
+      spawnComicPopup('K.O.!');
+      stage.classList.add('screen-shake-heavy');
+    }, 200);
+  } else if (attackType === 'dragon_punch') {
+    ArcadeAudio.playDragonPunch();
+    winnerCard.classList.add('anim-dragon-winner');
+    setTimeout(() => {
+      ArenaFxEngine.spawnBlast(loserCenter.x, loserCenter.y, '#f59e0b', 45);
+      loserCard.classList.add('anim-dragon-loser');
+      spawnComicPopup('SHORYUKEN!');
+      stage.classList.add('screen-shake-heavy');
+    }, 180);
+  } else if (attackType === 'lightning') {
+    ArcadeAudio.playLightning();
+    ArenaFxEngine.spawnLightning(loserCenter.x, loserCenter.y);
+    loserCard.classList.add('anim-lightning-loser');
+    spawnComicPopup('THUNDER!');
+    stage.classList.add('screen-shake-heavy');
+  } else if (attackType === 'lightsaber') {
+    ArcadeAudio.playLightsaber();
+    ArenaFxEngine.spawnBlast(loserCenter.x, loserCenter.y, '#10b981', 35);
+    loserCard.classList.add('anim-lightsaber-loser');
+    spawnComicPopup('SLASH!');
+    stage.classList.add('screen-shake-light');
+  } else if (attackType === 'battleaxe') {
+    ArcadeAudio.playBattleaxe();
+    ArenaFxEngine.spawnBlast(loserCenter.x, loserCenter.y, '#f97316', 40);
+    loserCard.classList.add('anim-battleaxe-loser');
+    spawnComicPopup('CLEAVE!');
+    stage.classList.add('screen-shake-heavy');
+  } else if (attackType === 'rasengan') {
+    ArcadeAudio.playRasengan();
+    ArenaFxEngine.spawnBlast(loserCenter.x, loserCenter.y, '#06b6d4', 40);
+    loserCard.classList.add('anim-rasengan-loser');
+    spawnComicPopup('RASENGAN!');
+    stage.classList.add('screen-shake-light');
+  } else if (attackType === 'meteor') {
+    ArcadeAudio.playMeteor();
+    setTimeout(() => {
+      ArenaFxEngine.spawnBlast(loserCenter.x, loserCenter.y, '#ea580c', 55);
+      loserCard.classList.add('anim-meteor-loser');
+      spawnComicPopup('METEOR!');
+      stage.classList.add('screen-shake-heavy');
+    }, 150);
+  } else if (attackType === 'arrows') {
+    ArcadeAudio.playArrows();
+    ArenaFxEngine.spawnBlast(loserCenter.x, loserCenter.y, '#eab308', 30);
+    loserCard.classList.add('anim-arrows-loser');
+    spawnComicPopup('BARRAGE!');
+  } else if (attackType === 'katana') {
+    ArcadeAudio.playKatana();
+    stage.classList.add('katana-monochrome');
+    stage.classList.add('arena-hitstop');
+    setTimeout(() => {
+      stage.classList.remove('katana-monochrome');
+      stage.classList.remove('arena-hitstop');
+      ArenaFxEngine.spawnBlast(loserCenter.x, loserCenter.y, '#dc2626', 40);
+      loserCard.classList.add('anim-katana-loser');
+      spawnComicPopup('IAI-SLASH!');
+      stage.classList.add('screen-shake-heavy');
+    }, 120);
+  }
+
+  setTimeout(() => {
+    stage.className = 'arena-stage';
+    winnerCard.className = 'fighter-card ' + (winnerSide === 'left' ? 'fighter-left' : 'fighter-right');
+    loserCard.className = 'fighter-card ' + (winnerSide === 'left' ? 'fighter-right' : 'fighter-left');
+    onComplete();
+  }, 650);
+}
+
+function chooseTie() {
+  if (!currentTournament || currentTournament.isAnimating) return;
+  ArcadeAudio.playTie();
+  currentTournament.recordTie();
+  renderCurrentMatchup();
+}
+
+function undoFighterChoice() {
+  if (!currentTournament || currentTournament.isAnimating) return;
+  const ok = currentTournament.undo();
+  if (ok) {
+    ArcadeAudio.playUndo();
+    renderCurrentMatchup();
+  }
+}
+
+function eliminateCurrentFightersPrompt() {
+  if (!currentTournament) return;
+  const pair = currentTournament.getNextPair();
+  if (pair.done) return;
+
+  const pick = confirm(`Deseja remover "${pair.itemB.title}" do torneio? (Pressione Cancelar para remover "${pair.itemA.title}")`);
+  if (pick) {
+    currentTournament.recordChoice('left');
+  } else {
+    currentTournament.recordChoice('right');
+  }
+  renderCurrentMatchup();
+}
+
+function toggleArenaSound() {
+  ArcadeAudio.enabled = !ArcadeAudio.enabled;
+  const icon = document.getElementById('arenaSoundIcon');
+  if (icon) icon.textContent = ArcadeAudio.enabled ? '🔊' : '🔇';
+  if (ArcadeAudio.enabled) ArcadeAudio.playClick();
+}
+
+function toggleArenaFx() {
+  if (!currentTournament) return;
+  currentTournament.options.fxEnabled = !currentTournament.options.fxEnabled;
+  const icon = document.getElementById('arenaFxIcon');
+  if (icon) icon.textContent = currentTournament.options.fxEnabled ? '💥' : '🚫';
+}
+
+function changeArenaAttack(val) {
+  if (!currentTournament) return;
+  currentTournament.options.attackEffect = val;
+}
+
+function exitArenaPrompt() {
+  if (confirm('Deseja realmente sair da Arena de Batalha? O progresso desta sessão será fechado.')) {
+    closeModal('rankingArenaModal');
+  }
+}
+
+let currentRankedResults = [];
+
+function showTournamentResults(sortedItems) {
+  currentRankedResults = sortedItems || [];
+  openModal('rankingResultsModal');
+
+  ArcadeAudio.playFanfare();
+  ArenaFxEngine.spawnConfetti('resultsConfettiCanvas');
+
+  const top1 = currentRankedResults[0];
+  const top2 = currentRankedResults[1];
+  const top3 = currentRankedResults[2];
+
+  const img1 = document.getElementById('podiumImg1');
+  const t1 = document.getElementById('podiumTitle1');
+  if (img1 && top1) img1.src = top1.image || '../assets/mascot-trimmed.png';
+  if (t1 && top1) t1.textContent = top1.title;
+
+  const img2 = document.getElementById('podiumImg2');
+  const t2 = document.getElementById('podiumTitle2');
+  if (img2 && top2) img2.src = top2.image || '../assets/mascot-trimmed.png';
+  if (t2 && top2) t2.textContent = top2.title;
+
+  const img3 = document.getElementById('podiumImg3');
+  const t3 = document.getElementById('podiumTitle3');
+  if (img3 && top3) img3.src = top3.image || '../assets/mascot-trimmed.png';
+  if (t3 && top3) t3.textContent = top3.title;
+
+  const listEl = document.getElementById('resultsListScroll');
+  const countEl = document.getElementById('resultsTotalCount');
+  if (countEl) countEl.textContent = `${currentRankedResults.length} jogos rankeados`;
+
+  if (listEl) {
+    listEl.innerHTML = '';
+    currentRankedResults.forEach((game, idx) => {
+      const row = document.createElement('div');
+      row.className = 'results-rank-row';
+
+      const num = document.createElement('span');
+      num.className = 'results-rank-num';
+      num.textContent = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `#${idx + 1}`;
+
+      const img = document.createElement('img');
+      img.className = 'results-rank-img';
+      img.src = game.image || '../assets/mascot-trimmed.png';
+      img.alt = game.title;
+
+      const name = document.createElement('div');
+      name.className = 'results-rank-name';
+      name.textContent = game.title;
+
+      const info = document.createElement('div');
+      info.className = 'results-rank-info';
+      info.textContent = [game.year, game.players ? `${game.players}p` : '', game.bggScore ? `⭐ ${game.bggScore}` : ''].filter(Boolean).join(' • ');
+
+      row.appendChild(num);
+      row.appendChild(img);
+      row.appendChild(name);
+      row.appendChild(info);
+      listEl.appendChild(row);
+    });
+  }
+}
+
+function isSameRankingGame(a, b) {
+  if (!a || !b) return false;
+  if (a.id && b.id && a.id === b.id) return true;
+  if (a.bggId && b.bggId && String(a.bggId) === String(b.bggId)) return true;
+  if (a.ludoId && b.ludoId && String(a.ludoId) === String(b.ludoId)) return true;
+  if (a.title && b.title) {
+    const normA = typeof normalizeSearchStr === 'function' ? normalizeSearchStr(a.title) : a.title.trim().toLowerCase();
+    const normB = typeof normalizeSearchStr === 'function' ? normalizeSearchStr(b.title) : b.title.trim().toLowerCase();
+    if (normA && normB && normA === normB) return true;
+  }
+  return false;
+}
+
+// Searches every tier in state.items, removes all occurrences of gameRef (moving it),
+// and returns the original item object (preserving ID, enriched fields, custom tags, etc.)
+function findAndRemoveExistingItem(gameRef) {
+  if (!gameRef || !state || !state.items) return null;
+
+  let existingFound = null;
+  for (const tierId of Object.keys(state.items)) {
+    const list = state.items[tierId];
+    if (!Array.isArray(list)) continue;
+
+    for (let i = list.length - 1; i >= 0; i--) {
+      if (isSameRankingGame(list[i], gameRef)) {
+        const [removed] = list.splice(i, 1);
+        if (!existingFound) existingFound = removed;
+      }
+    }
+  }
+  return existingFound;
+}
+
+function resolveGameToItem(gameRef) {
+  const existing = findAndRemoveExistingItem(gameRef);
+  if (existing) {
+    return Object.assign(existing, {
+      title: gameRef.title || existing.title,
+      image: existing.image || gameRef.image || '',
+      year: gameRef.year || existing.year || '',
+      ludoId: existing.ludoId || gameRef.ludoId || null,
+      bggId: existing.bggId || gameRef.bggId || null,
+      designer: existing.designer || gameRef.designer || '',
+      artist: existing.artist || gameRef.artist || '',
+      category: existing.category || gameRef.category || '',
+      domain: existing.domain || gameRef.domain || '',
+      mechanics: existing.mechanics || gameRef.mechanics || '',
+      players: existing.players || gameRef.players || '',
+      time: existing.time || gameRef.time || '',
+      plays: gameRef.plays != null ? gameRef.plays : (existing.plays || 0),
+      score: gameRef.score != null ? gameRef.score : existing.score,
+      bggScore: gameRef.bggScore != null ? gameRef.bggScore : existing.bggScore,
+      bggRank: gameRef.bggRank != null ? gameRef.bggRank : existing.bggRank,
+      bggWeight: gameRef.bggWeight != null ? gameRef.bggWeight : existing.bggWeight,
+      link: existing.link || gameRef.link || (gameRef.bggId ? `https://boardgamegeek.com/boardgame/${gameRef.bggId}` : ''),
+      bggLink: existing.bggLink || gameRef.bggLink || (gameRef.bggId ? `https://boardgamegeek.com/boardgame/${gameRef.bggId}` : ''),
+      source: existing.source || gameRef.source || 'bgg'
+    });
+  }
+
+  return {
+    id: gameRef.id || ('item_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6)),
+    title: gameRef.title,
+    image: gameRef.image || '',
+    year: gameRef.year || '',
+    ludoId: gameRef.ludoId || null,
+    bggId: gameRef.bggId || null,
+    designer: gameRef.designer || '',
+    artist: gameRef.artist || '',
+    category: gameRef.category || '',
+    domain: gameRef.domain || '',
+    mechanics: gameRef.mechanics || '',
+    players: gameRef.players || '',
+    time: gameRef.time || '',
+    plays: gameRef.plays || 0,
+    score: gameRef.score != null ? gameRef.score : null,
+    bggScore: gameRef.bggScore != null ? gameRef.bggScore : null,
+    bggRank: gameRef.bggRank != null ? gameRef.bggRank : null,
+    bggSubranks: gameRef.bggSubranks || [],
+    bggWeight: gameRef.bggWeight != null ? gameRef.bggWeight : null,
+    slug: gameRef.slug || '',
+    link: gameRef.link || (gameRef.bggId ? `https://boardgamegeek.com/boardgame/${gameRef.bggId}` : ''),
+    bggLink: gameRef.bggLink || (gameRef.bggId ? `https://boardgamegeek.com/boardgame/${gameRef.bggId}` : ''),
+    source: gameRef.source || 'bgg'
+  };
+}
+
+function applyRankingToUnplayedTier() {
+  if (!currentRankedResults || currentRankedResults.length === 0) return;
+
+  const unplayedTier = state.tiers.find(t => t.isUnplayed) || state.tiers[state.tiers.length - 1];
+  const targetId = unplayedTier.id;
+
+  // 1. Resolve and remove the ranked games from wherever they currently are in state.items
+  const resolvedItems = currentRankedResults.map(game => resolveGameToItem(game));
+
+  // 2. Keep any unranked games that were already in the unplayed tier
+  const remainingInUnplayed = (state.items[targetId] || []).filter(item => {
+    return !resolvedItems.some(r => isSameRankingGame(r, item));
+  });
+
+  state.items[targetId] = [...resolvedItems, ...remainingInUnplayed];
+  saveState();
+  renderBoard();
+  closeModal('rankingResultsModal');
+  showToast(`Tier "${unplayedTier.name}" reordenado com sucesso! (${resolvedItems.length} jogos movidos)`);
+}
+
+function distributeRankingToTiers() {
+  if (!currentRankedResults || currentRankedResults.length === 0) return;
+
+  const letterTiers = state.tiers.filter(t => !t.isUnplayed);
+  if (letterTiers.length === 0) {
+    applyRankingToUnplayedTier();
+    return;
+  }
+
+  // 1. Resolve and remove all ranked items from their current tier(s) (e.g., 'Não jogado')
+  // This guarantees items are MOVED and not duplicated!
+  const resolvedItems = currentRankedResults.map(game => resolveGameToItem(game));
+
+  const total = resolvedItems.length;
+  const numTiers = letterTiers.length;
+
+  // 2. Distribute the resolved items across the letter tiers
+  resolvedItems.forEach((item, idx) => {
+    const tierIdx = Math.min(numTiers - 1, Math.floor((idx / total) * numTiers));
+    const targetTierId = letterTiers[tierIdx].id;
+    if (!state.items[targetTierId]) state.items[targetTierId] = [];
+    state.items[targetTierId].push(item);
+  });
+
+  saveState();
+  renderBoard();
+  closeModal('rankingResultsModal');
+  showToast(`${total} jogos movidos e distribuídos nos tiers da Tierlist!`);
+}
+
+function copyRankingText() {
+  if (!currentRankedResults || currentRankedResults.length === 0) return;
+  const text = currentRankedResults.map((g, i) => `${i + 1}. ${g.title}${g.year ? ` (${g.year})` : ''}`).join('\n');
+  navigator.clipboard.writeText(text).then(() => {
+    showToast('Ranking copiado para a área de transferência!');
+  }).catch(() => {
+    prompt('Copie o ranking abaixo:', text);
+  });
+}
+
+function downloadRankingCsv() {
+  if (!currentRankedResults || currentRankedResults.length === 0) return;
+  let csv = 'Posição,Nome do Jogo,Ano,Jogadores,Tempo,Nota BGG\n';
+  currentRankedResults.forEach((g, i) => {
+    const titleClean = (g.title || '').replace(/"/g, '""');
+    csv += `"${i + 1}","${titleClean}","${g.year || ''}","${g.players || ''}","${g.time || ''}","${g.bggScore || ''}"\n`;
+  });
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `ranking_1x1_jogos_${Date.now()}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+window.ArcadeAudio = ArcadeAudio;
+window.ArenaFxEngine = ArenaFxEngine;
+window.TournamentEngine = TournamentEngine;
+window.openRankingSetupModal = openRankingSetupModal;
+window.switchRankingTab = switchRankingTab;
+window.fetchBggForRanking = fetchBggForRanking;
+window.updateBggFilterPreview = updateBggFilterPreview;
+window.updateOtherTierPreview = updateOtherTierPreview;
+window.updateCustomListPreview = updateCustomListPreview;
+window.startRankingBattle = startRankingBattle;
+window.renderCurrentMatchup = renderCurrentMatchup;
+window.chooseFighter = chooseFighter;
+window.executeFightAnimation = executeFightAnimation;
+window.chooseTie = chooseTie;
+window.undoFighterChoice = undoFighterChoice;
+window.eliminateCurrentFightersPrompt = eliminateCurrentFightersPrompt;
+window.toggleArenaSound = toggleArenaSound;
+window.toggleArenaFx = toggleArenaFx;
+window.changeArenaAttack = changeArenaAttack;
+window.exitArenaPrompt = exitArenaPrompt;
+window.showTournamentResults = showTournamentResults;
+window.applyRankingToUnplayedTier = applyRankingToUnplayedTier;
+window.distributeRankingToTiers = distributeRankingToTiers;
+window.isSameRankingGame = isSameRankingGame;
+window.findAndRemoveExistingItem = findAndRemoveExistingItem;
+window.resolveGameToItem = resolveGameToItem;
+window.copyRankingText = copyRankingText;
+window.downloadRankingCsv = downloadRankingCsv;
+window.parseBggUserCollectionXml = parseBggUserCollectionXml;
+window.state = state;
+window.renderBoard = renderBoard;
+
 </script>
 
 <script type="module">
