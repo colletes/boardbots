@@ -6273,6 +6273,20 @@ function detectAndParseCollectionData(fileName, rawContent) {
         headers.forEach((h, i) => { obj[h] = (row[i] || '').trim(); });
         return obj;
       });
+    } else if (headers.some(k => k.includes('nome do jogo')) && (headers.some(k => k.includes('ludopedia')) || headers.some(k => k.includes('designer')) || headers.some(k => k.includes('tipo de jogo')))) {
+      format = 'ludohall_bg';
+      rows = parsed.slice(1).map(row => {
+        const obj = {};
+        parsed[0].forEach((origH, i) => { obj[origH.trim()] = (row[i] || '').trim(); });
+        return obj;
+      });
+    } else if (headers.some(k => k.includes('nome do jogo')) && (headers.some(k => k.includes('dura')) || headers.some(k => k.includes('pontua')) || headers.some(k => k.includes('partida')))) {
+      format = 'ludohall_plays';
+      rows = parsed.slice(1).map(row => {
+        const obj = {};
+        parsed[0].forEach((origH, i) => { obj[origH.trim()] = (row[i] || '').trim(); });
+        return obj;
+      });
     } else {
       const nameKey = headers.find(h => h.includes('nome') || h.includes('name') || h.includes('title') || h.includes('jogo'));
       if (nameKey) {
@@ -6390,6 +6404,8 @@ function transformRowsToCollection(format, rows, fileName) {
     sourceLabel = 'Ludohall Coleção';
     badgeClass = 'ludopedia';
 
+    const seenMap = new Map();
+
     rows.forEach(r => {
       const nameKey = Object.keys(r).find(k => k.trim().toLowerCase() === 'nome do jogo') || 'Nome do jogo';
       const title = String(r[nameKey] || '').trim();
@@ -6397,6 +6413,15 @@ function transformRowsToCollection(format, rows, fileName) {
 
       const linkKey = Object.keys(r).find(k => k.trim().toLowerCase().includes('ludopedia')) || '';
       const link = linkKey ? String(r[linkKey] || '').trim() : '';
+
+      let slug = '';
+      if (link) {
+        const m = link.match(/ludopedia\.com\.br\/jogo\/([^/?#]+)/i);
+        if (m) slug = m[1];
+      }
+
+      const dedupKey = slug ? `slug_${slug}` : `title_${normalizeTitle(title)}`;
+      const normTitleKey = `title_${normalizeTitle(title)}`;
 
       const designerKey = Object.keys(r).find(k => k.trim().toLowerCase().includes('designer')) || '';
       const designer = designerKey ? String(r[designerKey] || '').trim() : '';
@@ -6429,10 +6454,19 @@ function transformRowsToCollection(format, rows, fileName) {
       const temaKey = Object.keys(r).find(k => k.trim().toLowerCase().includes('temas')) || '';
       const category = temaKey ? String(r[temaKey] || '').replace(/\|/g, ', ').trim() : '';
 
-      let slug = '';
-      if (link) {
-        const m = link.match(/ludopedia\.com\.br\/jogo\/([^/?#]+)/i);
-        if (m) slug = m[1];
+      let existing = seenMap.get(dedupKey) || (normTitleKey ? seenMap.get(normTitleKey) : null);
+      if (existing) {
+        if (plays > (existing.plays || 0)) existing.plays = plays;
+        if (score != null && (existing.score == null || score > existing.score)) existing.score = score;
+        if (!existing.year && year) existing.year = year;
+        if (!existing.players && players) existing.players = players;
+        if (!existing.designer && designer) existing.designer = designer;
+        if (!existing.artist && artist) existing.artist = artist;
+        if (!existing.link && link) {
+          existing.link = link;
+          existing.slug = slug;
+        }
+        return;
       }
 
       const item = {
@@ -6451,6 +6485,10 @@ function transformRowsToCollection(format, rows, fileName) {
         source: 'ludopedia'
       };
 
+      seenMap.set(dedupKey, item);
+      if (normTitleKey && normTitleKey !== dedupKey) {
+        seenMap.set(normTitleKey, item);
+      }
       allGames.push(item);
       if (isExp) expansions.push(item);
       else baseGames.push(item);
@@ -6466,8 +6504,9 @@ function transformRowsToCollection(format, rows, fileName) {
       const title = String(r[nameKey] || '').trim();
       if (!title) return;
 
-      if (!gameMap.has(title)) {
-        gameMap.set(title, {
+      const normTitle = normalizeTitle(title);
+      if (!gameMap.has(normTitle)) {
+        gameMap.set(normTitle, {
           title,
           plays: 0,
           totalDuration: 0,
@@ -6476,7 +6515,7 @@ function transformRowsToCollection(format, rows, fileName) {
           source: 'plays'
         });
       }
-      const entry = gameMap.get(title);
+      const entry = gameMap.get(normTitle);
       entry.plays++;
 
       const durKey = Object.keys(r).find(k => k.trim().toLowerCase().includes('dura\u00e7\u00e3o') || k.trim().toLowerCase().includes('duracao'));
@@ -6505,11 +6544,17 @@ function transformRowsToCollection(format, rows, fileName) {
     sourceLabel = 'Arquivo de Jogos';
     badgeClass = 'custom';
 
+    const seenTitles = new Set();
+
     rows.forEach(r => {
       const nameKey = Object.keys(r).find(k => k.toLowerCase().includes('nome') || k.toLowerCase().includes('title') || k.toLowerCase().includes('name') || k.toLowerCase().includes('jogo'));
       if (!nameKey) return;
       const title = String(r[nameKey] || '').trim();
       if (!title) return;
+
+      const norm = normalizeTitle(title);
+      if (!norm || seenTitles.has(norm)) return;
+      seenTitles.add(norm);
 
       const item = {
         title,
@@ -6793,17 +6838,38 @@ async function fetchLudopediaCollection(usernameOrUrl, options = {}) {
 
   const expansionIdSet = new Set((expansionsList || []).map(g => Number(g.id_jogo)));
 
-  const seenLudoIds = new Set();
+  const seenMap = new Map();
   const allGames = [];
   const baseGames = [];
   const expansions = [];
 
   for (const g of rawGames) {
+    if (!g || !g.nm_jogo) continue;
     const ludoId = Number(g.id_jogo);
-    if (ludoId && seenLudoIds.has(ludoId)) continue;
-    if (ludoId) seenLudoIds.add(ludoId);
+    const norm = normalizeTitle(g.nm_jogo);
+    const dedupKey = ludoId ? `ludo_${ludoId}` : `title_${norm}`;
+    const normKey = `title_${norm}`;
 
+    let existing = seenMap.get(dedupKey) || (normKey ? seenMap.get(normKey) : null);
+    const plays = g.qt_partidas || 0;
+    const scoreVal = (g.vl_nota != null && !isNaN(Number(g.vl_nota)) && Number(g.vl_nota) > 0) ? Number(g.vl_nota) : null;
     const isExp = expansionIdSet.has(ludoId);
+
+    if (existing) {
+      if (plays > (existing.plays || 0)) existing.plays = plays;
+      if (scoreVal != null && (existing.score == null || scoreVal > existing.score)) {
+        existing.score = scoreVal;
+        existing.userRating = scoreVal;
+      }
+      if (g.fl_tem) existing.fl_tem = g.fl_tem;
+      if (g.fl_jogou) existing.fl_jogou = g.fl_jogou;
+      if (g.fl_favorito) existing.fl_favorito = g.fl_favorito;
+      if (g.fl_quer) existing.fl_quer = g.fl_quer;
+      if (!existing.image && g.thumb) existing.image = (g.thumb || '').replace('_t.jpg', '_m.jpg');
+      if (!existing.year && g.ano_publicacao) existing.year = g.ano_publicacao;
+      continue;
+    }
+
     const item = {
       title: g.nm_jogo,
       image: (g.thumb || '').replace('_t.jpg', '_m.jpg'),
@@ -6817,9 +6883,9 @@ async function fetchLudopediaCollection(usernameOrUrl, options = {}) {
       mechanics: '',
       players: '',
       time: '',
-      plays: g.qt_partidas || 0,
-      score: (g.vl_nota != null && !isNaN(Number(g.vl_nota)) && Number(g.vl_nota) > 0) ? Number(g.vl_nota) : null,
-      userRating: (g.vl_nota != null && !isNaN(Number(g.vl_nota)) && Number(g.vl_nota) > 0) ? Number(g.vl_nota) : null,
+      plays,
+      score: scoreVal,
+      userRating: scoreVal,
       bggScore: null,
       bggRank: null,
       bggSubranks: [],
@@ -6835,6 +6901,10 @@ async function fetchLudopediaCollection(usernameOrUrl, options = {}) {
       fl_quer: g.fl_quer
     };
 
+    seenMap.set(dedupKey, item);
+    if (normKey && normKey !== dedupKey) {
+      seenMap.set(normKey, item);
+    }
     allGames.push(item);
     if (isExp) expansions.push(item);
     else baseGames.push(item);
@@ -8377,12 +8447,23 @@ function updateBggFilterPreview() {
   const incWishlist = document.getElementById('bggFilterWishlist')?.checked;
   const incExp = document.getElementById('bggFilterExpansions')?.checked;
 
+  const seenIds = new Set();
+  const seenTitles = new Set();
+
   const filtered = bggCachedGames.filter(g => {
     if (!incExp && g.isExpansion) return false;
     if (onlyUnplayed && g.plays > 0) return false;
     if (onlyPlayed && (!g.plays || g.plays <= 0)) return false;
     if (onlyRated && (g.score == null || isNaN(g.score) || g.score <= 0)) return false;
     if (onlyOwned && !g.own && !(incWishlist && (g.wantToPlay || g.wishlist))) return false;
+
+    const idKey = g.bggId ? `bgg_${g.bggId}` : (g.id || null);
+    const titleKey = normalizeTitle(g.title);
+    if (idKey && seenIds.has(idKey)) return false;
+    if (titleKey && seenTitles.has(titleKey)) return false;
+    if (idKey) seenIds.add(idKey);
+    if (titleKey) seenTitles.add(titleKey);
+
     return true;
   });
 
@@ -8435,6 +8516,9 @@ function updateLudoFilterPreview() {
   const incExp = document.getElementById('ludoFilterExpansions')?.checked;
   const onlyFav = document.getElementById('ludoFilterFavorites')?.checked;
 
+  const seenIds = new Set();
+  const seenTitles = new Set();
+
   const filtered = ludoCachedGames.filter(g => {
     if (!incExp && g.isExpansion) return false;
     if (onlyUnplayed && (g.plays > 0 || g.fl_jogou == 1 || g.fl_jogou === true)) return false;
@@ -8442,6 +8526,14 @@ function updateLudoFilterPreview() {
     if (onlyRated && (g.score == null || isNaN(g.score) || g.score <= 0)) return false;
     if (onlyOwned && !(g.fl_tem == 1 || g.fl_tem === true)) return false;
     if (onlyFav && !(g.fl_favorito == 1 || g.fl_favorito === true)) return false;
+
+    const idKey = g.ludoId ? `ludo_${g.ludoId}` : (g.id || null);
+    const titleKey = normalizeTitle(g.title || g.nm_jogo);
+    if (idKey && seenIds.has(idKey)) return false;
+    if (titleKey && seenTitles.has(titleKey)) return false;
+    if (idKey) seenIds.add(idKey);
+    if (titleKey) seenTitles.add(titleKey);
+
     return true;
   });
 
