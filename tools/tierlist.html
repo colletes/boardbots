@@ -14,6 +14,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <!-- SheetJS for BGG / Ludohall CSV & XLSX collection parsing -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<!-- Shared BoardBots ThemeKit for high-quality audio SFX -->
+<script src="../assets/theme-kit.js"></script>
 
 <style>
 :root {
@@ -6405,11 +6407,41 @@ window.addEventListener('DOMContentLoaded', () => {
    1V1 BATTLE ARENA & RANKING ENGINE JAVASCRIPT
    ======================================================= */
 
-// Web Audio API Sound Synthesizer
+// Sound System: Powered by ThemeKit (sampled audio) with Web Audio API procedural synthesis fallback
 const ArcadeAudio = {
   ctx: null,
   enabled: true,
+  preloaded: false,
   init() {
+    // Preload ThemeKit real audio samples
+    if (!this.preloaded && typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.preloadSfx === 'function') {
+      try {
+        window.ThemeKit.preloadSfx([
+          'heroscape/plasma-cannon',
+          'spacebase/quantum-drive',
+          'heroscape/dragon-roar',
+          'spacebase/sector-alert',
+          'hoth/lightsaber',
+          'utek/sword-clash',
+          'trv/flame-ignite',
+          'memoir44/artillery-distant',
+          'airlandsea/retreat-whistle',
+          'lotr/morgul-blade',
+          'heroscape/portal-warp',
+          'heroscape/shield-block',
+          'turn-notify',
+          'card-flip',
+          'card-draw',
+          'card-shuffle',
+          'ui-click',
+          '7wd/pantheon-chime',
+          'eleven/stadium-roar',
+          'lostcities/golden-relic-chime'
+        ]);
+        this.preloaded = true;
+      } catch (e) {}
+    }
+
     if (!this.ctx) {
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
       if (AudioCtx) this.ctx = new AudioCtx();
@@ -6417,6 +6449,20 @@ const ArcadeAudio = {
     if (this.ctx && this.ctx.state === 'suspended') {
       this.ctx.resume();
     }
+  },
+  playSample(key, opts = {}, fallbackFn = null) {
+    if (!this.enabled) return null;
+    this.init();
+    if (typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
+      try {
+        const audio = window.ThemeKit.playSfx(key, opts);
+        if (audio) return audio;
+      } catch (e) {}
+    }
+    if (typeof fallbackFn === 'function') {
+      fallbackFn();
+    }
+    return null;
   },
   playTone(freq, duration, type = 'sine', decay = true, gain = 0.15) {
     if (!this.enabled) return;
@@ -6464,88 +6510,123 @@ const ArcadeAudio = {
     } catch (e) {}
   },
   playHadouken() {
-    this.playTone(380, 0.35, 'sawtooth', true, 0.18);
-    setTimeout(() => this.playNoise(0.4, 1800, 0.22), 100);
+    this.playSample('heroscape/plasma-cannon', { volume: 0.85, rate: 1.05 }, () => {
+      this.playTone(380, 0.35, 'sawtooth', true, 0.18);
+      setTimeout(() => this.playNoise(0.4, 1800, 0.22), 100);
+    });
   },
   playKamehameha() {
-    this.playTone(160, 0.25, 'sine', true, 0.2);
+    this.playSample('spacebase/quantum-drive', { volume: 0.7, rate: 1.25 });
     setTimeout(() => {
-      this.playTone(320, 0.45, 'sawtooth', false, 0.24);
-      this.playNoise(0.65, 3000, 0.26);
-    }, 150);
+      this.playSample('heroscape/plasma-cannon', { volume: 0.95, rate: 0.85 }, () => {
+        this.playTone(320, 0.45, 'sawtooth', false, 0.24);
+        this.playNoise(0.65, 3000, 0.26);
+      });
+    }, 120);
   },
   playDragonPunch() {
-    this.init();
-    if (this.ctx && this.enabled) {
-      try {
-        const osc = this.ctx.createOscillator();
-        const g = this.ctx.createGain();
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(160, this.ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(750, this.ctx.currentTime + 0.35);
-        g.gain.setValueAtTime(0.22, this.ctx.currentTime);
-        g.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.4);
-        osc.connect(g);
-        g.connect(this.ctx.destination);
-        osc.start();
-        osc.stop(this.ctx.currentTime + 0.4);
-      } catch (e) {}
-    }
-    setTimeout(() => this.playNoise(0.35, 2000, 0.22), 140);
-  },
-  playLightning() {
-    this.playNoise(0.12, 8000, 0.35);
+    this.playSample('heroscape/dragon-roar', { volume: 0.85 });
     setTimeout(() => {
-      this.playTone(85, 0.5, 'square', true, 0.25);
-      this.playNoise(0.55, 700, 0.28);
-    }, 60);
-  },
-  playLightsaber() {
-    this.playTone(130, 0.2, 'sawtooth', true, 0.18);
-    setTimeout(() => {
-      this.playTone(880, 0.3, 'sine', true, 0.22);
-      this.playNoise(0.25, 4500, 0.18);
+      this.playSample('utek/sword-clash', { volume: 0.75, rate: 1.2 }, () => {
+        this.playNoise(0.35, 2000, 0.22);
+      });
     }, 80);
   },
+  playLightning() {
+    this.playSample('spacebase/sector-alert', { volume: 0.65, rate: 1.5 });
+    this.playSample('heroscape/plasma-cannon', { volume: 0.85, rate: 1.35 }, () => {
+      this.playNoise(0.12, 8000, 0.35);
+      setTimeout(() => {
+        this.playTone(85, 0.5, 'square', true, 0.25);
+        this.playNoise(0.55, 700, 0.28);
+      }, 60);
+    });
+  },
+  playLightsaber() {
+    this.playSample('hoth/lightsaber', { volume: 0.9 }, () => {
+      this.playTone(130, 0.2, 'sawtooth', true, 0.18);
+      setTimeout(() => {
+        this.playTone(880, 0.3, 'sine', true, 0.22);
+        this.playNoise(0.25, 4500, 0.18);
+      }, 80);
+    });
+  },
   playBattleaxe() {
-    this.playTone(1100, 0.15, 'sine', true, 0.28);
-    this.playTone(70, 0.45, 'square', true, 0.3);
-    this.playNoise(0.35, 1400, 0.24);
+    this.playSample('utek/sword-clash', { volume: 0.9, rate: 0.9 }, () => {
+      this.playTone(1100, 0.15, 'sine', true, 0.28);
+      this.playTone(70, 0.45, 'square', true, 0.3);
+      this.playNoise(0.35, 1400, 0.24);
+    });
   },
   playRasengan() {
-    this.playTone(460, 0.3, 'triangle', true, 0.2);
-    this.playNoise(0.45, 3200, 0.24);
+    this.playSample('spacebase/quantum-drive', { volume: 0.65, rate: 1.6 });
+    this.playSample('trv/flame-ignite', { volume: 0.75, rate: 1.2 }, () => {
+      this.playTone(460, 0.3, 'triangle', true, 0.2);
+      this.playNoise(0.45, 3200, 0.24);
+    });
   },
   playMeteor() {
-    this.playTone(380, 0.25, 'sawtooth', true, 0.15);
+    this.playSample('trv/flame-ignite', { volume: 0.85, rate: 0.9 });
     setTimeout(() => {
-      this.playTone(50, 0.6, 'sine', true, 0.35);
-      this.playNoise(0.7, 850, 0.35);
-    }, 140);
+      this.playSample('memoir44/artillery-distant', { volume: 0.95 }, () => {
+        this.playTone(50, 0.6, 'sine', true, 0.35);
+        this.playNoise(0.7, 850, 0.35);
+      });
+    }, 130);
   },
   playArrows() {
-    for (let k = 0; k < 4; k++) {
-      setTimeout(() => {
-        this.playTone(550 + Math.random() * 300, 0.07, 'sine', true, 0.12);
-        this.playNoise(0.08, 2200, 0.14);
-      }, k * 70);
-    }
+    this.playSample('airlandsea/retreat-whistle', { volume: 0.65, rate: 1.35 });
+    setTimeout(() => {
+      this.playSample('utek/sword-clash', { volume: 0.55, rate: 1.5 }, () => {
+        this.playNoise(0.12, 2200, 0.15);
+      });
+    }, 90);
   },
   playKatana() {
-    this.playTone(1750, 0.22, 'sine', true, 0.26);
-    setTimeout(() => this.playNoise(0.2, 4800, 0.22), 80);
+    this.playSample('heroscape/portal-warp', { volume: 0.7, rate: 1.4 });
+    setTimeout(() => {
+      this.playSample('lotr/morgul-blade', { volume: 0.9, rate: 1.1 }, () => {
+        this.playTone(1750, 0.22, 'sine', true, 0.26);
+        this.playNoise(0.2, 4800, 0.22);
+      });
+    }, 60);
+  },
+  playTie() {
+    this.playSample('heroscape/shield-block', { volume: 0.85 }, () => {
+      this.playTone(320, 0.12, 'triangle', true, 0.15);
+    });
   },
   playClick() {
-    this.playTone(520, 0.05, 'triangle', true, 0.08);
+    this.playSample('ui-click', { volume: 0.55 }, () => {
+      this.playTone(520, 0.05, 'triangle', true, 0.08);
+    });
+  },
+  playCardSelect() {
+    this.playSample('card-flip', { volume: 0.65 }, () => {
+      this.playTone(600, 0.04, 'triangle', true, 0.07);
+    });
+  },
+  playCardDraw() {
+    this.playSample('card-draw', { volume: 0.5 });
   },
   playUndo() {
-    this.playTone(300, 0.09, 'sine', true, 0.1);
+    this.playSample('card-shuffle', { volume: 0.6 }, () => {
+      this.playTone(300, 0.09, 'sine', true, 0.1);
+    });
+  },
+  playGong() {
+    this.playSample('turn-notify', { volume: 0.7 });
   },
   playFanfare() {
+    this.playSample('7wd/pantheon-chime', { volume: 0.8 });
+    setTimeout(() => {
+      this.playSample('lostcities/golden-relic-chime', { volume: 0.85 });
+      this.playSample('eleven/stadium-roar', { volume: 0.65 });
+    }, 220);
     const notes = [261.63, 329.63, 392.00, 523.25];
     notes.forEach((freq, idx) => {
       setTimeout(() => {
-        this.playTone(freq, idx === 3 ? 0.9 : 0.2, 'triangle', true, 0.25);
+        this.playTone(freq, idx === 3 ? 0.9 : 0.2, 'triangle', true, 0.2);
       }, idx * 130);
     });
   }
@@ -7073,6 +7154,7 @@ function updateBggFilterPreview() {
 
 // Ranking Setup Modal Handlers
 function openRankingSetupModal(defaultTierId = null) {
+  ArcadeAudio.init();
   const unplayedTier = state.tiers.find(t => t.isUnplayed) || state.tiers[state.tiers.length - 1];
   const unplayedItems = (unplayedTier && state.items[unplayedTier.id]) || [];
 
@@ -7236,6 +7318,9 @@ function startRankingBattle() {
 
   ArenaFxEngine.init('arenaFxCanvas');
 
+  ArcadeAudio.init();
+  ArcadeAudio.playGong();
+
   renderCurrentMatchup();
 }
 
@@ -7297,7 +7382,7 @@ function chooseFighter(winnerSide) {
 
   const isFx = currentTournament.options.fxEnabled;
   if (!isFx) {
-    ArcadeAudio.playClick();
+    ArcadeAudio.playCardSelect();
     currentTournament.recordChoice(winnerSide);
     renderCurrentMatchup();
     return;
@@ -7430,7 +7515,7 @@ function executeFightAnimation(winnerSide, attackType, onComplete) {
 
 function chooseTie() {
   if (!currentTournament || currentTournament.isAnimating) return;
-  ArcadeAudio.playClick();
+  ArcadeAudio.playTie();
   currentTournament.recordTie();
   renderCurrentMatchup();
 }
