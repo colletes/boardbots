@@ -570,7 +570,7 @@ body {
   box-shadow: 0 4px 10px rgba(0,0,0,0.6);
   cursor: grab;
   user-select: none;
-  touch-action: none;
+  touch-action: pan-y;
   transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
   flex-shrink: 0;
 }
@@ -687,6 +687,67 @@ body {
   border-radius: 6px;
   background: rgba(233, 200, 117, 0.12);
   flex-shrink: 0;
+}
+
+/* Drag Auto-Scroll Zones */
+.drag-scroll-zone {
+  position: fixed;
+  left: 0;
+  right: 0;
+  height: 80px;
+  z-index: 150;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.25s ease, visibility 0.25s ease, background 0.2s ease, border-color 0.2s ease;
+}
+.drag-scroll-zone-top {
+  top: 0;
+  background: linear-gradient(180deg, rgba(18, 10, 6, 0.88) 0%, rgba(18, 10, 6, 0) 100%);
+  border-top: 3px solid transparent;
+}
+.drag-scroll-zone-bottom {
+  bottom: 0;
+  background: linear-gradient(0deg, rgba(18, 10, 6, 0.88) 0%, rgba(18, 10, 6, 0) 100%);
+  border-bottom: 3px solid transparent;
+}
+body.is-dragging-tile .drag-scroll-zone {
+  opacity: 0.55;
+  visibility: visible;
+}
+body.is-dragging-tile .drag-scroll-zone.active {
+  opacity: 1;
+}
+body.is-dragging-tile .drag-scroll-zone-top.active {
+  background: linear-gradient(180deg, rgba(197, 160, 89, 0.45) 0%, rgba(18, 10, 6, 0.15) 100%);
+  border-color: var(--brass-bright);
+}
+body.is-dragging-tile .drag-scroll-zone-bottom.active {
+  background: linear-gradient(0deg, rgba(197, 160, 89, 0.45) 0%, rgba(18, 10, 6, 0.15) 100%);
+  border-color: var(--brass-bright);
+}
+.drag-scroll-zone-content {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  background: rgba(18, 10, 6, 0.92);
+  border: 1.5px solid var(--brass-dark);
+  border-radius: 24px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--brass-bright);
+  letter-spacing: 0.3px;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.7);
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.drag-scroll-zone.active .drag-scroll-zone-content {
+  border-color: var(--brass-bright);
+  box-shadow: 0 0 24px rgba(229, 178, 110, 0.6);
+  transform: scale(1.06);
 }
 
 /* Modals */
@@ -1983,6 +2044,20 @@ footer {
   </footer>
 </div>
 
+<!-- Drag & Drop Viewport Auto-Scroll Indicators -->
+<div id="dragScrollIndicatorTop" class="drag-scroll-zone drag-scroll-zone-top" aria-hidden="true">
+  <div class="drag-scroll-zone-content">
+    <span>▲</span>
+    <span data-i18n="drag_scroll_up">Rolar para o topo (Tier S)</span>
+  </div>
+</div>
+<div id="dragScrollIndicatorBottom" class="drag-scroll-zone drag-scroll-zone-bottom" aria-hidden="true">
+  <div class="drag-scroll-zone-content">
+    <span>▼</span>
+    <span data-i18n="drag_scroll_down">Rolar para baixo (Não jogados)</span>
+  </div>
+</div>
+
 <!-- Modal: Add Custom Game / Upload -->
 <div id="customGameModal" class="modal-overlay">
   <div class="modal-card">
@@ -2989,6 +3064,8 @@ const I18N = {
     toast_exported: 'Imagem exportada com sucesso!',
     toast_txt_exported: 'Lista em texto exportada com sucesso!',
     toast_recalculated: 'Cores dos Tiers recalculadas no gradiente!',
+    drag_scroll_up: '▲ Rolar para o topo (Tier S)',
+    drag_scroll_down: '▼ Rolar para baixo (Não jogado)',
     unplayed_name: 'Não jogado',
     btn_battle_1v1: 'Batalha 1x1',
     modal_ranking_setup_title: 'Rankeamento 1x1 — Batalha de Jogos',
@@ -3137,6 +3214,8 @@ const I18N = {
     toast_exported: 'Image exported successfully!',
     toast_txt_exported: 'Text list exported successfully!',
     toast_recalculated: 'Tier colors recalculated along the gradient spectrum!',
+    drag_scroll_up: '▲ Scroll to top (Tier S)',
+    drag_scroll_down: '▼ Scroll down (Unplayed)',
     unplayed_name: 'Unplayed',
     btn_battle_1v1: '1v1 Battle',
     modal_ranking_setup_title: '1v1 Ranking — Game Battle',
@@ -3418,8 +3497,8 @@ function renderBoard() {
     dropzone.className = 'tier-dropzone';
     dropzone.dataset.tierId = tier.id;
 
-    // Enable Drag and Drop Events
-    setupDropzoneEvents(dropzone, tier.id);
+    // Enable Drag and Drop Events on Row, Header & Dropzone
+    setupTierRowDragEvents(row, labelBox, dropzone, tier.id);
 
     // Render Tiles inside
     const items = state.items[tier.id] || [];
@@ -3440,6 +3519,73 @@ function renderBoard() {
 let draggedItemId = null;
 let sourceTierId = null;
 let activeTileItem = null; // For mobile tap modal
+
+/* Auto-Scroll during Drag Engine */
+let dragScrollRaf = null;
+let dragScrollSpeed = 0;
+
+function updateDragAutoScroll(clientY) {
+  if (!draggedItemId) {
+    stopDragAutoScroll();
+    return;
+  }
+
+  const zoneHeight = 135; // Pixels from top or bottom of viewport
+  const vh = window.innerHeight;
+  const topIndicator = document.getElementById('dragScrollIndicatorTop');
+  const bottomIndicator = document.getElementById('dragScrollIndicatorBottom');
+
+  if (clientY <= zoneHeight) {
+    // Scrolling up towards Tier S
+    const ratio = Math.max(0, Math.min(1, (zoneHeight - clientY) / zoneHeight));
+    dragScrollSpeed = -Math.round(4 + Math.pow(ratio, 1.35) * 28);
+    if (topIndicator) topIndicator.classList.add('active');
+    if (bottomIndicator) bottomIndicator.classList.remove('active');
+  } else if (clientY >= vh - zoneHeight) {
+    // Scrolling down towards Unplayed
+    const ratio = Math.max(0, Math.min(1, (clientY - (vh - zoneHeight)) / zoneHeight));
+    dragScrollSpeed = Math.round(4 + Math.pow(ratio, 1.35) * 28);
+    if (bottomIndicator) bottomIndicator.classList.add('active');
+    if (topIndicator) topIndicator.classList.remove('active');
+  } else {
+    dragScrollSpeed = 0;
+    if (topIndicator) topIndicator.classList.remove('active');
+    if (bottomIndicator) bottomIndicator.classList.remove('active');
+  }
+
+  if (dragScrollSpeed !== 0) {
+    if (!dragScrollRaf) {
+      startDragScrollLoop();
+    }
+  } else {
+    stopDragAutoScroll();
+  }
+}
+
+function startDragScrollLoop() {
+  if (dragScrollRaf) return;
+  function step() {
+    if (dragScrollSpeed !== 0 && draggedItemId) {
+      window.scrollBy({ top: dragScrollSpeed, behavior: 'auto' });
+      dragScrollRaf = requestAnimationFrame(step);
+    } else {
+      dragScrollRaf = null;
+    }
+  }
+  dragScrollRaf = requestAnimationFrame(step);
+}
+
+function stopDragAutoScroll() {
+  if (dragScrollRaf) {
+    cancelAnimationFrame(dragScrollRaf);
+    dragScrollRaf = null;
+  }
+  dragScrollSpeed = 0;
+  const topIndicator = document.getElementById('dragScrollIndicatorTop');
+  const bottomIndicator = document.getElementById('dragScrollIndicatorBottom');
+  if (topIndicator) topIndicator.classList.remove('active');
+  if (bottomIndicator) bottomIndicator.classList.remove('active');
+}
 
 function createGameTileElement(item, currentTierId) {
   const tile = document.createElement('div');
@@ -3512,12 +3658,21 @@ function createGameTileElement(item, currentTierId) {
     draggedItemId = item.id;
     sourceTierId = currentTierId;
     tile.classList.add('dragging');
+    document.body.classList.add('is-dragging-tile');
     e.dataTransfer.setData('text/plain', item.id);
     e.dataTransfer.effectAllowed = 'move';
   });
 
+  tile.addEventListener('drag', (e) => {
+    if (e.clientY > 0) {
+      updateDragAutoScroll(e.clientY);
+    }
+  });
+
   tile.addEventListener('dragend', () => {
     tile.classList.remove('dragging');
+    document.body.classList.remove('is-dragging-tile');
+    stopDragAutoScroll();
     draggedItemId = null;
     sourceTierId = null;
     document.querySelectorAll('.tier-row').forEach(r => r.classList.remove('drag-over'));
@@ -3533,14 +3688,16 @@ function createGameTileElement(item, currentTierId) {
   return tile;
 }
 
-function setupDropzoneEvents(dropzone, tierId) {
+function setupTierRowDragEvents(row, labelBox, dropzone, tierId) {
+  // 1. Dropzone Events
   dropzone.addEventListener('dragover', (e) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
-    dropzone.closest('.tier-row').classList.add('drag-over');
+    row.classList.add('drag-over');
+    updateDragAutoScroll(e.clientY);
 
     const placeholder = getOrCreatePlaceholder();
-    const afterElement = getDragAfterElement(dropzone, e.clientX);
+    const afterElement = getDragAfterElement(dropzone, e.clientX, e.clientY);
     if (afterElement == null) {
       dropzone.appendChild(placeholder);
     } else {
@@ -3549,8 +3706,8 @@ function setupDropzoneEvents(dropzone, tierId) {
   });
 
   dropzone.addEventListener('dragleave', (e) => {
-    if (!dropzone.contains(e.relatedTarget)) {
-      dropzone.closest('.tier-row').classList.remove('drag-over');
+    if (!dropzone.contains(e.relatedTarget) && !labelBox.contains(e.relatedTarget)) {
+      row.classList.remove('drag-over');
       const placeholder = document.querySelector('.snap-placeholder');
       if (placeholder && placeholder.parentElement === dropzone) {
         placeholder.remove();
@@ -3560,7 +3717,9 @@ function setupDropzoneEvents(dropzone, tierId) {
 
   dropzone.addEventListener('drop', (e) => {
     e.preventDefault();
-    dropzone.closest('.tier-row').classList.remove('drag-over');
+    stopDragAutoScroll();
+    document.body.classList.remove('is-dragging-tile');
+    row.classList.remove('drag-over');
     if (!draggedItemId || !sourceTierId) return;
 
     // Find item
@@ -3574,7 +3733,7 @@ function setupDropzoneEvents(dropzone, tierId) {
     if (!state.items[tierId]) state.items[tierId] = [];
     const targetItems = state.items[tierId];
 
-    const afterElement = getDragAfterElement(dropzone, e.clientX);
+    const afterElement = getDragAfterElement(dropzone, e.clientX, e.clientY);
     if (afterElement == null) {
       targetItems.push(item);
     } else {
@@ -3591,6 +3750,47 @@ function setupDropzoneEvents(dropzone, tierId) {
     saveState();
     renderBoard();
   });
+
+  // 2. Row & Label Box Direct Drop (e.g. dropping directly onto "S" header)
+  labelBox.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    row.classList.add('drag-over');
+    updateDragAutoScroll(e.clientY);
+
+    const placeholder = getOrCreatePlaceholder();
+    if (dropzone.firstChild) {
+      dropzone.insertBefore(placeholder, dropzone.firstChild);
+    } else {
+      dropzone.appendChild(placeholder);
+    }
+  });
+
+  labelBox.addEventListener('dragleave', (e) => {
+    if (!labelBox.contains(e.relatedTarget) && !dropzone.contains(e.relatedTarget)) {
+      row.classList.remove('drag-over');
+    }
+  });
+
+  labelBox.addEventListener('drop', (e) => {
+    e.preventDefault();
+    stopDragAutoScroll();
+    document.body.classList.remove('is-dragging-tile');
+    row.classList.remove('drag-over');
+    if (!draggedItemId || !sourceTierId) return;
+
+    const sourceItems = state.items[sourceTierId] || [];
+    const itemIndex = sourceItems.findIndex(i => i.id === draggedItemId);
+    if (itemIndex === -1) return;
+
+    const [item] = sourceItems.splice(itemIndex, 1);
+    if (!state.items[tierId]) state.items[tierId] = [];
+    state.items[tierId].unshift(item); // Insert at beginning of tier
+
+    document.querySelectorAll('.snap-placeholder').forEach(p => p.remove());
+    saveState();
+    renderBoard();
+  });
 }
 
 function getOrCreatePlaceholder() {
@@ -3602,11 +3802,23 @@ function getOrCreatePlaceholder() {
   return ph;
 }
 
-function getDragAfterElement(container, x) {
+function getDragAfterElement(container, x, y) {
   const draggableElements = [...container.querySelectorAll('.game-tile:not(.dragging)')];
+  if (draggableElements.length === 0) return null;
+
   return draggableElements.reduce((closest, child) => {
     const box = child.getBoundingClientRect();
-    const offset = x - box.left - box.width / 2;
+    let offset;
+    if (y != null && (y < box.top - 8 || y > box.bottom + 8)) {
+      if (y < box.top - 8) {
+        offset = -10000 - (box.top - y);
+      } else {
+        offset = Number.NEGATIVE_INFINITY;
+      }
+    } else {
+      offset = x - box.left - box.width / 2;
+    }
+
     if (offset < 0 && offset > closest.offset) {
       return { offset: offset, element: child };
     } else {
@@ -6983,12 +7195,22 @@ async function enrichImportedGames(items) {
 // Alias for backwards compatibility
 const enrichImportedGamesWithBgg = enrichImportedGames;
 
-// Window Drag & Drop for file imports
+// Window Drag & Drop for file imports and drag auto-scroll
 window.addEventListener('dragover', (e) => {
-  if (e.dataTransfer && e.dataTransfer.types && Array.from(e.dataTransfer.types).includes('Files')) {
+  if (draggedItemId) {
+    e.preventDefault();
+    updateDragAutoScroll(e.clientY);
+  } else if (e.dataTransfer && e.dataTransfer.types && Array.from(e.dataTransfer.types).includes('Files')) {
     e.preventDefault();
   }
 });
+
+// Allow manual wheel/trackpad scrolling while dragging
+window.addEventListener('wheel', (e) => {
+  if (draggedItemId) {
+    window.scrollBy({ top: e.deltaY, behavior: 'auto' });
+  }
+}, { passive: true });
 
 window.addEventListener('drop', (e) => {
   if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
