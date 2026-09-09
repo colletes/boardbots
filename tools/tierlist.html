@@ -7547,40 +7547,112 @@ function showTournamentResults(sortedItems) {
   }
 }
 
+function isSameRankingGame(a, b) {
+  if (!a || !b) return false;
+  if (a.id && b.id && a.id === b.id) return true;
+  if (a.bggId && b.bggId && String(a.bggId) === String(b.bggId)) return true;
+  if (a.ludoId && b.ludoId && String(a.ludoId) === String(b.ludoId)) return true;
+  if (a.title && b.title) {
+    const normA = typeof normalizeSearchStr === 'function' ? normalizeSearchStr(a.title) : a.title.trim().toLowerCase();
+    const normB = typeof normalizeSearchStr === 'function' ? normalizeSearchStr(b.title) : b.title.trim().toLowerCase();
+    if (normA && normB && normA === normB) return true;
+  }
+  return false;
+}
+
+// Searches every tier in state.items, removes all occurrences of gameRef (moving it),
+// and returns the original item object (preserving ID, enriched fields, custom tags, etc.)
+function findAndRemoveExistingItem(gameRef) {
+  if (!gameRef || !state || !state.items) return null;
+
+  let existingFound = null;
+  for (const tierId of Object.keys(state.items)) {
+    const list = state.items[tierId];
+    if (!Array.isArray(list)) continue;
+
+    for (let i = list.length - 1; i >= 0; i--) {
+      if (isSameRankingGame(list[i], gameRef)) {
+        const [removed] = list.splice(i, 1);
+        if (!existingFound) existingFound = removed;
+      }
+    }
+  }
+  return existingFound;
+}
+
+function resolveGameToItem(gameRef) {
+  const existing = findAndRemoveExistingItem(gameRef);
+  if (existing) {
+    return Object.assign(existing, {
+      title: gameRef.title || existing.title,
+      image: existing.image || gameRef.image || '',
+      year: gameRef.year || existing.year || '',
+      ludoId: existing.ludoId || gameRef.ludoId || null,
+      bggId: existing.bggId || gameRef.bggId || null,
+      designer: existing.designer || gameRef.designer || '',
+      artist: existing.artist || gameRef.artist || '',
+      category: existing.category || gameRef.category || '',
+      domain: existing.domain || gameRef.domain || '',
+      mechanics: existing.mechanics || gameRef.mechanics || '',
+      players: existing.players || gameRef.players || '',
+      time: existing.time || gameRef.time || '',
+      plays: gameRef.plays != null ? gameRef.plays : (existing.plays || 0),
+      score: gameRef.score != null ? gameRef.score : existing.score,
+      bggScore: gameRef.bggScore != null ? gameRef.bggScore : existing.bggScore,
+      bggRank: gameRef.bggRank != null ? gameRef.bggRank : existing.bggRank,
+      bggWeight: gameRef.bggWeight != null ? gameRef.bggWeight : existing.bggWeight,
+      link: existing.link || gameRef.link || (gameRef.bggId ? `https://boardgamegeek.com/boardgame/${gameRef.bggId}` : ''),
+      bggLink: existing.bggLink || gameRef.bggLink || (gameRef.bggId ? `https://boardgamegeek.com/boardgame/${gameRef.bggId}` : ''),
+      source: existing.source || gameRef.source || 'bgg'
+    });
+  }
+
+  return {
+    id: gameRef.id || ('item_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6)),
+    title: gameRef.title,
+    image: gameRef.image || '',
+    year: gameRef.year || '',
+    ludoId: gameRef.ludoId || null,
+    bggId: gameRef.bggId || null,
+    designer: gameRef.designer || '',
+    artist: gameRef.artist || '',
+    category: gameRef.category || '',
+    domain: gameRef.domain || '',
+    mechanics: gameRef.mechanics || '',
+    players: gameRef.players || '',
+    time: gameRef.time || '',
+    plays: gameRef.plays || 0,
+    score: gameRef.score != null ? gameRef.score : null,
+    bggScore: gameRef.bggScore != null ? gameRef.bggScore : null,
+    bggRank: gameRef.bggRank != null ? gameRef.bggRank : null,
+    bggSubranks: gameRef.bggSubranks || [],
+    bggWeight: gameRef.bggWeight != null ? gameRef.bggWeight : null,
+    slug: gameRef.slug || '',
+    link: gameRef.link || (gameRef.bggId ? `https://boardgamegeek.com/boardgame/${gameRef.bggId}` : ''),
+    bggLink: gameRef.bggLink || (gameRef.bggId ? `https://boardgamegeek.com/boardgame/${gameRef.bggId}` : ''),
+    source: gameRef.source || 'bgg'
+  };
+}
+
 function applyRankingToUnplayedTier() {
   if (!currentRankedResults || currentRankedResults.length === 0) return;
 
   const unplayedTier = state.tiers.find(t => t.isUnplayed) || state.tiers[state.tiers.length - 1];
   const targetId = unplayedTier.id;
 
-  const formattedItems = currentRankedResults.map(game => {
-    return {
-      id: game.id || ('item_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6)),
-      title: game.title,
-      image: game.image || '',
-      year: game.year || '',
-      ludoId: game.ludoId || null,
-      bggId: game.bggId || null,
-      designer: game.designer || '',
-      artist: game.artist || '',
-      players: game.players || '',
-      time: game.time || '',
-      plays: game.plays || 0,
-      score: game.score != null ? game.score : null,
-      bggScore: game.bggScore != null ? game.bggScore : null,
-      bggRank: game.bggRank != null ? game.bggRank : null,
-      bggWeight: game.bggWeight != null ? game.bggWeight : null,
-      link: game.link || (game.bggId ? `https://boardgamegeek.com/boardgame/${game.bggId}` : ''),
-      bggLink: game.bggLink || (game.bggId ? `https://boardgamegeek.com/boardgame/${game.bggId}` : ''),
-      source: game.source || 'bgg'
-    };
+  // 1. Resolve and remove the ranked games from wherever they currently are in state.items
+  const resolvedItems = currentRankedResults.map(game => resolveGameToItem(game));
+
+  // 2. Keep any unranked games that were already in the unplayed tier
+  const remainingInUnplayed = (state.items[targetId] || []).filter(item => {
+    return !resolvedItems.some(r => isSameRankingGame(r, item));
   });
 
-  state.items[targetId] = formattedItems;
+  state.items[targetId] = [...resolvedItems, ...remainingInUnplayed];
   saveState();
   renderBoard();
   closeModal('rankingResultsModal');
-  showToast(`Ordem do Tier "${unplayedTier.name}" atualizada com ${formattedItems.length} jogos!`);
+  showToast(`Tier "${unplayedTier.name}" reordenado com sucesso! (${resolvedItems.length} jogos movidos)`);
 }
 
 function distributeRankingToTiers() {
@@ -7592,43 +7664,25 @@ function distributeRankingToTiers() {
     return;
   }
 
-  letterTiers.forEach(t => { state.items[t.id] = []; });
+  // 1. Resolve and remove all ranked items from their current tier(s) (e.g., 'Não jogado')
+  // This guarantees items are MOVED and not duplicated!
+  const resolvedItems = currentRankedResults.map(game => resolveGameToItem(game));
 
-  const total = currentRankedResults.length;
+  const total = resolvedItems.length;
   const numTiers = letterTiers.length;
 
-  currentRankedResults.forEach((game, idx) => {
+  // 2. Distribute the resolved items across the letter tiers
+  resolvedItems.forEach((item, idx) => {
     const tierIdx = Math.min(numTiers - 1, Math.floor((idx / total) * numTiers));
     const targetTierId = letterTiers[tierIdx].id;
-
-    const formattedItem = {
-      id: game.id || ('item_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6)),
-      title: game.title,
-      image: game.image || '',
-      year: game.year || '',
-      ludoId: game.ludoId || null,
-      bggId: game.bggId || null,
-      designer: game.designer || '',
-      artist: game.artist || '',
-      players: game.players || '',
-      time: game.time || '',
-      plays: game.plays || 0,
-      score: game.score != null ? game.score : null,
-      bggScore: game.bggScore != null ? game.bggScore : null,
-      bggRank: game.bggRank != null ? game.bggRank : null,
-      bggWeight: game.bggWeight != null ? game.bggWeight : null,
-      link: game.link || (game.bggId ? `https://boardgamegeek.com/boardgame/${game.bggId}` : ''),
-      bggLink: game.bggLink || (game.bggId ? `https://boardgamegeek.com/boardgame/${game.bggId}` : ''),
-      source: game.source || 'bgg'
-    };
-
-    state.items[targetTierId].push(formattedItem);
+    if (!state.items[targetTierId]) state.items[targetTierId] = [];
+    state.items[targetTierId].push(item);
   });
 
   saveState();
   renderBoard();
   closeModal('rankingResultsModal');
-  showToast(`${total} jogos distribuídos nos tiers da Tierlist!`);
+  showToast(`${total} jogos movidos e distribuídos nos tiers da Tierlist!`);
 }
 
 function copyRankingText() {
@@ -7683,6 +7737,9 @@ window.exitArenaPrompt = exitArenaPrompt;
 window.showTournamentResults = showTournamentResults;
 window.applyRankingToUnplayedTier = applyRankingToUnplayedTier;
 window.distributeRankingToTiers = distributeRankingToTiers;
+window.isSameRankingGame = isSameRankingGame;
+window.findAndRemoveExistingItem = findAndRemoveExistingItem;
+window.resolveGameToItem = resolveGameToItem;
 window.copyRankingText = copyRankingText;
 window.downloadRankingCsv = downloadRankingCsv;
 window.parseBggUserCollectionXml = parseBggUserCollectionXml;
