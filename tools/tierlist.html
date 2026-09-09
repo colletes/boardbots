@@ -2049,9 +2049,8 @@ function resolveExportImageSrc(imageUrl) {
 }
 
 // BGG's XML API now requires a registered application + Bearer token
-// (see workers/ludoproxy.js BGG_TOKEN secret). Flip this on once that token
-// is set server-side, otherwise every BGG call would just 401.
-const BGG_ENABLED = false;
+// (see workers/ludoproxy.js BGG_TOKEN secret).
+const BGG_ENABLED = true;
 
 // Multi-tier Proxy & Cache Client for Ludopedia API
 const LUDO_SEARCH_CACHE = new Map();
@@ -2077,15 +2076,34 @@ async function fetchFromLudopediaProxy(apiPath) {
 
 async function fetchBggXml(apiPath) {
   if (!BGG_ENABLED) return null;
+  let cleanPath = apiPath.replace(/^\/xmlapi2/, '');
+  if (!cleanPath.startsWith('/')) cleanPath = '/' + cleanPath;
+
+  // 1. Primary: Cloudflare Worker proxy (provides edge caching & protects credentials)
   try {
-    const res = await fetch(`${LUDOPEDIA_PROXY_BASE}/bgg${apiPath}`, {
+    const res = await fetch(`${LUDOPEDIA_PROXY_BASE}/bgg${cleanPath}`, {
       headers: { 'Accept': 'application/xml' }
     });
     if (res.ok) {
       return await res.text();
     }
   } catch (e) {
-    // Proxy unreachable/not deployed.
+    // Proxy unreachable/not deployed — fall back to direct BGG XML API call below
+  }
+
+  // 2. Direct BGG XML API fallback (BGG xmlapi2 officially supports CORS with Bearer token)
+  try {
+    const res = await fetch(`https://boardgamegeek.com/xmlapi2${cleanPath}`, {
+      headers: {
+        'Accept': 'application/xml',
+        'Authorization': 'Bearer cdb528f3-d81c-464a-acf6-44e16b2f47a8'
+      }
+    });
+    if (res.ok) {
+      return await res.text();
+    }
+  } catch (e) {
+    // Both attempts failed
   }
   return null;
 }
@@ -2105,11 +2123,7 @@ function parseBggSearchXml(xmlText) {
   }).filter(g => g.title);
 }
 
-function parseBggThingXml(xmlText) {
-  if (!xmlText) return null;
-  const doc = new DOMParser().parseFromString(xmlText, 'text/xml');
-  if (doc.querySelector('parsererror')) return null;
-  const item = doc.querySelector('items > item');
+function parseBggThingItem(item) {
   if (!item) return null;
   const nameEl = item.querySelector('name[type="primary"]') || item.querySelector('name');
   const yearEl = item.querySelector('yearpublished');
@@ -2167,15 +2181,53 @@ function parseBggThingXml(xmlText) {
   };
 }
 
+function parseBggThingsXml(xmlText) {
+  if (!xmlText) return [];
+  const doc = new DOMParser().parseFromString(xmlText, 'text/xml');
+  if (doc.querySelector('parsererror')) return [];
+  return Array.from(doc.querySelectorAll('items > item')).map(parseBggThingItem).filter(Boolean);
+}
+
+function parseBggThingXml(xmlText) {
+  if (!xmlText) return null;
+  const doc = new DOMParser().parseFromString(xmlText, 'text/xml');
+  if (doc.querySelector('parsererror')) return null;
+  const item = doc.querySelector('items > item');
+  return parseBggThingItem(item);
+}
+
+async function fetchBggThings(bggIds) {
+  if (!bggIds || !bggIds.length) return [];
+  const missingIds = [];
+  bggIds.forEach(id => {
+    const key = String(id);
+    if (!BGG_THING_CACHE.has(key)) {
+      missingIds.push(id);
+    }
+  });
+
+  if (missingIds.length > 0) {
+    const xml = await fetchBggXml(`/thing?id=${encodeURIComponent(missingIds.join(','))}`);
+    if (xml) {
+      const things = parseBggThingsXml(xml);
+      things.forEach(t => {
+        if (t && t.bggId) {
+          BGG_THING_CACHE.set(String(t.bggId), t);
+        }
+      });
+    }
+  }
+
+  return bggIds.map(id => BGG_THING_CACHE.get(String(id)) || null);
+}
+
 async function fetchBggThing(bggId) {
   if (!bggId) return null;
   const cacheKey = String(bggId);
   if (BGG_THING_CACHE.has(cacheKey)) return BGG_THING_CACHE.get(cacheKey);
 
-  const xml = await fetchBggXml(`/xmlapi2/thing?id=${encodeURIComponent(bggId)}`);
-  const result = parseBggThingXml(xml);
-  BGG_THING_CACHE.set(cacheKey, result);
-  return result;
+  const results = await fetchBggThings([bggId]);
+  return results[0] || null;
 }
 
 async function searchBGGAPI(query) {
@@ -2188,17 +2240,25 @@ async function searchBGGAPI(query) {
   }
 
   try {
-    const xml = await fetchBggXml(`/xmlapi2/search?query=${encodeURIComponent(qClean)}&type=boardgame`);
+    const xml = await fetchBggXml(`/search?query=${encodeURIComponent(qClean)}&type=boardgame`);
     const rawResults = parseBggSearchXml(xml).slice(0, 6);
 
-    // Fetch cover images and metadata for the top few matches only.
-    const results = await Promise.all(rawResults.map(async (g) => {
-      const detail = await fetchBggThing(g.bggId);
+    if (!rawResults.length) {
+      BGG_SEARCH_CACHE.set(cacheKey, []);
+      return [];
+    }
+
+    // Fetch details & covers in a single batch request instead of N roundtrips
+    const ids = rawResults.map(g => g.bggId);
+    await fetchBggThings(ids);
+
+    const results = rawResults.map((g) => {
+      const detail = BGG_THING_CACHE.get(String(g.bggId));
       return {
         id: 'bgg_' + g.bggId,
         bggId: g.bggId,
-        title: g.title,
-        alt: g.title,
+        title: (detail && detail.title) || g.title,
+        alt: (detail && detail.title) || g.title,
         image: (detail && detail.image) || '',
         year: g.year || (detail && detail.year) || '',
         designer: (detail && detail.designer) || '',
@@ -2211,7 +2271,7 @@ async function searchBGGAPI(query) {
         source: 'bgg',
         link: (detail && detail.link) || `https://boardgamegeek.com/boardgame/${g.bggId}`
       };
-    }));
+    });
 
     BGG_SEARCH_CACHE.set(cacheKey, results);
     return results;
