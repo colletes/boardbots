@@ -12,6 +12,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <!-- jsPDF for direct PDF export -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<!-- SheetJS for BGG / Ludohall CSV & XLSX collection parsing -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <style>
 :root {
@@ -326,6 +328,8 @@ body {
 .source-badge.ludopedia { background: #1b4332; color: #74c69d; }
 .source-badge.bgg { background: #5c1d11; color: #ff9b85; }
 .source-badge.custom { background: #3d2645; color: #d4a5ff; }
+.source-badge.plays { background: #1e3a8a; color: #93c5fd; }
+.source-badge.csv { background: #701a75; color: #f0abfc; }
 
 .search-result-add-btn {
   background: linear-gradient(135deg, var(--brass), var(--brass-dark));
@@ -1148,11 +1152,12 @@ footer {
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
           <span data-i18n="btn_save_json">Salvar lista</span>
         </button>
-        <button class="tool-btn" onclick="document.getElementById('importJsonInput').click()" title="Carregar lista de um arquivo .json">
+        <button class="tool-btn" onclick="document.getElementById('importAnyFileInput').click()" title="Carregar lista (.json) ou importar coleção / partidas (.csv, .xlsx)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-          <span data-i18n="btn_load_json">Carregar lista</span>
+          <span data-i18n="btn_load_json">Carregar / Importar</span>
         </button>
-        <input type="file" id="importJsonInput" accept=".json,application/json" style="display:none;" onchange="importTierlistJson(event)">
+        <input type="file" id="importAnyFileInput" accept=".json,.csv,.xlsx,.xls,application/json,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" style="display:none;" onchange="handleAnyImportFile(event)">
+        <input type="file" id="importJsonInput" accept=".json,application/json" style="display:none;" onchange="handleAnyImportFile(event)">
       </div>
 
       <div class="toolbar-right">
@@ -1502,6 +1507,52 @@ footer {
   </div>
 </div>
 
+<!-- Modal: Import Collection / Plays -->
+<div id="importCollectionModal" class="modal-overlay">
+  <div class="modal-card" style="max-width: 520px;">
+    <button class="modal-close-btn" onclick="closeModal('importCollectionModal')">&times;</button>
+    <h2>
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      <span data-i18n="modal_import_title">Importar Coleção / Partidas</span>
+    </h2>
+
+    <div id="importSummaryCard" style="background:rgba(0,0,0,0.3); border:1px solid rgba(233,200,117,0.25); border-radius:8px; padding:12px 14px; margin-bottom:16px;">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+        <span id="importSourceBadge" class="source-badge bgg" style="font-weight:700;">BGG</span>
+        <span id="importFileName" style="font-size:0.85rem; color:var(--text-muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></span>
+      </div>
+      <div id="importStatsText" style="font-size:0.95rem; font-weight:600; color:var(--brass-bright);"></div>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:16px;">
+      <label id="importExpansionsLabel" style="display:flex; align-items:center; gap:10px; cursor:pointer; font-size:0.88rem; color:var(--text-main);">
+        <input type="checkbox" id="importOptExpansions" style="width:18px; height:18px; accent-color:var(--brass); cursor:pointer;" onchange="updateImportModalCounts()">
+        <span>Incluir expansões (<span id="importExpansionsCount">0</span>)</span>
+      </label>
+
+      <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-size:0.88rem; color:var(--text-main);">
+        <input type="checkbox" id="importOptSkipDuplicates" checked style="width:18px; height:18px; accent-color:var(--brass); cursor:pointer;" onchange="updateImportModalCounts()">
+        <span data-i18n="import_opt_skip_duplicates">Ignorar jogos já adicionados à Tierlist</span>
+      </label>
+
+      <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-size:0.88rem; color:var(--text-main);">
+        <input type="checkbox" id="importOptFetchBgg" checked style="width:18px; height:18px; accent-color:var(--brass); cursor:pointer;">
+        <span data-i18n="import_opt_fetch_bgg">Buscar capas e notas no BGG automaticamente em segundo plano</span>
+      </label>
+    </div>
+
+    <div id="importActionSummary" style="font-size:0.85rem; color:var(--text-muted); margin-bottom:18px; padding:10px 12px; background:rgba(233,200,117,0.08); border-radius:6px; border:1px solid rgba(233,200,117,0.15);"></div>
+
+    <div style="display:flex; gap:10px; justify-content:flex-end;">
+      <button class="tool-btn" onclick="closeModal('importCollectionModal')" data-i18n="btn_cancel">Cancelar</button>
+      <button class="tool-btn" style="background:var(--brass); color:var(--surface-dark); font-weight:700; border-color:var(--brass-bright);" onclick="executeCollectionImport()">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="20 6 9 17 4 12"/></svg>
+        <span data-i18n="btn_import_confirm">Importar para Não Jogados</span>
+      </button>
+    </div>
+  </div>
+</div>
+
 <script>
 /* =======================================================
    i18n DICTIONARY
@@ -1565,8 +1616,12 @@ const I18N = {
     label_game_link: 'Link da Ludopedia (Opcional)',
     btn_extract_link: 'Extrair Dados',
     btn_save_json: 'Salvar lista',
-    btn_load_json: 'Carregar lista',
+    btn_load_json: 'Carregar / Importar',
     btn_download_txt: 'TXT (Lista)',
+    modal_import_title: 'Importar Coleção / Partidas',
+    import_opt_skip_duplicates: 'Ignorar jogos já adicionados à Tierlist',
+    import_opt_fetch_bgg: 'Buscar capas e notas no BGG automaticamente em segundo plano',
+    btn_import_confirm: 'Importar para Não Jogados',
     toast_link_extracted: 'Capa e dados do jogo extraídos com sucesso da Ludopedia!',
     toast_link_error: 'Não foi possível extrair dados automaticamente deste link.',
     toast_json_saved: 'Lista da Tierlist salva com sucesso!',
@@ -1586,8 +1641,12 @@ const I18N = {
     btn_add_tier: '+ New Tier',
     btn_recalc_colors: 'Auto-Gradient',
     btn_save_json: 'Save List',
-    btn_load_json: 'Load List',
+    btn_load_json: 'Load / Import',
     btn_download_txt: 'TXT (List)',
+    modal_import_title: 'Import Collection / Plays',
+    import_opt_skip_duplicates: 'Skip games already in Tierlist',
+    import_opt_fetch_bgg: 'Fetch covers and stats from BGG automatically in background',
+    btn_import_confirm: 'Import to Unplayed',
     label_size: 'Tile:',
     btn_reset: 'Reset',
     footer_credits: 'Credits',
@@ -4282,40 +4341,659 @@ function downloadTextList() {
   showToast(t('toast_txt_exported'));
 }
 
-function importTierlistJson(event) {
+/* =======================================================
+   COLLECTION & PLAYS IMPORT (CSV, XLSX, JSON)
+   ======================================================= */
+function parseCSV(text) {
+  if (!text) return [];
+  if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+  const lines = [];
+  let row = [''];
+  let inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    const next = text[i + 1];
+    if (c === '"') {
+      if (inQuotes && next === '"') {
+        row[row.length - 1] += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (c === ',' && !inQuotes) {
+      row.push('');
+    } else if ((c === '\r' || c === '\n') && !inQuotes) {
+      if (c === '\r' && next === '\n') i++;
+      lines.push(row);
+      row = [''];
+    } else {
+      row[row.length - 1] += c;
+    }
+  }
+  if (row.length > 1 || row[0] !== '') {
+    lines.push(row);
+  }
+  return lines;
+}
+
+function ensureSheetJs() {
+  return new Promise((resolve, reject) => {
+    if (window.XLSX) return resolve(window.XLSX);
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    script.onload = () => resolve(window.XLSX);
+    script.onerror = () => reject(new Error('Falha ao carregar SheetJS (necessário para planilhas Excel).'));
+    document.head.appendChild(script);
+  });
+}
+
+function normalizeTitle(t) {
+  return (t || '')
+    .toString()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]/g, '')
+    .trim();
+}
+
+function getExistingBoardItems() {
+  const all = [];
+  if (state.items) {
+    Object.values(state.items).forEach(arr => {
+      if (Array.isArray(arr)) all.push(...arr);
+    });
+  }
+  return all;
+}
+
+function detectAndParseCollectionData(fileName, rawContent) {
+  let rows = [];
+  let format = null;
+
+  const isCsv = (fileName && fileName.toLowerCase().endsWith('.csv')) || typeof rawContent === 'string';
+
+  if (isCsv) {
+    const text = typeof rawContent === 'string' ? rawContent : new TextDecoder('utf-8').decode(rawContent);
+    const parsed = parseCSV(text);
+    if (!parsed || parsed.length < 2) {
+      throw new Error('Arquivo CSV vazio ou sem dados válidos.');
+    }
+    const headers = parsed[0].map(h => (h || '').trim().toLowerCase());
+    if (headers.includes('objectname') && (headers.includes('objectid') || headers.includes('collid'))) {
+      format = 'bgg_csv';
+      rows = parsed.slice(1).map(row => {
+        const obj = {};
+        headers.forEach((h, i) => { obj[h] = (row[i] || '').trim(); });
+        return obj;
+      });
+    } else {
+      const nameKey = headers.find(h => h.includes('nome') || h.includes('name') || h.includes('title') || h.includes('jogo'));
+      if (nameKey) {
+        format = 'generic_csv';
+        rows = parsed.slice(1).map(row => {
+          const obj = {};
+          headers.forEach((h, i) => { obj[h] = (row[i] || '').trim(); });
+          return obj;
+        });
+      } else {
+        throw new Error('Cabeçalho do CSV não reconhecido como BGG ou coleção de jogos.');
+      }
+    }
+  } else {
+    if (!window.XLSX) {
+      throw new Error('Biblioteca de leitura Excel não disponível.');
+    }
+    const wb = window.XLSX.read(rawContent, { type: 'array' });
+    const sheetName = wb.SheetNames[0];
+    const sheet = wb.Sheets[sheetName];
+    const rawRows = window.XLSX.utils.sheet_to_json(sheet, { defval: '' });
+    if (!rawRows || rawRows.length === 0) {
+      throw new Error('A planilha Excel está vazia.');
+    }
+
+    const firstRowKeys = Object.keys(rawRows[0]).map(k => k.trim());
+    const lowerKeys = firstRowKeys.map(k => k.toLowerCase());
+
+    if (lowerKeys.some(k => k === 'objectname') && lowerKeys.some(k => k === 'objectid' || k === 'collid')) {
+      format = 'bgg_csv';
+      rows = rawRows;
+    } else if (lowerKeys.some(k => k.includes('nome do jogo')) && (lowerKeys.some(k => k.includes('ludopedia')) || lowerKeys.some(k => k.includes('designer')) || lowerKeys.some(k => k.includes('tipo de jogo')))) {
+      format = 'ludohall_bg';
+      rows = rawRows;
+    } else if (lowerKeys.some(k => k.includes('nome do jogo')) && (lowerKeys.some(k => k.includes('dura')) || lowerKeys.some(k => k.includes('pontua')) || lowerKeys.some(k => k.includes('partida')))) {
+      format = 'ludohall_plays';
+      rows = rawRows;
+    } else {
+      const nameKey = firstRowKeys.find(k => k.toLowerCase().includes('nome') || k.toLowerCase().includes('title') || k.toLowerCase().includes('jogo'));
+      if (nameKey) {
+        format = 'generic_excel';
+        rows = rawRows;
+      } else {
+        throw new Error('Formato da planilha não reconhecido.');
+      }
+    }
+  }
+
+  return transformRowsToCollection(format, rows, fileName);
+}
+
+function transformRowsToCollection(format, rows, fileName) {
+  const allGames = [];
+  const baseGames = [];
+  const expansions = [];
+  let sourceLabel = 'Coleção';
+  let badgeClass = 'custom';
+
+  if (format === 'bgg_csv') {
+    sourceLabel = 'BGG Coleção';
+    badgeClass = 'bgg';
+
+    rows.forEach(r => {
+      const title = (r.objectname || r.originalname || '').trim();
+      if (!title) return;
+      const bggId = parseInt(r.objectid, 10) || null;
+      const isExp = String(r.itemtype || '').trim().toLowerCase() === 'expansion';
+      const minp = r.minplayers;
+      const maxp = r.maxplayers;
+      const players = minp && maxp ? (minp === maxp ? String(minp) : `${minp}-${maxp}`) : (minp || maxp ? String(minp || maxp) : '');
+      const time = r.playingtime && r.playingtime !== '0' ? `${r.playingtime} min` : '';
+      const plays = parseInt(r.numplays, 10) || 0;
+      const score = r.rating && r.rating !== 'N/A' && !isNaN(parseFloat(r.rating)) ? parseFloat(r.rating) : null;
+      const bggScore = r.baverage && r.baverage !== 'N/A' && !isNaN(parseFloat(r.baverage)) ? Math.round(parseFloat(r.baverage) * 10) / 10 : null;
+      const bggRank = r.rank && r.rank !== 'N/A' && !isNaN(parseInt(r.rank, 10)) ? parseInt(r.rank, 10) : null;
+      const bggWeight = r.avgweight && r.avgweight !== 'N/A' && !isNaN(parseFloat(r.avgweight)) ? Math.round(parseFloat(r.avgweight) * 100) / 100 : null;
+
+      const item = {
+        title,
+        bggId,
+        year: r.yearpublished || '',
+        players,
+        time,
+        plays,
+        score,
+        bggScore,
+        bggRank,
+        bggWeight,
+        link: bggId ? `https://boardgamegeek.com/boardgame/${bggId}` : '',
+        bggLink: bggId ? `https://boardgamegeek.com/boardgame/${bggId}` : '',
+        isExpansion: isExp,
+        source: 'bgg'
+      };
+
+      allGames.push(item);
+      if (isExp) expansions.push(item);
+      else baseGames.push(item);
+    });
+
+  } else if (format === 'ludohall_bg') {
+    sourceLabel = 'Ludohall Coleção';
+    badgeClass = 'ludopedia';
+
+    rows.forEach(r => {
+      const nameKey = Object.keys(r).find(k => k.trim().toLowerCase() === 'nome do jogo') || 'Nome do jogo';
+      const title = String(r[nameKey] || '').trim();
+      if (!title) return;
+
+      const linkKey = Object.keys(r).find(k => k.trim().toLowerCase().includes('ludopedia')) || '';
+      const link = linkKey ? String(r[linkKey] || '').trim() : '';
+
+      const designerKey = Object.keys(r).find(k => k.trim().toLowerCase().includes('designer')) || '';
+      const designer = designerKey ? String(r[designerKey] || '').trim() : '';
+
+      const artistKey = Object.keys(r).find(k => k.trim().toLowerCase().includes('artista')) || '';
+      const artist = artistKey ? String(r[artistKey] || '').replace(/\|/g, ', ').trim() : '';
+
+      const yearKey = Object.keys(r).find(k => k.trim().toLowerCase().includes('ano')) || '';
+      const year = yearKey ? String(r[yearKey] || '').trim() : '';
+
+      const minPKey = Object.keys(r).find(k => k.trim().toLowerCase().includes('m\u00ednimo n\u00famero') || k.trim().toLowerCase().includes('minimo numero')) || '';
+      const maxPKey = Object.keys(r).find(k => k.trim().toLowerCase().includes('m\u00e1ximo n\u00famero') || k.trim().toLowerCase().includes('maximo numero')) || '';
+      const minp = minPKey ? r[minPKey] : '';
+      const maxp = maxPKey ? r[maxPKey] : '';
+      const players = minp && maxp ? (minp === maxp ? String(minp) : `${minp}-${maxp}`) : (minp || maxp ? String(minp || maxp) : '');
+
+      const playsKey = Object.keys(r).find(k => k.trim().toLowerCase() === 'partidas') || '';
+      const plays = playsKey ? parseInt(r[playsKey], 10) || 0 : 0;
+
+      const ratingKey = Object.keys(r).find(k => k.trim().toLowerCase().includes('avalia')) || '';
+      const scoreVal = ratingKey ? parseFloat(r[ratingKey]) : null;
+      const score = (!isNaN(scoreVal) && scoreVal > 0) ? scoreVal : null;
+
+      const typeKey = Object.keys(r).find(k => k.trim().toLowerCase().includes('tipo de jogo')) || '';
+      const isExp = typeKey ? String(r[typeKey] || '').trim().toLowerCase() === 'e' : false;
+
+      const mechKey = Object.keys(r).find(k => k.trim().toLowerCase().includes('mec\u00e2nicas') || k.trim().toLowerCase().includes('mecanicas')) || '';
+      const mechanics = mechKey ? String(r[mechKey] || '').replace(/\|/g, ', ').trim() : '';
+
+      const temaKey = Object.keys(r).find(k => k.trim().toLowerCase().includes('temas')) || '';
+      const category = temaKey ? String(r[temaKey] || '').replace(/\|/g, ', ').trim() : '';
+
+      let slug = '';
+      if (link) {
+        const m = link.match(/ludopedia\.com\.br\/jogo\/([^/?#]+)/i);
+        if (m) slug = m[1];
+      }
+
+      const item = {
+        title,
+        link,
+        slug,
+        designer,
+        artist,
+        year,
+        players,
+        plays,
+        score,
+        mechanics,
+        category,
+        isExpansion: isExp,
+        source: 'ludopedia'
+      };
+
+      allGames.push(item);
+      if (isExp) expansions.push(item);
+      else baseGames.push(item);
+    });
+
+  } else if (format === 'ludohall_plays') {
+    sourceLabel = 'Ludohall Partidas';
+    badgeClass = 'plays';
+
+    const gameMap = new Map();
+    rows.forEach(r => {
+      const nameKey = Object.keys(r).find(k => k.trim().toLowerCase() === 'nome do jogo') || 'Nome do jogo';
+      const title = String(r[nameKey] || '').trim();
+      if (!title) return;
+
+      if (!gameMap.has(title)) {
+        gameMap.set(title, {
+          title,
+          plays: 0,
+          totalDuration: 0,
+          durationCount: 0,
+          isExpansion: false,
+          source: 'plays'
+        });
+      }
+      const entry = gameMap.get(title);
+      entry.plays++;
+
+      const durKey = Object.keys(r).find(k => k.trim().toLowerCase().includes('dura\u00e7\u00e3o') || k.trim().toLowerCase().includes('duracao'));
+      if (durKey && r[durKey]) {
+        const d = parseInt(r[durKey], 10);
+        if (!isNaN(d) && d > 0) {
+          entry.totalDuration += d;
+          entry.durationCount++;
+        }
+      }
+    });
+
+    Array.from(gameMap.values()).forEach(g => {
+      const item = {
+        title: g.title,
+        plays: g.plays,
+        time: g.durationCount > 0 ? `${Math.round(g.totalDuration / g.durationCount)} min` : '',
+        isExpansion: false,
+        source: 'plays'
+      };
+      allGames.push(item);
+      baseGames.push(item);
+    });
+
+  } else {
+    sourceLabel = 'Arquivo de Jogos';
+    badgeClass = 'custom';
+
+    rows.forEach(r => {
+      const nameKey = Object.keys(r).find(k => k.toLowerCase().includes('nome') || k.toLowerCase().includes('title') || k.toLowerCase().includes('name') || k.toLowerCase().includes('jogo'));
+      if (!nameKey) return;
+      const title = String(r[nameKey] || '').trim();
+      if (!title) return;
+
+      const item = {
+        title,
+        isExpansion: false,
+        source: 'manual'
+      };
+      allGames.push(item);
+      baseGames.push(item);
+    });
+  }
+
+  return {
+    sourceLabel,
+    badgeClass,
+    fileName,
+    allGames,
+    baseGames,
+    expansions
+  };
+}
+
+let currentImportPayload = null;
+
+function loadTierlistFromJson(data) {
+  state.title = data.title || 'Minha Tierlist de Jogos de Tabuleiro';
+  state.tileSize = data.tileSize || 88;
+  state.tiers = data.tiers;
+  state.items = data.items;
+
+  initItemSlots();
+  if (state.tileSize) {
+    updateTileSize(state.tileSize);
+  }
+  const titleInput = document.getElementById('tierlistCustomTitle');
+  if (titleInput) titleInput.value = state.title;
+
+  saveState();
+  renderBoard();
+  showToast(t('toast_json_loaded'));
+}
+
+async function handleAnyImportFile(event) {
   const file = event.target && event.target.files && event.target.files[0];
   if (!file) return;
 
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    try {
-      const data = JSON.parse(e.target.result);
-      if (data && data.tiers && Array.isArray(data.tiers) && data.items && typeof data.items === 'object') {
-        state.title = data.title || 'Minha Tierlist de Jogos de Tabuleiro';
-        state.tileSize = data.tileSize || 88;
-        state.tiers = data.tiers;
-        state.items = data.items;
+  const fileName = file.name || '';
+  const ext = fileName.split('.').pop().toLowerCase();
 
-        initItemSlots();
-        if (state.tileSize) {
-          updateTileSize(state.tileSize);
+  try {
+    if (ext === 'json') {
+      const text = await file.text();
+      try {
+        const data = JSON.parse(text);
+        if (data && data.tiers && Array.isArray(data.tiers) && data.items && typeof data.items === 'object') {
+          loadTierlistFromJson(data);
+          event.target.value = '';
+          return;
         }
-        const titleInput = document.getElementById('tierlistCustomTitle');
-        if (titleInput) titleInput.value = state.title;
-
-        saveState();
-        renderBoard();
-        showToast(t('toast_json_loaded'));
-      } else {
-        alert('O arquivo selecionado não é um formato de Tierlist válido.');
-      }
-    } catch (err) {
-      alert('Erro ao carregar arquivo JSON: ' + err.message);
+      } catch (jsonErr) {}
     }
-  };
-  reader.readAsText(file);
-  event.target.value = '';
+
+    if (ext === 'csv') {
+      const text = await file.text();
+      const payload = detectAndParseCollectionData(fileName, text);
+      openImportCollectionModal(payload);
+    } else if (ext === 'xlsx' || ext === 'xls') {
+      await ensureSheetJs();
+      const buffer = await file.arrayBuffer();
+      const payload = detectAndParseCollectionData(fileName, buffer);
+      openImportCollectionModal(payload);
+    } else {
+      const text = await file.text();
+      try {
+        const data = JSON.parse(text);
+        if (data && data.tiers && data.items) {
+          loadTierlistFromJson(data);
+          event.target.value = '';
+          return;
+        }
+      } catch (e) {}
+      const payload = detectAndParseCollectionData(fileName, text);
+      openImportCollectionModal(payload);
+    }
+  } catch (err) {
+    console.error('Erro no import:', err);
+    alert('Erro ao importar arquivo: ' + (err.message || err));
+  } finally {
+    if (event.target) event.target.value = '';
+  }
 }
+
+function importTierlistJson(event) {
+  handleAnyImportFile(event);
+}
+
+function openImportCollectionModal(payload) {
+  currentImportPayload = payload;
+  const modal = document.getElementById('importCollectionModal');
+  if (!modal) return;
+
+  const badge = document.getElementById('importSourceBadge');
+  const fileNameEl = document.getElementById('importFileName');
+  const statsTextEl = document.getElementById('importStatsText');
+  const expLabel = document.getElementById('importExpansionsLabel');
+  const expCountEl = document.getElementById('importExpansionsCount');
+  const expCheck = document.getElementById('importOptExpansions');
+
+  badge.textContent = payload.sourceLabel || 'Arquivo';
+  badge.className = 'source-badge ' + (payload.badgeClass || 'bgg');
+  fileNameEl.textContent = payload.fileName || '';
+
+  const total = payload.allGames.length;
+  const baseCount = payload.baseGames.length;
+  const expCount = payload.expansions.length;
+
+  if (expCount > 0) {
+    expLabel.style.display = 'flex';
+    if (expCountEl) expCountEl.textContent = expCount;
+    expCheck.checked = false;
+  } else {
+    expLabel.style.display = 'none';
+    expCheck.checked = false;
+  }
+
+  statsTextEl.textContent = `${total} jogos encontrados (${baseCount} jogos base${expCount > 0 ? `, ${expCount} expansões` : ''})`;
+
+  updateImportModalCounts();
+  openModal('importCollectionModal');
+}
+
+function updateImportModalCounts() {
+  if (!currentImportPayload) return;
+
+  const includeExp = document.getElementById('importOptExpansions').checked;
+  const skipDupes = document.getElementById('importOptSkipDuplicates').checked;
+  const summaryEl = document.getElementById('importActionSummary');
+
+  const candidates = includeExp ? currentImportPayload.allGames : currentImportPayload.baseGames;
+  let countToAdd = candidates.length;
+
+  if (skipDupes) {
+    const existing = getExistingBoardItems();
+    const existingBggIds = new Set(existing.filter(i => i.bggId).map(i => String(i.bggId)));
+    const existingTitles = new Set(existing.map(i => normalizeTitle(i.title)));
+
+    const seenIds = new Set();
+    const seenTitles = new Set();
+    let finalCount = 0;
+
+    for (const g of candidates) {
+      const gId = g.bggId ? String(g.bggId) : null;
+      const norm = normalizeTitle(g.title);
+      if (gId && (existingBggIds.has(gId) || seenIds.has(gId))) continue;
+      if (existingTitles.has(norm) || seenTitles.has(norm)) continue;
+
+      if (gId) seenIds.add(gId);
+      seenTitles.add(norm);
+      finalCount++;
+    }
+    countToAdd = finalCount;
+  }
+
+  const unplayedTier = state.tiers.find(t => t.isUnplayed) || state.tiers[state.tiers.length - 1];
+  const tierName = (unplayedTier && unplayedTier.name) || 'Não jogado';
+
+  if (summaryEl) {
+    summaryEl.innerHTML = `Serão adicionados <strong>${countToAdd}</strong> jogos ao tier <em>"${tierName}"</em>.`;
+  }
+}
+
+function executeCollectionImport() {
+  if (!currentImportPayload || !currentImportPayload.allGames) return;
+
+  const includeExpansions = document.getElementById('importOptExpansions').checked;
+  const skipDuplicates = document.getElementById('importOptSkipDuplicates').checked;
+  const fetchBgg = document.getElementById('importOptFetchBgg').checked;
+
+  const unplayedTier = state.tiers.find(t => t.isUnplayed) || state.tiers[state.tiers.length - 1];
+  const targetId = unplayedTier.id;
+  if (!state.items[targetId]) state.items[targetId] = [];
+
+  const existingItems = getExistingBoardItems();
+  const existingBggIds = new Set(existingItems.filter(i => i.bggId).map(i => String(i.bggId)));
+  const existingTitles = new Set(existingItems.map(i => normalizeTitle(i.title)));
+
+  const candidates = includeExpansions ? currentImportPayload.allGames : currentImportPayload.baseGames;
+  const toAdd = [];
+
+  for (const game of candidates) {
+    const gBggId = game.bggId ? String(game.bggId) : null;
+    const norm = normalizeTitle(game.title);
+
+    if (skipDuplicates) {
+      if (gBggId && existingBggIds.has(gBggId)) continue;
+      if (existingTitles.has(norm)) continue;
+    }
+
+    if (gBggId) existingBggIds.add(gBggId);
+    existingTitles.add(norm);
+
+    const newItem = {
+      id: 'item_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
+      title: game.title,
+      image: game.image || '',
+      year: game.year || '',
+      ludoId: game.ludoId || null,
+      bggId: game.bggId || null,
+      designer: game.designer || '',
+      artist: game.artist || '',
+      category: game.category || '',
+      domain: game.domain || '',
+      mechanics: game.mechanics || '',
+      players: game.players || '',
+      time: game.time || '',
+      plays: game.plays || 0,
+      score: game.score != null ? game.score : null,
+      bggScore: game.bggScore != null ? game.bggScore : null,
+      bggRank: game.bggRank != null ? game.bggRank : null,
+      bggSubranks: game.bggSubranks || [],
+      bggWeight: game.bggWeight != null ? game.bggWeight : null,
+      slug: game.slug || '',
+      link: game.link || '',
+      bggLink: game.bggLink || (game.bggId ? `https://boardgamegeek.com/boardgame/${game.bggId}` : ''),
+      source: game.source || 'manual'
+    };
+    toAdd.push(newItem);
+  }
+
+  if (toAdd.length === 0) {
+    alert('Nenhum jogo novo para importar (todos já constam na tierlist ou foram filtrados).');
+    closeModal('importCollectionModal');
+    return;
+  }
+
+  state.items[targetId].push(...toAdd);
+  saveState();
+  renderBoard();
+  closeModal('importCollectionModal');
+
+  showToast(`${toAdd.length} jogos importados para "${unplayedTier.name}"!`);
+
+  if (fetchBgg) {
+    enrichImportedGamesWithBgg(toAdd);
+  }
+}
+
+let isEnrichingImport = false;
+async function enrichImportedGamesWithBgg(items) {
+  if (!items || !items.length) return;
+  if (isEnrichingImport) return;
+  isEnrichingImport = true;
+
+  try {
+    // 1. Items with BGG ID but no cover image
+    const withBggId = items.filter(i => i.bggId && !i.image);
+    if (withBggId.length > 0) {
+      const BATCH_SIZE = 20;
+      for (let i = 0; i < withBggId.length; i += BATCH_SIZE) {
+        const chunk = withBggId.slice(i, i + BATCH_SIZE);
+        const ids = chunk.map(c => c.bggId);
+        try {
+          await fetchBggThings(ids);
+          chunk.forEach(item => {
+            const detail = BGG_THING_CACHE.get(String(item.bggId));
+            if (detail) {
+              if (detail.image && !item.image) item.image = detail.image;
+              if (detail.bggScore != null && item.bggScore == null) item.bggScore = detail.bggScore;
+              if (detail.bggRank != null && item.bggRank == null) item.bggRank = detail.bggRank;
+              if (detail.bggSubranks && (!item.bggSubranks || !item.bggSubranks.length)) item.bggSubranks = detail.bggSubranks;
+              if (detail.bggWeight != null && item.bggWeight == null) item.bggWeight = detail.bggWeight;
+              if (detail.designer && !item.designer) item.designer = detail.designer;
+              if (detail.artist && !item.artist) item.artist = detail.artist;
+              if (detail.year && !item.year) item.year = detail.year;
+              if (detail.time && !item.time) item.time = detail.time;
+              if (detail.players && !item.players) item.players = detail.players;
+            }
+          });
+          saveState();
+          renderBoard();
+        } catch (err) {
+          console.warn('Erro ao atualizar lote de capas do BGG:', err);
+        }
+        await new Promise(r => setTimeout(r, 350));
+      }
+    }
+
+    // 2. Items without BGG ID and without cover image (e.g. from Ludohall)
+    const withoutBgg = items.filter(i => !i.bggId && !i.image);
+    if (withoutBgg.length > 0) {
+      for (let i = 0; i < withoutBgg.length; i++) {
+        const item = withoutBgg[i];
+        try {
+          const results = await searchBGGAPI(item.title);
+          if (results && results.length > 0) {
+            const best = results[0];
+            if (best) {
+              item.bggId = best.bggId;
+              item.bggLink = `https://boardgamegeek.com/boardgame/${best.bggId}`;
+              if (best.image && !item.image) item.image = best.image;
+              if (best.score != null && item.bggScore == null) item.bggScore = best.score;
+              if (best.bggRank != null && item.bggRank == null) item.bggRank = best.bggRank;
+              if (best.bggWeight != null && item.bggWeight == null) item.bggWeight = best.bggWeight;
+              if (best.bggSubranks && (!item.bggSubranks || !item.bggSubranks.length)) item.bggSubranks = best.bggSubranks;
+              if (best.designer && !item.designer) item.designer = best.designer;
+              if (best.artist && !item.artist) item.artist = best.artist;
+            }
+          }
+        } catch (e) {
+          console.warn('Erro ao buscar BGG para:', item.title, e);
+        }
+
+        if ((i + 1) % 5 === 0 || i === withoutBgg.length - 1) {
+          saveState();
+          renderBoard();
+        }
+        await new Promise(r => setTimeout(r, 450));
+      }
+    }
+  } catch (err) {
+    console.error('Erro na sincronização de dados BGG:', err);
+  } finally {
+    isEnrichingImport = false;
+    saveState();
+    renderBoard();
+  }
+}
+
+// Window Drag & Drop for file imports
+window.addEventListener('dragover', (e) => {
+  if (e.dataTransfer && e.dataTransfer.types && Array.from(e.dataTransfer.types).includes('Files')) {
+    e.preventDefault();
+  }
+});
+
+window.addEventListener('drop', (e) => {
+  if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+    const file = e.dataTransfer.files[0];
+    const name = (file.name || '').toLowerCase();
+    if (name.endsWith('.json') || name.endsWith('.csv') || name.endsWith('.xlsx') || name.endsWith('.xls')) {
+      e.preventDefault();
+      handleAnyImportFile({ target: { files: [file] } });
+    }
+  }
+});
 
 async function shareNative() {
   const blob = await getExportBlob('image/png');
