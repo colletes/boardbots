@@ -1180,6 +1180,17 @@ body {
                     </div>
                 </div>
 
+                <h2 class="section-title" data-i18n="title_special_select">5. Desafios & Módulos Especiais</h2>
+                <div class="toggle-grid">
+                    <div class="toggle-card" id="tog-automubon" onclick="toggleAutomubon()">
+                        <div class="toggle-info">
+                            <span class="toggle-name">🏛️ <span data-i18n="opt_automubon_title">Sociedade Automubon</span> <span class="badge-pill" data-i18n="badge_expert" style="margin-left:6px;">Perito</span></span>
+                            <span class="toggle-sub" data-i18n="opt_automubon_desc">Adiciona a carta oficial de nível perito ao baralho. A Automa disputa agressivamente os objetivos de final de rodada (+1 cubo constante).</span>
+                        </div>
+                        <div class="switch-indicator" id="sw-automubon"></div>
+                    </div>
+                </div>
+
                 <details class="setup-checklist">
                     <summary data-i18n="setup_check_title">📋 Checklist de Preparação Física da Mesa</summary>
                     <ul>
@@ -1214,6 +1225,7 @@ body {
                     <span class="ticker-item cubes" title="Cubos de Objetivo da Rodada">⬛ <span id="hud-cubes">0</span></span>
                     <span class="ticker-item nectar" id="hud-nectar-wrap" title="Néctar Gasto Total">🌺 <span id="hud-nectar">0</span></span>
                     <span class="ticker-item hoard" id="hud-hoard-wrap" title="Fichas de Reserva/Acúmulo">🪙 <span id="hud-hoard">0</span></span>
+                    <span class="ticker-item automubon-badge" id="hud-automubon-badge" style="display:none; background:#5d4037; color:#fff; padding:3px 8px; border-radius:12px; font-weight:700; font-size:11px;" title="Sociedade Automubon Ativa">🏛️ Automubon</span>
                 </div>
                 <button class="btn-undo" onclick="undoLastTurn()">
                     <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7v6h6M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13"/></svg>
@@ -1531,6 +1543,13 @@ body {
                 <details>
                     <summary data-i18n="help_razzi_title">Modo Cooperativo Automarazzi</summary>
                     <p data-i18n="help_razzi_desc">Jogue cooperativamente em 2 a 4 jogadores contra a Automarazzi. Durante seu turno, você pode doar cartas a outros jogadores descartando 1 recurso, ou retirar 2 ovos do tabuleiro de um companheiro (colocando 1 em uma ave sua e dando 1 para a Automarazzi). Se todos os jogadores empatarem ou vencerem a Automarazzi no objetivo da rodada, cada um ganha 1 ovo bônus!</p>
+                </details>
+            </div>
+
+            <div class="help-section">
+                <details>
+                    <summary data-i18n="help_automubon_title">Sociedade Automubon (Nível Perito)</summary>
+                    <p data-i18n="help_automubon_desc">A Sociedade Automubon é uma carta oficial de nível perito do jogo base que pode ser adicionada a qualquer partida solo ou Automarazzi. Quando ativada, a Automa ganha cubos de objetivo de final de rodada em quase todas as ações (+1 cubo), tornando a disputa dos objetivos de rodada muito mais feroz e desafiadora.</p>
                 </details>
             </div>
         </div>
@@ -2065,6 +2084,12 @@ const I18N = {
         help_nectar_title: "Néctar & Expansão Oceania (OE)",
         help_benefit_title: "Reserva (Cache) vs Acúmulo (Hoard)",
         help_razzi_title: "Modo Cooperativo Automarazzi",
+        title_special_select: "5. Desafios & Módulos Especiais",
+        opt_automubon_title: "Sociedade Automubon",
+        opt_automubon_desc: "Adiciona a carta oficial de nível perito ao baralho. A Automa disputa agressivamente os objetivos de final de rodada (+1 cubo constante).",
+        badge_expert: "Perito",
+        help_automubon_title: "Sociedade Automubon (Nível Perito)",
+        help_automubon_desc: "A Sociedade Automubon é uma carta oficial de nível perito do jogo base que pode ser adicionada a qualquer partida solo ou Automarazzi. Quando ativada, a Automa ganha cubos de objetivo de final de rodada em quase todas as ações (+1 cubo), tornando a disputa dos objetivos de rodada muito mais feroz e desafiadora.",
         btn_reset: "Reiniciar",
         btn_sound: "Ambiente"
     },
@@ -2138,6 +2163,12 @@ const I18N = {
         help_nectar_title: "Nectar & Oceania Expansion (OE)",
         help_benefit_title: "Cache vs Hoard",
         help_razzi_title: "Automarazzi Co-op Mode",
+        title_special_select: "5. Special Challenges & Modules",
+        opt_automubon_title: "Automubon Society",
+        opt_automubon_desc: "Adds the official expert-level card to the deck. Automa aggressively contends for round goals (+1 cube constantly).",
+        badge_expert: "Expert",
+        help_automubon_title: "Automubon Society (Expert Challenge)",
+        help_automubon_desc: "Automubon Society is an official expert-level card from the base game that can be added to any match (Standard Solo, Oceania, European, or Automarazzi). When enabled, it adds the Automubon Society card into the deck. With it, the Automa places objective cubes on almost every turn (+1 cube), making the race for round goals significantly more competitive.",
         btn_reset: "Reset",
         btn_sound: "Ambience"
     }
@@ -2195,6 +2226,14 @@ function selectBenefitMode(b) {
     document.getElementById('opt-ben-none').classList.toggle('selected', b === 'none');
 }
 
+function toggleAutomubon() {
+    STATE.useAutomubon = !STATE.useAutomubon;
+    const card = document.getElementById('tog-automubon');
+    if (card) card.classList.toggle('active', STATE.useAutomubon);
+    const ind = document.getElementById('sw-automubon');
+    if (ind) ind.innerText = STATE.useAutomubon ? '✓' : '';
+}
+
 function updateChecklistVisibility() {
     const isDuet = STATE.mode === 'duet' || STATE.expansions.asia;
     const isAE = STATE.expansions.ae;
@@ -2233,21 +2272,48 @@ function startGame() {
         STATE.nectar = { forest: 0, grassland: 0, wetland: 0 };
     }
     
-    // Build deck
-    let baseDeck = (STATE.mode === 'duet' || (STATE.expansions.asia && !STATE.expansions.oe)) 
-        ? [...AUTOMA_CARDS_ASIA] 
-        : [...AUTOMA_CARDS_BASE];
+    // Build Automa action deck
+    let baseDeck;
+    if (STATE.mode === 'duet' || (STATE.expansions.asia && !STATE.expansions.oe)) {
+        // Asia deck: 10 regular cards + Alliance card (only in Duet mode)
+        baseDeck = AUTOMA_CARDS_ASIA.filter(c => {
+            if (c.isAlliance) return STATE.mode === 'duet';
+            return true;
+        }).map(c => ({...c}));
+    } else {
+        // Base deck: 10 regular cards (exclude Automubon by default)
+        baseDeck = AUTOMA_CARDS_BASE.filter(c => !c.isAutomubon).map(c => ({...c}));
+    }
+    
+    // Add Automubon Society expert card if enabled
+    if (STATE.useAutomubon) {
+        const automubonCard = AUTOMA_CARDS_BASE.find(c => c.isAutomubon);
+        if (automubonCard && !baseDeck.some(c => c.id === automubonCard.id)) {
+            baseDeck.push({...automubonCard});
+        }
+    }
         
+    // Add RAOUtoma if Oceania active
     if (STATE.expansions.oe) {
-        baseDeck.push(RAOUTOMA_CARD);
+        baseDeck.push({...RAOUTOMA_CARD});
     }
     
     STATE.activeDeck = shuffle(baseDeck);
     STATE.discardPile = [];
     
-    // Americas Hummingbird deck
+    // Americas Hummingbird deck with difficulty substitutions
     if (STATE.expansions.ae) {
-        STATE.hbirdDeck = shuffle(HUMMINGBIRD_DECK);
+        let hDeck = HUMMINGBIRD_DECK.filter(c => ['h01','h02','h03','h04','h05','h06','h07','h08','h09','h10'].includes(c.id)).map(c => ({...c}));
+        if (STATE.difficulty === 'eaglet') {
+            hDeck = hDeck.filter(c => c.id !== 'h09');
+            const eagletCard = HUMMINGBIRD_DECK.find(c => c.id === 'h11');
+            if (eagletCard) hDeck.push({...eagletCard});
+        } else if (STATE.difficulty === 'eyed') {
+            hDeck = hDeck.filter(c => c.id !== 'h10');
+            const eyedCard = HUMMINGBIRD_DECK.find(c => c.id === 'h12');
+            if (eyedCard) hDeck.push({...eyedCard});
+        }
+        STATE.hbirdDeck = shuffle(hDeck);
         STATE.hbirdTrack = 0;
     }
     
@@ -2269,6 +2335,7 @@ function startGame() {
     document.getElementById('panel-razzi').classList.toggle('hidden', STATE.mode !== 'razzi');
     document.getElementById('hud-nectar-wrap').style.display = STATE.expansions.oe ? 'inline-flex' : 'none';
     document.getElementById('hud-hoard-wrap').style.display = STATE.benefitMode !== 'none' ? 'inline-flex' : 'none';
+    document.getElementById('hud-automubon-badge').style.display = STATE.useAutomubon ? 'inline-flex' : 'none';
     
     buildDuetMapSVG();
     buildHummingbirdTrack();
@@ -2316,6 +2383,12 @@ function executeCurrentCardAction() {
     if (!STATE.currentCard) return;
     const roundData = STATE.currentCard.rounds[STATE.round];
     if (!roundData) return;
+    
+    if (STATE.currentCard.isAutomubon) {
+        addLog(STATE.lang === 'pt' ? "🏛️ SOCIEDADE AUTOMUBON" : "🏛️ AUTOMUBON SOCIETY",
+               STATE.lang === 'pt' ? "Carta oficial de perito revelada! A Automa disputa agressivamente os objetivos de final de rodada (+1 cubo)."
+                                  : "Official expert card revealed! Automa aggressively contends for round-end goals (+1 cube).");
+    }
     
     // Handle action effects
     if (roundData.action === 'draw_cards') {
@@ -3021,6 +3094,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('panel-razzi').classList.toggle('hidden', STATE.mode !== 'razzi');
                 document.getElementById('hud-nectar-wrap').style.display = STATE.expansions.oe ? 'inline-flex' : 'none';
                 document.getElementById('hud-hoard-wrap').style.display = STATE.benefitMode !== 'none' ? 'inline-flex' : 'none';
+                document.getElementById('hud-automubon-badge').style.display = STATE.useAutomubon ? 'inline-flex' : 'none';
                 
                 buildDuetMapSVG();
                 buildHummingbirdTrack();
