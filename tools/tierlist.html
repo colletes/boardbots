@@ -6356,7 +6356,12 @@ function transformRowsToCollection(format, rows, fileName) {
       if (!title) return;
       const bggId = parseInt(r.objectid, 10) || null;
       const dedupKey = bggId ? `bgg_${bggId}` : `title_${normalizeTitle(title)}`;
-      const isExp = String(r.itemtype || '').trim().toLowerCase() === 'expansion';
+      const typeStr = String(r.itemtype || r.subtype || r.objecttype || r.type || r.colltype || '').trim().toLowerCase();
+      const isExp = typeStr.includes('expansion') ||
+                    /\b(game expansion|board game expansion)\b/i.test(title) ||
+                    /\((?:board\s*)?game\s+expansion\)/i.test(title) ||
+                    /:\s*[^:]*?\bexpansion\b/i.test(title) ||
+                    /\bexpansion\s*\)/i.test(title);
       const minp = r.minplayers;
       const maxp = r.maxplayers;
       const players = minp && maxp ? (minp === maxp ? String(minp) : `${minp}-${maxp}`) : (minp || maxp ? String(minp || maxp) : '');
@@ -6369,6 +6374,7 @@ function transformRowsToCollection(format, rows, fileName) {
 
       if (seenMap.has(dedupKey)) {
         const existing = seenMap.get(dedupKey);
+        if (!existing.isExpansion && isExp) existing.isExpansion = true;
         if (plays > existing.plays) existing.plays = plays;
         if (score != null && existing.score == null) existing.score = score;
         if (bggScore != null && existing.bggScore == null) existing.bggScore = bggScore;
@@ -6958,12 +6964,24 @@ async function executeOnlineImportFromInput() {
         if (match) bggUser = (typeof match === 'string' ? match : match[1]).trim();
       } catch (e) {}
     }
-    closeModal('importSourceModal');
-    openRankingSetupModal();
-    const bggInput = document.getElementById('bggRankUsername');
-    if (bggInput && bggUser) bggInput.value = bggUser;
-    switchRankingTab('bgg');
-    fetchBggForRanking();
+    try {
+      if (btn) btn.disabled = true;
+      if (spinner) {
+        spinner.style.display = 'flex';
+        if (statusText) statusText.textContent = currentLang === 'en'
+          ? 'Connecting to BGG and loading collection...'
+          : 'Conectando ao BGG e carregando coleção...';
+      }
+      const payload = await fetchBggUserCollection(bggUser);
+      closeModal('importSourceModal');
+      openImportCollectionModal(payload);
+    } catch (err) {
+      console.error('Erro ao importar coleção do BGG:', err);
+      alert(err.message || 'Erro ao consultar coleção no BGG.');
+    } finally {
+      if (btn) btn.disabled = false;
+      if (spinner) spinner.style.display = 'none';
+    }
     return;
   }
 
@@ -8256,7 +8274,7 @@ class TournamentEngine {
 }
 
 // BGG XML Collection Parser
-function parseBggUserCollectionXml(xmlText) {
+function parseBggUserCollectionXml(xmlText, expansionIdSet = null) {
   if (!xmlText) return [];
   const doc = new DOMParser().parseFromString(xmlText, 'text/xml');
   if (doc.querySelector('parsererror')) return [];
@@ -8266,11 +8284,24 @@ function parseBggUserCollectionXml(xmlText) {
 
   items.forEach(item => {
     const bggId = item.getAttribute('objectid');
-    const subtype = item.getAttribute('subtype');
-    const isExpansion = subtype === 'boardgameexpansion';
+    const subtype = (item.getAttribute('subtype') || '').toLowerCase();
+    const objType = (item.getAttribute('objecttype') || '').toLowerCase();
     const nameEl = item.querySelector('name');
     const title = nameEl ? nameEl.textContent.trim() : '';
     if (!title) return;
+
+    let isExpansion = subtype === 'boardgameexpansion' || objType === 'boardgameexpansion';
+    if (!isExpansion && expansionIdSet && expansionIdSet.has(String(bggId))) {
+      isExpansion = true;
+    }
+    if (!isExpansion) {
+      if (/\b(game expansion|board game expansion)\b/i.test(title) ||
+          /\((?:board\s*)?game\s+expansion\)/i.test(title) ||
+          /:\s*[^:]*?\bexpansion\b/i.test(title) ||
+          /\bexpansion\s*\)/i.test(title)) {
+        isExpansion = true;
+      }
+    }
 
     const yearEl = item.querySelector('yearpublished');
     const year = yearEl ? yearEl.textContent.trim() : '';
@@ -8317,6 +8348,7 @@ function parseBggUserCollectionXml(xmlText) {
     }
 
     if (existing) {
+      if (!existing.isExpansion && isExpansion) existing.isExpansion = true;
       if (!existing.image && image) existing.image = image;
       if (!existing.year && year) existing.year = year;
       if (!existing.players && players) existing.players = players;
@@ -8373,7 +8405,86 @@ function parseBggUserCollectionXml(xmlText) {
   return Array.from(new Set(parsedMap.values()));
 }
 
-// BGG Collection Fetch with Retry Loop
+// Helper to fetch BGG User Collection with accurate expansions identification
+async function fetchBggUserCollection(username) {
+  const cleanUser = String(username || '').trim().replace(/^@/, '');
+  if (!cleanUser) {
+    throw new Error(currentLang === 'en' ? 'BGG username not provided.' : 'Nome de usuário do BGG não informado.');
+  }
+
+  const requestXml = async (path) => {
+    let raw = await fetchBggXml(path);
+    if (!raw || raw.includes('not allowed by policy')) {
+      try {
+        const directRes = await fetch(`https://boardgamegeek.com/xmlapi2${path}`, {
+          headers: {
+            'Accept': 'application/xml',
+            'Authorization': 'Bearer cdb528f3-d81c-464a-acf6-44e16b2f47a8'
+          }
+        });
+        if (directRes.ok) raw = await directRes.text();
+      } catch (err) {}
+    }
+    return raw;
+  };
+
+  let xmlText = null;
+  let expXmlText = null;
+  let attempts = 0;
+  const maxAttempts = 8;
+
+  while (attempts < maxAttempts) {
+    attempts++;
+    const [rawMain, rawExp] = await Promise.all([
+      !xmlText ? requestXml(`/collection?username=${encodeURIComponent(cleanUser)}&stats=1`) : Promise.resolve(xmlText),
+      !expXmlText ? requestXml(`/collection?username=${encodeURIComponent(cleanUser)}&subtype=boardgameexpansion&brief=1`).catch(() => null) : Promise.resolve(expXmlText)
+    ]);
+
+    if (rawExp && rawExp.includes('<items')) {
+      expXmlText = rawExp;
+    }
+
+    if (rawMain) {
+      if (rawMain.includes('<errors>') || rawMain.includes('Invalid username')) {
+        throw new Error(currentLang === 'en' ? `User "${cleanUser}" not found on BoardGameGeek.` : `Usuário "${cleanUser}" não encontrado no BoardGameGeek.`);
+      }
+      if (rawMain.includes('<message>') && rawMain.includes('accepted')) {
+        await new Promise(r => setTimeout(r, 2200));
+        continue;
+      }
+      if (rawMain.includes('<items')) {
+        xmlText = rawMain;
+        if (expXmlText || attempts >= 3) break;
+      }
+    }
+    await new Promise(r => setTimeout(r, 1800));
+  }
+
+  if (!xmlText) {
+    throw new Error(currentLang === 'en' ? 'Timeout waiting for BGG collection. Please try again in a few moments.' : 'Tempo limite excedido ao aguardar o BGG. Tente novamente em instantes.');
+  }
+
+  const expansionIdSet = new Set();
+  if (expXmlText) {
+    const matches = expXmlText.matchAll(/objectid="([^"]+)"/g);
+    for (const m of matches) expansionIdSet.add(String(m[1]));
+  }
+
+  const allGames = parseBggUserCollectionXml(xmlText, expansionIdSet);
+  const baseGames = allGames.filter(g => !g.isExpansion);
+  const expansions = allGames.filter(g => g.isExpansion);
+
+  return {
+    sourceLabel: 'BGG Coleção',
+    badgeClass: 'bgg',
+    fileName: `BGG (@${cleanUser})`,
+    allGames,
+    baseGames,
+    expansions
+  };
+}
+
+// BGG Collection Fetch with Retry Loop for 1v1 Battle Arena
 async function fetchBggForRanking() {
   const usernameInput = document.getElementById('bggRankUsername');
   const user = (usernameInput ? usernameInput.value : '').trim();
@@ -8384,52 +8495,22 @@ async function fetchBggForRanking() {
   const statusEl = document.getElementById('bggRankStatusText');
   const btn = document.getElementById('btnFetchBggRank');
   if (btn) btn.disabled = true;
+  if (statusEl) {
+    statusEl.innerHTML = `<span class="search-spinner" style="display:inline-block; margin-right:6px;"></span> ${currentLang === 'en' ? 'Connecting to BGG (this may take a few seconds)...' : 'Conectando ao BGG (pode demorar alguns segundos)...'}`;
+  }
 
   try {
-    let xmlText = null;
-    let attempts = 0;
-    const maxAttempts = 6;
-
-    while (attempts < maxAttempts) {
-      attempts++;
-      if (statusEl) statusEl.innerHTML = `<span class="search-spinner" style="display:inline-block; margin-right:6px;"></span> Solicitando coleção de "${user}" no BGG (tentativa ${attempts}/${maxAttempts})...`;
-
-      let raw = await fetchBggXml(`/collection?username=${encodeURIComponent(user)}&stats=1`);
-      if (!raw || raw.includes('not allowed by policy')) {
-        try {
-          const directRes = await fetch(`https://boardgamegeek.com/xmlapi2/collection?username=${encodeURIComponent(user)}&stats=1`, {
-            headers: {
-              'Accept': 'application/xml',
-              'Authorization': 'Bearer cdb528f3-d81c-464a-acf6-44e16b2f47a8'
-            }
-          });
-          if (directRes.ok) raw = await directRes.text();
-        } catch (err) {}
+    const payload = await fetchBggUserCollection(user);
+    bggCachedGames = payload.allGames;
+    const baseCount = payload.baseGames.length;
+    const expCount = payload.expansions.length;
+    if (statusEl) {
+      if (currentLang === 'en') {
+        statusEl.innerHTML = `✅ ${bggCachedGames.length} games loaded from BGG (${baseCount} base games${expCount > 0 ? `, ${expCount} expansions` : ''})!`;
+      } else {
+        statusEl.innerHTML = `✅ ${bggCachedGames.length} jogos carregados do BGG (${baseCount} jogos base${expCount > 0 ? `, ${expCount} expansões` : ''})!`;
       }
-
-      if (raw) {
-        if (raw.includes('<message>') && raw.includes('accepted')) {
-          if (statusEl) statusEl.innerHTML = `<span class="search-spinner" style="display:inline-block; margin-right:6px;"></span> O BGG está gerando a coleção de "${user}". Aguardando 2 segundos...`;
-          await new Promise(r => setTimeout(r, 2200));
-          continue;
-        }
-        if (raw.includes('<items')) {
-          xmlText = raw;
-          break;
-        }
-        if (raw.includes('<errors>') || raw.includes('Invalid username')) {
-          throw new Error('Usuário não encontrado no BoardGameGeek.');
-        }
-      }
-      await new Promise(r => setTimeout(r, 1800));
     }
-
-    if (!xmlText) {
-      throw new Error('Tempo limite excedido ao aguardar o BGG. Tente novamente em instantes.');
-    }
-
-    bggCachedGames = parseBggUserCollectionXml(xmlText);
-    if (statusEl) statusEl.innerHTML = `✅ ${bggCachedGames.length} jogos carregados com sucesso do BGG!`;
     updateBggFilterPreview();
   } catch (err) {
     if (statusEl) statusEl.innerHTML = `❌ Erro: ${err.message}`;
@@ -9302,6 +9383,7 @@ window.TournamentEngine = TournamentEngine;
 window.openRankingSetupModal = openRankingSetupModal;
 window.switchRankingTab = switchRankingTab;
 window.fetchBggForRanking = fetchBggForRanking;
+window.fetchBggUserCollection = fetchBggUserCollection;
 window.updateBggFilterPreview = updateBggFilterPreview;
 window.updateOtherTierPreview = updateOtherTierPreview;
 window.updateCustomListPreview = updateCustomListPreview;
