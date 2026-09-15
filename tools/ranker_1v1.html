@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="referrer" content="no-referrer">
 <title>1v1 Arena de Batalhas — Board Bots Tools</title>
-<meta name="description" content="Ranqueie jogos de tabuleiro, videogames e filmes em duelos 1x1 usando algoritmo de torneio merge sort, narração diegética do Arauto e exportação para redes sociais.">
+<meta name="description" content="Ranqueie jogos de tabuleiro, videogames e filmes em duelos 1x1 ou dispute uma Copa Mata-Mata (Oitavas, Quartas, Semis e Final). Importe links do IMDb, IGDB, GGapp e JustWatch sem CSV!">
 <link rel="icon" href="../assets/mascot-trimmed.png" type="image/png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -58,7 +58,6 @@ body {
   overflow-x: hidden;
 }
 
-/* Atmospheric embers / arena dust layer */
 .arena-dust {
   position: fixed;
   inset: 0;
@@ -68,7 +67,7 @@ body {
               radial-gradient(circle at 80% 20%, rgba(220, 38, 38, 0.03) 0%, transparent 50%);
 }
 
-/* Top Floating Controls */
+/* Floating Navigation Controls */
 .top-controls {
   position: fixed;
   top: 14px;
@@ -171,7 +170,7 @@ body {
 .arena-subtitle {
   color: var(--text-muted);
   font-size: 0.95em;
-  max-width: 620px;
+  max-width: 680px;
   margin: 8px auto 0;
   line-height: 1.45;
 }
@@ -223,6 +222,66 @@ body {
   color: #111;
   font-weight: 800;
   box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+
+/* Tournament Mode Selector Box */
+.mode-selector-box {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-lg);
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow-main);
+  backdrop-filter: blur(12px);
+}
+.mode-selector-title {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.98em;
+  font-weight: 700;
+  color: var(--gold-bright);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.mode-radios {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+}
+.mode-card {
+  background: var(--bg-card);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.mode-card:hover {
+  border-color: rgba(245, 158, 11, 0.5);
+  background: var(--bg-card-hover);
+}
+.mode-card.active {
+  border-color: var(--gold-primary);
+  background: rgba(245, 158, 11, 0.08);
+}
+.mode-card input {
+  margin-top: 3px;
+  accent-color: var(--gold-primary);
+}
+.mode-info-title {
+  font-weight: 800;
+  font-size: 0.95em;
+  color: #fff;
+  margin-bottom: 3px;
+}
+.mode-info-desc {
+  font-size: 0.8em;
+  color: var(--text-muted);
+  line-height: 1.35;
 }
 
 /* Category Setup Panes */
@@ -299,6 +358,39 @@ body {
   background: var(--bg-card-hover);
   border-color: var(--gold-primary);
   color: var(--gold-bright);
+}
+
+/* Universal Link Importer Banner */
+.link-importer-box {
+  background: rgba(245, 158, 11, 0.06);
+  border: 1px dashed var(--border-gold);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  margin-bottom: 20px;
+}
+.link-importer-title {
+  font-size: 0.9em;
+  font-weight: 700;
+  color: var(--gold-bright);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.link-services-badges {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+.service-pill {
+  font-size: 0.72em;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.06);
+  color: var(--text-muted);
+  border: 1px solid rgba(255,255,255,0.1);
 }
 
 /* Preset Cards Grid */
@@ -422,6 +514,21 @@ body {
 .staging-actions {
   display: flex;
   gap: 10px;
+  flex-wrap: wrap;
+}
+.bracket-trim-btn {
+  background: rgba(59, 130, 246, 0.15);
+  border: 1px solid var(--blue-primary);
+  color: #93c5fd;
+  font-size: 0.76em;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.bracket-trim-btn:hover {
+  background: var(--blue-primary);
+  color: #fff;
 }
 
 /* ========================================================== */
@@ -439,7 +546,6 @@ body {
   }
 }
 
-/* Battle Stage */
 .battle-stage {
   background: var(--bg-panel);
   border: 1px solid var(--border);
@@ -745,7 +851,7 @@ body {
 }
 
 /* ========================================================== */
-/* RESULTS & PODIUM SCREEN                                    */
+/* RESULTS, PODIUM & BRACKET TREE SCREEN                      */
 /* ========================================================== */
 .results-header {
   text-align: center;
@@ -850,6 +956,61 @@ body {
 .podium-col.rank-3 .podium-pillar {
   height: 70px;
   background: linear-gradient(180deg, #d97706, #78350f);
+}
+
+/* Bracket Tree Visualization */
+.bracket-tree-panel {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  box-shadow: var(--shadow-main);
+  backdrop-filter: blur(12px);
+  margin-top: 24px;
+  overflow-x: auto;
+}
+.bracket-tree-scroll {
+  display: flex;
+  gap: 24px;
+  min-width: 680px;
+  padding: 10px 0;
+}
+.bracket-round-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.bracket-round-header {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.85em;
+  font-weight: 800;
+  color: var(--gold-bright);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  text-align: center;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.bracket-match-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.82em;
+}
+.bracket-team-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--text-muted);
+}
+.bracket-team-line.winner {
+  color: var(--gold-bright);
+  font-weight: 700;
 }
 
 /* Leaderboard Table */
@@ -1004,7 +1165,7 @@ body {
   background: var(--bg-panel);
   border: 1px solid var(--border-gold);
   border-radius: var(--radius-lg);
-  max-width: 600px;
+  max-width: 620px;
   width: 100%;
   max-height: 85vh;
   overflow-y: auto;
@@ -1045,7 +1206,6 @@ body {
 }
 .modal-content ul { padding-left: 20px; }
 
-/* Hidden Canvas for High-Res Image Generation */
 #exportCanvas { display: none; }
 </style>
 </head>
@@ -1090,6 +1250,30 @@ body {
   <!-- ========================================================== -->
   <section class="screen-view active" id="viewSetup">
     
+    <!-- Tournament Mode Selector -->
+    <div class="mode-selector-box">
+      <div class="mode-selector-title">
+        <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="12 6 12 12 16 14"/></svg>
+        <span data-i18n="mode_sel_title">Escolha o Modo do Torneio:</span>
+      </div>
+      <div class="mode-radios">
+        <label class="mode-card active" id="modeCardMerge" onclick="setTournamentMode('merge')">
+          <input type="radio" name="tournamentMode" value="merge" checked>
+          <div>
+            <div class="mode-info-title" data-i18n="mode_merge_title">⚔️ Ranqueador Completo (Merge Sort)</div>
+            <div class="mode-info-desc" data-i18n="mode_merge_desc">Ordena rigorosamente a lista inteira do 1º ao último colocado com comparação lógica ótima O(N log N).</div>
+          </div>
+        </label>
+        <label class="mode-card" id="modeCardBracket" onclick="setTournamentMode('bracket')">
+          <input type="radio" name="tournamentMode" value="bracket">
+          <div>
+            <div class="mode-info-title" data-i18n="mode_bracket_title">🏆 Copa Mata-Mata (Eliminação Direta)</div>
+            <div class="mode-info-desc" data-i18n="mode_bracket_desc">Fases clássicas de copa: Oitavas, Quartas, Semifinais, Disputa de 3º e Grande Final. Requer número par de itens.</div>
+          </div>
+        </label>
+      </div>
+    </div>
+
     <!-- Category Navigation Tabs -->
     <nav class="tabs-nav" aria-label="Categorias">
       <button class="tab-btn active" data-tab="boardgames" onclick="switchCategory('boardgames')">
@@ -1109,6 +1293,28 @@ body {
         <span data-i18n="tab_custom">Lista Própria</span>
       </button>
     </nav>
+
+    <!-- Universal Link Importer Box -->
+    <div class="link-importer-box">
+      <div class="link-importer-title">
+        <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        <span data-i18n="link_import_title">Importar Link Direto (Sem necessidade de CSV)</span>
+      </div>
+      <div class="input-row" style="margin-bottom: 8px;">
+        <input type="url" class="input-text" id="linkImportInput" placeholder="Cole o link da lista (ex: IMDb list/chart, GGapp.io, JustWatch, IGDB)..." data-i18n-placeholder="ph_link_import">
+        <button class="btn-action" id="btnLinkImport" onclick="importFromPublicUrl()">
+          <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span data-i18n="btn_import_link">Importar Link</span>
+        </button>
+      </div>
+      <div class="link-services-badges">
+        <span class="service-pill">🎬 IMDb (Lists & Top 250)</span>
+        <span class="service-pill">🎮 GGapp.io (Lists & Collection)</span>
+        <span class="service-pill">📺 JustWatch (Lists & Popular)</span>
+        <span class="service-pill">👾 IGDB (Lists & Top 100)</span>
+        <span class="service-pill">🌐 Web Links Públicos</span>
+      </div>
+    </div>
 
     <!-- Tab 1: Board Games Pane -->
     <div class="category-pane" id="paneBoardgames">
@@ -1137,9 +1343,7 @@ body {
             <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
             <span data-i18n="sec_presets_bg">Ou carregue um Preset Curado de Tabuleiro:</span>
           </h3>
-          <div class="preset-grid" id="bgPresetsGrid">
-            <!-- Generated dynamically -->
-          </div>
+          <div class="preset-grid" id="bgPresetsGrid"></div>
         </div>
       </div>
     </div>
@@ -1151,9 +1355,7 @@ body {
           <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
           <span data-i18n="sec_presets_vg">Presets Curados de Videogames (Alta Resolução)</span>
         </h2>
-        <div class="preset-grid" id="vgPresetsGrid">
-          <!-- Generated dynamically -->
-        </div>
+        <div class="preset-grid" id="vgPresetsGrid"></div>
 
         <div style="margin-top: 24px;">
           <h3 class="setup-section-title" style="font-size: 0.95em;">
@@ -1176,9 +1378,7 @@ body {
           <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m10 15 5-3-5-3v6Z"/></svg>
           <span data-i18n="sec_presets_movies">Presets Curados de Filmes & Séries (Pôsteres HD)</span>
         </h2>
-        <div class="preset-grid" id="moviePresetsGrid">
-          <!-- Generated dynamically -->
-        </div>
+        <div class="preset-grid" id="moviePresetsGrid"></div>
 
         <div style="margin-top: 24px;">
           <h3 class="setup-section-title" style="font-size: 0.95em;">
@@ -1211,7 +1411,7 @@ body {
       </div>
     </div>
 
-    <!-- Staging Drawer (Displays count of loaded contenders ready for the arena) -->
+    <!-- Staging Drawer (Displays count & Quick Trim for Brackets) -->
     <div class="staging-bar" id="stagingBar">
       <div class="staging-info">
         <div class="staging-count" id="stagingCount">0</div>
@@ -1221,6 +1421,13 @@ body {
         </div>
       </div>
       <div class="staging-actions">
+        <!-- Quick adjustments for Bracket mode -->
+        <div id="bracketTrimControls" style="display:none; align-items:center; gap:6px;">
+          <span style="font-size:0.75em; color:var(--text-muted);" data-i18n="bracket_quick_trim">Ajustar Chave:</span>
+          <button class="bracket-trim-btn" onclick="trimCandidates(8)">Top 8</button>
+          <button class="bracket-trim-btn" onclick="trimCandidates(16)">Top 16</button>
+          <button class="bracket-trim-btn" onclick="trimCandidates(32)">Top 32</button>
+        </div>
         <button class="btn-action btn-secondary" onclick="clearStagingCandidates()">
           <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
           <span data-i18n="btn_clear">Limpar</span>
@@ -1303,11 +1510,11 @@ body {
             <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
             <span data-i18n="btn_undo">Desfazer [Ctrl+Z]</span>
           </button>
-          <button class="btn-arena-sub btn-arena-danger" onclick="promptEliminateContender('left')">
+          <button class="btn-arena-sub btn-arena-danger" id="btnElimA" onclick="promptEliminateContender('left')">
             <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             <span data-i18n="btn_elim_a">Banir Lutador A</span>
           </button>
-          <button class="btn-arena-sub btn-arena-danger" onclick="promptEliminateContender('right')">
+          <button class="btn-arena-sub btn-arena-danger" id="btnElimB" onclick="promptEliminateContender('right')">
             <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             <span data-i18n="btn_elim_b">Banir Lutador B</span>
           </button>
@@ -1326,9 +1533,7 @@ body {
             <div class="herald-title" data-i18n="herald_title">Crônica Oficial dos Duelos</div>
           </div>
         </div>
-        <div class="herald-log" id="actionHistory">
-          <!-- Log entries injected here -->
-        </div>
+        <div class="herald-log" id="actionHistory"></div>
       </aside>
 
     </div>
@@ -1341,24 +1546,29 @@ body {
     
     <div class="results-header">
       <svg class="results-trophy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
-      <h2 class="results-title" data-i18n="res_title">Torneio Finalizado!</h2>
-      <p class="results-subtitle" data-i18n="res_subtitle">A arena testemunhou a glória. Eis a classificação oficial indiscutível:</p>
+      <h2 class="results-title" id="resultsTitle" data-i18n="res_title">Torneio Finalizado!</h2>
+      <p class="results-subtitle" id="resultsSubtitle" data-i18n="res_subtitle">A arena testemunhou a glória. Eis a classificação oficial indiscutível:</p>
     </div>
 
     <!-- 3D Podium for Top 3 -->
-    <div class="podium-wrap" id="podiumWrap">
-      <!-- Generated dynamically -->
+    <div class="podium-wrap" id="podiumWrap"></div>
+
+    <!-- Bracket Tree Visualization (Single Elimination Mode) -->
+    <div class="bracket-tree-panel" id="bracketTreePanel" style="display:none;">
+      <h3 class="setup-section-title">
+        <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 17.5 3 6V3h3l11.5 11.5"/><path d="m13 19 6 2 2-6-2-2-4 4Z"/></svg>
+        <span data-i18n="bracket_tree_title">Chaveamento da Copa Mata-Mata</span>
+      </h3>
+      <div class="bracket-tree-scroll" id="bracketTreeScroll"></div>
     </div>
 
     <!-- Complete Leaderboard List -->
-    <div class="leaderboard-panel">
+    <div class="leaderboard-panel" id="leaderboardPanel">
       <h3 class="setup-section-title">
         <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
         <span data-i18n="lb_title">Classificação Completa</span>
       </h3>
-      <div class="leaderboard-list" id="leaderboardList">
-        <!-- Ranked entries injected here -->
-      </div>
+      <div class="leaderboard-list" id="leaderboardList"></div>
     </div>
 
     <!-- Social Export Panel -->
@@ -1425,8 +1635,13 @@ body {
     <h2 style="font-family:'Poppins',sans-serif; color:var(--gold-bright); margin-bottom:16px;" data-i18n="help_title">Como Funciona a Arena 1x1</h2>
     
     <details open>
-      <summary data-i18n="help_q1">O que é o Algoritmo de Torneio (Merge Sort)?</summary>
-      <p data-i18n="help_a1">A ferramenta usa um algoritmo matemático de merge sort por duelos comparativos. Em vez de obrigar você a comparar todos contra todos (que exigiria centenas de rodadas), ele divide a lista em confrontos estratégicos e aproveita a transitividade lógica (se A &gt; B e B &gt; C, A &gt; C). Isso reduz o número de decisões necessárias para a fórmula ótima \(O(N \log N)\)!</p>
+      <summary data-i18n="help_q_modes">Quais são os Modos de Torneio?</summary>
+      <p data-i18n="help_a_modes">A Arena oferece dois modos: <strong>Ranqueador Completo (Merge Sort)</strong>, que descobre a ordem do 1º ao último colocado de forma matemática e ótima \(O(N \log N)\); e a <strong>Copa Mata-Mata (Eliminação Direta)</strong>, no estilo torneio eliminatório clássico (Oitavas, Quartas, Semifinal e Final) onde quem perde cai na hora!</p>
+    </details>
+
+    <details>
+      <summary data-i18n="help_q_links">Como importar links do IMDb, GGapp, JustWatch e IGDB?</summary>
+      <p data-i18n="help_a_links">Basta colar o link público de qualquer lista ou catálogo na barra de importação direta no topo. O motor analisa o link com proxies resilientes e extrai automaticamente títulos, capas oficiais e anos sem necessidade de arquivos CSV!</p>
     </details>
 
     <details>
@@ -1434,7 +1649,7 @@ body {
       <ul>
         <li><strong data-i18n="help_k_left">Seta Esquerda [←]:</strong> <span data-i18n="help_k_left_desc">Voto de vitória para o Contendor A.</span></li>
         <li><strong data-i18n="help_k_right">Seta Direita [→]:</strong> <span data-i18n="help_k_right_desc">Voto de vitória para o Contendor B.</span></li>
-        <li><strong data-i18n="help_k_space">Barra de Espaço:</strong> <span data-i18n="help_k_space_desc">Declarar empate ou pular confronto.</span></li>
+        <li><strong data-i18n="help_k_space">Barra de Espaço:</strong> <span data-i18n="help_k_space_desc">Declarar empate ou pular confronto (apenas no modo Ranqueador).</span></li>
         <li><strong data-i18n="help_k_undo">Ctrl + Z:</strong> <span data-i18n="help_k_undo_desc">Desfazer o último duelo votado.</span></li>
       </ul>
     </details>
@@ -1443,30 +1658,32 @@ body {
       <summary data-i18n="help_q3">O que acontece se eu banir um lutador?</summary>
       <p data-i18n="help_a3">Se um jogo, filme ou videogame foi sorteado por engano ou você não o conhece, clique no botão vermelho "Banir Lutador". O motor recalcula instantaneamente as batalhas restantes sem corromper a ordenação do torneio.</p>
     </details>
-
-    <details>
-      <summary data-i18n="help_q4">Como importar Watchlists do IMDb ou CSVs do Backloggd?</summary>
-      <p data-i18n="help_a4">No IMDb, abra sua lista ou avaliações e clique no botão 'Export' no canto superior direito para baixar o arquivo .csv. Basta arrastar esse arquivo para a aba de Cinema. O mesmo se aplica ao Backloggd e Steam na aba de Videogames.</p>
-    </details>
   </div>
 </div>
 
 <canvas id="exportCanvas"></canvas>
 
 <!-- ========================================================== -->
-<!-- JAVASCRIPT: LOGIC, DATASETS, TOURNAMENT ENGINE & EXPORT    -->
+<!-- JAVASCRIPT: LOGIC, ENGINES, LINK SCRAPER & EXPORT          -->
 <!-- ========================================================== -->
 <script>
-/* Internationalization Dictionary */
 const I18N = {
   pt: {
     badge_text: 'ARENA DE CAMPEÕES 1X1',
     app_title: '1v1 Arena de Batalhas',
-    app_subtitle: 'Coloque seus jogos, videogames ou filmes favoritos frente a frente em combates diretos e descubra sua lista definitiva com ordenação suíça!',
+    app_subtitle: 'Coloque seus jogos, videogames ou filmes favoritos frente a frente em duelos 1x1 ou dispute uma Copa Mata-Mata com chaveamento clássico!',
+    mode_sel_title: 'Escolha o Modo do Torneio:',
+    mode_merge_title: '⚔️ Ranqueador Completo (Merge Sort)',
+    mode_merge_desc: 'Ordena rigorosamente a lista inteira do 1º ao último colocado com comparação lógica ótima O(N log N).',
+    mode_bracket_title: '🏆 Copa Mata-Mata (Eliminação Direta)',
+    mode_bracket_desc: 'Fases clássicas de copa: Oitavas, Quartas, Semifinais, Disputa de 3º e Grande Final. Requer número par de itens.',
     tab_boardgames: 'Tabuleiros',
     tab_videogames: 'Videogames',
     tab_movies: 'Cinema & Séries',
     tab_custom: 'Lista Própria',
+    link_import_title: 'Importar Link Direto (Sem necessidade de CSV)',
+    ph_link_import: 'Cole o link da lista (ex: IMDb list/chart, GGapp.io, JustWatch, IGDB)...',
+    btn_import_link: 'Importar Link',
     sec_import_bgg_ludo: 'Importar do BoardGameGeek ou Ludopedia',
     ph_user_bgg_ludo: 'Nome de usuário do BGG ou link/usuário da Ludopedia...',
     btn_fetch: 'Buscar Coleção',
@@ -1487,6 +1704,7 @@ const I18N = {
     btn_load_custom: 'Carregar Itens',
     staging_ready: 'Contendores Prontos',
     staging_min_hint: 'Carregue ou selecione pelo menos 2 itens para iniciar o torneio',
+    bracket_quick_trim: 'Ajustar Chave:',
     btn_clear: 'Limpar',
     btn_start_arena: 'Entrar na Arena 1x1',
     btn_choose_champion: 'Escolher Campeão',
@@ -1500,6 +1718,7 @@ const I18N = {
     herald_title: 'Crônica Oficial dos Duelos',
     res_title: 'Torneio Finalizado!',
     res_subtitle: 'A arena testemunhou a glória. Eis a classificação oficial indiscutível:',
+    bracket_tree_title: 'Chaveamento da Copa Mata-Mata',
     lb_title: 'Classificação Completa',
     exp_title: 'Compartilhe seu Ranking nas Redes',
     exp_desc: 'Gere imagens em alta resolução com arte diegética pronta para Feed ou Stories:',
@@ -1512,30 +1731,38 @@ const I18N = {
     bmc_btn: 'Buy me a coffee',
     btn_home: 'Voltar aos Bots',
     help_title: 'Como Funciona a Arena 1x1',
-    help_q1: 'O que é o Algoritmo de Torneio (Merge Sort)?',
-    help_a1: 'A ferramenta usa um algoritmo matemático de merge sort por duelos comparativos. Em vez de obrigar você a comparar todos contra todos (que exigiria centenas de rodadas), ele divide a lista em confrontos estratégicos e aproveita a transitividade lógica (se A > B e B > C, A > C). Isso reduz o número de decisões necessárias para a fórmula ótima O(N log N)!',
+    help_q_modes: 'Quais são os Modos de Torneio?',
+    help_a_modes: 'A Arena oferece dois modos: Ranqueador Completo (Merge Sort), que descobre a ordem do 1º ao último colocado de forma matemática e ótima O(N log N); e a Copa Mata-Mata (Eliminação Direta), no estilo torneio eliminatório clássico (Oitavas, Quartas, Semifinal e Final) onde quem perde cai na hora!',
+    help_q_links: 'Como importar links do IMDb, GGapp, JustWatch e IGDB?',
+    help_a_links: 'Basta colar o link público de qualquer lista ou catálogo na barra de importação direta no topo. O motor analisa o link com proxies resilientes e extrai automaticamente títulos, capas oficiais e anos sem necessidade de arquivos CSV!',
     help_q2: 'Atalhos Rápidos de Teclado',
     help_k_left: 'Seta Esquerda [←]:',
     help_k_left_desc: 'Voto de vitória para o Contendor A.',
     help_k_right: 'Seta Direita [→]:',
     help_k_right_desc: 'Voto de vitória para o Contendor B.',
     help_k_space: 'Barra de Espaço:',
-    help_k_space_desc: 'Declarar empate ou pular confronto.',
+    help_k_space_desc: 'Declarar empate ou pular confronto (apenas no modo Ranqueador).',
     help_k_undo: 'Ctrl + Z:',
     help_k_undo_desc: 'Desfazer o último duelo votado.',
     help_q3: 'O que acontece se eu banir um lutador?',
-    help_a3: 'Se um jogo, filme ou videogame foi sorteado por engano ou você não o conhece, clique no botão vermelho "Banir Lutador". O motor recalcula instantaneamente as batalhas restantes sem corromper a ordenação do torneio.',
-    help_q4: 'Como importar Watchlists do IMDb ou CSVs do Backloggd?',
-    help_a4: 'No IMDb, abra sua lista ou avaliações e clique no botão "Export" no canto superior direito para baixar o arquivo .csv. Basta arrastar esse arquivo para a aba de Cinema. O mesmo se aplica ao Backloggd e Steam na aba de Videogames.'
+    help_a3: 'Se um jogo, filme ou videogame foi sorteado por engano ou você não o conhece, clique no botão vermelho "Banir Lutador". O motor recalcula instantaneamente as batalhas restantes sem corromper a ordenação do torneio.'
   },
   en: {
     badge_text: '1V1 CHAMPIONS ARENA',
     app_title: '1v1 Battle Arena',
-    app_subtitle: 'Pit your favorite board games, video games, or movies head-to-head in direct duels and discover your undisputed ranking with Swiss merge sort!',
+    app_subtitle: 'Pit your favorite board games, video games, or movies head-to-head in 1v1 duels or compete in a Single Elimination Cup!',
+    mode_sel_title: 'Select Tournament Mode:',
+    mode_merge_title: '⚔️ Full Ranker (Merge Sort)',
+    mode_merge_desc: 'Ranks the entire list from 1st to last place with mathematical transitivity O(N log N).',
+    mode_bracket_title: '🏆 Knockout Cup (Single Elimination)',
+    mode_bracket_desc: 'Classic cup bracket: Round of 16, Quarter-Finals, Semi-Finals, 3rd Place and Grand Final. Requires even items.',
     tab_boardgames: 'Board Games',
     tab_videogames: 'Video Games',
     tab_movies: 'Movies & TV',
     tab_custom: 'Custom List',
+    link_import_title: 'Direct Link Import (No CSV needed)',
+    ph_link_import: 'Paste list link (e.g. IMDb list/chart, GGapp.io, JustWatch, IGDB)...',
+    btn_import_link: 'Import Link',
     sec_import_bgg_ludo: 'Import from BoardGameGeek or Ludopedia',
     ph_user_bgg_ludo: 'BGG username or Ludopedia link/user...',
     btn_fetch: 'Fetch Collection',
@@ -1556,6 +1783,7 @@ const I18N = {
     btn_load_custom: 'Load Items',
     staging_ready: 'Contenders Ready',
     staging_min_hint: 'Load or select at least 2 items to enter the arena',
+    bracket_quick_trim: 'Adjust Bracket:',
     btn_clear: 'Clear',
     btn_start_arena: 'Enter 1v1 Arena',
     btn_choose_champion: 'Pick Winner',
@@ -1569,6 +1797,7 @@ const I18N = {
     herald_title: 'Official Duel Chronicle',
     res_title: 'Tournament Complete!',
     res_subtitle: 'The arena witnessed true greatness. Here is the undisputed official ranking:',
+    bracket_tree_title: 'Knockout Cup Bracket',
     lb_title: 'Full Leaderboard',
     exp_title: 'Share Your Ranking on Social Media',
     exp_desc: 'Generate high-resolution images with diegetic arena styling ready for Feed or Stories:',
@@ -1581,25 +1810,26 @@ const I18N = {
     bmc_btn: 'Buy me a coffee',
     btn_home: 'Back to Bots',
     help_title: 'How 1v1 Battle Arena Works',
-    help_q1: 'What is the Tournament Algorithm (Merge Sort)?',
-    help_a1: 'The tool uses an interactive pairwise merge sort algorithm. Rather than forcing you into an exhaustive round-robin (which would take hundreds of battles), it splits contenders logically and applies mathematical transitivity (if A > B and B > C, then A > C), minimizing decisions to the optimal O(N log N) curve!',
+    help_q_modes: 'What are the Tournament Modes?',
+    help_a_modes: 'The Arena offers two modes: Full Ranker (Merge Sort), which discovers the exact 1st-to-last order mathematically with O(N log N); and Knockout Cup (Single Elimination), in classic bracket format where losers are eliminated immediately!',
+    help_q_links: 'How to import links from IMDb, GGapp, JustWatch, and IGDB?',
+    help_a_links: 'Simply paste any public list URL into the direct import bar at the top. The engine queries the link with resilient proxies and extracts titles, posters, and years automatically without requiring CSV files!',
     help_q2: 'Quick Keyboard Shortcuts',
     help_k_left: 'Left Arrow [←]:',
     help_k_left_desc: 'Vote victory for Contender A.',
     help_k_right: 'Right Arrow [→]:',
     help_k_right_desc: 'Vote victory for Contender B.',
     help_k_space: 'Spacebar:',
-    help_k_space_desc: 'Declare a tie or skip battle.',
+    help_k_space_desc: 'Declare a tie or skip battle (Ranker mode only).',
     help_k_undo: 'Ctrl + Z:',
     help_k_undo_desc: 'Undo the last duel.',
     help_q3: 'What happens if I ban a fighter?',
-    help_a3: 'If a game or movie was added by accident or you have not experienced it, click the red "Ban Fighter" button. The tournament engine immediately recalculates remaining battles without corrupting the tournament order.',
-    help_q4: 'How to import IMDb Watchlists or Backloggd CSVs?',
-    help_a4: 'On IMDb, open your list or ratings and click the "Export" button in the upper right corner to download the .csv file. Simply drag and drop that file into the Movies tab. The same applies to Backloggd and Steam on the Video Games tab.'
+    help_a3: 'If a game or movie was added by accident or you have not experienced it, click the red "Ban Fighter" button. The tournament engine immediately recalculates remaining battles without corrupting the tournament order.'
   }
 };
 
 let currentLang = localStorage.getItem('boardbots_lang') || 'pt';
+let selectedTournamentMode = 'merge'; // 'merge' or 'bracket'
 
 function T(key) {
   return I18N[currentLang][key] || I18N['pt'][key] || key;
@@ -1630,6 +1860,16 @@ function setLanguage(lang) {
   renderPresets();
 }
 
+function setTournamentMode(mode) {
+  selectedTournamentMode = mode;
+  document.getElementById('modeCardMerge').classList.toggle('active', mode === 'merge');
+  document.getElementById('modeCardBracket').classList.toggle('active', mode === 'bracket');
+  document.querySelector('input[name="tournamentMode"][value="' + mode + '"]').checked = true;
+  document.getElementById('bracketTrimControls').style.display = (mode === 'bracket') ? 'inline-flex' : 'none';
+  playSound('ui-click');
+  updateStagingUI();
+}
+
 /* Audio & SFX helpers */
 let isMuted = localStorage.getItem('boardbots_sfx_muted') === 'true';
 
@@ -1651,7 +1891,6 @@ function toggleSound() {
   btn.style.opacity = isMuted ? '0.4' : '1';
 }
 
-/* Navigation & Modal */
 function openHelpModal() {
   document.getElementById('helpModal').classList.add('active');
   playSound('ui-click');
@@ -1683,7 +1922,6 @@ function toggleFilterChip(checkbox) {
 /* ========================================================== */
 /* CURATED DATASETS                                           */
 /* ========================================================== */
-
 const PRESETS = {
   boardgames: [
     {
@@ -1706,19 +1944,15 @@ const PRESETS = {
         { id: 'bg-13', title: 'Scythe', year: '2016', image: 'https://cf.geekdo-images.com/7k_nOxEstablishment_image__thumb/img/26Y_N3w7z9L7U2t1u6mB1v9P8nA=/fit-in/200x150/filters:strip_icc()/pic3163924.jpg' },
         { id: 'bg-14', title: 'Castles of Burgundy', year: '2011', image: 'https://cf.geekdo-images.com/5ig0eA1P7V2B9_G6n2L4rQ__thumb/img/8BvW9x3Q0m2P1a7E9yB3T2oU2XU=/fit-in/200x150/filters:strip_icc()/pic1176894.jpg' },
         { id: 'bg-15', title: '7 Wonders Duel', year: '2015', image: 'https://cf.geekdo-images.com/zdagM_S184Dr35_90oO59w__thumb/img/A6o6O7w5g0k_1h7m3Q8a0p5E8vU=/fit-in/200x150/filters:strip_icc()/pic3376065.jpg' },
-        { id: 'bg-16', title: 'Concordia', year: '2013', image: 'https://cf.geekdo-images.com/C30bE1x2g4v7_P8n1b3v3A__thumb/img/y4E1r8j2O9W8k4B1t5x6B2v9E7M=/fit-in/200x150/filters:strip_icc()/pic1791244.jpg' },
-        { id: 'bg-17', title: 'Wingspan', year: '2019', image: 'https://cf.geekdo-images.com/yLrmOBaGs7Qq9IvNpLAHgQ__thumb/img/Qe3qjA3Q1R7s6_Q4w2M4c3b2t0A=/fit-in/200x150/filters:strip_icc()/pic4458123.jpg' },
-        { id: 'bg-18', title: 'Clank! Catacombs', year: '2022', image: 'https://cf.geekdo-images.com/yF20P2bA0Y87_b9t_6qP_A__thumb/img/L5Hk9w4Q9t2b6B3h6m8v7y1X9wM=/fit-in/200x150/filters:strip_icc()/pic6928822.png' },
-        { id: 'bg-19', title: 'Root', year: '2018', image: 'https://cf.geekdo-images.com/JUAUWaVUOBbgBL2xjs9FgA__thumb/img/P4G_P4a4w2M7n7j6V3A3H2b8f8E=/fit-in/200x150/filters:strip_icc()/pic4254509.jpg' },
-        { id: 'bg-20', title: 'Cascadia', year: '2021', image: 'https://cf.geekdo-images.com/MJEfTvdc_e6i4_aP8M2mBA__thumb/img/4D5F2T2m4Q4v2_1k8Y2b2h3h2b8=/fit-in/200x150/filters:strip_icc()/pic5100691.jpg' }
+        { id: 'bg-16', title: 'Concordia', year: '2013', image: 'https://cf.geekdo-images.com/C30bE1x2g4v7_P8n1b3v3A__thumb/img/y4E1r8j2O9W8k4B1t5x6B2v9E7M=/fit-in/200x150/filters:strip_icc()/pic1791244.jpg' }
       ]
     }
   ],
   videogames: [
     {
-      id: 'vg-top25',
-      title: { pt: 'IGDB Top 25 Jogos de Todos os Tempos', en: 'IGDB Top 25 All-Time Legends' },
-      count: 25,
+      id: 'vg-top16',
+      title: { pt: 'IGDB Top 16 Clássicos Absolutos', en: 'IGDB Top 16 All-Time Legends' },
+      count: 16,
       items: [
         { id: 'vg-1', title: 'The Legend of Zelda: Ocarina of Time', year: '1998', image: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co5vmg.jpg' },
         { id: 'vg-2', title: 'The Witcher 3: Wild Hunt', year: '2015', image: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co1wyy.jpg' },
@@ -1730,70 +1964,43 @@ const PRESETS = {
         { id: 'vg-8', title: 'Chrono Trigger', year: '1995', image: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co3p2d.jpg' },
         { id: 'vg-9', title: 'Mass Effect 2', year: '2010', image: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co20wg.jpg' },
         { id: 'vg-10', title: 'The Last of Us', year: '2013', image: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co1r7f.jpg' },
-        { id: 'vg-11', title: 'The Legend of Zelda: Breath of the Wild', year: '2017', image: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co39vc.jpg' },
+        { id: 'vg-11', title: 'Zelda: Breath of the Wild', year: '2017', image: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co39vc.jpg' },
         { id: 'vg-12', title: 'Portal 2', year: '2011', image: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co1rs4.jpg' },
         { id: 'vg-13', title: 'God of War', year: '2018', image: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co1tmu.jpg' },
         { id: 'vg-14', title: 'BioShock', year: '2007', image: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co249x.jpg' },
         { id: 'vg-15', title: 'Hollow Knight', year: '2017', image: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co9388.jpg' },
-        { id: 'vg-16', title: 'Dark Souls', year: '2011', image: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co1x77.jpg' },
-        { id: 'vg-17', title: 'Final Fantasy VII', year: '1997', image: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co20wx.jpg' },
-        { id: 'vg-18', title: 'Metal Gear Solid', year: '1998', image: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co1tnw.jpg' },
-        { id: 'vg-19', title: 'Persona 5 Royal', year: '2019', image: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co1nic.jpg' },
-        { id: 'vg-20', title: 'Bloodborne', year: '2015', image: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co1rba.jpg' }
-      ]
-    },
-    {
-      id: 'vg-goty',
-      title: { pt: 'Vencedores do Game of the Year (2014-2024)', en: 'Game of the Year Winners (2014-2024)' },
-      count: 11,
-      items: [
-        { id: 'vg-g1', title: 'Dragon Age: Inquisition', year: '2014', image: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co222d.jpg' },
-        { id: 'vg-g2', title: 'The Witcher 3: Wild Hunt', year: '2015', image: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co1wyy.jpg' },
-        { id: 'vg-g3', title: 'Overwatch', year: '2016', image: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co1rcb.jpg' },
-        { id: 'vg-g4', title: 'The Legend of Zelda: Breath of the Wild', year: '2017', image: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co39vc.jpg' },
-        { id: 'vg-g5', title: 'God of War', year: '2018', image: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co1tmu.jpg' },
-        { id: 'vg-g6', title: 'Sekiro: Shadows Die Twice', year: '2019', image: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co282a.jpg' },
-        { id: 'vg-g7', title: 'The Last of Us Part II', year: '2020', image: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co282t.jpg' },
-        { id: 'vg-g8', title: 'It Takes Two', year: '2021', image: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co2taj.jpg' },
-        { id: 'vg-g9', title: 'Elden Ring', year: '2022', image: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co4jni.jpg' },
-        { id: 'vg-g10', title: 'Baldur\'s Gate 3', year: '2023', image: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co670h.jpg' },
-        { id: 'vg-g11', title: 'Astro Bot', year: '2024', image: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co88ea.jpg' }
+        { id: 'vg-16', title: 'Dark Souls', year: '2011', image: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co1x77.jpg' }
       ]
     }
   ],
   movies: [
     {
-      id: 'mov-top25',
-      title: { pt: 'IMDb Top 20 Filmes Históricos', en: 'IMDb Top 20 All-Time Masterpieces' },
-      count: 20,
+      id: 'mov-top16',
+      title: { pt: 'IMDb Top 16 Melhores Filmes', en: 'IMDb Top 16 Masterpieces' },
+      count: 16,
       items: [
-        { id: 'm-1', title: 'Um Sonho de Liberdade (The Shawshank Redemption)', year: '1994', image: 'https://m.media-amazon.com/images/M/MV5BMDAyY2FhYjctNDc5OS00MDNlLThiMGUtY2UxYWVkNGY2ZjljXkEyXkFqcGc@._V1_SX300.jpg' },
-        { id: 'm-2', title: 'O Poderoso Chefão (The Godfather)', year: '1972', image: 'https://m.media-amazon.com/images/M/MV5BNGEwYjgwOGQtYjg5ZS00Njc1LTk2ZGEtMDRjYThhNjJhMzQxXkEyXkFqcGc@._V1_SX300.jpg' },
-        { id: 'm-3', title: 'Batman: O Cavaleiro das Trevas (The Dark Knight)', year: '2008', image: 'https://m.media-amazon.com/images/M/MV5BMTMxNTMwODM0NF5BMl5BanBnXkFtZTcwODAyMTk2Mw@@._V1_SX300.jpg' },
-        { id: 'm-4', title: 'O Poderoso Chefão II (The Godfather Part II)', year: '1974', image: 'https://m.media-amazon.com/images/M/MV5BMTY3MjM1Mzc4N15BMl5BanBnXkFtZTgwODM0NzAxMDE@._V1_SX300.jpg' },
-        { id: 'm-5', title: '12 Homens e uma Sentença (12 Angry Men)', year: '1957', image: 'https://m.media-amazon.com/images/M/MV5BYjE4NzdmOTcgNWY5LTQ3NDEtYmFkLWJkYjcxNmE0MWY0XkEyXkFqcGc@._V1_SX300.jpg' },
-        { id: 'm-6', title: 'A Lista de Schindler (Schindler\'s List)', year: '1993', image: 'https://m.media-amazon.com/images/M/MV5BNjM1ZDQxYWUtMzQyZS00MTE1LWJmZGYtNGUyNTdlYjM3ZmVmXkEyXkFqcGc@._V1_SX300.jpg' },
-        { id: 'm-7', title: 'O Senhor dos Anéis: O Retorno do Rei', year: '2003', image: 'https://m.media-amazon.com/images/M/MV5BMTZkMjBjNWMtZGI5OC00MGU0LTk4ZTItODg2NWM3NTVmNWQ4XkEyXkFqcGc@._V1_SX300.jpg' },
-        { id: 'm-8', title: 'Pulp Fiction: Tempo de Violência', year: '1994', image: 'https://m.media-amazon.com/images/M/MV5BYTViYTE3NWMtNmRhZi00NzRiLWI4YTAtY2Q5NmVhNzlkNTkxXkEyXkFqcGc@._V1_SX300.jpg' },
-        { id: 'm-9', title: 'Três Homens em Conflito (The Good, Bad and Ugly)', year: '1966', image: 'https://m.media-amazon.com/images/M/MV5BNjE5MzYwMzYxMF5BMl5BanBnXkFtZTcwOTk4MTk2Mw@@._V1_SX300.jpg' },
-        { id: 'm-10', title: 'Clube da Luta (Fight Club)', year: '1999', image: 'https://m.media-amazon.com/images/M/MV5BOTgyOGQ1NDItNGU3Ny00MjU3LTg2YTQtNmIzMS03Nzg1MmQzXkEyXkFqcGc@._V1_SX300.jpg' },
-        { id: 'm-11', title: 'A Origem (Inception)', year: '2010', image: 'https://m.media-amazon.com/images/M/MV5BMjAxMzY3NjcxNF5BMl5BanBnXkFtZTcwNTI5OTM0Mw@@._V1_SX300.jpg' },
-        { id: 'm-12', title: 'Interestelar (Interstellar)', year: '2014', image: 'https://m.media-amazon.com/images/M/MV5BYzdjMDAxZGItMjI2My00ODA1LTlkNzItOWFjMDU5ZDJlYWY3XkEyXkFqcGc@._V1_SX300.jpg' },
-        { id: 'm-13', title: 'Matrix (The Matrix)', year: '1999', image: 'https://m.media-amazon.com/images/M/MV5BN2NmN2VhMTQtMDNiOS00NDlhLTliMjgtODE2ZTY0ODQyNDRhXkEyXkFqcGc@._V1_SX300.jpg' },
-        { id: 'm-14', title: 'Os Bons Companheiros (Goodfellas)', year: '1990', image: 'https://m.media-amazon.com/images/M/MV5BN2E5NzI2ZGMtY2UxZS00MGY3LTg5NGEtY2FiN2U0MzQ1NmRhXkEyXkFqcGc@._V1_SX300.jpg' },
-        { id: 'm-15', title: 'Star Wars: O Império Contra-Ataca', year: '1980', image: 'https://m.media-amazon.com/images/M/MV5BMmU1ODRkNDMtMzg1MS00YjBhLWE1YTAtYTA5ZTE0YjBkY2Q1XkEyXkFqcGc@._V1_SX300.jpg' },
-        { id: 'm-16', title: 'A Viagem de Chihiro (Spirited Away)', year: '2001', image: 'https://m.media-amazon.com/images/M/MV5BNTEyNmEwOWUtYzkyOC00ZTQ4LTllZmUtMjk0Y2Q5YzgxYzRjXkEyXkFqcGc@._V1_SX300.jpg' },
-        { id: 'm-17', title: 'Cidade de Deus', year: '2002', image: 'https://m.media-amazon.com/images/M/MV5BMGU5OWGjM2UtNDRkMC00NzQ5LWE4N2ItNTBiODQzNjM2NzY1XkEyXkFqcGc@._V1_SX300.jpg' },
-        { id: 'm-18', title: 'Parasita (Parasite)', year: '2019', image: 'https://m.media-amazon.com/images/M/MV5BYjk1N2U4MjQtYjNhNC00OTgwLWIxZjAtMmVlNmRhZQFkYzBiXkEyXkFqcGc@._V1_SX300.jpg' },
-        { id: 'm-19', title: 'O Silêncio dos Inocentes', year: '1991', image: 'https://m.media-amazon.com/images/M/MV5BNjNhZTk0ZmEtNjJhMi00YzFlLWE1MmEtYzM1M2ZmMGMwMTU4XkEyXkFqcGc@._V1_SX300.jpg' },
-        { id: 'm-20', title: 'Gladiador (Gladiator)', year: '2000', image: 'https://m.media-amazon.com/images/M/MV5BYWQ4YmNjYjEtOWE1Zi00Y2U4LWI4NTAtMTU0MjkxNWQ1ZmJiXkEyXkFqcGc@._V1_SX300.jpg' }
+        { id: 'm-1', title: 'The Shawshank Redemption', year: '1994', image: 'https://m.media-amazon.com/images/M/MV5BMDAyY2FhYjctNDc5OS00MDNlLThiMGUtY2UxYWVkNGY2ZjljXkEyXkFqcGc@._V1_SX300.jpg' },
+        { id: 'm-2', title: 'The Godfather', year: '1972', image: 'https://m.media-amazon.com/images/M/MV5BNGEwYjgwOGQtYjg5ZS00Njc1LTk2ZGEtMDRjYThhNjJhMzQxXkEyXkFqcGc@._V1_SX300.jpg' },
+        { id: 'm-3', title: 'The Dark Knight', year: '2008', image: 'https://m.media-amazon.com/images/M/MV5BMTMxNTMwODM0NF5BMl5BanBnXkFtZTcwODAyMTk2Mw@@._V1_SX300.jpg' },
+        { id: 'm-4', title: 'The Godfather Part II', year: '1974', image: 'https://m.media-amazon.com/images/M/MV5BMTY3MjM1Mzc4N15BMl5BanBnXkFtZTgwODM0NzAxMDE@._V1_SX300.jpg' },
+        { id: 'm-5', title: '12 Angry Men', year: '1957', image: 'https://m.media-amazon.com/images/M/MV5BYjE4NzdmOTcgNWY5LTQ3NDEtYmFkLWJkYjcxNmE0MWY0XkEyXkFqcGc@._V1_SX300.jpg' },
+        { id: 'm-6', title: 'Schindler\'s List', year: '1993', image: 'https://m.media-amazon.com/images/M/MV5BNjM1ZDQxYWUtMzQyZS00MTE1LWJmZGYtNGUyNTdlYjM3ZmVmXkEyXkFqcGc@._V1_SX300.jpg' },
+        { id: 'm-7', title: 'LOTR: Return of the King', year: '2003', image: 'https://m.media-amazon.com/images/M/MV5BMTZkMjBjNWMtZGI5OC00MGU0LTk4ZTItODg2NWM3NTVmNWQ4XkEyXkFqcGc@._V1_SX300.jpg' },
+        { id: 'm-8', title: 'Pulp Fiction', year: '1994', image: 'https://m.media-amazon.com/images/M/MV5BYTViYTE3NWMtNmRhZi00NzRiLWI4YTAtY2Q5NmVhNzlkNTkxXkEyXkFqcGc@._V1_SX300.jpg' },
+        { id: 'm-9', title: 'The Good, Bad and Ugly', year: '1966', image: 'https://m.media-amazon.com/images/M/MV5BNjE5MzYwMzYxMF5BMl5BanBnXkFtZTcwOTk4MTk2Mw@@._V1_SX300.jpg' },
+        { id: 'm-10', title: 'Fight Club', year: '1999', image: 'https://m.media-amazon.com/images/M/MV5BOTgyOGQ1NDItNGU3Ny00MjU3LTg2YTQtNmIzMS03Nzg1MmQzXkEyXkFqcGc@._V1_SX300.jpg' },
+        { id: 'm-11', title: 'Inception', year: '2010', image: 'https://m.media-amazon.com/images/M/MV5BMjAxMzY3NjcxNF5BMl5BanBnXkFtZTcwNTI5OTM0Mw@@._V1_SX300.jpg' },
+        { id: 'm-12', title: 'Interstellar', year: '2014', image: 'https://m.media-amazon.com/images/M/MV5BYzdjMDAxZGItMjI2My00ODA1LTlkNzItOWFjMDU5ZDJlYWY3XkEyXkFqcGc@._V1_SX300.jpg' },
+        { id: 'm-13', title: 'The Matrix', year: '1999', image: 'https://m.media-amazon.com/images/M/MV5BN2NmN2VhMTQtMDNiOS00NDlhLTliMjgtODE2ZTY0ODQyNDRhXkEyXkFqcGc@._V1_SX300.jpg' },
+        { id: 'm-14', title: 'Goodfellas', year: '1990', image: 'https://m.media-amazon.com/images/M/MV5BN2E5NzI2ZGMtY2UxZS00MGY3LTg5NGEtY2FiN2U0MzQ1NmRhXkEyXkFqcGc@._V1_SX300.jpg' },
+        { id: 'm-15', title: 'Star Wars: Empire Strikes Back', year: '1980', image: 'https://m.media-amazon.com/images/M/MV5BMmU1ODRkNDMtMzg1MS00YjBhLWE1YTAtYTA5ZTE0YjBkY2Q1XkEyXkFqcGc@._V1_SX300.jpg' },
+        { id: 'm-16', title: 'Spirited Away', year: '2001', image: 'https://m.media-amazon.com/images/M/MV5BNTEyNmEwOWUtYzkyOC00ZTQ4LTllZmUtMjk0Y2Q5YzgxYzRjXkEyXkFqcGc@._V1_SX300.jpg' }
       ]
     }
   ]
 };
 
 function renderPresets() {
-  // Board games
   const bgGrid = document.getElementById('bgPresetsGrid');
   bgGrid.innerHTML = PRESETS.boardgames.map(p => `
     <div class="preset-card" onclick="loadPreset('boardgames', '${p.id}')">
@@ -1803,7 +2010,6 @@ function renderPresets() {
     </div>
   `).join('');
 
-  // Videogames
   const vgGrid = document.getElementById('vgPresetsGrid');
   vgGrid.innerHTML = PRESETS.videogames.map(p => `
     <div class="preset-card" onclick="loadPreset('videogames', '${p.id}')">
@@ -1813,7 +2019,6 @@ function renderPresets() {
     </div>
   `).join('');
 
-  // Movies
   const movieGrid = document.getElementById('moviePresetsGrid');
   movieGrid.innerHTML = PRESETS.movies.map(p => `
     <div class="preset-card" onclick="loadPreset('movies', '${p.id}')">
@@ -1833,17 +2038,41 @@ function updateStagingUI() {
   const countEl = document.getElementById('stagingCount');
   const descEl = document.getElementById('stagingDesc');
   const btnStart = document.getElementById('btnStartTournament');
-  
-  countEl.textContent = stagedCandidates.length;
-  if (stagedCandidates.length < 2) {
+  const count = stagedCandidates.length;
+
+  countEl.textContent = count;
+  if (count < 2) {
     descEl.textContent = T('staging_min_hint');
     btnStart.disabled = true;
+  } else if (selectedTournamentMode === 'bracket') {
+    if (count % 2 !== 0) {
+      descEl.textContent = currentLang === 'pt'
+        ? `⚠️ Modo Copa requer número PAR de itens (${count} carregados). Ajuste para 8, 16 ou adicione mais um.`
+        : `⚠️ Bracket mode requires an EVEN number of items (${count} loaded). Trim to 8, 16, or add one.`;
+      btnStart.disabled = true;
+    } else {
+      let stageName = getBracketStageName(count);
+      descEl.textContent = currentLang === 'pt'
+        ? `🏆 Chaveamento perfeito: ${count} contendores prontos para a fase de ${stageName}!`
+        : `🏆 Bracket ready: ${count} contenders starting in ${stageName}!`;
+      btnStart.disabled = false;
+    }
   } else {
     descEl.textContent = currentLang === 'pt'
-      ? `${stagedCandidates.length} contendores no chaveamento. Pronto para duelar!`
-      : `${stagedCandidates.length} contenders in bracket. Ready to duel!`;
+      ? `${count} contendores carregados. Modo Ranqueador Completo pronto!`
+      : `${count} contenders loaded. Full Ranker ready!`;
     btnStart.disabled = false;
   }
+}
+
+function trimCandidates(targetCount) {
+  if (stagedCandidates.length < targetCount) {
+    alert(currentLang === 'pt' ? `A lista possui apenas ${stagedCandidates.length} itens.` : `List only has ${stagedCandidates.length} items.`);
+    return;
+  }
+  stagedCandidates = stagedCandidates.slice(0, targetCount);
+  playSound('ui-click');
+  updateStagingUI();
 }
 
 function loadPreset(category, presetId) {
@@ -1879,7 +2108,134 @@ function loadCustomTextCandidates() {
 }
 
 /* ========================================================== */
-/* BGG / LUDOPEDIA / CSV PARSERS                              */
+/* DIRECT LINK SCRAPER (IMDb, GGapp, JustWatch, IGDB)        */
+/* ========================================================== */
+
+async function importFromPublicUrl() {
+  const urlInput = document.getElementById('linkImportInput');
+  let url = (urlInput ? urlInput.value : '').trim();
+  if (!url) return;
+  if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+
+  const btn = document.getElementById('btnLinkImport');
+  if (btn) { btn.disabled = true; btn.textContent = currentLang === 'pt' ? 'Lendo link...' : 'Reading link...'; }
+
+  try {
+    let rawText = '';
+
+    // 1. Primary: Jina Reader API (free, reliable CORS, markdown output, bypasses Cloudflare)
+    try {
+      const res = await fetch(`https://r.jina.ai/${url}`, {
+        headers: { 'Accept': 'text/plain' }
+      });
+      if (res.ok) rawText = await res.text();
+    } catch (e) {
+      console.warn('Jina extractor error:', e);
+    }
+
+    // 2. Fallback: corsproxy.io
+    if (!rawText || rawText.length < 200) {
+      try {
+        const fbRes = await fetch(`https://corsproxy.io/?${encodeURIComponent(url)}`);
+        if (fbRes.ok) rawText = await fbRes.text();
+      } catch (e2) {
+        console.warn('Corsproxy fallback error:', e2);
+      }
+    }
+
+    if (!rawText) throw new Error('Could not fetch link content');
+
+    const items = parseScrapedContent(rawText, url);
+    if (!items || items.length < 2) {
+      throw new Error('Not enough items extracted');
+    }
+
+    stagedCandidates = items;
+    playSound('token-place');
+    triggerHaptics(40);
+    updateStagingUI();
+    if (urlInput) urlInput.value = '';
+
+    alert(currentLang === 'pt'
+      ? `🎉 Sucesso! ${items.length} itens extraídos diretamente do link.`
+      : `🎉 Success! ${items.length} items extracted from link.`);
+
+  } catch (err) {
+    console.error('Link import error:', err);
+    alert(currentLang === 'pt'
+      ? 'Não foi possível extrair a lista automaticamente deste link. Verifique se a URL é pública ou utilize um CSV/Preset!'
+      : 'Could not extract list from this link. Make sure the URL is public or use a CSV/Preset!');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = T('btn_import_link');
+    }
+  }
+}
+
+function parseScrapedContent(text, sourceUrl) {
+  const items = [];
+  const seenTitles = new Set();
+
+  function addItem(title, year = '', image = '') {
+    const cleanTitle = (title || '').trim().replace(/^#\d+\s*|\b\d+\.\s*/, '');
+    if (!cleanTitle || cleanTitle.length < 2 || cleanTitle.length > 120) return;
+    if (seenTitles.has(cleanTitle.toLowerCase())) return;
+
+    // Filter UI noise
+    const ignored = ['menu', 'home', 'sign in', 'watchlist', 'imdb', 'justwatch', 'ggapp', 'games', 'movies', 'terms', 'privacy', 'rating', 'popular'];
+    if (ignored.includes(cleanTitle.toLowerCase())) return;
+
+    seenTitles.add(cleanTitle.toLowerCase());
+    items.push({
+      id: `link-${items.length + 1}-${Date.now()}`,
+      title: cleanTitle,
+      year: year ? `(${year})` : '',
+      image: image || `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="400" viewBox="0 0 300 400"><rect width="300" height="400" fill="%231a1f2c"/><circle cx="150" cy="180" r="80" fill="%23f59e0b" opacity="0.2"/><text x="50%25" y="48%25" dominant-baseline="middle" text-anchor="middle" fill="%23ffffff" font-family="sans-serif" font-size="20" font-weight="bold">${encodeURIComponent(cleanTitle.slice(0, 18))}</text></svg>`
+    });
+  }
+
+  // 1. IMDb style: #1\nTitle\n(Year)
+  const imdbRankMatches = text.matchAll(/#(\d{1,3})\s*\n+([^\n\r]+?)(?:\n+(\d{4}))?(?=\n+[0-9h\s]|\n+Rate|\n+#\d+|\n*$)/g);
+  for (const m of imdbRankMatches) {
+    addItem(m[2], m[3]);
+  }
+
+  // 2. Markdown Image-Links: [![Alt / Title](image_url)](link)
+  if (items.length < 2) {
+    const imgLinkMatches = text.matchAll(/\[!\[([^\]]*)\]\((https?:\/\/[^\)]+)\)\]\((https?:\/\/[^\)]+)\)/g);
+    for (const m of imgLinkMatches) {
+      const alt = m[1].replace(/Image \d+:\s*|Poster of\s*/i, '');
+      const img = m[2];
+      if (alt && !alt.toLowerCase().includes('logo')) {
+        addItem(alt, '', img);
+      }
+    }
+  }
+
+  // 3. Markdown numbered items: 1. [Title](url) or 1. Title
+  if (items.length < 2) {
+    const numMatches = text.matchAll(/^\s*\d+\.\s*(?:\[([^\]]+)\]\([^\)]+\)|([^\n\r]+))/gm);
+    for (const m of numMatches) {
+      const t = m[1] || m[2];
+      if (t) addItem(t);
+    }
+  }
+
+  // 4. Fallback: Markdown headings ### Title
+  if (items.length < 2) {
+    const headingMatches = text.matchAll(/^#{2,4}\s+(?:\[([^\]]+)\]\([^\)]+\)|([^\n\r]+))/gm);
+    for (const m of headingMatches) {
+      const t = m[1] || m[2];
+      if (t) addItem(t);
+    }
+  }
+
+  return items;
+}
+
+/* ========================================================== */
+/* BGG & CSV PARSERS                                          */
 /* ========================================================== */
 
 async function fetchBoardgameCollection() {
@@ -1891,7 +2247,6 @@ async function fetchBoardgameCollection() {
   btn.textContent = currentLang === 'pt' ? 'Buscando...' : 'Fetching...';
 
   try {
-    // If it's a BGG username
     const bggRes = await fetch(`https://boardgamegeek.com/xmlapi2/collection?username=${encodeURIComponent(query)}&stats=1`);
     if (bggRes.ok) {
       const xml = await bggRes.text();
@@ -1906,15 +2261,12 @@ async function fetchBoardgameCollection() {
       }
     }
   } catch (err) {
-    console.warn('BGG direct fetch failed, trying proxy...', err);
+    console.warn('BGG direct fetch failed...', err);
   }
 
-  // Fallback / Alert
   btn.disabled = false;
   btn.textContent = T('btn_fetch');
-  alert(currentLang === 'pt'
-    ? 'Não foi possível carregar a coleção online ou o usuário possui menos de 2 jogos. Verifique o usuário ou selecione um Preset!'
-    : 'Could not fetch online collection. Check username or select a Curated Preset!');
+  alert(currentLang === 'pt' ? 'Não foi possível carregar a coleção online.' : 'Could not fetch online collection.');
 }
 
 function parseBggCollectionXml(xmlText) {
@@ -1965,26 +2317,17 @@ function parseBggCollectionXml(xmlText) {
   return results;
 }
 
-// IMDb CSV Parser
 function handleImdbCsvUpload(e) {
   const file = e.target.files[0];
   if (!file) return;
-
   const reader = new FileReader();
   reader.onload = function(evt) {
-    const text = evt.target.result;
-    const lines = text.split(/\r?\n/).filter(Boolean);
+    const lines = evt.target.result.split(/\r?\n/).filter(Boolean);
     if (lines.length < 2) return;
-
     const header = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, '').toLowerCase());
     const titleIdx = header.findIndex(h => h === 'title');
     const yearIdx = header.findIndex(h => h === 'year');
-    const ratingIdx = header.findIndex(h => h === 'your rating' || h === 'imdb rating');
-
-    if (titleIdx === -1) {
-      alert(currentLang === 'pt' ? 'CSV do IMDb inválido (coluna Title não encontrada).' : 'Invalid IMDb CSV (Title column not found).');
-      return;
-    }
+    if (titleIdx === -1) return;
 
     const items = [];
     for (let i = 1; i < lines.length; i++) {
@@ -1993,17 +2336,14 @@ function handleImdbCsvUpload(e) {
       const title = cleanRow[titleIdx];
       if (!title) continue;
       const year = yearIdx !== -1 ? cleanRow[yearIdx] : '';
-      const rating = ratingIdx !== -1 ? cleanRow[ratingIdx] : '';
 
       items.push({
         id: `imdb-csv-${i}`,
         title,
         year: year ? `(${year})` : '',
-        rating: rating ? `★ ${rating}` : '',
         image: `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="450" viewBox="0 0 300 450"><rect width="300" height="450" fill="%23121620"/><rect x="15" y="15" width="270" height="420" fill="none" stroke="%23f59e0b" stroke-width="2" rx="8"/><text x="50%25" y="48%25" dominant-baseline="middle" text-anchor="middle" fill="%23ffffff" font-family="sans-serif" font-size="22" font-weight="bold">${encodeURIComponent(title.slice(0, 18))}</text><text x="50%25" y="58%25" dominant-baseline="middle" text-anchor="middle" fill="%23f59e0b" font-family="sans-serif" font-size="16">${encodeURIComponent(year)}</text></svg>`
       });
     }
-
     if (items.length >= 2) {
       stagedCandidates = items;
       playSound('token-place');
@@ -2013,25 +2353,17 @@ function handleImdbCsvUpload(e) {
   reader.readAsText(file);
 }
 
-// Gaming CSV Parser (Backloggd / Steam)
 function handleVgCsvUpload(e) {
   const file = e.target.files[0];
   if (!file) return;
-
   const reader = new FileReader();
   reader.onload = function(evt) {
-    const text = evt.target.result;
-    const lines = text.split(/\r?\n/).filter(Boolean);
+    const lines = evt.target.result.split(/\r?\n/).filter(Boolean);
     if (lines.length < 2) return;
-
     const header = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, '').toLowerCase());
-    const titleIdx = header.findIndex(h => h === 'title' || h === 'game' || h === 'game title');
+    const titleIdx = header.findIndex(h => h === 'title' || h === 'game');
     const yearIdx = header.findIndex(h => h === 'release date' || h === 'year');
-
-    if (titleIdx === -1) {
-      alert(currentLang === 'pt' ? 'CSV de videogame inválido (coluna Title não encontrada).' : 'Invalid game CSV (Title column not found).');
-      return;
-    }
+    if (titleIdx === -1) return;
 
     const items = [];
     for (let i = 1; i < lines.length; i++) {
@@ -2044,10 +2376,9 @@ function handleVgCsvUpload(e) {
         id: `vg-csv-${i}`,
         title,
         year: year ? `(${year})` : '',
-        image: `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="400" viewBox="0 0 300 400"><rect width="300" height="400" fill="%231a1f2c"/><circle cx="150" cy="180" r="80" fill="%233b82f6" opacity="0.2"/><text x="50%25" y="48%25" dominant-baseline="middle" text-anchor="middle" fill="%23ffffff" font-family="sans-serif" font-size="20" font-weight="bold">${encodeURIComponent(title.slice(0, 18))}</text><text x="50%25" y="58%25" dominant-baseline="middle" text-anchor="middle" fill="%233b82f6" font-family="sans-serif" font-size="16">${encodeURIComponent(year)}</text></svg>`
+        image: `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="400" viewBox="0 0 300 400"><rect width="300" height="400" fill="%231a1f2c"/><circle cx="150" cy="180" r="80" fill="%233b82f6" opacity="0.2"/><text x="50%25" y="48%25" dominant-baseline="middle" text-anchor="middle" fill="%23ffffff" font-family="sans-serif" font-size="20" font-weight="bold">${encodeURIComponent(title.slice(0, 18))}</text></svg>`
       });
     }
-
     if (items.length >= 2) {
       stagedCandidates = items;
       playSound('token-place');
@@ -2058,7 +2389,7 @@ function handleVgCsvUpload(e) {
 }
 
 /* ========================================================== */
-/* TOURNAMENT ENGINE (Merge Sort Interactive Pairwise)        */
+/* ENGINE 1: MERGE SORT TOURNAMENT ENGINE                     */
 /* ========================================================== */
 
 class TournamentEngine {
@@ -2202,7 +2533,8 @@ class TournamentEngine {
         progress,
         round: this.comparisonCount + 1,
         remaining,
-        total: currentTotal
+        total: currentTotal,
+        stageLabel: `${currentLang === 'pt' ? 'RODADA' : 'ROUND'} ${this.comparisonCount + 1}`
       };
     }
   }
@@ -2250,6 +2582,211 @@ class TournamentEngine {
 }
 
 /* ========================================================== */
+/* ENGINE 2: KNOCKOUT CUP BRACKET ENGINE (Single Elimination) */
+/* ========================================================== */
+
+function getBracketStageName(contenderCount) {
+  if (contenderCount >= 64) return currentLang === 'pt' ? 'Trinta-e-dois-avos de Final' : 'Round of 64';
+  if (contenderCount >= 32) return currentLang === 'pt' ? 'Dezesseis-avos de Final' : 'Round of 32';
+  if (contenderCount >= 16) return currentLang === 'pt' ? 'Oitavas de Final' : 'Round of 16';
+  if (contenderCount >= 8) return currentLang === 'pt' ? 'Quartas de Final' : 'Quarter-Finals';
+  if (contenderCount === 4) return currentLang === 'pt' ? 'Semifinais' : 'Semi-Finals';
+  if (contenderCount === 2) return currentLang === 'pt' ? 'Grande Final' : 'Grand Final';
+  return currentLang === 'pt' ? 'Fase Preliminar' : 'Preliminary Round';
+}
+
+class BracketEngine {
+  constructor(items) {
+    this.originalItems = [...items];
+    const n = items.length;
+    this.totalDuels = n >= 4 ? n : n - 1;
+    this.completedDuels = 0;
+    this.undoHistory = [];
+    this.bracketHistory = []; // stores completed matches for tree rendering
+    this.semiLosers = [];
+    this.thirdPlaceWinner = null;
+    this.champion = null;
+    this.runnerUp = null;
+    this.isThirdPlaceMatch = false;
+
+    // Handle byes if n is not an exact power of 2
+    const p = Math.pow(2, Math.floor(Math.log2(n)));
+    if (p === n) {
+      this.currentRound = [...items];
+      this.byeTeams = [];
+    } else {
+      const prelimDuels = n - p;
+      const prelimCount = prelimDuels * 2;
+      const byeCount = n - prelimCount;
+      this.byeTeams = items.slice(0, byeCount);
+      this.currentRound = items.slice(byeCount);
+    }
+    this.nextRound = [];
+    this.pairIndex = 0;
+  }
+
+  saveSnapshot() {
+    return JSON.stringify({
+      currentRound: this.currentRound,
+      nextRound: this.nextRound,
+      byeTeams: this.byeTeams,
+      pairIndex: this.pairIndex,
+      completedDuels: this.completedDuels,
+      bracketHistory: this.bracketHistory,
+      semiLosers: this.semiLosers,
+      thirdPlaceWinner: this.thirdPlaceWinner,
+      champion: this.champion,
+      runnerUp: this.runnerUp,
+      isThirdPlaceMatch: this.isThirdPlaceMatch
+    });
+  }
+
+  restoreSnapshot(jsonStr) {
+    const data = JSON.parse(jsonStr);
+    this.currentRound = data.currentRound;
+    this.nextRound = data.nextRound;
+    this.byeTeams = data.byeTeams;
+    this.pairIndex = data.pairIndex;
+    this.completedDuels = data.completedDuels;
+    this.bracketHistory = data.bracketHistory;
+    this.semiLosers = data.semiLosers;
+    this.thirdPlaceWinner = data.thirdPlaceWinner;
+    this.champion = data.champion;
+    this.runnerUp = data.runnerUp;
+    this.isThirdPlaceMatch = data.isThirdPlaceMatch;
+  }
+
+  getNextPair() {
+    if (this.isThirdPlaceMatch) {
+      return {
+        done: false,
+        itemA: this.semiLosers[0],
+        itemB: this.semiLosers[1],
+        progress: Math.min(99, Math.round((this.completedDuels / this.totalDuels) * 100)),
+        round: this.completedDuels + 1,
+        remaining: Math.max(1, this.totalDuels - this.completedDuels),
+        stageLabel: currentLang === 'pt' ? 'DISPUTA DE 3º LUGAR' : '3RD PLACE PLAYOFF'
+      };
+    }
+
+    if (this.champion) {
+      // Tournament completely finished
+      const ranked = [this.champion, this.runnerUp, this.thirdPlaceWinner].filter(Boolean);
+      return { done: true, result: ranked, bracketHistory: this.bracketHistory };
+    }
+
+    const idx = this.pairIndex * 2;
+    if (idx >= this.currentRound.length) {
+      // Current round finished, advance to next round!
+      if (this.currentRound.length === 4 && this.semiLosers.length === 2 && !this.thirdPlaceWinner) {
+        // Run 3rd place match before Grand Final!
+        this.isThirdPlaceMatch = true;
+        return this.getNextPair();
+      }
+
+      // Merge any bye teams waiting for this round
+      if (this.byeTeams && this.byeTeams.length > 0) {
+        this.currentRound = [...this.byeTeams, ...this.nextRound];
+        this.byeTeams = [];
+      } else {
+        this.currentRound = [...this.nextRound];
+      }
+      this.nextRound = [];
+      this.pairIndex = 0;
+      return this.getNextPair();
+    }
+
+    const itemA = this.currentRound[idx];
+    const itemB = this.currentRound[idx + 1];
+
+    const stageName = getBracketStageName(this.currentRound.length);
+    const duelNum = this.pairIndex + 1;
+    const totalDuelsInStage = Math.floor(this.currentRound.length / 2);
+
+    return {
+      done: false,
+      itemA,
+      itemB,
+      progress: Math.min(99, Math.round((this.completedDuels / this.totalDuels) * 100)),
+      round: this.completedDuels + 1,
+      remaining: Math.max(1, this.totalDuels - this.completedDuels),
+      stageLabel: `${stageName.toUpperCase()} (${duelNum}/${totalDuelsInStage})`
+    };
+  }
+
+  recordChoice(winnerSide) {
+    this.undoHistory.push(this.saveSnapshot());
+    this.completedDuels++;
+
+    if (this.isThirdPlaceMatch) {
+      const winner = winnerSide === 'left' ? this.semiLosers[0] : this.semiLosers[1];
+      const loser = winnerSide === 'left' ? this.semiLosers[1] : this.semiLosers[0];
+      this.thirdPlaceWinner = winner;
+      this.isThirdPlaceMatch = false;
+
+      this.bracketHistory.push({
+        stage: currentLang === 'pt' ? 'Disputa de 3º Lugar' : '3rd Place Playoff',
+        teamA: this.semiLosers[0],
+        teamB: this.semiLosers[1],
+        winner: winner
+      });
+      return;
+    }
+
+    const idx = this.pairIndex * 2;
+    const itemA = this.currentRound[idx];
+    const itemB = this.currentRound[idx + 1];
+
+    const winner = winnerSide === 'left' ? itemA : itemB;
+    const loser = winnerSide === 'left' ? itemB : itemA;
+
+    // Save for bracket history tree
+    this.bracketHistory.push({
+      stage: getBracketStageName(this.currentRound.length),
+      teamA: itemA,
+      teamB: itemB,
+      winner: winner
+    });
+
+    if (this.currentRound.length === 4) {
+      // Save loser of semifinal for 3rd place playoff
+      this.semiLosers.push(loser);
+    }
+
+    if (this.currentRound.length === 2) {
+      // Grand final!
+      this.champion = winner;
+      this.runnerUp = loser;
+      this.currentRound = [winner];
+      this.pairIndex = 0;
+      return;
+    }
+
+    this.nextRound.push(winner);
+    this.pairIndex++;
+  }
+
+  recordTie() {
+    // In knockout cup, ties are not allowed; pick random winner
+    this.recordChoice(Math.random() > 0.5 ? 'left' : 'right');
+  }
+
+  eliminateFighter(side) {
+    // In bracket, eliminating a fighter automatically awards victory to the other
+    const winnerSide = side === 'left' ? 'right' : 'left';
+    this.recordChoice(winnerSide);
+    return null;
+  }
+
+  undo() {
+    if (this.undoHistory.length === 0) return false;
+    const snap = this.undoHistory.pop();
+    this.restoreSnapshot(snap);
+    return true;
+  }
+}
+
+/* ========================================================== */
 /* ARENA EXECUTION & HERALD PERSONA                           */
 /* ========================================================== */
 let currentEngine = null;
@@ -2258,19 +2795,36 @@ let finalRankings = [];
 
 function startTournamentMatch() {
   if (stagedCandidates.length < 2) return;
-  currentEngine = new TournamentEngine(stagedCandidates);
+
+  if (selectedTournamentMode === 'bracket') {
+    if (stagedCandidates.length % 2 !== 0) {
+      alert(currentLang === 'pt'
+        ? 'O modo Copa Mata-Mata requer um número PAR de itens (ex: 8, 16, 32). Ajuste sua lista!'
+        : 'Knockout Cup mode requires an EVEN number of contenders (e.g. 8, 16, 32). Adjust your list!');
+      return;
+    }
+    currentEngine = new BracketEngine(stagedCandidates);
+  } else {
+    currentEngine = new TournamentEngine(stagedCandidates);
+  }
+
   switchScreen('viewArena');
-  
-  // Clear log & announce
+
+  // Configure UI depending on mode
+  document.getElementById('btnTie').style.display = (selectedTournamentMode === 'bracket') ? 'none' : 'inline-flex';
+
   const log = document.getElementById('actionHistory');
   log.innerHTML = '';
-  addHeraldLog(
-    currentLang === 'pt'
-      ? `🏛️ "Os portões de bronze se abrem com estrondo! Que comecem os combates com ${stagedCandidates.length} contendores pela supremacia!"`
-      : `🏛️ "The bronze gates swing wide! Let the arena clashes begin with ${stagedCandidates.length} contenders fighting for glory!"`,
-    'herald'
-  );
 
+  const initialAnnounce = selectedTournamentMode === 'bracket'
+    ? (currentLang === 'pt'
+      ? `🏛️ "OS PORTÕES SE ABREM PARA A COPA MATA-MATA! ${stagedCandidates.length} guerreiros disputam o troféu em eliminatória direta! Quem perder está fora!"`
+      : `🏛️ "THE GATES OPEN FOR THE KNOCKOUT CUP! ${stagedCandidates.length} warriors enter direct elimination! Lose and you are out!"`)
+    : (currentLang === 'pt'
+      ? `🏛️ "Os portões de bronze se abrem com estrondo! Que comecem os combates com ${stagedCandidates.length} contendores pela supremacia!"`
+      : `🏛️ "The bronze gates swing wide! Let the arena clashes begin with ${stagedCandidates.length} contenders fighting for glory!"`);
+
+  addHeraldLog(initialAnnounce, 'herald');
   playSound('card-draw');
   triggerHaptics(40);
   nextArenaStep();
@@ -2281,14 +2835,13 @@ function nextArenaStep() {
   const step = currentEngine.getNextPair();
 
   if (step.done) {
-    finishTournament(step.result);
+    finishTournament(step.result, step.bracketHistory);
     return;
   }
 
   currentDuelStep = step;
 
-  // Update UI Elements
-  document.getElementById('battleRoundBadge').textContent = `${currentLang === 'pt' ? 'RODADA' : 'ROUND'} ${step.round}`;
+  document.getElementById('battleRoundBadge').textContent = step.stageLabel;
   document.getElementById('battleRemainingTag').textContent = `${currentLang === 'pt' ? 'Batalhas estimadas restantes' : 'Estimated battles left'}: ${step.remaining}`;
   document.getElementById('battleProgressFill').style.width = `${step.progress}%`;
 
@@ -2317,18 +2870,16 @@ function handleChoice(winnerSide) {
   playSound('token-place');
   triggerHaptics(30);
 
-  // Herald Voice
   const msgs = currentLang === 'pt' ? [
-    `⚔️ "Golpe magistral! [${winner.title}] subjuga [${loser.title}] e avança!"`,
-    `🛡️ "[${winner.title}] prevalece no duelo de titãs contra [${loser.title}]!"`,
-    `👑 "A torcida ruge! Vitória consagrada para [${winner.title}]!"`
+    `⚔️ "Golpe magistral! [${winner.title}] avança e derruba [${loser.title}]!"`,
+    `🛡️ "[${winner.title}] triunfa sobre [${loser.title}] sob aplausos da arena!"`,
+    `👑 "Vitória de [${winner.title}]! A jornada rumo ao título continua!"`
   ] : [
     `⚔️ "A decisive blow! [${winner.title}] conquers [${loser.title}]!"`,
     `🛡️ "[${winner.title}] triumphs over [${loser.title}] in an epic clash!"`,
-    `👑 "The crowd roars! Victory belongs to [${winner.title}]!"`
+    `👑 "Victory for [${winner.title}]! The quest for the crown continues!"`
   ];
-  const heraldMsg = msgs[Math.floor(Math.random() * msgs.length)];
-  addHeraldLog(heraldMsg, 'herald');
+  addHeraldLog(msgs[Math.floor(Math.random() * msgs.length)], 'herald');
 
   nextArenaStep();
 }
@@ -2374,8 +2925,8 @@ function promptEliminateContender(side) {
     triggerHaptics(50);
     addHeraldLog(
       currentLang === 'pt'
-        ? `🚫 "O árbitro decreta a eliminação sumária de [${eliminated.title}] da arena!"`
-        : `🚫 "The herald proclaims the banishment of [${eliminated.title}] from the arena!"`,
+        ? `🚫 "O árbitro decreta a eliminação sumária de [${target.title}]!"`
+        : `🚫 "The herald proclaims the banishment of [${target.title}]!"`,
       'danger'
     );
     nextArenaStep();
@@ -2408,7 +2959,7 @@ window.addEventListener('keydown', (e) => {
     } else if (e.key === 'ArrowRight') {
       e.preventDefault();
       handleChoice('right');
-    } else if (e.key === ' ') {
+    } else if (e.key === ' ' && selectedTournamentMode !== 'bracket') {
       e.preventDefault();
       handleTie();
     } else if (e.key === 'z' && (e.ctrlKey || e.metaKey)) {
@@ -2419,14 +2970,27 @@ window.addEventListener('keydown', (e) => {
 });
 
 /* ========================================================== */
-/* RESULTS, PODIUM & SOCIAL EXPORT                            */
+/* RESULTS, PODIUM & BRACKET TREE DISPLAY                    */
 /* ========================================================== */
 
-function finishTournament(ranked) {
+function finishTournament(ranked, bracketHistory = null) {
   finalRankings = ranked;
   switchScreen('viewResults');
   playSound('token-place');
   triggerHaptics(80);
+
+  const resTitle = document.getElementById('resultsTitle');
+  const resSubtitle = document.getElementById('resultsSubtitle');
+
+  if (selectedTournamentMode === 'bracket') {
+    resTitle.textContent = currentLang === 'pt' ? '🏆 Campeão da Copa Consagrado!' : '🏆 Cup Champion Crowned!';
+    resSubtitle.textContent = currentLang === 'pt'
+      ? `Após emocionantes duelos eliminatórios, [${ranked[0]?.title}] conquista o troféu máximo!`
+      : `After thrilling knockout matches, [${ranked[0]?.title}] claims the championship trophy!`;
+  } else {
+    resTitle.textContent = T('res_title');
+    resSubtitle.textContent = T('res_subtitle');
+  }
 
   // Render Podium for Top 3
   const podium = document.getElementById('podiumWrap');
@@ -2443,7 +3007,7 @@ function finishTournament(ranked) {
           <div class="podium-img-wrap"><img class="podium-img" src="${r2.image}" alt=""></div>
           <div class="podium-name" title="${r2.title}">${r2.title}</div>
         </div>
-        <div class="podium-pillar">2º</div>
+        <div class="podium-pillar">🥈 2º</div>
       </div>
     `;
   }
@@ -2465,9 +3029,18 @@ function finishTournament(ranked) {
           <div class="podium-img-wrap"><img class="podium-img" src="${r3.image}" alt=""></div>
           <div class="podium-name" title="${r3.title}">${r3.title}</div>
         </div>
-        <div class="podium-pillar">3º</div>
+        <div class="podium-pillar">🥉 3º</div>
       </div>
     `;
+  }
+
+  // Render Bracket Tree (if knockout mode)
+  const treePanel = document.getElementById('bracketTreePanel');
+  if (selectedTournamentMode === 'bracket' && bracketHistory && bracketHistory.length > 0) {
+    treePanel.style.display = 'block';
+    renderBracketTree(bracketHistory);
+  } else {
+    treePanel.style.display = 'none';
   }
 
   // Render Complete Leaderboard
@@ -2484,6 +3057,39 @@ function finishTournament(ranked) {
   `).join('');
 }
 
+function renderBracketTree(history) {
+  const container = document.getElementById('bracketTreeScroll');
+  container.innerHTML = '';
+
+  // Group matches by stage
+  const stages = {};
+  history.forEach(m => {
+    if (!stages[m.stage]) stages[m.stage] = [];
+    stages[m.stage].push(m);
+  });
+
+  for (const [stageName, matches] of Object.entries(stages)) {
+    const col = document.createElement('div');
+    col.className = 'bracket-round-col';
+    col.innerHTML = `
+      <div class="bracket-round-header">${stageName}</div>
+      ${matches.map(m => `
+        <div class="bracket-match-card">
+          <div class="bracket-team-line ${m.winner?.id === m.teamA?.id ? 'winner' : ''}">
+            <span>${m.teamA?.title}</span>
+            <span>${m.winner?.id === m.teamA?.id ? '✓' : ''}</span>
+          </div>
+          <div class="bracket-team-line ${m.winner?.id === m.teamB?.id ? 'winner' : ''}">
+            <span>${m.teamB?.title}</span>
+            <span>${m.winner?.id === m.teamB?.id ? '✓' : ''}</span>
+          </div>
+        </div>
+      `).join('')}
+    `;
+    container.appendChild(col);
+  }
+}
+
 function restartWithSameCandidates() {
   startTournamentMatch();
 }
@@ -2491,7 +3097,8 @@ function restartWithSameCandidates() {
 function copyRankingText() {
   if (!finalRankings.length) return;
   const lines = finalRankings.map((it, idx) => `${idx + 1}. ${it.title} ${it.year || ''}`.trim());
-  const header = currentLang === 'pt' ? '⚔️ Meu Ranking da 1v1 Arena de Batalhas (BoardBots):\n' : '⚔️ My 1v1 Battle Arena Ranking (BoardBots):\n';
+  const modeLabel = selectedTournamentMode === 'bracket' ? '🏆 Copa Mata-Mata' : '⚔️ Ranqueador Suíço';
+  const header = `⚔️ Meu Ranking da 1v1 Arena (${modeLabel} • BoardBots):\n`;
   const text = header + lines.join('\n');
   navigator.clipboard.writeText(text).then(() => {
     alert(currentLang === 'pt' ? 'Lista copiada para a área de transferência!' : 'Ranking copied to clipboard!');
@@ -2506,7 +3113,7 @@ function exportRankingCsv() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'arena_1v1_ranking.csv';
+  a.download = `arena_1v1_${selectedTournamentMode}.csv`;
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -2522,7 +3129,6 @@ async function generateSocialImage(format = 'feed') {
   canvas.width = width;
   canvas.height = height;
 
-  // Background stone gradient
   const bgGrad = ctx.createLinearGradient(0, 0, 0, height);
   bgGrad.addColorStop(0, '#0f131a');
   bgGrad.addColorStop(0.5, '#161b24');
@@ -2530,22 +3136,21 @@ async function generateSocialImage(format = 'feed') {
   ctx.fillStyle = bgGrad;
   ctx.fillRect(0, 0, width, height);
 
-  // Outer gold frame border
   ctx.strokeStyle = '#b48328';
   ctx.lineWidth = 12;
   ctx.strokeRect(24, 24, width - 48, height - 48);
 
-  // Header Title
   ctx.fillStyle = '#f59e0b';
   ctx.font = 'bold 36px sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText('⚔️ ARENA DE CAMPEÕES 1X1 ⚔️', width / 2, 90);
+  const tag = selectedTournamentMode === 'bracket' ? '🏆 COPA MATA-MATA 1X1 🏆' : '⚔️ ARENA DE CAMPEÕES 1X1 ⚔️';
+  ctx.fillText(tag, width / 2, 90);
 
   ctx.fillStyle = '#ffffff';
   ctx.font = 'bold 54px sans-serif';
-  ctx.fillText('MEU RANKING DEFINITIVO', width / 2, 160);
+  const banner = selectedTournamentMode === 'bracket' ? 'CAMPEÃO DO TORNEIO' : 'MEU RANKING DEFINITIVO';
+  ctx.fillText(banner, width / 2, 160);
 
-  // Top 3 Podium
   const top1 = finalRankings[0];
   const top2 = finalRankings[1];
   const top3 = finalRankings[2];
@@ -2559,7 +3164,6 @@ async function generateSocialImage(format = 'feed') {
   if (top2) ctx.fillText(`🥈 2º: ${top2.title}`, width / 2, 315);
   if (top3) ctx.fillText(`🥉 3º: ${top3.title}`, width / 2, 365);
 
-  // Divider line
   ctx.strokeStyle = '#2e384d';
   ctx.lineWidth = 2;
   ctx.beginPath();
@@ -2567,7 +3171,6 @@ async function generateSocialImage(format = 'feed') {
   ctx.lineTo(width - 80, 420);
   ctx.stroke();
 
-  // Next rankings list
   ctx.fillStyle = '#e2e8f0';
   ctx.font = '26px sans-serif';
   ctx.textAlign = 'left';
@@ -2585,17 +3188,15 @@ async function generateSocialImage(format = 'feed') {
     startY += 48;
   }
 
-  // Footer branding
   ctx.fillStyle = '#9ca3af';
   ctx.font = '24px sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText('Gerado no BoardBots • colletes.github.io/boardbots', width / 2, height - 60);
 
-  // Download Trigger
   const dataUrl = canvas.toDataURL('image/png');
   const a = document.createElement('a');
   a.href = dataUrl;
-  a.download = `arena_1v1_ranking_${format}.png`;
+  a.download = `arena_1v1_${selectedTournamentMode}_${format}.png`;
   a.click();
 }
 
