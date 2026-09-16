@@ -530,6 +530,12 @@ body {
   background: var(--blue-primary);
   color: #fff;
 }
+.bg-source-pill.active {
+  background: var(--gold-main);
+  border-color: var(--gold-bright);
+  color: #0b0d12;
+  font-weight: 700;
+}
 
 /* ========================================================== */
 /* ARENA DUEL SCREEN (Widescreen 2-column grid on desktop)     */
@@ -1532,8 +1538,14 @@ body {
           <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
           <span data-i18n="sec_import_bgg_ludo">Importar do BoardGameGeek ou Ludopedia</span>
         </h2>
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap;">
+          <span style="font-size:0.75em; color:var(--text-muted); font-weight:700;" data-i18n="bg_source_label">FONTE:</span>
+          <button type="button" class="bracket-trim-btn bg-source-pill active" id="bgSrcAuto" onclick="setBoardgameSource('auto')" data-i18n="bg_source_auto">🎲 Automático / Link</button>
+          <button type="button" class="bracket-trim-btn bg-source-pill" id="bgSrcLudo" onclick="setBoardgameSource('ludopedia')" data-i18n="bg_source_ludo">📚 Ludopedia</button>
+          <button type="button" class="bracket-trim-btn bg-source-pill" id="bgSrcBgg" onclick="setBoardgameSource('bgg')" data-i18n="bg_source_bgg">🌐 BoardGameGeek (BGG)</button>
+        </div>
         <div class="input-row">
-          <input type="text" class="input-text" id="bggUserInput" placeholder="Nome de usuário do BGG ou link/usuário da Ludopedia..." data-i18n-placeholder="ph_user_bgg_ludo">
+          <input type="text" class="input-text" id="bggUserInput" placeholder="Nome de usuário do BGG ou link/usuário da Ludopedia..." data-i18n-placeholder="ph_user_bgg_ludo" onkeydown="if(event.key==='Enter') fetchBoardgameCollection()">
           <button class="btn-action" id="btnFetchCollection" onclick="fetchBoardgameCollection()">
             <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             <span data-i18n="btn_fetch">Buscar Coleção</span>
@@ -1927,6 +1939,10 @@ const I18N = {
     ph_link_import: 'Cole o link da lista (ex: IMDb list/chart, GGapp.io, JustWatch, IGDB)...',
     btn_import_link: 'Importar Link',
     sec_import_bgg_ludo: 'Importar do BoardGameGeek ou Ludopedia',
+    bg_source_label: 'FONTE:',
+    bg_source_auto: '🎲 Automático / Link',
+    bg_source_ludo: '📚 Ludopedia',
+    bg_source_bgg: '🌐 BoardGameGeek (BGG)',
     ph_user_bgg_ludo: 'Nome de usuário do BGG ou link/usuário da Ludopedia...',
     btn_fetch: 'Buscar Coleção',
     filter_owned: 'Apenas Possuídos',
@@ -2025,6 +2041,10 @@ const I18N = {
     ph_link_import: 'Paste list link (e.g. IMDb list/chart, GGapp.io, JustWatch, IGDB)...',
     btn_import_link: 'Import Link',
     sec_import_bgg_ludo: 'Import from BoardGameGeek or Ludopedia',
+    bg_source_label: 'SOURCE:',
+    bg_source_auto: '🎲 Auto / Link',
+    bg_source_ludo: '📚 Ludopedia',
+    bg_source_bgg: '🌐 BoardGameGeek (BGG)',
     ph_user_bgg_ludo: 'BGG username or Ludopedia link/user...',
     btn_fetch: 'Fetch Collection',
     filter_owned: 'Owned Only',
@@ -2400,6 +2420,17 @@ async function importFromPublicUrl() {
   const btn = document.getElementById('btnLinkImport');
   if (btn) { btn.disabled = true; btn.textContent = currentLang === 'pt' ? 'Lendo link...' : 'Reading link...'; }
 
+  // Check if it's a BoardGameGeek or Ludopedia collection URL
+  if (url.toLowerCase().includes('boardgamegeek.com') || url.toLowerCase().includes('ludopedia.com.br')) {
+    if (btn) { btn.disabled = false; btn.textContent = T('btn_import_link'); }
+    const bggInput = document.getElementById('bggUserInput');
+    if (bggInput) bggInput.value = url;
+    setSetupTab('boardgames');
+    fetchBoardgameCollection(url);
+    if (urlInput) urlInput.value = '';
+    return;
+  }
+
   try {
     let rawText = '';
 
@@ -2515,38 +2546,234 @@ function parseScrapedContent(text, sourceUrl) {
 }
 
 /* ========================================================== */
-/* BGG & CSV PARSERS                                          */
+/* BGG & LUDOPEDIA ONLINE COLLECTION LOADERS                  */
 /* ========================================================== */
 
-async function fetchBoardgameCollection() {
-  const query = document.getElementById('bggUserInput').value.trim();
-  if (!query) return;
+const LUDOPEDIA_PROXY_BASE = 'https://ludoproxy.boardbots.workers.dev';
+const BGG_BEARER_TOKEN = 'cdb528f3-d81c-464a-acf6-44e16b2f47a8';
 
-  const btn = document.getElementById('btnFetchCollection');
-  btn.disabled = true;
-  btn.textContent = currentLang === 'pt' ? 'Buscando...' : 'Fetching...';
+let selectedBoardgameSource = 'auto'; // 'auto', 'ludopedia', 'bgg'
+
+function setBoardgameSource(src) {
+  selectedBoardgameSource = src;
+  document.querySelectorAll('.bg-source-pill').forEach(el => {
+    el.classList.toggle('active', el.getAttribute('data-source') === src);
+  });
+  playSound('ui-click');
+}
+
+function parseLudopediaCollectionUrl(input) {
+  if (!input) return null;
+  const str = String(input).trim();
+  try {
+    const url = new URL(str.startsWith('http') ? str : 'https://' + str);
+    if (url.hostname.toLowerCase().includes('ludopedia.com.br')) {
+      for (const [k, v] of url.searchParams.entries()) {
+        const kLow = k.toLowerCase();
+        if (kLow === 'usuario' || kLow === 'user') return { username: v.trim() };
+        if (kLow === 'id_usuario') return { idUsuario: parseInt(v.trim(), 10) };
+      }
+      const matchUser = url.pathname.match(/\/usuario\/([^/?#]+)/i);
+      if (matchUser) return { username: decodeURIComponent(matchUser[1].trim()) };
+      const matchCol = url.pathname.match(/\/colecao\/([^/?#]+)/i);
+      if (matchCol) return { username: decodeURIComponent(matchCol[1].trim()) };
+    }
+  } catch (e) {}
+
+  const clean = str.replace(/^@/, '');
+  return { username: clean };
+}
+
+async function resolveLudopediaUserId(input) {
+  if (!input) return null;
+  const clean = String(input).trim().replace(/^@/, '');
+  if (/^\d+$/.test(clean)) return parseInt(clean, 10);
 
   try {
-    const bggRes = await fetch(`https://boardgamegeek.com/xmlapi2/collection?username=${encodeURIComponent(query)}&stats=1`);
-    if (bggRes.ok) {
-      const xml = await bggRes.text();
-      const parsed = parseBggCollectionXml(xml);
-      if (parsed && parsed.length >= 2) {
-        stagedCandidates = parsed;
-        playSound('token-place');
-        updateStagingUI();
-        btn.disabled = false;
-        btn.textContent = T('btn_fetch');
-        return;
-      }
-    }
-  } catch (err) {
-    console.warn('BGG direct fetch failed...', err);
+    const url = `${LUDOPEDIA_PROXY_BASE}/api/v1/usuarios?search=${encodeURIComponent(clean)}`;
+    const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data || !Array.isArray(data.usuarios) || data.usuarios.length === 0) return null;
+
+    // Exact match case-insensitive
+    const exact = data.usuarios.find(u => u.usuario && u.usuario.trim().toLowerCase() === clean.toLowerCase());
+    if (exact && exact.id_usuario) return exact.id_usuario;
+
+    // Exact match ignoring spaces
+    const exactNoSpaces = data.usuarios.find(u => u.usuario && u.usuario.replace(/\s+/g, '').toLowerCase() === clean.replace(/\s+/g, '').toLowerCase());
+    if (exactNoSpaces && exactNoSpaces.id_usuario) return exactNoSpaces.id_usuario;
+
+    // Starts with
+    const startsWith = data.usuarios.find(u => u.usuario && u.usuario.trim().toLowerCase().startsWith(clean.toLowerCase()));
+    if (startsWith && startsWith.id_usuario) return startsWith.id_usuario;
+
+    if (data.usuarios[0] && data.usuarios[0].id_usuario) return data.usuarios[0].id_usuario;
+  } catch (e) {
+    console.warn('Ludopedia user resolution error:', e);
+  }
+  return null;
+}
+
+async function fetchLudopediaUserCollection(query) {
+  const parsed = parseLudopediaCollectionUrl(query);
+  const user = parsed ? (parsed.username || query) : query;
+  const userId = parsed?.idUsuario || await resolveLudopediaUserId(user);
+  if (!userId) {
+    throw new Error(currentLang === 'pt'
+      ? `Usuário "${user}" não encontrado na Ludopedia. Verifique o link ou nome de usuário.`
+      : `User "${user}" not found on Ludopedia. Please check the username or link.`);
   }
 
-  btn.disabled = false;
-  btn.textContent = T('btn_fetch');
-  alert(currentLang === 'pt' ? 'Não foi possível carregar a coleção online.' : 'Could not fetch online collection.');
+  // Fetch page 1
+  const firstUrl = `${LUDOPEDIA_PROXY_BASE}/api/v1/colecao?id_usuario=${userId}&rows=100&page=1`;
+  const res = await fetch(firstUrl, { headers: { 'Accept': 'application/json' } });
+  if (!res.ok) {
+    throw new Error(`Falha na Ludopedia (HTTP ${res.status})`);
+  }
+  const data = await res.json();
+  if (!data || !Array.isArray(data.colecao)) {
+    throw new Error(currentLang === 'pt' ? 'Coleção vazia na Ludopedia.' : 'Empty collection on Ludopedia.');
+  }
+
+  let rawGames = [...data.colecao];
+  const total = data.total || rawGames.length;
+  const totalPages = Math.min(5, Math.ceil(total / 100)); // load up to 500 items
+
+  if (totalPages > 1) {
+    const extraPages = [];
+    for (let p = 2; p <= totalPages; p++) {
+      extraPages.push(
+        fetch(`${LUDOPEDIA_PROXY_BASE}/api/v1/colecao?id_usuario=${userId}&rows=100&page=${p}`, {
+          headers: { 'Accept': 'application/json' }
+        }).then(r => r.ok ? r.json() : null).catch(() => null)
+      );
+    }
+    const extraResults = await Promise.all(extraPages);
+    extraResults.forEach(pr => {
+      if (pr && Array.isArray(pr.colecao)) rawGames.push(...pr.colecao);
+    });
+  }
+
+  // Fetch expansions list (tp_jogo=e) to filter accurately
+  const expIdSet = new Set();
+  try {
+    const expRes = await fetch(`${LUDOPEDIA_PROXY_BASE}/api/v1/colecao?id_usuario=${userId}&tp_jogo=e&rows=100&page=1`, {
+      headers: { 'Accept': 'application/json' }
+    });
+    if (expRes.ok) {
+      const expData = await expRes.json();
+      if (expData && Array.isArray(expData.colecao)) {
+        expData.colecao.forEach(e => expIdSet.add(Number(e.id_jogo)));
+      }
+    }
+  } catch (e) {}
+
+  const chkOwned = document.getElementById('chkOwned').checked;
+  const chkPlayed = document.getElementById('chkPlayed').checked;
+  const chkRated = document.getElementById('chkRated').checked;
+  const chkNoExp = document.getElementById('chkNoExpansions').checked;
+
+  const results = [];
+  const seenIds = new Set();
+
+  for (const g of rawGames) {
+    if (!g || !g.nm_jogo) continue;
+    const ludoId = Number(g.id_jogo);
+    if (seenIds.has(ludoId)) continue;
+    seenIds.add(ludoId);
+
+    const isExp = expIdSet.has(ludoId);
+    if (chkNoExp && isExp) continue;
+
+    const own = g.fl_tem === 1 || g.fl_tem === '1' || g.fl_tem === true;
+    if (chkOwned && !own) continue;
+
+    const plays = g.qt_partidas || 0;
+    const played = g.fl_jogou === 1 || g.fl_jogou === '1' || plays > 0;
+    if (chkPlayed && !played) continue;
+
+    const rating = g.vl_nota != null && !isNaN(Number(g.vl_nota)) ? Number(g.vl_nota) : 0;
+    if (chkRated && rating <= 0) continue;
+
+    const img = (g.thumb || '').replace('_t.jpg', '_m.jpg');
+    results.push({
+      id: `ludo-${ludoId}`,
+      title: g.nm_jogo,
+      year: g.ano_publicacao ? `(${g.ano_publicacao})` : '',
+      image: img || '../assets/mascot-trimmed.png'
+    });
+  }
+
+  return results;
+}
+
+async function fetchBggUserCollection(query, onProgress) {
+  let cleanUser = String(query).trim().replace(/^@/, '');
+  try {
+    const url = new URL(cleanUser.startsWith('http') ? cleanUser : 'https://' + cleanUser);
+    if (url.hostname.includes('boardgamegeek.com')) {
+      const match = url.pathname.match(/\/collection\/user\/([^/?#]+)/i) || url.pathname.match(/\/user\/([^/?#]+)/i);
+      if (match) cleanUser = decodeURIComponent(match[1]);
+    }
+  } catch (e) {}
+
+  if (!cleanUser) throw new Error(currentLang === 'pt' ? 'Nome de usuário do BGG não informado.' : 'BGG username not provided.');
+
+  const requestBggXml = async (path) => {
+    // 1. Try ludoproxy first
+    try {
+      const res = await fetch(`${LUDOPEDIA_PROXY_BASE}/bgg${path}`, { headers: { 'Accept': 'application/xml' } });
+      if (res.ok) {
+        const text = await res.text();
+        if (text && text.includes('<items')) return text;
+      }
+    } catch (e) {}
+
+    // 2. Direct BGG with Bearer token (supports CORS directly)
+    try {
+      const res = await fetch(`https://boardgamegeek.com/xmlapi2${path}`, {
+        headers: {
+          'Accept': 'application/xml',
+          'Authorization': `Bearer ${BGG_BEARER_TOKEN}`
+        }
+      });
+      if (res.ok) return await res.text();
+    } catch (e) {}
+
+    return null;
+  };
+
+  let xmlText = null;
+  const maxAttempts = 6;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    if (onProgress) onProgress(attempt, maxAttempts);
+    const raw = await requestBggXml(`/collection?username=${encodeURIComponent(cleanUser)}&stats=1`);
+    if (raw) {
+      if (raw.includes('Invalid username') || raw.includes('Cannot find user')) {
+        throw new Error(currentLang === 'pt'
+          ? `Usuário "${cleanUser}" não encontrado no BoardGameGeek.`
+          : `User "${cleanUser}" not found on BoardGameGeek.`);
+      }
+      if (raw.includes('<items')) {
+        xmlText = raw;
+        break;
+      }
+      if (raw.includes('accepted')) {
+        await new Promise(r => setTimeout(r, 2200));
+        continue;
+      }
+    }
+    await new Promise(r => setTimeout(r, 1800));
+  }
+
+  if (!xmlText) {
+    throw new Error(currentLang === 'pt'
+      ? 'O BGG está gerando a coleção em cache ou demorou para responder. Tente novamente em instantes.'
+      : 'BGG is preparing the collection cache. Please try again in a few seconds.');
+  }
+
+  return parseBggCollectionXml(xmlText);
 }
 
 function parseBggCollectionXml(xmlText) {
@@ -2589,12 +2816,89 @@ function parseBggCollectionXml(xmlText) {
     results.push({
       id: `bgg-${item.getAttribute('objectid')}`,
       title,
-      year,
+      year: year ? `(${year})` : '',
       image: img || '../assets/mascot-trimmed.png'
     });
   });
 
   return results;
+}
+
+async function fetchBoardgameCollection(overrideQuery = null) {
+  const query = (overrideQuery || document.getElementById('bggUserInput').value).trim();
+  if (!query) {
+    alert(currentLang === 'pt' ? 'Digite um nome de usuário ou cole um link.' : 'Please enter a username or paste a link.');
+    return;
+  }
+
+  const btn = document.getElementById('btnFetchCollection');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = currentLang === 'pt' ? 'Buscando...' : 'Fetching...';
+  }
+
+  try {
+    let items = null;
+    let sourceUsed = '';
+
+    const isLudoUrl = query.toLowerCase().includes('ludopedia.com.br');
+    const isBggUrl = query.toLowerCase().includes('boardgamegeek.com');
+
+    const shouldTryLudoFirst = selectedBoardgameSource === 'ludopedia' || isLudoUrl || (selectedBoardgameSource === 'auto' && !isBggUrl);
+
+    if (shouldTryLudoFirst) {
+      if (btn) btn.textContent = currentLang === 'pt' ? 'Consultando Ludopedia...' : 'Checking Ludopedia...';
+      try {
+        const ludoItems = await fetchLudopediaUserCollection(query);
+        if (ludoItems && ludoItems.length >= 2) {
+          items = ludoItems;
+          sourceUsed = 'Ludopedia';
+        }
+      } catch (errLudo) {
+        if (selectedBoardgameSource === 'ludopedia' || isLudoUrl) {
+          throw errLudo;
+        }
+      }
+    }
+
+    if (!items) {
+      if (btn) btn.textContent = currentLang === 'pt' ? 'Consultando BGG...' : 'Checking BGG...';
+      items = await fetchBggUserCollection(query, (att, max) => {
+        if (btn) btn.textContent = currentLang === 'pt' ? `Aguardando BGG (${att}/${max})...` : `Waiting BGG (${att}/${max})...`;
+      });
+      sourceUsed = 'BoardGameGeek';
+    }
+
+    if (!items || items.length === 0) {
+      throw new Error(currentLang === 'pt'
+        ? 'Nenhum jogo encontrado com os filtros selecionados (ex: Apenas Possuídos/Já Jogados). Tente desmarcar alguns filtros.'
+        : 'No games found matching selected filters. Try unchecking some filters.');
+    }
+
+    if (items.length < 2) {
+      throw new Error(currentLang === 'pt'
+        ? `Apenas 1 jogo encontrado na coleção. São necessários pelo menos 2 jogos para a Arena.`
+        : `Only 1 game found in collection. At least 2 games are needed for the Arena.`);
+    }
+
+    stagedCandidates = items;
+    playSound('token-place');
+    triggerHaptics(40);
+    updateStagingUI();
+
+    alert(currentLang === 'pt'
+      ? `🎉 Sucesso! ${items.length} jogos carregados da ${sourceUsed}.`
+      : `🎉 Success! ${items.length} games loaded from ${sourceUsed}.`);
+
+  } catch (err) {
+    console.error('Boardgame fetch error:', err);
+    alert(err.message || (currentLang === 'pt' ? 'Não foi possível carregar a coleção online.' : 'Could not fetch online collection.'));
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = T('btn_fetch');
+    }
+  }
 }
 
 function handleImdbCsvUpload(e) {
