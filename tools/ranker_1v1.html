@@ -382,15 +382,53 @@ body {
   gap: 6px;
   flex-wrap: wrap;
   margin-top: 8px;
+  align-items: center;
 }
 .service-pill {
   font-size: 0.72em;
   font-weight: 700;
-  padding: 2px 8px;
+  padding: 4px 10px;
   border-radius: 12px;
   background: rgba(255,255,255,0.06);
   color: var(--text-muted);
-  border: 1px solid rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.12);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+.service-pill:hover {
+  background: rgba(245, 158, 11, 0.15);
+  border-color: var(--gold-primary);
+  color: #fff;
+  transform: translateY(-1px);
+}
+.service-pill:active {
+  transform: translateY(0);
+}
+.service-pill.pill-history {
+  background: rgba(59, 130, 246, 0.12);
+  border-color: rgba(59, 130, 246, 0.35);
+  color: #93c5fd;
+  max-width: 220px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.service-pill.pill-history:hover {
+  background: rgba(59, 130, 246, 0.25);
+  border-color: #60a5fa;
+  color: #ffffff;
+}
+.service-badge-label {
+  font-size: 0.7em;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-right: 2px;
 }
 
 /* Preset Cards Grid */
@@ -1522,12 +1560,8 @@ body {
           <span data-i18n="btn_import_link">Importar Link</span>
         </button>
       </div>
-      <div class="link-services-badges">
-        <span class="service-pill">🎬 IMDb (Lists & Top 250)</span>
-        <span class="service-pill">🎮 GGapp.io (Lists & Collection)</span>
-        <span class="service-pill">📺 JustWatch (Lists & Popular)</span>
-        <span class="service-pill">👾 IGDB (Lists & Top 100)</span>
-        <span class="service-pill">🌐 Web Links Públicos</span>
+      <div class="link-services-badges" id="linkServicesBadges">
+        <!-- Rendered dynamically according to active tab + search history -->
       </div>
     </div>
 
@@ -2022,7 +2056,9 @@ const I18N = {
     bracket_pending_badge: 'Aguardando',
     bracket_tbd: 'A Definir',
     bracket_winner_of: 'Vencedor do',
-    bracket_loser_of: 'Perdedor da Semifinal'
+    bracket_loser_of: 'Perdedor da Semifinal',
+    badge_label_shortcuts: 'Exemplos:',
+    badge_label_history: 'Recentes:'
   },
   en: {
     badge_text: '1V1 CHAMPIONS ARENA',
@@ -2124,7 +2160,9 @@ const I18N = {
     bracket_pending_badge: 'Pending',
     bracket_tbd: 'TBD',
     bracket_winner_of: 'Winner of',
-    bracket_loser_of: 'Semifinal Loser'
+    bracket_loser_of: 'Semifinal Loser',
+    badge_label_shortcuts: 'Examples:',
+    badge_label_history: 'Recent:'
   }
 };
 
@@ -2206,12 +2244,183 @@ function switchScreen(screenId) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+let currentCategory = 'boardgames';
+const IMPORT_HISTORY_STORAGE_KEY = 'boardbots_arena_import_history';
+
+function getImportHistory() {
+  try {
+    const raw = localStorage.getItem(IMPORT_HISTORY_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveImportHistory(item) {
+  if (!item || !item.url) return;
+  try {
+    let history = getImportHistory().filter(h => h.url !== item.url);
+    history.unshift({
+      label: item.label || item.url.replace(/^https?:\/\//i, '').slice(0, 24),
+      url: item.url,
+      category: item.category || currentCategory,
+      timestamp: Date.now()
+    });
+    history = history.slice(0, 4); // Keep last 4 searches
+    localStorage.setItem(IMPORT_HISTORY_STORAGE_KEY, JSON.stringify(history));
+    renderContextualLinkBadges();
+  } catch (e) {
+    console.warn('Could not save import history:', e);
+  }
+}
+
+function applyQuickLinkService(serviceKey) {
+  const urlInput = document.getElementById('linkImportInput');
+  const bggInput = document.getElementById('bggUserInput');
+  playSound('ui-click');
+
+  switch (serviceKey) {
+    case 'imdb_top':
+      if (urlInput) {
+        urlInput.value = 'https://www.imdb.com/chart/top/';
+        urlInput.focus();
+        importFromPublicUrl();
+      }
+      break;
+    case 'justwatch_pop':
+      if (urlInput) {
+        urlInput.value = 'https://www.justwatch.com/us/movies';
+        urlInput.focus();
+      }
+      break;
+    case 'igdb_top':
+      if (urlInput) {
+        urlInput.value = 'https://www.igdb.com/top-100';
+        urlInput.focus();
+        importFromPublicUrl();
+      }
+      break;
+    case 'ggapp_list':
+      if (urlInput) {
+        urlInput.value = 'https://ggapp.io/';
+        urlInput.focus();
+      }
+      break;
+    case 'bgg_hot':
+      if (bggInput) {
+        bggInput.value = 'rahdo';
+        bggInput.focus();
+      }
+      if (urlInput) urlInput.value = 'https://boardgamegeek.com/collection/user/rahdo';
+      break;
+    case 'ludo_col':
+      if (bggInput) {
+        bggInput.value = 'colletes';
+        bggInput.focus();
+      }
+      if (urlInput) urlInput.value = 'https://ludopedia.com.br/colecao?usuario=colletes';
+      break;
+    case 'generic_url':
+      if (urlInput) {
+        urlInput.placeholder = currentLang === 'pt' ? 'Cole o link público de qualquer lista da web...' : 'Paste any public list link...';
+        urlInput.focus();
+      }
+      break;
+  }
+}
+
+function renderContextualLinkBadges() {
+  const container = document.getElementById('linkServicesBadges');
+  if (!container) return;
+
+  const history = getImportHistory();
+  let badgesHtml = '';
+
+  // Contextual presets/shortcuts depending on active tab
+  if (currentCategory === 'movies') {
+    badgesHtml += `
+      <span class="service-pill" onclick="applyQuickLinkService('imdb_top')" title="Carregar IMDb Top 250">
+        🎬 IMDb Top 250
+      </span>
+      <span class="service-pill" onclick="applyQuickLinkService('justwatch_pop')" title="Preencher JustWatch Filmes">
+        📺 JustWatch Popular
+      </span>
+      <span class="service-pill" onclick="applyQuickLinkService('generic_url')" title="Qualquer lista pública">
+        🌐 Web Lists
+      </span>
+    `;
+  } else if (currentCategory === 'videogames') {
+    badgesHtml += `
+      <span class="service-pill" onclick="applyQuickLinkService('igdb_top')" title="Carregar IGDB Top 100">
+        👾 IGDB Top 100
+      </span>
+      <span class="service-pill" onclick="applyQuickLinkService('ggapp_list')" title="Preencher GGapp.io">
+        🎮 GGapp.io
+      </span>
+      <span class="service-pill" onclick="applyQuickLinkService('generic_url')" title="Qualquer lista pública">
+        🌐 Web Lists
+      </span>
+    `;
+  } else if (currentCategory === 'boardgames') {
+    badgesHtml += `
+      <span class="service-pill" onclick="applyQuickLinkService('ludo_col')" title="Coleção Ludopedia">
+        📚 Ludopedia (colletes)
+      </span>
+      <span class="service-pill" onclick="applyQuickLinkService('bgg_hot')" title="Coleção BGG (rahdo)">
+        🌐 BoardGameGeek (rahdo)
+      </span>
+      <span class="service-pill" onclick="applyQuickLinkService('generic_url')" title="Qualquer lista pública">
+        🌐 Web Lists
+      </span>
+    `;
+  } else {
+    badgesHtml += `
+      <span class="service-pill" onclick="applyQuickLinkService('imdb_top')">🎬 IMDb</span>
+      <span class="service-pill" onclick="applyQuickLinkService('igdb_top')">👾 IGDB</span>
+      <span class="service-pill" onclick="applyQuickLinkService('ludo_col')">📚 Ludopedia</span>
+      <span class="service-pill" onclick="applyQuickLinkService('generic_url')">🌐 Web Lists</span>
+    `;
+  }
+
+  // Recent searches history tags (last 4)
+  if (history && history.length > 0) {
+    const historyBadges = history.map(item => {
+      const displayLabel = item.label || item.url;
+      const safeUrl = item.url.replace(/"/g, '&quot;');
+      return `
+        <span class="service-pill pill-history" onclick="loadFromHistory('${safeUrl}', '${item.category}')" title="${safeUrl}">
+          🕒 ${displayLabel}
+        </span>
+      `;
+    }).join('');
+
+    badgesHtml += `
+      <span class="service-badge-label">${T('badge_label_history')}</span>
+      ${historyBadges}
+    `;
+  }
+
+  container.innerHTML = badgesHtml;
+}
+
+function loadFromHistory(url, category) {
+  playSound('ui-click');
+  if (category && category !== currentCategory) {
+    switchCategory(category);
+  }
+  const urlInput = document.getElementById('linkImportInput');
+  if (urlInput) urlInput.value = url;
+  importFromPublicUrl();
+}
+
 function switchCategory(cat) {
   playSound('ui-click');
+  currentCategory = cat;
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === cat));
   document.querySelectorAll('.category-pane').forEach(p => p.style.display = 'none');
   const target = document.getElementById(`pane${cat.charAt(0).toUpperCase() + cat.slice(1)}`);
   if (target) target.style.display = 'block';
+  renderContextualLinkBadges();
 }
 
 function toggleFilterChip(checkbox) {
@@ -2465,6 +2674,19 @@ async function importFromPublicUrl() {
     playSound('token-place');
     triggerHaptics(40);
     updateStagingUI();
+
+    // Save to recent search history
+    let domainName = 'Web';
+    try {
+      const u = new URL(url);
+      domainName = u.hostname.replace(/^www\./i, '');
+    } catch (e) {}
+    saveImportHistory({
+      label: `${domainName} (${items.length})`,
+      url: url,
+      category: currentCategory
+    });
+
     if (urlInput) urlInput.value = '';
 
     alert(currentLang === 'pt'
@@ -2885,6 +3107,13 @@ async function fetchBoardgameCollection(overrideQuery = null) {
     playSound('token-place');
     triggerHaptics(40);
     updateStagingUI();
+
+    // Save to import history
+    saveImportHistory({
+      label: `${sourceUsed}: ${query.slice(0, 14)} (${items.length})`,
+      url: query.startsWith('http') ? query : (sourceUsed === 'Ludopedia' ? `https://ludopedia.com.br/colecao?usuario=${encodeURIComponent(query)}` : `https://boardgamegeek.com/collection/user/${encodeURIComponent(query)}`),
+      category: 'boardgames'
+    });
 
     alert(currentLang === 'pt'
       ? `🎉 Sucesso! ${items.length} jogos carregados da ${sourceUsed}.`
@@ -4051,6 +4280,7 @@ document.addEventListener('DOMContentLoaded', () => {
   applyTranslations();
   renderPresets();
   updateStagingUI();
+  renderContextualLinkBadges();
 
   if (window.ThemeKit && typeof window.ThemeKit.preloadSfx === 'function') {
     window.ThemeKit.preloadSfx(['card-draw', 'card-flip', 'token-place', 'ui-click']);
