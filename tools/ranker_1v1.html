@@ -2250,9 +2250,10 @@ const I18N = {
     share_copied_toast: 'Link do torneio copiado com sucesso!',
     share_loaded_toast: 'Torneio carregado com sucesso via link compartilhado!',
     bracket_advances_bye: 'Avança direto por Bye (folga)',
-    bracket_bye_badge: 'BYE / FOLGA',
     btn_shuffle_candidates: 'Aleatorizar Chave',
-    shuffle_toast: 'Ordem dos competidores aleatorizada com sucesso!'
+    shuffle_toast: 'Ordem dos competidores aleatorizada com sucesso!',
+    generating_link: 'Gerando link curto...',
+    copy_link: 'Copiar Link'
   },
   en: {
     badge_text: '1V1 CHAMPIONS ARENA',
@@ -2378,7 +2379,9 @@ const I18N = {
     bracket_advances_bye: 'Advances directly with a Bye',
     bracket_bye_badge: 'BYE / SEED',
     btn_shuffle_candidates: 'Shuffle Bracket',
-    shuffle_toast: 'Contenders randomized successfully!'
+    shuffle_toast: 'Contenders randomized successfully!',
+    generating_link: 'Generating short link...',
+    copy_link: 'Copy Link'
   }
 };
 
@@ -4956,7 +4959,7 @@ function decodeTournamentData(b64) {
   }
 }
 
-function openShareTournamentModal() {
+async function openShareTournamentModal() {
   const candidatesToShare = stagedCandidates && stagedCandidates.length >= 2
     ? stagedCandidates
     : (currentEngine?.originalItems || []);
@@ -4968,22 +4971,11 @@ function openShareTournamentModal() {
     return;
   }
 
-  const encoded = encodeTournamentData(candidatesToShare, selectedTournamentMode);
-  if (!encoded) {
-    alert(currentLang === 'pt' ? 'Não foi possível gerar o link de compartilhamento.' : 'Failed to generate share link.');
-    return;
-  }
-
-  const shareUrl = `${window.location.origin}${window.location.pathname}#tournament=${encoded}`;
-
   const modal = document.getElementById('shareTournamentModal');
   const input = document.getElementById('shareTournamentUrlInput');
   const summary = document.getElementById('shareTournamentSummary');
   const preview = document.getElementById('shareTournamentPreviewList');
   const btnCopy = document.getElementById('btnCopyShareText');
-
-  if (input) input.value = shareUrl;
-  if (btnCopy) btnCopy.textContent = currentLang === 'pt' ? 'Copiar Link' : 'Copy Link';
 
   const modeName = selectedTournamentMode === 'bracket'
     ? (currentLang === 'pt' ? '🏆 Copa Mata-Mata' : '🏆 Knockout Cup')
@@ -5001,8 +4993,70 @@ function openShareTournamentModal() {
     `).join('');
   }
 
+  if (input) {
+    input.value = T('generating_link');
+  }
+  if (btnCopy) {
+    btnCopy.disabled = true;
+    btnCopy.textContent = T('copy_link');
+  }
+
   if (modal) modal.classList.add('active');
   playSound('ui-click');
+
+  // Generate Base64 fallback first
+  const encoded = encodeTournamentData(candidatesToShare, selectedTournamentMode);
+  const base64Url = `${window.location.origin}${window.location.pathname}#tournament=${encoded}`;
+
+  let finalShareUrl = null;
+
+  // 1. Try Cloudflare Workers KV endpoint
+  try {
+    const payload = {
+      mode: selectedTournamentMode,
+      candidates: candidatesToShare.map(c => ({
+        title: c.title,
+        year: c.year || '',
+        image: c.image && !c.image.startsWith('data:') ? c.image : ''
+      }))
+    };
+    const res = await fetch(`${LUDOPEDIA_PROXY_BASE}/api/tournaments`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.id) {
+        finalShareUrl = `${window.location.origin}${window.location.pathname}?t=${data.id}`;
+      }
+    }
+  } catch (err) {
+    console.warn('KV shortlink attempt failed:', err);
+  }
+
+  // 2. Fallback: TinyURL API (instant tiny link for whatsapp)
+  if (!finalShareUrl && encoded) {
+    try {
+      const tinyRes = await fetch(`https://tinyurl.com/api-create.php?url=${encodeURIComponent(base64Url)}`);
+      if (tinyRes.ok) {
+        const short = (await tinyRes.text()).trim();
+        if (short.startsWith('http')) {
+          finalShareUrl = short;
+        }
+      }
+    } catch (errTiny) {
+      console.warn('TinyURL fallback failed:', errTiny);
+    }
+  }
+
+  // 3. Fallback: original Base64 hash URL
+  if (!finalShareUrl) {
+    finalShareUrl = base64Url;
+  }
+
+  if (input) input.value = finalShareUrl;
+  if (btnCopy) btnCopy.disabled = false;
 }
 
 function closeShareTournamentModal() {
@@ -5022,7 +5076,7 @@ function copyShareTournamentUrl() {
     playSound('token-place');
     triggerHaptics(35);
     setTimeout(() => {
-      if (btn) btn.textContent = currentLang === 'pt' ? 'Copiar Link' : 'Copy Link';
+      if (btn) btn.textContent = T('copy_link');
     }, 2500);
   }).catch(() => {
     input.select();
@@ -5048,22 +5102,53 @@ function showShareToast(msg) {
   }, 3500);
 }
 
-function checkAndLoadSharedTournament() {
+async function checkAndLoadSharedTournament() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const shortId = urlParams.get('t');
+
+  // Case 1: Short ID from KV (?t=X7k9Pq)
+  if (shortId) {
+    showShareToast(currentLang === 'pt' ? 'Carregando torneio compartilhado...' : 'Loading shared tournament...');
+    try {
+      const res = await fetch(`${LUDOPEDIA_PROXY_BASE}/api/tournaments/${encodeURIComponent(shortId)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data && Array.isArray(data.candidates) && data.candidates.length >= 2) {
+          const placeholderSvg = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400"><rect width="400" height="400" fill="%231c2230"/><circle cx="200" cy="200" r="120" fill="%23f59e0b" opacity="0.15"/><text x="50%25" y="52%25" dominant-baseline="middle" text-anchor="middle" fill="%23f59e0b" font-family="sans-serif" font-size="28" font-weight="bold">ARENA</text></svg>`;
+          stagedCandidates = data.candidates.map((it, idx) => ({
+            id: `shared-${idx}-${Date.now()}`,
+            title: it.title || `Item #${idx + 1}`,
+            year: it.year || '',
+            image: it.image || placeholderSvg
+          }));
+          setTournamentMode(data.mode === 'bracket' ? 'bracket' : 'merge');
+          updateStagingUI();
+          showShareToast(T('share_loaded_toast'));
+          return true;
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to fetch short tournament:', e);
+    }
+  }
+
+  // Case 2: Legacy hash base64 (#tournament=...)
   const hash = window.location.hash || '';
-  if (!hash.includes('tournament=')) return false;
+  if (hash.includes('tournament=')) {
+    const raw = hash.split('tournament=')[1];
+    if (raw) {
+      const data = decodeTournamentData(decodeURIComponent(raw));
+      if (data && data.candidates && data.candidates.length >= 2) {
+        stagedCandidates = data.candidates;
+        setTournamentMode(data.mode);
+        updateStagingUI();
+        showShareToast(T('share_loaded_toast'));
+        return true;
+      }
+    }
+  }
 
-  const raw = hash.split('tournament=')[1];
-  if (!raw) return false;
-
-  const data = decodeTournamentData(decodeURIComponent(raw));
-  if (!data || !data.candidates || data.candidates.length < 2) return false;
-
-  stagedCandidates = data.candidates;
-  setTournamentMode(data.mode);
-  updateStagingUI();
-
-  showShareToast(T('share_loaded_toast'));
-  return true;
+  return false;
 }
 
 /* Initialization */

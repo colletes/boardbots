@@ -22,10 +22,19 @@ const ALLOWED_IMAGE_HOSTS = ['storage.googleapis.com', 'cf.geekdo-images.com'];
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, OPTIONS',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   'Access-Control-Max-Age': '86400'
 };
+
+function generateShortId(length = 6) {
+  const chars = '23456789abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ';
+  let result = '';
+  for (let i = 0; i < length; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+}
 
 export default {
   async fetch(request, env, ctx) {
@@ -36,7 +45,92 @@ export default {
       return new Response(null, { status: 204, headers: CORS_HEADERS });
     }
 
-    // Only allow GET requests
+    // Route: /api/tournaments or /tournaments
+    if (url.pathname.startsWith('/api/tournaments') || url.pathname.startsWith('/tournaments')) {
+      const kv = env.KV_TOURNAMENTS;
+      if (!kv) {
+        return new Response(JSON.stringify({ error: 'KV_TOURNAMENTS binding not configured' }), {
+          status: 503,
+          headers: { 'Content-Type': 'application/json', ...CORS_HEADERS }
+        });
+      }
+
+      // POST: Store tournament
+      if (request.method === 'POST') {
+        try {
+          const body = await request.json();
+          if (!body || !Array.isArray(body.candidates) || body.candidates.length < 2) {
+            return new Response(JSON.stringify({ error: 'Invalid tournament payload: at least 2 candidates required' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json', ...CORS_HEADERS }
+            });
+          }
+
+          // Generate unique short ID
+          let shortId = generateShortId(6);
+          let attempts = 0;
+          while (attempts < 5) {
+            const existing = await kv.get(shortId);
+            if (!existing) break;
+            shortId = generateShortId(7);
+            attempts++;
+          }
+
+          // Expire in 60 days (5184000 seconds)
+          await kv.put(shortId, JSON.stringify(body), { expirationTtl: 5184000 });
+
+          return new Response(JSON.stringify({
+            success: true,
+            id: shortId
+          }), {
+            status: 201,
+            headers: { 'Content-Type': 'application/json', ...CORS_HEADERS }
+          });
+        } catch (err) {
+          return new Response(JSON.stringify({ error: 'Failed to save tournament', message: err.message }), {
+            status: 500,
+            headers: { 'Content-Type': 'application/json', ...CORS_HEADERS }
+          });
+        }
+      }
+
+      // GET: Retrieve tournament by ID
+      if (request.method === 'GET') {
+        const parts = url.pathname.split('/').filter(Boolean);
+        // Expecting /api/tournaments/:id or /tournaments/:id
+        const shortId = parts[parts.length - 1];
+        if (!shortId || shortId === 'tournaments') {
+          return new Response(JSON.stringify({ error: 'Missing tournament id' }), {
+            status: 400,
+            headers: { 'Content-Type': 'application/json', ...CORS_HEADERS }
+          });
+        }
+
+        const data = await kv.get(shortId);
+        if (!data) {
+          return new Response(JSON.stringify({ error: 'Tournament not found or expired' }), {
+            status: 404,
+            headers: { 'Content-Type': 'application/json', ...CORS_HEADERS }
+          });
+        }
+
+        return new Response(data, {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json; charset=utf-8',
+            ...CORS_HEADERS,
+            'Cache-Control': 'public, max-age=86400, s-maxage=86400'
+          }
+        });
+      }
+
+      return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+        status: 405,
+        headers: { 'Content-Type': 'application/json', ...CORS_HEADERS }
+      });
+    }
+
+    // Only allow GET requests for the remaining routes
     if (request.method !== 'GET') {
       return new Response(JSON.stringify({ error: 'Method not allowed' }), {
         status: 405,
