@@ -1057,8 +1057,9 @@ body {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  width: 200px;
+  width: 230px;
   flex-shrink: 0;
+  position: relative;
 }
 .wc-round-header {
   font-family: 'Poppins', sans-serif;
@@ -1077,8 +1078,54 @@ body {
 .wc-matches-list {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
+  justify-content: space-around;
+  flex-grow: 1;
 }
+
+/* Match Pair Grouping with Bracket Connector lines */
+.wc-match-pair {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  position: relative;
+  padding-right: 14px;
+}
+/* Right-side bracket connecting pair toward the next round */
+.wc-match-pair::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 25%;
+  bottom: 25%;
+  width: 14px;
+  border: 2px solid rgba(245, 158, 11, 0.35);
+  border-left: none;
+  border-top-right-radius: 6px;
+  border-bottom-right-radius: 6px;
+  pointer-events: none;
+  transition: all 0.25s ease;
+}
+.wc-match-pair::before {
+  content: '';
+  position: absolute;
+  right: -10px;
+  top: 50%;
+  width: 10px;
+  height: 2px;
+  background: rgba(245, 158, 11, 0.35);
+  pointer-events: none;
+  transition: all 0.25s ease;
+}
+.wc-match-pair:hover::after {
+  border-color: var(--gold-bright);
+  box-shadow: 2px 0 8px rgba(245, 158, 11, 0.4);
+}
+.wc-match-pair:hover::before {
+  background: var(--gold-bright);
+  box-shadow: 0 0 6px rgba(245, 158, 11, 0.5);
+}
+
 .wc-match-card {
   background: rgba(20, 24, 33, 0.95);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -1086,15 +1133,17 @@ body {
   padding: 8px 10px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 5px;
   font-size: 0.8em;
   position: relative;
   transition: all 0.2s ease;
   box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+  cursor: pointer;
 }
 .wc-match-card:hover {
-  border-color: rgba(245, 158, 11, 0.5);
+  border-color: rgba(245, 158, 11, 0.6);
   transform: translateY(-1px);
+  background: rgba(28, 33, 44, 0.98);
 }
 .wc-match-card.is-live {
   border: 2px solid var(--gold-bright);
@@ -1102,6 +1151,23 @@ body {
   animation: wcLivePulse 2s infinite ease-in-out;
   background: rgba(36, 28, 14, 0.95);
 }
+/* Highlight pathway states when hovering */
+.wc-match-card.bracket-path-active {
+  border-color: #f59e0b !important;
+  box-shadow: 0 0 14px rgba(245, 158, 11, 0.65) !important;
+  background: rgba(45, 34, 15, 0.98) !important;
+}
+.wc-match-card.bracket-feeder-highlight {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 12px rgba(59, 130, 246, 0.55) !important;
+  background: rgba(18, 30, 48, 0.95) !important;
+}
+.wc-match-card.bracket-target-highlight {
+  border-color: #10b981 !important;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.55) !important;
+  background: rgba(16, 40, 30, 0.95) !important;
+}
+
 @keyframes wcLivePulse {
   0% { box-shadow: 0 0 6px rgba(245, 158, 11, 0.3); }
   50% { box-shadow: 0 0 18px rgba(245, 158, 11, 0.7); }
@@ -1117,6 +1183,27 @@ body {
   border-bottom: 1px solid rgba(255,255,255,0.06);
   padding-bottom: 3px;
   margin-bottom: 2px;
+}
+.wc-match-dest {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.68em;
+  font-weight: 600;
+  color: #fbbf24;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px dashed rgba(245, 158, 11, 0.25);
+  border-radius: 4px;
+  padding: 2px 5px;
+  margin-top: 3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wc-match-dest svg {
+  flex-shrink: 0;
+  width: 10px;
+  height: 10px;
 }
 .wc-badge-live {
   background: var(--gold-bright);
@@ -2107,7 +2194,9 @@ const I18N = {
     btn_confirm_add: 'Adicionar à Lista',
     btn_trim_last: 'Remover Último',
     arena_live_bracket_title: 'Chaveamento do Mata-Mata',
-    stage_round: 'Rodada'
+    stage_round: 'Rodada',
+    bracket_advances_to: 'Vencedor avança para',
+    bracket_feed_winner: 'Vencedor do'
   },
   en: {
     badge_text: '1V1 CHAMPIONS ARENA',
@@ -2222,7 +2311,9 @@ const I18N = {
     btn_confirm_add: 'Add to List',
     btn_trim_last: 'Drop Last',
     arena_live_bracket_title: 'Knockout Bracket',
-    stage_round: 'Round'
+    stage_round: 'Round',
+    bracket_advances_to: 'Winner advances to',
+    bracket_feed_winner: 'Winner of'
   }
 };
 
@@ -4143,6 +4234,20 @@ function buildWorldCupBracketHTML(items, history = [], activeMatch = null, champ
     }
   }
 
+  // Set up nextMatch references and feeder labels across stages
+  for (let s = 0; s < stages.length - 1; s++) {
+    const nextStage = stages[s + 1];
+    stages[s].matches.forEach((m, idx) => {
+      const nextMatchIdx = Math.floor(idx / 2);
+      const nextMatch = nextStage.matches[nextMatchIdx];
+      if (nextMatch) {
+        m.nextMatchId = nextMatch.id;
+        m.nextStageName = nextMatch.stageName;
+        m.nextMatchIndex = nextMatchIdx;
+      }
+    });
+  }
+
   function renderMatchCard(m, matchNumLabel = '') {
     const isLive = m.isLive;
     const isDone = m.isDone;
@@ -4155,8 +4260,24 @@ function buildWorldCupBracketHTML(items, history = [], activeMatch = null, champ
 
     const defaultImg = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23f59e0b' stroke-width='2'%3E%3Cpolygon points='12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2'/%3E%3C/svg%3E";
 
+    // Feeder labels for unresolved slots
+    const labelA = teamA?.title || (m.prevM1 ? `${T('bracket_feed_winner')} ${m.prevM1.stageName} #${m.prevM1.matchIndex + 1}` : T('bracket_tbd'));
+    const labelB = teamB?.title || (m.prevM2 ? `${T('bracket_feed_winner')} ${m.prevM2.stageName} #${m.prevM2.matchIndex + 1}` : T('bracket_tbd'));
+
+    // Destination badge for rounds leading to subsequent matches
+    const destHTML = m.nextStageName ? `
+      <div class="wc-match-dest" title="${T('bracket_advances_to')} ${m.nextStageName} #${m.nextMatchIndex + 1}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+        <span>${T('bracket_advances_to')} <strong>${m.nextStageName} #${m.nextMatchIndex + 1}</strong></span>
+      </div>
+    ` : '';
+
+    const feeder1Attr = m.prevM1 ? `data-feeder-1="${m.prevM1.id}"` : '';
+    const feeder2Attr = m.prevM2 ? `data-feeder-2="${m.prevM2.id}"` : '';
+    const nextAttr = m.nextMatchId ? `data-next-match="${m.nextMatchId}"` : '';
+
     return `
-      <div class="wc-match-card ${isLive ? 'is-live' : ''} ${isDone ? 'is-done' : ''}">
+      <div class="wc-match-card ${isLive ? 'is-live' : ''} ${isDone ? 'is-done' : ''}" id="wcCard_${m.id}" data-match-id="${m.id}" ${nextAttr} ${feeder1Attr} ${feeder2Attr} onmouseenter="highlightBracketPath('${m.id}')" onmouseleave="clearBracketHighlight()">
         <div class="wc-match-header">
           <span class="wc-match-stage">${matchNumLabel || m.stageName}</span>
           ${isLive ? `<span class="wc-badge-live">${T('bracket_live_badge')}</span>` : ''}
@@ -4166,17 +4287,18 @@ function buildWorldCupBracketHTML(items, history = [], activeMatch = null, champ
         <div class="wc-team-row ${tADoneClass}">
           <div class="wc-team-info">
             <img class="wc-team-thumb" src="${teamA?.image || defaultImg}" alt="" onerror="this.src='${defaultImg}'">
-            <span class="wc-team-name" title="${teamA?.title || T('bracket_tbd')}">${teamA?.title || (m.prevM1 ? `${T('bracket_winner_of')} ${m.prevM1.stageName}` : T('bracket_tbd'))}</span>
+            <span class="wc-team-name" title="${labelA}">${labelA}</span>
           </div>
           ${winId && winId === teamA?.id ? '<span style="font-size:0.85em;">👑</span>' : ''}
         </div>
         <div class="wc-team-row ${tBDoneClass}">
           <div class="wc-team-info">
             <img class="wc-team-thumb" src="${teamB?.image || defaultImg}" alt="" onerror="this.src='${defaultImg}'">
-            <span class="wc-team-name" title="${teamB?.title || T('bracket_tbd')}">${teamB?.title || (m.prevM2 ? `${T('bracket_winner_of')} ${m.prevM2.stageName}` : T('bracket_tbd'))}</span>
+            <span class="wc-team-name" title="${labelB}">${labelB}</span>
           </div>
           ${winId && winId === teamB?.id ? '<span style="font-size:0.85em;">👑</span>' : ''}
         </div>
+        ${destHTML}
       </div>
     `;
   }
@@ -4186,11 +4308,28 @@ function buildWorldCupBracketHTML(items, history = [], activeMatch = null, champ
 
   const roundsColumnsHTML = roundsBeforeFinal.map((s, sIdx) => {
     const stageTitle = s.matches[0]?.stageName || `${T('stage_round')} ${sIdx + 1}`;
+    
+    // Group matches in pairs of 2 so bracket connecting lines converge into subsequent round
+    let matchesContent = '';
+    for (let i = 0; i < s.matches.length; i += 2) {
+      const m1 = s.matches[i];
+      const m2 = s.matches[i + 1];
+      const m1HTML = renderMatchCard(m1, `${m1.stageName} #${m1.matchIndex + 1}`);
+      const m2HTML = m2 ? renderMatchCard(m2, `${m2.stageName} #${m2.matchIndex + 1}`) : '';
+      
+      matchesContent += `
+        <div class="wc-match-pair">
+          ${m1HTML}
+          ${m2HTML}
+        </div>
+      `;
+    }
+
     return `
       <div class="wc-round-column">
         <div class="wc-round-header">${stageTitle}</div>
         <div class="wc-matches-list">
-          ${s.matches.map((m, idx) => renderMatchCard(m, `${m.stageName} #${idx + 1}`)).join('')}
+          ${matchesContent}
         </div>
       </div>
     `;
@@ -4224,6 +4363,40 @@ function buildWorldCupBracketHTML(items, history = [], activeMatch = null, champ
       ${finalsColumnHTML}
     </div>
   `;
+}
+
+function highlightBracketPath(matchId) {
+  clearBracketHighlight();
+  const card = document.getElementById('wcCard_' + matchId);
+  if (!card) return;
+
+  card.classList.add('bracket-path-active');
+
+  // Highlight feeders (previous round sources)
+  const f1 = card.getAttribute('data-feeder-1');
+  const f2 = card.getAttribute('data-feeder-2');
+  if (f1) {
+    const el = document.getElementById('wcCard_' + f1);
+    if (el) el.classList.add('bracket-feeder-highlight');
+  }
+  if (f2) {
+    const el = document.getElementById('wcCard_' + f2);
+    if (el) el.classList.add('bracket-feeder-highlight');
+  }
+
+  // Highlight destination target (next round)
+  const next = card.getAttribute('data-next-match');
+  if (next) {
+    const el = document.getElementById('wcCard_' + next);
+    if (el) el.classList.add('bracket-target-highlight');
+  }
+}
+
+function clearBracketHighlight() {
+  document.querySelectorAll('.wc-match-card.bracket-path-active, .wc-match-card.bracket-feeder-highlight, .wc-match-card.bracket-target-highlight')
+    .forEach(el => {
+      el.classList.remove('bracket-path-active', 'bracket-feeder-highlight', 'bracket-target-highlight');
+    });
 }
 
 function openBracketModal(htmlContent, subtitleText = '') {
