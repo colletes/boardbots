@@ -1759,6 +1759,10 @@ body {
           <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
           <span data-i18n="btn_clear">Limpar</span>
         </button>
+        <button class="btn-action btn-secondary" id="btnShareStaging" onclick="openShareTournamentModal()" title="Compartilhar lista de competidores com amigos">
+          <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+          <span data-i18n="btn_share_tournament">Compartilhar Torneio</span>
+        </button>
         <button class="btn-action" id="btnStartTournament" disabled onclick="startTournamentMatch()">
           <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 17.5 3 6V3h3l11.5 11.5"/><path d="m13 19 6 2 2-6-2-2-4 4Z"/><path d="m19 13 2-2-6-6-2 2 4 4Z"/></svg>
           <span data-i18n="btn_start_arena">Entrar na Arena 1x1</span>
@@ -1951,6 +1955,10 @@ body {
           <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
           <span data-i18n="btn_copy_text">Copiar Lista</span>
         </button>
+        <button class="btn-action btn-secondary" onclick="openShareTournamentModal()" style="border-color:rgba(245,158,11,0.4); color:var(--gold-bright);">
+          <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+          <span data-i18n="btn_share_tournament">Compartilhar Torneio</span>
+        </button>
         <button class="btn-action btn-secondary" onclick="restartWithSameCandidates()">
           <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
           <span data-i18n="btn_rematch">Revanche / Novo Torneio</span>
@@ -2052,6 +2060,41 @@ body {
         </button>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- Modal: Compartilhar Torneio -->
+<div class="modal-backdrop" id="shareTournamentModal" onclick="if(event.target===this) closeShareTournamentModal()">
+  <div class="modal-content" style="max-width: 520px;">
+    <button class="modal-close-btn" onclick="closeShareTournamentModal()" aria-label="Fechar">
+      <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <h2 style="font-family:'Poppins',sans-serif; color:var(--gold-bright); margin-bottom:8px; display:flex; align-items:center; gap:8px;" data-i18n="share_tournament_title">
+      <svg class="icon-inline" style="width:20px; height:20px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+      Compartilhar Torneio
+    </h2>
+    <p style="font-size:0.85em; color:var(--text-muted); margin-bottom:16px; line-height:1.4;" data-i18n="share_tournament_desc">
+      Envie este link para outras pessoas jogarem exatamente com a mesma lista de competidores e comparar os resultados!
+    </p>
+
+    <div style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.08); border-radius:var(--radius-sm); padding:10px 12px; margin-bottom:14px;">
+      <div style="font-size:0.78em; color:var(--gold-bright); font-weight:700; margin-bottom:4px;" id="shareTournamentSummary">Resumo do Torneio</div>
+      <div style="font-size:0.75em; color:var(--text-muted); max-height:80px; overflow-y:auto;" id="shareTournamentPreviewList"></div>
+    </div>
+
+    <div style="display:flex; gap:8px; margin-bottom:16px;">
+      <input type="text" class="input-text" id="shareTournamentUrlInput" readonly style="flex:1; font-size:0.82em; background:rgba(0,0,0,0.5); cursor:pointer;" onclick="this.select()">
+      <button class="btn-action" onclick="copyShareTournamentUrl()" style="white-space:nowrap;">
+        <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        <span id="btnCopyShareText">Copiar Link</span>
+      </button>
+    </div>
+
+    <div style="display:flex; justify-content:flex-end; gap:8px;">
+      <button type="button" class="btn-action btn-secondary" onclick="closeShareTournamentModal()">
+        <span data-i18n="btn_cancel">Fechar</span>
+      </button>
+    </div>
   </div>
 </div>
 
@@ -2196,7 +2239,12 @@ const I18N = {
     arena_live_bracket_title: 'Chaveamento do Mata-Mata',
     stage_round: 'Rodada',
     bracket_advances_to: 'Vencedor avança para',
-    bracket_feed_winner: 'Vencedor do'
+    bracket_feed_winner: 'Vencedor do',
+    btn_share_tournament: 'Compartilhar Torneio',
+    share_tournament_title: 'Compartilhar Torneio com Amigos',
+    share_tournament_desc: 'Envie este link para outras pessoas jogarem exatamente com a mesma lista de competidores e comparar os resultados!',
+    share_copied_toast: 'Link do torneio copiado com sucesso!',
+    share_loaded_toast: 'Torneio carregado com sucesso via link compartilhado!'
   },
   en: {
     badge_text: '1V1 CHAMPIONS ARENA',
@@ -2313,7 +2361,12 @@ const I18N = {
     arena_live_bracket_title: 'Knockout Bracket',
     stage_round: 'Round',
     bracket_advances_to: 'Winner advances to',
-    bracket_feed_winner: 'Winner of'
+    bracket_feed_winner: 'Winner of',
+    btn_share_tournament: 'Share Tournament',
+    share_tournament_title: 'Share Tournament with Friends',
+    share_tournament_desc: 'Send this link to others so they can play with the exact same contenders and compare rankings!',
+    share_copied_toast: 'Tournament link copied to clipboard!',
+    share_loaded_toast: 'Tournament loaded successfully from shared link!'
   }
 };
 
@@ -4580,12 +4633,182 @@ async function generateSocialImage(format = 'feed') {
   a.click();
 }
 
+/* ========================================================== */
+/* TOURNAMENT SHARING (URL State with Base64 & Unicode)       */
+/* ========================================================== */
+
+function encodeTournamentData(candidates, mode) {
+  try {
+    const compact = {
+      m: mode,
+      c: candidates.map(it => ({
+        t: it.title,
+        y: it.year || '',
+        i: it.image && !it.image.startsWith('data:') ? it.image : ''
+      }))
+    };
+    const json = JSON.stringify(compact);
+    const bytes = new TextEncoder().encode(json);
+    let binary = '';
+    for (let i = 0; i < bytes.length; i++) {
+      binary += String.fromCharCode(bytes[i]);
+    }
+    return btoa(binary);
+  } catch (e) {
+    console.error('Failed to encode tournament data:', e);
+    return '';
+  }
+}
+
+function decodeTournamentData(b64) {
+  try {
+    const binary = atob(b64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+    const json = new TextDecoder().decode(bytes);
+    const compact = JSON.parse(json);
+    if (!compact || !Array.isArray(compact.c)) return null;
+
+    const placeholderSvg = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400"><rect width="400" height="400" fill="%231c2230"/><circle cx="200" cy="200" r="120" fill="%23f59e0b" opacity="0.15"/><text x="50%25" y="52%25" dominant-baseline="middle" text-anchor="middle" fill="%23f59e0b" font-family="sans-serif" font-size="28" font-weight="bold">ARENA</text></svg>`;
+
+    const candidates = compact.c.map((it, idx) => ({
+      id: `shared-${idx}-${Date.now()}`,
+      title: it.t || `Item #${idx + 1}`,
+      year: it.y || '',
+      image: it.i || placeholderSvg
+    }));
+
+    return {
+      mode: compact.m === 'bracket' ? 'bracket' : 'merge',
+      candidates
+    };
+  } catch (e) {
+    console.error('Failed to decode tournament data:', e);
+    return null;
+  }
+}
+
+function openShareTournamentModal() {
+  const candidatesToShare = stagedCandidates && stagedCandidates.length >= 2
+    ? stagedCandidates
+    : (currentEngine?.originalItems || []);
+
+  if (!candidatesToShare || candidatesToShare.length < 2) {
+    alert(currentLang === 'pt'
+      ? 'Carregue pelo menos 2 competidores para poder compartilhar o torneio!'
+      : 'Load at least 2 contenders before sharing the tournament!');
+    return;
+  }
+
+  const encoded = encodeTournamentData(candidatesToShare, selectedTournamentMode);
+  if (!encoded) {
+    alert(currentLang === 'pt' ? 'Não foi possível gerar o link de compartilhamento.' : 'Failed to generate share link.');
+    return;
+  }
+
+  const shareUrl = `${window.location.origin}${window.location.pathname}#tournament=${encoded}`;
+
+  const modal = document.getElementById('shareTournamentModal');
+  const input = document.getElementById('shareTournamentUrlInput');
+  const summary = document.getElementById('shareTournamentSummary');
+  const preview = document.getElementById('shareTournamentPreviewList');
+  const btnCopy = document.getElementById('btnCopyShareText');
+
+  if (input) input.value = shareUrl;
+  if (btnCopy) btnCopy.textContent = currentLang === 'pt' ? 'Copiar Link' : 'Copy Link';
+
+  const modeName = selectedTournamentMode === 'bracket'
+    ? (currentLang === 'pt' ? '🏆 Copa Mata-Mata' : '🏆 Knockout Cup')
+    : (currentLang === 'pt' ? '⚔️ Ranqueador Completo' : '⚔️ Full Ranker');
+
+  if (summary) {
+    summary.textContent = `${modeName} • ${candidatesToShare.length} ${currentLang === 'pt' ? 'Competidores' : 'Contenders'}`;
+  }
+
+  if (preview) {
+    preview.innerHTML = candidatesToShare.map((c, i) => `
+      <div style="padding:2px 0; border-bottom:1px solid rgba(255,255,255,0.05); text-overflow:ellipsis; overflow:hidden; white-space:nowrap;">
+        <span style="color:var(--gold-bright); font-weight:700;">#${i + 1}</span> ${c.title} ${c.year ? `<span style="opacity:0.6;">${c.year}</span>` : ''}
+      </div>
+    `).join('');
+  }
+
+  if (modal) modal.classList.add('active');
+  playSound('ui-click');
+}
+
+function closeShareTournamentModal() {
+  const modal = document.getElementById('shareTournamentModal');
+  if (modal) modal.classList.remove('active');
+  playSound('ui-click');
+}
+
+function copyShareTournamentUrl() {
+  const input = document.getElementById('shareTournamentUrlInput');
+  if (!input || !input.value) return;
+
+  navigator.clipboard.writeText(input.value).then(() => {
+    const btn = document.getElementById('btnCopyShareText');
+    if (btn) btn.textContent = currentLang === 'pt' ? '✓ Copiado!' : '✓ Copied!';
+    showShareToast(T('share_copied_toast'));
+    playSound('token-place');
+    triggerHaptics(35);
+    setTimeout(() => {
+      if (btn) btn.textContent = currentLang === 'pt' ? 'Copiar Link' : 'Copy Link';
+    }, 2500);
+  }).catch(() => {
+    input.select();
+    document.execCommand('copy');
+    showShareToast(T('share_copied_toast'));
+  });
+}
+
+function showShareToast(msg) {
+  let toast = document.getElementById('arenaToastNotification');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'arenaToastNotification';
+    toast.style.cssText = 'position:fixed; bottom:30px; left:50%; transform:translateX(-50%); background:#10b981; color:#0b0d12; font-weight:800; font-size:0.88em; padding:10px 20px; border-radius:999px; box-shadow:0 8px 24px rgba(0,0,0,0.6); z-index:9999; display:flex; align-items:center; gap:8px; pointer-events:none; transition:all 0.3s ease; opacity:0;';
+    document.body.appendChild(toast);
+  }
+  toast.innerHTML = `<svg style="width:18px;height:18px;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> <span>${msg}</span>`;
+  toast.style.opacity = '1';
+  toast.style.transform = 'translateX(-50%) translateY(0)';
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateX(-50%) translateY(12px)';
+  }, 3500);
+}
+
+function checkAndLoadSharedTournament() {
+  const hash = window.location.hash || '';
+  if (!hash.includes('tournament=')) return false;
+
+  const raw = hash.split('tournament=')[1];
+  if (!raw) return false;
+
+  const data = decodeTournamentData(decodeURIComponent(raw));
+  if (!data || !data.candidates || data.candidates.length < 2) return false;
+
+  stagedCandidates = data.candidates;
+  setTournamentMode(data.mode);
+  updateStagingUI();
+
+  showShareToast(T('share_loaded_toast'));
+  return true;
+}
+
 /* Initialization */
 document.addEventListener('DOMContentLoaded', () => {
   applyTranslations();
   renderPresets();
   updateStagingUI();
   renderContextualLinkBadges();
+
+  // Check if loaded via shared tournament link in URL hash
+  checkAndLoadSharedTournament();
 
   if (window.ThemeKit && typeof window.ThemeKit.preloadSfx === 'function') {
     window.ThemeKit.preloadSfx(['card-draw', 'card-flip', 'token-place', 'ui-click']);
