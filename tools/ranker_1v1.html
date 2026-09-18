@@ -2965,21 +2965,19 @@ function updateStagingUI() {
     descEl.textContent = T('staging_min_hint');
     btnStart.disabled = true;
   } else if (selectedTournamentMode === 'bracket') {
-    const p = Math.pow(2, Math.floor(Math.log2(count)));
-    let stageName = getBracketStageName(p >= 2 ? p : 2);
+    const r1Duels = Math.floor(count / 2);
+    const hasR0Bye = (count % 2 !== 0);
     
-    if (count % 2 !== 0) {
-      const byes = (2 * p) - count;
+    if (hasR0Bye) {
       descEl.innerHTML = currentLang === 'pt'
-        ? `🏆 <strong>${count} competidores</strong>: Chave com <strong>${byes} jogo(s) avançando direto por bye</strong> para a fase seguinte!`
-        : `🏆 <strong>${count} contenders</strong>: Bracket with <strong>${byes} game(s) advancing directly via bye</strong> to the next round!`;
-      btnStart.disabled = false;
+        ? `🏆 <strong>${count} competidores</strong>: 1ª rodada com <strong>${r1Duels} confrontos diretos</strong> e <strong>1 folga (bye)</strong>!`
+        : `🏆 <strong>${count} contenders</strong>: 1st round with <strong>${r1Duels} direct duels</strong> and <strong>1 bye</strong>!`;
     } else {
       descEl.innerHTML = currentLang === 'pt'
-        ? `🏆 Chaveamento perfeito: <strong>${count} competidores</strong> prontos para ${stageName}!`
-        : `🏆 Bracket ready: <strong>${count} contenders</strong> starting in ${stageName}!`;
-      btnStart.disabled = false;
+        ? `🏆 <strong>${count} competidores</strong>: 1ª rodada com <strong>${r1Duels} confrontos diretos</strong> (sem folgas)!`
+        : `🏆 <strong>${count} contenders</strong>: 1st round with <strong>${r1Duels} direct duels</strong> (no byes)!`;
     }
+    btnStart.disabled = false;
   } else {
     descEl.textContent = currentLang === 'pt'
       ? `${count} competidores carregados. Modo Ranqueador Completo pronto!`
@@ -4226,6 +4224,19 @@ class TournamentEngine {
 /* ENGINE 2: KNOCKOUT CUP BRACKET ENGINE (Single Elimination) */
 /* ========================================================== */
 
+function getBracketStageNameByDistance(stagesFromEnd) {
+  if (stagesFromEnd === 1) return currentLang === 'pt' ? 'Grande Final' : 'Grand Final';
+  if (stagesFromEnd === 2) return currentLang === 'pt' ? 'Semifinais' : 'Semi-Finals';
+  if (stagesFromEnd === 3) return currentLang === 'pt' ? 'Quartas de Final' : 'Quarter-Finals';
+  if (stagesFromEnd === 4) return currentLang === 'pt' ? 'Oitavas de Final' : 'Round of 16';
+  if (stagesFromEnd === 5) return currentLang === 'pt' ? '16-avos de Final' : 'Round of 32';
+  if (stagesFromEnd === 6) return currentLang === 'pt' ? '32-avos de Final' : 'Round of 64';
+  if (stagesFromEnd === 7) return currentLang === 'pt' ? '64-avos de Final' : 'Round of 128';
+  if (stagesFromEnd === 8) return currentLang === 'pt' ? '128-avos de Final' : 'Round of 256';
+  if (stagesFromEnd === 9) return currentLang === 'pt' ? '256-avos de Final' : 'Round of 512';
+  return currentLang === 'pt' ? 'Fase Preliminar' : 'Preliminary Round';
+}
+
 function getBracketStageName(contenderCount) {
   if (contenderCount >= 512) return currentLang === 'pt' ? '256-avos de Final' : 'Round of 512';
   if (contenderCount >= 256) return currentLang === 'pt' ? '128-avos de Final' : 'Round of 256';
@@ -4243,10 +4254,6 @@ class BracketEngine {
   constructor(items) {
     this.originalItems = [...items];
     const n = items.length;
-    // Power of 2 bracket size (e.g. 10 -> 16, 8 -> 8)
-    const p = Math.pow(2, Math.ceil(Math.log2(n)));
-    this.bracketSize = p;
-    this.totalDuels = n >= 4 ? n : n - 1;
     this.completedDuels = 0;
     this.undoHistory = [];
     this.bracketHistory = [];
@@ -4254,20 +4261,33 @@ class BracketEngine {
     this.runnerUp = null;
     this.thirdPlaceWinner = null;
 
-    // Stages from p down to 2
+    // Dynamically build stages without forcing artificial power-of-2 bloat
+    // e.g. 66 contenders -> Round 0 has 33 duels, Round 1 has 17 matches, etc.
     this.stages = [];
-    let count = p;
+    let currentCount = n;
     let sIdx = 0;
-    while (count >= 2) {
-      const matchCount = count / 2;
-      const matches = [];
-      for (let mIdx = 0; mIdx < matchCount; mIdx++) {
-        matches.push({
-          id: `r${sIdx}_m${mIdx}`,
-          stageIndex: sIdx,
-          matchIndex: mIdx,
-          stageCount: count,
-          stageName: getBracketStageName(count),
+    while (currentCount > 1) {
+      const matchCount = Math.ceil(currentCount / 2);
+      this.stages.push({
+        stageIndex: sIdx,
+        matchCount: matchCount,
+        matches: []
+      });
+      currentCount = matchCount;
+      sIdx++;
+    }
+
+    const totalStages = this.stages.length;
+    for (let s = 0; s < totalStages; s++) {
+      const stagesFromEnd = totalStages - s;
+      const stageName = getBracketStageNameByDistance(stagesFromEnd);
+      this.stages[s].stageName = stageName;
+      for (let m = 0; m < this.stages[s].matchCount; m++) {
+        this.stages[s].matches.push({
+          id: `r${s}_m${m}`,
+          stageIndex: s,
+          matchIndex: m,
+          stageName: stageName,
           teamA: null,
           teamB: null,
           winner: null,
@@ -4283,13 +4303,10 @@ class BracketEngine {
           prevM2: null
         });
       }
-      this.stages.push({ count, matches });
-      count /= 2;
-      sIdx++;
     }
 
-    // Connect stages
-    for (let s = 0; s < this.stages.length - 1; s++) {
+    // Connect feeders between stages
+    for (let s = 0; s < totalStages - 1; s++) {
       for (let m = 0; m < this.stages[s].matches.length; m++) {
         const nextMIdx = Math.floor(m / 2);
         const slot = (m % 2 === 0) ? 'teamA' : 'teamB';
@@ -4304,39 +4321,38 @@ class BracketEngine {
       }
     }
 
-    // Distribute byes evenly across Round 0
-    const numByes = p - n;
-    const numMatchesR0 = p / 2;
-    const isByeMatch = new Array(numMatchesR0).fill(false);
-    for (let b = 0; b < numByes; b++) {
-      const targetIdx = Math.floor((b * numMatchesR0) / numByes);
-      let target = targetIdx;
-      while (isByeMatch[target]) {
-        target = (target + 1) % numMatchesR0;
-      }
-      isByeMatch[target] = true;
-    }
-
+    // Seed Round 0 with items
     let itemIdx = 0;
-    for (let m = 0; m < numMatchesR0; m++) {
-      const match = this.stages[0].matches[m];
-      if (isByeMatch[m]) {
-        match.teamA = items[itemIdx++];
+    const r0Matches = this.stages[0].matches;
+    for (let m = 0; m < r0Matches.length; m++) {
+      const match = r0Matches[m];
+      match.teamA = items[itemIdx++];
+      if (itemIdx < n) {
+        match.teamB = items[itemIdx++];
+      } else {
         match.teamB = null;
         match.isBye = true;
-        match.winner = match.teamA;
         match.isDone = true;
-        const nextMIdx = Math.floor(m / 2);
-        this.stages[1].matches[nextMIdx][match.nextSlot] = match.winner;
-      } else {
-        match.teamA = items[itemIdx++];
-        match.teamB = items[itemIdx++];
-        match.isBye = false;
-        match.isDone = false;
+        match.winner = match.teamA;
+        if (match.nextMatchId) {
+          const nextStage = this.stages[1];
+          nextStage.matches[match.nextMatchIndex][match.nextSlot] = match.winner;
+        }
       }
     }
 
-    this.thirdPlaceMatch = (n >= 4) ? {
+    // Auto-advance subsequent byes if a match has only 1 feeder and already received teamA
+    this.propagateAllByes();
+
+    // Setup 3rd place playoff if viable (n >= 4 and both semifinal matches have duels)
+    const hasSemi = totalStages >= 2;
+    const semiMatches = hasSemi ? this.stages[totalStages - 2].matches : [];
+    const bothSemisHaveOpponents = hasSemi && semiMatches.length === 2 && 
+      (semiMatches[0].prevM2 !== null || semiMatches[0].teamB !== null) &&
+      (semiMatches[1].prevM2 !== null || semiMatches[1].teamB !== null);
+
+    this.hasThirdPlace = (n >= 4 && bothSemisHaveOpponents);
+    this.thirdPlaceMatch = this.hasThirdPlace ? {
       id: 'm_third',
       stageIndex: 'third',
       stageName: currentLang === 'pt' ? 'Disputa de 3º Lugar' : '3rd Place Playoff',
@@ -4347,6 +4363,30 @@ class BracketEngine {
       isLive: false,
       isDone: false
     } : null;
+
+    this.totalDuels = (n - 1) + (this.hasThirdPlace ? 1 : 0);
+  }
+
+  propagateAllByes() {
+    let changed = true;
+    while (changed) {
+      changed = false;
+      for (let s = 1; s < this.stages.length; s++) {
+        for (let m = 0; m < this.stages[s].matches.length; m++) {
+          const match = this.stages[s].matches[m];
+          if (!match.isDone && match.prevM2 === null && match.teamB === null && match.teamA !== null) {
+            match.isBye = true;
+            match.isDone = true;
+            match.winner = match.teamA;
+            if (match.nextMatchId) {
+              const nextStage = this.stages[s + 1];
+              nextStage.matches[match.nextMatchIndex][match.nextSlot] = match.winner;
+            }
+            changed = true;
+          }
+        }
+      }
+    }
   }
 
   saveSnapshot() {
@@ -4357,7 +4397,9 @@ class BracketEngine {
       bracketHistory: this.bracketHistory,
       champion: this.champion,
       runnerUp: this.runnerUp,
-      thirdPlaceWinner: this.thirdPlaceWinner
+      thirdPlaceWinner: this.thirdPlaceWinner,
+      hasThirdPlace: this.hasThirdPlace,
+      totalDuels: this.totalDuels
     });
   }
 
@@ -4370,6 +4412,8 @@ class BracketEngine {
     this.champion = data.champion;
     this.runnerUp = data.runnerUp;
     this.thirdPlaceWinner = data.thirdPlaceWinner;
+    this.hasThirdPlace = data.hasThirdPlace;
+    this.totalDuels = data.totalDuels;
 
     // Re-link prevM1 / prevM2 references across stages
     for (let s = 0; s < this.stages.length - 1; s++) {
@@ -4397,19 +4441,24 @@ class BracketEngine {
     // Check if semifinals are done and 3rd place playoff is ready
     const semiStage = this.stages.length >= 2 ? this.stages[this.stages.length - 2].matches : null;
     if (this.thirdPlaceMatch && !this.thirdPlaceMatch.isDone && semiStage && semiStage.every(m => m.isDone)) {
-      this.thirdPlaceMatch.teamA = semiStage[0].loser;
-      this.thirdPlaceMatch.teamB = semiStage[1].loser;
-      this.thirdPlaceMatch.isLive = true;
-      return {
-        done: false,
-        matchId: this.thirdPlaceMatch.id,
-        itemA: this.thirdPlaceMatch.teamA,
-        itemB: this.thirdPlaceMatch.teamB,
-        progress: Math.min(99, Math.round((this.completedDuels / this.totalDuels) * 100)),
-        round: this.completedDuels + 1,
-        remaining: Math.max(1, this.totalDuels - this.completedDuels),
-        stageLabel: currentLang === 'pt' ? 'DISPUTA DE 3º LUGAR' : '3RD PLACE PLAYOFF'
-      };
+      if (semiStage[0].loser && semiStage[1].loser) {
+        this.thirdPlaceMatch.teamA = semiStage[0].loser;
+        this.thirdPlaceMatch.teamB = semiStage[1].loser;
+        this.thirdPlaceMatch.isLive = true;
+        return {
+          done: false,
+          matchId: this.thirdPlaceMatch.id,
+          itemA: this.thirdPlaceMatch.teamA,
+          itemB: this.thirdPlaceMatch.teamB,
+          progress: Math.min(99, Math.round((this.completedDuels / this.totalDuels) * 100)),
+          round: this.completedDuels + 1,
+          remaining: Math.max(1, this.totalDuels - this.completedDuels),
+          stageLabel: currentLang === 'pt' ? 'DISPUTA DE 3º LUGAR' : '3RD PLACE PLAYOFF'
+        };
+      } else {
+        this.thirdPlaceWinner = semiStage[0].loser || semiStage[1].loser;
+        this.thirdPlaceMatch.isDone = true;
+      }
     }
 
     // Find first ready unplayed match
@@ -4431,6 +4480,10 @@ class BracketEngine {
           };
         }
       }
+    }
+
+    if (!this.thirdPlaceWinner && semiStage && semiStage.every(m => m.isDone)) {
+      this.thirdPlaceWinner = semiStage[0].loser || semiStage[1].loser;
     }
 
     return { done: true, result: [this.champion, this.runnerUp, this.thirdPlaceWinner].filter(Boolean), bracketHistory: this.bracketHistory };
@@ -4492,12 +4545,18 @@ class BracketEngine {
     if (currentMatch.stageIndex === this.stages.length - 1) {
       this.champion = winner;
       this.runnerUp = loser;
+      const semiStage = this.stages.length >= 2 ? this.stages[this.stages.length - 2].matches : null;
+      if (!this.thirdPlaceWinner && semiStage) {
+        this.thirdPlaceWinner = semiStage[0].loser || semiStage[1].loser;
+      }
       return;
     }
 
     const nextStage = this.stages[currentMatch.stageIndex + 1].matches;
     const nextMIdx = Math.floor(currentMatch.matchIndex / 2);
     nextStage[nextMIdx][currentMatch.nextSlot] = winner;
+
+    this.propagateAllByes();
   }
 
   recordTie() {
@@ -4869,7 +4928,7 @@ function buildWorldCupBracketHTML(engineOrItems, isPreview = false) {
 
     // Feeder labels for unresolved slots
     const labelA = teamA?.title || (m.prevM1 ? `${T('bracket_feed_winner')} ${m.prevM1.stageName} #${m.prevM1.matchIndex + 1}` : T('bracket_tbd'));
-    const labelB = teamB?.title || (m.prevM2 ? `${T('bracket_feed_winner')} ${m.prevM2.stageName} #${m.prevM2.matchIndex + 1}` : T('bracket_tbd'));
+    const labelB = teamB?.title || (m.prevM2 ? `${T('bracket_feed_winner')} ${m.prevM2.stageName} #${m.prevM2.matchIndex + 1}` : (!m.prevM2 && !m.teamB ? `🛡️ ${T('bracket_bye_badge')}` : T('bracket_tbd')));
 
     // Destination badge for rounds leading to subsequent matches
     const destHTML = m.nextStageName ? `
