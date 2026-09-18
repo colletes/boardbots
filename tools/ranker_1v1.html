@@ -4071,69 +4071,168 @@ class BracketEngine {
   constructor(items) {
     this.originalItems = [...items];
     const n = items.length;
+    // Power of 2 bracket size (e.g. 10 -> 16, 8 -> 8)
+    const p = Math.pow(2, Math.ceil(Math.log2(n)));
+    this.bracketSize = p;
     this.totalDuels = n >= 4 ? n : n - 1;
     this.completedDuels = 0;
     this.undoHistory = [];
-    this.bracketHistory = []; // stores completed matches for tree rendering
-    this.semiLosers = [];
-    this.thirdPlaceWinner = null;
+    this.bracketHistory = [];
     this.champion = null;
     this.runnerUp = null;
-    this.isThirdPlaceMatch = false;
+    this.thirdPlaceWinner = null;
 
-    // Handle byes if n is not an exact power of 2
-    const p = Math.pow(2, Math.floor(Math.log2(n)));
-    if (p === n) {
-      this.currentRound = [...items];
-      this.byeTeams = [];
-    } else {
-      const prelimDuels = n - p;
-      const prelimCount = prelimDuels * 2;
-      const byeCount = n - prelimCount;
-      this.byeTeams = items.slice(0, byeCount);
-      this.currentRound = items.slice(byeCount);
+    // Stages from p down to 2
+    this.stages = [];
+    let count = p;
+    let sIdx = 0;
+    while (count >= 2) {
+      const matchCount = count / 2;
+      const matches = [];
+      for (let mIdx = 0; mIdx < matchCount; mIdx++) {
+        matches.push({
+          id: `r${sIdx}_m${mIdx}`,
+          stageIndex: sIdx,
+          matchIndex: mIdx,
+          stageCount: count,
+          stageName: getBracketStageName(count),
+          teamA: null,
+          teamB: null,
+          winner: null,
+          loser: null,
+          isBye: false,
+          isDone: false,
+          isLive: false,
+          nextMatchId: null,
+          nextSlot: null,
+          nextStageName: null,
+          nextMatchIndex: null,
+          prevM1: null,
+          prevM2: null
+        });
+      }
+      this.stages.push({ count, matches });
+      count /= 2;
+      sIdx++;
     }
-    this.nextRound = [];
-    this.pairIndex = 0;
+
+    // Connect stages
+    for (let s = 0; s < this.stages.length - 1; s++) {
+      for (let m = 0; m < this.stages[s].matches.length; m++) {
+        const nextMIdx = Math.floor(m / 2);
+        const slot = (m % 2 === 0) ? 'teamA' : 'teamB';
+        const curr = this.stages[s].matches[m];
+        const next = this.stages[s + 1].matches[nextMIdx];
+        curr.nextMatchId = next.id;
+        curr.nextSlot = slot;
+        curr.nextStageName = next.stageName;
+        curr.nextMatchIndex = nextMIdx;
+        if (slot === 'teamA') next.prevM1 = curr;
+        else next.prevM2 = curr;
+      }
+    }
+
+    // Distribute byes evenly across Round 0
+    const numByes = p - n;
+    const numMatchesR0 = p / 2;
+    const isByeMatch = new Array(numMatchesR0).fill(false);
+    for (let b = 0; b < numByes; b++) {
+      const targetIdx = Math.floor((b * numMatchesR0) / numByes);
+      let target = targetIdx;
+      while (isByeMatch[target]) {
+        target = (target + 1) % numMatchesR0;
+      }
+      isByeMatch[target] = true;
+    }
+
+    let itemIdx = 0;
+    for (let m = 0; m < numMatchesR0; m++) {
+      const match = this.stages[0].matches[m];
+      if (isByeMatch[m]) {
+        match.teamA = items[itemIdx++];
+        match.teamB = null;
+        match.isBye = true;
+        match.winner = match.teamA;
+        match.isDone = true;
+        const nextMIdx = Math.floor(m / 2);
+        this.stages[1].matches[nextMIdx][match.nextSlot] = match.winner;
+      } else {
+        match.teamA = items[itemIdx++];
+        match.teamB = items[itemIdx++];
+        match.isBye = false;
+        match.isDone = false;
+      }
+    }
+
+    this.thirdPlaceMatch = (n >= 4) ? {
+      id: 'm_third',
+      stageIndex: 'third',
+      stageName: currentLang === 'pt' ? 'Disputa de 3º Lugar' : '3rd Place Playoff',
+      teamA: null,
+      teamB: null,
+      winner: null,
+      loser: null,
+      isLive: false,
+      isDone: false
+    } : null;
   }
 
   saveSnapshot() {
     return JSON.stringify({
-      currentRound: this.currentRound,
-      nextRound: this.nextRound,
-      byeTeams: this.byeTeams,
-      pairIndex: this.pairIndex,
+      stages: this.stages,
+      thirdPlaceMatch: this.thirdPlaceMatch,
       completedDuels: this.completedDuels,
       bracketHistory: this.bracketHistory,
-      semiLosers: this.semiLosers,
-      thirdPlaceWinner: this.thirdPlaceWinner,
       champion: this.champion,
       runnerUp: this.runnerUp,
-      isThirdPlaceMatch: this.isThirdPlaceMatch
+      thirdPlaceWinner: this.thirdPlaceWinner
     });
   }
 
   restoreSnapshot(jsonStr) {
     const data = JSON.parse(jsonStr);
-    this.currentRound = data.currentRound;
-    this.nextRound = data.nextRound;
-    this.byeTeams = data.byeTeams;
-    this.pairIndex = data.pairIndex;
+    this.stages = data.stages;
+    this.thirdPlaceMatch = data.thirdPlaceMatch;
     this.completedDuels = data.completedDuels;
     this.bracketHistory = data.bracketHistory;
-    this.semiLosers = data.semiLosers;
-    this.thirdPlaceWinner = data.thirdPlaceWinner;
     this.champion = data.champion;
     this.runnerUp = data.runnerUp;
-    this.isThirdPlaceMatch = data.isThirdPlaceMatch;
+    this.thirdPlaceWinner = data.thirdPlaceWinner;
+
+    // Re-link prevM1 / prevM2 references across stages
+    for (let s = 0; s < this.stages.length - 1; s++) {
+      for (let m = 0; m < this.stages[s].matches.length; m++) {
+        const nextMIdx = Math.floor(m / 2);
+        const slot = (m % 2 === 0) ? 'teamA' : 'teamB';
+        const curr = this.stages[s].matches[m];
+        const next = this.stages[s + 1].matches[nextMIdx];
+        if (slot === 'teamA') next.prevM1 = curr;
+        else next.prevM2 = curr;
+      }
+    }
   }
 
   getNextPair() {
-    if (this.isThirdPlaceMatch) {
+    if (this.champion) {
+      const ranked = [this.champion, this.runnerUp, this.thirdPlaceWinner].filter(Boolean);
+      return { done: true, result: ranked, bracketHistory: this.bracketHistory };
+    }
+
+    // Reset live flags on all matches
+    this.stages.forEach(stage => stage.matches.forEach(m => m.isLive = false));
+    if (this.thirdPlaceMatch) this.thirdPlaceMatch.isLive = false;
+
+    // Check if semifinals are done and 3rd place playoff is ready
+    const semiStage = this.stages.length >= 2 ? this.stages[this.stages.length - 2].matches : null;
+    if (this.thirdPlaceMatch && !this.thirdPlaceMatch.isDone && semiStage && semiStage.every(m => m.isDone)) {
+      this.thirdPlaceMatch.teamA = semiStage[0].loser;
+      this.thirdPlaceMatch.teamB = semiStage[1].loser;
+      this.thirdPlaceMatch.isLive = true;
       return {
         done: false,
-        itemA: this.semiLosers[0],
-        itemB: this.semiLosers[1],
+        matchId: this.thirdPlaceMatch.id,
+        itemA: this.thirdPlaceMatch.teamA,
+        itemB: this.thirdPlaceMatch.teamB,
         progress: Math.min(99, Math.round((this.completedDuels / this.totalDuels) * 100)),
         round: this.completedDuels + 1,
         remaining: Math.max(1, this.totalDuels - this.completedDuels),
@@ -4141,110 +4240,99 @@ class BracketEngine {
       };
     }
 
-    if (this.champion) {
-      // Tournament completely finished
-      const ranked = [this.champion, this.runnerUp, this.thirdPlaceWinner].filter(Boolean);
-      return { done: true, result: ranked, bracketHistory: this.bracketHistory };
+    // Find first ready unplayed match
+    for (let s = 0; s < this.stages.length; s++) {
+      for (let m = 0; m < this.stages[s].matches.length; m++) {
+        const match = this.stages[s].matches[m];
+        if (!match.isDone && match.teamA && match.teamB) {
+          match.isLive = true;
+          const totalInStage = this.stages[s].matches.length;
+          return {
+            done: false,
+            matchId: match.id,
+            itemA: match.teamA,
+            itemB: match.teamB,
+            progress: Math.min(99, Math.round((this.completedDuels / this.totalDuels) * 100)),
+            round: this.completedDuels + 1,
+            remaining: Math.max(1, this.totalDuels - this.completedDuels),
+            stageLabel: `${match.stageName.toUpperCase()} (${m + 1}/${totalInStage})`
+          };
+        }
+      }
     }
 
-    const idx = this.pairIndex * 2;
-    if (idx >= this.currentRound.length) {
-      // Current round finished, advance to next round!
-      if (this.currentRound.length === 4 && this.semiLosers.length === 2 && !this.thirdPlaceWinner) {
-        // Run 3rd place match before Grand Final!
-        this.isThirdPlaceMatch = true;
-        return this.getNextPair();
-      }
-
-      // Merge any bye teams waiting for this round
-      if (this.byeTeams && this.byeTeams.length > 0) {
-        this.currentRound = [...this.byeTeams, ...this.nextRound];
-        this.byeTeams = [];
-      } else {
-        this.currentRound = [...this.nextRound];
-      }
-      this.nextRound = [];
-      this.pairIndex = 0;
-      return this.getNextPair();
-    }
-
-    const itemA = this.currentRound[idx];
-    const itemB = this.currentRound[idx + 1];
-
-    const stageName = getBracketStageName(this.currentRound.length);
-    const duelNum = this.pairIndex + 1;
-    const totalDuelsInStage = Math.floor(this.currentRound.length / 2);
-
-    return {
-      done: false,
-      itemA,
-      itemB,
-      progress: Math.min(99, Math.round((this.completedDuels / this.totalDuels) * 100)),
-      round: this.completedDuels + 1,
-      remaining: Math.max(1, this.totalDuels - this.completedDuels),
-      stageLabel: `${stageName.toUpperCase()} (${duelNum}/${totalDuelsInStage})`
-    };
+    return { done: true, result: [this.champion, this.runnerUp, this.thirdPlaceWinner].filter(Boolean), bracketHistory: this.bracketHistory };
   }
 
   recordChoice(winnerSide) {
     this.undoHistory.push(this.saveSnapshot());
+    const step = this.getNextPair();
+    if (step.done) return;
+
     this.completedDuels++;
 
-    if (this.isThirdPlaceMatch) {
-      const winner = winnerSide === 'left' ? this.semiLosers[0] : this.semiLosers[1];
-      const loser = winnerSide === 'left' ? this.semiLosers[1] : this.semiLosers[0];
+    if (step.matchId === 'm_third') {
+      const winner = winnerSide === 'left' ? this.thirdPlaceMatch.teamA : this.thirdPlaceMatch.teamB;
+      const loser = winnerSide === 'left' ? this.thirdPlaceMatch.teamB : this.thirdPlaceMatch.teamA;
+      this.thirdPlaceMatch.winner = winner;
+      this.thirdPlaceMatch.loser = loser;
+      this.thirdPlaceMatch.isDone = true;
+      this.thirdPlaceMatch.isLive = false;
       this.thirdPlaceWinner = winner;
-      this.isThirdPlaceMatch = false;
-
       this.bracketHistory.push({
-        stage: currentLang === 'pt' ? 'Disputa de 3º Lugar' : '3rd Place Playoff',
-        teamA: this.semiLosers[0],
-        teamB: this.semiLosers[1],
+        id: this.thirdPlaceMatch.id,
+        stage: this.thirdPlaceMatch.stageName,
+        teamA: this.thirdPlaceMatch.teamA,
+        teamB: this.thirdPlaceMatch.teamB,
         winner: winner
       });
       return;
     }
 
-    const idx = this.pairIndex * 2;
-    const itemA = this.currentRound[idx];
-    const itemB = this.currentRound[idx + 1];
+    let currentMatch = null;
+    for (let s = 0; s < this.stages.length; s++) {
+      for (let m = 0; m < this.stages[s].matches.length; m++) {
+        if (this.stages[s].matches[m].id === step.matchId) {
+          currentMatch = this.stages[s].matches[m];
+          break;
+        }
+      }
+      if (currentMatch) break;
+    }
 
-    const winner = winnerSide === 'left' ? itemA : itemB;
-    const loser = winnerSide === 'left' ? itemB : itemA;
+    if (!currentMatch) return;
 
-    // Save for bracket history tree
+    const winner = winnerSide === 'left' ? currentMatch.teamA : currentMatch.teamB;
+    const loser = winnerSide === 'left' ? currentMatch.teamB : currentMatch.teamA;
+    currentMatch.winner = winner;
+    currentMatch.loser = loser;
+    currentMatch.isDone = true;
+    currentMatch.isLive = false;
+
     this.bracketHistory.push({
-      stage: getBracketStageName(this.currentRound.length),
-      teamA: itemA,
-      teamB: itemB,
+      id: currentMatch.id,
+      stage: currentMatch.stageName,
+      teamA: currentMatch.teamA,
+      teamB: currentMatch.teamB,
       winner: winner
     });
 
-    if (this.currentRound.length === 4) {
-      // Save loser of semifinal for 3rd place playoff
-      this.semiLosers.push(loser);
-    }
-
-    if (this.currentRound.length === 2) {
-      // Grand final!
+    if (currentMatch.stageIndex === this.stages.length - 1) {
       this.champion = winner;
       this.runnerUp = loser;
-      this.currentRound = [winner];
-      this.pairIndex = 0;
       return;
     }
 
-    this.nextRound.push(winner);
-    this.pairIndex++;
+    const nextStage = this.stages[currentMatch.stageIndex + 1].matches;
+    const nextMIdx = Math.floor(currentMatch.matchIndex / 2);
+    nextStage[nextMIdx][currentMatch.nextSlot] = winner;
   }
 
   recordTie() {
-    // In knockout cup, ties are not allowed; pick random winner
     this.recordChoice(Math.random() > 0.5 ? 'left' : 'right');
   }
 
   eliminateFighter(side) {
-    // In bracket, eliminating a fighter automatically awards victory to the other
     const winnerSide = side === 'left' ? 'right' : 'left';
     this.recordChoice(winnerSide);
     return null;
@@ -4314,15 +4402,7 @@ function updateInlineLiveBracket() {
   const container = document.getElementById('arenaInlineBracketScroll');
   if (!container) return;
 
-  const html = buildWorldCupBracketHTML(
-    currentEngine.originalItems,
-    currentEngine.bracketHistory,
-    currentDuelStep,
-    currentEngine.champion,
-    currentEngine.runnerUp,
-    currentEngine.thirdPlaceWinner,
-    false
-  );
+  const html = buildWorldCupBracketHTML(currentEngine, false);
   container.innerHTML = html;
 
   // Horizontally scroll the inner container to active match without moving page scroll
@@ -4554,9 +4634,9 @@ function finishTournament(ranked, bracketHistory = null) {
 
   // Render Bracket Tree (if knockout mode)
   const treePanel = document.getElementById('bracketTreePanel');
-  if (selectedTournamentMode === 'bracket' && bracketHistory && bracketHistory.length > 0) {
+  if (selectedTournamentMode === 'bracket' && currentEngine) {
     treePanel.style.display = 'block';
-    renderBracketTree(bracketHistory);
+    renderBracketTree();
   } else {
     treePanel.style.display = 'none';
   }
@@ -4579,160 +4659,32 @@ function finishTournament(ranked, bracketHistory = null) {
 /* WORLD CUP BRACKET TREE BUILDER & MODAL VIEWER             */
 /* ========================================================== */
 
-function buildWorldCupBracketHTML(items, history = [], activeMatch = null, champion = null, runnerUp = null, thirdPlace = null, isPreview = false) {
-  if (!items || items.length < 2) {
+function buildWorldCupBracketHTML(engineOrItems, isPreview = false) {
+  let stages = null;
+  let thirdMatch = null;
+  let champion = null;
+
+  if (engineOrItems instanceof BracketEngine) {
+    stages = engineOrItems.stages;
+    thirdMatch = engineOrItems.thirdPlaceMatch;
+    champion = engineOrItems.champion;
+  } else if (Array.isArray(engineOrItems)) {
+    // Preview mode: generate temporary bracket structure
+    if (engineOrItems.length < 2) {
+      return `<div style="text-align:center; padding:40px; color:var(--text-muted);">${currentLang === 'pt' ? 'Carregue pelo menos 2 competidores para gerar a chave.' : 'Load at least 2 contenders to generate bracket.'}</div>`;
+    }
+    const tempEngine = new BracketEngine(engineOrItems);
+    stages = tempEngine.stages;
+    thirdMatch = tempEngine.thirdPlaceMatch;
+    champion = null;
+  }
+
+  if (!stages || stages.length === 0) {
     return `<div style="text-align:center; padding:40px; color:var(--text-muted);">${currentLang === 'pt' ? 'Carregue pelo menos 2 competidores para gerar a chave.' : 'Load at least 2 contenders to generate bracket.'}</div>`;
   }
 
-  const n = items.length;
-  // Next higher power of 2 for bracket tree (e.g. n=7 -> p=8, n=9 -> p=16, n=8 -> p=8)
-  const p = Math.pow(2, Math.ceil(Math.log2(n)));
-  
-  // Stages array from p down to 2
-  const stages = [];
-  let count = p;
-  while (count >= 2) {
-    stages.push({ count, matches: [] });
-    count /= 2;
-  }
-  
-  // Byes: number of free passes directly to Round 1
-  const numByes = p - n;
-  const numPrelimMatches = (n - numByes) / 2; // matches with 2 contenders
-
-  // Initialize round 0 (p / 2 total slots)
-  const r0Count = stages[0].count;
-  const totalR0Matches = r0Count / 2;
-  
-  // Contenders distribution:
-  // Contenders playing prelims take items 0 .. (numPrelimMatches * 2 - 1)
-  // Contenders receiving BYEs take items (numPrelimMatches * 2) .. n - 1
-  for (let i = 0; i < totalR0Matches; i++) {
-    if (i < numPrelimMatches) {
-      // Normal match: 2 combatants
-      const tA = items[i * 2] || null;
-      const tB = items[i * 2 + 1] || null;
-      const histMatch = history.find(h => (h.teamA?.id === tA?.id && h.teamB?.id === tB?.id) || (h.teamA?.id === tB?.id && h.teamB?.id === tA?.id));
-      const isLive = activeMatch && !isPreview && ((activeMatch.itemA?.id === tA?.id && activeMatch.itemB?.id === tB?.id) || (activeMatch.itemA?.id === tB?.id && activeMatch.itemB?.id === tA?.id));
-      stages[0].matches.push({
-        id: 'r0_m' + i,
-        stageIndex: 0,
-        matchIndex: i,
-        stageName: getBracketStageName(r0Count),
-        teamA: tA,
-        teamB: tB,
-        winner: histMatch?.winner || null,
-        loser: histMatch ? (histMatch.winner?.id === tA?.id ? tB : tA) : null,
-        isLive: !!isLive,
-        isDone: !!histMatch,
-        isBye: false
-      });
-    } else {
-      // BYE match: contender advances automatically without fighting in round 0
-      const byeItemIdx = (numPrelimMatches * 2) + (i - numPrelimMatches);
-      const tA = items[byeItemIdx] || null;
-      stages[0].matches.push({
-        id: 'r0_m' + i,
-        stageIndex: 0,
-        matchIndex: i,
-        stageName: getBracketStageName(r0Count),
-        teamA: tA,
-        teamB: null,
-        winner: tA,
-        loser: null,
-        isLive: false,
-        isDone: true,
-        isBye: true
-      });
-    }
-  }
-
-  // Populate subsequent rounds
-  for (let s = 1; s < stages.length; s++) {
-    const prevMatches = stages[s - 1].matches;
-    const currCount = stages[s].count;
-    const matchesCount = currCount / 2;
-    for (let i = 0; i < matchesCount; i++) {
-      const prevM1 = prevMatches[i * 2];
-      const prevM2 = prevMatches[i * 2 + 1];
-      const tA = prevM1 ? prevM1.winner : null;
-      const tB = prevM2 ? prevM2.winner : null;
-      const histMatch = (tA && tB) ? history.find(h => (h.teamA?.id === tA?.id && h.teamB?.id === tB?.id) || (h.teamA?.id === tB?.id && h.teamB?.id === tA?.id)) : null;
-      const isLive = (tA && tB && activeMatch && !isPreview) ? ((activeMatch.itemA?.id === tA?.id && activeMatch.itemB?.id === tB?.id) || (activeMatch.itemA?.id === tB?.id && activeMatch.itemB?.id === tA?.id)) : false;
-      stages[s].matches.push({
-        id: 'r' + s + '_m' + i,
-        stageIndex: s,
-        matchIndex: i,
-        stageName: getBracketStageName(currCount),
-        prevM1,
-        prevM2,
-        teamA: tA,
-        teamB: tB,
-        winner: histMatch?.winner || null,
-        loser: histMatch ? (histMatch.winner?.id === tA?.id ? tB : tA) : null,
-        isLive: !!isLive,
-        isDone: !!histMatch
-      });
-    }
-  }
-
-  // Final match is the only match in the last stage
-  const finalMatch = stages[stages.length - 1].matches[0];
-  if (champion && runnerUp) {
-    finalMatch.teamA = champion;
-    finalMatch.teamB = runnerUp;
-    finalMatch.winner = champion;
-    finalMatch.loser = runnerUp;
-    finalMatch.isDone = true;
-  }
-  if (activeMatch && !isPreview && activeMatch.stageLabel && activeMatch.stageLabel.toUpperCase().includes('FINAL') && !activeMatch.stageLabel.toUpperCase().includes('3º') && !activeMatch.stageLabel.toUpperCase().includes('3RD')) {
-    finalMatch.isLive = true;
-    finalMatch.teamA = activeMatch.itemA;
-    finalMatch.teamB = activeMatch.itemB;
-  }
-
-  // 3rd place match
-  let thirdMatch = null;
-  if (stages.length >= 2) {
-    const semiStages = stages[stages.length - 2];
-    const semi1 = semiStages.matches[0];
-    const semi2 = semiStages.matches[1];
-    const tA = semi1?.loser || null;
-    const tB = semi2?.loser || null;
-    const histMatch = history.find(h => h.stage && (h.stage.includes('3º') || h.stage.includes('3rd')));
-    const isLive = activeMatch && !isPreview && (activeMatch.stageLabel?.includes('3º') || activeMatch.stageLabel?.includes('3RD'));
-    thirdMatch = {
-      id: 'm_third',
-      stageName: currentLang === 'pt' ? 'Disputa de 3º Lugar' : '3rd Place Playoff',
-      teamA: tA,
-      teamB: tB,
-      winner: thirdPlace || histMatch?.winner || null,
-      loser: (thirdPlace && tA && tB) ? (thirdPlace.id === tA.id ? tB : tA) : null,
-      isLive: !!isLive,
-      isDone: !!(thirdPlace || histMatch)
-    };
-    if (isLive) {
-      thirdMatch.teamA = activeMatch.itemA;
-      thirdMatch.teamB = activeMatch.itemB;
-    }
-  }
-
-  // Set up nextMatch references and feeder labels across stages
-  for (let s = 0; s < stages.length - 1; s++) {
-    const nextStage = stages[s + 1];
-    stages[s].matches.forEach((m, idx) => {
-      const nextMatchIdx = Math.floor(idx / 2);
-      const nextMatch = nextStage.matches[nextMatchIdx];
-      if (nextMatch) {
-        m.nextMatchId = nextMatch.id;
-        m.nextStageName = nextMatch.stageName;
-        m.nextMatchIndex = nextMatchIdx;
-      }
-    });
-  }
-
   function renderMatchCard(m, matchNumLabel = '') {
-    const isLive = m.isLive;
+    const isLive = m.isLive && !isPreview;
     const isDone = m.isDone;
     const teamA = m.teamA;
     const teamB = m.teamB;
@@ -4842,6 +4794,7 @@ function buildWorldCupBracketHTML(items, history = [], activeMatch = null, champ
   }).join('');
 
   // Finals Column: Final Match + Champion Banner + 3rd Place Playoff
+  const finalMatch = stages[stages.length - 1].matches[0];
   const championObj = champion || finalMatch.winner || null;
   const finalsColumnHTML = `
     <div class="wc-finals-column">
@@ -4926,53 +4879,26 @@ function previewBracketModal() {
     alert(currentLang === 'pt' ? 'Adicione pelo menos 2 competidores para ver o chaveamento.' : 'Add at least 2 contenders to preview bracket.');
     return;
   }
-  const html = buildWorldCupBracketHTML(stagedCandidates, [], null, null, null, null, true);
+  const html = buildWorldCupBracketHTML(stagedCandidates, true);
   openBracketModal(html, T('bracket_modal_preview_sub'));
 }
 
 function openLiveBracketModal() {
   if (!currentEngine) return;
-  const html = buildWorldCupBracketHTML(
-    currentEngine.originalItems,
-    currentEngine.bracketHistory,
-    currentDuelStep,
-    currentEngine.champion,
-    currentEngine.runnerUp,
-    currentEngine.thirdPlaceWinner,
-    false
-  );
+  const html = buildWorldCupBracketHTML(currentEngine, false);
   openBracketModal(html, T('bracket_modal_live_sub'));
 }
 
 function openResultsBracketModal() {
-  if (!finalRankings.length) return;
-  const items = currentEngine ? currentEngine.originalItems : stagedCandidates;
-  const history = currentEngine ? currentEngine.bracketHistory : [];
-  const html = buildWorldCupBracketHTML(
-    items,
-    history,
-    null,
-    finalRankings[0],
-    finalRankings[1],
-    finalRankings[2],
-    false
-  );
+  if (!currentEngine && (!stagedCandidates || stagedCandidates.length < 2)) return;
+  const html = currentEngine ? buildWorldCupBracketHTML(currentEngine, false) : buildWorldCupBracketHTML(stagedCandidates, true);
   openBracketModal(html, T('bracket_modal_results_sub'));
 }
 
-function renderBracketTree(history) {
+function renderBracketTree() {
   const container = document.getElementById('bracketTreeScroll');
-  if (!container) return;
-  const items = currentEngine ? currentEngine.originalItems : stagedCandidates;
-  const html = buildWorldCupBracketHTML(
-    items,
-    history,
-    null,
-    finalRankings[0],
-    finalRankings[1],
-    finalRankings[2],
-    false
-  );
+  if (!container || !currentEngine) return;
+  const html = buildWorldCupBracketHTML(currentEngine, false);
   container.innerHTML = html;
 }
 
