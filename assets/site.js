@@ -108,6 +108,7 @@ const SITE_I18N = {
     credit_airlandsea: '<strong>Air, Land & Sea</strong> — Automa baseado nas regras solo originais criadas por <a href="https://boardgamegeek.com/profile/I_2orLess_I" target="_blank" rel="noopener">I_2orLess_I</a>. Air, Land & Sea © Arcane Wonders.',
     credit_lotrduel: '<strong>Lord of the Rings: Duel for Middle-earth</strong> — baseado no bot Automa Duelist. Lord of the Rings: Duel for Middle-earth © Repos Production.',
     credit_uteg: '<strong>Ultra Tiny Epic Galaxies / Tiny Epic Galaxies</strong> — baseado no modo solo oficial Rogue Galaxy por Scott Almes. Ultra Tiny Epic Galaxies © Gamelyn Games.',
+    credit_ranker1v1: '<strong>1v1 Arena de Batalhas</strong> — ferramenta de torneio e ranqueamento por confrontos diretos, com dados de BoardGameGeek, Ludopedia, IGDB e IMDb.',
 
     tools_title: 'Ferramentas',
     tools_desc: 'Utilitários genéricos para qualquer jogo de tabuleiro, sem regras específicas.',
@@ -117,6 +118,8 @@ const SITE_I18N = {
     tool_pointcounter_desc: 'Jogadores, critérios de pontuação, cronômetro de partida e sorteio do primeiro jogador.',
     tool_tierlist_title: 'Criador de Tierlist',
     tool_tierlist_desc: 'Crie tierlists de jogos buscando na Ludopedia e BGG, com tiers customizáveis e exportação de imagem.',
+    tool_ranker1v1_title: '1v1 Arena de Batalhas',
+    tool_ranker1v1_desc: 'Duelos rápidos 1 contra 1 para ranquear jogos de tabuleiro, videogames e filmes com algoritmo merge sort e exportação social.',
   },
   en: {
     site_title: 'Board Bots',
@@ -224,6 +227,7 @@ const SITE_I18N = {
     credit_airlandsea: '<strong>Air, Land & Sea</strong> — Automa based on the original solo rules designed by <a href="https://boardgamegeek.com/profile/I_2orLess_I" target="_blank" rel="noopener">I_2orLess_I</a>. Air, Land & Sea © Arcane Wonders.',
     credit_lotrduel: '<strong>Lord of the Rings: Duel for Middle-earth</strong> — based on the Automa Duelist bot. Lord of the Rings: Duel for Middle-earth © Repos Production.',
     credit_uteg: '<strong>Ultra Tiny Epic Galaxies / Tiny Epic Galaxies</strong> — based on the official Rogue Galaxy solo mode by Scott Almes. Ultra Tiny Epic Galaxies © Gamelyn Games.',
+    credit_ranker1v1: '<strong>1v1 Battle Arena</strong> — pairwise tournament ranker tool integrating public data from BoardGameGeek, Ludopedia, IGDB, and IMDb.',
 
     tools_title: 'Tools',
     tools_desc: 'Generic utilities for any board game, with no game-specific rules.',
@@ -233,6 +237,8 @@ const SITE_I18N = {
     tool_pointcounter_desc: 'Players, scoring criteria, a play timer and a first-player picker.',
     tool_tierlist_title: 'Tierlist Maker',
     tool_tierlist_desc: 'Create board game tierlists by searching on Ludopedia & BGG, with custom tiers and image export.',
+    tool_ranker1v1_title: '1v1 Battle Arena',
+    tool_ranker1v1_desc: 'Quick 1-on-1 matchups to rank board games, video games, and movies with merge sort tournament logic and social export.',
   }
 };
 

@@ -70,30 +70,42 @@ async function castVote(bot, choice, likeBtn, dislikeBtn, likeCountEl, dislikeCo
 async function initVoteButtons(){
   const groups = document.querySelectorAll('.game-card-actions[data-bot]');
   for (const group of groups) {
-    const bot = group.dataset.bot;
-    const likeBtn = group.querySelector('.vote-btn.like');
-    const dislikeBtn = group.querySelector('.vote-btn.dislike');
-    const likeCountEl = group.querySelector('.like-count');
-    const dislikeCountEl = group.querySelector('.dislike-count');
-    const voted = localStorage.getItem(VOTE_KEY_PREFIX + bot);
-
     try {
-      const [likeCount, dislikeCount] = await Promise.all([
-        readCount(`like-${bot}`),
-        readCount(`dislike-${bot}`)
-      ]);
-      likeCountEl.textContent = formatCount(likeCount);
-      dislikeCountEl.textContent = formatCount(dislikeCount);
-    } catch (e) {
-      likeCountEl.textContent = '–';
-      dislikeCountEl.textContent = '–';
+      const bot = group.dataset.bot;
+      if (!bot) continue;
+
+      const likeBtn = group.querySelector('.vote-btn.like');
+      const dislikeBtn = group.querySelector('.vote-btn.dislike');
+      const likeCountEl = group.querySelector('.like-count');
+      const dislikeCountEl = group.querySelector('.dislike-count');
+
+      if (!likeBtn || !dislikeBtn || !likeCountEl || !dislikeCountEl) {
+        console.warn(`Board Bots: incomplete vote markup for "${bot}"`, group);
+        continue;
+      }
+
+      const voted = localStorage.getItem(VOTE_KEY_PREFIX + bot);
+
+      try {
+        const [likeCount, dislikeCount] = await Promise.all([
+          readCount(`like-${bot}`),
+          readCount(`dislike-${bot}`)
+        ]);
+        likeCountEl.textContent = formatCount(likeCount);
+        dislikeCountEl.textContent = formatCount(dislikeCount);
+      } catch (e) {
+        likeCountEl.textContent = '–';
+        dislikeCountEl.textContent = '–';
+      }
+
+      if (voted === 'like') likeBtn.classList.add('voted');
+      if (voted === 'dislike') dislikeBtn.classList.add('voted');
+
+      likeBtn.addEventListener('click', () => castVote(bot, 'like', likeBtn, dislikeBtn, likeCountEl, dislikeCountEl));
+      dislikeBtn.addEventListener('click', () => castVote(bot, 'dislike', likeBtn, dislikeBtn, likeCountEl, dislikeCountEl));
+    } catch (err) {
+      console.warn('Board Bots: failed initializing card vote', group, err);
     }
-
-    if (voted === 'like') likeBtn.classList.add('voted');
-    if (voted === 'dislike') dislikeBtn.classList.add('voted');
-
-    likeBtn.addEventListener('click', () => castVote(bot, 'like', likeBtn, dislikeBtn, likeCountEl, dislikeCountEl));
-    dislikeBtn.addEventListener('click', () => castVote(bot, 'dislike', likeBtn, dislikeBtn, likeCountEl, dislikeCountEl));
   }
 }
 
