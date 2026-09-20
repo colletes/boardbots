@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="referrer" content="no-referrer">
-<title>Criador de Tierlist — Board Bots Tools</title>
-<meta name="description" content="Crie tierlists de jogos de tabuleiro buscando capas na Ludopedia e BGG, com tiers customizáveis, snap magnético e exportação para redes sociais.">
+<title>Arena &amp; Tierlist Studio — Board Bots Tools</title>
+<meta name="description" content="Ranqueie jogos de tabuleiro, videogames e filmes em duelos 1x1, dispute uma Copa Mata-Mata com chaveamento eliminatório e crie Tierlists visuais S/A/B/C/D compartilháveis.">
 <link rel="icon" href="../assets/mascot-trimmed.png" type="image/png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1920,11 +1920,427 @@ footer {
     width: 85px;
     height: 85px;
   }
-  .results-actions-grid {
-    grid-template-columns: 1fr;
-  }
+/* =======================================================
+   MODE TABS BAR & UNIFIED SECTIONS
+   ======================================================= */
+.mode-tabs-wrap {
+  display: flex;
+  gap: 8px;
+  background: rgba(22, 13, 8, 0.92);
+  border: 1.5px solid var(--panel-border);
+  border-radius: 12px;
+  padding: 6px;
+  margin-bottom: 20px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+  overflow-x: auto;
+}
+.mode-tab-btn {
+  flex: 1;
+  min-width: 140px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: transparent;
+  border: 1.5px solid transparent;
+  color: var(--text-dim);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.92rem;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+.mode-tab-btn:hover {
+  background: rgba(197, 160, 89, 0.1);
+  color: var(--brass-bright);
+}
+.mode-tab-btn.active {
+  background: linear-gradient(135deg, rgba(68, 42, 27, 0.95), rgba(46, 28, 18, 0.95));
+  border-color: var(--brass);
+  color: var(--brass-bright);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5), inset 0 0 10px rgba(233, 200, 117, 0.2);
+}
+.tab-badge {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(233, 200, 117, 0.3);
+  color: var(--brass);
+  font-size: 0.74rem;
+  font-family: var(--font-body);
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 12px;
+}
+.mode-tab-btn.active .tab-badge {
+  background: var(--brass-dark);
+  color: #fff;
+  border-color: var(--brass-bright);
+}
+.main-mode-section {
+  display: none;
+}
+.main-mode-section.active {
+  display: block;
 }
 
+/* Tier Quick Action Buttons */
+.tier-quick-actions {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  margin-right: 6px;
+}
+.tier-quick-btn {
+  background: rgba(197, 160, 89, 0.15);
+  border: 1px solid var(--brass-dark);
+  color: var(--brass-bright);
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+}
+.tier-quick-btn:hover {
+  background: var(--brass-dark);
+  color: #fff;
+  border-color: var(--brass-bright);
+}
+
+/* Launcher Setup Cards */
+.launcher-card {
+  background: linear-gradient(135deg, rgba(46, 28, 18, 0.95), rgba(24, 14, 9, 0.95)), url('../assets/textures/dark-walnut.jpg');
+  background-blend-mode: multiply;
+  border: 2px solid var(--brass-dark);
+  border-radius: 14px;
+  padding: 24px;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.6);
+  margin-bottom: 24px;
+}
+.launcher-title {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  color: var(--brass-bright);
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.launcher-desc {
+  font-size: 0.88rem;
+  color: var(--text-dim);
+  margin-bottom: 20px;
+}
+.launcher-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.launcher-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.launcher-field label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--brass);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.launcher-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  border-top: 1px solid rgba(197, 160, 89, 0.2);
+  padding-top: 16px;
+}
+
+/* =======================================================
+   WORLD CUP BRACKET TREE STYLES (Copa Mata-Mata)
+   ======================================================= */
+.wc-bracket-container {
+  background: rgba(18, 10, 6, 0.85);
+  border: 1.5px solid var(--panel-border);
+  border-radius: 12px;
+  padding: 20px 16px;
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.6);
+  margin-top: 16px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+.wc-stages-row {
+  display: flex;
+  align-items: stretch;
+  gap: 24px;
+  min-width: max-content;
+  padding-bottom: 12px;
+}
+.wc-stage-column {
+  display: flex;
+  flex-direction: column;
+  width: 230px;
+  flex-shrink: 0;
+}
+.wc-stage-header {
+  font-family: var(--font-display);
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: var(--brass-bright);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  text-align: center;
+  padding: 8px 10px;
+  background: rgba(46, 28, 18, 0.8);
+  border: 1px solid var(--brass-dark);
+  border-radius: 6px;
+  margin-bottom: 16px;
+}
+.wc-stage-matches {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  flex: 1;
+  gap: 16px;
+}
+.wc-match-pair {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.wc-match-card {
+  background: rgba(26, 16, 10, 0.95);
+  border: 1.5px solid rgba(197, 160, 89, 0.25);
+  border-radius: 8px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 0.82rem;
+  position: relative;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+  cursor: pointer;
+}
+.wc-match-card:hover {
+  border-color: var(--brass-bright);
+  transform: translateY(-1px);
+  background: rgba(46, 28, 18, 0.98);
+}
+.wc-match-card.is-live {
+  border: 2px solid var(--brass-bright);
+  box-shadow: 0 0 16px rgba(233, 200, 117, 0.5);
+  animation: wcLivePulse 2s infinite ease-in-out;
+  background: rgba(58, 36, 20, 0.98);
+}
+.wc-match-card.bracket-path-active {
+  border-color: #f59e0b !important;
+  box-shadow: 0 0 14px rgba(245, 158, 11, 0.65) !important;
+  background: rgba(68, 42, 27, 0.98) !important;
+}
+.wc-match-card.bracket-feeder-highlight {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 12px rgba(59, 130, 246, 0.55) !important;
+}
+.wc-match-card.bracket-target-highlight {
+  border-color: #10b981 !important;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.55) !important;
+}
+@keyframes wcLivePulse {
+  0% { box-shadow: 0 0 6px rgba(233, 200, 117, 0.3); }
+  50% { box-shadow: 0 0 18px rgba(233, 200, 117, 0.7); }
+  100% { box-shadow: 0 0 6px rgba(233, 200, 117, 0.3); }
+}
+.wc-match-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.74em;
+  font-weight: 700;
+  color: var(--text-dim);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  padding-bottom: 3px;
+  margin-bottom: 2px;
+}
+.wc-badge-live {
+  background: var(--brass-bright);
+  color: #120a06;
+  font-size: 0.72em;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.wc-badge-done {
+  color: #10b981;
+  font-size: 0.78em;
+  font-weight: 700;
+}
+.wc-badge-pending {
+  color: var(--text-dim);
+  font-size: 0.74em;
+  font-style: italic;
+}
+.wc-team-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 4px 6px;
+  border-radius: 4px;
+  color: var(--text-dim);
+  background: rgba(255,255,255,0.03);
+  transition: background 0.15s ease;
+}
+.wc-team-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+  flex: 1;
+}
+.wc-team-thumb {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  object-fit: cover;
+  background: #2a1b12;
+  flex-shrink: 0;
+}
+.wc-team-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 0.86em;
+}
+.wc-team-row.winner {
+  color: #ffffff;
+  font-weight: 700;
+  background: rgba(197, 160, 89, 0.22);
+  border-left: 2px solid var(--brass-bright);
+}
+.wc-team-row.loser {
+  opacity: 0.45;
+  text-decoration: line-through;
+}
+.wc-match-dest {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.68em;
+  font-weight: 600;
+  color: var(--brass-bright);
+  background: rgba(197, 160, 89, 0.1);
+  border: 1px dashed rgba(197, 160, 89, 0.3);
+  border-radius: 4px;
+  padding: 2px 5px;
+  margin-top: 3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wc-finals-column {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 250px;
+  flex-shrink: 0;
+}
+.wc-trophy-banner {
+  text-align: center;
+  background: radial-gradient(circle, rgba(233,200,117,0.2) 0%, rgba(0,0,0,0) 75%);
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(197,160,89,0.3);
+  margin-bottom: 8px;
+}
+.wc-trophy-icon {
+  font-size: 2.2em;
+  line-height: 1;
+  filter: drop-shadow(0 0 10px rgba(233, 200, 117, 0.6));
+}
+.wc-trophy-title {
+  font-family: var(--font-display);
+  font-size: 0.85em;
+  font-weight: 900;
+  color: var(--brass-bright);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+.wc-champion-badge {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #120a06;
+  font-size: 0.78em;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 999px;
+  margin-top: 6px;
+  display: inline-block;
+  box-shadow: 0 4px 10px rgba(245, 158, 11, 0.4);
+}
+.wc-3rd-banner {
+  font-family: var(--font-display);
+  font-size: 0.72em;
+  font-weight: 800;
+  color: #cd7f32;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  text-align: center;
+  margin-top: 10px;
+  border-top: 1px dashed rgba(255,255,255,0.12);
+  padding-top: 8px;
+  width: 100%;
+}
+
+/* Distribution Modal Styles */
+.distribute-options-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin: 16px 0;
+}
+.distribute-card {
+  background: rgba(30, 18, 12, 0.85);
+  border: 1.5px solid var(--brass-dark);
+  border-radius: 8px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.distribute-card:hover, .distribute-card.active {
+  border-color: var(--brass-bright);
+  background: rgba(46, 28, 18, 0.95);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+.distribute-card input {
+  margin-top: 4px;
+}
+.distribute-title {
+  font-weight: 700;
+  color: var(--brass-bright);
+  font-size: 0.92rem;
+}
+.distribute-desc {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
 </style>
 </head>
 <body>
@@ -1952,7 +2368,7 @@ footer {
     <div class="hero-title-row">
       <h1 class="hero-title">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="3" width="19" height="8" rx="2" stroke-width="1.6"/><line x1="8.5" y1="3" x2="8.5" y2="11" stroke-width="1.6"/><path d="M6.6 5.4H4.5a1 1 0 0 0 0 1.8h1a1 1 0 0 1 0 1.8H3.6" stroke-width="2"/><rect x="11" y="5" width="3.8" height="4" rx="1" stroke-width="1.2"/><rect x="16.2" y="5" width="3.8" height="4" rx="1" stroke-width="1.2"/><rect x="2.5" y="13" width="19" height="8" rx="2" stroke-width="1.6"/><line x1="8.5" y1="13" x2="8.5" y2="21" stroke-width="1.6"/><path d="M4 19.2 5.2 15 6.4 19.2M4.4 18h1.6" stroke-width="2"/><rect x="11" y="15" width="3.8" height="4" rx="1" stroke-width="1.2"/><rect x="16.2" y="15" width="3.8" height="4" rx="1" stroke-width="1.2"/></svg>
-        <span data-i18n="tier_maker_title">Criador de Tierlist</span>
+        <span data-i18n="studio_title">Arena &amp; Tierlist Studio</span>
       </h1>
       <button class="tool-btn primary" onclick="openExportModal()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
@@ -1962,69 +2378,213 @@ footer {
     <input type="text" id="tierlistCustomTitle" class="tierlist-title-input" value="Minha Tierlist de Jogos de Tabuleiro" placeholder="Título da sua Tierlist...">
   </div>
 
-  <!-- Control Toolbar -->
-  <div class="toolbar">
-    <!-- Search Bar with Live Suggestions -->
-    <div class="search-box-wrapper">
-      <div class="search-input-group">
-        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-        <input type="text" id="gameSearchInput" class="search-input" placeholder="Buscar jogo na Ludopedia & BGG (ex: Catan, Ark Nova, Stone Age)..." autocomplete="off">
-        <button id="searchClearBtn" class="search-clear-btn" onclick="clearSearch()">&times;</button>
-        <div id="searchSpinner" class="search-spinner"></div>
+  <!-- Main Mode Navigation Tabs -->
+  <div class="mode-tabs-wrap">
+    <button class="mode-tab-btn active" id="tabBtnTierlist" onclick="switchMainTab('tierlist')">
+      <span class="tab-icon">📋</span>
+      <span data-i18n="tab_tierlist">Criador de Tierlist</span>
+      <span class="tab-badge" id="tabBadgeTierlist">0</span>
+    </button>
+    <button class="mode-tab-btn" id="tabBtnArena" onclick="switchMainTab('arena')">
+      <span class="tab-icon">⚔️</span>
+      <span data-i18n="tab_arena">Arena 1x1 (Merge Sort)</span>
+      <span class="tab-badge" id="tabBadgeArena">0</span>
+    </button>
+    <button class="mode-tab-btn" id="tabBtnBracket" onclick="switchMainTab('bracket')">
+      <span class="tab-icon">🏆</span>
+      <span data-i18n="tab_bracket">Copa Mata-Mata</span>
+      <span class="tab-badge" id="tabBadgeBracket">0</span>
+    </button>
+  </div>
+
+  <!-- Mode 1: Tierlist Board Section -->
+  <div id="sectionTierlist" class="main-mode-section active">
+    <!-- Control Toolbar -->
+    <div class="toolbar">
+      <!-- Search Bar with Live Suggestions -->
+      <div class="search-box-wrapper">
+        <div class="search-input-group">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <input type="text" id="gameSearchInput" class="search-input" placeholder="Buscar jogo na Ludopedia & BGG (ex: Catan, Ark Nova, Stone Age)..." autocomplete="off">
+          <button id="searchClearBtn" class="search-clear-btn" onclick="clearSearch()">&times;</button>
+          <div id="searchSpinner" class="search-spinner"></div>
+        </div>
+        <!-- Autocomplete Dropdown -->
+        <div id="searchResultsDropdown" class="search-results-dropdown"></div>
       </div>
-      <!-- Autocomplete Dropdown -->
-      <div id="searchResultsDropdown" class="search-results-dropdown"></div>
+
+      <!-- Actions Row -->
+      <div class="toolbar-actions">
+        <div class="toolbar-left">
+          <button class="tool-btn" onclick="openCustomGameModal()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <span data-i18n="btn_add_custom">Jogo Manual / Upload</span>
+          </button>
+          <button class="tool-btn" onclick="addNewTier()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+            <span data-i18n="btn_add_tier">+ Novo Tier</span>
+          </button>
+          <button class="tool-btn" onclick="recalcGradientColors()" title="Recalcular cores da escala Índigo -> Vermelho">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 4.24 4.24"/><path d="m14.83 9.17 4.24-4.24"/><path d="m14.83 14.83 4.24 4.24"/><path d="m9.17 14.83-4.24 4.24"/></svg>
+            <span data-i18n="btn_recalc_colors">Auto-Gradiente</span>
+          </button>
+          <button class="tool-btn" onclick="saveTierlistJson()" title="Salvar lista em arquivo .json">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            <span data-i18n="btn_save_json">Salvar lista</span>
+          </button>
+          <button class="tool-btn" onclick="openImportSourceModal()" title="Carregar lista (.json) ou importar coleção por link / arquivo (.csv, .xlsx)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <span data-i18n="btn_load_json">Carregar / Importar</span>
+          </button>
+          <button class="tool-btn ranking-btn" onclick="switchMainTab('arena')" title="Arena 1x1 — Ordenação Matemática Merge Sort">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 17.5 3 6V3h3l11.5 11.5"/><path d="m13 19 6 2 2-2-2-6"/><path d="m5 11 4-4"/><path d="m19 13-4 4"/></svg>
+            <span data-i18n="btn_battle_1v1">Batalha 1x1</span>
+          </button>
+          <button class="tool-btn" onclick="switchMainTab('bracket')" style="background:rgba(245,158,11,0.15); border-color:var(--brass-dark); color:var(--brass-bright);" title="Copa Mata-Mata — Torneio Eliminatório com Chaveamento">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+            <span data-i18n="btn_cup_bracket">Copa Mata-Mata</span>
+          </button>
+          <input type="file" id="importAnyFileInput" accept=".json,.csv,.xlsx,.xls,application/json,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" style="display:none;" onchange="handleAnyImportFile(event)">
+          <input type="file" id="importJsonInput" accept=".json,application/json" style="display:none;" onchange="handleAnyImportFile(event)">
+        </div>
+
+        <div class="toolbar-right">
+          <!-- Size Slider -->
+          <div class="size-control">
+            <label for="tileSizeSlider" data-i18n="label_size">Capa:</label>
+            <input type="range" id="tileSizeSlider" class="size-slider" min="50" max="140" value="88" oninput="updateTileSize(this.value)">
+            <span id="tileSizeVal" style="font-size:0.75rem; font-weight:700; color:var(--brass-bright); width:28px;">88px</span>
+          </div>
+          <button class="tool-btn" onclick="resetTierlist()" style="color:#f87171; border-color:#7f1d1d;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            <span data-i18n="btn_reset">Reiniciar</span>
+          </button>
+        </div>
+      </div>
     </div>
 
-    <!-- Actions Row -->
-    <div class="toolbar-actions">
-      <div class="toolbar-left">
-        <button class="tool-btn" onclick="openCustomGameModal()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          <span data-i18n="btn_add_custom">Jogo Manual / Upload</span>
-        </button>
-        <button class="tool-btn" onclick="addNewTier()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-          <span data-i18n="btn_add_tier">+ Novo Tier</span>
-        </button>
-        <button class="tool-btn" onclick="recalcGradientColors()" title="Recalcular cores da escala Índigo -> Vermelho">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 4.24 4.24"/><path d="m14.83 9.17 4.24-4.24"/><path d="m14.83 14.83 4.24 4.24"/><path d="m9.17 14.83-4.24 4.24"/></svg>
-          <span data-i18n="btn_recalc_colors">Auto-Gradiente</span>
-        </button>
-        <button class="tool-btn" onclick="saveTierlistJson()" title="Salvar lista em arquivo .json">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-          <span data-i18n="btn_save_json">Salvar lista</span>
-        </button>
-        <button class="tool-btn" onclick="openImportSourceModal()" title="Carregar lista (.json) ou importar coleção por link / arquivo (.csv, .xlsx)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-          <span data-i18n="btn_load_json">Carregar / Importar Coleção</span>
-        </button>
-        <button class="tool-btn ranking-btn" onclick="openRankingSetupModal()" title="Rankeamento 1x1 — Batalha de Jogos (Coleção, BGG)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 17.5 3 6V3h3l11.5 11.5"/><path d="m13 19 6 2 2-2-2-6"/><path d="m5 11 4-4"/><path d="m19 13-4 4"/></svg>
-          <span data-i18n="btn_battle_1v1">Batalha 1x1</span>
-        </button>
-        <input type="file" id="importAnyFileInput" accept=".json,.csv,.xlsx,.xls,application/json,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" style="display:none;" onchange="handleAnyImportFile(event)">
-        <input type="file" id="importJsonInput" accept=".json,application/json" style="display:none;" onchange="handleAnyImportFile(event)">
+    <!-- Tierlist Board -->
+    <div id="tierlistBoard" class="tierlist-board">
+      <!-- Dynamic Tiers rendered via JS -->
+    </div>
+  </div><!-- /#sectionTierlist -->
+
+  <!-- Mode 2: 1v1 Battle Arena Section -->
+  <div id="sectionArena" class="main-mode-section">
+    <!-- Arena Launcher Card (shown when battle idle) -->
+    <div id="arenaLauncherCard" class="launcher-card">
+      <div class="launcher-title">
+        <span>⚔️</span>
+        <span data-i18n="arena_launcher_title">Arena 1x1 — Batalhas de Ordenação Ótima</span>
+      </div>
+      <p class="launcher-desc" data-i18n="arena_launcher_desc">Compare jogos dois a dois. Nosso motor de Merge Sort calcula matematicamente o seu ranking perfeito do 1º ao último colocado em O(N log N) comparações!</p>
+      
+      <div class="launcher-grid">
+        <div class="launcher-field">
+          <label data-i18n="label_pool_source">Conjunto de Jogos:</label>
+          <select id="arenaPoolSource" class="form-input" onchange="updateArenaCandidateCount()">
+            <option value="all" selected>🌐 Todos os Jogos da Lista</option>
+            <option value="unplayed">📦 Apenas Banco de Reserva (Não Jogados)</option>
+          </select>
+        </div>
+        <div class="launcher-field">
+          <label data-i18n="label_attack_effect">Golpe Especial de Impacto:</label>
+          <select id="arenaInlineAttackEffect" class="form-input">
+            <option value="random" selected>🎲 Aleatório (Arsenal Completo)</option>
+            <option value="hadouken">🌀 Hadouken (Street Fighter)</option>
+            <option value="kamehameha">⚡ Kamehameha (Dragon Ball)</option>
+            <option value="dragon_punch">🐉 Dragon Punch (Shoryuken)</option>
+            <option value="lightning">⚡ Raio de Thor</option>
+            <option value="lightsaber">🗡️ Sabre de Luz</option>
+            <option value="battleaxe">🪓 Machados Vikings</option>
+            <option value="rasengan">🌀 Rasengan</option>
+            <option value="meteor">☄️ Meteoro Cósmico</option>
+            <option value="katana">⚔️ Katana Iaijutsu</option>
+          </select>
+        </div>
       </div>
 
-      <div class="toolbar-right">
-        <!-- Size Slider -->
-        <div class="size-control">
-          <label for="tileSizeSlider" data-i18n="label_size">Capa:</label>
-          <input type="range" id="tileSizeSlider" class="size-slider" min="50" max="140" value="88" oninput="updateTileSize(this.value)">
-          <span id="tileSizeVal" style="font-size:0.75rem; font-weight:700; color:var(--brass-bright); width:28px;">88px</span>
+      <div class="launcher-bottom">
+        <div id="arenaCandidateBadge" style="font-weight:700; color:var(--brass-bright);">0 jogos selecionados</div>
+        <div style="display:flex; gap:10px;">
+          <button class="tool-btn" onclick="openImportSourceModal()" data-i18n="btn_import_more">+ Importar Mais Jogos</button>
+          <button class="tool-btn primary" onclick="launchArenaFromSection()">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            <span data-i18n="btn_start_arena">🔥 Iniciar Batalha 1x1</span>
+          </button>
         </div>
-        <button class="tool-btn" onclick="resetTierlist()" style="color:#f87171; border-color:#7f1d1d;">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-          <span data-i18n="btn_reset">Reiniciar</span>
-        </button>
       </div>
+    </div>
+
+    <!-- Live Arena Stage Container -->
+    <div id="arenaLiveContainer" style="display:none;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+        <h3 style="font-family:var(--font-display); color:var(--brass-bright); margin:0;">⚔️ Batalha 1x1 em Andamento</h3>
+        <button class="tool-btn" onclick="exitArenaPrompt()" data-i18n="btn_exit_arena">✕ Sair da Arena</button>
+      </div>
+      <div id="arenaStageInlineMount"></div>
     </div>
   </div>
 
-  <!-- Tierlist Board -->
-  <div id="tierlistBoard" class="tierlist-board">
-    <!-- Dynamic Tiers rendered via JS -->
+  <!-- Mode 3: Copa Mata-Mata (Knockout Bracket) Section -->
+  <div id="sectionBracket" class="main-mode-section">
+    <!-- Bracket Launcher Card (shown when cup idle) -->
+    <div id="bracketLauncherCard" class="launcher-card">
+      <div class="launcher-title">
+        <span>🏆</span>
+        <span data-i18n="bracket_launcher_title">Copa Mata-Mata — Torneio Eliminatório</span>
+      </div>
+      <p class="launcher-desc" data-i18n="bracket_launcher_desc">Dispute uma verdadeira Copa! Oitavas, Quartas, Semifinais, Disputa de 3º Lugar e Grande Final. Avanço por Byes automáticos caso o número de competidores seja ímpar.</p>
+      
+      <div class="launcher-grid">
+        <div class="launcher-field">
+          <label data-i18n="label_pool_source">Conjunto de Competidores:</label>
+          <select id="bracketPoolSource" class="form-input" onchange="updateBracketCandidateCount()">
+            <option value="all" selected>🌐 Todos os Jogos da Lista</option>
+            <option value="unplayed">📦 Apenas Banco de Reserva (Não Jogados)</option>
+          </select>
+        </div>
+        <div class="launcher-field">
+          <label data-i18n="label_seeding_mode">Chaveamento Inicial:</label>
+          <select id="bracketSeedingMode" class="form-input">
+            <option value="random" selected>🎲 Aleatório (Embaralhado)</option>
+            <option value="tier_order">📊 Ordenado por Posição na Tierlist</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="launcher-bottom">
+        <div id="bracketCandidateBadge" style="font-weight:700; color:var(--brass-bright);">0 competidores prontos</div>
+        <div style="display:flex; gap:10px;">
+          <button class="tool-btn" onclick="openImportSourceModal()" data-i18n="btn_import_more">+ Importar Mais</button>
+          <button class="tool-btn primary" onclick="launchBracketFromSection()">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+            <span data-i18n="btn_start_cup">🏆 Iniciar Copa Mata-Mata</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Live Cup Duel Stage & Bracket Tree -->
+    <div id="bracketLiveContainer" style="display:none;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+        <div>
+          <h3 id="bracketLiveStageTitle" style="font-family:var(--font-display); color:var(--brass-bright); margin:0;">🏆 Copa Mata-Mata</h3>
+          <span id="bracketLiveMatchInfo" style="font-size:0.82rem; color:var(--text-dim);">Duelo 1 de X</span>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button class="tool-btn" onclick="confirmResetCup()" data-i18n="btn_reset_cup">✕ Reiniciar Copa</button>
+          <button class="tool-btn" onclick="openExportModalForBracket()" data-i18n="btn_export_bracket">📸 Exportar Chave</button>
+        </div>
+      </div>
+      
+      <!-- Stage Mount for Cup Duel -->
+      <div id="bracketStageInlineMount" style="margin-bottom:20px;"></div>
+
+      <!-- Interactive World Cup Bracket Tree -->
+      <h4 style="font-family:var(--font-display); color:var(--brass-bright); margin:16px 0 8px;" data-i18n="bracket_tree_heading">🌲 Árvore de Confrontos da Copa:</h4>
+      <div id="worldCupBracketTreeMount" class="wc-bracket-container"></div>
+    </div>
   </div>
 
   <!-- Help Floating Button -->
@@ -2447,26 +3007,25 @@ footer {
 
 <!-- Modal: Import Options (File or Online Link) -->
 <div id="importSourceModal" class="modal-overlay">
-  <div class="modal-card" style="max-width: 540px;">
+  <div class="modal-card" style="max-width: 580px;">
     <button class="modal-close-btn" onclick="closeModal('importSourceModal')">&times;</button>
     <h2>
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
       <span data-i18n="modal_import_source_title">Carregar ou Importar Coleção</span>
     </h2>
 
-    <!-- Option 1: Online via Link / Username (Ludopedia or BGG) -->
-    <div style="background: rgba(233, 200, 117, 0.08); border: 1px solid rgba(233, 200, 117, 0.25); border-radius: 10px; padding: 16px; margin-bottom: 16px;">
-      <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px; color:var(--brass-bright); font-weight:700; font-size:0.95rem;">
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-        <span data-i18n="import_online_heading">Importar por Link ou Usuário</span>
+    <!-- Option 1: Boardgame Sync (Ludopedia or BGG) -->
+    <div style="background: rgba(233, 200, 117, 0.08); border: 1px solid rgba(233, 200, 117, 0.25); border-radius: 10px; padding: 14px; margin-bottom: 14px;">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px; color:var(--brass-bright); font-weight:700; font-size:0.92rem;">
+        <span>🎲</span>
+        <span data-i18n="import_online_heading">Jogos de Tabuleiro (Ludopedia ou BGG)</span>
       </div>
-      <p style="font-size:0.83rem; color:var(--text-dim); margin-top:0; margin-bottom:12px;" data-i18n="import_online_desc">
-        Cole o link da sua coleção na Ludopedia ou digite seu usuário do BGG para importar tudo diretamente:
+      <p style="font-size:0.8rem; color:var(--text-dim); margin:0 0 10px;" data-i18n="import_online_desc">
+        Cole o link da sua coleção na Ludopedia ou digite seu usuário do BGG:
       </p>
       <div style="display:flex; gap:8px;">
-        <input type="text" id="importOnlineInput" class="form-input" placeholder="https://ludopedia.com.br/colecao?lista=colecao&usuario=... ou usuário" style="flex:1; font-size:0.88rem;" onkeydown="if(event.key==='Enter') executeOnlineImportFromInput()">
+        <input type="text" id="importOnlineInput" class="form-input" placeholder="Usuário do BGG ou link da Ludopedia..." style="flex:1; font-size:0.88rem;" onkeydown="if(event.key==='Enter') executeOnlineImportFromInput()">
         <button id="btnFetchOnlineCollection" class="tool-btn primary" onclick="executeOnlineImportFromInput()" style="white-space:nowrap; padding:0 14px;">
-          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
           <span data-i18n="btn_fetch_online">Buscar</span>
         </button>
       </div>
@@ -2476,21 +3035,32 @@ footer {
       </div>
     </div>
 
-    <!-- Divider -->
-    <div style="display:flex; align-items:center; gap:10px; margin: 16px 0; color:var(--text-dim); font-size:0.8rem; text-transform:uppercase; letter-spacing:0.05em;">
-      <div style="flex:1; height:1px; background:rgba(233,200,117,0.2);"></div>
-      <span data-i18n="import_or_separator">Ou carregar arquivo</span>
-      <div style="flex:1; height:1px; background:rgba(233,200,117,0.2);"></div>
+    <!-- Option 2: Web / Videogames / Movies Link Scraper -->
+    <div style="background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.25); border-radius: 10px; padding: 14px; margin-bottom: 14px;">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px; color:#93c5fd; font-weight:700; font-size:0.92rem;">
+        <span>🌐</span>
+        <span data-i18n="import_web_heading">Links da Web (IMDb, Steam, IGDB, JustWatch)</span>
+      </div>
+      <p style="font-size:0.8rem; color:var(--text-dim); margin:0 0 10px;" data-i18n="import_web_desc">
+        Cole qualquer link de lista pública do IMDb, Steam, IGDB, JustWatch ou página web com listas de itens:
+      </p>
+      <div style="display:flex; gap:8px;">
+        <input type="url" id="importWebScraperInput" class="form-input" placeholder="https://www.imdb.com/chart/top/ ou link..." style="flex:1; font-size:0.88rem;" onkeydown="if(event.key==='Enter') executeWebScraperImport()">
+        <button id="btnFetchWebScraper" class="tool-btn" onclick="executeWebScraperImport()" style="white-space:nowrap; padding:0 14px; border-color:#3b82f6; color:#93c5fd;">
+          <span data-i18n="btn_extract_link">Extrair</span>
+        </button>
+      </div>
     </div>
 
-    <!-- Option 2: Local File -->
-    <div style="background: rgba(0,0,0,0.3); border: 1px dashed rgba(233, 200, 117, 0.3); border-radius: 10px; padding: 18px; text-align: center; cursor:pointer;" onclick="closeModal('importSourceModal'); document.getElementById('importAnyFileInput').click()">
-      <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--brass); margin-bottom:8px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-      <div style="font-weight:700; color:var(--text-main); font-size:0.92rem; margin-bottom:4px;" data-i18n="import_file_heading">Selecionar Arquivo do Computador</div>
-      <div style="font-size:0.8rem; color:var(--text-muted);" data-i18n="import_file_formats">Formatos aceitos: Backup (.json), BGG (.csv), Ludopedia/Ludohall (.csv, .xlsx), BGStats (.csv)</div>
+    <!-- Option 3: Local Files (CSV, XLSX, JSON) -->
+    <div style="background: rgba(0,0,0,0.3); border: 1px dashed rgba(233, 200, 117, 0.3); border-radius: 10px; padding: 16px; text-align: center; cursor:pointer;" onclick="closeModal('importSourceModal'); document.getElementById('importAnyFileInput').click()">
+      <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--brass); margin-bottom:6px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      <div style="font-weight:700; color:var(--text-main); font-size:0.9rem; margin-bottom:2px;" data-i18n="import_file_heading">Selecionar Arquivo do Computador</div>
+      <div style="font-size:0.78rem; color:var(--text-muted);" data-i18n="import_file_formats">Formatos: Backup (.json), BGG (.csv), Ludopedia/Ludohall (.csv, .xlsx), IMDb (.csv), BGStats (.csv)</div>
     </div>
 
-    <div style="display:flex; justify-content:flex-end; margin-top:16px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px;">
+      <button class="tool-btn" onclick="openRankingSetupModal()" style="font-size:0.82rem; color:var(--brass-bright);">📝 Colar Lista em Texto</button>
       <button class="tool-btn" onclick="closeModal('importSourceModal')" data-i18n="btn_cancel">Cancelar</button>
     </div>
   </div>
@@ -2922,6 +3492,54 @@ footer {
   </div>
 </div>
 
+<!-- Modal: Auto-Distribute Tournament Results to Tiers -->
+<div id="distributeModal" class="modal-overlay">
+  <div class="modal-card" style="max-width: 560px;">
+    <button class="modal-close-btn" onclick="closeModal('distributeModal')">&times;</button>
+    <h2>
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      <span data-i18n="modal_distribute_title">Distribuir Resultado na Tierlist</span>
+    </h2>
+    <p style="font-size:0.88rem; color:var(--text-dim); margin-bottom:14px;" data-i18n="distribute_intro">
+      Transfira automaticamente a classificação do torneio para organizar os jogos nas fileiras da sua Tierlist:
+    </p>
+
+    <div class="distribute-options-grid">
+      <label class="distribute-card active" id="distCardPercentile" onclick="selectDistributeMode('percentile')">
+        <input type="radio" name="distributeMode" value="percentile" checked>
+        <div>
+          <div class="distribute-title" data-i18n="dist_percentile_title">📊 Percentil Proporcional Clássico</div>
+          <div class="distribute-desc" data-i18n="dist_percentile_desc">Top 15% vai para o Tier S, 25% para o Tier A, 30% para o Tier B, 20% para o Tier C e o restante para o Tier D.</div>
+        </div>
+      </label>
+
+      <label class="distribute-card" id="distCardCup" onclick="selectDistributeMode('cup')">
+        <input type="radio" name="distributeMode" value="cup">
+        <div>
+          <div class="distribute-title" data-i18n="dist_cup_title">🏆 Fases do Torneio & Pódio</div>
+          <div class="distribute-desc" data-i18n="dist_cup_desc">Campeão & Vice no Tier S; Semifinalistas no Tier A; Quartas de Final no Tier B; Fases Eliminatórias no Tier C.</div>
+        </div>
+      </label>
+
+      <label class="distribute-card" id="distCardLinear" onclick="selectDistributeMode('linear')">
+        <input type="radio" name="distributeMode" value="linear">
+        <div>
+          <div class="distribute-title" data-i18n="dist_linear_title">🔢 Ordem Direta (Cortes Fixos)</div>
+          <div class="distribute-desc" data-i18n="dist_linear_desc">Distribui igualmente preenchendo os tiers disponíveis em ordem da melhor para a pior colocação.</div>
+        </div>
+      </label>
+    </div>
+
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px;">
+      <button class="tool-btn" onclick="closeModal('distributeModal')" data-i18n="btn_cancel">Cancelar</button>
+      <button class="tool-btn primary" onclick="confirmApplyRankingToTiers()">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="20 6 9 17 4 12"/></svg>
+        <span data-i18n="btn_apply_tiers">⚡ Aplicar na Tierlist Agora</span>
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal: Tournament Results & Podium -->
 <div id="rankingResultsModal" class="modal-overlay">
   <div class="modal-card" style="max-width: 720px; position:relative; overflow:hidden;">
@@ -2933,10 +3551,10 @@ footer {
     <div style="text-align:center; margin-bottom:16px;">
       <div style="font-size:2rem; margin-bottom:4px;">🏆</div>
       <h2 style="font-family:var(--font-display); font-weight:900; color:var(--brass-bright); margin:0;" data-i18n="results_title">Ranking 1x1 Concluído!</h2>
-      <p style="color:var(--text-dim); font-size:0.88rem; margin:4px 0 0;" data-i18n="results_subtitle">Aqui está a classificação final dos seus jogos ordenada pelos confrontos diretos.</p>
+      <p id="resultsSubtext" style="color:var(--text-dim); font-size:0.88rem; margin:4px 0 0;" data-i18n="results_subtitle">Confira o pódio dos grandes vencedores e a ordem final definida pelos seus confrontos:</p>
     </div>
 
-    <!-- Podium for Top 3 -->
+    <!-- 3D Style Podium -->
     <div id="resultsPodium" class="results-podium">
       <!-- 2nd Place -->
       <div id="podium2" class="podium-col rank-2">
@@ -2983,14 +3601,19 @@ footer {
 
     <!-- Destination Actions -->
     <div class="results-actions-grid">
-      <button class="tool-btn primary" onclick="applyRankingToUnplayedTier()" id="btnApplyUnplayed">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="20 6 9 17 4 12"/></svg>
-        <span data-i18n="btn_apply_to_unplayed">Reordenar Tier "Não Jogado"</span>
+      <button class="tool-btn primary" onclick="openDistributeModal()" id="btnApplyTiers" style="background:linear-gradient(135deg,#e9c875,#c5a059); color:#120a06; font-weight:800;">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        <span data-i18n="btn_distribute_tiers">⚡ Distribuir nos Tiers (S, A, B...)</span>
       </button>
 
-      <button class="tool-btn" onclick="distributeRankingToTiers()">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg>
-        <span data-i18n="btn_distribute_tiers">Distribuir em Tiers (S, A, B...)</span>
+      <button class="tool-btn" onclick="applyRankingToUnplayedTier()" id="btnApplyUnplayed">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="20 6 9 17 4 12"/></svg>
+        <span data-i18n="btn_apply_to_unplayed">Reordenar "Não Jogado"</span>
+      </button>
+
+      <button class="tool-btn" onclick="openExportModalForTournament()" id="btnExportTournamentResults">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+        <span data-i18n="btn_export_tournament_img">Exportar Imagem (Pódio / Chave)</span>
       </button>
 
       <button class="tool-btn" onclick="copyRankingText()">
@@ -3160,7 +3783,46 @@ const I18N = {
     help_sec4_title: '4. Batalha 1x1 — Descubra o Melhor Jogo',
     help_sec4_desc: 'A <strong>Batalha 1x1</strong> utiliza um algoritmo de ordenação por confrontos diretos (merge sort interativo) onde você compara jogos dois a dois até encontrar o #1 definitivo da sua coleção:<br>• <strong>Fontes Flexíveis:</strong> Dispute com os jogos do tier "Não jogado", com qualquer outro tier da lista, cole uma lista de nomes ou <em>digite seu usuário do BGG</em> para buscar sua coleção online diretamente na tela do torneio!<br>• <strong>Arena Interativa:</strong> Golpes animados com efeitos épicos, efeitos sonoros arcade e atalhos de teclado (Setas Esquerda/Direita para escolher e Espaço para empate).<br>• <strong>Pódio e Aplicação:</strong> Veja o Pódio 3D com os 3 maiores campeões e use os botões para <em>"Distribuir em Tiers"</em> (organizando os jogos por faixas de excelência S, A, B...) ou <em>"Reordenar Tier"</em>.',
     help_sec5_title: '5. Exportação e Compartilhamento',
-    help_sec5_desc: 'Gere imagens em alta definição prontas para postar: escolha o preset <strong>Feed (1:1 quadrado)</strong> para Instagram/Twitter ou <strong>Story (9:16 vertical)</strong> para Stories e Status do WhatsApp. Baixe também em PNG de alta resolução, JPG, PDF, TXT ou salve o arquivo <strong>.json</strong> para continuar editando depois.'
+    help_sec5_desc: 'Gere imagens em alta definição prontas para postar: escolha o preset <strong>Feed (1:1 quadrado)</strong> para Instagram/Twitter ou <strong>Story (9:16 vertical)</strong> para Stories e Status do WhatsApp. Baixe também em PNG de alta resolução, JPG, PDF, TXT ou salve o arquivo <strong>.json</strong> para continuar editando depois.',
+    studio_title: 'Arena &amp; Tierlist Studio',
+    tab_tierlist: 'Criador de Tierlist',
+    tab_arena: 'Arena 1x1 (Merge Sort)',
+    tab_bracket: 'Copa Mata-Mata',
+    btn_cup_bracket: 'Copa Mata-Mata',
+    arena_launcher_title: 'Arena 1x1 — Batalhas de Ordenação Ótima',
+    arena_launcher_desc: 'Compare jogos dois a dois. Nosso motor de Merge Sort calcula matematicamente o seu ranking perfeito do 1º ao último colocado em O(N log N) comparações!',
+    label_pool_source: 'Conjunto de Jogos:',
+    btn_import_more: '+ Importar Mais',
+    btn_start_arena: '🔥 Iniciar Batalha 1x1',
+    btn_exit_arena: '✕ Sair da Arena',
+    bracket_launcher_title: 'Copa Mata-Mata — Torneio Eliminatório',
+    bracket_launcher_desc: 'Dispute uma verdadeira Copa! Oitavas, Quartas, Semifinais, Disputa de 3º Lugar e Grande Final. Avanço por Byes automáticos caso o número de competidores seja ímpar.',
+    label_seeding_mode: 'Chaveamento Inicial:',
+    btn_start_cup: '🏆 Iniciar Copa Mata-Mata',
+    btn_reset_cup: '✕ Reiniciar Copa',
+    btn_export_bracket: '📸 Exportar Chave',
+    bracket_tree_heading: '🌲 Árvore de Confrontos da Copa:',
+    modal_distribute_title: 'Distribuir Resultado na Tierlist',
+    distribute_intro: 'Transfira automaticamente a classificação do torneio para organizar os jogos nas fileiras da sua Tierlist:',
+    dist_percentile_title: '📊 Percentil Proporcional Clássico',
+    dist_percentile_desc: 'Top 15% vai para o Tier S, 25% para o Tier A, 30% para o Tier B, 20% para o Tier C e o restante para o Tier D.',
+    dist_cup_title: '🏆 Fases do Torneio & Pódio',
+    dist_cup_desc: 'Campeão & Vice no Tier S; Semifinalistas no Tier A; Quartas de Final no Tier B; Fases Eliminatórias no Tier C.',
+    dist_linear_title: '🔢 Ordem Direta (Cortes Fixos)',
+    dist_linear_desc: 'Distribui igualmente preenchendo os tiers disponíveis em ordem da melhor para a pior colocação.',
+    btn_apply_tiers: '⚡ Aplicar na Tierlist Agora',
+    btn_export_tournament_img: 'Exportar Imagem (Pódio / Chave)',
+    import_web_heading: 'Links da Web (IMDb, Steam, IGDB, JustWatch)',
+    import_web_desc: 'Cole qualquer link de lista pública do IMDb, Steam, IGDB, JustWatch ou página web com listas de itens:',
+    bracket_live_badge: 'AO VIVO',
+    bracket_done_badge: 'Finalizado',
+    bracket_pending_badge: 'Aguardando',
+    bracket_bye_badge: 'Avança por Bye',
+    bracket_tbd: 'A definir',
+    bracket_feed_winner: 'Vencedor',
+    bracket_advances_to: 'Avança para',
+    bracket_advances_bye: 'Avança direto por Bye 🛡️',
+    stage_round: 'Rodada'
   },
   en: {
     back_home: 'Board Bots',
@@ -3315,7 +3977,46 @@ const I18N = {
     help_sec4_title: '4. 1v1 Battle — Find Your #1 Board Game',
     help_sec4_desc: 'The <strong>1v1 Battle</strong> uses a head-to-head tournament sorting algorithm (interactive merge sort) where you compare games two by two until finding your collection\'s undisputed #1:<br>• <strong>Flexible Sources:</strong> Battle games from Unplayed, any specific tier, paste a list of titles, or <em>type your BGG username</em> to pull your collection online!<br>• <strong>Interactive Arena:</strong> Animated special moves, arcade sound effects, and quick keyboard shortcuts (Left/Right Arrow keys to pick, Spacebar for a tie).<br>• <strong>3D Podium & Tier Distribution:</strong> View the top 3 champions on the podium, then click <em>"Distribute to Tiers"</em> to automatically sort your tierlist from top to bottom!',
     help_sec5_title: '5. Export & Social Sharing',
-    help_sec5_desc: 'Export high-definition graphics ready to post: choose <strong>Feed (1:1 square)</strong> for Instagram/Twitter or <strong>Story (9:16 vertical)</strong> for Stories and WhatsApp Status. You can also export to PDF, save TXT lists, or download the <strong>.json</strong> file to continue editing later.'
+    help_sec5_desc: 'Export high-definition graphics ready to post: choose <strong>Feed (1:1 square)</strong> for Instagram/Twitter or <strong>Story (9:16 vertical)</strong> for Stories and WhatsApp Status. You can also export to PDF, save TXT lists, or download the <strong>.json</strong> file to continue editing later.',
+    studio_title: 'Arena &amp; Tierlist Studio',
+    tab_tierlist: 'Tierlist Maker',
+    tab_arena: '1v1 Arena (Merge Sort)',
+    tab_bracket: 'Knockout Cup',
+    btn_cup_bracket: 'Knockout Cup',
+    arena_launcher_title: '1v1 Arena — Optimal Merge Sort Battles',
+    arena_launcher_desc: 'Compare contenders head-to-head. Our Merge Sort engine mathematically calculates your complete ranking from 1st to last place in O(N log N) comparisons!',
+    label_pool_source: 'Contender Pool:',
+    btn_import_more: '+ Import More',
+    btn_start_arena: '🔥 Start 1v1 Battle',
+    btn_exit_arena: '✕ Exit Arena',
+    bracket_launcher_title: 'Knockout Cup — Tournament Bracket',
+    bracket_launcher_desc: 'Play a classic Cup! Round of 16, Quarterfinals, Semifinals, 3rd Place Playoff, and Grand Final. Odd contender counts are seamlessly balanced with automatic Byes.',
+    label_seeding_mode: 'Initial Seeding:',
+    btn_start_cup: '🏆 Start Knockout Cup',
+    btn_reset_cup: '✕ Reset Cup',
+    btn_export_bracket: '📸 Export Bracket',
+    bracket_tree_heading: '🌲 Cup Tournament Bracket Tree:',
+    modal_distribute_title: 'Distribute Results to Tierlist',
+    distribute_intro: 'Automatically apply the tournament standings to arrange contenders across your Tierlist rows:',
+    dist_percentile_title: '📊 Classic Proportional Percentiles',
+    dist_percentile_desc: 'Top 15% into Tier S, 25% into Tier A, 30% into Tier B, 20% into Tier C and remaining into Tier D.',
+    dist_cup_title: '🏆 Cup Stages & Podium',
+    dist_cup_desc: 'Champion & Runner-up into Tier S; Semifinalists into Tier A; Quarterfinalists into Tier B; Preliminary rounds into Tier C.',
+    dist_linear_title: '🔢 Linear Fill (Equal Slices)',
+    dist_linear_desc: 'Distributes evenly across available tiers in order of finish.',
+    btn_apply_tiers: '⚡ Apply to Tierlist Now',
+    btn_export_tournament_img: 'Export Image (Podium / Bracket)',
+    import_web_heading: 'Web Links (IMDb, Steam, IGDB, JustWatch)',
+    import_web_desc: 'Paste any public list link from IMDb, Steam, IGDB, JustWatch, or web list page:',
+    bracket_live_badge: 'LIVE',
+    bracket_done_badge: 'Done',
+    bracket_pending_badge: 'TBD',
+    bracket_bye_badge: 'Advances by Bye',
+    bracket_tbd: 'TBD',
+    bracket_feed_winner: 'Winner of',
+    bracket_advances_to: 'Advances to',
+    bracket_advances_bye: 'Advances directly via Bye 🛡️',
+    stage_round: 'Round'
   }
 };
 
@@ -3543,6 +4244,28 @@ function renderBoard() {
     const actions = document.createElement('div');
     actions.className = 'tier-actions';
 
+    // Quick Action: Duel games from this tier
+    const duelBtn = document.createElement('button');
+    duelBtn.className = 'tier-action-btn tier-rank-btn';
+    duelBtn.title = currentLang === 'en' ? 'Duel games from this tier (1v1 Arena)' : 'Rankear jogos deste tier na Arena 1x1';
+    duelBtn.innerHTML = '⚔️';
+    duelBtn.onclick = (e) => {
+      e.stopPropagation();
+      startTournamentFromTier(tier.id, 'arena');
+    };
+    actions.appendChild(duelBtn);
+
+    // Quick Action: Run Cup tournament with games from this tier
+    const cupBtn = document.createElement('button');
+    cupBtn.className = 'tier-action-btn tier-rank-btn';
+    cupBtn.title = currentLang === 'en' ? 'Run Knockout Cup with games from this tier' : 'Disputar Copa Mata-Mata com jogos deste tier';
+    cupBtn.innerHTML = '🏆';
+    cupBtn.onclick = (e) => {
+      e.stopPropagation();
+      startTournamentFromTier(tier.id, 'bracket');
+    };
+    actions.appendChild(cupBtn);
+
     if (!tier.isUnplayed) {
       // Move Up
       if (index > 0) {
@@ -3574,7 +4297,7 @@ function renderBoard() {
     } else {
       const rankBtn = document.createElement('button');
       rankBtn.className = 'tier-action-btn tier-rank-btn';
-      rankBtn.title = 'Rankear jogos deste tier em 1x1 (Battle Arena)';
+      rankBtn.title = 'Configurar Batalha com Filtros (Ludopedia/BGG/Outros)';
       rankBtn.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 17.5 3 6V3h3l11.5 11.5"/><path d="m13 19 6 2 2-2-2-6"/></svg>';
       rankBtn.onclick = (e) => {
         e.stopPropagation();
@@ -3605,6 +4328,9 @@ function renderBoard() {
     row.appendChild(dropzone);
     board.appendChild(row);
   });
+  if (typeof updateStudioBadges === 'function') {
+    updateStudioBadges();
+  }
 }
 
 /* =======================================================
@@ -8865,7 +9591,293 @@ function startRankingBattle() {
   renderCurrentMatchup();
 }
 
+let currentTournamentType = 'arena'; // 'arena' (Merge Sort) or 'bracket' (Knockout Cup)
+let currentBracketEngine = null;
+let activeStudioMode = 'tierlist';
+let selectedDistributeMode = 'percentile';
+
+function switchMainTab(tabId) {
+  activeStudioMode = tabId;
+  const tabs = ['tierlist', 'arena', 'bracket'];
+  tabs.forEach(id => {
+    const btn = document.getElementById('tabBtn' + id.charAt(0).toUpperCase() + id.slice(1));
+    const section = document.getElementById('section' + id.charAt(0).toUpperCase() + id.slice(1));
+    if (btn) btn.classList.toggle('active', id === tabId);
+    if (section) section.classList.toggle('active', id === tabId);
+  });
+
+  if (tabId === 'arena') {
+    updateArenaCandidateCount();
+  } else if (tabId === 'bracket') {
+    updateBracketCandidateCount();
+    renderWorldCupBracketTree();
+  }
+
+  updateStudioBadges();
+
+  try {
+    const url = new URL(window.location.href);
+    url.searchParams.set('mode', tabId);
+    history.replaceState(null, '', url.toString());
+  } catch (e) {}
+}
+
+function updateStudioBadges() {
+  const allItems = typeof getExistingBoardItems === 'function' ? getExistingBoardItems() : [];
+  const tierCountEl = document.getElementById('badgeTierlistCount');
+  if (tierCountEl) tierCountEl.textContent = allItems.length;
+
+  const arenaCountEl = document.getElementById('badgeArenaCount');
+  if (arenaCountEl) arenaCountEl.textContent = allItems.length;
+
+  const bracketCountEl = document.getElementById('badgeBracketCount');
+  if (bracketCountEl) bracketCountEl.textContent = allItems.length;
+
+  if (typeof updateArenaCandidateCount === 'function') updateArenaCandidateCount();
+  if (typeof updateBracketCandidateCount === 'function') updateBracketCandidateCount();
+}
+
+function updateArenaCandidateCount() {
+  const source = document.getElementById('arenaPoolSource')?.value || 'all';
+  const unplayedTier = state.tiers.find(t => t.isUnplayed) || state.tiers[state.tiers.length - 1];
+  const items = source === 'unplayed'
+    ? ((unplayedTier && state.items[unplayedTier.id]) || [])
+    : (typeof getExistingBoardItems === 'function' ? getExistingBoardItems() : []);
+
+  const badge = document.getElementById('arenaCandidateBadge');
+  if (badge) {
+    badge.textContent = currentLang === 'en'
+      ? `${items.length} games ready for battle`
+      : `${items.length} jogos prontos para batalha`;
+  }
+}
+
+function updateBracketCandidateCount() {
+  const source = document.getElementById('bracketPoolSource')?.value || 'all';
+  const unplayedTier = state.tiers.find(t => t.isUnplayed) || state.tiers[state.tiers.length - 1];
+  const items = source === 'unplayed'
+    ? ((unplayedTier && state.items[unplayedTier.id]) || [])
+    : (typeof getExistingBoardItems === 'function' ? getExistingBoardItems() : []);
+
+  const badge = document.getElementById('bracketCandidateBadge');
+  if (badge) {
+    badge.textContent = currentLang === 'en'
+      ? `${items.length} contenders ready`
+      : `${items.length} competidores prontos`;
+  }
+}
+
+function launchArenaFromSection() {
+  const source = document.getElementById('arenaPoolSource')?.value || 'all';
+  const unplayedTier = state.tiers.find(t => t.isUnplayed) || state.tiers[state.tiers.length - 1];
+  let candidates = source === 'unplayed'
+    ? ((unplayedTier && state.items[unplayedTier.id]) ? [...state.items[unplayedTier.id]] : [])
+    : (typeof getExistingBoardItems === 'function' ? getExistingBoardItems() : []);
+
+  const seen = new Set();
+  candidates = candidates.filter(c => {
+    if (!c || !c.title) return false;
+    const key = (c.id || c.title).toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  if (candidates.length < 2) {
+    alert(currentLang === 'en' ? 'At least 2 games are required to start 1v1 Arena.' : 'É necessário ter pelo menos 2 jogos para iniciar a Arena 1x1.');
+    return;
+  }
+
+  const atk = document.getElementById('arenaInlineAttackEffect')?.value || 'random';
+  currentTournamentType = 'arena';
+  currentTournament = new TournamentEngine(candidates, {
+    fxEnabled: true,
+    attackEffect: atk
+  });
+  window.currentTournament = currentTournament;
+
+  const quickSelect = document.getElementById('arenaAttackQuickSelect');
+  if (quickSelect) quickSelect.value = atk;
+
+  openModal('rankingArenaModal');
+  ArenaFxEngine.init('arenaFxCanvas');
+  ArcadeAudio.init();
+  ArcadeAudio.playGong();
+  renderCurrentMatchup();
+}
+
+function launchBracketFromSection() {
+  const source = document.getElementById('bracketPoolSource')?.value || 'all';
+  const unplayedTier = state.tiers.find(t => t.isUnplayed) || state.tiers[state.tiers.length - 1];
+  let candidates = source === 'unplayed'
+    ? ((unplayedTier && state.items[unplayedTier.id]) ? [...state.items[unplayedTier.id]] : [])
+    : (typeof getExistingBoardItems === 'function' ? getExistingBoardItems() : []);
+
+  const seen = new Set();
+  candidates = candidates.filter(c => {
+    if (!c || !c.title) return false;
+    const key = (c.id || c.title).toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  if (candidates.length < 2) {
+    alert(currentLang === 'en' ? 'At least 2 contenders are required for the Knockout Cup.' : 'É necessário ter pelo menos 2 competidores para iniciar a Copa Mata-Mata.');
+    return;
+  }
+
+  const seeding = document.getElementById('bracketSeedingMode')?.value || 'random';
+  if (seeding === 'random') {
+    for (let i = candidates.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
+    }
+  }
+
+  currentTournamentType = 'bracket';
+  currentBracketEngine = new BracketEngine(candidates);
+  window.currentBracketEngine = currentBracketEngine;
+
+  const launcherCard = document.getElementById('bracketLauncherCard');
+  const liveContainer = document.getElementById('bracketLiveContainer');
+  if (launcherCard) launcherCard.style.display = 'none';
+  if (liveContainer) liveContainer.style.display = 'block';
+
+  renderWorldCupBracketTree();
+
+  openModal('rankingArenaModal');
+  ArenaFxEngine.init('arenaFxCanvas');
+  ArcadeAudio.init();
+  ArcadeAudio.playGong();
+  renderCurrentMatchup();
+}
+
+function confirmResetCup() {
+  if (confirm(currentLang === 'en' ? 'Reset current Cup tournament?' : 'Deseja reiniciar a Copa Mata-Mata em andamento?')) {
+    currentBracketEngine = null;
+    window.currentBracketEngine = null;
+    const launcherCard = document.getElementById('bracketLauncherCard');
+    const liveContainer = document.getElementById('bracketLiveContainer');
+    if (launcherCard) launcherCard.style.display = 'block';
+    if (liveContainer) liveContainer.style.display = 'none';
+    updateBracketCandidateCount();
+  }
+}
+
+function startTournamentFromTier(tierId, mode = 'arena') {
+  const items = state.items[tierId] || [];
+  if (items.length < 2) {
+    alert(currentLang === 'en' ? 'At least 2 games in this tier are required to start a duel/cup.' : 'É necessário ter pelo menos 2 jogos neste tier para disputar torneio.');
+    return;
+  }
+
+  const candidates = [...items];
+  if (mode === 'bracket') {
+    switchMainTab('bracket');
+    for (let i = candidates.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
+    }
+    currentTournamentType = 'bracket';
+    currentBracketEngine = new BracketEngine(candidates);
+    window.currentBracketEngine = currentBracketEngine;
+
+    const launcherCard = document.getElementById('bracketLauncherCard');
+    const liveContainer = document.getElementById('bracketLiveContainer');
+    if (launcherCard) launcherCard.style.display = 'none';
+    if (liveContainer) liveContainer.style.display = 'block';
+
+    renderWorldCupBracketTree();
+    openModal('rankingArenaModal');
+    ArenaFxEngine.init('arenaFxCanvas');
+    ArcadeAudio.init();
+    ArcadeAudio.playGong();
+    renderCurrentMatchup();
+  } else {
+    switchMainTab('arena');
+    currentTournamentType = 'arena';
+    currentTournament = new TournamentEngine(candidates, {
+      fxEnabled: true,
+      attackEffect: 'random'
+    });
+    window.currentTournament = currentTournament;
+    openModal('rankingArenaModal');
+    ArenaFxEngine.init('arenaFxCanvas');
+    ArcadeAudio.init();
+    ArcadeAudio.playGong();
+    renderCurrentMatchup();
+  }
+}
+
+function renderFighterCards(itemA, itemB) {
+  const leftCard = document.getElementById('fighterCardLeft');
+  const imgLeft = document.getElementById('fighterImgLeft');
+  const titleLeft = document.getElementById('fighterTitleLeft');
+  const metaLeft = document.getElementById('fighterMetaLeft');
+  if (leftCard) leftCard.className = 'fighter-card fighter-left';
+  if (imgLeft) imgLeft.src = itemA?.image || '../assets/mascot-trimmed.png';
+  if (titleLeft) titleLeft.textContent = itemA?.title || '';
+  if (metaLeft) {
+    metaLeft.innerHTML = `
+      ${itemA?.year ? `<span class="fighter-meta-tag">📅 ${itemA.year}</span>` : ''}
+      ${itemA?.players ? `<span class="fighter-meta-tag">👥 ${itemA.players}p</span>` : ''}
+      ${itemA?.time ? `<span class="fighter-meta-tag">⏱️ ${itemA.time}</span>` : ''}
+      ${itemA?.bggScore ? `<span class="fighter-meta-tag" style="color:#e9c875;">⭐ ${itemA.bggScore}</span>` : ''}
+    `;
+  }
+
+  const rightCard = document.getElementById('fighterCardRight');
+  const imgRight = document.getElementById('fighterImgRight');
+  const titleRight = document.getElementById('fighterTitleRight');
+  const metaRight = document.getElementById('fighterMetaRight');
+  if (rightCard) rightCard.className = 'fighter-card fighter-right';
+  if (imgRight) imgRight.src = itemB?.image || '../assets/mascot-trimmed.png';
+  if (titleRight) titleRight.textContent = itemB?.title || '';
+  if (metaRight) {
+    metaRight.innerHTML = `
+      ${itemB?.year ? `<span class="fighter-meta-tag">📅 ${itemB.year}</span>` : ''}
+      ${itemB?.players ? `<span class="fighter-meta-tag">👥 ${itemB.players}p</span>` : ''}
+      ${itemB?.time ? `<span class="fighter-meta-tag">⏱️ ${itemB.time}</span>` : ''}
+      ${itemB?.bggScore ? `<span class="fighter-meta-tag" style="color:#e9c875;">⭐ ${itemB.bggScore}</span>` : ''}
+    `;
+  }
+}
+
 function renderCurrentMatchup() {
+  if (currentTournamentType === 'bracket') {
+    if (!currentBracketEngine && window.currentBracketEngine) currentBracketEngine = window.currentBracketEngine;
+    if (!currentBracketEngine) return;
+    const step = currentBracketEngine.getNextPair();
+
+    if (step.done) {
+      closeModal('rankingArenaModal');
+      renderWorldCupBracketTree();
+      showTournamentResults(step.result);
+      return;
+    }
+
+    const roundText = document.getElementById('arenaRoundText');
+    const percentText = document.getElementById('arenaPercentText');
+    const progBar = document.getElementById('arenaProgressBar');
+    if (roundText) roundText.textContent = step.stageLabel || 'Copa Mata-Mata';
+    if (percentText) percentText.textContent = `${step.progress}%`;
+    if (progBar) progBar.style.width = `${step.progress}%`;
+
+    const undoBtn = document.getElementById('arenaUndoBtn');
+    if (undoBtn) undoBtn.disabled = currentBracketEngine.undoHistory.length === 0;
+
+    const tieBtn = document.querySelector('#rankingArenaModal .arena-action-buttons button[onclick*="chooseTie"]');
+    if (tieBtn) tieBtn.style.display = 'none';
+
+    renderFighterCards(step.itemA, step.itemB);
+    return;
+  }
+
+  // Arena (Merge Sort) mode
+  const tieBtn = document.querySelector('#rankingArenaModal .arena-action-buttons button[onclick*="chooseTie"]');
+  if (tieBtn) tieBtn.style.display = 'inline-flex';
+
   if (!currentTournament && window.currentTournament) currentTournament = window.currentTournament;
   if (!currentTournament) return;
   const step = currentTournament.getNextPair();
@@ -8892,177 +9904,39 @@ function renderCurrentMatchup() {
   const undoBtn = document.getElementById('arenaUndoBtn');
   if (undoBtn) undoBtn.disabled = currentTournament.undoHistory.length === 0;
 
-  const leftCard = document.getElementById('fighterCardLeft');
-  const imgLeft = document.getElementById('fighterImgLeft');
-  const titleLeft = document.getElementById('fighterTitleLeft');
-  const metaLeft = document.getElementById('fighterMetaLeft');
-  if (leftCard) leftCard.className = 'fighter-card fighter-left';
-  if (imgLeft) imgLeft.src = step.itemA.image || '../assets/mascot-trimmed.png';
-  if (titleLeft) titleLeft.textContent = step.itemA.title;
-  if (metaLeft) {
-    metaLeft.innerHTML = `
-      ${step.itemA.year ? `<span class="fighter-meta-tag">📅 ${step.itemA.year}</span>` : ''}
-      ${step.itemA.players ? `<span class="fighter-meta-tag">👥 ${step.itemA.players}p</span>` : ''}
-      ${step.itemA.time ? `<span class="fighter-meta-tag">⏱️ ${step.itemA.time}</span>` : ''}
-      ${step.itemA.bggScore ? `<span class="fighter-meta-tag" style="color:#e9c875;">⭐ ${step.itemA.bggScore}</span>` : ''}
-    `;
-  }
-
-  const rightCard = document.getElementById('fighterCardRight');
-  const imgRight = document.getElementById('fighterImgRight');
-  const titleRight = document.getElementById('fighterTitleRight');
-  const metaRight = document.getElementById('fighterMetaRight');
-  if (rightCard) rightCard.className = 'fighter-card fighter-right';
-  if (imgRight) imgRight.src = step.itemB.image || '../assets/mascot-trimmed.png';
-  if (titleRight) titleRight.textContent = step.itemB.title;
-  if (metaRight) {
-    metaRight.innerHTML = `
-      ${step.itemB.year ? `<span class="fighter-meta-tag">📅 ${step.itemB.year}</span>` : ''}
-      ${step.itemB.players ? `<span class="fighter-meta-tag">👥 ${step.itemB.players}p</span>` : ''}
-      ${step.itemB.time ? `<span class="fighter-meta-tag">⏱️ ${step.itemB.time}</span>` : ''}
-      ${step.itemB.bggScore ? `<span class="fighter-meta-tag" style="color:#e9c875;">⭐ ${step.itemB.bggScore}</span>` : ''}
-    `;
-  }
+  renderFighterCards(step.itemA, step.itemB);
 }
 
 function chooseFighter(winnerSide) {
-  if (!currentTournament && window.currentTournament) currentTournament = window.currentTournament;
-  if (!currentTournament || currentTournament.isAnimating) return;
+  const activeEngine = currentTournamentType === 'bracket' ? currentBracketEngine : currentTournament;
+  if (!activeEngine || activeEngine.isAnimating) return;
 
-  const isFx = currentTournament.options.fxEnabled;
+  const isFx = activeEngine.options ? activeEngine.options.fxEnabled : true;
   if (!isFx) {
     ArcadeAudio.playCardSelect();
-    currentTournament.recordChoice(winnerSide);
+    activeEngine.recordChoice(winnerSide);
+    if (currentTournamentType === 'bracket') renderWorldCupBracketTree();
     renderCurrentMatchup();
     return;
   }
 
-  currentTournament.isAnimating = true;
-
-  let atk = currentTournament.options.attackEffect || 'random';
+  activeEngine.isAnimating = true;
+  let atk = (activeEngine.options && activeEngine.options.attackEffect) || 'random';
   if (atk === 'random') {
     const attacks = ['hadouken', 'kamehameha', 'dragon_punch', 'lightning', 'lightsaber', 'battleaxe', 'rasengan', 'meteor', 'arrows', 'katana'];
     atk = attacks[Math.floor(Math.random() * attacks.length)];
   }
 
   executeFightAnimation(winnerSide, atk, () => {
-    currentTournament.recordChoice(winnerSide);
-    currentTournament.isAnimating = false;
+    activeEngine.recordChoice(winnerSide);
+    activeEngine.isAnimating = false;
+    if (currentTournamentType === 'bracket') renderWorldCupBracketTree();
     renderCurrentMatchup();
   });
 }
 
-function executeFightAnimation(winnerSide, attackType, onComplete) {
-  const stage = document.getElementById('arenaStage');
-  const leftCard = document.getElementById('fighterCardLeft');
-  const rightCard = document.getElementById('fighterCardRight');
-
-  const winnerCard = winnerSide === 'left' ? leftCard : rightCard;
-  const loserCard = winnerSide === 'left' ? rightCard : leftCard;
-
-  const leftRect = leftCard ? leftCard.getBoundingClientRect() : { x: 200, y: 200, width: 200, height: 200 };
-  const rightRect = rightCard ? rightCard.getBoundingClientRect() : { x: 500, y: 200, width: 200, height: 200 };
-  const stageRect = stage ? stage.getBoundingClientRect() : { left: 0, top: 0 };
-
-  const winnerCenter = {
-    x: (winnerSide === 'left' ? leftRect.left + leftRect.width / 2 : rightRect.left + rightRect.width / 2) - stageRect.left,
-    y: (winnerSide === 'left' ? leftRect.top + leftRect.height / 2 : rightRect.top + rightRect.height / 2) - stageRect.top
-  };
-  const loserCenter = {
-    x: (winnerSide === 'left' ? rightRect.left + rightRect.width / 2 : leftRect.left + leftRect.width / 2) - stageRect.left,
-    y: (winnerSide === 'left' ? rightRect.top + rightRect.height / 2 : leftRect.top + leftRect.height / 2) - stageRect.top
-  };
-
-  const popups = ['POW!', 'K.O.!', 'CRITICAL!', 'SMASH!', 'BOOM!', 'FATALITY!', 'SUPER!'];
-  const popText = popups[Math.floor(Math.random() * popups.length)];
-
-  if (attackType === 'hadouken') {
-    ArcadeAudio.playHadouken();
-    winnerCard.classList.add('anim-hadouken-winner');
-    setTimeout(() => {
-      ArenaFxEngine.spawnBlast(loserCenter.x, loserCenter.y, '#38bdf8', 40);
-      loserCard.classList.add('anim-hadouken-loser');
-      spawnComicPopup(popText);
-      stage.classList.add('screen-shake-light');
-    }, 150);
-  } else if (attackType === 'kamehameha') {
-    ArcadeAudio.playKamehameha();
-    winnerCard.classList.add('anim-kamehameha-winner');
-    setTimeout(() => {
-      ArenaFxEngine.spawnBeam(winnerCenter.x, winnerCenter.y, loserCenter.x, loserCenter.y, '#60a5fa');
-      loserCard.classList.add('anim-kamehameha-loser');
-      spawnComicPopup('K.O.!');
-      stage.classList.add('screen-shake-heavy');
-    }, 200);
-  } else if (attackType === 'dragon_punch') {
-    ArcadeAudio.playDragonPunch();
-    winnerCard.classList.add('anim-dragon-winner');
-    setTimeout(() => {
-      ArenaFxEngine.spawnBlast(loserCenter.x, loserCenter.y, '#f59e0b', 45);
-      loserCard.classList.add('anim-dragon-loser');
-      spawnComicPopup('SHORYUKEN!');
-      stage.classList.add('screen-shake-heavy');
-    }, 180);
-  } else if (attackType === 'lightning') {
-    ArcadeAudio.playLightning();
-    ArenaFxEngine.spawnLightning(loserCenter.x, loserCenter.y);
-    loserCard.classList.add('anim-lightning-loser');
-    spawnComicPopup('THUNDER!');
-    stage.classList.add('screen-shake-heavy');
-  } else if (attackType === 'lightsaber') {
-    ArcadeAudio.playLightsaber();
-    ArenaFxEngine.spawnBlast(loserCenter.x, loserCenter.y, '#10b981', 35);
-    loserCard.classList.add('anim-lightsaber-loser');
-    spawnComicPopup('SLASH!');
-    stage.classList.add('screen-shake-light');
-  } else if (attackType === 'battleaxe') {
-    ArcadeAudio.playBattleaxe();
-    ArenaFxEngine.spawnBlast(loserCenter.x, loserCenter.y, '#f97316', 40);
-    loserCard.classList.add('anim-battleaxe-loser');
-    spawnComicPopup('CLEAVE!');
-    stage.classList.add('screen-shake-heavy');
-  } else if (attackType === 'rasengan') {
-    ArcadeAudio.playRasengan();
-    ArenaFxEngine.spawnBlast(loserCenter.x, loserCenter.y, '#06b6d4', 40);
-    loserCard.classList.add('anim-rasengan-loser');
-    spawnComicPopup('RASENGAN!');
-    stage.classList.add('screen-shake-light');
-  } else if (attackType === 'meteor') {
-    ArcadeAudio.playMeteor();
-    setTimeout(() => {
-      ArenaFxEngine.spawnBlast(loserCenter.x, loserCenter.y, '#ea580c', 55);
-      loserCard.classList.add('anim-meteor-loser');
-      spawnComicPopup('METEOR!');
-      stage.classList.add('screen-shake-heavy');
-    }, 150);
-  } else if (attackType === 'arrows') {
-    ArcadeAudio.playArrows();
-    ArenaFxEngine.spawnBlast(loserCenter.x, loserCenter.y, '#eab308', 30);
-    loserCard.classList.add('anim-arrows-loser');
-    spawnComicPopup('BARRAGE!');
-  } else if (attackType === 'katana') {
-    ArcadeAudio.playKatana();
-    stage.classList.add('katana-monochrome');
-    stage.classList.add('arena-hitstop');
-    setTimeout(() => {
-      stage.classList.remove('katana-monochrome');
-      stage.classList.remove('arena-hitstop');
-      ArenaFxEngine.spawnBlast(loserCenter.x, loserCenter.y, '#dc2626', 40);
-      loserCard.classList.add('anim-katana-loser');
-      spawnComicPopup('IAI-SLASH!');
-      stage.classList.add('screen-shake-heavy');
-    }, 120);
-  }
-
-  setTimeout(() => {
-    stage.className = 'arena-stage';
-    winnerCard.className = 'fighter-card ' + (winnerSide === 'left' ? 'fighter-left' : 'fighter-right');
-    loserCard.className = 'fighter-card ' + (winnerSide === 'left' ? 'fighter-right' : 'fighter-left');
-    onComplete();
-  }, 650);
-}
-
 function chooseTie() {
+  if (currentTournamentType === 'bracket') return; // Knockout cannot tie
   if (!currentTournament && window.currentTournament) currentTournament = window.currentTournament;
   if (!currentTournament || currentTournament.isAnimating) return;
   ArcadeAudio.playTie();
@@ -9071,19 +9945,20 @@ function chooseTie() {
 }
 
 function undoFighterChoice() {
-  if (!currentTournament && window.currentTournament) currentTournament = window.currentTournament;
-  if (!currentTournament || currentTournament.isAnimating) return;
-  const ok = currentTournament.undo();
+  const activeEngine = currentTournamentType === 'bracket' ? currentBracketEngine : currentTournament;
+  if (!activeEngine || activeEngine.isAnimating) return;
+  const ok = activeEngine.undo();
   if (ok) {
     ArcadeAudio.playUndo();
+    if (currentTournamentType === 'bracket') renderWorldCupBracketTree();
     renderCurrentMatchup();
   }
 }
 
 function eliminateCurrentFightersPrompt() {
-  if (!currentTournament && window.currentTournament) currentTournament = window.currentTournament;
-  if (!currentTournament || currentTournament.isAnimating) return;
-  const step = currentTournament.getNextPair();
+  const activeEngine = currentTournamentType === 'bracket' ? currentBracketEngine : currentTournament;
+  if (!activeEngine || activeEngine.isAnimating) return;
+  const step = activeEngine.getNextPair();
   if (step.done) return;
 
   const titleA = document.getElementById('elimTitleLeft');
@@ -9100,6 +9975,13 @@ function eliminateCurrentFightersPrompt() {
 }
 
 function confirmEliminateFighter(side) {
+  if (currentTournamentType === 'bracket') {
+    // In bracket, eliminating a fighter simply awards victory to opponent
+    closeModal('arenaEliminateModal');
+    chooseFighter(side === 'left' ? 'right' : 'left');
+    return;
+  }
+
   if (!currentTournament && window.currentTournament) currentTournament = window.currentTournament;
   if (!currentTournament) return;
 
@@ -9129,23 +10011,548 @@ function toggleArenaSound() {
 }
 
 function toggleArenaFx() {
-  if (!currentTournament) return;
-  currentTournament.options.fxEnabled = !currentTournament.options.fxEnabled;
+  const activeEngine = currentTournamentType === 'bracket' ? currentBracketEngine : currentTournament;
+  if (!activeEngine) return;
+  if (!activeEngine.options) activeEngine.options = {};
+  activeEngine.options.fxEnabled = !activeEngine.options.fxEnabled;
   const icon = document.getElementById('arenaFxIcon');
-  if (icon) icon.textContent = currentTournament.options.fxEnabled ? '💥' : '🚫';
+  if (icon) icon.textContent = activeEngine.options.fxEnabled ? '💥' : '🚫';
 }
 
 function changeArenaAttack(val) {
-  if (!currentTournament) return;
-  currentTournament.options.attackEffect = val;
+  const activeEngine = currentTournamentType === 'bracket' ? currentBracketEngine : currentTournament;
+  if (!activeEngine) return;
+  if (!activeEngine.options) activeEngine.options = {};
+  activeEngine.options.attackEffect = val;
 }
 
 function exitArenaPrompt() {
-  if (confirm('Deseja realmente sair da Arena de Batalha? O progresso desta sessão será fechado.')) {
+  if (confirm(currentLang === 'en' ? 'Exit battle arena? Current duel window will be closed.' : 'Deseja realmente sair da Arena de Batalha? A janela do duelo será fechada.')) {
     closeModal('rankingArenaModal');
   }
 }
 
+/* ========================================================== */
+/* BRACKET ENGINE (KNOCKOUT CUP TOURNAMENT)                   */
+/* ========================================================== */
+class BracketEngine {
+  constructor(items) {
+    this.originalItems = [...items];
+    const n = items.length;
+    this.completedDuels = 0;
+    this.undoHistory = [];
+    this.bracketHistory = [];
+    this.champion = null;
+    this.runnerUp = null;
+    this.thirdPlaceWinner = null;
+    this.options = { fxEnabled: true, attackEffect: 'random' };
+    this.isAnimating = false;
+
+    // Dynamically build stages without power-of-2 artificial bloat
+    this.stages = [];
+    let currentCount = n;
+    let sIdx = 0;
+    while (currentCount > 1) {
+      const matchCount = Math.ceil(currentCount / 2);
+      this.stages.push({
+        stageIndex: sIdx,
+        matchCount: matchCount,
+        matches: []
+      });
+      currentCount = matchCount;
+      sIdx++;
+    }
+
+    const totalStages = this.stages.length;
+    for (let s = 0; s < totalStages; s++) {
+      const stagesFromEnd = totalStages - s;
+      const stageName = getBracketStageNameByDistance(stagesFromEnd);
+      this.stages[s].stageName = stageName;
+      for (let m = 0; m < this.stages[s].matchCount; m++) {
+        this.stages[s].matches.push({
+          id: `r${s}_m${m}`,
+          stageIndex: s,
+          matchIndex: m,
+          stageName: stageName,
+          teamA: null,
+          teamB: null,
+          winner: null,
+          loser: null,
+          isBye: false,
+          isDone: false,
+          isLive: false,
+          nextMatchId: null,
+          nextSlot: null,
+          nextStageName: null,
+          nextMatchIndex: null,
+          prevM1: null,
+          prevM2: null
+        });
+      }
+    }
+
+    // Connect feeders between stages
+    for (let s = 0; s < totalStages - 1; s++) {
+      for (let m = 0; m < this.stages[s].matches.length; m++) {
+        const nextMIdx = Math.floor(m / 2);
+        const slot = (m % 2 === 0) ? 'teamA' : 'teamB';
+        const curr = this.stages[s].matches[m];
+        const next = this.stages[s + 1].matches[nextMIdx];
+        curr.nextMatchId = next.id;
+        curr.nextSlot = slot;
+        curr.nextStageName = next.stageName;
+        curr.nextMatchIndex = nextMIdx;
+        if (slot === 'teamA') next.prevM1 = curr;
+        else next.prevM2 = curr;
+      }
+    }
+
+    // Seed Round 0 with items
+    let itemIdx = 0;
+    const r0Matches = this.stages[0].matches;
+    for (let m = 0; m < r0Matches.length; m++) {
+      const match = r0Matches[m];
+      match.teamA = items[itemIdx++];
+      if (itemIdx < n) {
+        match.teamB = items[itemIdx++];
+      } else {
+        match.teamB = null;
+        match.isBye = true;
+        match.isDone = true;
+        match.winner = match.teamA;
+        if (match.nextMatchId) {
+          const nextStage = this.stages[1];
+          nextStage.matches[match.nextMatchIndex][match.nextSlot] = match.winner;
+        }
+      }
+    }
+
+    this.propagateAllByes();
+
+    // 3rd place playoff if viable
+    const hasSemi = totalStages >= 2;
+    const semiMatches = hasSemi ? this.stages[totalStages - 2].matches : [];
+    const bothSemisHaveOpponents = hasSemi && semiMatches.length === 2 && 
+      (semiMatches[0].prevM2 !== null || semiMatches[0].teamB !== null) &&
+      (semiMatches[1].prevM2 !== null || semiMatches[1].teamB !== null);
+
+    this.hasThirdPlace = (n >= 4 && bothSemisHaveOpponents);
+    this.thirdPlaceMatch = this.hasThirdPlace ? {
+      id: 'm_third',
+      stageIndex: 'third',
+      stageName: currentLang === 'en' ? '3rd Place Playoff' : 'Disputa de 3º Lugar',
+      teamA: null,
+      teamB: null,
+      winner: null,
+      loser: null,
+      isLive: false,
+      isDone: false
+    } : null;
+
+    this.totalDuels = (n - 1) + (this.hasThirdPlace ? 1 : 0);
+  }
+
+  propagateAllByes() {
+    let changed = true;
+    while (changed) {
+      changed = false;
+      for (let s = 1; s < this.stages.length; s++) {
+        for (let m = 0; m < this.stages[s].matches.length; m++) {
+          const match = this.stages[s].matches[m];
+          if (!match.isDone && match.prevM2 === null && match.teamB === null && match.teamA !== null) {
+            match.isBye = true;
+            match.isDone = true;
+            match.winner = match.teamA;
+            if (match.nextMatchId) {
+              const nextStage = this.stages[s + 1];
+              nextStage.matches[match.nextMatchIndex][match.nextSlot] = match.winner;
+            }
+            changed = true;
+          }
+        }
+      }
+    }
+  }
+
+  saveSnapshot() {
+    return JSON.stringify({
+      stages: this.stages,
+      thirdPlaceMatch: this.thirdPlaceMatch,
+      completedDuels: this.completedDuels,
+      bracketHistory: this.bracketHistory,
+      champion: this.champion,
+      runnerUp: this.runnerUp,
+      thirdPlaceWinner: this.thirdPlaceWinner,
+      hasThirdPlace: this.hasThirdPlace,
+      totalDuels: this.totalDuels
+    });
+  }
+
+  restoreSnapshot(jsonStr) {
+    const data = JSON.parse(jsonStr);
+    this.stages = data.stages;
+    this.thirdPlaceMatch = data.thirdPlaceMatch;
+    this.completedDuels = data.completedDuels;
+    this.bracketHistory = data.bracketHistory;
+    this.champion = data.champion;
+    this.runnerUp = data.runnerUp;
+    this.thirdPlaceWinner = data.thirdPlaceWinner;
+    this.hasThirdPlace = data.hasThirdPlace;
+    this.totalDuels = data.totalDuels;
+  }
+
+  getNextPair() {
+    // Reset live flags
+    this.stages.forEach(s => s.matches.forEach(m => m.isLive = false));
+    if (this.thirdPlaceMatch) this.thirdPlaceMatch.isLive = false;
+
+    // Check if semifinals are done and 3rd place playoff is ready
+    const semiStage = this.stages.length >= 2 ? this.stages[this.stages.length - 2].matches : null;
+    if (this.thirdPlaceMatch && !this.thirdPlaceMatch.isDone && semiStage && semiStage.every(m => m.isDone)) {
+      if (semiStage[0].loser && semiStage[1].loser) {
+        this.thirdPlaceMatch.teamA = semiStage[0].loser;
+        this.thirdPlaceMatch.teamB = semiStage[1].loser;
+        this.thirdPlaceMatch.isLive = true;
+        return {
+          done: false,
+          matchId: this.thirdPlaceMatch.id,
+          itemA: this.thirdPlaceMatch.teamA,
+          itemB: this.thirdPlaceMatch.teamB,
+          progress: Math.min(99, Math.round((this.completedDuels / Math.max(1, this.totalDuels)) * 100)),
+          round: this.completedDuels + 1,
+          remaining: Math.max(1, this.totalDuels - this.completedDuels),
+          stageLabel: currentLang === 'en' ? '3RD PLACE PLAYOFF' : 'DISPUTA DE 3º LUGAR'
+        };
+      } else {
+        this.thirdPlaceWinner = semiStage[0].loser || semiStage[1].loser;
+        this.thirdPlaceMatch.isDone = true;
+      }
+    }
+
+    // Find first ready unplayed match
+    for (let s = 0; s < this.stages.length; s++) {
+      for (let m = 0; m < this.stages[s].matches.length; m++) {
+        const match = this.stages[s].matches[m];
+        if (!match.isDone && match.teamA && match.teamB) {
+          match.isLive = true;
+          const totalInStage = this.stages[s].matches.length;
+          return {
+            done: false,
+            matchId: match.id,
+            itemA: match.teamA,
+            itemB: match.teamB,
+            progress: Math.min(99, Math.round((this.completedDuels / Math.max(1, this.totalDuels)) * 100)),
+            round: this.completedDuels + 1,
+            remaining: Math.max(1, this.totalDuels - this.completedDuels),
+            stageLabel: `${match.stageName.toUpperCase()} (${m + 1}/${totalInStage})`
+          };
+        }
+      }
+    }
+
+    if (!this.thirdPlaceWinner && semiStage && semiStage.every(m => m.isDone)) {
+      this.thirdPlaceWinner = semiStage[0].loser || semiStage[1].loser;
+    }
+
+    // Collect ordered rankings from knockout tree
+    const finalRankings = [this.champion, this.runnerUp, this.thirdPlaceWinner].filter(Boolean);
+    const seen = new Set(finalRankings.map(r => r.id || r.title));
+    for (let s = this.stages.length - 1; s >= 0; s--) {
+      for (const m of this.stages[s].matches) {
+        if (m.loser && !seen.has(m.loser.id || m.loser.title)) {
+          finalRankings.push(m.loser);
+          seen.add(m.loser.id || m.loser.title);
+        }
+      }
+    }
+    for (const item of this.originalItems) {
+      if (!seen.has(item.id || item.title)) {
+        finalRankings.push(item);
+        seen.add(item.id || item.title);
+      }
+    }
+
+    return { done: true, result: finalRankings, bracketHistory: this.bracketHistory };
+  }
+
+  recordChoice(winnerSide) {
+    this.undoHistory.push(this.saveSnapshot());
+    const step = this.getNextPair();
+    if (step.done) return;
+
+    this.completedDuels++;
+
+    if (step.matchId === 'm_third') {
+      const winner = winnerSide === 'left' ? this.thirdPlaceMatch.teamA : this.thirdPlaceMatch.teamB;
+      const loser = winnerSide === 'left' ? this.thirdPlaceMatch.teamB : this.thirdPlaceMatch.teamA;
+      this.thirdPlaceMatch.winner = winner;
+      this.thirdPlaceMatch.loser = loser;
+      this.thirdPlaceMatch.isDone = true;
+      this.thirdPlaceMatch.isLive = false;
+      this.thirdPlaceWinner = winner;
+      this.bracketHistory.push({
+        stage: this.thirdPlaceMatch.stageName,
+        matchId: 'm_third',
+        winner,
+        loser
+      });
+      return;
+    }
+
+    for (let s = 0; s < this.stages.length; s++) {
+      for (let m = 0; m < this.stages[s].matches.length; m++) {
+        const match = this.stages[s].matches[m];
+        if (match.id === step.matchId) {
+          const winner = winnerSide === 'left' ? match.teamA : match.teamB;
+          const loser = winnerSide === 'left' ? match.teamB : match.teamA;
+          match.winner = winner;
+          match.loser = loser;
+          match.isDone = true;
+          match.isLive = false;
+
+          this.bracketHistory.push({
+            stage: match.stageName,
+            matchId: match.id,
+            winner,
+            loser
+          });
+
+          if (match.nextMatchId) {
+            const nextStage = this.stages[s + 1];
+            nextStage.matches[match.nextMatchIndex][match.nextSlot] = winner;
+          } else {
+            this.champion = winner;
+            this.runnerUp = loser;
+          }
+
+          this.propagateAllByes();
+          return;
+        }
+      }
+    }
+  }
+
+  undo() {
+    if (this.undoHistory.length === 0) return false;
+    const snap = this.undoHistory.pop();
+    this.restoreSnapshot(snap);
+    return true;
+  }
+}
+
+function getBracketStageNameByDistance(stagesFromEnd) {
+  if (stagesFromEnd === 1) return currentLang === 'en' ? 'Grand Final' : 'Grande Final';
+  if (stagesFromEnd === 2) return currentLang === 'en' ? 'Semi-Finals' : 'Semifinais';
+  if (stagesFromEnd === 3) return currentLang === 'en' ? 'Quarter-Finals' : 'Quartas de Final';
+  if (stagesFromEnd === 4) return currentLang === 'en' ? 'Round of 16' : 'Oitavas de Final';
+  if (stagesFromEnd === 5) return currentLang === 'en' ? 'Round of 32' : '16-avos de Final';
+  if (stagesFromEnd === 6) return currentLang === 'en' ? 'Round of 64' : '32-avos de Final';
+  if (stagesFromEnd === 7) return currentLang === 'en' ? 'Round of 128' : '64-avos de Final';
+  return currentLang === 'en' ? 'Preliminary Round' : 'Fase Preliminar';
+}
+
+function buildWorldCupBracketHTML(engineOrItems, isPreview = false) {
+  let stages = null;
+  let thirdMatch = null;
+  let champion = null;
+
+  if (engineOrItems instanceof BracketEngine) {
+    stages = engineOrItems.stages;
+    thirdMatch = engineOrItems.thirdPlaceMatch;
+    champion = engineOrItems.champion;
+  } else if (Array.isArray(engineOrItems)) {
+    if (engineOrItems.length < 2) {
+      return `<div style="text-align:center; padding:40px; color:var(--text-dim);">${currentLang === 'en' ? 'Add at least 2 contenders to generate bracket.' : 'Carregue pelo menos 2 competidores para gerar a chave.'}</div>`;
+    }
+    const tempEngine = new BracketEngine(engineOrItems);
+    stages = tempEngine.stages;
+    thirdMatch = tempEngine.thirdPlaceMatch;
+    champion = null;
+  }
+
+  if (!stages || stages.length === 0) {
+    return `<div style="text-align:center; padding:40px; color:var(--text-dim);">${currentLang === 'en' ? 'Add at least 2 contenders to generate bracket.' : 'Carregue pelo menos 2 competidores para gerar a chave.'}</div>`;
+  }
+
+  const defaultImg = '../assets/mascot-trimmed.png';
+
+  function renderMatchCard(m, matchNumLabel = '') {
+    const isLive = m.isLive && !isPreview;
+    const isDone = m.isDone;
+    const teamA = m.teamA;
+    const teamB = m.teamB;
+    const winId = m.winner?.id;
+
+    const tADoneClass = isDone ? (winId === teamA?.id ? 'winner' : 'loser') : '';
+    const tBDoneClass = isDone ? (winId === teamB?.id ? 'winner' : 'loser') : '';
+
+    const labelA = teamA?.title || (m.prevM1 ? `Vencedor ${m.prevM1.stageName} #${m.prevM1.matchIndex + 1}` : 'A definir');
+    const labelB = teamB?.title || (m.prevM2 ? `Vencedor ${m.prevM2.stageName} #${m.prevM2.matchIndex + 1}` : (!m.prevM2 && !m.teamB ? '🛡️ Bye (Avança)' : 'A definir'));
+
+    const destHTML = m.nextStageName ? `
+      <div class="wc-match-dest" title="Avança para ${m.nextStageName} #${m.nextMatchIndex + 1}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+        <span>Avança para <strong>${m.nextStageName} #${m.nextMatchIndex + 1}</strong></span>
+      </div>
+    ` : '';
+
+    const feeder1Attr = m.prevM1 ? `data-feeder-1="${m.prevM1.id}"` : '';
+    const feeder2Attr = m.prevM2 ? `data-feeder-2="${m.prevM2.id}"` : '';
+    const nextAttr = m.nextMatchId ? `data-next-match="${m.nextMatchId}"` : '';
+
+    if (m.isBye) {
+      return `
+        <div class="wc-match-card is-done" id="wcCard_${m.id}" data-match-id="${m.id}" ${nextAttr} onmouseenter="highlightBracketPath('${m.id}')" onmouseleave="clearBracketHighlight()" style="border-left: 3px solid #10b981;">
+          <div class="wc-match-header">
+            <span class="wc-match-stage">${matchNumLabel || m.stageName}</span>
+            <span class="wc-badge-done" style="color:#10b981; font-weight:800; font-size:0.72em;">🛡️ BYE</span>
+          </div>
+          <div class="wc-team-row winner">
+            <div class="wc-team-info">
+              <img class="wc-team-thumb" src="${teamA?.image || defaultImg}" alt="" onerror="this.src='${defaultImg}'">
+              <span class="wc-team-name" title="${teamA?.title || ''}">${teamA?.title || ''}</span>
+            </div>
+            <span style="font-size:0.8em; color:#10b981; font-weight:700;">✓</span>
+          </div>
+          <div class="wc-match-dest" style="color:#10b981; border-color:rgba(16,185,129,0.3); background:rgba(16,185,129,0.08);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+            <span>Classificado direto</span>
+          </div>
+          ${destHTML}
+        </div>
+      `;
+    }
+
+    return `
+      <div class="wc-match-card ${isLive ? 'is-live' : ''} ${isDone ? 'is-done' : ''}" id="wcCard_${m.id}" data-match-id="${m.id}" ${nextAttr} ${feeder1Attr} ${feeder2Attr} onmouseenter="highlightBracketPath('${m.id}')" onmouseleave="clearBracketHighlight()">
+        <div class="wc-match-header">
+          <span class="wc-match-stage">${matchNumLabel || m.stageName}</span>
+          ${isLive ? '<span class="wc-badge-live">⚔️ AO VIVO</span>' : ''}
+          ${isDone ? '<span class="wc-badge-done">✓ CONCLUÍDO</span>' : ''}
+          ${(!isLive && !isDone) ? '<span class="wc-badge-pending">PENDENTE</span>' : ''}
+        </div>
+        <div class="wc-team-row ${tADoneClass}">
+          <div class="wc-team-info">
+            <img class="wc-team-thumb" src="${teamA?.image || defaultImg}" alt="" onerror="this.src='${defaultImg}'">
+            <span class="wc-team-name" title="${labelA}">${labelA}</span>
+          </div>
+          ${winId && winId === teamA?.id ? '<span style="font-size:0.85em;">👑</span>' : ''}
+        </div>
+        <div class="wc-team-row ${tBDoneClass}">
+          <div class="wc-team-info">
+            <img class="wc-team-thumb" src="${teamB?.image || defaultImg}" alt="" onerror="this.src='${defaultImg}'">
+            <span class="wc-team-name" title="${labelB}">${labelB}</span>
+          </div>
+          ${winId && winId === teamB?.id ? '<span style="font-size:0.85em;">👑</span>' : ''}
+        </div>
+        ${destHTML}
+      </div>
+    `;
+  }
+
+  const roundsBeforeFinal = stages.slice(0, stages.length - 1);
+  const roundsColumnsHTML = roundsBeforeFinal.map((s, sIdx) => {
+    const stageTitle = s.matches[0]?.stageName || `Rodada ${sIdx + 1}`;
+    let matchesContent = '';
+    for (let i = 0; i < s.matches.length; i += 2) {
+      const m1 = s.matches[i];
+      const m2 = s.matches[i + 1];
+      const m1HTML = renderMatchCard(m1, `${m1.stageName} #${m1.matchIndex + 1}`);
+      const m2HTML = m2 ? renderMatchCard(m2, `${m2.stageName} #${m2.matchIndex + 1}`) : '';
+      matchesContent += `
+        <div class="wc-match-pair">
+          ${m1HTML}
+          ${m2HTML}
+        </div>
+      `;
+    }
+
+    return `
+      <div class="wc-round-column">
+        <div class="wc-round-header">${stageTitle}</div>
+        <div class="wc-matches-list">
+          ${matchesContent}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  const finalMatch = stages[stages.length - 1].matches[0];
+  const championObj = champion || finalMatch.winner || null;
+  const finalsColumnHTML = `
+    <div class="wc-finals-column">
+      <div class="wc-round-header" style="color:var(--gold-bright); border-color:rgba(245,158,11,0.4);">Grande Final</div>
+      <div class="wc-trophy-banner">
+        <div class="wc-trophy-icon">🏆</div>
+        <div class="wc-trophy-title">Grande Campeão da Copa</div>
+        ${championObj ? `<div class="wc-champion-badge">👑 ${championObj.title}</div>` : `<div style="font-size:0.75em; color:var(--text-dim); margin-top:4px;">A definir</div>`}
+      </div>
+      <div class="wc-matches-list">
+        ${renderMatchCard(finalMatch, 'Grande Final')}
+      </div>
+      ${thirdMatch ? `
+        <div class="wc-3rd-banner" style="margin-top:16px; font-weight:700; color:var(--brass-bright); font-size:0.8rem; text-align:center;">🥉 Disputa de 3º Lugar</div>
+        <div class="wc-matches-list" style="margin-top:6px;">
+          ${renderMatchCard(thirdMatch, 'Disputa de 3º Lugar')}
+        </div>
+      ` : ''}
+    </div>
+  `;
+
+  return `
+    <div class="wc-bracket-wrapper">
+      ${roundsColumnsHTML}
+      ${finalsColumnHTML}
+    </div>
+  `;
+}
+
+function highlightBracketPath(matchId) {
+  clearBracketHighlight();
+  const card = document.getElementById('wcCard_' + matchId);
+  if (!card) return;
+  card.classList.add('bracket-path-active');
+
+  const f1 = card.getAttribute('data-feeder-1');
+  const f2 = card.getAttribute('data-feeder-2');
+  if (f1) document.getElementById('wcCard_' + f1)?.classList.add('bracket-feeder-highlight');
+  if (f2) document.getElementById('wcCard_' + f2)?.classList.add('bracket-feeder-highlight');
+
+  const next = card.getAttribute('data-next-match');
+  if (next) document.getElementById('wcCard_' + next)?.classList.add('bracket-target-highlight');
+}
+
+function clearBracketHighlight() {
+  document.querySelectorAll('.wc-match-card.bracket-path-active, .wc-match-card.bracket-feeder-highlight, .wc-match-card.bracket-target-highlight')
+    .forEach(el => {
+      el.classList.remove('bracket-path-active', 'bracket-feeder-highlight', 'bracket-target-highlight');
+    });
+}
+
+function renderWorldCupBracketTree() {
+  const mount = document.getElementById('worldCupBracketTreeMount');
+  if (!mount) return;
+  if (!currentBracketEngine) {
+    const candidates = typeof getExistingBoardItems === 'function' ? getExistingBoardItems() : [];
+    mount.innerHTML = buildWorldCupBracketHTML(candidates.slice(0, 16), true);
+    return;
+  }
+  mount.innerHTML = buildWorldCupBracketHTML(currentBracketEngine, false);
+
+  setTimeout(() => {
+    const activeCard = mount.querySelector('.wc-match-card.is-live');
+    if (activeCard) {
+      const cardRect = activeCard.getBoundingClientRect();
+      const mountRect = mount.getBoundingClientRect();
+      const targetScrollLeft = mount.scrollLeft + (cardRect.left - mountRect.left) - (mount.clientWidth / 2) + (activeCard.clientWidth / 2);
+      mount.scrollTo({ left: targetScrollLeft, behavior: 'smooth' });
+    }
+  }, 100);
+}
+
+/* ========================================================== */
+/* RESULTS, PODIUM & SMART TIER DISTRIBUTION                  */
+/* ========================================================== */
 let currentRankedResults = [];
 
 function showTournamentResults(sortedItems) {
@@ -9208,6 +10615,112 @@ function showTournamentResults(sortedItems) {
       listEl.appendChild(row);
     });
   }
+}
+
+function openDistributeModal() {
+  closeModal('rankingResultsModal');
+  openModal('distributeModal');
+  selectDistributeMode(selectedDistributeMode || 'percentile');
+}
+
+function selectDistributeMode(mode) {
+  selectedDistributeMode = mode;
+  ['distCardPercentile', 'distCardCup', 'distCardLinear'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('active');
+  });
+  if (mode === 'percentile') document.getElementById('distCardPercentile')?.classList.add('active');
+  if (mode === 'cup') document.getElementById('distCardCup')?.classList.add('active');
+  if (mode === 'linear') document.getElementById('distCardLinear')?.classList.add('active');
+}
+
+function confirmApplyRankingToTiers() {
+  if (!currentRankedResults || currentRankedResults.length === 0) {
+    closeModal('distributeModal');
+    return;
+  }
+
+  const letterTiers = state.tiers.filter(t => !t.isUnplayed);
+  if (letterTiers.length === 0) {
+    applyRankingToUnplayedTier();
+    closeModal('distributeModal');
+    return;
+  }
+
+  const resolvedItems = currentRankedResults.map(game => resolveGameToItem(game));
+  const total = resolvedItems.length;
+  const numTiers = letterTiers.length;
+
+  if (selectedDistributeMode === 'cup') {
+    resolvedItems.forEach((item, idx) => {
+      let targetTierIdx = 0;
+      if (idx < 2) targetTierIdx = 0; // S (1st & 2nd)
+      else if (idx < 4) targetTierIdx = Math.min(1, numTiers - 1); // A (3rd & 4th)
+      else if (idx < 8) targetTierIdx = Math.min(2, numTiers - 1); // B (Quarterfinals)
+      else if (idx < 16) targetTierIdx = Math.min(3, numTiers - 1); // C (Round of 16)
+      else targetTierIdx = Math.min(4, numTiers - 1); // D+ (Others)
+
+      const targetTierId = letterTiers[targetTierIdx].id;
+      if (!state.items[targetTierId]) state.items[targetTierId] = [];
+      state.items[targetTierId].push(item);
+    });
+  } else if (selectedDistributeMode === 'percentile') {
+    resolvedItems.forEach((item, idx) => {
+      const pct = (idx + 0.5) / total;
+      let targetTierIdx = 0;
+      if (numTiers >= 5) {
+        if (pct <= 0.15) targetTierIdx = 0;
+        else if (pct <= 0.40) targetTierIdx = 1;
+        else if (pct <= 0.70) targetTierIdx = 2;
+        else if (pct <= 0.90) targetTierIdx = 3;
+        else targetTierIdx = 4;
+      } else {
+        targetTierIdx = Math.min(numTiers - 1, Math.floor(pct * numTiers));
+      }
+      const targetTierId = letterTiers[targetTierIdx].id;
+      if (!state.items[targetTierId]) state.items[targetTierId] = [];
+      state.items[targetTierId].push(item);
+    });
+  } else {
+    // Linear cutoffs: equal slices
+    resolvedItems.forEach((item, idx) => {
+      const tierIdx = Math.min(numTiers - 1, Math.floor((idx / total) * numTiers));
+      const targetTierId = letterTiers[tierIdx].id;
+      if (!state.items[targetTierId]) state.items[targetTierId] = [];
+      state.items[targetTierId].push(item);
+    });
+  }
+
+  saveState();
+  renderBoard();
+  closeModal('distributeModal');
+  switchMainTab('tierlist');
+  showToast(`${total} ${currentLang === 'en' ? 'games distributed into tiers!' : 'jogos distribuídos nas fileiras da Tierlist!'}`);
+}
+
+function distributeRankingToTiers() {
+  openDistributeModal();
+}
+
+function applyRankingToUnplayedTier() {
+  if (!currentRankedResults || currentRankedResults.length === 0) return;
+
+  const unplayedTier = state.tiers.find(t => t.isUnplayed) || state.tiers[state.tiers.length - 1];
+  const targetId = unplayedTier.id;
+
+  // 1. Resolve and remove the ranked games from wherever they currently are in state.items
+  const resolvedItems = currentRankedResults.map(game => resolveGameToItem(game));
+
+  // 2. Keep any unranked games that were already in the unplayed tier
+  const remainingInUnplayed = (state.items[targetId] || []).filter(item => {
+    return !resolvedItems.some(r => isSameRankingGame(r, item));
+  });
+
+  state.items[targetId] = [...resolvedItems, ...remainingInUnplayed];
+  saveState();
+  renderBoard();
+  closeModal('rankingResultsModal');
+  showToast(`Tier "${unplayedTier.name}" reordenado com sucesso! (${resolvedItems.length} jogos movidos)`);
 }
 
 function isSameRankingGame(a, b) {
@@ -9297,57 +10810,6 @@ function resolveGameToItem(gameRef) {
   };
 }
 
-function applyRankingToUnplayedTier() {
-  if (!currentRankedResults || currentRankedResults.length === 0) return;
-
-  const unplayedTier = state.tiers.find(t => t.isUnplayed) || state.tiers[state.tiers.length - 1];
-  const targetId = unplayedTier.id;
-
-  // 1. Resolve and remove the ranked games from wherever they currently are in state.items
-  const resolvedItems = currentRankedResults.map(game => resolveGameToItem(game));
-
-  // 2. Keep any unranked games that were already in the unplayed tier
-  const remainingInUnplayed = (state.items[targetId] || []).filter(item => {
-    return !resolvedItems.some(r => isSameRankingGame(r, item));
-  });
-
-  state.items[targetId] = [...resolvedItems, ...remainingInUnplayed];
-  saveState();
-  renderBoard();
-  closeModal('rankingResultsModal');
-  showToast(`Tier "${unplayedTier.name}" reordenado com sucesso! (${resolvedItems.length} jogos movidos)`);
-}
-
-function distributeRankingToTiers() {
-  if (!currentRankedResults || currentRankedResults.length === 0) return;
-
-  const letterTiers = state.tiers.filter(t => !t.isUnplayed);
-  if (letterTiers.length === 0) {
-    applyRankingToUnplayedTier();
-    return;
-  }
-
-  // 1. Resolve and remove all ranked items from their current tier(s) (e.g., 'Não jogado')
-  // This guarantees items are MOVED and not duplicated!
-  const resolvedItems = currentRankedResults.map(game => resolveGameToItem(game));
-
-  const total = resolvedItems.length;
-  const numTiers = letterTiers.length;
-
-  // 2. Distribute the resolved items across the letter tiers
-  resolvedItems.forEach((item, idx) => {
-    const tierIdx = Math.min(numTiers - 1, Math.floor((idx / total) * numTiers));
-    const targetTierId = letterTiers[tierIdx].id;
-    if (!state.items[targetTierId]) state.items[targetTierId] = [];
-    state.items[targetTierId].push(item);
-  });
-
-  saveState();
-  renderBoard();
-  closeModal('rankingResultsModal');
-  showToast(`${total} jogos movidos e distribuídos nos tiers da Tierlist!`);
-}
-
 function copyRankingText() {
   if (!currentRankedResults || currentRankedResults.length === 0) return;
   const text = currentRankedResults.map((g, i) => `${i + 1}. ${g.title}${g.year ? ` (${g.year})` : ''}`).join('\n');
@@ -9377,9 +10839,268 @@ function downloadRankingCsv() {
   URL.revokeObjectURL(url);
 }
 
+/* ========================================================== */
+/* WEB SCRAPER & MULTI-PLATFORM IMPORTER                      */
+/* ========================================================== */
+async function executeWebScraperImport() {
+  const input = document.getElementById('scraperUrlInput');
+  const url = (input ? input.value : '').trim();
+  if (!url) {
+    alert(currentLang === 'en' ? 'Please paste a valid web page URL.' : 'Por favor insira um link válido da página.');
+    return;
+  }
+  await importFromPublicUrl(url);
+}
+
+async function importFromPublicUrl(sourceUrl) {
+  showToast(currentLang === 'en' ? 'Fetching list from web page...' : 'Buscando lista da página web...');
+  try {
+    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(sourceUrl)}`;
+    const res = await fetch(proxyUrl);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    const htmlText = data.contents || '';
+    
+    const items = parseScrapedContent(htmlText, sourceUrl);
+    if (items.length === 0) {
+      alert(currentLang === 'en' ? 'Could not extract list items from this URL. Try pasting the text manually.' : 'Não foi possível extrair itens dessa URL. Tente colar os títulos manualmente.');
+      return;
+    }
+
+    const unplayedTier = state.tiers.find(t => t.isUnplayed) || state.tiers[state.tiers.length - 1];
+    const targetTierId = unplayedTier.id;
+    if (!state.items[targetTierId]) state.items[targetTierId] = [];
+
+    let addedCount = 0;
+    items.forEach(rawItem => {
+      const item = resolveGameToItem(rawItem);
+      state.items[targetTierId].push(item);
+      addedCount++;
+    });
+
+    saveState();
+    renderBoard();
+    updateStudioBadges();
+    closeModal('importSourceModal');
+    showToast(`${addedCount} ${currentLang === 'en' ? 'items imported to list!' : 'itens importados para a lista!'}`);
+  } catch (err) {
+    console.error('Web scraper error:', err);
+    alert(currentLang === 'en' ? 'Failed to fetch the URL. Please verify the link or try manual input.' : 'Falha ao acessar o link. Verifique a URL ou use a importação manual.');
+  }
+}
+
+function parseScrapedContent(text, sourceUrl) {
+  const items = [];
+  const seenTitles = new Set();
+  const urlToImage = new Map();
+
+  const imgLinkRegex = /\[!\[([^\]]*)\]\((https?:\/\/[^\)]+)\)\]\((https?:\/\/[^\)\s]+)(?:\s+\"[^\"]*\")?\)/g;
+  for (const m of text.matchAll(imgLinkRegex)) {
+    const imgUrl = m[2];
+    const pageUrl = m[3].split('?')[0].split('#')[0].replace(/\/$/, '');
+    const isNoiseImg = /avatar|logo|brand|icon|google|meep|propaganda|banner/i.test(imgUrl);
+    if (!isNoiseImg && pageUrl) {
+      urlToImage.set(pageUrl.toLowerCase(), imgUrl);
+    }
+  }
+
+  function isGenericImageLabel(str) {
+    const s = (str || '').trim();
+    return /^(?:image|imagem|poster|photo|foto|picture|figura|thumb(?:nail)?|capa|avatar|banner|icon|badge)\b(?:\s*[:#-]?\s*\d+)?$/i.test(s)
+      || /^image\s+\d+$/i.test(s)
+      || /^\d+$/i.test(s);
+  }
+
+  function addItem(title, year = '', image = '') {
+    let cleanTitle = (title || '').trim()
+      .replace(/^#\d+\s*|^\d+[º°\.\)\-]\s*/, '')
+      .replace(/^\[|\]$/g, '')
+      .replace(/\*|_/g, '')
+      .trim();
+
+    if (!cleanTitle || cleanTitle.length < 2 || cleanTitle.length > 120) return;
+    if (isGenericImageLabel(cleanTitle)) return;
+    if (seenTitles.has(cleanTitle.toLowerCase())) return;
+
+    const ignored = ['menu', 'home', 'sign in', 'watchlist', 'imdb', 'justwatch', 'ggapp', 'games', 'movies', 'terms', 'privacy', 'rating', 'popular', 'ludopedia', 'boardgamegeek', 'bgg'];
+    if (ignored.includes(cleanTitle.toLowerCase())) return;
+
+    seenTitles.add(cleanTitle.toLowerCase());
+    items.push({
+      id: `link-${items.length + 1}-${Date.now()}`,
+      title: cleanTitle,
+      year: year ? `(${year.replace(/[()]/g, '')})` : '',
+      image: image || `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="400" viewBox="0 0 300 400"><rect width="300" height="400" fill="%23180e09"/><circle cx="150" cy="180" r="80" fill="%23e9c875" opacity="0.2"/><text x="50%25" y="48%25" dominant-baseline="middle" text-anchor="middle" fill="%23ffffff" font-family="sans-serif" font-size="20" font-weight="bold">${encodeURIComponent(cleanTitle.slice(0, 18))}</text></svg>`
+    });
+  }
+
+  // Strategy 1: Heading with link and rank
+  const headingRankRegex = /#{1,5}\s*(?:\d+[º°\.\)\-]?\s*)?\[([^\]]+)\]\((https?:\/\/[^\)\s]+)(?:\s+\"[^\"]*\")?\)(?:[^\n\r]*?\(?(\b(?:19|20)\d{2}\b)\)?)?/g;
+  for (const m of text.matchAll(headingRankRegex)) {
+    const rawTitle = m[1].trim();
+    if (!isGenericImageLabel(rawTitle)) {
+      const pageUrl = m[2].split('?')[0].split('#')[0].replace(/\/$/, '').toLowerCase();
+      const year = m[3] || '';
+      const img = urlToImage.get(pageUrl) || '';
+      addItem(rawTitle, year, img);
+    }
+  }
+
+  // Strategy 2: Numbered lists
+  if (items.length < 2) {
+    const numListRegex = /^\s*(?:\d{1,3}|[#№]\s*\d{1,3})[º°\.\)\-]\s*(?:\[([^\]]+)\]\((https?:\/\/[^\)\s]+)\)|([^\n\r\(]+?))(?:\s*\(?(\b(?:19|20)\d{2}\b)\)?)?/gm;
+    for (const m of text.matchAll(numListRegex)) {
+      const rawTitle = (m[1] || m[3] || '').trim();
+      if (!isGenericImageLabel(rawTitle)) {
+        const pageUrl = m[2] ? m[2].split('?')[0].split('#')[0].replace(/\/$/, '').toLowerCase() : '';
+        const year = m[4] || '';
+        const img = pageUrl ? (urlToImage.get(pageUrl) || '') : '';
+        addItem(rawTitle, year, img);
+      }
+    }
+  }
+
+  // Strategy 3: IMDb style blocks
+  if (items.length < 2) {
+    const imdbRankMatches = text.matchAll(/#(\d{1,3})\s*\n+([^\n\r]+?)(?:\n+(\d{4}))?(?=\n+[0-9h\s]|\n+Rate|\n+#\d+|\n*$)/g);
+    for (const m of imdbRankMatches) {
+      if (!isGenericImageLabel(m[2])) {
+        addItem(m[2], m[3]);
+      }
+    }
+  }
+
+  // Strategy 4: Image links where alt is real title
+  if (items.length < 2) {
+    const imgLinkMatches = text.matchAll(/\[!\[([^\]]*)\]\((https?:\/\/[^\)]+)\)\]\((https?:\/\/[^\)]+)\)/g);
+    for (const m of imgLinkMatches) {
+      let alt = m[1].replace(/^(?:Image \d+:|Poster of|Cover of)\s*/i, '').trim();
+      const img = m[2];
+      if (alt && !isGenericImageLabel(alt) && !alt.toLowerCase().includes('logo')) {
+        addItem(alt, '', img);
+      }
+    }
+  }
+
+  // Strategy 5: Generic markdown headings
+  if (items.length < 2) {
+    const headingMatches = text.matchAll(/^#{2,4}\s+(?:\[([^\]]+)\]\([^\)]+\)|([^\n\r]+))/gm);
+    for (const m of headingMatches) {
+      const t = (m[1] || m[2] || '').trim();
+      if (t && !isGenericImageLabel(t)) addItem(t);
+    }
+  }
+
+  return items;
+}
+
+function handleImdbCsvUpload(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const text = e.target.result;
+    const lines = text.split(/\r?\n/);
+    if (lines.length < 2) return;
+
+    const headers = lines[0].split(',').map(h => h.replace(/"/g, '').trim().toLowerCase());
+    const titleIdx = headers.findIndex(h => h === 'title' || h === 'primary title' || h === 'original title');
+    const yearIdx = headers.findIndex(h => h === 'year' || h === 'release date');
+    const imgIdx = headers.findIndex(h => h === 'url' || h === 'image url');
+
+    if (titleIdx === -1) {
+      alert(currentLang === 'en' ? 'Could not find Title column in CSV.' : 'Coluna de título não encontrada no CSV.');
+      return;
+    }
+
+    const unplayedTier = state.tiers.find(t => t.isUnplayed) || state.tiers[state.tiers.length - 1];
+    const targetTierId = unplayedTier.id;
+    if (!state.items[targetTierId]) state.items[targetTierId] = [];
+
+    let count = 0;
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (!line) continue;
+      const fields = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(f => f.replace(/^"|"$/g, '').trim());
+      const title = fields[titleIdx];
+      if (!title) continue;
+      const year = yearIdx !== -1 ? fields[yearIdx] : '';
+      const img = imgIdx !== -1 ? fields[imgIdx] : '';
+
+      const item = resolveGameToItem({
+        title,
+        year: year ? String(year).slice(0, 4) : '',
+        image: img || '',
+        source: 'imdb'
+      });
+      state.items[targetTierId].push(item);
+      count++;
+    }
+
+    saveState();
+    renderBoard();
+    updateStudioBadges();
+    closeModal('importSourceModal');
+    showToast(`${count} ${currentLang === 'en' ? 'items imported from IMDb CSV!' : 'itens importados do CSV do IMDb!'}`);
+  };
+  reader.readAsText(file);
+}
+
+function openExportModalForTournament() {
+  openExportModal();
+}
+
+function openExportModalForBracket() {
+  openExportModal();
+}
+
+// Studio boot initializer
+if (typeof document !== 'undefined') {
+  const initStudioBoot = () => {
+    updateStudioBadges();
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const modeParam = params.get('mode');
+      if (modeParam === 'arena' || modeParam === 'bracket') {
+        switchMainTab(modeParam);
+      }
+    } catch (e) {}
+  };
+
+  if (document.readyState !== 'loading') {
+    initStudioBoot();
+  } else {
+    document.addEventListener('DOMContentLoaded', initStudioBoot);
+  }
+}
+
 window.ArcadeAudio = ArcadeAudio;
 window.ArenaFxEngine = ArenaFxEngine;
 window.TournamentEngine = TournamentEngine;
+window.BracketEngine = BracketEngine;
+window.activeStudioMode = activeStudioMode;
+window.switchMainTab = switchMainTab;
+window.updateStudioBadges = updateStudioBadges;
+window.updateArenaCandidateCount = updateArenaCandidateCount;
+window.updateBracketCandidateCount = updateBracketCandidateCount;
+window.launchArenaFromSection = launchArenaFromSection;
+window.launchBracketFromSection = launchBracketFromSection;
+window.confirmResetCup = confirmResetCup;
+window.startTournamentFromTier = startTournamentFromTier;
+window.renderWorldCupBracketTree = renderWorldCupBracketTree;
+window.buildWorldCupBracketHTML = buildWorldCupBracketHTML;
+window.highlightBracketPath = highlightBracketPath;
+window.clearBracketHighlight = clearBracketHighlight;
+window.openDistributeModal = openDistributeModal;
+window.selectDistributeMode = selectDistributeMode;
+window.confirmApplyRankingToTiers = confirmApplyRankingToTiers;
+window.executeWebScraperImport = executeWebScraperImport;
+window.importFromPublicUrl = importFromPublicUrl;
+window.parseScrapedContent = parseScrapedContent;
+window.handleImdbCsvUpload = handleImdbCsvUpload;
+window.openExportModalForTournament = openExportModalForTournament;
+window.openExportModalForBracket = openExportModalForBracket;
 window.openRankingSetupModal = openRankingSetupModal;
 window.switchRankingTab = switchRankingTab;
 window.fetchBggForRanking = fetchBggForRanking;
