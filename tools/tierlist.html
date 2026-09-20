@@ -5757,11 +5757,41 @@ function generateItemSvgCover(title, category = 'custom') {
     custom: '✨'
   };
   const icon = icons[category] || '✨';
-  const cleanTitle = (title || 'Item').slice(0, 26);
-  const bg = category === 'videogame' ? '%230f172a' : (category === 'movie' ? '%23261208' : '%231e110a');
-  const accent = category === 'videogame' ? '%2360a5fa' : (category === 'movie' ? '%23f59e0b' : '%23e9c875');
+  const cleanTitle = (title || 'Item').slice(0, 24);
+  const bg = category === 'videogame' ? '#0f172a' : (category === 'movie' ? '#261208' : (category === 'boardgame' ? '#1c100a' : '#1e110a'));
+  const accent = category === 'videogame' ? '#60a5fa' : (category === 'movie' ? '#f59e0b' : '#e9c875');
 
-  return `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="${bg}"/><rect x="12" y="12" width="276" height="276" rx="14" fill="none" stroke="${accent}" stroke-width="3" stroke-opacity="0.6"/><circle cx="150" cy="115" r="50" fill="${accent}" fill-opacity="0.15"/><text x="150" y="125" dominant-baseline="middle" text-anchor="middle" font-size="46">${icon}</text><text x="150" y="210" dominant-baseline="middle" text-anchor="middle" fill="${accent}" font-family="sans-serif" font-weight="bold" font-size="19">${encodeURIComponent(cleanTitle)}</text><text x="150" y="240" dominant-baseline="middle" text-anchor="middle" fill="%23a89382" font-family="sans-serif" font-size="11" text-transform="uppercase">${encodeURIComponent(category)}</text></svg>`;
+  const escapeXml = (str) => String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+
+  const safeTitle = escapeXml(cleanTitle);
+  const safeCat = escapeXml(category || 'custom');
+
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300">` +
+    `<defs>` +
+      `<linearGradient id="svgCoverGrad_${category}" x1="0%" y1="0%" x2="100%" y2="100%">` +
+        `<stop offset="0%" stop-color="${bg}"/>` +
+        `<stop offset="100%" stop-color="#090503"/>` +
+      `</linearGradient>` +
+    `</defs>` +
+    `<rect width="300" height="300" fill="url(#svgCoverGrad_${category})"/>` +
+    `<rect x="12" y="12" width="276" height="276" rx="16" fill="none" stroke="${accent}" stroke-width="3" stroke-opacity="0.55"/>` +
+    `<circle cx="150" cy="115" r="48" fill="${accent}" fill-opacity="0.16"/>` +
+    `<text x="150" y="125" dominant-baseline="middle" text-anchor="middle" font-size="44">${icon}</text>` +
+    `<text x="150" y="205" dominant-baseline="middle" text-anchor="middle" fill="${accent}" font-family="system-ui, -apple-system, sans-serif" font-weight="bold" font-size="18">${safeTitle}</text>` +
+    `<text x="150" y="235" dominant-baseline="middle" text-anchor="middle" fill="#a89382" font-family="system-ui, -apple-system, sans-serif" font-size="11" letter-spacing="2" text-transform="uppercase">${safeCat}</text>` +
+  `</svg>`;
+
+  try {
+    const binary = encodeURIComponent(svg).replace(/%([0-9A-F]{2})/g, (_, p1) => String.fromCharCode('0x' + p1));
+    return 'data:image/svg+xml;base64,' + btoa(binary);
+  } catch (err) {
+    return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+  }
 }
 
 function quickAddItemFromSearch() {
@@ -6654,6 +6684,7 @@ async function submitCustomGame() {
   const image = uploadedBase64Image || urlInput.value.trim() || '';
   const link = linkInput ? linkInput.value.trim() : '';
   const customDesigner = designerInput ? designerInput.value.trim() : '';
+  const customArtist = artistInput ? artistInput.value.trim() : '';
   const catInput = document.getElementById('customItemCategory');
   const category = (catInput ? catInput.value : 'boardgame') || 'boardgame';
   const finalImage = image || generateItemSvgCover(title, category);
@@ -10456,7 +10487,7 @@ function renderTournamentContenders(mode = 'arena') {
 
   container.innerHTML = stagedTournamentContenders.map((c, idx) => `
     <div class="tournament-chip" title="${escapeHtml(c.title)}">
-      <img src="${c.image || '../assets/mascot-trimmed.png'}" class="tournament-chip-thumb" alt="${escapeHtml(c.title)}" onerror="this.src='../assets/mascot-trimmed.png'">
+      <img src="${escapeHtml(c.image || '../assets/mascot-trimmed.png')}" class="tournament-chip-thumb" alt="${escapeHtml(c.title)}" onerror="this.src='../assets/mascot-trimmed.png'">
       <span class="tournament-chip-name">${escapeHtml(c.title)}</span>
       <button type="button" class="tournament-chip-remove" onclick="removeContenderAt(${idx})" title="Remover competidor">&times;</button>
     </div>
@@ -11534,8 +11565,8 @@ function buildWorldCupBracketHTML(engineOrItems, isPreview = false) {
           </div>
           <div class="wc-team-row winner">
             <div class="wc-team-info">
-              <img class="wc-team-thumb" src="${teamA?.image || defaultImg}" alt="" onerror="this.src='${defaultImg}'">
-              <span class="wc-team-name" title="${teamA?.title || ''}">${teamA?.title || ''}</span>
+              <img class="wc-team-thumb" src="${escapeHtml(teamA?.image || defaultImg)}" alt="" onerror="this.src='${defaultImg}'">
+              <span class="wc-team-name" title="${escapeHtml(teamA?.title || '')}">${escapeHtml(teamA?.title || '')}</span>
             </div>
             <span style="font-size:0.8em; color:#10b981; font-weight:700;">✓</span>
           </div>
@@ -11558,15 +11589,15 @@ function buildWorldCupBracketHTML(engineOrItems, isPreview = false) {
         </div>
         <div class="wc-team-row ${tADoneClass}">
           <div class="wc-team-info">
-            <img class="wc-team-thumb" src="${teamA?.image || defaultImg}" alt="" onerror="this.src='${defaultImg}'">
-            <span class="wc-team-name" title="${labelA}">${labelA}</span>
+            <img class="wc-team-thumb" src="${escapeHtml(teamA?.image || defaultImg)}" alt="" onerror="this.src='${defaultImg}'">
+            <span class="wc-team-name" title="${escapeHtml(labelA)}">${escapeHtml(labelA)}</span>
           </div>
           ${winId && winId === teamA?.id ? '<span style="font-size:0.85em;">👑</span>' : ''}
         </div>
         <div class="wc-team-row ${tBDoneClass}">
           <div class="wc-team-info">
-            <img class="wc-team-thumb" src="${teamB?.image || defaultImg}" alt="" onerror="this.src='${defaultImg}'">
-            <span class="wc-team-name" title="${labelB}">${labelB}</span>
+            <img class="wc-team-thumb" src="${escapeHtml(teamB?.image || defaultImg)}" alt="" onerror="this.src='${defaultImg}'">
+            <span class="wc-team-name" title="${escapeHtml(labelB)}">${escapeHtml(labelB)}</span>
           </div>
           ${winId && winId === teamB?.id ? '<span style="font-size:0.85em;">👑</span>' : ''}
         </div>
