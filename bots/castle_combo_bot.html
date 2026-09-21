@@ -1,0 +1,2015 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title data-i18n="docTitle">Castle Combo — Modo Solo (Anton)</title>
+  <link rel="icon" href="../assets/mascot-trimmed.png" type="image/png">
+  <meta name="description" content="Automa companion para o modo solo de Castle Combo com Anton.">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="../assets/theme-kit.css">
+  <script src="../assets/logger.js"></script>
+  <script src="../assets/theme-kit.js"></script>
+
+  <style>
+    .hidden { display: none !important; }
+
+    :root {
+      --bg-dark: #12151c;
+      --bg-card: rgba(26, 31, 44, 0.94);
+      --bg-card-sub: rgba(18, 22, 32, 0.85);
+      --border-gold: #c69b4c;
+      --border-gold-glow: rgba(198, 155, 76, 0.4);
+      --border-dark: rgba(198, 155, 76, 0.25);
+      
+      --text-main: #f5eedb;
+      --text-dim: #cfc5b0;
+      --text-muted: #8e887a;
+      
+      /* Shield & Category Colors */
+      --shield-campesinato: #eab308;
+      --shield-nobreza: #a855f7;
+      --shield-militar: #ef4444;
+      --shield-artesanato: #f97316;
+      --shield-fe: #22c55e;
+      --shield-escolaridade: #3b82f6;
+
+      --font-display: 'Cinzel', serif;
+      --font-body: 'Inter', sans-serif;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      
+      --tk-credits-color: #cfc5b0;
+      --tk-credits-border-top: 1px solid rgba(198, 155, 76, 0.2);
+      --tk-credits-padding: 16px 0;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      background-image:
+        radial-gradient(circle at 50% 10%, rgba(198, 155, 76, 0.08) 0%, transparent 70%),
+        linear-gradient(rgba(14, 17, 24, 0.90), rgba(14, 17, 24, 0.92)),
+        url('../assets/textures/old-parchment.jpg');
+      background-size: auto, auto, 512px 512px;
+      background-repeat: no-repeat, no-repeat, repeat;
+      background-blend-mode: normal, normal, multiply;
+      background-attachment: fixed;
+      color: var(--text-main);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-bottom: calc(50px + env(safe-area-inset-bottom));
+      overflow-x: hidden;
+    }
+
+    /* SVG containment */
+    svg { max-width: 100%; }
+    .icon-inline, .btn-icon, .icon-h1, h1 svg, h2 svg, h3 svg, button svg, .modal-content svg {
+      display: inline-block !important;
+      width: 1.2em !important;
+      height: 1.2em !important;
+      max-width: 24px !important;
+      max-height: 24px !important;
+      flex-shrink: 0 !important;
+      vertical-align: -0.2em !important;
+    }
+
+    /* Top Floating Bar / Controls */
+    .top-controls {
+      position: fixed;
+      top: 12px;
+      right: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      z-index: 100;
+    }
+    .ctrl-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 1px solid var(--border-gold);
+      background: rgba(20, 24, 34, 0.88);
+      backdrop-filter: blur(8px);
+      color: var(--border-gold);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      transition: all 0.2s ease;
+    }
+    .ctrl-btn:hover {
+      background: var(--border-gold);
+      color: #1a1505;
+      transform: translateY(-2px);
+    }
+    .lang-btn {
+      font-family: var(--font-display);
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0 10px;
+      width: auto;
+      border-radius: 20px;
+    }
+
+    /* Sound Mute Toggle */
+    .sfx-btn {
+      font-size: 1rem;
+    }
+
+    /* Layout Containers */
+    .app-container {
+      width: 100%;
+      max-width: 1020px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    /* Hero Banner */
+    .hero {
+      width: 100%;
+      height: 180px;
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      position: relative;
+      border: 1px solid var(--border-gold);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+      margin-top: 36px;
+    }
+    .hero img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center 25%;
+      filter: brightness(0.85);
+    }
+    .hero-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(0deg, rgba(14, 17, 24, 0.95) 0%, rgba(14, 17, 24, 0.4) 60%, transparent 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 16px 20px;
+    }
+    .hero-title {
+      font-family: var(--font-display);
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: #ffd88a;
+      text-shadow: 0 2px 6px rgba(0,0,0,0.9);
+      letter-spacing: 1px;
+    }
+    .hero-subtitle {
+      font-size: 0.9rem;
+      color: var(--text-dim);
+      text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+    }
+
+    /* Card Panels */
+    .panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border-dark);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+      position: relative;
+    }
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(198, 155, 76, 0.2);
+    }
+    .panel-title {
+      font-family: var(--font-display);
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--border-gold);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Buttons */
+    .btn {
+      font-family: var(--font-display);
+      font-weight: 700;
+      padding: 12px 20px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-gold);
+      background: linear-gradient(180deg, #d3a958 0%, #a4782e 100%);
+      color: #1a1505;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      transition: all 0.2s ease;
+      font-size: 0.95rem;
+    }
+    .btn:hover:not(:disabled) {
+      filter: brightness(1.15);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px var(--border-gold-glow);
+    }
+    .btn:active:not(:disabled) {
+      transform: translateY(1px);
+    }
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      filter: grayscale(0.8);
+    }
+    .btn-secondary {
+      background: var(--bg-card-sub);
+      color: var(--border-gold);
+      border-color: var(--border-dark);
+    }
+    .btn-secondary:hover:not(:disabled) {
+      background: rgba(198, 155, 76, 0.15);
+      border-color: var(--border-gold);
+      color: #ffd88a;
+    }
+    .btn-large {
+      padding: 16px 28px;
+      font-size: 1.1rem;
+      width: 100%;
+    }
+
+    /* Setup Screen Styles */
+    .setup-section {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .difficulty-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 12px;
+    }
+    .diff-card {
+      background: var(--bg-card-sub);
+      border: 1px solid var(--border-dark);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .diff-card:hover {
+      border-color: var(--border-gold);
+      transform: translateY(-2px);
+    }
+    .diff-card.selected {
+      border-color: var(--border-gold);
+      background: rgba(198, 155, 76, 0.12);
+      box-shadow: 0 0 14px var(--border-gold-glow);
+    }
+    .diff-title {
+      font-family: var(--font-display);
+      font-size: 1rem;
+      font-weight: 700;
+      color: #ffd88a;
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+    .diff-desc {
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      line-height: 1.35;
+    }
+
+    /* Priority Track Setup & Game */
+    .priority-track {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 6px;
+      margin-top: 8px;
+    }
+    @media (max-width: 600px) {
+      .priority-track {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+      }
+    }
+    .priority-slot {
+      background: var(--bg-card-sub);
+      border: 1px solid var(--border-dark);
+      border-radius: var(--radius-sm);
+      padding: 8px 4px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      position: relative;
+      transition: transform 0.2s ease;
+    }
+    .priority-slot.active-target {
+      border-color: #ffd88a;
+      box-shadow: 0 0 10px rgba(255, 216, 138, 0.5);
+      transform: scale(1.04);
+    }
+    .slot-num {
+      font-family: var(--font-display);
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+    .shield-badge {
+      width: 38px;
+      height: 44px;
+      border-radius: 4px 4px 18px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 0.9rem;
+      box-shadow: inset 0 0 6px rgba(0,0,0,0.5), 0 3px 6px rgba(0,0,0,0.4);
+      border: 1px solid rgba(255,255,255,0.25);
+    }
+    .shield-name {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--text-main);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+    }
+
+    /* Colors by Shield */
+    .shield-campesinato { background: linear-gradient(180deg, #facc15, #ca8a04); color: #2e1d05; }
+    .shield-nobreza { background: linear-gradient(180deg, #c084fc, #7e22ce); color: #ffffff; }
+    .shield-militar { background: linear-gradient(180deg, #f87171, #b91c1c); color: #ffffff; }
+    .shield-artesanato { background: linear-gradient(180deg, #fb923c, #c2410c); color: #ffffff; }
+    .shield-fe { background: linear-gradient(180deg, #4ade80, #15803d); color: #ffffff; }
+    .shield-escolaridade { background: linear-gradient(180deg, #60a5fa, #1d4ed8); color: #ffffff; }
+
+    /* Game Screen Grid: 2 Columns on desktop */
+    .game-layout {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 18px;
+    }
+    @media (min-width: 900px) {
+      .game-layout {
+        grid-template-columns: 1.15fr 1fr;
+      }
+    }
+
+    /* Decision Card Display */
+    .decision-card-container {
+      background: var(--bg-card);
+      border: 2px solid var(--border-gold);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.7), inset 0 0 20px rgba(198, 155, 76, 0.08);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      position: relative;
+    }
+    .turn-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-dark);
+      padding-bottom: 10px;
+    }
+    .round-badge {
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #ffd88a;
+    }
+    .deck-counter {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    /* Arrow Direction Banner */
+    .direction-banner {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      background: var(--bg-card-sub);
+      border: 1px solid var(--border-gold);
+      border-radius: var(--radius-md);
+      padding: 12px;
+      box-shadow: inset 0 0 12px rgba(0,0,0,0.6);
+    }
+    .direction-arrow {
+      font-size: 2.2rem;
+      line-height: 1;
+      color: #ffd88a;
+      text-shadow: 0 0 12px rgba(255, 216, 138, 0.6);
+    }
+    .direction-text {
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: #ffd88a;
+    }
+
+    /* Turn Priorities Box */
+    .priorities-container {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .priorities-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .priority-chips {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+    .priority-chip {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 10px 6px;
+      border-radius: var(--radius-sm);
+      border: 1px solid rgba(255,255,255,0.2);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+      position: relative;
+    }
+    .priority-chip .rank-tag {
+      font-family: var(--font-display);
+      font-size: 0.75rem;
+      font-weight: 800;
+      background: rgba(0,0,0,0.6);
+      padding: 2px 6px;
+      border-radius: 10px;
+      margin-bottom: 6px;
+      color: #ffd88a;
+    }
+    .priority-chip .chip-name {
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-align: center;
+      line-height: 1.2;
+    }
+
+    /* Fallback Bar */
+    .fallback-box {
+      background: var(--bg-card-sub);
+      border-left: 3px solid var(--border-gold);
+      padding: 10px 12px;
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      font-size: 0.82rem;
+      color: var(--text-dim);
+      line-height: 1.4;
+    }
+    .fallback-strong {
+      color: #ffd88a;
+      font-weight: 600;
+    }
+
+    /* End-of-turn Effects Alert */
+    .effect-alert {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 0.88rem;
+      font-weight: 600;
+      line-height: 1.35;
+      animation: popIn 0.3s ease;
+    }
+    .effect-discard {
+      background: rgba(220, 38, 38, 0.2);
+      border: 1px solid #ef4444;
+      color: #fca5a5;
+    }
+    .effect-reshuffle {
+      background: rgba(59, 130, 246, 0.2);
+      border: 1px solid #3b82f6;
+      color: #93c5fd;
+    }
+    .effect-icon {
+      font-size: 1.4rem;
+      font-weight: 800;
+    }
+
+    /* Anton 3x3 Grid Assistant */
+    .grid-3x3-container {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .grid-3x3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+    .grid-slot {
+      aspect-ratio: 1.2 / 1;
+      background: var(--bg-card-sub);
+      border: 1px dashed var(--border-dark);
+      border-radius: var(--radius-sm);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      padding: 6px;
+    }
+    .grid-slot:hover {
+      border-color: var(--border-gold);
+      background: rgba(198, 155, 76, 0.1);
+    }
+    .grid-slot.filled {
+      border-style: solid;
+      border-color: rgba(198, 155, 76, 0.6);
+      background: rgba(30, 38, 54, 0.9);
+    }
+    .grid-slot.recommended {
+      border: 2px solid #ffd88a;
+      box-shadow: 0 0 14px var(--border-gold-glow);
+      background: rgba(198, 155, 76, 0.18);
+    }
+    .slot-index {
+      font-family: var(--font-display);
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+    .slot-status {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--text-dim);
+      margin-top: 2px;
+      text-align: center;
+    }
+    .grid-helper {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      line-height: 1.35;
+    }
+
+    /* Resource Counter Bar */
+    .counters-bar {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+    .counter-card {
+      background: var(--bg-card-sub);
+      border: 1px solid var(--border-dark);
+      border-radius: var(--radius-sm);
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+    .counter-label {
+      font-family: var(--font-display);
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--text-dim);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .counter-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .counter-val {
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #ffd88a;
+      min-width: 28px;
+      text-align: center;
+    }
+    .c-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 4px;
+      border: 1px solid var(--border-dark);
+      background: rgba(14, 17, 24, 0.8);
+      color: var(--text-main);
+      cursor: pointer;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s ease;
+    }
+    .c-btn:hover {
+      background: var(--border-gold);
+      color: #12151c;
+      border-color: var(--border-gold);
+    }
+
+    /* Tactical Chronicle Log */
+    .log-panel {
+      background: var(--bg-card-sub);
+      border: 1px solid var(--border-dark);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      max-height: 170px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      font-size: 0.85rem;
+    }
+    .log-entry {
+      line-height: 1.35;
+      padding-bottom: 6px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .log-entry:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+    .log-speaker {
+      font-family: var(--font-display);
+      font-weight: 700;
+      color: #ffd88a;
+      margin-right: 6px;
+    }
+    .log-text {
+      color: var(--text-dim);
+    }
+
+    /* Scoring Screen & Modal */
+    .scoring-box {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .scoring-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      background: var(--bg-card-sub);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-dark);
+      font-size: 0.9rem;
+    }
+    .scoring-label {
+      color: var(--text-main);
+      font-weight: 500;
+    }
+    .scoring-sub {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+    .scoring-val {
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: #ffd88a;
+    }
+    .score-input {
+      width: 75px;
+      padding: 6px 8px;
+      background: #0f131a;
+      border: 1px solid var(--border-gold);
+      border-radius: 4px;
+      color: #ffd88a;
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    /* Winner Banner */
+    .winner-banner {
+      text-align: center;
+      padding: 16px;
+      border-radius: var(--radius-md);
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 1.3rem;
+      letter-spacing: 1px;
+      margin-top: 10px;
+    }
+    .winner-player {
+      background: rgba(34, 197, 94, 0.2);
+      border: 2px solid #22c55e;
+      color: #86efac;
+    }
+    .winner-anton {
+      background: rgba(239, 68, 68, 0.2);
+      border: 2px solid #ef4444;
+      color: #fca5a5;
+    }
+    .winner-tie {
+      background: rgba(234, 179, 8, 0.2);
+      border: 2px solid #eab308;
+      color: #fde047;
+    }
+
+    /* Modal Styles */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.8);
+      backdrop-filter: blur(6px);
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .modal-content {
+      background: var(--bg-card);
+      border: 2px solid var(--border-gold);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      max-width: 600px;
+      width: 100%;
+      max-height: 85vh;
+      overflow-y: auto;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.8);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-dark);
+      padding-bottom: 10px;
+    }
+    .modal-title {
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #ffd88a;
+    }
+    .close-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.5rem;
+      cursor: pointer;
+      line-height: 1;
+    }
+    .close-btn:hover {
+      color: #ffd88a;
+    }
+    details {
+      background: var(--bg-card-sub);
+      border: 1px solid var(--border-dark);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      font-size: 0.88rem;
+      line-height: 1.4;
+    }
+    summary {
+      font-family: var(--font-display);
+      font-weight: 700;
+      color: #ffd88a;
+      cursor: pointer;
+      margin-bottom: 6px;
+    }
+    details p, details ul {
+      color: var(--text-dim);
+      margin-top: 6px;
+    }
+    details ul {
+      padding-left: 18px;
+    }
+
+    /* Footer */
+    footer {
+      width: 100%;
+      max-width: 1020px;
+      margin-top: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      padding: 0 16px;
+    }
+    .btn-home {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--border-gold);
+      text-decoration: none;
+      font-family: var(--font-display);
+      font-size: 0.85rem;
+      font-weight: 700;
+      border: 1px solid var(--border-dark);
+      padding: 6px 14px;
+      border-radius: 20px;
+      background: var(--bg-card-sub);
+      transition: all 0.2s ease;
+    }
+    .btn-home:hover {
+      border-color: var(--border-gold);
+      color: #ffd88a;
+    }
+    .bmc-inline {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #ffd88a;
+      color: #12151c;
+      padding: 8px 16px;
+      border-radius: 20px;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 0.85rem;
+      transition: all 0.2s ease;
+    }
+    .bmc-inline:hover {
+      filter: brightness(1.1);
+      transform: translateY(-2px);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Floating Controls -->
+  <div class="top-controls">
+    <button class="ctrl-btn sfx-btn" id="btnSfx" aria-label="Som" title="Alternar Efeitos Sonoros">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-inline">
+        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+        <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+      </svg>
+    </button>
+    <button class="ctrl-btn" id="btnHelp" aria-label="Ajuda e Regras" title="Regras do Modo Solo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-inline">
+        <circle cx="12" cy="12" r="10"></circle>
+        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+      </svg>
+    </button>
+    <button class="ctrl-btn" id="btnReset" aria-label="Reiniciar Partida" title="Reiniciar Partida">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-inline">
+        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+        <path d="M3 3v5h5"></path>
+      </svg>
+    </button>
+    <button class="ctrl-btn lang-btn" id="btnLang">EN</button>
+  </div>
+
+  <main class="app-container">
+    
+    <!-- Hero Banner -->
+    <header class="hero">
+      <img src="../assets/art/castlecombo.webp" alt="Castle Combo Box Art" loading="lazy">
+      <div class="hero-overlay">
+        <h1 class="hero-title">CASTLE COMBO</h1>
+        <p class="hero-subtitle" data-i18n="heroSubtitle">Modo Solo: Oponente Anton</p>
+      </div>
+    </header>
+
+    <!-- Priority Bar (Always visible in Game, preview in Setup) -->
+    <section class="panel" id="priorityPanel">
+      <div class="panel-header">
+        <h2 class="panel-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-inline">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+          </svg>
+          <span data-i18n="priorityTitle">Trilha de Prioridades de Anton</span>
+        </h2>
+        <button class="btn btn-secondary" id="btnReshufflePriority" style="padding: 4px 10px; font-size: 0.75rem;" data-i18n="btnReshuffle">Sortear</button>
+      </div>
+      <div class="priority-track" id="priorityTrack">
+        <!-- Rendered dynamically -->
+      </div>
+    </section>
+
+    <!-- ==================== SETUP VIEW ==================== -->
+    <div id="viewSetup" class="setup-section">
+      <section class="panel">
+        <div class="panel-header">
+          <h2 class="panel-title" data-i18n="setupTitle">Preparação da Partida</h2>
+        </div>
+
+        <p style="font-size: 0.9rem; color: var(--text-dim); margin-bottom: 14px;" data-i18n="setupIntro">
+          Prepare a mesa normalmente para uma partida de Castle Combo com 2 fileiras de 3 cartas (Castelo e Aldeia) e o Peão Mensageiro. Você é o jogador inicial!
+        </p>
+
+        <h3 style="font-family: var(--font-display); font-size: 0.95rem; color: #ffd88a; margin-bottom: 8px;" data-i18n="diffHeading">
+          Selecione a Dificuldade de Pontuação:
+        </h3>
+        <div class="difficulty-grid">
+          <div class="diff-card selected" data-diff="easy" id="diffEasy">
+            <div class="diff-title">
+              <span data-i18n="diffEasyTitle">Fácil</span>
+              <span>⭐</span>
+            </div>
+            <p class="diff-desc" data-i18n="diffEasyDesc">
+              Chaves: 1 PV • Moedas: 1 PV a cada 2 • Descontos: 1 PV. Efeitos de ausência/virada contam apenas se cumpridos estritamente.
+            </p>
+          </div>
+
+          <div class="diff-card" data-diff="hard" id="diffHard">
+            <div class="diff-title">
+              <span data-i18n="diffHardTitle">Difícil</span>
+              <span>⭐⭐</span>
+            </div>
+            <p class="diff-desc" data-i18n="diffHardDesc">
+              Chaves: 1 PV • Moedas: 1 PV cada • Descontos: 2 PV cada. Cartas de ausência e viradas pontuam mesmo se não cumpridas!
+            </p>
+          </div>
+
+          <div class="diff-card" data-diff="insane" id="diffInsane">
+            <div class="diff-title">
+              <span data-i18n="diffInsaneTitle">Insano</span>
+              <span>⭐⭐⭐</span>
+            </div>
+            <p class="diff-desc" data-i18n="diffInsaneDesc">
+              Chaves: 2 PV cada • Moedas: 1 PV cada • Descontos: 3 PV cada. Cartas de ausência e viradas pontuam sempre!
+            </p>
+          </div>
+        </div>
+
+        <div style="margin-top: 16px;">
+          <details>
+            <summary data-i18n="rulesChecklistSummary">Checklist de Setup Físico na Mesa</summary>
+            <ul>
+              <li data-i18n="rulesCheck1">Embaralhe as cartas de Castelo e revele 3 cartas na fileira superior.</li>
+              <li data-i18n="rulesCheck2">Embaralhe as cartas de Aldeia e revele 3 cartas na fileira inferior.</li>
+              <li data-i18n="rulesCheck3">Coloque o Peão Mensageiro ao lado da Aldeia.</li>
+              <li data-i18n="rulesCheck4">Você recebe 15 Ouros e 2 Chaves da reserva.</li>
+              <li data-i18n="rulesCheck5">Anton começa com 0 Ouros e 0 Chaves. Ele não precisa de tabuleiro físico impresso — apenas um espaço 3x3 na mesa ao seu lado!</li>
+            </ul>
+          </details>
+        </div>
+
+        <button class="btn btn-large" id="btnStartGame" style="margin-top: 16px;" data-i18n="btnStart">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-inline">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
+          <span data-i18n="btnStartText">Iniciar Partida</span>
+        </button>
+      </section>
+    </div>
+
+    <!-- ==================== GAMEPLAY VIEW ==================== -->
+    <div id="viewGame" class="hidden">
+      <div class="game-layout">
+        
+        <!-- Left Column: Decision Card & Turn Controls -->
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+          
+          <div class="decision-card-container">
+            <div class="turn-header">
+              <span class="round-badge" id="roundBadge">TURNO 1 / 9</span>
+              <span class="deck-counter" id="deckCounter">Cartas de Decisão: 12</span>
+            </div>
+
+            <!-- Direction Banner -->
+            <div class="direction-banner">
+              <span class="direction-arrow" id="dirArrow">→</span>
+              <span class="direction-text" id="dirText">Varredura: Esquerda para Direita</span>
+            </div>
+
+            <!-- 3 Target Priorities -->
+            <div class="priorities-container">
+              <div class="priorities-title" data-i18n="targetPrioritiesLabel">Prioridades na Fileira Ativa:</div>
+              <div class="priority-chips" id="priorityChips">
+                <!-- Rendered dynamically -->
+              </div>
+            </div>
+
+            <!-- Fallback Box (Priorities 4, 5, 6) -->
+            <div class="fallback-box">
+              <span class="fallback-strong" data-i18n="fallbackPrefix">Fallback: </span>
+              <span id="fallbackText" data-i18n="fallbackDefault">Se nenhuma das 3 estiver na fileira, Anton busca a 4ª, 5ª ou 6ª prioridade no sentido da seta.</span>
+            </div>
+
+            <!-- Special End of Turn Alerts -->
+            <div id="effectAlert" class="effect-alert hidden">
+              <!-- Rendered dynamically -->
+            </div>
+
+            <!-- Turn Action Button -->
+            <button class="btn btn-large" id="btnNextTurn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-inline">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+              <span id="btnNextTurnText" data-i18n="btnAdvanceTurn">Anton Recrutou (Avançar Turno)</span>
+            </button>
+          </div>
+
+          <!-- Anton Resource Counters -->
+          <section class="panel">
+            <div class="panel-header">
+              <h3 class="panel-title" style="font-size: 1rem;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-inline">
+                  <circle cx="12" cy="12" r="8"></circle>
+                  <line x1="12" y1="8" x2="12" y2="16"></line>
+                  <line x1="8" y1="12" x2="16" y2="12"></line>
+                </svg>
+                <span data-i18n="resourcesTitle">Recursos de Anton</span>
+              </h3>
+              <span style="font-size: 0.75rem; color: var(--text-muted);" data-i18n="antonFreeRule">Anton não paga custos</span>
+            </div>
+
+            <div class="counters-bar">
+              <!-- Chaves -->
+              <div class="counter-card">
+                <div class="counter-label">
+                  <span data-i18n="resKeys">Chaves</span> 🗝️
+                </div>
+                <div class="counter-controls">
+                  <button class="c-btn" onclick="adjustResource('keys', -1)">-</button>
+                  <span class="counter-val" id="valKeys">0</span>
+                  <button class="c-btn" onclick="adjustResource('keys', 1)">+</button>
+                </div>
+              </div>
+
+              <!-- Ouros -->
+              <div class="counter-card">
+                <div class="counter-label">
+                  <span data-i18n="resCoins">Ouros</span> 🪙
+                </div>
+                <div class="counter-controls">
+                  <button class="c-btn" onclick="adjustResource('coins', -1)">-</button>
+                  <span class="counter-val" id="valCoins">0</span>
+                  <button class="c-btn" onclick="adjustResource('coins', 1)">+</button>
+                </div>
+              </div>
+
+              <!-- Descontos -->
+              <div class="counter-card">
+                <div class="counter-label">
+                  <span data-i18n="resDiscounts">Descontos</span> 🏷️
+                </div>
+                <div class="counter-controls">
+                  <button class="c-btn" onclick="adjustResource('discounts', -1)">-</button>
+                  <span class="counter-val" id="valDiscounts">0</span>
+                  <button class="c-btn" onclick="adjustResource('discounts', 1)">+</button>
+                </div>
+              </div>
+            </div>
+
+            <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 10px; line-height: 1.3;" data-i18n="antonBenefitRule">
+              💡 <em>Anton ganha todos os benefícios das habilidades. Em efeitos com "OU", ele ganha AMBOS ("E").</em>
+            </p>
+          </section>
+
+        </div>
+
+        <!-- Right Column: 3x3 Grid Guide & Chronicle Log -->
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+          
+          <!-- 3x3 Anton Castle Grid Guide -->
+          <section class="panel">
+            <div class="panel-header">
+              <h3 class="panel-title" style="font-size: 1rem;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-inline">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="9" y1="3" x2="9" y2="21"></line>
+                  <line x1="15" y1="3" x2="15" y2="21"></line>
+                  <line x1="3" y1="9" x2="21" y2="9"></line>
+                  <line x1="3" y1="15" x2="21" y2="15"></line>
+                </svg>
+                <span data-i18n="gridTitle">Castelo de Anton (Guia 3x3)</span>
+              </h3>
+              <span style="font-size: 0.8rem; color: #ffd88a; font-weight: 700;" id="cardsCountBadge">0 / 9 Cartas</span>
+            </div>
+
+            <div class="grid-3x3-container">
+              <div class="grid-3x3" id="antonGrid">
+                <!-- 9 slots rendered in JS -->
+              </div>
+              <p class="grid-helper" data-i18n="gridHelper">
+                Anton preenche sequencialmente de 1 a 9. Se a carta pontuar por posição específica (ex: linha/coluna/borda), clique no espaço correspondente para colocá-la lá diretamente.
+              </p>
+            </div>
+          </section>
+
+          <!-- Narrative Tactical Log -->
+          <section class="panel">
+            <div class="panel-header">
+              <h3 class="panel-title" style="font-size: 1rem;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-inline">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                </svg>
+                <span data-i18n="logTitle">Crônica do Mensageiro Michel</span>
+              </h3>
+              <button class="btn btn-secondary" id="btnClearLog" style="padding: 2px 8px; font-size: 0.7rem;" data-i18n="btnClear">Limpar</button>
+            </div>
+            <div class="log-panel" id="logPanel">
+              <div class="log-entry">
+                <span class="log-speaker">Michel:</span>
+                <span class="log-text" data-i18n="logInit">"Que comece a grande Festa Combo! Anton observa as cartas e aguarda sua jogada."</span>
+              </div>
+            </div>
+          </section>
+
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ==================== SCORING VIEW ==================== -->
+    <div id="viewScoring" class="hidden">
+      <section class="panel">
+        <div class="panel-header">
+          <h2 class="panel-title" data-i18n="finalScoringTitle">Apuração Final de Pontos</h2>
+          <span style="font-size: 0.85rem; color: #ffd88a; font-weight: 700;" id="scoringDiffLabel">Dificuldade: Fácil</span>
+        </div>
+
+        <p style="font-size: 0.88rem; color: var(--text-dim); margin-bottom: 16px;" data-i18n="scoringIntro">
+          Os 9 turnos foram concluídos! Aloque as moedas restantes de Anton em suas bolsas de moedas (se houver) e calcule os pontos das cartas de personagens normalmente.
+        </p>
+
+        <div class="scoring-box">
+          <!-- Anton Cards Base VP -->
+          <div class="scoring-row">
+            <div>
+              <div class="scoring-label" data-i18n="scoreAntonCards">Pontos das Cartas de Anton:</div>
+              <div class="scoring-sub" data-i18n="scoreAntonCardsSub">Soma dos pontos impressos e condições das cartas dele</div>
+            </div>
+            <input type="number" class="score-input" id="inputAntonCardPoints" value="0" min="0" oninput="recalcScores()">
+          </div>
+
+          <!-- Keys Points -->
+          <div class="scoring-row">
+            <div>
+              <div class="scoring-label" data-i18n="scoreKeys">Bônus por Chaves:</div>
+              <div class="scoring-sub" id="keysSub">0 chaves × 1 PV</div>
+            </div>
+            <span class="scoring-val" id="scoreKeysVal">0 PV</span>
+          </div>
+
+          <!-- Coins Points -->
+          <div class="scoring-row">
+            <div>
+              <div class="scoring-label" data-i18n="scoreCoins">Bônus por Ouros:</div>
+              <div class="scoring-sub" id="coinsSub">0 ouros</div>
+            </div>
+            <span class="scoring-val" id="scoreCoinsVal">0 PV</span>
+          </div>
+
+          <!-- Discounts Points -->
+          <div class="scoring-row">
+            <div>
+              <div class="scoring-label" data-i18n="scoreDiscounts">Bônus por Descontos:</div>
+              <div class="scoring-sub" id="discountsSub">0 descontos</div>
+            </div>
+            <span class="scoring-val" id="scoreDiscountsVal">0 PV</span>
+          </div>
+
+          <!-- Total Anton -->
+          <div class="scoring-row" style="background: rgba(239, 68, 68, 0.15); border-color: #ef4444;">
+            <div class="scoring-label" style="font-size: 1.05rem; font-weight: 700; color: #fca5a5;" data-i18n="totalAnton">
+              Pontuação Total de Anton:
+            </div>
+            <span class="scoring-val" style="font-size: 1.4rem; color: #fca5a5;" id="totalAntonVal">0 PV</span>
+          </div>
+
+          <hr style="border: none; border-top: 1px solid var(--border-dark); margin: 8px 0;">
+
+          <!-- Player Score Input -->
+          <div class="scoring-row" style="background: rgba(34, 197, 94, 0.15); border-color: #22c55e;">
+            <div>
+              <div class="scoring-label" style="font-size: 1.05rem; font-weight: 700; color: #86efac;" data-i18n="totalPlayer">
+                Sua Pontuação Total:
+              </div>
+              <div class="scoring-sub" data-i18n="totalPlayerSub">Some os pontos de suas 9 cartas, moedas e chaves</div>
+            </div>
+            <input type="number" class="score-input" id="inputPlayerPoints" value="0" min="0" oninput="recalcScores()" style="border-color: #22c55e;">
+          </div>
+        </div>
+
+        <div id="winnerBanner" class="winner-banner hidden">
+          <!-- Populated in JS -->
+        </div>
+
+        <button class="btn btn-large" id="btnPlayAgain" style="margin-top: 16px;" data-i18n="btnPlayAgain">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-inline">
+            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+          </svg>
+          <span data-i18n="btnPlayAgainText">Jogar Novamente</span>
+        </button>
+      </section>
+    </div>
+
+  </main>
+
+  <!-- Help / Rules Modal -->
+  <div class="modal-overlay hidden" id="helpModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title" data-i18n="helpTitle">Regras do Modo Solo (Anton)</h2>
+        <button class="close-btn" id="btnCloseHelp" aria-label="Fechar">&times;</button>
+      </div>
+
+      <details open>
+        <summary data-i18n="helpOverviewSummary">Visão Geral & Fluxo de Turno</summary>
+        <p data-i18n="helpOverviewText">
+          No seu turno, jogue normalmente conforme as regras do jogo base. No turno de Anton:
+        </p>
+        <ul>
+          <li data-i18n="helpRule1">Anton nunca usa chaves e sempre pega cartas da linha atual indicada pelo Peão Mensageiro.</li>
+          <li data-i18n="helpRule2">Revele a carta de decisão: Anton verifica as prioridades indicadas (1ª, 2ª, 3ª) no sentido da seta.</li>
+          <li data-i18n="helpRule3">Se nenhuma das 3 estiver disponível na linha, ele procura as 4ª, 5ª e 6ª prioridades (do topo do tabuleiro) no sentido da seta.</li>
+          <li data-i18n="helpRule4">Anton não paga custos de ouro das cartas.</li>
+          <li data-i18n="helpRule5">Mova o mensageiro se a carta recrutada exigir. Aplique efeitos de fim de turno ([X][X][X] descarte ou reembaralhar).</li>
+        </ul>
+      </details>
+
+      <details>
+        <summary data-i18n="helpGridSummary">Colocação de Cartas no Grid de Anton (3x3)</summary>
+        <p data-i18n="helpGridText">
+          Anton preenche sua grade da esquerda para a direita e de cima para baixo (espaços 1 a 9).
+          <strong>Exceção:</strong> Se a carta exigir uma posição específica para pontuar (ex: canto, centro, topo, base), Anton ignora o preenchimento sequencial e a adjacência e a coloca diretamente naquele espaço se disponível!
+        </p>
+      </details>
+
+      <details>
+        <summary data-i18n="helpAbilitiesSummary">Habilidades de Anton</summary>
+        <p data-i18n="helpAbilitiesText">
+          Anton recebe todos os benefícios imediatos das cartas. Quando houver <strong>"OU"</strong>, trate sempre como <strong>"E"</strong> (ele recebe ambos os benefícios).
+          Se Anton precisar descartar uma carta para ganhar recursos (ex: Mestre das Guildas), ele descarta a de maior custo.
+        </p>
+      </details>
+
+      <details>
+        <summary data-i18n="helpScoringSummary">Dificuldades & Pontuação Final</summary>
+        <ul>
+          <li data-i18n="helpScoreEasy"><strong>Fácil:</strong> 1 PV por chave, 1 PV a cada 2 ouros, 1 PV por desconto. Condições de ausência/virada contam apenas se estritamente cumpridas.</li>
+          <li data-i18n="helpScoreHard"><strong>Difícil:</strong> 1 PV por chave, 1 PV por ouro, 2 PV por desconto. Condições de ausência e viradas pontuam sempre!</li>
+          <li data-i18n="helpScoreInsane"><strong>Insano:</strong> 2 PV por chave, 1 PV por ouro, 3 PV por desconto. Condições de ausência e viradas pontuam sempre!</li>
+        </ul>
+        <p style="margin-top: 6px;" data-i18n="helpDiscountNote">
+          * Descontos que afetam ambas as fileiras (Castelo e Aldeia) contam como 2 descontos!
+        </p>
+      </details>
+
+      <button class="btn" id="btnGotIt" style="width: 100%;" data-i18n="btnUnderstood">Entendido!</button>
+    </div>
+  </div>
+
+  <!-- Reset Confirmation Modal -->
+  <div class="modal-overlay hidden" id="resetModal">
+    <div class="modal-content" style="max-width: 420px; text-align: center;">
+      <h2 class="modal-title" data-i18n="resetConfirmTitle">Reiniciar Partida?</h2>
+      <p style="color: var(--text-dim); font-size: 0.9rem;" data-i18n="resetConfirmText">
+        Todo o progresso atual do jogo e o baralho de decisão serão reiniciados.
+      </p>
+      <div style="display: flex; gap: 10px; margin-top: 10px;">
+        <button class="btn btn-secondary" id="btnCancelReset" style="flex: 1;" data-i18n="btnCancel">Cancelar</button>
+        <button class="btn" id="btnConfirmReset" style="flex: 1;" data-i18n="btnConfirm">Reiniciar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer & Credits -->
+  <footer>
+    <div class="credits">
+      <img src="../assets/art/castlecombo.webp" alt="Castle Combo Box Cover">
+      <div class="credits-text">
+        <strong>Castle Combo</strong> — Jogo de Grégory Grard & Mathieu Roussel. Arte de Stéphane Escapa. © Catch Up Games.<br>
+        Modo solo criado por <strong>ben_uez</strong> no BoardGameGeek. Companion app não-oficial.
+      </div>
+    </div>
+
+    <div style="display: flex; gap: 12px; align-items: center; margin-top: 8px;">
+      <a class="btn-home" href="../index.html" data-i18n="btnHome">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-inline">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+          <polyline points="9 22 9 12 15 12 15 22"></polyline>
+        </svg>
+        <span data-i18n="homeText">Início</span>
+      </a>
+
+      <a class="bmc-inline" href="https://www.buymeacoffee.com/colletes" target="_blank" rel="noopener" aria-label="Buy me a coffee">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-inline">
+          <path d="M4 8h13a2 2 0 0 1 2 2v1a3 3 0 0 1-3 3h-1"/><path d="M4 8h13v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V8Z"/><path d="M8 3c-.6 1 .5 1.6 0 3M12 3c-.6 1 .5 1.6 0 3"/>
+        </svg>
+        <span>Buy me a coffee</span>
+      </a>
+    </div>
+  </footer>
+
+  <script>
+    /* =========================================================
+       CASTLE COMBO - SOLO BOT (ANTON)
+       Core Logic, State Management, i18n & ThemeKit Audio
+       ========================================================= */
+
+    const SHIELDS = [
+      { id: 'campesinato', namePt: 'Campesinato', nameEn: 'Peasants', color: 'shield-campesinato', icon: '🌾' },
+      { id: 'nobreza', namePt: 'Nobreza', nameEn: 'Nobles', color: 'shield-nobreza', icon: '👑' },
+      { id: 'militar', namePt: 'Militar', nameEn: 'Military', color: 'shield-militar', icon: '⚔️' },
+      { id: 'artesanato', namePt: 'Artesanato', nameEn: 'Crafts', color: 'shield-artesanato', icon: '🔨' },
+      { id: 'fe', namePt: 'Fé', nameEn: 'Clergy', color: 'shield-fe', icon: '🕊️' },
+      { id: 'escolaridade', namePt: 'Escolaridade', nameEn: 'Scholars', color: 'shield-escolaridade', icon: '📜' }
+    ];
+
+    // The 12 official Decision Cards from the PDF
+    const DECISION_CARDS_RAW = [
+      { dir: 'right', priorities: [1, 2, 3], effect: 'discard3' },
+      { dir: 'right', priorities: [2, 1, 3], effect: null },
+      { dir: 'right', priorities: [3, 1, 2], effect: null },
+      { dir: 'right', priorities: [3, 2, 1], effect: 'discard3' },
+      { dir: 'right', priorities: [2, 3, 1], effect: 'discard3' },
+      { dir: 'right', priorities: [1, 3, 2], effect: 'reshuffle' },
+      { dir: 'left',  priorities: [3, 1, 2], effect: 'discard3' },
+      { dir: 'left',  priorities: [3, 2, 1], effect: null },
+      { dir: 'left',  priorities: [2, 1, 3], effect: 'discard3' },
+      { dir: 'left',  priorities: [2, 3, 1], effect: null },
+      { dir: 'left',  priorities: [1, 3, 2], effect: 'discard3' },
+      { dir: 'left',  priorities: [1, 2, 3], effect: 'reshuffle' }
+    ];
+
+    const I18N = {
+      pt: {
+        docTitle: 'Castle Combo — Modo Solo (Anton)',
+        heroSubtitle: 'Modo Solo: Oponente Anton',
+        priorityTitle: 'Trilha de Prioridades de Anton',
+        btnReshuffle: 'Sortear',
+        setupTitle: 'Preparação da Partida',
+        setupIntro: 'Prepare a mesa normalmente para uma partida de Castle Combo com 2 fileiras de 3 cartas (Castelo e Aldeia) e o Peão Mensageiro. Você é o jogador inicial!',
+        diffHeading: 'Selecione a Dificuldade de Pontuação:',
+        diffEasyTitle: 'Fácil',
+        diffEasyDesc: 'Chaves: 1 PV • Moedas: 1 PV a cada 2 • Descontos: 1 PV. Efeitos de ausência/virada contam apenas se cumpridos estritamente.',
+        diffHardTitle: 'Difícil',
+        diffHardDesc: 'Chaves: 1 PV • Moedas: 1 PV cada • Descontos: 2 PV cada. Cartas de ausência e viradas pontuam mesmo se não cumpridas!',
+        diffInsaneTitle: 'Insano',
+        diffInsaneDesc: 'Chaves: 2 PV cada • Moedas: 1 PV cada • Descontos: 3 PV cada. Cartas de ausência e viradas pontuam sempre!',
+        rulesChecklistSummary: 'Checklist de Setup Físico na Mesa',
+        rulesCheck1: 'Embaralhe as cartas de Castelo e revele 3 cartas na fileira superior.',
+        rulesCheck2: 'Embaralhe as cartas de Aldeia e revele 3 cartas na fileira inferior.',
+        rulesCheck3: 'Coloque o Peão Mensageiro ao lado da Aldeia.',
+        rulesCheck4: 'Você recebe 15 Ouros e 2 Chaves da reserva.',
+        rulesCheck5: 'Anton começa com 0 Ouros e 0 Chaves. Ele não precisa de tabuleiro físico impresso — apenas um espaço 3x3 na mesa ao seu lado!',
+        btnStart: 'Iniciar Partida',
+        btnStartText: 'Iniciar Partida',
+        targetPrioritiesLabel: 'Prioridades na Fileira Ativa:',
+        fallbackPrefix: 'Fallback: ',
+        fallbackDefault: 'Se nenhuma das 3 estiver na fileira, Anton busca a 4ª, 5ª ou 6ª prioridade no sentido da seta.',
+        btnAdvanceTurn: 'Anton Recrutou (Avançar Turno)',
+        resourcesTitle: 'Recursos de Anton',
+        antonFreeRule: 'Anton não paga custos',
+        resKeys: 'Chaves',
+        resCoins: 'Ouros',
+        resDiscounts: 'Descontos',
+        antonBenefitRule: '💡 Anton ganha todos os benefícios das habilidades. Em efeitos com "OU", ele ganha AMBOS ("E").',
+        gridTitle: 'Castelo de Anton (Guia 3x3)',
+        gridHelper: 'Anton preenche sequencialmente de 1 a 9. Se a carta pontuar por posição específica (ex: linha/coluna/borda), clique no espaço correspondente para colocá-la lá diretamente.',
+        logTitle: 'Crônica do Mensageiro Michel',
+        btnClear: 'Limpar',
+        logInit: '"Que comece a grande Festa Combo! Anton observa as cartas e aguarda sua jogada."',
+        finalScoringTitle: 'Apuração Final de Pontos',
+        scoringIntro: 'Os 9 turnos foram concluídos! Aloque as moedas restantes de Anton em suas bolsas de moedas (se houver) e calcule os pontos das cartas de personagens normalmente.',
+        scoreAntonCards: 'Pontos das Cartas de Anton:',
+        scoreAntonCardsSub: 'Soma dos pontos impressos e condições das cartas dele',
+        scoreKeys: 'Bônus por Chaves:',
+        scoreCoins: 'Bônus por Ouros:',
+        scoreDiscounts: 'Bônus por Descontos:',
+        totalAnton: 'Pontuação Total de Anton:',
+        totalPlayer: 'Sua Pontuação Total:',
+        totalPlayerSub: 'Some os pontos de suas 9 cartas, moedas e chaves',
+        btnPlayAgain: 'Jogar Novamente',
+        btnPlayAgainText: 'Jogar Novamente',
+        helpTitle: 'Regras do Modo Solo (Anton)',
+        helpOverviewSummary: 'Visão Geral & Fluxo de Turno',
+        helpOverviewText: 'No seu turno, jogue normalmente conforme as regras do jogo base. No turno de Anton:',
+        helpRule1: 'Anton nunca usa chaves e sempre pega cartas da linha atual indicada pelo Peão Mensageiro.',
+        helpRule2: 'Revele a carta de decisão: Anton verifica as prioridades indicadas (1ª, 2ª, 3ª) no sentido da seta.',
+        helpRule3: 'Se nenhuma das 3 estiver disponível na linha, ele procura as 4ª, 5ª e 6ª prioridades (do topo do tabuleiro) no sentido da seta.',
+        helpRule4: 'Anton não paga custos de ouro das cartas.',
+        helpRule5: 'Mova o mensageiro se a carta recrutada exigir. Aplique efeitos de fim de turno ([X][X][X] descarte ou reembaralhar).',
+        helpGridSummary: 'Colocação de Cartas no Grid de Anton (3x3)',
+        helpGridText: 'Anton preenche sua grade da esquerda para a direita e de cima para baixo (espaços 1 a 9). Exceção: Se a carta exigir uma posição específica para pontuar (ex: canto, centro, topo, base), Anton ignora o preenchimento sequencial e a adjacência e a coloca diretamente naquele espaço se disponível!',
+        helpAbilitiesSummary: 'Habilidades de Anton',
+        helpAbilitiesText: 'Anton recebe todos os benefícios imediatos das cartas. Quando houver "OU", trate sempre como "E" (ele recebe ambos os benefícios). Se Anton precisar descartar uma carta para ganhar recursos (ex: Mestre das Guildas), ele descarta a de maior custo.',
+        helpScoringSummary: 'Dificuldades & Pontuação Final',
+        helpScoreEasy: 'Fácil: 1 PV por chave, 1 PV a cada 2 ouros, 1 PV por desconto. Condições de ausência/virada contam apenas se estritamente cumpridas.',
+        helpScoreHard: 'Difícil: 1 PV por chave, 1 PV por ouro, 2 PV por desconto. Condições de ausência e viradas pontuam sempre!',
+        helpScoreInsane: 'Insano: 2 PV por chave, 1 PV por ouro, 3 PV por desconto. Condições de ausência e viradas pontuam sempre!',
+        helpDiscountNote: '* Descontos que afetam ambas as fileiras (Castelo e Aldeia) contam como 2 descontos!',
+        btnUnderstood: 'Entendido!',
+        resetConfirmTitle: 'Reiniciar Partida?',
+        resetConfirmText: 'Todo o progresso atual do jogo e o baralho de decisão serão reiniciados.',
+        btnCancel: 'Cancelar',
+        btnConfirm: 'Reiniciar',
+        btnHome: 'Início',
+        homeText: 'Início',
+        dirRight: 'Varredura: Esquerda para Direita (→)',
+        dirLeft: 'Varredura: Direita para Esquerda (←)',
+        alertDiscard: 'Efeito Fim de Turno: Descarte todas as 3 cartas restantes da fileira atual e reponha o mercado!',
+        alertReshuffle: 'Efeito Fim de Turno: Reembaralhe todas as cartas de decisão de volta ao baralho!',
+        turnRound: 'TURNO',
+        cardsRemaining: 'Cartas no Baralho:',
+        winnerPlayer: 'PARABÉNS! VOCÊ VENCEU O DUELO!',
+        winnerAnton: 'ANTON VENCEU O FESTIVAL COMBO!',
+        winnerTie: 'EMPATE HISTÓRICO NO REINO!'
+      },
+      en: {
+        docTitle: 'Castle Combo — Solo Mode (Anton)',
+        heroSubtitle: 'Solo Mode: Anton Automa Rival',
+        priorityTitle: 'Anton Priority Track',
+        btnReshuffle: 'Shuffle',
+        setupTitle: 'Game Setup',
+        setupIntro: 'Prepare the tabletop as usual for Castle Combo with 2 rows of 3 cards (Castle and Village) and the Messenger pawn. You are the starting player!',
+        diffHeading: 'Select Scoring Difficulty:',
+        diffEasyTitle: 'Easy',
+        diffEasyDesc: 'Keys: 1 VP • Coins: 1 VP per 2 • Discounts: 1 VP. Missing/flipped card rules count only if strictly fulfilled.',
+        diffHardTitle: 'Hard',
+        diffHardDesc: 'Keys: 1 VP • Coins: 1 VP each • Discounts: 2 VP each. Missing & flipped card rules score regardless of condition!',
+        diffInsaneTitle: 'Insane',
+        diffInsaneDesc: 'Keys: 2 VP each • Coins: 1 VP each • Discounts: 3 VP each. Missing & flipped card rules score regardless of condition!',
+        rulesChecklistSummary: 'Tabletop Setup Checklist',
+        rulesCheck1: 'Shuffle the Castle cards and reveal 3 cards in the top row.',
+        rulesCheck2: 'Shuffle the Village cards and reveal 3 cards in the bottom row.',
+        rulesCheck3: 'Place the Messenger Pawn next to the Village row.',
+        rulesCheck4: 'You receive 15 Gold and 2 Keys from the supply.',
+        rulesCheck5: 'Anton starts with 0 Gold and 0 Keys. No printed board is needed — just reserve a 3x3 table area next to you!',
+        btnStart: 'Start Game',
+        btnStartText: 'Start Game',
+        targetPrioritiesLabel: 'Active Row Priorities:',
+        fallbackPrefix: 'Fallback: ',
+        fallbackDefault: 'If none of the 3 are in the row, Anton seeks the 4th, 5th, or 6th priority in arrow direction.',
+        btnAdvanceTurn: 'Anton Recruited (Advance Turn)',
+        resourcesTitle: 'Anton Resources',
+        antonFreeRule: 'Anton pays no costs',
+        resKeys: 'Keys',
+        resCoins: 'Gold',
+        resDiscounts: 'Discounts',
+        antonBenefitRule: '💡 Anton receives all card benefits. For "OR" effects, he receives BOTH ("AND").',
+        gridTitle: 'Anton Castle (3x3 Guide)',
+        gridHelper: 'Anton places sequentially from 1 to 9. If a card scores for a specific position (e.g. row/col/edge), click the slot to place it directly.',
+        logTitle: 'Michel the Herald Chronicle',
+        btnClear: 'Clear',
+        logInit: '"Let the great Combo Festival begin! Anton eyes the cards and awaits your move."',
+        finalScoringTitle: 'Final Score Calculation',
+        scoringIntro: 'All 9 turns are complete! Place Anton remaining coins onto his coin pouch cards (if any) and calculate character card points normally.',
+        scoreAntonCards: 'Anton Card Points:',
+        scoreAntonCardsSub: 'Sum of printed VP and conditions on his recruited cards',
+        scoreKeys: 'Key Bonus:',
+        scoreCoins: 'Gold Bonus:',
+        scoreDiscounts: 'Discount Bonus:',
+        totalAnton: 'Anton Total Score:',
+        totalPlayer: 'Your Total Score:',
+        totalPlayerSub: 'Sum of your 9 cards, remaining gold and keys',
+        btnPlayAgain: 'Play Again',
+        btnPlayAgainText: 'Play Again',
+        helpTitle: 'Solo Mode Rules (Anton)',
+        helpOverviewSummary: 'Overview & Turn Flow',
+        helpOverviewText: 'On your turn, play normally by base rules. On Anton turn:',
+        helpRule1: 'Anton never spends keys and always drafts from the active row indicated by the Messenger Pawn.',
+        helpRule2: 'Reveal the decision card: Anton checks priorities (1st, 2nd, 3rd) in the arrow direction.',
+        helpRule3: 'If none of the 3 are in the row, he checks 4th, 5th, and 6th priorities in arrow direction.',
+        helpRule4: 'Anton pays no gold cost for cards.',
+        helpRule5: 'Move messenger if the card requires it. Apply end-of-turn effects ([X][X][X] discard or reshuffle).',
+        helpGridSummary: 'Placing Cards in Anton Grid (3x3)',
+        helpGridText: 'Anton fills his grid left-to-right, top-to-bottom (slots 1 to 9). Exception: If the card has a positional scoring condition, he places it directly into that slot if open!',
+        helpAbilitiesSummary: 'Anton Abilities',
+        helpAbilitiesText: 'Anton receives all immediate card benefits. When there is "OR", treat as "AND" (gains both). If required to discard a card for resources, he discards his highest-cost card.',
+        helpScoringSummary: 'Difficulties & Final Scoring',
+        helpScoreEasy: 'Easy: 1 VP per key, 1 VP per 2 gold, 1 VP per discount. Missing/flipped card bonuses score only if strictly fulfilled.',
+        helpScoreHard: 'Hard: 1 VP per key, 1 VP per gold, 2 VP per discount. Missing/flipped bonuses score always!',
+        helpScoreInsane: 'Insane: 2 VP per key, 1 VP per gold, 3 VP per discount. Missing/flipped bonuses score always!',
+        helpDiscountNote: '* Discounts affecting both rows (Castle and Village) count as 2 discounts!',
+        btnUnderstood: 'Understood!',
+        resetConfirmTitle: 'Restart Game?',
+        resetConfirmText: 'All current progress and decision decks will be reset.',
+        btnCancel: 'Cancel',
+        btnConfirm: 'Restart',
+        btnHome: 'Home',
+        homeText: 'Home',
+        dirRight: 'Scan Direction: Left to Right (→)',
+        dirLeft: 'Scan Direction: Right to Left (←)',
+        alertDiscard: 'End-of-Turn Effect: Discard all 3 remaining cards from active row and replenish!',
+        alertReshuffle: 'End-of-Turn Effect: Reshuffle all decision cards back into the deck!',
+        turnRound: 'TURN',
+        cardsRemaining: 'Cards in Deck:',
+        winnerPlayer: 'CONGRATULATIONS! YOU WON THE DUEL!',
+        winnerAnton: 'ANTON WON THE COMBO FESTIVAL!',
+        winnerTie: 'A LEGENDARY TIE IN THE REALM!'
+      }
+    };
+
+    function getStorage(key, defaultVal) {
+      try { return localStorage.getItem(key) || defaultVal; } catch (e) { return defaultVal; }
+    }
+    function setStorage(key, val) {
+      try { localStorage.setItem(key, val); } catch (e) {}
+    }
+
+    // State Variables
+    let currentLang = getStorage('boardbots_lang', 'pt');
+    let difficulty = 'easy'; // easy, hard, insane
+    let priorityOrder = []; // Array of 6 shield objects
+    let decisionDeck = [];
+    let decisionDiscard = [];
+    let currentCard = null;
+    let roundNumber = 1; // 1 to 9
+    let antonGridSlots = Array(9).fill(false); // true if filled
+    let antonResources = {
+      keys: 0,
+      coins: 0,
+      discounts: 0
+    };
+    let sfxMuted = getStorage('boardbots_sfx_muted', 'false') === 'true';
+
+    // Helper: Play SFX safely
+    function playSfx(name, vol = 0.5) {
+      if (sfxMuted) return;
+      if (window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
+        window.ThemeKit.playSfx(name, { volume: vol });
+      }
+    }
+
+    // Helper: i18n lookup
+    function t(key) {
+      const dict = I18N[currentLang] || I18N.pt;
+      return dict[key] !== undefined ? dict[key] : (I18N.pt[key] || key);
+    }
+
+    function applyI18n() {
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        el.textContent = t(key);
+      });
+      document.getElementById('btnLang').textContent = currentLang === 'pt' ? 'EN' : 'PT';
+      document.documentElement.lang = currentLang === 'pt' ? 'pt-BR' : 'en';
+      renderPriorityTrack();
+      if (currentCard) renderCurrentDecisionCard();
+      renderAntonGrid();
+    }
+
+    // Shuffle Array Utility
+    function shuffle(arr) {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    // Randomize Priority Track
+    function randomizePriorities() {
+      priorityOrder = shuffle(SHIELDS);
+      renderPriorityTrack();
+      playSfx('card-shuffle');
+    }
+
+    function renderPriorityTrack() {
+      const track = document.getElementById('priorityTrack');
+      if (!track) return;
+      track.innerHTML = '';
+      priorityOrder.forEach((shield, idx) => {
+        const slot = document.createElement('div');
+        slot.className = 'priority-slot';
+        slot.id = `priority-slot-${idx + 1}`;
+        
+        const name = currentLang === 'pt' ? shield.namePt : shield.nameEn;
+        slot.innerHTML = `
+          <span class="slot-num">${idx + 1}</span>
+          <div class="shield-badge ${shield.color}">
+            <span>${shield.icon}</span>
+          </div>
+          <span class="shield-name" title="${name}">${name}</span>
+        `;
+        track.appendChild(slot);
+      });
+    }
+
+    // Init Decision Deck
+    function initDecisionDeck() {
+      decisionDeck = shuffle(DECISION_CARDS_RAW);
+      decisionDiscard = [];
+    }
+
+    // Draw Next Decision Card
+    function drawDecisionCard() {
+      if (decisionDeck.length === 0) {
+        decisionDeck = shuffle(decisionDiscard);
+        decisionDiscard = [];
+        playSfx('card-shuffle');
+        addLog('Michel', currentLang === 'pt' 
+          ? 'O baralho de decisões de Anton foi reembaralhado!' 
+          : 'Anton decision deck has been reshuffled!');
+      }
+
+      currentCard = decisionDeck.pop();
+      decisionDiscard.push(currentCard);
+      playSfx('card-flip');
+      renderCurrentDecisionCard();
+    }
+
+    function renderCurrentDecisionCard() {
+      if (!currentCard) return;
+
+      // Update Round Badge & Counter
+      document.getElementById('roundBadge').textContent = `${t('turnRound')} ${roundNumber} / 9`;
+      document.getElementById('deckCounter').textContent = `${t('cardsRemaining')} ${decisionDeck.length}`;
+
+      // Update Direction
+      const isRight = currentCard.dir === 'right';
+      const dirArrow = document.getElementById('dirArrow');
+      const dirText = document.getElementById('dirText');
+      dirArrow.textContent = isRight ? '→' : '←';
+      dirText.textContent = isRight ? t('dirRight') : t('dirLeft');
+
+      // Update 3 Priority Chips
+      const chipsCont = document.getElementById('priorityChips');
+      chipsCont.innerHTML = '';
+
+      // Reset target highlights on priority track
+      document.querySelectorAll('.priority-slot').forEach(s => s.classList.remove('active-target'));
+
+      currentCard.priorities.forEach((pNum, rankIdx) => {
+        const shield = priorityOrder[pNum - 1];
+        const name = currentLang === 'pt' ? shield.namePt : shield.nameEn;
+        
+        // Highlight corresponding slot on the track
+        const slotEl = document.getElementById(`priority-slot-${pNum}`);
+        if (slotEl) slotEl.classList.add('active-target');
+
+        const chip = document.createElement('div');
+        chip.className = `priority-chip ${shield.color}`;
+        const rankLabels = currentLang === 'pt' ? ['1ª Escolha', '2ª Escolha', '3ª Escolha'] : ['1st Pick', '2nd Pick', '3rd Pick'];
+        
+        chip.innerHTML = `
+          <span class="rank-tag">${rankLabels[rankIdx]} (#${pNum})</span>
+          <span style="font-size: 1.2rem; margin-bottom: 2px;">${shield.icon}</span>
+          <span class="chip-name">${name}</span>
+        `;
+        chipsCont.appendChild(chip);
+      });
+
+      // Update Fallback Text (priorities 4, 5, 6)
+      const remainingIndices = [1, 2, 3, 4, 5, 6].filter(n => !currentCard.priorities.includes(n));
+      const fallbackNames = remainingIndices.map(n => {
+        const s = priorityOrder[n - 1];
+        return `${n}º ${(currentLang === 'pt' ? s.namePt : s.nameEn)}`;
+      }).join(', ');
+      
+      const fallbackEl = document.getElementById('fallbackText');
+      fallbackEl.innerHTML = (currentLang === 'pt'
+        ? `Se não houver na fileira, Anton busca por: <strong>${fallbackNames}</strong> no sentido da seta.`
+        : `If absent from row, Anton seeks: <strong>${fallbackNames}</strong> in arrow direction.`);
+
+      // Update End-of-Turn Effect Alert
+      const alertBox = document.getElementById('effectAlert');
+      if (currentCard.effect === 'discard3') {
+        alertBox.className = 'effect-alert effect-discard';
+        alertBox.innerHTML = `
+          <span class="effect-icon">❌❌❌</span>
+          <span>${t('alertDiscard')}</span>
+        `;
+        alertBox.classList.remove('hidden');
+      } else if (currentCard.effect === 'reshuffle') {
+        alertBox.className = 'effect-alert effect-reshuffle';
+        alertBox.innerHTML = `
+          <span class="effect-icon">🔄</span>
+          <span>${t('alertReshuffle')}</span>
+        `;
+        alertBox.classList.remove('hidden');
+      } else {
+        alertBox.classList.add('hidden');
+      }
+    }
+
+    // Grid 3x3 Management
+    function renderAntonGrid() {
+      const grid = document.getElementById('antonGrid');
+      if (!grid) return;
+      grid.innerHTML = '';
+
+      // Find first empty slot for recommendation
+      const nextEmptyIndex = antonGridSlots.findIndex(filled => !filled);
+
+      antonGridSlots.forEach((filled, idx) => {
+        const slot = document.createElement('div');
+        slot.className = `grid-slot ${filled ? 'filled' : ''} ${idx === nextEmptyIndex ? 'recommended' : ''}`;
+        
+        slot.innerHTML = `
+          <span class="slot-index">${idx + 1}</span>
+          <span class="slot-status">
+            ${filled ? (currentLang === 'pt' ? 'Recrutada' : 'Drafted') : (idx === nextEmptyIndex ? (currentLang === 'pt' ? 'Próxima' : 'Next') : '')}
+          </span>
+        `;
+
+        slot.addEventListener('click', () => {
+          antonGridSlots[idx] = !antonGridSlots[idx];
+          playSfx('token-place');
+          renderAntonGrid();
+          updateCardsCount();
+        });
+
+        grid.appendChild(slot);
+      });
+
+      updateCardsCount();
+    }
+
+    function updateCardsCount() {
+      const filledCount = antonGridSlots.filter(Boolean).length;
+      document.getElementById('cardsCountBadge').textContent = `${filledCount} / 9 ${currentLang === 'pt' ? 'Cartas' : 'Cards'}`;
+    }
+
+    // Resources Adjustment
+    window.adjustResource = function(type, delta) {
+      if (antonResources[type] !== undefined) {
+        antonResources[type] = Math.max(0, antonResources[type] + delta);
+        document.getElementById(`val${type.charAt(0).toUpperCase() + type.slice(1)}`).textContent = antonResources[type];
+        playSfx('token-place', 0.4);
+      }
+    };
+
+    // Tactical Log Helper
+    function addLog(speaker, msg) {
+      const logPanel = document.getElementById('logPanel');
+      if (!logPanel) return;
+      const entry = document.createElement('div');
+      entry.className = 'log-entry';
+      entry.innerHTML = `<span class="log-speaker">${speaker}:</span> <span class="log-text">${msg}</span>`;
+      logPanel.appendChild(entry);
+      logPanel.scrollTop = logPanel.scrollHeight;
+    }
+
+    // Game Progression: Advance Turn
+    function handleNextTurn() {
+      // Auto fill the next sequential slot if not already manually placed
+      const nextEmpty = antonGridSlots.findIndex(f => !f);
+      if (nextEmpty !== -1) {
+        antonGridSlots[nextEmpty] = true;
+        renderAntonGrid();
+      }
+
+      // If card had reshuffle effect, reshuffle deck
+      if (currentCard && currentCard.effect === 'reshuffle') {
+        initDecisionDeck();
+        playSfx('card-shuffle');
+        addLog('Michel', currentLang === 'pt' 
+          ? 'Efeito da carta: Baralho de decisões reembaralhado!' 
+          : 'Card effect: Decision deck reshuffled!');
+      }
+
+      if (roundNumber >= 9) {
+        // End of Game!
+        finishGame();
+        return;
+      }
+
+      roundNumber++;
+      playSfx('turn-notify');
+      drawDecisionCard();
+
+      // Log narrative message
+      const dirTxt = currentCard.dir === 'right' ? (currentLang === 'pt' ? 'esquerda para direita' : 'left to right') : (currentLang === 'pt' ? 'direita para esquerda' : 'right to left');
+      const topP = priorityOrder[currentCard.priorities[0] - 1];
+      const topPName = currentLang === 'pt' ? topP.namePt : topP.nameEn;
+      
+      addLog('Michel', currentLang === 'pt'
+        ? `Turno ${roundNumber}: Anton varre a linha (${dirTxt}) buscando ${topPName}.`
+        : `Turn ${roundNumber}: Anton scans the row (${dirTxt}) seeking ${topPName}.`);
+    }
+
+    function finishGame() {
+      document.getElementById('viewGame').classList.add('hidden');
+      document.getElementById('viewScoring').classList.remove('hidden');
+      document.getElementById('scoringDiffLabel').textContent = `${currentLang === 'pt' ? 'Dificuldade' : 'Difficulty'}: ${difficulty.toUpperCase()}`;
+      
+      playSfx('turn-notify', 0.8);
+      addLog('Michel', currentLang === 'pt'
+        ? 'A 9ª rodada terminou! Que comece a apuração de pontos do Festival Combo!'
+        : 'Round 9 is complete! Let the Combo Festival scoring begin!');
+      
+      recalcScores();
+    }
+
+    // Final Scoring Recalculation
+    window.recalcScores = function() {
+      const cardPoints = parseInt(document.getElementById('inputAntonCardPoints').value, 10) || 0;
+      const playerPoints = parseInt(document.getElementById('inputPlayerPoints').value, 10) || 0;
+
+      const keys = antonResources.keys;
+      const coins = antonResources.coins;
+      const discounts = antonResources.discounts;
+
+      let keyPoints = 0;
+      let coinPoints = 0;
+      let discountPoints = 0;
+
+      if (difficulty === 'easy') {
+        keyPoints = keys * 1;
+        coinPoints = Math.floor(coins / 2);
+        discountPoints = discounts * 1;
+        document.getElementById('keysSub').textContent = `${keys} ${currentLang === 'pt' ? 'chaves' : 'keys'} × 1 PV`;
+        document.getElementById('coinsSub').textContent = `${coins} ${currentLang === 'pt' ? 'ouros (1 PV a cada 2)' : 'gold (1 VP per 2)'}`;
+        document.getElementById('discountsSub').textContent = `${discounts} ${currentLang === 'pt' ? 'descontos' : 'discounts'} × 1 PV`;
+      } else if (difficulty === 'hard') {
+        keyPoints = keys * 1;
+        coinPoints = coins * 1;
+        discountPoints = discounts * 2;
+        document.getElementById('keysSub').textContent = `${keys} ${currentLang === 'pt' ? 'chaves' : 'keys'} × 1 PV`;
+        document.getElementById('coinsSub').textContent = `${coins} ${currentLang === 'pt' ? 'ouros' : 'gold'} × 1 PV`;
+        document.getElementById('discountsSub').textContent = `${discounts} ${currentLang === 'pt' ? 'descontos' : 'discounts'} × 2 PV`;
+      } else { // insane
+        keyPoints = keys * 2;
+        coinPoints = coins * 1;
+        discountPoints = discounts * 3;
+        document.getElementById('keysSub').textContent = `${keys} ${currentLang === 'pt' ? 'chaves' : 'keys'} × 2 PV`;
+        document.getElementById('coinsSub').textContent = `${coins} ${currentLang === 'pt' ? 'ouros' : 'gold'} × 1 PV`;
+        document.getElementById('discountsSub').textContent = `${discounts} ${currentLang === 'pt' ? 'descontos' : 'discounts'} × 3 PV`;
+      }
+
+      document.getElementById('scoreKeysVal').textContent = `${keyPoints} PV`;
+      document.getElementById('scoreCoinsVal').textContent = `${coinPoints} PV`;
+      document.getElementById('scoreDiscountsVal').textContent = `${discountPoints} PV`;
+
+      const totalAnton = cardPoints + keyPoints + coinPoints + discountPoints;
+      document.getElementById('totalAntonVal').textContent = `${totalAnton} PV`;
+
+      // Winner evaluation
+      const banner = document.getElementById('winnerBanner');
+      if (playerPoints > 0 || cardPoints > 0) {
+        banner.classList.remove('hidden');
+        if (playerPoints > totalAnton) {
+          banner.className = 'winner-banner winner-player';
+          banner.textContent = t('winnerPlayer');
+        } else if (totalAnton > playerPoints) {
+          banner.className = 'winner-banner winner-anton';
+          banner.textContent = t('winnerAnton');
+        } else {
+          banner.className = 'winner-banner winner-tie';
+          banner.textContent = t('winnerTie');
+        }
+      } else {
+        banner.classList.add('hidden');
+      }
+    };
+
+    // Reset Game Function
+    function resetGame() {
+      roundNumber = 1;
+      antonGridSlots = Array(9).fill(false);
+      antonResources = { keys: 0, coins: 0, discounts: 0 };
+      document.getElementById('valKeys').textContent = '0';
+      document.getElementById('valCoins').textContent = '0';
+      document.getElementById('valDiscounts').textContent = '0';
+      document.getElementById('inputAntonCardPoints').value = '0';
+      document.getElementById('inputPlayerPoints').value = '0';
+      
+      document.getElementById('viewScoring').classList.add('hidden');
+      document.getElementById('viewGame').classList.add('hidden');
+      document.getElementById('viewSetup').classList.remove('hidden');
+      document.getElementById('btnReshufflePriority').classList.remove('hidden');
+
+      randomizePriorities();
+      initDecisionDeck();
+      renderAntonGrid();
+
+      const logPanel = document.getElementById('logPanel');
+      if (logPanel) {
+        logPanel.innerHTML = `
+          <div class="log-entry">
+            <span class="log-speaker">Michel:</span>
+            <span class="log-text">${t('logInit')}</span>
+          </div>
+        `;
+      }
+
+      playSfx('ui-click');
+    }
+
+    // Event Listeners Setup
+    document.addEventListener('DOMContentLoaded', () => {
+      // Preload shared audio samples
+      if (window.ThemeKit && typeof window.ThemeKit.preloadSfx === 'function') {
+        window.ThemeKit.preloadSfx(['card-flip', 'card-draw', 'card-shuffle', 'token-place', 'turn-notify', 'ui-click']);
+      }
+
+      // Initial Priorities & Deck
+      randomizePriorities();
+      initDecisionDeck();
+      renderAntonGrid();
+      applyI18n();
+
+      // Difficulty Selection
+      document.querySelectorAll('.diff-card').forEach(card => {
+        card.addEventListener('click', () => {
+          document.querySelectorAll('.diff-card').forEach(c => c.classList.remove('selected'));
+          card.classList.add('selected');
+          difficulty = card.getAttribute('data-diff');
+          playSfx('ui-click', 0.4);
+        });
+      });
+
+      // Priority Reshuffle Button
+      document.getElementById('btnReshufflePriority').addEventListener('click', () => {
+        randomizePriorities();
+      });
+
+      // Start Game Button
+      document.getElementById('btnStartGame').addEventListener('click', () => {
+        document.getElementById('viewSetup').classList.add('hidden');
+        document.getElementById('btnReshufflePriority').classList.add('hidden');
+        document.getElementById('viewGame').classList.remove('hidden');
+        
+        playSfx('card-draw');
+        drawDecisionCard();
+      });
+
+      // Next Turn Button
+      document.getElementById('btnNextTurn').addEventListener('click', handleNextTurn);
+
+      // Play Again Button
+      document.getElementById('btnPlayAgain').addEventListener('click', resetGame);
+
+      // Clear Log
+      document.getElementById('btnClearLog').addEventListener('click', () => {
+        document.getElementById('logPanel').innerHTML = '';
+        playSfx('ui-click', 0.3);
+      });
+
+      // Language Switcher
+      document.getElementById('btnLang').addEventListener('click', () => {
+        currentLang = currentLang === 'pt' ? 'en' : 'pt';
+        setStorage('boardbots_lang', currentLang);
+        applyI18n();
+        playSfx('ui-click', 0.3);
+      });
+
+      // SFX Mute Switcher
+      const sfxBtn = document.getElementById('btnSfx');
+      function updateSfxIcon() {
+        sfxBtn.style.opacity = sfxMuted ? '0.45' : '1';
+        sfxBtn.title = sfxMuted ? 'Desmutar Sons' : 'Mutar Sons';
+      }
+      updateSfxIcon();
+      sfxBtn.addEventListener('click', () => {
+        sfxMuted = !sfxMuted;
+        setStorage('boardbots_sfx_muted', sfxMuted ? 'true' : 'false');
+        updateSfxIcon();
+        if (!sfxMuted) playSfx('ui-click', 0.4);
+      });
+
+      // Modals
+      const helpModal = document.getElementById('helpModal');
+      document.getElementById('btnHelp').addEventListener('click', () => {
+        helpModal.classList.remove('hidden');
+        playSfx('ui-click');
+      });
+      document.getElementById('btnCloseHelp').addEventListener('click', () => {
+        helpModal.classList.add('hidden');
+      });
+      document.getElementById('btnGotIt').addEventListener('click', () => {
+        helpModal.classList.add('hidden');
+      });
+
+      const resetModal = document.getElementById('resetModal');
+      document.getElementById('btnReset').addEventListener('click', () => {
+        resetModal.classList.remove('hidden');
+        playSfx('ui-click');
+      });
+      document.getElementById('btnCancelReset').addEventListener('click', () => {
+        resetModal.classList.add('hidden');
+      });
+      document.getElementById('btnConfirmReset').addEventListener('click', () => {
+        resetModal.classList.add('hidden');
+        resetGame();
+      });
+    });
+  </script>
+</body>
+</html>
