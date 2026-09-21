@@ -5280,25 +5280,25 @@ async function fetchBggXml(apiPath) {
   let cleanPath = apiPath.replace(/^\/xmlapi2/, '');
   if (!cleanPath.startsWith('/')) cleanPath = '/' + cleanPath;
 
-  // 1. Primary: Cloudflare Worker proxy (provides edge caching & protects credentials)
-  try {
-    const res = await fetch(`${LUDOPEDIA_PROXY_BASE}/bgg${cleanPath}`, {
-      headers: { 'Accept': 'application/xml' }
-    });
-    if (res.ok) {
-      return await res.text();
-    }
-  } catch (e) {
-    // Proxy unreachable/not deployed — fall back to direct BGG XML API call below
-  }
-
-  // 2. Direct BGG XML API fallback (BGG xmlapi2 officially supports CORS with Bearer token)
+  // 1. Direct BGG XML API (BGG xmlapi2 officially supports CORS with Bearer token, responds in ~200ms)
   try {
     const res = await fetch(`https://boardgamegeek.com/xmlapi2${cleanPath}`, {
       headers: {
         'Accept': 'application/xml',
         'Authorization': 'Bearer cdb528f3-d81c-464a-acf6-44e16b2f47a8'
       }
+    });
+    if (res.ok) {
+      return await res.text();
+    }
+  } catch (e) {
+    // Direct call failed, fall back to worker proxy below
+  }
+
+  // 2. Fallback: Cloudflare Worker proxy
+  try {
+    const res = await fetch(`${LUDOPEDIA_PROXY_BASE}/bgg${cleanPath}`, {
+      headers: { 'Accept': 'application/xml' }
     });
     if (res.ok) {
       return await res.text();
@@ -5913,40 +5913,46 @@ async function performSearch(query) {
     return;
   }
 
-  // URL detected in search input (e.g. Ludopedia collection, game page, or direct image)
-  const ludoCol = parseLudopediaCollectionUrl(query);
-  if (ludoCol && ludoCol.username) {
-    spinner.style.display = 'none';
-    dropdown.innerHTML = `
-      <div class="search-result-item" style="background:rgba(233, 200, 117, 0.15); border-left:3px solid var(--brass);">
-        <div class="search-result-thumb" style="display:flex;align-items:center;justify-content:center;background:#2a1b0c;color:var(--brass-bright);font-size:1.3rem;">📚</div>
-        <div class="search-result-info">
-          <div class="search-result-title" style="color:var(--brass-bright);">Importar Coleção Ludopedia (@${escapeHtml(ludoCol.username)})</div>
-          <div class="search-result-meta"><span class="source-badge ludopedia">Ludopedia</span> Clique para carregar os jogos online</div>
+  // Only trigger collection import if explicitly a collection URL, a @handle, or ludo: prefix
+  const isExplicitCollection = query.startsWith('@') || 
+    /^ludo(?:pedia)?:/i.test(query) || 
+    (query.toLowerCase().includes('ludopedia.com.br') && (query.includes('/colecao/') || query.includes('/usuario/') || query.includes('usuario=')));
+
+  if (isExplicitCollection) {
+    const ludoCol = parseLudopediaCollectionUrl(query, true);
+    if (ludoCol && ludoCol.username) {
+      spinner.style.display = 'none';
+      dropdown.innerHTML = `
+        <div class="search-result-item" style="background:rgba(233, 200, 117, 0.15); border-left:3px solid var(--brass);">
+          <div class="search-result-thumb" style="display:flex;align-items:center;justify-content:center;background:#2a1b0c;color:var(--brass-bright);font-size:1.3rem;">📚</div>
+          <div class="search-result-info">
+            <div class="search-result-title" style="color:var(--brass-bright);">Importar Coleção Ludopedia (@${escapeHtml(ludoCol.username)})</div>
+            <div class="search-result-meta"><span class="source-badge ludopedia">Ludopedia</span> Clique para carregar os jogos online</div>
+          </div>
+          <button class="search-result-add-btn">📥</button>
         </div>
-        <button class="search-result-add-btn">📥</button>
-      </div>
-    `;
-    dropdown.classList.add('visible');
-    dropdown.querySelector('.search-result-item').onclick = async () => {
-      spinner.style.display = 'block';
-      dropdown.innerHTML = `<div class="search-result-status">Consultando coleção de @${escapeHtml(ludoCol.username)} na Ludopedia...</div>`;
-      try {
-        const payload = await fetchLudopediaCollection(ludoCol.username);
-        dropdown.classList.remove('visible');
-        document.getElementById('gameSearchInput').value = '';
-        document.getElementById('searchClearBtn').style.display = 'none';
-        openImportCollectionModal(payload);
-      } catch (err) {
-        alert('Erro ao importar coleção da Ludopedia: ' + (err.message || err));
-      } finally {
-        spinner.style.display = 'none';
-      }
-    };
-    return;
+      `;
+      dropdown.classList.add('visible');
+      dropdown.querySelector('.search-result-item').onclick = async () => {
+        spinner.style.display = 'block';
+        dropdown.innerHTML = `<div class="search-result-status">Consultando coleção de @${escapeHtml(ludoCol.username)} na Ludopedia...</div>`;
+        try {
+          const payload = await fetchLudopediaCollection(ludoCol.username);
+          dropdown.classList.remove('visible');
+          document.getElementById('gameSearchInput').value = '';
+          document.getElementById('searchClearBtn').style.display = 'none';
+          openImportCollectionModal(payload);
+        } catch (err) {
+          alert('Erro ao importar coleção da Ludopedia: ' + (err.message || err));
+        } finally {
+          spinner.style.display = 'none';
+        }
+      };
+      return;
+    }
   }
 
-  const isUrl = query.startsWith('http://') || query.startsWith('https://') || query.includes('ludopedia.com.br');
+  const isUrl = query.startsWith('http://') || query.startsWith('https://');
   if (isUrl) {
     spinner.style.display = 'none';
     dropdown.innerHTML = `
@@ -6011,9 +6017,13 @@ async function performSearch(query) {
       const normTitle = normalizeSearchStr(game.title);
       if (!seenTitles.has(normTitle)) {
         seenTitles.add(normTitle);
-        const score = calculateGameMatchScore(game, query);
-        if (score > 0 || activeSearchCategory === 'videogame' || activeSearchCategory === 'movie') {
-          merged.push({ game, score: score || 500 });
+        let score = calculateGameMatchScore(game, query);
+        if (!score || score <= 0) {
+          // If returned by an active API search, preserve it with baseline score so results are never lost
+          score = (game.source === 'ludopedia' || game.source === 'bgg' || activeSearchCategory === 'videogame' || activeSearchCategory === 'movie') ? 100 : 0;
+        }
+        if (score > 0) {
+          merged.push({ game, score });
         }
       }
     };
@@ -6047,16 +6057,16 @@ async function performSearch(query) {
     };
     dropdown.appendChild(quickAddRow);
 
-    // Render up to 10 matching results
-    merged.slice(0, 10).forEach(({ game }) => {
+    // Render up to 15 matching results
+    merged.slice(0, 15).forEach(({ game }) => {
       const itemRow = document.createElement('div');
       itemRow.className = 'search-result-item';
 
       const thumb = document.createElement('img');
       thumb.className = 'search-result-thumb';
-      thumb.src = game.image || '../assets/mascot-trimmed.png';
+      thumb.src = game.image || generateItemSvgCover(game.title, game.source || activeSearchCategory);
       thumb.alt = game.title;
-      thumb.onerror = () => { thumb.src = '../assets/mascot-trimmed.png'; };
+      thumb.onerror = () => { thumb.src = generateItemSvgCover(game.title, game.source || activeSearchCategory); };
 
       const info = document.createElement('div');
       info.className = 'search-result-info';
@@ -6122,6 +6132,7 @@ async function performSearch(query) {
     });
 
   } catch (e) {
+    console.error('performSearch error:', e);
     spinner.style.display = 'none';
     dropdown.innerHTML = `
       <div class="search-result-item" onclick="quickAddCustomItem('${escapeHtml(query)}', activeSearchCategory)">
@@ -6141,7 +6152,7 @@ function addGameToTierlist(game) {
   const newItem = {
     id: 'item_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
     title: game.title,
-    image: game.image,
+    image: game.image || generateItemSvgCover(game.title, game.source || activeSearchCategory || 'boardgame'),
     year: game.year || '',
     ludoId: game.ludoId || null,
     bggId: game.bggId || null,
@@ -8204,7 +8215,7 @@ function setOnlineImportExample(val) {
   }
 }
 
-function parseLudopediaCollectionUrl(input) {
+function parseLudopediaCollectionUrl(input, allowRawUsername = false) {
   if (!input) return null;
   const str = String(input).trim();
 
@@ -8244,10 +8255,17 @@ function parseLudopediaCollectionUrl(input) {
     return { username: m[1].trim(), lista: 'colecao' };
   }
 
-  // If user typed only a raw username (letters, digits, underscores, dashes, optional leading @)
-  const cleanStr = str.replace(/^@/, '');
-  if (/^[a-zA-Z0-9_.-]{2,40}$/.test(cleanStr) && !cleanStr.includes('/') && !cleanStr.includes(':')) {
-    return { username: cleanStr, lista: 'colecao' };
+  // Explicit @username (e.g. @colletes)
+  if (/^@[a-zA-Z0-9_.-]{2,40}$/.test(str)) {
+    return { username: str.substring(1), lista: 'colecao' };
+  }
+
+  // Raw username allowed ONLY when specifically permitted (e.g. in dedicated Ludopedia import field)
+  if (allowRawUsername) {
+    const cleanStr = str.replace(/^@/, '');
+    if (/^[a-zA-Z0-9_.-]{2,40}$/.test(cleanStr) && !cleanStr.includes('/') && !cleanStr.includes(':')) {
+      return { username: cleanStr, lista: 'colecao' };
+    }
   }
 
   return null;
@@ -8292,7 +8310,7 @@ async function resolveLudopediaUserId(input) {
 async function fetchLudopediaCollection(usernameOrUrl, options = {}) {
   if (!usernameOrUrl) throw new Error(currentLang === 'en' ? 'Username or link not provided.' : 'Nome de usuário ou link não informado.');
   let cleanUser = String(usernameOrUrl).trim().replace(/^@/, '');
-  const parsed = parseLudopediaCollectionUrl(cleanUser);
+  const parsed = parseLudopediaCollectionUrl(cleanUser, true);
   if (parsed && parsed.username) {
     cleanUser = parsed.username;
   }
@@ -8526,7 +8544,7 @@ async function executeOnlineImportFromInput() {
         : 'Conectando à Ludopedia e carregando jogos...';
     }
 
-    const parsed = parseLudopediaCollectionUrl(raw);
+    const parsed = parseLudopediaCollectionUrl(raw, true);
     const username = parsed ? parsed.username : raw.replace(/^@/, '').trim();
     const payload = await fetchLudopediaCollection(username);
 
@@ -10433,7 +10451,7 @@ async function fetchLudopediaForRanking() {
     alert(currentLang === 'en' ? 'Please enter a Ludopedia link or username.' : 'Digite um link ou usuário da Ludopedia.');
     return;
   }
-  const parsed = parseLudopediaCollectionUrl(rawInput);
+  const parsed = parseLudopediaCollectionUrl(rawInput, true);
   const user = (parsed && parsed.username) ? parsed.username : rawInput.replace(/^@/, '').trim();
 
   const statusEl = document.getElementById('ludoRankStatusText');
@@ -10942,11 +10960,29 @@ async function addContenderFromInput(mode = 'arena') {
     return;
   }
 
+  let coverImage = generateItemSvgCover(text, 'boardgame');
+  let source = 'custom';
+  let year = '';
+  let bggId = null;
+  let ludoId = null;
+
+  const cached = BOARD_GAMES_DATABASE.find(g => normalizeSearchStr(g.title) === normalizeSearchStr(text));
+  if (cached && cached.image) {
+    coverImage = cached.image;
+    source = cached.source || 'ludopedia';
+    year = cached.year || '';
+    bggId = cached.bggId || null;
+    ludoId = cached.ludoId || null;
+  }
+
   const newItem = {
     id: `contender_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
     title: text,
-    image: generateItemSvgCover(text, 'custom'),
-    source: 'custom'
+    image: coverImage,
+    source: source,
+    year: year,
+    bggId: bggId,
+    ludoId: ludoId
   };
 
   stagedTournamentContenders.push(newItem);
@@ -10954,6 +10990,23 @@ async function addContenderFromInput(mode = 'arena') {
   renderTournamentContenders('arena');
   renderTournamentContenders('bracket');
   showToast(`"${text}" adicionado aos competidores!`);
+
+  // Background lookup on Ludopedia/BGG if cover was generic
+  if (source === 'custom') {
+    searchLudopediaAPI(text).then(results => {
+      if (results && results.length > 0) {
+        const match = results.find(r => normalizeSearchStr(r.title) === normalizeSearchStr(text)) || results[0];
+        if (match && match.image) {
+          newItem.image = match.image;
+          newItem.source = 'ludopedia';
+          newItem.ludoId = match.ludoId || null;
+          newItem.year = match.year || '';
+          renderTournamentContenders('arena');
+          renderTournamentContenders('bracket');
+        }
+      }
+    }).catch(() => {});
+  }
 }
 
 function removeContenderAt(idx) {
