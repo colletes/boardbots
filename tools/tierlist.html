@@ -5980,6 +5980,69 @@ async function performSearch(query) {
     }
   }
 
+  // List URL detected in search input (e.g. GGapp list, BGG GeekList, IMDb chart/list)
+  const isListUrl = (query.includes('ggapp.io') && query.includes('/lists/')) ||
+    isBggGeekList(query) ||
+    query.includes('imdb.com/list/') ||
+    query.includes('imdb.com/chart/');
+
+  if (isListUrl) {
+    spinner.style.display = 'none';
+    const listLabel = query.includes('ggapp.io') ? 'GGapp.io' : (isBggGeekList(query) ? 'BGG GeekList' : 'IMDb');
+    dropdown.innerHTML = `
+      <div class="search-result-item" style="background:rgba(233, 200, 117, 0.15); border-left:3px solid var(--brass);">
+        <div class="search-result-thumb" style="display:flex;align-items:center;justify-content:center;background:#2a1b0c;color:var(--brass-bright);font-size:1.3rem;">📋</div>
+        <div class="search-result-info">
+          <div class="search-result-title" style="color:var(--brass-bright);">Importar Lista Completa (${listLabel})</div>
+          <div class="search-result-meta"><span class="source-badge videogame">LISTA ONLINE</span> Clique para carregar todos os itens para a Tierlist</div>
+        </div>
+        <button class="search-result-add-btn">📥</button>
+      </div>
+    `;
+    dropdown.classList.add('visible');
+    dropdown.querySelector('.search-result-item').onclick = async () => {
+      spinner.style.display = 'block';
+      dropdown.innerHTML = `<div class="search-result-status">Carregando lista ${listLabel}...</div>`;
+      try {
+        if (query.includes('ggapp.io')) {
+          const gg = await fetchGgAppList(query);
+          const unplayedTier = state.tiers.find(t => t.isUnplayed) || state.tiers[state.tiers.length - 1];
+          const targetId = unplayedTier.id;
+          if (!state.items[targetId]) state.items[targetId] = [];
+          gg.items.forEach(it => {
+            state.items[targetId].push(resolveGameToItem(it));
+          });
+          saveState();
+          renderBoard();
+          updateStudioBadges();
+          showToast(`🎉 ${gg.items.length} jogos importados de "${gg.title}" para a Tierlist!`);
+        } else if (isBggGeekList(query)) {
+          const gl = await fetchBggGeekList(query);
+          const unplayedTier = state.tiers.find(t => t.isUnplayed) || state.tiers[state.tiers.length - 1];
+          const targetId = unplayedTier.id;
+          if (!state.items[targetId]) state.items[targetId] = [];
+          gl.items.forEach(it => {
+            state.items[targetId].push(resolveGameToItem(it));
+          });
+          saveState();
+          renderBoard();
+          updateStudioBadges();
+          showToast(`🎉 ${gl.items.length} jogos importados de "${gl.title}" para a Tierlist!`);
+        } else {
+          await importFromPublicUrl(query, 'tierlist');
+        }
+        dropdown.classList.remove('visible');
+        document.getElementById('gameSearchInput').value = '';
+        document.getElementById('searchClearBtn').style.display = 'none';
+      } catch (err) {
+        alert('Erro ao importar lista: ' + (err.message || err));
+      } finally {
+        spinner.style.display = 'none';
+      }
+    };
+    return;
+  }
+
   const isUrl = query.startsWith('http://') || query.startsWith('https://');
   if (isUrl) {
     spinner.style.display = 'none';
@@ -10259,6 +10322,113 @@ async function executeBggGeeklistImport() {
   });
 }
 
+function extractGgAppListSlug(urlStr) {
+  try {
+    const u = new URL(urlStr.startsWith('http') ? urlStr : 'https://' + urlStr);
+    const m = u.pathname.match(/\/lists?\/([^/?#]+)/i);
+    if (m) return decodeURIComponent(m[1]);
+  } catch (e) {}
+  const match = urlStr.match(/lists?\/([a-zA-Z0-9_-]+)/i);
+  return match ? match[1] : null;
+}
+
+async function fetchGgAppList(urlOrSlug) {
+  const slug = extractGgAppListSlug(urlOrSlug) || (urlOrSlug || '').trim();
+  if (!slug) throw new Error(currentLang === 'en' ? 'Invalid GGapp URL or slug' : 'Link ou identificador do GGapp inválido');
+
+  const getListQuery = `
+    query getList($slug: String) {
+      getList(slug: $slug) {
+        id
+        title
+        gameCount
+      }
+    }
+  `;
+
+  const res = await fetch('https://api.ggapp.io', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+    body: JSON.stringify({ query: getListQuery, variables: { slug } })
+  });
+
+  if (!res.ok) throw new Error(`GGapp API status ${res.status}`);
+  const json = await res.json();
+  const listData = json?.data?.getList;
+  if (!listData || !listData.id) throw new Error(currentLang === 'en' ? 'GGapp list not found' : 'Lista do GGapp não encontrada');
+
+  const listId = String(listData.id);
+  const listTitle = listData.title || 'GGapp List';
+  const totalCount = listData.gameCount || 0;
+
+  const gamesQuery = `
+    query gamesForList($listId: ID!, $limit: Int, $offset: Int) {
+      gamesForList(listId: $listId, limit: $limit, offset: $offset) {
+        id
+        rank
+        game {
+          id
+          name
+          slug
+          coverPath
+        }
+      }
+    }
+  `;
+
+  let allGames = [];
+  let offset = 0;
+  const limit = 50;
+
+  while (offset < 500) {
+    const pageRes = await fetch('https://api.ggapp.io', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({ query: gamesQuery, variables: { listId, limit, offset } })
+    });
+    if (!pageRes.ok) break;
+    const pageJson = await pageRes.json();
+    const batch = pageJson?.data?.gamesForList || [];
+    if (batch.length === 0) break;
+
+    batch.forEach(entry => {
+      const g = entry.game;
+      if (!g || !g.name) return;
+      let imgUrl = '';
+      if (g.coverPath) {
+        const payload = {
+          bucket: "ggapp",
+          key: g.coverPath,
+          edits: {
+            toFormat: "jpg",
+            jpeg: { quality: 80, chromaSubsampling: "4:4:4" },
+            resize: { width: 300, height: 400 }
+          }
+        };
+        try {
+          const jsonStr = JSON.stringify(payload);
+          const b64 = typeof btoa === 'function' ? btoa(jsonStr) : '';
+          if (b64) imgUrl = `https://d2d2z3qzqjizpf.cloudfront.net/${b64}`;
+        } catch (e) {}
+      }
+
+      allGames.push({
+        id: `ggapp_${g.id || entry.id}`,
+        title: g.name,
+        image: imgUrl || generateItemSvgCover(g.name, 'videogame'),
+        category: 'videogame',
+        source: 'ggapp',
+        year: ''
+      });
+    });
+
+    offset += batch.length;
+    if (batch.length < limit || (totalCount > 0 && allGames.length >= totalCount)) break;
+  }
+
+  return { title: listTitle, items: allGames };
+}
+
 function promptImportUrl(type, mode = 'arena') {
   if (type === 'ggapp') {
     const url = prompt(currentLang === 'en'
@@ -10314,8 +10484,22 @@ async function importUniversalSourceToTournament(query, options = {}) {
       items = (payload.baseGames && payload.baseGames.length > 0) ? payload.baseGames : payload.allGames;
       sourceLabel = `Ludopedia (@${ludoUser})`;
     }
-    // 4. Web URLs (IMDb, GGapp, JustWatch, Letterboxd, Steam, Backloggd, Metacritic...)
-    else if (/^https?:\/\//i.test(raw) || raw.includes('imdb.com') || raw.includes('ggapp.io') || raw.includes('letterboxd.com') || raw.includes('justwatch.com') || raw.includes('steampowered.com') || raw.includes('backloggd.com') || raw.includes('metacritic.com')) {
+    // 4. GGapp.io Lists
+    else if (raw.toLowerCase().includes('ggapp.io')) {
+      showToast(currentLang === 'en' ? 'Fetching GGapp list...' : 'Consultando lista no GGapp.io...');
+      try {
+        const gg = await fetchGgAppList(raw);
+        items = gg.items;
+        sourceLabel = gg.title || 'GGapp';
+      } catch (errGg) {
+        console.warn('GGapp API fallback to scraper:', errGg);
+        const url = /^https?:\/\//i.test(raw) ? raw : 'https://' + raw;
+        items = await fetchWebScraperItems(url);
+        sourceLabel = 'GGapp';
+      }
+    }
+    // 5. Web URLs (IMDb, JustWatch, Letterboxd, Steam, Backloggd, Metacritic...)
+    else if (/^https?:\/\//i.test(raw) || raw.includes('imdb.com') || raw.includes('letterboxd.com') || raw.includes('justwatch.com') || raw.includes('steampowered.com') || raw.includes('backloggd.com') || raw.includes('metacritic.com')) {
       const url = /^https?:\/\//i.test(raw) ? raw : 'https://' + raw;
       showToast(currentLang === 'en' ? 'Extracting items from link...' : 'Extraindo itens do link...');
       items = await fetchWebScraperItems(url);
@@ -12547,6 +12731,18 @@ async function executeWebScraperImport() {
 }
 
 async function fetchWebScraperItems(sourceUrl) {
+  // If GGapp.io URL, use the native GGapp GraphQL client first for 100% complete list
+  if (sourceUrl.toLowerCase().includes('ggapp.io')) {
+    try {
+      const gg = await fetchGgAppList(sourceUrl);
+      if (gg && gg.items && gg.items.length > 0) {
+        return gg.items;
+      }
+    } catch (e) {
+      console.warn('GGapp GraphQL fetch failed, falling back to web scraper:', e);
+    }
+  }
+
   let rawText = '';
   // 1. Primary: Jina Reader API (free, returns markdown, bypasses CF protection)
   try {
@@ -12600,7 +12796,7 @@ async function importFromPublicUrl(sourceUrl, destination = 'auto', mode = 'aren
         title: rawItem.title,
         year: rawItem.year || '',
         image: rawItem.image || generateItemSvgCover(rawItem.title, 'custom'),
-        source: 'web'
+        source: rawItem.source || 'web'
       }));
       renderTournamentContenders('arena');
       renderTournamentContenders('bracket');
@@ -12655,15 +12851,16 @@ function parseScrapedContent(text, sourceUrl) {
     let cleanTitle = (title || '').trim()
       .replace(/^#\d+\s*|^\d+[º°\.\)\-]\s*/, '')
       .replace(/^\[|\]$/g, '')
-      .replace(/\*|_/g, '')
+      .replace(/[*_~`]/g, '')
+      .replace(/^[\u2022\s\-_•*]+/, '')
       .trim();
 
     if (!cleanTitle || cleanTitle.length < 2 || cleanTitle.length > 120) return;
     if (isGenericImageLabel(cleanTitle)) return;
     if (seenTitles.has(cleanTitle.toLowerCase())) return;
 
-    const ignored = ['menu', 'home', 'sign in', 'watchlist', 'imdb', 'justwatch', 'ggapp', 'games', 'movies', 'terms', 'privacy', 'rating', 'popular', 'ludopedia', 'boardgamegeek', 'bgg'];
-    if (ignored.includes(cleanTitle.toLowerCase())) return;
+    const ignored = ['menu', 'home', 'sign in', 'sign up', 'watchlist', 'imdb', 'justwatch', 'ggapp', 'games', 'movies', 'terms', 'privacy', 'rating', 'popular', 'ludopedia', 'boardgamegeek', 'bgg', 'like', 'grid', 'list order'];
+    if (ignored.includes(cleanTitle.toLowerCase()) || /^\d+\s+games$/i.test(cleanTitle)) return;
 
     seenTitles.add(cleanTitle.toLowerCase());
     items.push({
@@ -12674,15 +12871,48 @@ function parseScrapedContent(text, sourceUrl) {
     });
   }
 
+  // Strategy 0: Markdown images followed by titles on subsequent lines (GGapp, Backloggd, Steam, etc.)
+  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const imgMatch = line.match(/^!\[(.*?)\]\((https?:\/\/[^\)\s]+)\)$/);
+    if (imgMatch) {
+      const alt = imgMatch[1];
+      const imgUrl = imgMatch[2];
+      const isNoise = /avatar|logo|brand|icon|banner|favicon/i.test(imgUrl);
+      if (!isNoise) {
+        if (alt && !isGenericImageLabel(alt) && !['menu', 'home', 'games', 'like', 'grid'].includes(alt.toLowerCase())) {
+          addItem(alt, '', imgUrl);
+        } else {
+          for (let j = i + 1; j < Math.min(lines.length, i + 5); j++) {
+            const nextLine = lines[j];
+            if (nextLine.startsWith('![') || nextLine.startsWith('###')) break;
+            const cand = nextLine.replace(/^[\u2022\s\-_•*]+/, '').trim();
+            if (cand.length >= 2 && !isGenericImageLabel(cand) && !['like', 'grid', 'list order', 'games'].includes(cand.toLowerCase()) && !/^\d+\s+games$/i.test(cand)) {
+              let year = '';
+              if (j + 1 < lines.length && /^\(?((?:19|20)\d{2})\)?$/.test(lines[j + 1])) {
+                year = lines[j + 1].match(/((?:19|20)\d{2})/)[1];
+              }
+              addItem(cand, year, imgUrl);
+              break;
+            }
+          }
+        }
+      }
+    }
+  }
+
   // Strategy 1: Heading with link and rank
-  const headingRankRegex = /#{1,5}\s*(?:\d+[º°\.\)\-]?\s*)?\[([^\]]+)\]\((https?:\/\/[^\)\s]+)(?:\s+\"[^\"]*\")?\)(?:[^\n\r]*?\(?(\b(?:19|20)\d{2}\b)\)?)?/g;
-  for (const m of text.matchAll(headingRankRegex)) {
-    const rawTitle = m[1].trim();
-    if (!isGenericImageLabel(rawTitle)) {
-      const pageUrl = m[2].split('?')[0].split('#')[0].replace(/\/$/, '').toLowerCase();
-      const year = m[3] || '';
-      const img = urlToImage.get(pageUrl) || '';
-      addItem(rawTitle, year, img);
+  if (items.length < 2) {
+    const headingRankRegex = /#{1,5}\s*(?:\d+[º°\.\)\-]?\s*)?\[([^\]]+)\]\((https?:\/\/[^\)\s]+)(?:\s+\"[^\"]*\")?\)(?:[^\n\r]*?\(?(\b(?:19|20)\d{2}\b)\)?)?/g;
+    for (const m of text.matchAll(headingRankRegex)) {
+      const rawTitle = m[1].trim();
+      if (!isGenericImageLabel(rawTitle)) {
+        const pageUrl = m[2].split('?')[0].split('#')[0].replace(/\/$/, '').toLowerCase();
+        const year = m[3] || '';
+        const img = urlToImage.get(pageUrl) || '';
+        addItem(rawTitle, year, img);
+      }
     }
   }
 
@@ -12916,6 +13146,8 @@ window.promptImportUrl = promptImportUrl;
 window.fetchWebScraperItems = fetchWebScraperItems;
 window.isBggGeekList = isBggGeekList;
 window.extractBggGeekListId = extractBggGeekListId;
+window.fetchGgAppList = fetchGgAppList;
+window.extractGgAppListSlug = extractGgAppListSlug;
 
 
 
