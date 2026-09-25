@@ -49,12 +49,13 @@ jobs:
             touch _site/staging/.nojekyll
           fi
 
-      - name: Inject Staging badge into staging environment
+      - name: Inject Staging badge and noindex into staging environment
         run: |
           if [ -d "_site/staging" ]; then
             python3 -c "
           import os
           badge = '<div id=\"bb-staging-badge\" style=\"position:fixed;top:10px;right:10px;z-index:99999;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;font-family:Inter,system-ui,sans-serif;font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;box-shadow:0 4px 12px rgba(0,0,0,0.35);letter-spacing:0.8px;pointer-events:none;text-transform:uppercase;border:1px solid rgba(255,255,255,0.4);\">Staging</div>'
+          noindex = '<meta name=\"robots\" content=\"noindex, nofollow, noarchive\">'
           for root, _, files in os.walk('_site/staging'):
               for f in files:
                   if f.endswith('.html'):
@@ -62,12 +63,17 @@ jobs:
                       try:
                           with open(p, 'r', encoding='utf-8', errors='ignore') as file:
                               content = file.read()
+                          if '<head>' in content and 'noindex' not in content:
+                              content = content.replace('<head>', f'<head>\n    {noindex}')
                           if '</body>' in content and 'bb-staging-badge' not in content:
                               content = content.replace('</body>', f'{badge}</body>')
-                              with open(p, 'w', encoding='utf-8') as file:
-                                  file.write(content)
+                          with open(p, 'w', encoding='utf-8') as file:
+                              file.write(content)
                       except Exception as e:
-                          print(f'Warning injecting badge to {p}: {e}')
+                          print(f'Warning injecting to {p}: {e}')
+          # Ensure staging robots.txt blocks all crawlers
+          with open('_site/staging/robots.txt', 'w', encoding='utf-8') as f:
+              f.write('User-agent: *\nDisallow: /\n')
           "
           fi
 
