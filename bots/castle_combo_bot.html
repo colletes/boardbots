@@ -433,9 +433,17 @@
     }
     .round-badge {
       font-family: var(--font-display);
-      font-size: 1.1rem;
+      font-size: 0.95rem;
       font-weight: 700;
       color: #ffd88a;
+      letter-spacing: 0.5px;
+      transition: color 0.2s ease;
+    }
+    .round-badge.badge-player-turn {
+      color: #6ee7b7;
+    }
+    .round-badge.badge-anton-turn {
+      color: #fca5a5;
     }
     .deck-counter {
       font-size: 0.85rem;
@@ -553,6 +561,72 @@
     .effect-icon {
       font-size: 1.4rem;
       font-weight: 800;
+    }
+
+    /* Face-Down Decision Card (Player Turn) */
+    .card-face-down {
+      background: radial-gradient(circle at 50% 30%, rgba(30, 36, 50, 0.95), rgba(13, 16, 24, 0.98)),
+                  repeating-linear-gradient(45deg, rgba(198, 155, 76, 0.04) 0, rgba(198, 155, 76, 0.04) 10px, transparent 10px, transparent 20px);
+      border: 2px dashed rgba(198, 155, 76, 0.45);
+      border-radius: var(--radius-md);
+      padding: 26px 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 12px;
+      box-shadow: inset 0 0 25px rgba(0, 0, 0, 0.7);
+      animation: fadeIn 0.25s ease-out;
+    }
+    .face-down-crest {
+      font-size: 2.6rem;
+      line-height: 1;
+      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.6));
+    }
+    .face-down-title {
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #ffd88a;
+      letter-spacing: 0.5px;
+    }
+    .face-down-desc {
+      font-size: 0.88rem;
+      color: var(--text-dim);
+      line-height: 1.45;
+      max-width: 420px;
+      margin: 0;
+    }
+    .face-down-hint {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #cbd5e1;
+      background: rgba(198, 155, 76, 0.12);
+      border: 1px solid rgba(198, 155, 76, 0.3);
+      padding: 6px 12px;
+      border-radius: 20px;
+    }
+
+    /* Face-Up Decision Card Container */
+    .card-face-up {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      animation: cardFlipIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes cardFlipIn {
+      0% {
+        opacity: 0;
+        transform: perspective(600px) rotateY(-15deg) scale(0.96);
+      }
+      100% {
+        opacity: 1;
+        transform: perspective(600px) rotateY(0deg) scale(1);
+      }
     }
 
     /* Anton 3x3 Grid Assistant */
@@ -1023,43 +1097,57 @@
         <!-- Left Column: Decision Card & Turn Controls -->
         <div style="display: flex; flex-direction: column; gap: 16px;">
           
-          <div class="decision-card-container">
+            <div class="decision-card-container">
             <div class="turn-header">
-              <span class="round-badge" id="roundBadge">TURNO 1 / 9</span>
+              <span class="round-badge badge-player-turn" id="roundBadge">RODADA 1 / 9 — SUA VEZ (JOGADOR)</span>
               <span class="deck-counter" id="deckCounter">Cartas de Decisão: 12</span>
             </div>
 
-            <!-- Direction Banner -->
-            <div class="direction-banner">
-              <span class="direction-arrow" id="dirArrow">→</span>
-              <span class="direction-text" id="dirText">Varredura: Esquerda para Direita</span>
+            <!-- Face Down Card View (Player Turn) -->
+            <div id="cardFaceDown" class="card-face-down">
+              <div class="face-down-crest">🏰</div>
+              <div class="face-down-title" data-i18n="faceDownTitle">Sua Vez de Jogar</div>
+              <p class="face-down-desc" data-i18n="faceDownDesc">Faça o seu recrutamento na mesa normalmente. A carta de Anton permanece oculta para evitar decisões influenciadas (metagame).</p>
+              <div class="face-down-hint">
+                <span data-i18n="faceDownHint">Após jogar o seu turno, clique abaixo para revelar a decisão de Anton.</span>
+              </div>
             </div>
 
-            <!-- 3 Target Priorities -->
-            <div class="priorities-container">
-              <div class="priorities-title" data-i18n="targetPrioritiesLabel">Prioridades na Fileira Ativa:</div>
-              <div class="priority-chips" id="priorityChips">
+            <!-- Face Up Card View (Anton Turn) -->
+            <div id="cardFaceUp" class="card-face-up hidden">
+              <!-- Direction Banner -->
+              <div class="direction-banner">
+                <span class="direction-arrow" id="dirArrow">→</span>
+                <span class="direction-text" id="dirText">Varredura: Esquerda para Direita</span>
+              </div>
+
+              <!-- 3 Target Priorities -->
+              <div class="priorities-container">
+                <div class="priorities-title" data-i18n="targetPrioritiesLabel">Prioridades na Fileira Ativa:</div>
+                <div class="priority-chips" id="priorityChips">
+                  <!-- Rendered dynamically -->
+                </div>
+              </div>
+
+              <!-- Fallback Box (Priorities 4, 5, 6) -->
+              <div class="fallback-box">
+                <span class="fallback-strong" data-i18n="fallbackPrefix">Fallback: </span>
+                <span id="fallbackText" data-i18n="fallbackDefault">Se nenhuma das 3 estiver na fileira, Anton busca a 4ª, 5ª ou 6ª prioridade no sentido da seta.</span>
+              </div>
+
+              <!-- Special End of Turn Alerts -->
+              <div id="effectAlert" class="effect-alert hidden">
                 <!-- Rendered dynamically -->
               </div>
             </div>
 
-            <!-- Fallback Box (Priorities 4, 5, 6) -->
-            <div class="fallback-box">
-              <span class="fallback-strong" data-i18n="fallbackPrefix">Fallback: </span>
-              <span id="fallbackText" data-i18n="fallbackDefault">Se nenhuma das 3 estiver na fileira, Anton busca a 4ª, 5ª ou 6ª prioridade no sentido da seta.</span>
-            </div>
-
-            <!-- Special End of Turn Alerts -->
-            <div id="effectAlert" class="effect-alert hidden">
-              <!-- Rendered dynamically -->
-            </div>
-
             <!-- Turn Action Button -->
             <button class="btn btn-large" id="btnNextTurn">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-inline">
-                <polyline points="9 18 15 12 9 6"></polyline>
+              <svg id="btnTurnIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-inline">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
               </svg>
-              <span id="btnNextTurnText" data-i18n="btnAdvanceTurn">Anton Recrutou (Avançar Turno)</span>
+              <span id="btnNextTurnText" data-i18n="btnRevealAnton">Terminei Meu Turno ➔ Revelar Anton</span>
             </button>
           </div>
 
@@ -1415,6 +1503,14 @@
         fallbackPrefix: 'Fallback: ',
         fallbackDefault: 'Se nenhuma das 3 estiver na fileira, Anton busca a 4ª, 5ª ou 6ª prioridade no sentido da seta.',
         btnAdvanceTurn: 'Anton Recrutou (Avançar Turno)',
+        faceDownTitle: 'Sua Vez de Jogar',
+        faceDownDesc: 'Faça o seu recrutamento na mesa normalmente. A carta de Anton permanece oculta para evitar decisões influenciadas (metagame).',
+        faceDownHint: 'Após jogar o seu turno, clique abaixo para revelar a decisão de Anton.',
+        btnRevealAnton: 'Terminei Meu Turno ➔ Revelar Anton',
+        btnAntonRecruitedNext: 'Anton Recrutou ➔ Próxima Rodada',
+        btnAntonRecruitedFinish: 'Anton Recrutou ➔ Finalizar Partida',
+        phaseYourTurn: 'SUA VEZ (JOGADOR)',
+        phaseAntonTurn: 'TURNO DE ANTON',
         resourcesTitle: 'Recursos de Anton',
         antonFreeRule: 'Anton não paga custos',
         resKeys: 'Chaves',
@@ -1466,7 +1562,7 @@
         dirLeft: 'Varredura: Direita para Esquerda (←)',
         alertDiscard: 'Efeito Fim de Turno: Descarte todas as 3 cartas restantes da fileira atual e reponha o mercado!',
         alertReshuffle: 'Efeito Fim de Turno: Reembaralhe todas as cartas de decisão de volta ao baralho!',
-        turnRound: 'TURNO',
+        turnRound: 'RODADA',
         cardsRemaining: 'Cartas no Baralho:',
         winnerPlayer: 'PARABÉNS! VOCÊ VENCEU O DUELO!',
         winnerAnton: 'ANTON VENCEU O FESTIVAL COMBO!',
@@ -1498,6 +1594,14 @@
         fallbackPrefix: 'Fallback: ',
         fallbackDefault: 'If none of the 3 are in the row, Anton seeks the 4th, 5th, or 6th priority in arrow direction.',
         btnAdvanceTurn: 'Anton Recruited (Advance Turn)',
+        faceDownTitle: 'Your Turn to Play',
+        faceDownDesc: 'Draft your card from the physical table normally. Anton’s decision remains hidden to prevent privileged information (metagame).',
+        faceDownHint: 'After playing your turn, click below to reveal Anton’s decision.',
+        btnRevealAnton: 'Finished My Turn ➔ Reveal Anton',
+        btnAntonRecruitedNext: 'Anton Recruited ➔ Next Round',
+        btnAntonRecruitedFinish: 'Anton Recruited ➔ End Game (Scoring)',
+        phaseYourTurn: 'YOUR TURN (PLAYER)',
+        phaseAntonTurn: 'ANTON\'S TURN',
         resourcesTitle: 'Anton Resources',
         antonFreeRule: 'Anton pays no costs',
         resKeys: 'Keys',
@@ -1549,7 +1653,7 @@
         dirLeft: 'Scan Direction: Right to Left (←)',
         alertDiscard: 'End-of-Turn Effect: Discard all 3 remaining cards from active row and replenish!',
         alertReshuffle: 'End-of-Turn Effect: Reshuffle all decision cards back into the deck!',
-        turnRound: 'TURN',
+        turnRound: 'ROUND',
         cardsRemaining: 'Cards in Deck:',
         winnerPlayer: 'CONGRATULATIONS! YOU WON THE DUEL!',
         winnerAnton: 'ANTON WON THE COMBO FESTIVAL!',
@@ -1572,6 +1676,7 @@
     let decisionDiscard = [];
     let currentCard = null;
     let roundNumber = 1; // 1 to 9
+    let turnPhase = 'player'; // 'player' (Your Turn) | 'anton' (Anton's Turn)
     let antonGridSlots = Array(9).fill(false); // true if filled
     let antonResources = {
       keys: 0,
@@ -1594,6 +1699,42 @@
       return dict[key] !== undefined ? dict[key] : (I18N.pt[key] || key);
     }
 
+    function updateTurnHeader() {
+      const badge = document.getElementById('roundBadge');
+      const counter = document.getElementById('deckCounter');
+      if (!badge || !counter) return;
+
+      if (turnPhase === 'player') {
+        badge.textContent = `${t('turnRound')} ${roundNumber} / 9 — ${t('phaseYourTurn')}`;
+        badge.classList.remove('badge-anton-turn');
+        badge.classList.add('badge-player-turn');
+      } else {
+        badge.textContent = `${t('turnRound')} ${roundNumber} / 9 — ${t('phaseAntonTurn')}`;
+        badge.classList.remove('badge-player-turn');
+        badge.classList.add('badge-anton-turn');
+      }
+
+      counter.textContent = `${t('cardsRemaining')} ${decisionDeck.length}`;
+    }
+
+    function updateTurnButton() {
+      const btnText = document.getElementById('btnNextTurnText');
+      const btnIcon = document.getElementById('btnTurnIcon');
+      if (!btnText || !btnIcon) return;
+
+      if (turnPhase === 'player') {
+        btnText.textContent = t('btnRevealAnton');
+        btnIcon.innerHTML = `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>`;
+      } else {
+        if (roundNumber >= 9) {
+          btnText.textContent = t('btnAntonRecruitedFinish');
+        } else {
+          btnText.textContent = t('btnAntonRecruitedNext');
+        }
+        btnIcon.innerHTML = `<polyline points="9 18 15 12 9 6"></polyline>`;
+      }
+    }
+
     function applyI18n() {
       document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
@@ -1602,7 +1743,11 @@
       document.getElementById('btnLang').textContent = currentLang === 'pt' ? 'EN' : 'PT';
       document.documentElement.lang = currentLang === 'pt' ? 'pt-BR' : 'en';
       renderPriorityTrack();
-      if (currentCard) renderCurrentDecisionCard();
+      if (currentCard && turnPhase === 'anton') {
+        renderCurrentDecisionCard();
+      }
+      updateTurnHeader();
+      updateTurnButton();
       renderAntonGrid();
     }
 
@@ -1650,7 +1795,7 @@
       decisionDiscard = [];
     }
 
-    // Draw Next Decision Card
+    // Draw Next Decision Card (called when revealing Anton's turn)
     function drawDecisionCard() {
       if (decisionDeck.length === 0) {
         decisionDeck = shuffle(decisionDiscard);
@@ -1663,16 +1808,30 @@
 
       currentCard = decisionDeck.pop();
       decisionDiscard.push(currentCard);
-      playSfx('card-flip');
+
+      // Reveal face up, hide face down
+      document.getElementById('cardFaceDown').classList.add('hidden');
+      document.getElementById('cardFaceUp').classList.remove('hidden');
+
       renderCurrentDecisionCard();
+      updateTurnHeader();
+      updateTurnButton();
+
+      // Log narrative message
+      const dirTxt = currentCard.dir === 'right' ? (currentLang === 'pt' ? 'esquerda para direita' : 'left to right') : (currentLang === 'pt' ? 'direita para esquerda' : 'right to left');
+      const topP = priorityOrder[currentCard.priorities[0] - 1];
+      const topPName = currentLang === 'pt' ? topP.namePt : topP.nameEn;
+      
+      addLog('Michel', currentLang === 'pt'
+        ? `Turno ${roundNumber}: Anton varre a linha (${dirTxt}) buscando ${topPName}.`
+        : `Turn ${roundNumber}: Anton scans the row (${dirTxt}) seeking ${topPName}.`);
     }
 
     function renderCurrentDecisionCard() {
       if (!currentCard) return;
 
       // Update Round Badge & Counter
-      document.getElementById('roundBadge').textContent = `${t('turnRound')} ${roundNumber} / 9`;
-      document.getElementById('deckCounter').textContent = `${t('cardsRemaining')} ${decisionDeck.length}`;
+      updateTurnHeader();
 
       // Update Direction
       const isRight = currentCard.dir === 'right';
@@ -1692,9 +1851,11 @@
         const shield = priorityOrder[pNum - 1];
         const name = currentLang === 'pt' ? shield.namePt : shield.nameEn;
         
-        // Highlight corresponding slot on the track
-        const slotEl = document.getElementById(`priority-slot-${pNum}`);
-        if (slotEl) slotEl.classList.add('active-target');
+        // Highlight corresponding slot on the track only during Anton's turn
+        if (turnPhase === 'anton') {
+          const slotEl = document.getElementById(`priority-slot-${pNum}`);
+          if (slotEl) slotEl.classList.add('active-target');
+        }
 
         const chip = document.createElement('div');
         chip.className = `priority-chip ${shield.color}`;
@@ -1799,8 +1960,20 @@
       logPanel.scrollTop = logPanel.scrollHeight;
     }
 
-    // Game Progression: Advance Turn
-    function handleNextTurn() {
+    // Turn Progression Handlers
+    function handleTurnAction() {
+      if (turnPhase === 'player') {
+        // Player concluded turn -> Reveal Anton's card
+        turnPhase = 'anton';
+        playSfx('card-flip');
+        drawDecisionCard();
+      } else {
+        // Anton recruited -> Advance to next round or finish
+        advanceFromAnton();
+      }
+    }
+
+    function advanceFromAnton() {
       // Auto fill the next sequential slot if not already manually placed
       const nextEmpty = antonGridSlots.findIndex(f => !f);
       if (nextEmpty !== -1) {
@@ -1824,17 +1997,23 @@
       }
 
       roundNumber++;
+      turnPhase = 'player';
       playSfx('turn-notify');
-      drawDecisionCard();
+
+      // Hide face up, show face down
+      document.getElementById('cardFaceUp').classList.add('hidden');
+      document.getElementById('cardFaceDown').classList.remove('hidden');
+
+      // Clear target highlights on priority track
+      document.querySelectorAll('.priority-slot').forEach(s => s.classList.remove('active-target'));
+
+      updateTurnHeader();
+      updateTurnButton();
 
       // Log narrative message
-      const dirTxt = currentCard.dir === 'right' ? (currentLang === 'pt' ? 'esquerda para direita' : 'left to right') : (currentLang === 'pt' ? 'direita para esquerda' : 'right to left');
-      const topP = priorityOrder[currentCard.priorities[0] - 1];
-      const topPName = currentLang === 'pt' ? topP.namePt : topP.nameEn;
-      
       addLog('Michel', currentLang === 'pt'
-        ? `Turno ${roundNumber}: Anton varre a linha (${dirTxt}) buscando ${topPName}.`
-        : `Turn ${roundNumber}: Anton scans the row (${dirTxt}) seeking ${topPName}.`);
+        ? `Rodada ${roundNumber}: Sua vez de jogar! Recrute uma carta da fileira ativa.`
+        : `Round ${roundNumber}: Your turn to play! Draft a card from the active row.`);
     }
 
     function finishGame() {
@@ -1915,6 +2094,8 @@
     // Reset Game Function
     function resetGame() {
       roundNumber = 1;
+      turnPhase = 'player';
+      currentCard = null;
       antonGridSlots = Array(9).fill(false);
       antonResources = { keys: 0, coins: 0, discounts: 0 };
       document.getElementById('valKeys').textContent = '0';
@@ -1927,6 +2108,10 @@
       document.getElementById('viewGame').classList.add('hidden');
       document.getElementById('viewSetup').classList.remove('hidden');
       document.getElementById('btnReshufflePriority').classList.remove('hidden');
+
+      document.getElementById('cardFaceDown').classList.remove('hidden');
+      document.getElementById('cardFaceUp').classList.add('hidden');
+      document.querySelectorAll('.priority-slot').forEach(s => s.classList.remove('active-target'));
 
       randomizePriorities();
       initDecisionDeck();
@@ -1979,12 +2164,24 @@
         document.getElementById('btnReshufflePriority').classList.add('hidden');
         document.getElementById('viewGame').classList.remove('hidden');
         
+        roundNumber = 1;
+        turnPhase = 'player';
+
+        document.getElementById('cardFaceDown').classList.remove('hidden');
+        document.getElementById('cardFaceUp').classList.add('hidden');
+        document.querySelectorAll('.priority-slot').forEach(s => s.classList.remove('active-target'));
+
+        updateTurnHeader();
+        updateTurnButton();
+
         playSfx('card-draw');
-        drawDecisionCard();
+        addLog('Michel', currentLang === 'pt'
+          ? 'A partida começou! Você é o jogador inicial. Recrute uma carta da fileira ativa.'
+          : 'The game begins! You are the starting player. Draft a card from the active row.');
       });
 
-      // Next Turn Button
-      document.getElementById('btnNextTurn').addEventListener('click', handleNextTurn);
+      // Turn Action Button (Reveal Anton / Next Round)
+      document.getElementById('btnNextTurn').addEventListener('click', handleTurnAction);
 
       // Play Again Button
       document.getElementById('btnPlayAgain').addEventListener('click', resetGame);
