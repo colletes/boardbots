@@ -382,5 +382,70 @@ Para evitar os bugs recorrentes de "o redesign quebrou o layout de novo" (botõe
    - **Falsos positivos conhecidos**: `arknova_arno_bot.html` e `sanctuary_bot.html` sorteiam aleatoriamente a ordem das cartas de ação já na tela inicial (antes de qualquer clique) — um `CHANGED` nesses dois bots, sem relação com o arquivo que você editou, é normal; confirme visualmente via o `.diff.png` gerado (se o conteúdo aleatório é o único diferente, ignore/atualize a baseline mesmo assim).
    - Isso substitui o ciclo manual de "usuário reporta botão quebrado → corrige → usuário reporta de novo" observado em passes anteriores (Tiny Epic Kingdoms, Hoth).
 
+## 16. Requisitos Obrigatórios de SEO, Metadados e Sitemap
+
+Todo novo bot ou ferramenta criado no Boardbots DEVE incluir no `<head>` o pacote de metadados padronizado para garantir indexação correta nos motores de busca (Google, Bing) e exibição de cards visuais atraentes ao compartilhar links nas redes sociais (WhatsApp, Discord, Reddit, BGG, Twitter/X), além da atualização obrigatória do `sitemap.xml` e do catálogo na `index.html`.
+
+### 16.1 Metadados Obrigatórios no `<head>` do Bot
+Copie e adapte o bloco abaixo diretamente após a tag `<meta name="viewport"...>`:
+
+```html
+    <title>[Nome do Jogo] Solo Automa &amp; Companion App | Board Bots</title>
+    <link rel="icon" href="../assets/mascot-trimmed.png" type="image/png">
+    <meta name="description" content="[Breve resumo em 1-2 frases destacando o modo solo, automa, gratuidade e funcionamento no navegador sem instalação.]">
+    <link rel="canonical" href="https://colletes.github.io/boardbots/bots/[nome_do_arquivo].html">
+
+    <!-- Open Graph / Facebook / WhatsApp -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Board Bots">
+    <meta property="og:title" content="[Nome do Jogo] Solo Automa &amp; Companion App | Board Bots">
+    <meta property="og:description" content="[Mesmo texto descritivo da meta description]">
+    <meta property="og:url" content="https://colletes.github.io/boardbots/bots/[nome_do_arquivo].html">
+    <meta property="og:image" content="https://colletes.github.io/boardbots/assets/art/[nome_da_arte].webp">
+
+    <!-- Twitter Cards -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="[Nome do Jogo] Solo Automa &amp; Companion App | Board Bots">
+    <meta name="twitter:description" content="[Mesmo texto descritivo]">
+    <meta name="twitter:image" content="https://colletes.github.io/boardbots/assets/art/[nome_da_arte].webp">
+
+    <!-- Schema.org WebApplication -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "[Nome do Jogo] Solo Automa",
+      "applicationCategory": "GameApplication",
+      "operatingSystem": "All",
+      "browserRequirements": "Requires JavaScript. Requires HTML5.",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "description": "[Mesmo texto descritivo]"
+    }
+    </script>
+```
+
+### 16.2 Atualização Obrigatória do `sitemap.xml`
+Ao criar um novo bot ou ferramenta, adicione obrigatoriamente a respectiva URL no arquivo `sitemap.xml` na raiz do repositório:
+```xml
+  <url>
+    <loc>https://colletes.github.io/boardbots/bots/[nome_do_arquivo].html</loc>
+    <lastmod>YYYY-MM-DD</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+```
+
+### 16.3 Atualização da `index.html`
+1. Adicione o card do novo jogo na grade de jogos correspondente (oficiais ou Alpha).
+2. Configure o link para `bots/[nome_do_arquivo].html`.
+3. Inclua a box art em `assets/art/[nome_da_arte].webp`.
+4. Configure as chaves de tradução `data-i18n` para título e descrição no catálogo.
+5. Adicione os botões de like/dislike com o atributo `data-bot="[id_do_bot]"`.
+
+
 
 

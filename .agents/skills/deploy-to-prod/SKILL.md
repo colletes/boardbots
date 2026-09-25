@@ -15,6 +15,10 @@ Antes de realizar o deploy em produção, o agente DEVE verificar:
 1. **Aprovação Explícita do Usuário:** O usuário deve ter testado no link de staging (`https://colletes.github.io/boardbots/staging/`) e expressado intenção de publicar em produção (ex: "deploy para prod", "pode subir para produção", "merge staging para main").
 2. **Git Status Limpo em Staging:** Nenhuma alteração pendente não commitada na branch `staging`.
 3. **Histórico Sincronizado:** A branch `staging` local deve estar em dia com `origin/staging`.
+4. **Validação Obrigatória de SEO e Sitemap:**
+   - Conferir se qualquer novo bot criado em `bots/` ou nova ferramenta em `tools/` possui entrada correspondente em `sitemap.xml` com tag canônica `<loc>https://colletes.github.io/boardbots/...` e `<lastmod>` atualizado.
+   - Conferir se os novos arquivos possuem metadados `<title>`, `<meta name="description">`, `<link rel="canonical">`, Open Graph (`og:image`, `og:title`, etc.) e bloco de Schema.org JSON-LD (`WebApplication`).
+   - Conferir se `robots.txt` continua presente e apontando para o sitemap de produção (`https://colletes.github.io/boardbots/sitemap.xml`).
 
 ## 2. Passo-a-Passo de Execução
 
