@@ -2580,6 +2580,17 @@ footer {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.wc-match-dest svg {
+  width: 12px;
+  height: 12px;
+  min-width: 12px;
+  min-height: 12px;
+  max-width: 12px;
+  max-height: 12px;
+  flex-shrink: 0;
+  display: inline-block;
+  vertical-align: middle;
+}
 .wc-finals-column {
   display: flex;
   flex-direction: column;
@@ -4000,7 +4011,7 @@ footer {
         <div id="fighterCardLeft" class="fighter-card fighter-left" onclick="chooseFighter('left')" tabindex="0">
           <div class="fighter-key-hint">Tecla [ A ] ou [ ← ]</div>
           <div class="fighter-img-wrap">
-            <img id="fighterImgLeft" src="" alt="Game A" class="fighter-img">
+            <img id="fighterImgLeft" src="" alt="Game A" class="fighter-img" onerror="this.onerror=null;this.src='../assets/mascot-trimmed.png'">
             <div class="fighter-aura"></div>
           </div>
           <div class="fighter-details">
@@ -4034,7 +4045,7 @@ footer {
         <div id="fighterCardRight" class="fighter-card fighter-right" onclick="chooseFighter('right')" tabindex="0">
           <div class="fighter-key-hint">Tecla [ L ] ou [ → ]</div>
           <div class="fighter-img-wrap">
-            <img id="fighterImgRight" src="" alt="Game B" class="fighter-img">
+            <img id="fighterImgRight" src="" alt="Game B" class="fighter-img" onerror="this.onerror=null;this.src='../assets/mascot-trimmed.png'">
             <div class="fighter-aura"></div>
           </div>
           <div class="fighter-details">
@@ -11806,11 +11817,130 @@ function chooseFighter(winnerSide) {
   }
 
   executeFightAnimation(winnerSide, atk, () => {
-    activeEngine.recordChoice(winnerSide);
-    activeEngine.isAnimating = false;
-    if (currentTournamentType === 'bracket') renderWorldCupBracketTree();
-    renderCurrentMatchup();
+    try {
+      activeEngine.recordChoice(winnerSide);
+      if (currentTournamentType === 'bracket') renderWorldCupBracketTree();
+      renderCurrentMatchup();
+    } catch (err) {
+      console.error('Error recording fighter choice in animation callback:', err);
+    } finally {
+      activeEngine.isAnimating = false;
+    }
   });
+}
+
+function executeFightAnimation(winnerSide, atk, onComplete) {
+  let finished = false;
+  const finish = () => {
+    if (finished) return;
+    finished = true;
+    const leftCard = document.getElementById('fighterCardLeft');
+    const rightCard = document.getElementById('fighterCardRight');
+    if (leftCard) leftCard.className = 'fighter-card fighter-left';
+    if (rightCard) rightCard.className = 'fighter-card fighter-right';
+    if (typeof onComplete === 'function') {
+      try {
+        onComplete();
+      } catch (err) {
+        console.error('Error in executeFightAnimation finish callback:', err);
+      }
+    }
+  };
+
+  const leftCard = document.getElementById('fighterCardLeft');
+  const rightCard = document.getElementById('fighterCardRight');
+  const winnerCard = winnerSide === 'left' ? leftCard : rightCard;
+  const loserCard = winnerSide === 'left' ? rightCard : leftCard;
+
+  // Sound FX
+  try {
+    if (atk === 'hadouken') ArcadeAudio.playHadouken();
+    else if (atk === 'kamehameha') ArcadeAudio.playKamehameha();
+    else if (atk === 'dragon_punch') ArcadeAudio.playDragonPunch();
+    else if (atk === 'lightning') ArcadeAudio.playLightning();
+    else if (atk === 'lightsaber') ArcadeAudio.playLightsaber();
+    else if (atk === 'battleaxe') ArcadeAudio.playBattleaxe();
+    else if (atk === 'rasengan') ArcadeAudio.playRasengan();
+    else if (atk === 'meteor') ArcadeAudio.playMeteor();
+    else if (atk === 'arrows') ArcadeAudio.playArrows();
+    else if (atk === 'katana') ArcadeAudio.playKatana();
+    else ArcadeAudio.playCardSelect();
+  } catch (e) {
+    console.warn('Audio play error in fight animation:', e);
+  }
+
+  // Visual Canvas Particles FX
+  try {
+    const canvas = document.getElementById('arenaFxCanvas');
+    const cw = canvas ? (canvas.width || 800) : 800;
+    const ch = canvas ? (canvas.height || 400) : 400;
+    const fromX = winnerSide === 'left' ? cw * 0.25 : cw * 0.75;
+    const toX = winnerSide === 'left' ? cw * 0.75 : cw * 0.25;
+    const centerY = ch * 0.5;
+
+    if (atk === 'hadouken') {
+      ArenaFxEngine.spawnBeam(fromX, centerY, toX, centerY, '#38bdf8');
+      spawnComicPopup('HADOUKEN!');
+    } else if (atk === 'kamehameha') {
+      ArenaFxEngine.spawnBeam(fromX, centerY, toX, centerY, '#60a5fa');
+      spawnComicPopup('KAMEHAMEHA!');
+    } else if (atk === 'dragon_punch') {
+      ArenaFxEngine.spawnBlast(toX, centerY, '#f59e0b', 40);
+      spawnComicPopup('SHORYUKEN!');
+    } else if (atk === 'lightning') {
+      ArenaFxEngine.spawnLightning(toX, centerY);
+      spawnComicPopup('THUNDER!');
+    } else if (atk === 'lightsaber') {
+      ArenaFxEngine.spawnBlast(toX, centerY, '#10b981', 35);
+      spawnComicPopup('SLASH!');
+    } else if (atk === 'battleaxe') {
+      ArenaFxEngine.spawnBlast(toX, centerY, '#ef4444', 35);
+      spawnComicPopup('CLEAVE!');
+    } else if (atk === 'rasengan') {
+      ArenaFxEngine.spawnBeam(fromX, centerY, toX, centerY, '#06b6d4');
+      spawnComicPopup('RASENGAN!');
+    } else if (atk === 'meteor') {
+      ArenaFxEngine.spawnBlast(toX, centerY, '#ea580c', 50);
+      spawnComicPopup('METEOR!');
+    } else if (atk === 'arrows') {
+      ArenaFxEngine.spawnBlast(toX, centerY, '#f59e0b', 35);
+      spawnComicPopup('BARRAGE!');
+    } else if (atk === 'katana') {
+      ArenaFxEngine.spawnBlast(toX, centerY, '#dc2626', 40);
+      spawnComicPopup('IAIJUTSU!');
+    } else {
+      ArenaFxEngine.spawnBlast(toX, centerY, '#ffd88a', 25);
+      spawnComicPopup('HIT!');
+    }
+  } catch (e) {
+    console.warn('ArenaFx error in fight animation:', e);
+  }
+
+  // CSS Animations
+  try {
+    if (winnerCard) {
+      if (atk === 'hadouken') winnerCard.classList.add('anim-hadouken-winner');
+      else if (atk === 'kamehameha') winnerCard.classList.add('anim-kamehameha-winner');
+      else if (atk === 'dragon_punch') winnerCard.classList.add('anim-dragon-winner');
+    }
+    if (loserCard) {
+      if (atk === 'hadouken') loserCard.classList.add('anim-hadouken-loser');
+      else if (atk === 'kamehameha') loserCard.classList.add('anim-kamehameha-loser');
+      else if (atk === 'dragon_punch') loserCard.classList.add('anim-dragon-loser');
+      else if (atk === 'lightning') loserCard.classList.add('anim-lightning-loser');
+      else if (atk === 'lightsaber') loserCard.classList.add('anim-lightsaber-loser');
+      else if (atk === 'battleaxe') loserCard.classList.add('anim-battleaxe-loser');
+      else if (atk === 'rasengan') loserCard.classList.add('anim-rasengan-loser');
+      else if (atk === 'meteor') loserCard.classList.add('anim-meteor-loser');
+      else if (atk === 'arrows') loserCard.classList.add('anim-arrows-loser');
+      else if (atk === 'katana') loserCard.classList.add('anim-katana-loser');
+    }
+  } catch (e) {
+    console.warn('CSS anim error in fight animation:', e);
+  }
+
+  // Failsafe timer so the duel ALWAYS proceeds cleanly
+  setTimeout(finish, 650);
 }
 
 function chooseTie() {
@@ -12269,7 +12399,7 @@ function buildWorldCupBracketHTML(engineOrItems, isPreview = false) {
 
     const destHTML = m.nextStageName ? `
       <div class="wc-match-dest" title="Avança para ${m.nextStageName} #${m.nextMatchIndex + 1}">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" style="width:12px; height:12px; min-width:12px; min-height:12px; flex-shrink:0;"><polyline points="9 18 15 12 9 6"/></svg>
         <span>Avança para <strong>${m.nextStageName} #${m.nextMatchIndex + 1}</strong></span>
       </div>
     ` : '';
@@ -12293,7 +12423,7 @@ function buildWorldCupBracketHTML(engineOrItems, isPreview = false) {
             <span style="font-size:0.8em; color:#10b981; font-weight:700;">✓</span>
           </div>
           <div class="wc-match-dest" style="color:#10b981; border-color:rgba(16,185,129,0.3); background:rgba(16,185,129,0.08);">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" style="width:12px; height:12px; min-width:12px; min-height:12px; flex-shrink:0;"><polyline points="9 18 15 12 9 6"/></svg>
             <span>Classificado direto</span>
           </div>
           ${destHTML}
