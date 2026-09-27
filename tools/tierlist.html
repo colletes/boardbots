@@ -40,6 +40,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <!-- jsPDF for direct PDF export -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<!-- html2canvas for rich bracket & UI screenshot export -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <!-- SheetJS for BGG / Ludohall CSV & XLSX collection parsing -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <!-- Shared BoardBots ThemeKit for high-quality audio SFX -->
@@ -3120,10 +3122,10 @@ footer {
     <div class="toolbar">
       <!-- Search Category Pills -->
       <div class="search-category-pills">
-        <button type="button" class="search-cat-pill active" id="searchPillBoardgame" onclick="setSearchCategory('boardgame')">🎲 Tabuleiro (BGG &amp; Ludopedia)</button>
-        <button type="button" class="search-cat-pill" id="searchPillVideogame" onclick="setSearchCategory('videogame')">🎮 Videogames</button>
-        <button type="button" class="search-cat-pill" id="searchPillMovie" onclick="setSearchCategory('movie')">🎬 Filmes &amp; Séries</button>
-        <button type="button" class="search-cat-pill" id="searchPillAll" onclick="setSearchCategory('all')">🌐 Qualquer Assunto</button>
+        <button type="button" class="search-cat-pill active" id="searchPillBoardgame" onclick="setSearchCategory('boardgame')" data-i18n="search_pill_boardgame">🎲 Tabuleiro (BGG &amp; Ludopedia)</button>
+        <button type="button" class="search-cat-pill" id="searchPillVideogame" onclick="setSearchCategory('videogame')" data-i18n="search_pill_videogame">🎮 Videogames</button>
+        <button type="button" class="search-cat-pill" id="searchPillMovie" onclick="setSearchCategory('movie')" data-i18n="search_pill_movie">🎬 Filmes &amp; Séries</button>
+        <button type="button" class="search-cat-pill" id="searchPillAll" onclick="setSearchCategory('all')" data-i18n="search_pill_all">🌐 Qualquer Assunto</button>
       </div>
 
       <!-- Search Bar with Live Suggestions -->
@@ -3135,7 +3137,7 @@ footer {
           <div id="searchSpinner" class="search-spinner"></div>
         </div>
         <button type="button" class="tool-btn primary" id="btnQuickAddFromSearch" onclick="quickAddItemFromSearch()" style="white-space:nowrap; flex-shrink:0;">
-          + Adicionar
+          <span data-i18n="btn_quick_add">+ Adicionar</span>
         </button>
         <!-- Autocomplete Dropdown -->
         <div id="searchResultsDropdown" class="search-results-dropdown"></div>
@@ -3163,14 +3165,6 @@ footer {
           <button class="tool-btn" onclick="openImportSourceModal()" title="Carregar lista (.json) ou importar coleção por link / arquivo (.csv, .xlsx)">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
             <span data-i18n="btn_load_json">Carregar / Importar</span>
-          </button>
-          <button class="tool-btn ranking-btn" onclick="switchMainTab('arena')" title="Arena 1x1 — Ordenação Matemática Merge Sort">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 17.5 3 6V3h3l11.5 11.5"/><path d="m13 19 6 2 2-2-2-6"/><path d="m5 11 4-4"/><path d="m19 13-4 4"/></svg>
-            <span data-i18n="btn_battle_1v1">Batalha 1x1</span>
-          </button>
-          <button class="tool-btn" onclick="switchMainTab('bracket')" style="background:rgba(245,158,11,0.15); border-color:var(--brass-dark); color:var(--brass-bright);" title="Copa Mata-Mata — Torneio Eliminatório com Chaveamento">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
-            <span data-i18n="btn_cup_bracket">Copa Mata-Mata</span>
           </button>
           <input type="file" id="importAnyFileInput" accept=".json,.csv,.xlsx,.xls,application/json,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" style="display:none;" onchange="handleAnyImportFile(event)">
           <input type="file" id="importJsonInput" accept=".json,application/json" style="display:none;" onchange="handleAnyImportFile(event)">
@@ -3209,44 +3203,36 @@ footer {
 
       <!-- Contender Add & Search Row -->
       <div style="background:rgba(233, 200, 117, 0.07); border:1px solid rgba(233, 200, 117, 0.22); border-radius:10px; padding:12px; margin: 14px 0 10px;">
-        <div style="font-size:0.84rem; font-weight:700; color:var(--brass-bright); margin-bottom:6px;">
+        <div style="font-size:0.84rem; font-weight:700; color:var(--brass-bright); margin-bottom:6px;" data-i18n="arena_add_contenders_title">
           🔍 Adicionar Competidores (Digite nome individual OU cole link/usuário de Coleção/Lista):
         </div>
         <div style="display:flex; gap:8px; flex-wrap:wrap;">
           <input type="text" id="arenaContenderInput" class="form-input" placeholder="Digite nome OU cole link/usuário (Ludopedia, BGG, GeekList, GGapp, IMDb)..." style="flex:1; min-width:240px;" onkeydown="if(event.key==='Enter') addContenderFromInput('arena')">
           <button type="button" class="tool-btn primary" onclick="addContenderFromInput('arena')" style="white-space:nowrap;">
-            + Adicionar
+            <span data-i18n="btn_add">+ Adicionar</span>
           </button>
           <button type="button" class="tool-btn" onclick="openTournamentImportModal('arena')" style="white-space:nowrap; border-color:var(--brass); color:var(--brass-bright);">
-            📥 Importar Lista / Perfil
+            <span data-i18n="btn_import_profile">📥 Importar Lista / Perfil</span>
           </button>
-        </div>
-        <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:10px; align-items:center;">
-          <span style="font-size:0.75rem; font-weight:700; color:var(--brass); text-transform:uppercase; letter-spacing:0.5px;">Atalhos Rápidos:</span>
-          <button type="button" class="service-badge-btn" onclick="importUniversalSourceToTournament('colletes', { mode:'arena', sourceHint:'ludopedia' })" title="Coleção da Ludopedia (colletes)">📚 Ludopedia (colletes)</button>
-          <button type="button" class="service-badge-btn" onclick="importUniversalSourceToTournament('rahdo', { mode:'arena', sourceHint:'bgg' })" title="Coleção do BGG (rahdo)">🌐 BGG (rahdo)</button>
-          <button type="button" class="service-badge-btn" onclick="importUniversalSourceToTournament('https://boardgamegeek.com/geeklist/200000', { mode:'arena' })" title="GeekList #200000 (Top 100)">📋 BGG GeekList</button>
-          <button type="button" class="service-badge-btn" onclick="promptImportUrl('ggapp', 'arena')" title="Lista do GGapp.io">🎮 GGapp.io</button>
-          <button type="button" class="service-badge-btn" onclick="importUniversalSourceToTournament('https://www.imdb.com/chart/top/', { mode:'arena' })" title="Carregar IMDb Top 250">🎬 IMDb Top 250</button>
         </div>
       </div>
 
       <!-- Quick Preset Cards Bar -->
       <div style="margin-top:12px;">
-        <span style="font-size:0.8rem; font-weight:700; color:var(--brass); text-transform:uppercase; letter-spacing:0.5px;">⚡ Presets Prontos &amp; Fontes Rápidas:</span>
+        <span style="font-size:0.8rem; font-weight:700; color:var(--brass); text-transform:uppercase; letter-spacing:0.5px;" data-i18n="preset_bar_title">⚡ Presets Prontos &amp; Fontes Rápidas:</span>
         <div class="preset-grid" style="margin-top:6px;">
           <div class="preset-card" onclick="stagePresetContenders('boardgames', 'arena')">
-            <span class="preset-badge">16 Jogos</span>
+            <span class="preset-badge" data-i18n="preset_16_games">16 Jogos</span>
             <div class="preset-card-title">🎲 BGG Top 16 Clássicos</div>
             <div class="preset-card-meta">Brass, Gloomhaven, Ark Nova, Terraforming Mars... (Clique para carregar na Arena)</div>
           </div>
           <div class="preset-card" onclick="stagePresetContenders('videogames', 'arena')">
-            <span class="preset-badge">16 Games</span>
+            <span class="preset-badge" data-i18n="preset_16_games">16 Games</span>
             <div class="preset-card-title">🎮 IGDB Top 16 Games</div>
             <div class="preset-card-meta">Zelda OoT, Witcher 3, Elden Ring, Baldur's Gate 3... (Clique para carregar na Arena)</div>
           </div>
           <div class="preset-card" onclick="stagePresetContenders('movies', 'arena')">
-            <span class="preset-badge">16 Filmes</span>
+            <span class="preset-badge" data-i18n="preset_16_games">16 Filmes</span>
             <div class="preset-card-title">🎬 IMDb Top 16 Cinema</div>
             <div class="preset-card-meta">The Godfather, Dark Knight, Pulp Fiction, Inception... (Clique para carregar na Arena)</div>
           </div>
@@ -3264,9 +3250,9 @@ footer {
             <button type="button" class="staging-tool-btn" onclick="trimContenders(8, 'arena')">Top 8</button>
             <button type="button" class="staging-tool-btn" onclick="trimContenders(16, 'arena')">Top 16</button>
             <button type="button" class="staging-tool-btn" onclick="trimContenders(32, 'arena')">Top 32</button>
-            <button type="button" class="staging-tool-btn" onclick="shuffleContenders('arena')">🎲 Embaralhar</button>
-            <button type="button" class="staging-tool-btn" onclick="loadContendersFromTierlist('arena')">📋 Puxar da Tierlist</button>
-            <button type="button" class="staging-tool-btn" onclick="clearContenders('arena')" style="color:#f87171;">🗑️ Limpar</button>
+            <button type="button" class="staging-tool-btn" onclick="shuffleContenders('arena')"><span data-i18n="btn_shuffle">🎲 Embaralhar</span></button>
+            <button type="button" class="staging-tool-btn" onclick="loadContendersFromTierlist('arena')"><span data-i18n="btn_pull_tierlist">📋 Puxar da Tierlist</span></button>
+            <button type="button" class="staging-tool-btn" onclick="clearContenders('arena')" style="color:#f87171;"><span data-i18n="btn_clear">🗑️ Limpar</span></button>
           </div>
         </div>
         <div id="arenaContendersChips" class="tournament-chips-grid">
@@ -3307,8 +3293,11 @@ footer {
     <!-- Live Arena Stage Container -->
     <div id="arenaLiveContainer" style="display:none;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
-        <h3 style="font-family:var(--font-display); color:var(--brass-bright); margin:0;">⚔️ Batalha 1x1 em Andamento</h3>
-        <button class="tool-btn" onclick="exitArenaPrompt()" data-i18n="btn_exit_arena">✕ Sair da Arena</button>
+        <h3 style="font-family:var(--font-display); color:var(--brass-bright); margin:0;" data-i18n="arena_live_title">⚔️ Batalha 1x1 em Andamento</h3>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="tool-btn" onclick="openDistributeModal()" style="border-color:var(--brass); color:var(--brass-bright);" data-i18n="btn_distribute_tiers">⚡ Distribuir na Tierlist</button>
+          <button class="tool-btn" onclick="exitArenaPrompt()" data-i18n="btn_exit_arena">✕ Sair da Arena</button>
+        </div>
       </div>
       <div id="arenaStageInlineMount"></div>
     </div>
@@ -3326,44 +3315,36 @@ footer {
 
       <!-- Contender Add & Search Row -->
       <div style="background:rgba(233, 200, 117, 0.07); border:1px solid rgba(233, 200, 117, 0.22); border-radius:10px; padding:12px; margin: 14px 0 10px;">
-        <div style="font-size:0.84rem; font-weight:700; color:var(--brass-bright); margin-bottom:6px;">
+        <div style="font-size:0.84rem; font-weight:700; color:var(--brass-bright); margin-bottom:6px;" data-i18n="arena_add_contenders_title">
           🔍 Adicionar Competidores (Digite nome individual OU cole link/usuário de Coleção/Lista):
         </div>
         <div style="display:flex; gap:8px; flex-wrap:wrap;">
           <input type="text" id="bracketContenderInput" class="form-input" placeholder="Digite nome OU cole link/usuário (Ludopedia, BGG, GeekList, GGapp, IMDb)..." style="flex:1; min-width:240px;" onkeydown="if(event.key==='Enter') addContenderFromInput('bracket')">
           <button type="button" class="tool-btn primary" onclick="addContenderFromInput('bracket')" style="white-space:nowrap;">
-            + Adicionar
+            <span data-i18n="btn_add">+ Adicionar</span>
           </button>
           <button type="button" class="tool-btn" onclick="openTournamentImportModal('bracket')" style="white-space:nowrap; border-color:var(--brass); color:var(--brass-bright);">
-            📥 Importar Lista / Perfil
+            <span data-i18n="btn_import_profile">📥 Importar Lista / Perfil</span>
           </button>
-        </div>
-        <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:10px; align-items:center;">
-          <span style="font-size:0.75rem; font-weight:700; color:var(--brass); text-transform:uppercase; letter-spacing:0.5px;">Atalhos Rápidos:</span>
-          <button type="button" class="service-badge-btn" onclick="importUniversalSourceToTournament('colletes', { mode:'bracket', sourceHint:'ludopedia' })" title="Coleção da Ludopedia (colletes)">📚 Ludopedia (colletes)</button>
-          <button type="button" class="service-badge-btn" onclick="importUniversalSourceToTournament('rahdo', { mode:'bracket', sourceHint:'bgg' })" title="Coleção do BGG (rahdo)">🌐 BGG (rahdo)</button>
-          <button type="button" class="service-badge-btn" onclick="importUniversalSourceToTournament('https://boardgamegeek.com/geeklist/200000', { mode:'bracket' })" title="GeekList #200000 (Top 100)">📋 BGG GeekList</button>
-          <button type="button" class="service-badge-btn" onclick="promptImportUrl('ggapp', 'bracket')" title="Lista do GGapp.io">🎮 GGapp.io</button>
-          <button type="button" class="service-badge-btn" onclick="importUniversalSourceToTournament('https://www.imdb.com/chart/top/', { mode:'bracket' })" title="Carregar IMDb Top 250">🎬 IMDb Top 250</button>
         </div>
       </div>
 
       <!-- Quick Preset Cards Bar -->
       <div style="margin-top:12px;">
-        <span style="font-size:0.8rem; font-weight:700; color:var(--brass); text-transform:uppercase; letter-spacing:0.5px;">⚡ Presets Prontos para a Copa Mata-Mata:</span>
+        <span style="font-size:0.8rem; font-weight:700; color:var(--brass); text-transform:uppercase; letter-spacing:0.5px;" data-i18n="preset_bar_title_cup">⚡ Presets Prontos para a Copa Mata-Mata:</span>
         <div class="preset-grid" style="margin-top:6px;">
           <div class="preset-card" onclick="stagePresetContenders('boardgames', 'bracket')">
-            <span class="preset-badge">16 Competidores</span>
+            <span class="preset-badge" data-i18n="preset_16_contenders">16 Competidores</span>
             <div class="preset-card-title">🎲 BGG Top 16 Clássicos</div>
             <div class="preset-card-meta">Brass, Gloomhaven, Ark Nova, Terraforming Mars... (Clique para carregar na Copa)</div>
           </div>
           <div class="preset-card" onclick="stagePresetContenders('videogames', 'bracket')">
-            <span class="preset-badge">16 Competidores</span>
+            <span class="preset-badge" data-i18n="preset_16_contenders">16 Competidores</span>
             <div class="preset-card-title">🎮 IGDB Top 16 Games</div>
             <div class="preset-card-meta">Zelda OoT, Witcher 3, Elden Ring, Baldur's Gate 3... (Clique para carregar na Copa)</div>
           </div>
           <div class="preset-card" onclick="stagePresetContenders('movies', 'bracket')">
-            <span class="preset-badge">16 Competidores</span>
+            <span class="preset-badge" data-i18n="preset_16_contenders">16 Competidores</span>
             <div class="preset-card-title">🎬 IMDb Top 16 Cinema</div>
             <div class="preset-card-meta">The Godfather, Dark Knight, Pulp Fiction, Inception... (Clique para carregar na Copa)</div>
           </div>
@@ -3381,9 +3362,9 @@ footer {
             <button type="button" class="staging-tool-btn" onclick="trimContenders(8, 'bracket')">Top 8</button>
             <button type="button" class="staging-tool-btn" onclick="trimContenders(16, 'bracket')">Top 16</button>
             <button type="button" class="staging-tool-btn" onclick="trimContenders(32, 'bracket')">Top 32</button>
-            <button type="button" class="staging-tool-btn" onclick="shuffleContenders('bracket')">🎲 Embaralhar</button>
-            <button type="button" class="staging-tool-btn" onclick="loadContendersFromTierlist('bracket')">📋 Puxar da Tierlist</button>
-            <button type="button" class="staging-tool-btn" onclick="clearContenders('bracket')" style="color:#f87171;">🗑️ Limpar</button>
+            <button type="button" class="staging-tool-btn" onclick="shuffleContenders('bracket')"><span data-i18n="btn_shuffle">🎲 Embaralhar</span></button>
+            <button type="button" class="staging-tool-btn" onclick="loadContendersFromTierlist('bracket')"><span data-i18n="btn_pull_tierlist">📋 Puxar da Tierlist</span></button>
+            <button type="button" class="staging-tool-btn" onclick="clearContenders('bracket')" style="color:#f87171;"><span data-i18n="btn_clear">🗑️ Limpar</span></button>
           </div>
         </div>
         <div id="bracketContendersChips" class="tournament-chips-grid">
@@ -3420,9 +3401,10 @@ footer {
           <h3 id="bracketLiveStageTitle" style="font-family:var(--font-display); color:var(--brass-bright); margin:0;">🏆 Copa Mata-Mata</h3>
           <span id="bracketLiveMatchInfo" style="font-size:0.82rem; color:var(--text-dim);">Duelo 1 de X</span>
         </div>
-        <div style="display:flex; gap:8px;">
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
           <button class="tool-btn" onclick="confirmResetCup()" data-i18n="btn_reset_cup">✕ Reiniciar Copa</button>
-          <button class="tool-btn" onclick="openExportModalForBracket()" data-i18n="btn_export_bracket">📸 Exportar Chave</button>
+          <button class="tool-btn" onclick="openExportModalForBracket()" data-i18n="btn_export_bracket">📸 Exportar Chave (Imagem / PDF)</button>
+          <button class="tool-btn primary" onclick="openDistributeModal()" style="background:linear-gradient(135deg,#e9c875,#c5a059); color:#120a06; font-weight:800;" data-i18n="btn_distribute_tiers">⚡ Distribuir na Tierlist</button>
         </div>
       </div>
       
@@ -4107,6 +4089,16 @@ footer {
       </label>
 
       <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-size:0.88rem; color:var(--text-main);">
+        <input type="checkbox" id="importOptOnlyOwned" checked style="width:18px; height:18px; accent-color:var(--brass); cursor:pointer;" onchange="updateImportModalCounts()">
+        <span data-i18n="import_opt_only_owned">Apenas jogos que possuo na Coleção (Owned)</span>
+      </label>
+
+      <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-size:0.88rem; color:var(--text-main);">
+        <input type="checkbox" id="importOptWishlist" style="width:18px; height:18px; accent-color:var(--brass); cursor:pointer;" onchange="updateImportModalCounts()">
+        <span data-i18n="import_opt_wishlist">Incluir lista de desejos (Wishlist)</span>
+      </label>
+
+      <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-size:0.88rem; color:var(--text-main);">
         <input type="checkbox" id="importOptOnlyRated" style="width:18px; height:18px; accent-color:var(--brass); cursor:pointer;" onchange="updateImportModalCounts()">
         <span data-i18n="import_opt_only_rated">Apenas jogos com nota (avaliação pessoal)</span>
       </label>
@@ -4125,6 +4117,21 @@ footer {
         <input type="checkbox" id="importOptFetchBgg" checked style="width:18px; height:18px; accent-color:var(--brass); cursor:pointer;">
         <span data-i18n="import_opt_fetch_bgg">Buscar capas na Ludopedia e BGG em segundo plano</span>
       </label>
+    </div>
+
+    <!-- Destination Selector in Import Modal -->
+    <div style="background:rgba(20,12,8,0.85); border:1px solid rgba(233,200,117,0.25); border-radius:8px; padding:10px 14px; margin-bottom:14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+      <span style="font-size:0.84rem; font-weight:700; color:var(--brass-bright);" data-i18n="import_dest_heading">🎯 Destino dos Itens:</span>
+      <div style="display:flex; gap:14px; flex-wrap:wrap;">
+        <label style="display:flex; align-items:center; gap:6px; font-size:0.84rem; cursor:pointer; color:var(--text-main);">
+          <input type="checkbox" id="importDestTierlist" checked style="accent-color:var(--brass);">
+          <span data-i18n="import_dest_tierlist_label">📋 Quadro da Tierlist</span>
+        </label>
+        <label style="display:flex; align-items:center; gap:6px; font-size:0.84rem; cursor:pointer; color:var(--text-main);">
+          <input type="checkbox" id="importDestTournament" checked style="accent-color:var(--brass);">
+          <span data-i18n="import_dest_tournament_label">⚔️ Torneios (Arena &amp; Copa)</span>
+        </label>
+      </div>
     </div>
 
     <div id="importActionSummary" style="font-size:0.85rem; color:var(--text-muted); margin-bottom:18px; padding:10px 12px; background:rgba(233,200,117,0.08); border-radius:6px; border:1px solid rgba(233,200,117,0.15);"></div>
@@ -4524,6 +4531,42 @@ footer {
   </div>
 </div>
 
+<!-- Modal: Export Bracket (Image & PDF) -->
+<div id="exportBracketModal" class="modal-overlay">
+  <div class="modal-card" style="max-width: 680px;">
+    <button class="modal-close-btn" onclick="closeModal('exportBracketModal')">&times;</button>
+    <h2>
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+      <span data-i18n="modal_export_bracket_title">Exportar Chaveamento da Copa</span>
+    </h2>
+    <p style="font-size:0.86rem; color:var(--text-dim); margin-top:-4px; margin-bottom:14px;" data-i18n="modal_export_bracket_desc">
+      Exporte o diagrama completo do torneio em alta definição em formato de imagem PNG ou documento PDF pronto para impressão ou compartilhamento:
+    </p>
+
+    <!-- Export Action Options -->
+    <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:18px;">
+      <div style="background:rgba(233,200,117,0.06); border:1px solid rgba(233,200,117,0.2); border-radius:8px; padding:12px 14px; font-size:0.85rem; color:var(--text-dim);">
+        <strong style="color:var(--brass-bright);" data-i18n="bracket_export_hint_title">Diagrama Completo:</strong>
+        <span data-i18n="bracket_export_hint_desc"> O documento inclui todas as rodadas (Oitavas, Quartas, Semis e Grande Final), confrontos individuais, pontuações e o Campeão com coroa.</span>
+      </div>
+    </div>
+
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+      <button class="tool-btn" onclick="closeModal('exportBracketModal')" data-i18n="btn_cancel">Cancelar</button>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button class="tool-btn" onclick="downloadBracketImage('png')" id="btnDownloadBracketPng" style="border-color:var(--brass-bright); color:var(--brass-bright);">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span data-i18n="btn_download_bracket_png">Baixar Imagem PNG (HD)</span>
+        </button>
+        <button class="tool-btn primary" onclick="downloadBracketPDF()" id="btnDownloadBracketPdf">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          <span data-i18n="btn_download_bracket_pdf">Baixar PDF (Chave)</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Modal: Tournament Results & Podium -->
 <div id="rankingResultsModal" class="modal-overlay">
   <div class="modal-card" style="max-width: 720px; position:relative; overflow:hidden;">
@@ -4806,7 +4849,34 @@ const I18N = {
     bracket_feed_winner: 'Vencedor',
     bracket_advances_to: 'Avança para',
     bracket_advances_bye: 'Avança direto por Bye 🛡️',
-    stage_round: 'Rodada'
+    stage_round: 'Rodada',
+    search_pill_boardgame: '🎲 Tabuleiro (BGG & Ludopedia)',
+    search_pill_videogame: '🎮 Videogames',
+    search_pill_movie: '🎬 Filmes & Séries',
+    search_pill_all: '🌐 Qualquer Assunto',
+    btn_quick_add: '+ Adicionar',
+    arena_add_contenders_title: '🔍 Adicionar Competidores (Digite nome individual OU cole link/usuário de Coleção/Lista):',
+    btn_add: '+ Adicionar',
+    btn_import_profile: '📥 Importar Lista / Perfil',
+    preset_bar_title: '⚡ Presets Prontos & Fontes Rápidas:',
+    preset_16_games: '16 Jogos',
+    btn_shuffle: '🎲 Embaralhar',
+    btn_pull_tierlist: '📋 Puxar da Tierlist',
+    btn_clear: '🗑️ Limpar',
+    arena_live_title: '⚔️ Batalha 1x1 em Andamento',
+    preset_bar_title_cup: '⚡ Presets Prontos para a Copa Mata-Mata:',
+    preset_16_contenders: '16 Competidores',
+    import_opt_only_owned: 'Apenas jogos possuídos (Owned / Minha Coleção)',
+    import_opt_wishlist: 'Incluir desejados (Wishlist / Want to Play)',
+    import_dest_heading: 'Destino dos Jogos:',
+    import_dest_tierlist_label: 'Tierlist (Tier "Não jogado")',
+    import_dest_tournament_label: 'Arena 1x1 / Copa Mata-Mata (Competidores)',
+    modal_export_bracket_title: 'Exportar Chaveamento da Copa',
+    modal_export_bracket_desc: 'Exporte o diagrama completo do torneio em alta definição em formato de imagem PNG ou documento PDF pronto para impressão ou compartilhamento:',
+    bracket_export_hint_title: 'Diagrama Completo:',
+    bracket_export_hint_desc: ' O documento inclui todas as rodadas (Oitavas, Quartas, Semis e Grande Final), confrontos individuais, pontuações e o Campeão com coroa.',
+    btn_download_bracket_png: 'Baixar Imagem PNG (HD)',
+    btn_download_bracket_pdf: 'Baixar PDF (Chave)'
   },
   en: {
     back_home: 'Board Bots',
@@ -5000,7 +5070,34 @@ const I18N = {
     bracket_feed_winner: 'Winner of',
     bracket_advances_to: 'Advances to',
     bracket_advances_bye: 'Advances directly via Bye 🛡️',
-    stage_round: 'Round'
+    stage_round: 'Round',
+    search_pill_boardgame: '🎲 Board Games (BGG & Ludopedia)',
+    search_pill_videogame: '🎮 Video Games',
+    search_pill_movie: '🎬 Movies & TV',
+    search_pill_all: '🌐 Any Topic',
+    btn_quick_add: '+ Add',
+    arena_add_contenders_title: '🔍 Add Contenders (Type individual name OR paste Collection/List link/username):',
+    btn_add: '+ Add',
+    btn_import_profile: '📥 Import List / Profile',
+    preset_bar_title: '⚡ Ready Presets & Quick Sources:',
+    preset_16_games: '16 Games',
+    btn_shuffle: '🎲 Shuffle',
+    btn_pull_tierlist: '📋 Pull from Tierlist',
+    btn_clear: '🗑️ Clear',
+    arena_live_title: '⚔️ 1v1 Battle in Progress',
+    preset_bar_title_cup: '⚡ Ready Presets for Knockout Cup:',
+    preset_16_contenders: '16 Contenders',
+    import_opt_only_owned: 'Only owned games (My Collection)',
+    import_opt_wishlist: 'Include wishlist (Wishlist / Want to Play)',
+    import_dest_heading: 'Destination for Imported Games:',
+    import_dest_tierlist_label: 'Tierlist ("Unplayed" Tier)',
+    import_dest_tournament_label: '1v1 Arena / Knockout Cup (Contenders)',
+    modal_export_bracket_title: 'Export Tournament Bracket',
+    modal_export_bracket_desc: 'Export the complete tournament diagram in high definition as a PNG image or printable PDF document:',
+    bracket_export_hint_title: 'Full Diagram:',
+    bracket_export_hint_desc: ' The document includes all rounds (Round of 16, Quarterfinals, Semis, and Grand Final), individual matchups, scores, and crowned Champion.',
+    btn_download_bracket_png: 'Download PNG Image (HD)',
+    btn_download_bracket_pdf: 'Download PDF (Bracket)'
   }
 };
 
@@ -5034,8 +5131,44 @@ function applyI18n() {
       }
     }
   });
+
   const searchInput = document.getElementById('gameSearchInput');
-  if (searchInput) searchInput.placeholder = t('search_placeholder');
+  if (searchInput) {
+    searchInput.placeholder = currentLang === 'en'
+      ? 'Search games on Ludopedia & BGG (e.g. Catan, Ark Nova, Stone Age)...'
+      : 'Buscar jogo na Ludopedia & BGG (ex: Catan, Ark Nova, Stone Age)...';
+  }
+
+  const arenaInput = document.getElementById('arenaContenderInput');
+  if (arenaInput) {
+    arenaInput.placeholder = currentLang === 'en'
+      ? 'Type title OR paste link/username (Ludopedia, BGG, GeekList, GGapp, IMDb)...'
+      : 'Digite nome OU cole link/usuário (Ludopedia, BGG, GeekList, GGapp, IMDb)...';
+  }
+
+  const bracketInput = document.getElementById('bracketContenderInput');
+  if (bracketInput) {
+    bracketInput.placeholder = currentLang === 'en'
+      ? 'Type title OR paste link/username (Ludopedia, BGG, GeekList, GGapp, IMDb)...'
+      : 'Digite nome OU cole link/usuário (Ludopedia, BGG, GeekList, GGapp, IMDb)...';
+  }
+
+  const titleInput = document.getElementById('tierlistCustomTitle');
+  if (titleInput) {
+    titleInput.placeholder = currentLang === 'en' ? 'Your Tierlist Title...' : 'Título da sua Tierlist...';
+    if (titleInput.value === 'Minha Tierlist de Jogos de Tabuleiro' && currentLang === 'en') {
+      titleInput.value = 'My Board Game Tierlist';
+      if (typeof state !== 'undefined') state.title = 'My Board Game Tierlist';
+    } else if (titleInput.value === 'My Board Game Tierlist' && currentLang === 'pt') {
+      titleInput.value = 'Minha Tierlist de Jogos de Tabuleiro';
+      if (typeof state !== 'undefined') state.title = 'Minha Tierlist de Jogos de Tabuleiro';
+    }
+  }
+
+  if (typeof renderTournamentContenders === 'function') {
+    renderTournamentContenders('arena');
+    renderTournamentContenders('bracket');
+  }
 }
 
 /* =======================================================
@@ -9174,12 +9307,23 @@ function updateImportModalCounts() {
 
   const includeExp = document.getElementById('importOptExpansions')?.checked;
   const skipDupes = document.getElementById('importOptSkipDuplicates')?.checked;
+  const onlyOwned = document.getElementById('importOptOnlyOwned')?.checked;
+  const includeWishlist = document.getElementById('importOptWishlist')?.checked;
   const onlyRated = document.getElementById('importOptOnlyRated')?.checked;
   const onlyUnplayed = document.getElementById('importOptOnlyUnplayed')?.checked;
   const onlyPlayed = document.getElementById('importOptOnlyPlayed')?.checked;
   const summaryEl = document.getElementById('importActionSummary');
 
   let candidates = includeExp ? currentImportPayload.allGames : currentImportPayload.baseGames;
+  if (onlyOwned) {
+    candidates = candidates.filter(g => {
+      const isOwned = (g.owned !== false && g.fl_tem !== 0 && g.fl_tem !== false);
+      const isWish = includeWishlist && (g.wishlist === true || g.fl_quer == 1 || g.fl_favorito == 1);
+      return isOwned || isWish;
+    });
+  } else if (includeWishlist) {
+    candidates = candidates.filter(g => (g.wishlist === true || g.fl_quer == 1 || g.fl_favorito == 1));
+  }
   if (onlyRated) {
     candidates = candidates.filter(g => g.score != null && !isNaN(g.score) && g.score > 0);
   }
@@ -9236,6 +9380,8 @@ function executeCollectionImport() {
 
   const includeExpansions = document.getElementById('importOptExpansions')?.checked;
   const skipDuplicates = document.getElementById('importOptSkipDuplicates')?.checked;
+  const onlyOwned = document.getElementById('importOptOnlyOwned')?.checked;
+  const includeWishlist = document.getElementById('importOptWishlist')?.checked;
   const onlyRated = document.getElementById('importOptOnlyRated')?.checked;
   const onlyUnplayed = document.getElementById('importOptOnlyUnplayed')?.checked;
   const onlyPlayed = document.getElementById('importOptOnlyPlayed')?.checked;
@@ -9251,6 +9397,15 @@ function executeCollectionImport() {
   const existingTitles = new Set(existingItems.map(i => normalizeTitle(i.title)));
 
   let candidates = includeExpansions ? currentImportPayload.allGames : currentImportPayload.baseGames;
+  if (onlyOwned) {
+    candidates = candidates.filter(g => {
+      const isOwned = (g.owned !== false && g.fl_tem !== 0 && g.fl_tem !== false);
+      const isWish = includeWishlist && (g.wishlist === true || g.fl_quer == 1 || g.fl_favorito == 1);
+      return isOwned || isWish;
+    });
+  } else if (includeWishlist) {
+    candidates = candidates.filter(g => (g.wishlist === true || g.fl_quer == 1 || g.fl_favorito == 1));
+  }
   if (onlyRated) {
     candidates = candidates.filter(g => g.score != null && !isNaN(g.score) && g.score > 0);
   }
@@ -10410,6 +10565,45 @@ class TournamentEngine {
     this.restoreSnapshot(snap);
     return true;
   }
+
+  getRankedStandings() {
+    if (this.nextPass && this.nextPass.length === 1 && (!this.sublists || this.sublists.length === 0) && !this.left && !this.right) {
+      return [...this.nextPass[0]];
+    }
+    const gathered = [];
+    if (this.merged && this.merged.length) gathered.push(...this.merged);
+    if (this.left) gathered.push(...this.left.slice(this.i));
+    if (this.right) gathered.push(...this.right.slice(this.j));
+    if (this.sublists) {
+      for (const s of this.sublists) {
+        if (Array.isArray(s)) gathered.push(...s);
+      }
+    }
+    if (this.nextPass) {
+      for (const s of this.nextPass) {
+        if (Array.isArray(s)) gathered.push(...s);
+      }
+    }
+    const seen = new Set();
+    const result = [];
+    for (const item of gathered) {
+      if (!item) continue;
+      const key = item.id || item.title;
+      if (!seen.has(key)) {
+        seen.add(key);
+        result.push(item);
+      }
+    }
+    for (const item of this.originalItems) {
+      if (!item) continue;
+      const key = item.id || item.title;
+      if (!seen.has(key)) {
+        seen.add(key);
+        result.push(item);
+      }
+    }
+    return result;
+  }
 }
 
 // BGG XML Collection Parser
@@ -10934,7 +11128,7 @@ async function importUniversalSourceToTournament(query, options = {}) {
       sourceLabel = gl.title || 'BGG GeekList';
     }
     // 2. BGG Collection / User
-    else if (raw.toLowerCase().startsWith('bgg:') || raw.toLowerCase().includes('boardgamegeek.com')) {
+    else if (raw.toLowerCase().startsWith('bgg:') || raw.toLowerCase().includes('boardgamegeek.com/user') || raw.toLowerCase().includes('boardgamegeek.com/collection')) {
       showToast(currentLang === 'en' ? 'Fetching BGG user collection...' : 'Consultando coleção no BGG...');
       let bggUser = raw.replace(/^bgg:/i, '').trim();
       if (raw.toLowerCase().includes('boardgamegeek.com')) {
@@ -10945,18 +11139,18 @@ async function importUniversalSourceToTournament(query, options = {}) {
         } catch (e) {}
       }
       const payload = await fetchBggUserCollection(bggUser);
-      items = (payload.baseGames && payload.baseGames.length > 0) ? payload.baseGames : payload.allGames;
-      sourceLabel = `BGG (@${bggUser})`;
+      openImportCollectionModal(payload);
+      return;
     }
     // 3. Ludopedia Collection / User
-    else if (raw.toLowerCase().startsWith('ludo:') || raw.toLowerCase().includes('ludopedia.com.br')) {
+    else if (raw.toLowerCase().startsWith('ludo:') || raw.toLowerCase().includes('ludopedia.com.br/colecao') || raw.toLowerCase().includes('ludopedia.com.br/usuario')) {
       showToast(currentLang === 'en' ? 'Fetching Ludopedia collection...' : 'Consultando coleção na Ludopedia...');
       let ludoUser = raw.replace(/^ludo:/i, '').trim();
       const parsed = parseLudopediaCollectionUrl(ludoUser);
       if (parsed && parsed.username) ludoUser = parsed.username;
       const payload = await fetchLudopediaCollection(ludoUser);
-      items = (payload.baseGames && payload.baseGames.length > 0) ? payload.baseGames : payload.allGames;
-      sourceLabel = `Ludopedia (@${ludoUser})`;
+      openImportCollectionModal(payload);
+      return;
     }
     // 4. GGapp.io Lists
     else if (raw.toLowerCase().includes('ggapp.io')) {
@@ -11572,15 +11766,8 @@ function getPoolItemsBySource(source) {
 let stagedTournamentContenders = [];
 
 function initTournamentContenders() {
-  if (!stagedTournamentContenders || stagedTournamentContenders.length === 0) {
-    const existing = typeof getExistingBoardItems === 'function' ? getExistingBoardItems() : [];
-    if (existing && existing.length >= 2) {
-      stagedTournamentContenders = [...existing];
-    } else if (PRESETS && PRESETS.boardgames && PRESETS.boardgames.items) {
-      stagedTournamentContenders = [...PRESETS.boardgames.items];
-    } else {
-      stagedTournamentContenders = [];
-    }
+  if (!stagedTournamentContenders) {
+    stagedTournamentContenders = [];
   }
 
   // Ensure staged contenders have valid fresh image URLs
@@ -11637,7 +11824,9 @@ function renderTournamentContenders(mode = 'arena') {
   if (count === 0) {
     container.innerHTML = `
       <div class="tournament-staging-empty">
-        Nenhum competidor selecionado. Adicione itens digitando acima, escolha um Preset rápido ou clique em "Puxar da Tierlist".
+        ${currentLang === 'en'
+          ? 'No contenders selected yet. Add items by typing above, choose a Preset, or import your collection.'
+          : 'Nenhum competidor selecionado. Adicione itens digitando acima, escolha um Preset ou importe sua coleção.'}
       </div>
     `;
     return;
@@ -12858,6 +13047,26 @@ class BracketEngine {
     this.restoreSnapshot(snap);
     return true;
   }
+
+  getRankedStandings() {
+    const finalRankings = [this.champion, this.runnerUp, this.thirdPlaceWinner].filter(Boolean);
+    const seen = new Set(finalRankings.map(r => r.id || r.title));
+    for (let s = this.stages.length - 1; s >= 0; s--) {
+      for (const m of this.stages[s].matches) {
+        if (m.loser && !seen.has(m.loser.id || m.loser.title)) {
+          finalRankings.push(m.loser);
+          seen.add(m.loser.id || m.loser.title);
+        }
+      }
+    }
+    for (const item of this.originalItems) {
+      if (!seen.has(item.id || item.title)) {
+        finalRankings.push(item);
+        seen.add(item.id || item.title);
+      }
+    }
+    return finalRankings;
+  }
 }
 
 function getBracketStageNameByDistance(stagesFromEnd) {
@@ -12906,13 +13115,18 @@ function buildWorldCupBracketHTML(engineOrItems, isPreview = false) {
     const tADoneClass = isDone ? (winId === teamA?.id ? 'winner' : 'loser') : '';
     const tBDoneClass = isDone ? (winId === teamB?.id ? 'winner' : 'loser') : '';
 
-    const labelA = teamA?.title || (m.prevM1 ? `Vencedor ${m.prevM1.stageName} #${m.prevM1.matchIndex + 1}` : 'A definir');
-    const labelB = teamB?.title || (m.prevM2 ? `Vencedor ${m.prevM2.stageName} #${m.prevM2.matchIndex + 1}` : (!m.prevM2 && !m.teamB ? '🛡️ Bye (Avança)' : 'A definir'));
+    const winnerWord = currentLang === 'en' ? 'Winner' : 'Vencedor';
+    const tbdWord = currentLang === 'en' ? 'TBD' : 'A definir';
+    const advancesWord = currentLang === 'en' ? 'Advances to' : 'Avança para';
+    const byeWord = currentLang === 'en' ? '🛡️ Bye (Advances)' : '🛡️ Bye (Avança)';
+
+    const labelA = teamA?.title || (m.prevM1 ? `${winnerWord} ${m.prevM1.stageName} #${m.prevM1.matchIndex + 1}` : tbdWord);
+    const labelB = teamB?.title || (m.prevM2 ? `${winnerWord} ${m.prevM2.stageName} #${m.prevM2.matchIndex + 1}` : (!m.prevM2 && !m.teamB ? byeWord : tbdWord));
 
     const destHTML = m.nextStageName ? `
-      <div class="wc-match-dest" title="Avança para ${m.nextStageName} #${m.nextMatchIndex + 1}">
+      <div class="wc-match-dest" title="${advancesWord} ${m.nextStageName} #${m.nextMatchIndex + 1}">
         <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" style="width:12px; height:12px; min-width:12px; min-height:12px; flex-shrink:0;"><polyline points="9 18 15 12 9 6"/></svg>
-        <span>Avança para <strong>${m.nextStageName} #${m.nextMatchIndex + 1}</strong></span>
+        <span>${advancesWord} <strong>${m.nextStageName} #${m.nextMatchIndex + 1}</strong></span>
       </div>
     ` : '';
 
@@ -12936,7 +13150,7 @@ function buildWorldCupBracketHTML(engineOrItems, isPreview = false) {
           </div>
           <div class="wc-match-dest" style="color:#10b981; border-color:rgba(16,185,129,0.3); background:rgba(16,185,129,0.08);">
             <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" style="width:12px; height:12px; min-width:12px; min-height:12px; flex-shrink:0;"><polyline points="9 18 15 12 9 6"/></svg>
-            <span>Classificado direto</span>
+            <span>${currentLang === 'en' ? 'Direct qualifier' : 'Classificado direto'}</span>
           </div>
           ${destHTML}
         </div>
@@ -12947,9 +13161,9 @@ function buildWorldCupBracketHTML(engineOrItems, isPreview = false) {
       <div class="wc-match-card ${isLive ? 'is-live' : ''} ${isDone ? 'is-done' : ''}" id="wcCard_${m.id}" data-match-id="${m.id}" ${nextAttr} ${feeder1Attr} ${feeder2Attr} onmouseenter="highlightBracketPath('${m.id}')" onmouseleave="clearBracketHighlight()">
         <div class="wc-match-header">
           <span class="wc-match-stage">${matchNumLabel || m.stageName}</span>
-          ${isLive ? '<span class="wc-badge-live">⚔️ AO VIVO</span>' : ''}
-          ${isDone ? '<span class="wc-badge-done">✓ CONCLUÍDO</span>' : ''}
-          ${(!isLive && !isDone) ? '<span class="wc-badge-pending">PENDENTE</span>' : ''}
+          ${isLive ? `<span class="wc-badge-live">${currentLang === 'en' ? '⚔️ LIVE' : '⚔️ AO VIVO'}</span>` : ''}
+          ${isDone ? `<span class="wc-badge-done">${currentLang === 'en' ? '✓ DONE' : '✓ CONCLUÍDO'}</span>` : ''}
+          ${(!isLive && !isDone) ? `<span class="wc-badge-pending">${currentLang === 'en' ? 'PENDING' : 'PENDENTE'}</span>` : ''}
         </div>
         <div class="wc-team-row ${tADoneClass}">
           <div class="wc-team-info">
@@ -12972,7 +13186,7 @@ function buildWorldCupBracketHTML(engineOrItems, isPreview = false) {
 
   const roundsBeforeFinal = stages.slice(0, stages.length - 1);
   const roundsColumnsHTML = roundsBeforeFinal.map((s, sIdx) => {
-    const stageTitle = s.matches[0]?.stageName || `Rodada ${sIdx + 1}`;
+    const stageTitle = s.matches[0]?.stageName || (currentLang === 'en' ? `Round ${sIdx + 1}` : `Rodada ${sIdx + 1}`);
     let matchesContent = '';
     for (let i = 0; i < s.matches.length; i += 2) {
       const m1 = s.matches[i];
@@ -13001,19 +13215,19 @@ function buildWorldCupBracketHTML(engineOrItems, isPreview = false) {
   const championObj = champion || finalMatch.winner || null;
   const finalsColumnHTML = `
     <div class="wc-finals-column">
-      <div class="wc-round-header" style="color:var(--gold-bright); border-color:rgba(245,158,11,0.4);">Grande Final</div>
+      <div class="wc-round-header" style="color:var(--gold-bright); border-color:rgba(245,158,11,0.4);">${currentLang === 'en' ? 'Grand Final' : 'Grande Final'}</div>
       <div class="wc-trophy-banner">
         <div class="wc-trophy-icon">🏆</div>
-        <div class="wc-trophy-title">Grande Campeão da Copa</div>
-        ${championObj ? `<div class="wc-champion-badge">👑 ${championObj.title}</div>` : `<div style="font-size:0.75em; color:var(--text-dim); margin-top:4px;">A definir</div>`}
+        <div class="wc-trophy-title">${currentLang === 'en' ? 'Knockout Cup Champion' : 'Grande Campeão da Copa'}</div>
+        ${championObj ? `<div class="wc-champion-badge">👑 ${championObj.title}</div>` : `<div style="font-size:0.75em; color:var(--text-dim); margin-top:4px;">${currentLang === 'en' ? 'TBD' : 'A definir'}</div>`}
       </div>
       <div class="wc-matches-list">
-        ${renderMatchCard(finalMatch, 'Grande Final')}
+        ${renderMatchCard(finalMatch, currentLang === 'en' ? 'Grand Final' : 'Grande Final')}
       </div>
       ${thirdMatch ? `
-        <div class="wc-3rd-banner" style="margin-top:16px; font-weight:700; color:var(--brass-bright); font-size:0.8rem; text-align:center;">🥉 Disputa de 3º Lugar</div>
+        <div class="wc-3rd-banner" style="margin-top:16px; font-weight:700; color:var(--brass-bright); font-size:0.8rem; text-align:center;">🥉 ${currentLang === 'en' ? '3rd Place Playoff' : 'Disputa de 3º Lugar'}</div>
         <div class="wc-matches-list" style="margin-top:6px;">
-          ${renderMatchCard(thirdMatch, 'Disputa de 3º Lugar')}
+          ${renderMatchCard(thirdMatch, currentLang === 'en' ? '3rd Place Playoff' : 'Disputa de 3º Lugar')}
         </div>
       ` : ''}
     </div>
@@ -13138,9 +13352,28 @@ function showTournamentResults(sortedItems) {
 }
 
 function openDistributeModal() {
+  if (!currentRankedResults || currentRankedResults.length === 0) {
+    if (activeStudioMode === 'bracket' && currentBracketEngine && typeof currentBracketEngine.getRankedStandings === 'function') {
+      currentRankedResults = currentBracketEngine.getRankedStandings();
+    } else if (activeStudioMode === 'arena' && currentTournament && typeof currentTournament.getRankedStandings === 'function') {
+      currentRankedResults = currentTournament.getRankedStandings();
+    } else if (currentBracketEngine && typeof currentBracketEngine.getRankedStandings === 'function') {
+      currentRankedResults = currentBracketEngine.getRankedStandings();
+    } else if (currentTournament && typeof currentTournament.getRankedStandings === 'function') {
+      currentRankedResults = currentTournament.getRankedStandings();
+    }
+  }
+
+  if (!currentRankedResults || currentRankedResults.length === 0) {
+    alert(currentLang === 'en'
+      ? 'No tournament results found to distribute. Start a 1v1 battle or Knockout Cup first!'
+      : 'Nenhum resultado de torneio encontrado para distribuir. Inicie uma Batalha 1x1 ou Copa primeiro!');
+    return;
+  }
+
   closeModal('rankingResultsModal');
   openModal('distributeModal');
-  selectDistributeMode(selectedDistributeMode || 'percentile');
+  selectDistributeMode(selectedDistributeMode || (activeStudioMode === 'bracket' ? 'cup' : 'percentile'));
 }
 
 function selectDistributeMode(mode) {
@@ -13660,11 +13893,107 @@ function handleImdbCsvUpload(event) {
 }
 
 function openExportModalForTournament() {
-  openExportModal();
+  openModal('exportBracketModal');
 }
 
 function openExportModalForBracket() {
-  openExportModal();
+  openModal('exportBracketModal');
+}
+
+async function captureBracketCanvas() {
+  const mount = document.getElementById('worldCupBracketTreeMount');
+  if (!mount) throw new Error('Bracket container not found');
+  const target = mount.querySelector('.wc-bracket-wrapper') || mount.querySelector('.wc-stages-row') || mount;
+
+  if (typeof html2canvas !== 'function') {
+    throw new Error('html2canvas library is not loaded');
+  }
+
+  const origOverflow = mount.style.overflow;
+  mount.style.overflow = 'visible';
+
+  try {
+    const canvas = await html2canvas(target, {
+      scale: 2,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: '#120a06',
+      logging: false,
+      scrollX: 0,
+      scrollY: 0,
+      windowWidth: target.scrollWidth + 100,
+      width: target.scrollWidth,
+      height: target.scrollHeight
+    });
+    return canvas;
+  } finally {
+    mount.style.overflow = origOverflow;
+  }
+}
+
+async function downloadBracketImage(format = 'png') {
+  const btn = document.getElementById('btnDownloadBracketPng');
+  const origText = btn ? btn.innerHTML : '';
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = `<span class="spinner" style="display:inline-block; width:14px; height:14px; border:2px solid currentColor; border-top-color:transparent; border-radius:50%; animation:spin 0.8s linear infinite; margin-right:6px;"></span> ${currentLang === 'en' ? 'Generating...' : 'Gerando...'}`;
+  }
+  try {
+    const canvas = await captureBracketCanvas();
+    const link = document.createElement('a');
+    link.download = `chave-copa-mata-mata-${new Date().toISOString().slice(0, 10)}.png`;
+    link.href = canvas.toDataURL('image/png');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    closeModal('exportBracketModal');
+    showToast(currentLang === 'en' ? 'Bracket image exported successfully!' : 'Chaveamento exportado com sucesso!');
+  } catch (err) {
+    console.error('Failed to export bracket image:', err);
+    alert(currentLang === 'en' ? 'Could not generate bracket image. Please try again.' : 'Não foi possível gerar a imagem da chave. Tente novamente.');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = origText;
+    }
+  }
+}
+
+async function downloadBracketPDF() {
+  const btn = document.getElementById('btnDownloadBracketPdf');
+  const origText = btn ? btn.innerHTML : '';
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = `<span class="spinner" style="display:inline-block; width:14px; height:14px; border:2px solid currentColor; border-top-color:transparent; border-radius:50%; animation:spin 0.8s linear infinite; margin-right:6px;"></span> ${currentLang === 'en' ? 'Generating...' : 'Gerando...'}`;
+  }
+  try {
+    const canvas = await captureBracketCanvas();
+    const imgData = canvas.toDataURL('image/jpeg', 0.95);
+    if (window.jspdf && window.jspdf.jsPDF) {
+      const orientation = canvas.width > canvas.height ? 'landscape' : 'portrait';
+      const doc = new window.jspdf.jsPDF({
+        orientation,
+        unit: 'px',
+        format: [canvas.width, canvas.height]
+      });
+      doc.addImage(imgData, 'JPEG', 0, 0, canvas.width, canvas.height);
+      doc.save(`chave-copa-mata-mata-${Date.now()}.pdf`);
+      closeModal('exportBracketModal');
+      showToast(currentLang === 'en' ? 'Bracket PDF exported successfully!' : 'PDF do chaveamento exportado com sucesso!');
+    } else {
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(`<img src="${imgData}" style="max-width:100%;">`);
+      printWindow.print();
+    }
+  } catch (err) {
+    console.error('Failed to export bracket PDF:', err);
+    alert(currentLang === 'en' ? 'Could not generate bracket PDF. Please try again.' : 'Não foi possível gerar o PDF da chave. Tente novamente.');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = origText;
+    }
+  }
 }
 
 // Studio boot initializer
@@ -13714,6 +14043,9 @@ window.parseScrapedContent = parseScrapedContent;
 window.handleImdbCsvUpload = handleImdbCsvUpload;
 window.openExportModalForTournament = openExportModalForTournament;
 window.openExportModalForBracket = openExportModalForBracket;
+window.captureBracketCanvas = captureBracketCanvas;
+window.downloadBracketImage = downloadBracketImage;
+window.downloadBracketPDF = downloadBracketPDF;
 window.openRankingSetupModal = openRankingSetupModal;
 window.switchRankingTab = switchRankingTab;
 window.fetchBggForRanking = fetchBggForRanking;
