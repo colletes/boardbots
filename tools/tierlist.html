@@ -11649,6 +11649,15 @@ function switchMainTab(tabId) {
     if (section) section.classList.toggle('active', id === tabId);
   });
 
+  if (tabId === 'arena' || tabId === 'bracket') {
+    const boardItems = typeof getExistingBoardItems === 'function' ? getExistingBoardItems() : [];
+    if (boardItems.length > 0) {
+      stagedTournamentContenders = [...boardItems];
+      renderTournamentContenders('arena');
+      renderTournamentContenders('bracket');
+    }
+  }
+
   if (tabId === 'arena') {
     updateArenaCandidateCount();
   } else if (tabId === 'bracket') {
@@ -11667,17 +11676,20 @@ function switchMainTab(tabId) {
 
 function updateStudioBadges() {
   const allItems = typeof getExistingBoardItems === 'function' ? getExistingBoardItems() : [];
-  const tierCountEl = document.getElementById('badgeTierlistCount');
+  const tierCountEl = document.getElementById('tabBadgeTierlist') || document.getElementById('badgeTierlistCount');
   if (tierCountEl) tierCountEl.textContent = allItems.length;
 
-  const arenaCountEl = document.getElementById('badgeArenaCount');
-  if (arenaCountEl) arenaCountEl.textContent = allItems.length;
+  const arenaCount = (stagedTournamentContenders && stagedTournamentContenders.length > 0)
+    ? stagedTournamentContenders.length
+    : allItems.length;
+  const arenaCountEl = document.getElementById('tabBadgeArena') || document.getElementById('badgeArenaCount');
+  if (arenaCountEl) arenaCountEl.textContent = arenaCount;
 
-  const bracketCountEl = document.getElementById('badgeBracketCount');
-  if (bracketCountEl) bracketCountEl.textContent = allItems.length;
-
-  if (typeof updateArenaCandidateCount === 'function') updateArenaCandidateCount();
-  if (typeof updateBracketCandidateCount === 'function') updateBracketCandidateCount();
+  const bracketCount = (stagedTournamentContenders && stagedTournamentContenders.length > 0)
+    ? stagedTournamentContenders.length
+    : allItems.length;
+  const bracketCountEl = document.getElementById('tabBadgeBracket') || document.getElementById('badgeBracketCount');
+  if (bracketCountEl) bracketCountEl.textContent = bracketCount;
 }
 
 /* ========================================================== */
@@ -13267,7 +13279,9 @@ function renderWorldCupBracketTree() {
   const mount = document.getElementById('worldCupBracketTreeMount');
   if (!mount) return;
   if (!currentBracketEngine) {
-    const candidates = typeof getExistingBoardItems === 'function' ? getExistingBoardItems() : [];
+    const candidates = (stagedTournamentContenders && stagedTournamentContenders.length > 0)
+      ? stagedTournamentContenders
+      : (typeof getExistingBoardItems === 'function' ? getExistingBoardItems() : []);
     mount.innerHTML = buildWorldCupBracketHTML(candidates.slice(0, 16), true);
     return;
   }
