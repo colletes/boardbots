@@ -21,24 +21,33 @@ O **Boardbots** é uma coleção de bots e ferramentas web estáticas (HTML/CSS/
 
 O bot para **SETI: Search for Extraterrestrial Intelligence** automatiza completamente o Rival em todos os 5 níveis de dificuldade, suportando tanto o **Jogo Base puro** (5 rodadas) quanto a expansão **Agências Espaciais** (4 rodadas, novas espécies e objetivos de longo prazo).
 
+> [!NOTE]
+> **Status Atual em Staging (Fase 1 Concluída & Auditada):**
+> - **Branch:** `staging`
+> - **URL de Testes Públicos:** [https://colletes.github.io/boardbots/staging/bots/seti_bot.html](https://colletes.github.io/boardbots/staging/bots/seti_bot.html)
+> - **Artes e Componentes:** 23 cartas escaneadas e alinhadas, 4 tabuleiros solo, 27 tiles de objetivos e 5 SFX espaciais customizados via `ThemeKit`.
+> - **Auditoria de Cartas & Espécies:** 100% revisada e validada via planilha Excel e galeria visual interativa (`tools/seti_review_gallery.html`).
+> - **Próximo Passo:** Testes de mesa física pelo jogador -> promoção para `main` (produção).
+
 O projeto segue uma abordagem de **Evolução em Duas Fases**:
-- **Fase 1 (Validação Rápida & Cartas Físicas):** Implementação completa de todas as regras mecânicas, lógica de IA e fluxo de jogo utilizando recortes em alta definição das cartas físicas reais. Permite testes imediatos e validação da experiência de jogo.
-- **Fase 2 (Terminal Astronômico High-End):** Evolução da UI com ícones próprios vetorizados, microinterações e redesign do painel do Rival simulando um computador quântico de bordo / observatório futurista.
+- **Fase 1 (Validação Rápida & Cartas Físicas):** Implementação completa de todas as regras mecânicas, lógica de IA e fluxo de jogo utilizando recortes em alta definição das cartas físicas reais. Permite testes imediatos e validação da experiência de jogo. (**Status: 100% Concluída & Auditada**).
+- **Fase 2 (Terminal Astronômico High-End):** Evolução da UI com ícones próprios vetorizados, microinterações e redesign do painel do Rival simulando um computador quântico de bordo / observatório futurista. (**Status: Backlog Futuro**).
 
 O desenvolvimento está dividido em **entregáveis pequenos, modulares e estritamente testáveis**:
 
 ```mermaid
 flowchart LR
-    subgraph Fase 1 - Cartas Físicas & Engine
+    subgraph Fase 1 - Cartas Físicas & Engine (Concluída)
     M1[M1: Asset Pipeline] --> M2[M2: Shell & Diegetic UI]
     M2 --> M3[M3: Deck & Trilha Engine]
     M3 --> M4[M4: Árvore de Decisão]
     M4 --> M5[M5: Módulo de Objetivos]
     M5 --> M6[M6: Módulo Expansão]
     M6 --> M7[M7: QA, Regressão & Staging]
+    M7 --> M75[M7.5: Auditoria & Refinamento]
     end
-    subgraph Fase 2 - UI Futurista
-    M7 --> M8[M8: Terminal High-End & Vetorização]
+    subgraph Fase 2 - UI Futurista (Backlog)
+    M75 --> M8[M8: Terminal High-End & Vetorização]
     end
 ```
 
@@ -159,6 +168,7 @@ flowchart LR
 - [x] **5.4 Pontuação de Fim de Jogo (Rodada 5):**
   - Contagem de objetivos restantes não concluídos: Rival recebe **5 PV por objetivo não concluído**.
   - Tela de placar final com comparativo de PV (Humano vs Rival) e resumo da partida.
+- **Status dos Tiles:** ✅ Todos os 27 tiles físicos (4 Nível I, 11 Nível II, 9 Nível III e 3 Longo Prazo) estão ativos e funcionais com suas regras de reposição e penalidades. A transcrição textual minuciosa dos ícones foi catalogada na planilha de revisão e permanece como melhoria incremental futura caso o usuário deseje refiná-la.
 - **Critério de Teste:** ✅ Penalidades de fim de rodada (+3 progresso por tile faltante) e pontuação de fim de jogo (+5 PV por incompleto) funcionando e testadas.
 
 ---
@@ -185,10 +195,10 @@ flowchart LR
 
 ---
 
-### Milestone 7: QA, Regressão Visual, Catálogo e Deploy em Staging
+### Milestone 7: QA, Regressão Visual, Catálogo e Deploy Inicial em Staging
 > **Objetivo:** Assegurar conformidade rigorosa com os padrões do repositório e disponibilizar publicamente em staging (Fase 1 com cartas físicas).
 - [x] **7.1 Teste de Regressão Visual:**
-  - Rodar `node tools/visual-regression.mjs seti_bot.html` para validar conformidade nos viewports de 1440px e 390px.
+  - Execução via `node tools/visual-regression.mjs seti_bot.html` para validar conformidade nos viewports de 1440px e 390px.
   - Baselines capturadas e validadas em `tools/visual-baselines/`.
 - [x] **7.2 Integração na Página Inicial (`index.html`):**
   - Adicionado o card de SETI na seção **Em Teste (Alpha)** mantendo a ordem alfabética.
@@ -199,15 +209,32 @@ flowchart LR
   - Adicionados créditos em `credits.html`.
   - Adicionada entrada no `sitemap.xml`.
 - [x] **7.4 Deploy em Staging:**
-  - Commit e push na branch `staging`:
-    ```bash
-    git checkout staging
-    git add .
-    git commit -m "feat(seti): implement solo rival bot with base game and expansion support (Phase 1)"
-    git push origin staging
-    ```
-  - Fornecer link público de validação: `https://colletes.github.io/boardbots/staging/bots/seti_bot.html`.
-- **Critério de Teste:** ✅ Baselines criadas, catalogado na home, SEO e i18n completos, pronto para validação em staging.
+  - Publicação na branch `staging`: [https://colletes.github.io/boardbots/staging/bots/seti_bot.html](https://colletes.github.io/boardbots/staging/bots/seti_bot.html).
+- **Critério de Teste:** ✅ Baselines criadas, catalogado na home, SEO e i18n completos.
+
+---
+
+### Milestone 7.5: Auditoria Mecânica Fina das Cartas e Espécies
+> **Objetivo:** Revisar com exatidão física todas as 15 cartas de ação do Rival e as 8 espécies alienígenas através de planilha dedicada e galeria visual.
+- [x] **7.5.1 Ferramental de Auditoria Integrado:**
+  - Criada a planilha oficial multi-abas [`tools/SETI_Revisao_Rival_Cartas_Tiles_Racas.xlsx`](file:///Users/thiagocarvalho/Documents/Board%20games/boardbots/tools/SETI_Revisao_Rival_Cartas_Tiles_Racas.xlsx) (e espelhada na pasta SETI).
+  - Criada a Galeria Visual de Apoio [`tools/seti_review_gallery.html`](file:///Users/thiagocarvalho/Documents/Board%20games/boardbots/tools/seti_review_gallery.html) com visualização lado a lado de artes e dados.
+- [x] **7.5.2 Correção de Inversão e Setas de Decisão:**
+  - Inversão física corrigida entre `S.02` e `S.03` (imagens `S.02.webp` ⇄ `S.03.webp` trocadas para corresponder à numeração e setas reais).
+  - Setas corrigidas em 8 cartas: `S.04` (Direita), `S.05` (Esquerda), `S.07` (Direita), `S.09` (Direita), `S.12` (Esquerda), `S.13` (Esquerda), `S.14` (Direita).
+  - Removida a Ação 4 de `S.04` (inexistente na carta física).
+  - Unificada a ação de `S.EXP1` (+1 progresso por estrela de dificuldade do bot).
+- [x] **7.5.3 Refinamento das Ações e Espécies:**
+  - Ação `Analisar (Computador)` padronizada para conceder 3 PV + benefícios com bônus opcional de tecnologia (+3 PV e +1 progresso).
+  - Ação `Tecnologia Grátis (+1 Progresso)` implementada sem custo de publicidade em `S.04`, `species_anomalias` e `species_amoeba`.
+  - Coleta de amostras da `species_mascamitas` integrada na ação de movimento para Saturno/Júpiter.
+  - Rompimento de cartas de segurança de `species_arkhos` corrigido para conceder +2 recompensas menores de exploração.
+  - Descarte de tecnologia para telescópios padronizado em todas as espécies alienígenas.
+- [x] **7.5.4 Sincronização e Baselines Atualizadas:**
+  - Sincronização executada em `assets/art/seti/cards_data.json` e `bots/seti_bot.html`.
+  - Novas baselines visuais geradas e validadas via Playwright.
+  - Commit e push concluídos na branch `staging`.
+- **Critério de Teste:** ✅ 100% das 23 cartas do Rival e das espécies alienígenas rigorosamente alinhadas com as cartas físicas e manuais oficiais.
 
 ---
 
