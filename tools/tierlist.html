@@ -40,6 +40,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <!-- jsPDF for direct PDF export -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<!-- html2canvas for rich bracket & UI screenshot export -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <!-- SheetJS for BGG / Ludohall CSV & XLSX collection parsing -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <!-- Shared BoardBots ThemeKit for high-quality audio SFX -->
@@ -63,10 +65,14 @@
 }
 
 * { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; }
+html {
+  -webkit-text-size-adjust: 100%;
+  overflow-x: hidden;
+}
 body {
   margin: 0;
   padding: 16px 12px 60px;
+  overflow-x: hidden;
   font-family: var(--font-body);
   color: var(--text-main);
   background-color: var(--desk-dark);
@@ -782,13 +788,16 @@ body.is-dragging-tile .drag-scroll-zone-bottom.active {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.82);
+  background: rgba(0,0,0,0.85);
   backdrop-filter: blur(4px);
   z-index: 200;
   display: none;
   align-items: center;
   justify-content: center;
   padding: 16px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 .modal-overlay.visible {
   display: flex;
@@ -805,7 +814,9 @@ body.is-dragging-tile .drag-scroll-zone-bottom.active {
   box-shadow: 0 16px 50px rgba(0,0,0,0.9);
   position: relative;
   max-height: 90vh;
+  max-height: 90dvh;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 .modal-card h2 {
   font-family: var(--font-display);
@@ -1163,6 +1174,9 @@ footer {
 }
 
 @media (max-width: 768px) {
+  *, body, .container { min-width: 0; }
+  h1, h2, h3, .tool-btn, .modal-card, .launcher-card { overflow-wrap: break-word; word-break: break-word; }
+  .tournament-chip { max-width: 100%; }
   .hero-tier { padding: 14px; }
   .hero-title { font-size: 1.4rem; }
   .tierlist-title-input { font-size: 1.2rem; }
@@ -1253,7 +1267,11 @@ footer {
   background: linear-gradient(135deg, rgba(26, 15, 9, 0.98), rgba(16, 10, 6, 0.98)), url('../assets/textures/dark-walnut.jpg') !important;
   border: 2px solid var(--brass) !important;
   box-shadow: 0 0 50px rgba(0, 0, 0, 0.9), 0 0 30px rgba(233, 200, 117, 0.2) !important;
-  overflow: hidden;
+  max-height: 94vh !important;
+  max-height: 94dvh !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch;
   position: relative;
 }
 .arena-header {
@@ -1921,32 +1939,393 @@ footer {
 }
 
 @media (max-width: 600px) {
+  /* Modal Overlays & Cards */
+  .modal-overlay {
+    padding: 8px 6px;
+    align-items: flex-start;
+  }
+  .modal-card {
+    padding: 16px 12px;
+    max-height: 94dvh;
+    border-radius: 10px;
+  }
+  .arena-modal-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 10px 8px !important;
+    margin: 4px auto !important;
+    max-height: 96dvh !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Arena Header & Controls */
+  .arena-header {
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+  }
+  .arena-progress-wrap {
+    width: 100%;
+    min-width: 0;
+  }
+  .arena-controls-row {
+    width: 100%;
+    justify-content: flex-end;
+  }
+  .arena-mini-select {
+    max-width: 160px;
+    font-size: 0.75rem;
+    padding: 4px 6px;
+  }
+
+  /* Arena Stage & Mobile 1v1 Portrait Cards */
+  .arena-stage {
+    min-height: auto;
+    padding: 4px 0;
+    overflow: hidden;
+  }
   .arena-fighters-grid {
     grid-template-columns: 1fr;
-    gap: 12px;
+    gap: 8px;
+    width: 100%;
   }
-  .arena-vs-column {
-    flex-direction: row;
-    justify-content: center;
-    min-width: unset;
+  .fighter-card {
+    padding: 8px 10px;
+    border-radius: 12px;
+  }
+  .fighter-key-hint {
+    display: none !important;
   }
   .fighter-img-wrap {
-    width: 120px;
-    height: 120px;
+    width: 76px;
+    height: 76px;
+    margin-bottom: 6px;
+    border-radius: 8px;
   }
+  .fighter-title {
+    font-size: 0.92rem;
+    line-height: 1.25;
+    margin-bottom: 4px;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+  .fighter-meta {
+    font-size: 0.72rem;
+    gap: 3px;
+  }
+  .fighter-select-btn {
+    padding: 7px 10px;
+    font-size: 0.82rem;
+    margin-top: 4px;
+  }
+
+  /* VS Row & Action Buttons */
+  .arena-vs-column {
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    margin: 4px 0;
+    min-width: unset;
+  }
+  .vs-emblem {
+    width: 42px;
+    height: 42px;
+  }
+  .vs-text {
+    font-size: 1rem;
+  }
+  .arena-action-buttons {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+  }
+  .arena-sub-btn {
+    flex: 1 1 auto;
+    min-width: 80px;
+    padding: 5px 8px;
+    font-size: 0.72rem;
+    text-align: center;
+  }
+
+  /* Results Modal & Podium */
   .results-podium {
     gap: 6px;
   }
   .podium-col {
-    width: 100px;
+    width: 95px;
   }
   .podium-img-wrap {
-    width: 70px;
-    height: 70px;
+    width: 65px;
+    height: 65px;
   }
   .champion-wrap {
-    width: 85px;
-    height: 85px;
+    width: 80px;
+    height: 80px;
+  }
+  .results-actions-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  /* Global Mobile Text & Containers Overflows */
+  .hero-tier {
+    padding: 12px 10px;
+  }
+  .hero-title-row {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+  }
+  .hero-title-row .tool-btn {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+  .hero-title {
+    font-size: 1.15rem;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+  .hero-title svg {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+  }
+  .tierlist-title-input {
+    font-size: 0.98rem;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* Mode Tabs */
+  .mode-tab-btn {
+    min-width: 110px;
+    padding: 8px 10px;
+    font-size: 0.8rem;
+  }
+
+  /* Toolbar & Search Area */
+  .toolbar {
+    padding: 12px 8px !important;
+    gap: 10px !important;
+  }
+  .search-category-pills {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 4px !important;
+    margin-bottom: 6px !important;
+  }
+  .search-cat-pill {
+    font-size: 0.72rem !important;
+    padding: 4px 6px !important;
+    flex: 1 1 calc(50% - 4px) !important;
+    text-align: center !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+  }
+  .search-box-wrapper {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 6px !important;
+    align-items: stretch !important;
+  }
+  .search-input-group {
+    flex: 1 !important;
+    min-width: 0 !important;
+    padding: 4px 8px !important;
+  }
+  .search-input {
+    font-size: 0.84rem !important;
+    min-width: 0 !important;
+  }
+  #btnQuickAddFromSearch {
+    padding: 6px 10px !important;
+    font-size: 0.78rem !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+  }
+  .toolbar-actions {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+  }
+  .toolbar-left {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 6px !important;
+    width: 100% !important;
+  }
+  .toolbar-left .tool-btn {
+    width: 100% !important;
+    justify-content: center !important;
+    font-size: 0.72rem !important;
+    padding: 6px 4px !important;
+    white-space: normal !important;
+    text-align: center !important;
+    line-height: 1.2 !important;
+    overflow-wrap: anywhere !important;
+    word-break: break-word !important;
+  }
+  .tool-btn {
+    font-size: 0.78rem;
+    padding: 6px 8px;
+  }
+
+  /* Tier Board, Labels & Dropzones */
+  .tier-label-box {
+    width: 72px !important;
+    min-width: 64px !important;
+    max-width: 76px !important;
+    padding: 6px 2px !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+  }
+  .tier-name {
+    font-size: 1.05rem !important;
+    overflow-wrap: anywhere !important;
+    word-break: break-word !important;
+    max-width: 100% !important;
+    line-height: 1.1 !important;
+  }
+  .tier-unplayed-finish .tier-name {
+    font-size: 0.65rem !important;
+    letter-spacing: -0.3px !important;
+    line-height: 1.15 !important;
+    text-align: center !important;
+  }
+  .tier-actions {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    gap: 2px !important;
+    margin-top: 4px !important;
+    max-width: 100% !important;
+    opacity: 0.9 !important;
+  }
+  .tier-action-btn {
+    width: 18px !important;
+    height: 18px !important;
+    font-size: 0.65rem !important;
+    flex-shrink: 0 !important;
+  }
+  .tier-action-btn svg {
+    width: 10px !important;
+    height: 10px !important;
+  }
+  .tier-dropzone {
+    padding: 6px !important;
+    gap: 6px !important;
+    min-height: 64px !important;
+  }
+  :root {
+    --tile-size: 64px !important;
+  }
+
+  /* Presets & Launchers */
+  .preset-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .preset-card-title {
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+  .launcher-card {
+    padding: 12px 10px !important;
+  }
+  .launcher-title {
+    font-size: 1.05rem;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+  .launcher-card input.form-input,
+  #arenaContenderInput,
+  #bracketContenderInput {
+    min-width: 0 !important;
+    width: 100% !important;
+    font-size: 0.88rem;
+  }
+  .tournament-staging-box {
+    padding: 10px 8px;
+  }
+  .tournament-staging-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .tournament-staging-title {
+    font-size: 0.88rem;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+  .tournament-staging-tools {
+    width: 100%;
+    gap: 4px;
+  }
+  .staging-tool-btn {
+    flex: 1 1 auto;
+    text-align: center;
+    font-size: 0.7rem;
+    padding: 4px 6px;
+  }
+  .service-badge-btn {
+    font-size: 0.72rem;
+    padding: 4px 8px;
+  }
+
+  /* Modal Overflows */
+  .modal-category-tabs {
+    display: flex;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    gap: 4px;
+    padding-bottom: 4px;
+  }
+  .modal-cat-btn {
+    font-size: 0.74rem;
+    padding: 6px 8px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .import-category-pane input.form-input {
+    min-width: 0 !important;
+    font-size: 0.82rem;
+  }
+  .import-category-pane .tool-btn {
+    font-size: 0.76rem;
+    padding: 6px 8px;
+  }
+  .game-detail-info h2 {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+}
+
+@media (max-width: 400px) {
+  :root {
+    --tile-size: 56px !important;
+  }
+  .tier-label-box {
+    width: 62px !important;
+    min-width: 56px !important;
+    max-width: 66px !important;
+    padding: 4px 1px !important;
+  }
+  .tier-name {
+    font-size: 0.95rem !important;
+  }
+  .tier-unplayed-finish .tier-name {
+    font-size: 0.58rem !important;
+    letter-spacing: -0.4px !important;
+  }
+  .toolbar-left {
+    grid-template-columns: 1fr !important;
+  }
+  .search-cat-pill {
+    flex: 1 1 100% !important;
   }
 }
 
@@ -2743,10 +3122,10 @@ footer {
     <div class="toolbar">
       <!-- Search Category Pills -->
       <div class="search-category-pills">
-        <button type="button" class="search-cat-pill active" id="searchPillBoardgame" onclick="setSearchCategory('boardgame')">🎲 Tabuleiro (BGG &amp; Ludopedia)</button>
-        <button type="button" class="search-cat-pill" id="searchPillVideogame" onclick="setSearchCategory('videogame')">🎮 Videogames</button>
-        <button type="button" class="search-cat-pill" id="searchPillMovie" onclick="setSearchCategory('movie')">🎬 Filmes &amp; Séries</button>
-        <button type="button" class="search-cat-pill" id="searchPillAll" onclick="setSearchCategory('all')">🌐 Qualquer Assunto</button>
+        <button type="button" class="search-cat-pill active" id="searchPillBoardgame" onclick="setSearchCategory('boardgame')" data-i18n="search_pill_boardgame">🎲 Tabuleiro (BGG &amp; Ludopedia)</button>
+        <button type="button" class="search-cat-pill" id="searchPillVideogame" onclick="setSearchCategory('videogame')" data-i18n="search_pill_videogame">🎮 Videogames</button>
+        <button type="button" class="search-cat-pill" id="searchPillMovie" onclick="setSearchCategory('movie')" data-i18n="search_pill_movie">🎬 Filmes &amp; Séries</button>
+        <button type="button" class="search-cat-pill" id="searchPillAll" onclick="setSearchCategory('all')" data-i18n="search_pill_all">🌐 Qualquer Assunto</button>
       </div>
 
       <!-- Search Bar with Live Suggestions -->
@@ -2758,7 +3137,7 @@ footer {
           <div id="searchSpinner" class="search-spinner"></div>
         </div>
         <button type="button" class="tool-btn primary" id="btnQuickAddFromSearch" onclick="quickAddItemFromSearch()" style="white-space:nowrap; flex-shrink:0;">
-          + Adicionar
+          <span data-i18n="btn_quick_add">+ Adicionar</span>
         </button>
         <!-- Autocomplete Dropdown -->
         <div id="searchResultsDropdown" class="search-results-dropdown"></div>
@@ -2786,14 +3165,6 @@ footer {
           <button class="tool-btn" onclick="openImportSourceModal()" title="Carregar lista (.json) ou importar coleção por link / arquivo (.csv, .xlsx)">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
             <span data-i18n="btn_load_json">Carregar / Importar</span>
-          </button>
-          <button class="tool-btn ranking-btn" onclick="switchMainTab('arena')" title="Arena 1x1 — Ordenação Matemática Merge Sort">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 17.5 3 6V3h3l11.5 11.5"/><path d="m13 19 6 2 2-2-2-6"/><path d="m5 11 4-4"/><path d="m19 13-4 4"/></svg>
-            <span data-i18n="btn_battle_1v1">Batalha 1x1</span>
-          </button>
-          <button class="tool-btn" onclick="switchMainTab('bracket')" style="background:rgba(245,158,11,0.15); border-color:var(--brass-dark); color:var(--brass-bright);" title="Copa Mata-Mata — Torneio Eliminatório com Chaveamento">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
-            <span data-i18n="btn_cup_bracket">Copa Mata-Mata</span>
           </button>
           <input type="file" id="importAnyFileInput" accept=".json,.csv,.xlsx,.xls,application/json,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" style="display:none;" onchange="handleAnyImportFile(event)">
           <input type="file" id="importJsonInput" accept=".json,application/json" style="display:none;" onchange="handleAnyImportFile(event)">
@@ -2832,44 +3203,36 @@ footer {
 
       <!-- Contender Add & Search Row -->
       <div style="background:rgba(233, 200, 117, 0.07); border:1px solid rgba(233, 200, 117, 0.22); border-radius:10px; padding:12px; margin: 14px 0 10px;">
-        <div style="font-size:0.84rem; font-weight:700; color:var(--brass-bright); margin-bottom:6px;">
+        <div style="font-size:0.84rem; font-weight:700; color:var(--brass-bright); margin-bottom:6px;" data-i18n="arena_add_contenders_title">
           🔍 Adicionar Competidores (Digite nome individual OU cole link/usuário de Coleção/Lista):
         </div>
         <div style="display:flex; gap:8px; flex-wrap:wrap;">
           <input type="text" id="arenaContenderInput" class="form-input" placeholder="Digite nome OU cole link/usuário (Ludopedia, BGG, GeekList, GGapp, IMDb)..." style="flex:1; min-width:240px;" onkeydown="if(event.key==='Enter') addContenderFromInput('arena')">
           <button type="button" class="tool-btn primary" onclick="addContenderFromInput('arena')" style="white-space:nowrap;">
-            + Adicionar
+            <span data-i18n="btn_add">+ Adicionar</span>
           </button>
           <button type="button" class="tool-btn" onclick="openTournamentImportModal('arena')" style="white-space:nowrap; border-color:var(--brass); color:var(--brass-bright);">
-            📥 Importar Lista / Perfil
+            <span data-i18n="btn_import_profile">📥 Importar Lista / Perfil</span>
           </button>
-        </div>
-        <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:10px; align-items:center;">
-          <span style="font-size:0.75rem; font-weight:700; color:var(--brass); text-transform:uppercase; letter-spacing:0.5px;">Atalhos Rápidos:</span>
-          <button type="button" class="service-badge-btn" onclick="importUniversalSourceToTournament('colletes', { mode:'arena', sourceHint:'ludopedia' })" title="Coleção da Ludopedia (colletes)">📚 Ludopedia (colletes)</button>
-          <button type="button" class="service-badge-btn" onclick="importUniversalSourceToTournament('rahdo', { mode:'arena', sourceHint:'bgg' })" title="Coleção do BGG (rahdo)">🌐 BGG (rahdo)</button>
-          <button type="button" class="service-badge-btn" onclick="importUniversalSourceToTournament('https://boardgamegeek.com/geeklist/200000', { mode:'arena' })" title="GeekList #200000 (Top 100)">📋 BGG GeekList</button>
-          <button type="button" class="service-badge-btn" onclick="promptImportUrl('ggapp', 'arena')" title="Lista do GGapp.io">🎮 GGapp.io</button>
-          <button type="button" class="service-badge-btn" onclick="importUniversalSourceToTournament('https://www.imdb.com/chart/top/', { mode:'arena' })" title="Carregar IMDb Top 250">🎬 IMDb Top 250</button>
         </div>
       </div>
 
       <!-- Quick Preset Cards Bar -->
       <div style="margin-top:12px;">
-        <span style="font-size:0.8rem; font-weight:700; color:var(--brass); text-transform:uppercase; letter-spacing:0.5px;">⚡ Presets Prontos &amp; Fontes Rápidas:</span>
+        <span style="font-size:0.8rem; font-weight:700; color:var(--brass); text-transform:uppercase; letter-spacing:0.5px;" data-i18n="preset_bar_title">⚡ Presets Prontos &amp; Fontes Rápidas:</span>
         <div class="preset-grid" style="margin-top:6px;">
           <div class="preset-card" onclick="stagePresetContenders('boardgames', 'arena')">
-            <span class="preset-badge">16 Jogos</span>
+            <span class="preset-badge" data-i18n="preset_16_games">16 Jogos</span>
             <div class="preset-card-title">🎲 BGG Top 16 Clássicos</div>
             <div class="preset-card-meta">Brass, Gloomhaven, Ark Nova, Terraforming Mars... (Clique para carregar na Arena)</div>
           </div>
           <div class="preset-card" onclick="stagePresetContenders('videogames', 'arena')">
-            <span class="preset-badge">16 Games</span>
+            <span class="preset-badge" data-i18n="preset_16_games">16 Games</span>
             <div class="preset-card-title">🎮 IGDB Top 16 Games</div>
             <div class="preset-card-meta">Zelda OoT, Witcher 3, Elden Ring, Baldur's Gate 3... (Clique para carregar na Arena)</div>
           </div>
           <div class="preset-card" onclick="stagePresetContenders('movies', 'arena')">
-            <span class="preset-badge">16 Filmes</span>
+            <span class="preset-badge" data-i18n="preset_16_games">16 Filmes</span>
             <div class="preset-card-title">🎬 IMDb Top 16 Cinema</div>
             <div class="preset-card-meta">The Godfather, Dark Knight, Pulp Fiction, Inception... (Clique para carregar na Arena)</div>
           </div>
@@ -2887,9 +3250,9 @@ footer {
             <button type="button" class="staging-tool-btn" onclick="trimContenders(8, 'arena')">Top 8</button>
             <button type="button" class="staging-tool-btn" onclick="trimContenders(16, 'arena')">Top 16</button>
             <button type="button" class="staging-tool-btn" onclick="trimContenders(32, 'arena')">Top 32</button>
-            <button type="button" class="staging-tool-btn" onclick="shuffleContenders('arena')">🎲 Embaralhar</button>
-            <button type="button" class="staging-tool-btn" onclick="loadContendersFromTierlist('arena')">📋 Puxar da Tierlist</button>
-            <button type="button" class="staging-tool-btn" onclick="clearContenders('arena')" style="color:#f87171;">🗑️ Limpar</button>
+            <button type="button" class="staging-tool-btn" onclick="shuffleContenders('arena')"><span data-i18n="btn_shuffle">🎲 Embaralhar</span></button>
+            <button type="button" class="staging-tool-btn" onclick="loadContendersFromTierlist('arena')"><span data-i18n="btn_pull_tierlist">📋 Puxar da Tierlist</span></button>
+            <button type="button" class="staging-tool-btn" onclick="clearContenders('arena')" style="color:#f87171;"><span data-i18n="btn_clear">🗑️ Limpar</span></button>
           </div>
         </div>
         <div id="arenaContendersChips" class="tournament-chips-grid">
@@ -2930,8 +3293,11 @@ footer {
     <!-- Live Arena Stage Container -->
     <div id="arenaLiveContainer" style="display:none;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
-        <h3 style="font-family:var(--font-display); color:var(--brass-bright); margin:0;">⚔️ Batalha 1x1 em Andamento</h3>
-        <button class="tool-btn" onclick="exitArenaPrompt()" data-i18n="btn_exit_arena">✕ Sair da Arena</button>
+        <h3 style="font-family:var(--font-display); color:var(--brass-bright); margin:0;" data-i18n="arena_live_title">⚔️ Batalha 1x1 em Andamento</h3>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="tool-btn" onclick="openDistributeModal()" style="border-color:var(--brass); color:var(--brass-bright);" data-i18n="btn_distribute_tiers">⚡ Distribuir na Tierlist</button>
+          <button class="tool-btn" onclick="exitArenaPrompt()" data-i18n="btn_exit_arena">✕ Sair da Arena</button>
+        </div>
       </div>
       <div id="arenaStageInlineMount"></div>
     </div>
@@ -2949,44 +3315,36 @@ footer {
 
       <!-- Contender Add & Search Row -->
       <div style="background:rgba(233, 200, 117, 0.07); border:1px solid rgba(233, 200, 117, 0.22); border-radius:10px; padding:12px; margin: 14px 0 10px;">
-        <div style="font-size:0.84rem; font-weight:700; color:var(--brass-bright); margin-bottom:6px;">
+        <div style="font-size:0.84rem; font-weight:700; color:var(--brass-bright); margin-bottom:6px;" data-i18n="arena_add_contenders_title">
           🔍 Adicionar Competidores (Digite nome individual OU cole link/usuário de Coleção/Lista):
         </div>
         <div style="display:flex; gap:8px; flex-wrap:wrap;">
           <input type="text" id="bracketContenderInput" class="form-input" placeholder="Digite nome OU cole link/usuário (Ludopedia, BGG, GeekList, GGapp, IMDb)..." style="flex:1; min-width:240px;" onkeydown="if(event.key==='Enter') addContenderFromInput('bracket')">
           <button type="button" class="tool-btn primary" onclick="addContenderFromInput('bracket')" style="white-space:nowrap;">
-            + Adicionar
+            <span data-i18n="btn_add">+ Adicionar</span>
           </button>
           <button type="button" class="tool-btn" onclick="openTournamentImportModal('bracket')" style="white-space:nowrap; border-color:var(--brass); color:var(--brass-bright);">
-            📥 Importar Lista / Perfil
+            <span data-i18n="btn_import_profile">📥 Importar Lista / Perfil</span>
           </button>
-        </div>
-        <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:10px; align-items:center;">
-          <span style="font-size:0.75rem; font-weight:700; color:var(--brass); text-transform:uppercase; letter-spacing:0.5px;">Atalhos Rápidos:</span>
-          <button type="button" class="service-badge-btn" onclick="importUniversalSourceToTournament('colletes', { mode:'bracket', sourceHint:'ludopedia' })" title="Coleção da Ludopedia (colletes)">📚 Ludopedia (colletes)</button>
-          <button type="button" class="service-badge-btn" onclick="importUniversalSourceToTournament('rahdo', { mode:'bracket', sourceHint:'bgg' })" title="Coleção do BGG (rahdo)">🌐 BGG (rahdo)</button>
-          <button type="button" class="service-badge-btn" onclick="importUniversalSourceToTournament('https://boardgamegeek.com/geeklist/200000', { mode:'bracket' })" title="GeekList #200000 (Top 100)">📋 BGG GeekList</button>
-          <button type="button" class="service-badge-btn" onclick="promptImportUrl('ggapp', 'bracket')" title="Lista do GGapp.io">🎮 GGapp.io</button>
-          <button type="button" class="service-badge-btn" onclick="importUniversalSourceToTournament('https://www.imdb.com/chart/top/', { mode:'bracket' })" title="Carregar IMDb Top 250">🎬 IMDb Top 250</button>
         </div>
       </div>
 
       <!-- Quick Preset Cards Bar -->
       <div style="margin-top:12px;">
-        <span style="font-size:0.8rem; font-weight:700; color:var(--brass); text-transform:uppercase; letter-spacing:0.5px;">⚡ Presets Prontos para a Copa Mata-Mata:</span>
+        <span style="font-size:0.8rem; font-weight:700; color:var(--brass); text-transform:uppercase; letter-spacing:0.5px;" data-i18n="preset_bar_title_cup">⚡ Presets Prontos para a Copa Mata-Mata:</span>
         <div class="preset-grid" style="margin-top:6px;">
           <div class="preset-card" onclick="stagePresetContenders('boardgames', 'bracket')">
-            <span class="preset-badge">16 Competidores</span>
+            <span class="preset-badge" data-i18n="preset_16_contenders">16 Competidores</span>
             <div class="preset-card-title">🎲 BGG Top 16 Clássicos</div>
             <div class="preset-card-meta">Brass, Gloomhaven, Ark Nova, Terraforming Mars... (Clique para carregar na Copa)</div>
           </div>
           <div class="preset-card" onclick="stagePresetContenders('videogames', 'bracket')">
-            <span class="preset-badge">16 Competidores</span>
+            <span class="preset-badge" data-i18n="preset_16_contenders">16 Competidores</span>
             <div class="preset-card-title">🎮 IGDB Top 16 Games</div>
             <div class="preset-card-meta">Zelda OoT, Witcher 3, Elden Ring, Baldur's Gate 3... (Clique para carregar na Copa)</div>
           </div>
           <div class="preset-card" onclick="stagePresetContenders('movies', 'bracket')">
-            <span class="preset-badge">16 Competidores</span>
+            <span class="preset-badge" data-i18n="preset_16_contenders">16 Competidores</span>
             <div class="preset-card-title">🎬 IMDb Top 16 Cinema</div>
             <div class="preset-card-meta">The Godfather, Dark Knight, Pulp Fiction, Inception... (Clique para carregar na Copa)</div>
           </div>
@@ -3004,9 +3362,9 @@ footer {
             <button type="button" class="staging-tool-btn" onclick="trimContenders(8, 'bracket')">Top 8</button>
             <button type="button" class="staging-tool-btn" onclick="trimContenders(16, 'bracket')">Top 16</button>
             <button type="button" class="staging-tool-btn" onclick="trimContenders(32, 'bracket')">Top 32</button>
-            <button type="button" class="staging-tool-btn" onclick="shuffleContenders('bracket')">🎲 Embaralhar</button>
-            <button type="button" class="staging-tool-btn" onclick="loadContendersFromTierlist('bracket')">📋 Puxar da Tierlist</button>
-            <button type="button" class="staging-tool-btn" onclick="clearContenders('bracket')" style="color:#f87171;">🗑️ Limpar</button>
+            <button type="button" class="staging-tool-btn" onclick="shuffleContenders('bracket')"><span data-i18n="btn_shuffle">🎲 Embaralhar</span></button>
+            <button type="button" class="staging-tool-btn" onclick="loadContendersFromTierlist('bracket')"><span data-i18n="btn_pull_tierlist">📋 Puxar da Tierlist</span></button>
+            <button type="button" class="staging-tool-btn" onclick="clearContenders('bracket')" style="color:#f87171;"><span data-i18n="btn_clear">🗑️ Limpar</span></button>
           </div>
         </div>
         <div id="bracketContendersChips" class="tournament-chips-grid">
@@ -3043,9 +3401,10 @@ footer {
           <h3 id="bracketLiveStageTitle" style="font-family:var(--font-display); color:var(--brass-bright); margin:0;">🏆 Copa Mata-Mata</h3>
           <span id="bracketLiveMatchInfo" style="font-size:0.82rem; color:var(--text-dim);">Duelo 1 de X</span>
         </div>
-        <div style="display:flex; gap:8px;">
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
           <button class="tool-btn" onclick="confirmResetCup()" data-i18n="btn_reset_cup">✕ Reiniciar Copa</button>
-          <button class="tool-btn" onclick="openExportModalForBracket()" data-i18n="btn_export_bracket">📸 Exportar Chave</button>
+          <button class="tool-btn" onclick="openExportModalForBracket()" data-i18n="btn_export_bracket">📸 Exportar Chave (Imagem / PDF)</button>
+          <button class="tool-btn primary" onclick="openDistributeModal()" style="background:linear-gradient(135deg,#e9c875,#c5a059); color:#120a06; font-weight:800;" data-i18n="btn_distribute_tiers">⚡ Distribuir na Tierlist</button>
         </div>
       </div>
       
@@ -3730,6 +4089,16 @@ footer {
       </label>
 
       <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-size:0.88rem; color:var(--text-main);">
+        <input type="checkbox" id="importOptOnlyOwned" checked style="width:18px; height:18px; accent-color:var(--brass); cursor:pointer;" onchange="updateImportModalCounts()">
+        <span data-i18n="import_opt_only_owned">Apenas jogos que possuo na Coleção (Owned)</span>
+      </label>
+
+      <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-size:0.88rem; color:var(--text-main);">
+        <input type="checkbox" id="importOptWishlist" style="width:18px; height:18px; accent-color:var(--brass); cursor:pointer;" onchange="updateImportModalCounts()">
+        <span data-i18n="import_opt_wishlist">Incluir lista de desejos (Wishlist)</span>
+      </label>
+
+      <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-size:0.88rem; color:var(--text-main);">
         <input type="checkbox" id="importOptOnlyRated" style="width:18px; height:18px; accent-color:var(--brass); cursor:pointer;" onchange="updateImportModalCounts()">
         <span data-i18n="import_opt_only_rated">Apenas jogos com nota (avaliação pessoal)</span>
       </label>
@@ -3748,6 +4117,21 @@ footer {
         <input type="checkbox" id="importOptFetchBgg" checked style="width:18px; height:18px; accent-color:var(--brass); cursor:pointer;">
         <span data-i18n="import_opt_fetch_bgg">Buscar capas na Ludopedia e BGG em segundo plano</span>
       </label>
+    </div>
+
+    <!-- Destination Selector in Import Modal -->
+    <div style="background:rgba(20,12,8,0.85); border:1px solid rgba(233,200,117,0.25); border-radius:8px; padding:10px 14px; margin-bottom:14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+      <span style="font-size:0.84rem; font-weight:700; color:var(--brass-bright);" data-i18n="import_dest_heading">🎯 Destino dos Itens:</span>
+      <div style="display:flex; gap:14px; flex-wrap:wrap;">
+        <label style="display:flex; align-items:center; gap:6px; font-size:0.84rem; cursor:pointer; color:var(--text-main);">
+          <input type="checkbox" id="importDestTierlist" checked style="accent-color:var(--brass);">
+          <span data-i18n="import_dest_tierlist_label">📋 Quadro da Tierlist</span>
+        </label>
+        <label style="display:flex; align-items:center; gap:6px; font-size:0.84rem; cursor:pointer; color:var(--text-main);">
+          <input type="checkbox" id="importDestTournament" checked style="accent-color:var(--brass);">
+          <span data-i18n="import_dest_tournament_label">⚔️ Torneios (Arena &amp; Copa)</span>
+        </label>
+      </div>
     </div>
 
     <div id="importActionSummary" style="font-size:0.85rem; color:var(--text-muted); margin-bottom:18px; padding:10px 12px; background:rgba(233,200,117,0.08); border-radius:6px; border:1px solid rgba(233,200,117,0.15);"></div>
@@ -4147,6 +4531,42 @@ footer {
   </div>
 </div>
 
+<!-- Modal: Export Bracket (Image & PDF) -->
+<div id="exportBracketModal" class="modal-overlay">
+  <div class="modal-card" style="max-width: 680px;">
+    <button class="modal-close-btn" onclick="closeModal('exportBracketModal')">&times;</button>
+    <h2>
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+      <span data-i18n="modal_export_bracket_title">Exportar Chaveamento da Copa</span>
+    </h2>
+    <p style="font-size:0.86rem; color:var(--text-dim); margin-top:-4px; margin-bottom:14px;" data-i18n="modal_export_bracket_desc">
+      Exporte o diagrama completo do torneio em alta definição em formato de imagem PNG ou documento PDF pronto para impressão ou compartilhamento:
+    </p>
+
+    <!-- Export Action Options -->
+    <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:18px;">
+      <div style="background:rgba(233,200,117,0.06); border:1px solid rgba(233,200,117,0.2); border-radius:8px; padding:12px 14px; font-size:0.85rem; color:var(--text-dim);">
+        <strong style="color:var(--brass-bright);" data-i18n="bracket_export_hint_title">Diagrama Completo:</strong>
+        <span data-i18n="bracket_export_hint_desc"> O documento inclui todas as rodadas (Oitavas, Quartas, Semis e Grande Final), confrontos individuais, pontuações e o Campeão com coroa.</span>
+      </div>
+    </div>
+
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+      <button class="tool-btn" onclick="closeModal('exportBracketModal')" data-i18n="btn_cancel">Cancelar</button>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button class="tool-btn" onclick="downloadBracketImage('png')" id="btnDownloadBracketPng" style="border-color:var(--brass-bright); color:var(--brass-bright);">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span data-i18n="btn_download_bracket_png">Baixar Imagem PNG (HD)</span>
+        </button>
+        <button class="tool-btn primary" onclick="downloadBracketPDF()" id="btnDownloadBracketPdf">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          <span data-i18n="btn_download_bracket_pdf">Baixar PDF (Chave)</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Modal: Tournament Results & Podium -->
 <div id="rankingResultsModal" class="modal-overlay">
   <div class="modal-card" style="max-width: 720px; position:relative; overflow:hidden;">
@@ -4429,7 +4849,34 @@ const I18N = {
     bracket_feed_winner: 'Vencedor',
     bracket_advances_to: 'Avança para',
     bracket_advances_bye: 'Avança direto por Bye 🛡️',
-    stage_round: 'Rodada'
+    stage_round: 'Rodada',
+    search_pill_boardgame: '🎲 Tabuleiro (BGG & Ludopedia)',
+    search_pill_videogame: '🎮 Videogames',
+    search_pill_movie: '🎬 Filmes & Séries',
+    search_pill_all: '🌐 Qualquer Assunto',
+    btn_quick_add: '+ Adicionar',
+    arena_add_contenders_title: '🔍 Adicionar Competidores (Digite nome individual OU cole link/usuário de Coleção/Lista):',
+    btn_add: '+ Adicionar',
+    btn_import_profile: '📥 Importar Lista / Perfil',
+    preset_bar_title: '⚡ Presets Prontos & Fontes Rápidas:',
+    preset_16_games: '16 Jogos',
+    btn_shuffle: '🎲 Embaralhar',
+    btn_pull_tierlist: '📋 Puxar da Tierlist',
+    btn_clear: '🗑️ Limpar',
+    arena_live_title: '⚔️ Batalha 1x1 em Andamento',
+    preset_bar_title_cup: '⚡ Presets Prontos para a Copa Mata-Mata:',
+    preset_16_contenders: '16 Competidores',
+    import_opt_only_owned: 'Apenas jogos possuídos (Owned / Minha Coleção)',
+    import_opt_wishlist: 'Incluir desejados (Wishlist / Want to Play)',
+    import_dest_heading: 'Destino dos Jogos:',
+    import_dest_tierlist_label: 'Tierlist (Tier "Não jogado")',
+    import_dest_tournament_label: 'Arena 1x1 / Copa Mata-Mata (Competidores)',
+    modal_export_bracket_title: 'Exportar Chaveamento da Copa',
+    modal_export_bracket_desc: 'Exporte o diagrama completo do torneio em alta definição em formato de imagem PNG ou documento PDF pronto para impressão ou compartilhamento:',
+    bracket_export_hint_title: 'Diagrama Completo:',
+    bracket_export_hint_desc: ' O documento inclui todas as rodadas (Oitavas, Quartas, Semis e Grande Final), confrontos individuais, pontuações e o Campeão com coroa.',
+    btn_download_bracket_png: 'Baixar Imagem PNG (HD)',
+    btn_download_bracket_pdf: 'Baixar PDF (Chave)'
   },
   en: {
     back_home: 'Board Bots',
@@ -4623,7 +5070,34 @@ const I18N = {
     bracket_feed_winner: 'Winner of',
     bracket_advances_to: 'Advances to',
     bracket_advances_bye: 'Advances directly via Bye 🛡️',
-    stage_round: 'Round'
+    stage_round: 'Round',
+    search_pill_boardgame: '🎲 Board Games (BGG & Ludopedia)',
+    search_pill_videogame: '🎮 Video Games',
+    search_pill_movie: '🎬 Movies & TV',
+    search_pill_all: '🌐 Any Topic',
+    btn_quick_add: '+ Add',
+    arena_add_contenders_title: '🔍 Add Contenders (Type individual name OR paste Collection/List link/username):',
+    btn_add: '+ Add',
+    btn_import_profile: '📥 Import List / Profile',
+    preset_bar_title: '⚡ Ready Presets & Quick Sources:',
+    preset_16_games: '16 Games',
+    btn_shuffle: '🎲 Shuffle',
+    btn_pull_tierlist: '📋 Pull from Tierlist',
+    btn_clear: '🗑️ Clear',
+    arena_live_title: '⚔️ 1v1 Battle in Progress',
+    preset_bar_title_cup: '⚡ Ready Presets for Knockout Cup:',
+    preset_16_contenders: '16 Contenders',
+    import_opt_only_owned: 'Only owned games (My Collection)',
+    import_opt_wishlist: 'Include wishlist (Wishlist / Want to Play)',
+    import_dest_heading: 'Destination for Imported Games:',
+    import_dest_tierlist_label: 'Tierlist ("Unplayed" Tier)',
+    import_dest_tournament_label: '1v1 Arena / Knockout Cup (Contenders)',
+    modal_export_bracket_title: 'Export Tournament Bracket',
+    modal_export_bracket_desc: 'Export the complete tournament diagram in high definition as a PNG image or printable PDF document:',
+    bracket_export_hint_title: 'Full Diagram:',
+    bracket_export_hint_desc: ' The document includes all rounds (Round of 16, Quarterfinals, Semis, and Grand Final), individual matchups, scores, and crowned Champion.',
+    btn_download_bracket_png: 'Download PNG Image (HD)',
+    btn_download_bracket_pdf: 'Download PDF (Bracket)'
   }
 };
 
@@ -4657,8 +5131,44 @@ function applyI18n() {
       }
     }
   });
+
   const searchInput = document.getElementById('gameSearchInput');
-  if (searchInput) searchInput.placeholder = t('search_placeholder');
+  if (searchInput) {
+    searchInput.placeholder = currentLang === 'en'
+      ? 'Search games on Ludopedia & BGG (e.g. Catan, Ark Nova, Stone Age)...'
+      : 'Buscar jogo na Ludopedia & BGG (ex: Catan, Ark Nova, Stone Age)...';
+  }
+
+  const arenaInput = document.getElementById('arenaContenderInput');
+  if (arenaInput) {
+    arenaInput.placeholder = currentLang === 'en'
+      ? 'Type title OR paste link/username (Ludopedia, BGG, GeekList, GGapp, IMDb)...'
+      : 'Digite nome OU cole link/usuário (Ludopedia, BGG, GeekList, GGapp, IMDb)...';
+  }
+
+  const bracketInput = document.getElementById('bracketContenderInput');
+  if (bracketInput) {
+    bracketInput.placeholder = currentLang === 'en'
+      ? 'Type title OR paste link/username (Ludopedia, BGG, GeekList, GGapp, IMDb)...'
+      : 'Digite nome OU cole link/usuário (Ludopedia, BGG, GeekList, GGapp, IMDb)...';
+  }
+
+  const titleInput = document.getElementById('tierlistCustomTitle');
+  if (titleInput) {
+    titleInput.placeholder = currentLang === 'en' ? 'Your Tierlist Title...' : 'Título da sua Tierlist...';
+    if (titleInput.value === 'Minha Tierlist de Jogos de Tabuleiro' && currentLang === 'en') {
+      titleInput.value = 'My Board Game Tierlist';
+      if (typeof state !== 'undefined') state.title = 'My Board Game Tierlist';
+    } else if (titleInput.value === 'My Board Game Tierlist' && currentLang === 'pt') {
+      titleInput.value = 'Minha Tierlist de Jogos de Tabuleiro';
+      if (typeof state !== 'undefined') state.title = 'Minha Tierlist de Jogos de Tabuleiro';
+    }
+  }
+
+  if (typeof renderTournamentContenders === 'function') {
+    renderTournamentContenders('arena');
+    renderTournamentContenders('bracket');
+  }
 }
 
 /* =======================================================
@@ -4702,6 +5212,40 @@ function initItemSlots() {
   });
 }
 
+function sanitizeSavedItemImages(items) {
+  if (!items || typeof items !== 'object') return;
+  const presetMap = new Map();
+  if (typeof PRESETS !== 'undefined') {
+    Object.values(PRESETS).forEach(p => {
+      if (p.items) p.items.forEach(it => {
+        if (it.id) presetMap.set(it.id.toLowerCase(), it);
+        if (it.title) presetMap.set(it.title.toLowerCase(), it);
+      });
+    });
+  }
+  Object.keys(items).forEach(tierId => {
+    if (Array.isArray(items[tierId])) {
+      items[tierId].forEach(it => {
+        if (!it) return;
+        const keyId = (it.id || '').toLowerCase();
+        const keyTitle = (it.title || '').toLowerCase();
+        if (presetMap.has(keyId) || presetMap.has(keyTitle)) {
+          const fresh = presetMap.get(keyId) || presetMap.get(keyTitle);
+          if (!it.image || it.image.includes('__micro') || it.image.includes('x3zxjr7URqiFcBLfdHqQuw') || it.image.includes('sZYp_3BTDGjh2XdAnPnlpQ') || it.image.includes('Cg3W7fD1P9A6q1A7B9-3Qw')) {
+            it.image = fresh.image;
+          }
+        }
+        if (it.image && it.image.includes('__micro')) {
+          it.image = it.image.replace('__micro', '__small');
+        }
+        if (it.image && it.image.startsWith('http://')) {
+          it.image = 'https://' + it.image.slice(7);
+        }
+      });
+    }
+  });
+}
+
 function loadState() {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -4715,6 +5259,7 @@ function loadState() {
     console.warn('Erro ao carregar estado salvo:', e);
   }
   initItemSlots();
+  sanitizeSavedItemImages(state.items);
   cleanupDuplicateBoardItems();
   if (state.tileSize) {
     document.documentElement.style.setProperty('--tile-size', state.tileSize + 'px');
@@ -5023,10 +5568,20 @@ function createGameTileElement(item, currentTierId) {
 
   if (item.image) {
     const img = document.createElement('img');
-    img.src = item.image;
+    let clean = String(item.image).trim();
+    if (clean.startsWith('http://')) clean = 'https://' + clean.slice(7);
     img.alt = item.title;
     img.loading = 'lazy';
+    img.dataset.proxyTried = 'false';
     img.onerror = () => {
+      if (img.dataset.proxyTried !== 'true' && clean.startsWith('http')) {
+        const proxyUrl = typeof getProxyImageUrl === 'function' ? getProxyImageUrl(clean) : '';
+        if (proxyUrl && proxyUrl !== clean) {
+          img.dataset.proxyTried = 'true';
+          img.src = proxyUrl;
+          return;
+        }
+      }
       img.style.display = 'none';
       if (!tile.querySelector('.game-tile-fallback')) {
         const fb = document.createElement('div');
@@ -5035,6 +5590,7 @@ function createGameTileElement(item, currentTierId) {
         tile.appendChild(fb);
       }
     };
+    img.src = clean;
     tile.appendChild(img);
   } else {
     const fb = document.createElement('div');
@@ -5288,6 +5844,46 @@ function resolveExportImageSrc(imageUrl) {
   return imageUrl;
 }
 
+function getProxyImageUrl(imageUrl) {
+  if (!imageUrl || typeof imageUrl !== 'string') return '';
+  if (imageUrl.startsWith('data:') || imageUrl.startsWith('blob:') || imageUrl.startsWith('../') || imageUrl.startsWith('./')) return imageUrl;
+  if (imageUrl.includes('workers.dev/img')) return imageUrl;
+  try {
+    const hostname = new URL(imageUrl, window.location.href).hostname;
+    if (IMAGE_PROXY_HOSTS.includes(hostname)) {
+      return `${LUDOPEDIA_PROXY_BASE}/img?url=` + encodeURIComponent(imageUrl);
+    }
+  } catch (err) {}
+  return imageUrl;
+}
+
+function attachImageWithFallback(imgEl, originalUrl, fallback = '../assets/mascot-trimmed.png') {
+  if (!imgEl) return;
+  let clean = (originalUrl || '').trim();
+  if (!clean) {
+    imgEl.src = fallback;
+    return;
+  }
+  if (clean.startsWith('http://')) {
+    clean = 'https://' + clean.slice(7);
+  }
+
+  imgEl.dataset.proxyTried = 'false';
+  imgEl.onerror = function() {
+    if (this.dataset.proxyTried !== 'true' && clean.startsWith('http')) {
+      const proxyUrl = getProxyImageUrl(clean);
+      if (proxyUrl && proxyUrl !== clean) {
+        this.dataset.proxyTried = 'true';
+        this.src = proxyUrl;
+        return;
+      }
+    }
+    this.onerror = null;
+    this.src = fallback;
+  };
+  imgEl.src = clean;
+}
+
 // BGG's XML API now requires a registered application + Bearer token
 // (see workers/ludoproxy.js BGG_TOKEN secret).
 const BGG_ENABLED = true;
@@ -5466,7 +6062,7 @@ function parseBggThingItem(item) {
     bggId: item.getAttribute('id'),
     title: nameEl ? nameEl.getAttribute('value') : '',
     year: yearEl ? yearEl.getAttribute('value') : '',
-    image: (imageEl && imageEl.textContent.trim()) || (thumbEl && thumbEl.textContent.trim()) || '',
+    image: (thumbEl && thumbEl.textContent.trim()) || (imageEl && imageEl.textContent.trim()) || '',
     designer: designers,
     artist: artists,
     mechanics: mechanics,
@@ -7093,7 +7689,7 @@ async function openTapModal(item, currentTierId) {
   const container = document.getElementById('tapActionsContainer');
 
   titleEl.textContent = item.title;
-  coverEl.src = item.image || '../assets/mascot-trimmed.png';
+  attachImageWithFallback(coverEl, item.image);
   coverEl.alt = item.title;
 
   if (item.year) {
@@ -8711,12 +9307,23 @@ function updateImportModalCounts() {
 
   const includeExp = document.getElementById('importOptExpansions')?.checked;
   const skipDupes = document.getElementById('importOptSkipDuplicates')?.checked;
+  const onlyOwned = document.getElementById('importOptOnlyOwned')?.checked;
+  const includeWishlist = document.getElementById('importOptWishlist')?.checked;
   const onlyRated = document.getElementById('importOptOnlyRated')?.checked;
   const onlyUnplayed = document.getElementById('importOptOnlyUnplayed')?.checked;
   const onlyPlayed = document.getElementById('importOptOnlyPlayed')?.checked;
   const summaryEl = document.getElementById('importActionSummary');
 
   let candidates = includeExp ? currentImportPayload.allGames : currentImportPayload.baseGames;
+  if (onlyOwned) {
+    candidates = candidates.filter(g => {
+      const isOwned = (g.owned !== false && g.fl_tem !== 0 && g.fl_tem !== false);
+      const isWish = includeWishlist && (g.wishlist === true || g.fl_quer == 1 || g.fl_favorito == 1);
+      return isOwned || isWish;
+    });
+  } else if (includeWishlist) {
+    candidates = candidates.filter(g => (g.wishlist === true || g.fl_quer == 1 || g.fl_favorito == 1));
+  }
   if (onlyRated) {
     candidates = candidates.filter(g => g.score != null && !isNaN(g.score) && g.score > 0);
   }
@@ -8773,6 +9380,8 @@ function executeCollectionImport() {
 
   const includeExpansions = document.getElementById('importOptExpansions')?.checked;
   const skipDuplicates = document.getElementById('importOptSkipDuplicates')?.checked;
+  const onlyOwned = document.getElementById('importOptOnlyOwned')?.checked;
+  const includeWishlist = document.getElementById('importOptWishlist')?.checked;
   const onlyRated = document.getElementById('importOptOnlyRated')?.checked;
   const onlyUnplayed = document.getElementById('importOptOnlyUnplayed')?.checked;
   const onlyPlayed = document.getElementById('importOptOnlyPlayed')?.checked;
@@ -8788,6 +9397,15 @@ function executeCollectionImport() {
   const existingTitles = new Set(existingItems.map(i => normalizeTitle(i.title)));
 
   let candidates = includeExpansions ? currentImportPayload.allGames : currentImportPayload.baseGames;
+  if (onlyOwned) {
+    candidates = candidates.filter(g => {
+      const isOwned = (g.owned !== false && g.fl_tem !== 0 && g.fl_tem !== false);
+      const isWish = includeWishlist && (g.wishlist === true || g.fl_quer == 1 || g.fl_favorito == 1);
+      return isOwned || isWish;
+    });
+  } else if (includeWishlist) {
+    candidates = candidates.filter(g => (g.wishlist === true || g.fl_quer == 1 || g.fl_favorito == 1));
+  }
   if (onlyRated) {
     candidates = candidates.filter(g => g.score != null && !isNaN(g.score) && g.score > 0);
   }
@@ -9947,6 +10565,45 @@ class TournamentEngine {
     this.restoreSnapshot(snap);
     return true;
   }
+
+  getRankedStandings() {
+    if (this.nextPass && this.nextPass.length === 1 && (!this.sublists || this.sublists.length === 0) && !this.left && !this.right) {
+      return [...this.nextPass[0]];
+    }
+    const gathered = [];
+    if (this.merged && this.merged.length) gathered.push(...this.merged);
+    if (this.left) gathered.push(...this.left.slice(this.i));
+    if (this.right) gathered.push(...this.right.slice(this.j));
+    if (this.sublists) {
+      for (const s of this.sublists) {
+        if (Array.isArray(s)) gathered.push(...s);
+      }
+    }
+    if (this.nextPass) {
+      for (const s of this.nextPass) {
+        if (Array.isArray(s)) gathered.push(...s);
+      }
+    }
+    const seen = new Set();
+    const result = [];
+    for (const item of gathered) {
+      if (!item) continue;
+      const key = item.id || item.title;
+      if (!seen.has(key)) {
+        seen.add(key);
+        result.push(item);
+      }
+    }
+    for (const item of this.originalItems) {
+      if (!item) continue;
+      const key = item.id || item.title;
+      if (!seen.has(key)) {
+        seen.add(key);
+        result.push(item);
+      }
+    }
+    return result;
+  }
 }
 
 // BGG XML Collection Parser
@@ -9983,7 +10640,7 @@ function parseBggUserCollectionXml(xmlText, expansionIdSet = null) {
     const year = yearEl ? yearEl.textContent.trim() : '';
     const imgEl = item.querySelector('image');
     const thumbEl = item.querySelector('thumbnail');
-    const image = (imgEl && imgEl.textContent.trim()) || (thumbEl && thumbEl.textContent.trim()) || '';
+    const image = (thumbEl && thumbEl.textContent.trim()) || (imgEl && imgEl.textContent.trim()) || '';
     const statusEl = item.querySelector('status');
     const own = statusEl ? statusEl.getAttribute('own') === '1' : false;
     const wantToPlay = statusEl ? statusEl.getAttribute('wanttoplay') === '1' : false;
@@ -10471,7 +11128,7 @@ async function importUniversalSourceToTournament(query, options = {}) {
       sourceLabel = gl.title || 'BGG GeekList';
     }
     // 2. BGG Collection / User
-    else if (raw.toLowerCase().startsWith('bgg:') || raw.toLowerCase().includes('boardgamegeek.com')) {
+    else if (raw.toLowerCase().startsWith('bgg:') || raw.toLowerCase().includes('boardgamegeek.com/user') || raw.toLowerCase().includes('boardgamegeek.com/collection')) {
       showToast(currentLang === 'en' ? 'Fetching BGG user collection...' : 'Consultando coleção no BGG...');
       let bggUser = raw.replace(/^bgg:/i, '').trim();
       if (raw.toLowerCase().includes('boardgamegeek.com')) {
@@ -10482,18 +11139,18 @@ async function importUniversalSourceToTournament(query, options = {}) {
         } catch (e) {}
       }
       const payload = await fetchBggUserCollection(bggUser);
-      items = (payload.baseGames && payload.baseGames.length > 0) ? payload.baseGames : payload.allGames;
-      sourceLabel = `BGG (@${bggUser})`;
+      openImportCollectionModal(payload);
+      return;
     }
     // 3. Ludopedia Collection / User
-    else if (raw.toLowerCase().startsWith('ludo:') || raw.toLowerCase().includes('ludopedia.com.br')) {
+    else if (raw.toLowerCase().startsWith('ludo:') || raw.toLowerCase().includes('ludopedia.com.br/colecao') || raw.toLowerCase().includes('ludopedia.com.br/usuario')) {
       showToast(currentLang === 'en' ? 'Fetching Ludopedia collection...' : 'Consultando coleção na Ludopedia...');
       let ludoUser = raw.replace(/^ludo:/i, '').trim();
       const parsed = parseLudopediaCollectionUrl(ludoUser);
       if (parsed && parsed.username) ludoUser = parsed.username;
       const payload = await fetchLudopediaCollection(ludoUser);
-      items = (payload.baseGames && payload.baseGames.length > 0) ? payload.baseGames : payload.allGames;
-      sourceLabel = `Ludopedia (@${ludoUser})`;
+      openImportCollectionModal(payload);
+      return;
     }
     // 4. GGapp.io Lists
     else if (raw.toLowerCase().includes('ggapp.io')) {
@@ -10992,6 +11649,15 @@ function switchMainTab(tabId) {
     if (section) section.classList.toggle('active', id === tabId);
   });
 
+  if (tabId === 'arena' || tabId === 'bracket') {
+    const boardItems = typeof getExistingBoardItems === 'function' ? getExistingBoardItems() : [];
+    if (boardItems.length > 0) {
+      stagedTournamentContenders = [...boardItems];
+      renderTournamentContenders('arena');
+      renderTournamentContenders('bracket');
+    }
+  }
+
   if (tabId === 'arena') {
     updateArenaCandidateCount();
   } else if (tabId === 'bracket') {
@@ -11010,17 +11676,20 @@ function switchMainTab(tabId) {
 
 function updateStudioBadges() {
   const allItems = typeof getExistingBoardItems === 'function' ? getExistingBoardItems() : [];
-  const tierCountEl = document.getElementById('badgeTierlistCount');
+  const tierCountEl = document.getElementById('tabBadgeTierlist') || document.getElementById('badgeTierlistCount');
   if (tierCountEl) tierCountEl.textContent = allItems.length;
 
-  const arenaCountEl = document.getElementById('badgeArenaCount');
-  if (arenaCountEl) arenaCountEl.textContent = allItems.length;
+  const arenaCount = (stagedTournamentContenders && stagedTournamentContenders.length > 0)
+    ? stagedTournamentContenders.length
+    : allItems.length;
+  const arenaCountEl = document.getElementById('tabBadgeArena') || document.getElementById('badgeArenaCount');
+  if (arenaCountEl) arenaCountEl.textContent = arenaCount;
 
-  const bracketCountEl = document.getElementById('badgeBracketCount');
-  if (bracketCountEl) bracketCountEl.textContent = allItems.length;
-
-  if (typeof updateArenaCandidateCount === 'function') updateArenaCandidateCount();
-  if (typeof updateBracketCandidateCount === 'function') updateBracketCandidateCount();
+  const bracketCount = (stagedTournamentContenders && stagedTournamentContenders.length > 0)
+    ? stagedTournamentContenders.length
+    : allItems.length;
+  const bracketCountEl = document.getElementById('tabBadgeBracket') || document.getElementById('badgeBracketCount');
+  if (bracketCountEl) bracketCountEl.textContent = bracketCount;
 }
 
 /* ========================================================== */
@@ -11031,22 +11700,22 @@ const PRESETS = {
     id: 'bg-top16',
     name: 'BGG Top 16 Clássicos Modernos',
     items: [
-      { id: 'bgg_224517', title: 'Brass: Birmingham', image: 'https://cf.geekdo-images.com/x3zxjr7URqiFcBLfdHqQuw__micro/img/gtdBv3p81aLw9L1j90Hk39G6h-A=/fit-in/64x64/filters:strip_icc()/pic3490053.jpg', category: 'boardgame' },
-      { id: 'bgg_174430', title: 'Gloomhaven', image: 'https://cf.geekdo-images.com/sZYp_3BTDGjh2XdAnPnlpQ__micro/img/C3u0j1W8Ew2F_vR5zS8zQ7k1Pms=/fit-in/64x64/filters:strip_icc()/pic2437871.jpg', category: 'boardgame' },
-      { id: 'bgg_161936', title: 'Pandemic Legacy: Season 1', image: 'https://cf.geekdo-images.com/-Qer2BBPG7qGGScXM0eyPg__micro/img/h7K6n5t34yRfgM950wS96x4Vq-w=/fit-in/64x64/filters:strip_icc()/pic2452831.png', category: 'boardgame' },
-      { id: 'bgg_342942', title: 'Ark Nova', image: 'https://cf.geekdo-images.com/SoU8CSclVF5KpnaCFRAaoA__micro/img/P9V-K3Q8m3r447P74pT2c8t_l6k=/fit-in/64x64/filters:strip_icc()/pic6293412.jpg', category: 'boardgame' },
-      { id: 'bgg_233078', title: 'Twilight Imperium: Fourth Edition', image: 'https://cf.geekdo-images.com/_Ppn5lssO5OEkMVfWnqcTQ__micro/img/zNfF89v2Z-230Xv4oD318LzN6gU=/fit-in/64x64/filters:strip_icc()/pic3727516.jpg', category: 'boardgame' },
-      { id: 'bgg_316554', title: 'Dune: Imperium', image: 'https://cf.geekdo-images.com/PhjygpTFaaBKn7vA6nh1ew__micro/img/H3B-B03Mh7l3E_qN-Ua39H4_71o=/fit-in/64x64/filters:strip_icc()/pic5666597.jpg', category: 'boardgame' },
-      { id: 'bgg_167791', title: 'Terraforming Mars', image: 'https://cf.geekdo-images.com/wg9oOLcsKvDesqGGbgst9A__micro/img/5U_gY0eR37aO6m-65u-cZk0d0gM=/fit-in/64x64/filters:strip_icc()/pic3536616.jpg', category: 'boardgame' },
-      { id: 'bgg_115746', title: 'War of the Ring: Second Edition', image: 'https://cf.geekdo-images.com/3fUo9k1pT167E-j1hN00vg__micro/img/K-HqS977E_X5u-AEv-7v9e5wH6c=/fit-in/64x64/filters:strip_icc()/pic1132942.jpg', category: 'boardgame' },
-      { id: 'bgg_187645', title: 'Star Wars: Rebellion', image: 'https://cf.geekdo-images.com/ODclI4beI6Z9iM_fMvL59g__micro/img/yF6iZzR1k7k2m_A0a34b2r4g6f4=/fit-in/64x64/filters:strip_icc()/pic2737530.png', category: 'boardgame' },
-      { id: 'bgg_162886', title: 'Spirit Island', image: 'https://cf.geekdo-images.com/kjBBDp9aooee19S35r_vEQ__micro/img/fM1aR6k8F3uL4W_K9j1a3eF8x48=/fit-in/64x64/filters:strip_icc()/pic3615735.jpg', category: 'boardgame' },
-      { id: 'bgg_220308', title: 'Gaia Project', image: 'https://cf.geekdo-images.com/hGWkzfdjhIS5R3nkecEr_w__micro/img/F-G934QWjE92Fk_v_v0k8v0q5uA=/fit-in/64x64/filters:strip_icc()/pic3661260.jpg', category: 'boardgame' },
-      { id: 'bgg_193738', title: 'Great Western Trail', image: 'https://cf.geekdo-images.com/u1faEypcrbJ-8lA9sQ67pw__micro/img/4jQ_d0sF13G-q0A9iJv4q1233Fk=/fit-in/64x64/filters:strip_icc()/pic3156335.jpg', category: 'boardgame' },
-      { id: 'bgg_169786', title: 'Scythe', image: 'https://cf.geekdo-images.com/7k_nOxIORAMHGungHRHGtA__micro/img/3u4G7jG1y15gN-A6w6oB2iQ0e1k=/fit-in/64x64/filters:strip_icc()/pic3163924.jpg', category: 'boardgame' },
-      { id: 'bgg_271349', title: 'The Castles of Burgundy', image: 'https://cf.geekdo-images.com/5PEUbpQ06WjF-eBv-A2G3w__micro/img/6mD4-kE8g7b4r5hEw7f8iJ4-L3g=/fit-in/64x64/filters:strip_icc()/pic4652251.jpg', category: 'boardgame' },
-      { id: 'bgg_173346', title: '7 Wonders Duel', image: 'https://cf.geekdo-images.com/W3Bsga_uLP9kO91gDhO6rg__micro/img/z7l2gG4_vB4pMvOqjB0E_r-C32A=/fit-in/64x64/filters:strip_icc()/pic3376065.jpg', category: 'boardgame' },
-      { id: 'bgg_124361', title: 'Concordia', image: 'https://cf.geekdo-images.com/Cg3W7fD1P9A6q1A7B9-3Qw__micro/img/J4l4R9O7f6h7rE9p1q-42D-qWkQ=/fit-in/64x64/filters:strip_icc()/pic3145873.jpg', category: 'boardgame' }
+      { id: 'bgg_224517', title: 'Brass: Birmingham', image: 'https://cf.geekdo-images.com/x3zxjr-Vw5iU4yDPg70Jgw__small/img/o18rjEemoWaVru9Y2TyPwuIaRfE=/fit-in/200x150/filters:strip_icc()/pic3490053.jpg', category: 'boardgame', year: '2018', players: '2-4', time: '120m', bggScore: '8.6' },
+      { id: 'bgg_174430', title: 'Gloomhaven', image: 'https://cf.geekdo-images.com/sZYp_3BTDGjh2unaZfZmuA__small/img/veqFeP4d_3zNhFc3GNBkV95rBEQ=/fit-in/200x150/filters:strip_icc()/pic2437871.jpg', category: 'boardgame', year: '2017', players: '1-4', time: '120m', bggScore: '8.5' },
+      { id: 'bgg_161936', title: 'Pandemic Legacy: Season 1', image: 'https://cf.geekdo-images.com/-Qer2BBPG7qGGDu6KcVDIw__small/img/NQQcjS31TO0DE246N9rpt0hd9eo=/fit-in/200x150/filters:strip_icc()/pic2452831.png', category: 'boardgame', year: '2015', players: '2-4', time: '60m', bggScore: '8.5' },
+      { id: 'bgg_342942', title: 'Ark Nova', image: 'https://cf.geekdo-images.com/SoU8p28Sk1s8MSvoM4N8pQ__small/img/4KuHNTWSMPf8vTNDKSRMMI3oOv8=/fit-in/200x150/filters:strip_icc()/pic6293412.jpg', category: 'boardgame', year: '2021', players: '1-4', time: '150m', bggScore: '8.5' },
+      { id: 'bgg_233078', title: 'Twilight Imperium: Fourth Edition', image: 'https://cf.geekdo-images.com/_Ppn5lssO5OaildSE-FgFA__small/img/lfEukJE0JsoZZObaF9K9YnFp62E=/fit-in/200x150/filters:strip_icc()/pic3727516.jpg', category: 'boardgame', year: '2017', players: '3-6', time: '360m', bggScore: '8.6' },
+      { id: 'bgg_316554', title: 'Dune: Imperium', image: 'https://cf.geekdo-images.com/PhjygpWSo-0labGrPBMyyg__small/img/JGgY-nBmkyB8WRp8vcoBLlNMQ5U=/fit-in/200x150/filters:strip_icc()/pic5666597.jpg', category: 'boardgame', year: '2020', players: '1-4', time: '120m', bggScore: '8.4' },
+      { id: 'bgg_167791', title: 'Terraforming Mars', image: 'https://cf.geekdo-images.com/wg9oOLcsKvDesSUdZQ4rxw__small/img/BTxqxgYay5tHJfVoJ2NF5g43_gA=/fit-in/200x150/filters:strip_icc()/pic3536616.jpg', category: 'boardgame', year: '2016', players: '1-5', time: '120m', bggScore: '8.4' },
+      { id: 'bgg_115746', title: 'War of the Ring: Second Edition', image: 'https://cf.geekdo-images.com/ImPgGag98W6gpV1KV812aA__small/img/X-lBBdG4uO6LT0y1vXxCN4jdR4M=/fit-in/200x150/filters:strip_icc()/pic1215633.jpg', category: 'boardgame', year: '2012', players: '2-4', time: '180m', bggScore: '8.5' },
+      { id: 'bgg_187645', title: 'Star Wars: Rebellion', image: 'https://cf.geekdo-images.com/7SrPNGBKg9IIsP4UQpOi8g__small/img/gAxzddRVQiRdjZHYFUZ2xc5Jlbw=/fit-in/200x150/filters:strip_icc()/pic4325841.jpg', category: 'boardgame', year: '2016', players: '2-4', time: '240m', bggScore: '8.4' },
+      { id: 'bgg_162886', title: 'Spirit Island', image: 'https://cf.geekdo-images.com/kjCm4ZvPjIZxS-mYgSPy1g__small/img/aUlIih2_R7P8IYKeyNl2heLQbu8=/fit-in/200x150/filters:strip_icc()/pic7013651.jpg', category: 'boardgame', year: '2017', players: '1-4', time: '120m', bggScore: '8.3' },
+      { id: 'bgg_220308', title: 'Gaia Project', image: 'https://cf.geekdo-images.com/hGWFm3hbMlCDsfCsauOQ4g__small/img/NNG7Ijyx4evp5gcVReis9i0koas=/fit-in/200x150/filters:strip_icc()/pic5375625.png', category: 'boardgame', year: '2017', players: '1-4', time: '150m', bggScore: '8.4' },
+      { id: 'bgg_193738', title: 'Great Western Trail', image: 'https://cf.geekdo-images.com/u1l0gH7sb_vnvDvoO_QHqA__small/img/9lxFidyDb8j6D1vobx4e3UwZ-FI=/fit-in/200x150/filters:strip_icc()/pic4887376.jpg', category: 'boardgame', year: '2016', players: '1-4', time: '150m', bggScore: '8.2' },
+      { id: 'bgg_169786', title: 'Scythe', image: 'https://cf.geekdo-images.com/7k_nOxpO9OGIjhLq2BUZdA__small/img/eQ69OEDdjYjfKg6q5Navee87skU=/fit-in/200x150/filters:strip_icc()/pic3163924.jpg', category: 'boardgame', year: '2016', players: '1-5', time: '115m', bggScore: '8.1' },
+      { id: 'bgg_271349', title: 'The Castles of Burgundy', image: 'https://cf.geekdo-images.com/sH2YTQ10dHj1ibfS-KKtGA__small/img/f5zFXdTcH9RNY0iMNBppd8D-_r0=/fit-in/200x150/filters:strip_icc()/pic8745814.jpg', category: 'boardgame', year: '2019', players: '1-4', time: '90m', bggScore: '8.1' },
+      { id: 'bgg_173346', title: '7 Wonders Duel', image: 'https://cf.geekdo-images.com/zdagMskTF7wJBPjX74XsRw__small/img/gV1-ckZSIC-dCxxpq1Y7GmPITzQ=/fit-in/200x150/filters:strip_icc()/pic2576399.jpg', category: 'boardgame', year: '2015', players: '2', time: '30m', bggScore: '8.1' },
+      { id: 'bgg_124361', title: 'Concordia', image: 'https://cf.geekdo-images.com/CzwSm8i7tkLz6cBnrILZBg__small/img/ESPSltYYSFK-aJw6jOTdQrJGpOc=/fit-in/200x150/filters:strip_icc()/pic3453267.jpg', category: 'boardgame', year: '2013', players: '2-5', time: '100m', bggScore: '8.1' }
     ]
   },
   videogames: {
@@ -11075,22 +11744,22 @@ const PRESETS = {
     id: 'mov-top16',
     name: 'IMDb Top 16 Melhores Filmes',
     items: [
-      { id: 'tt0111161', title: 'Um Sonho de Liberdade (The Shawshank Redemption)', image: 'https://m.media-amazon.com/images/M/MV5BMDAyY2FhYjctNDc5OS00MDNlLThiMGUtY2UxYWVkNGY2MmI0XkEyXkFqcGc@._V1_SX300.jpg', category: 'movie' },
-      { id: 'tt0068646', title: 'O Poderoso Chefão (The Godfather)', image: 'https://m.media-amazon.com/images/M/MV5BNGEwYjgwOGQtYjg5ZS00Njc1LTk2ZGEtM2QwZWQ2hnMQ@@._V1_SX300.jpg', category: 'movie' },
-      { id: 'tt0468569', title: 'Batman: O Cavaleiro das Trevas (The Dark Knight)', image: 'https://m.media-amazon.com/images/M/MV5BMTMxNTMwODM0NF5BMl5BanBnXkFtZTcwODAyMTk2Mw@@._V1_SX300.jpg', category: 'movie' },
-      { id: 'tt0071562', title: 'O Poderoso Chefão II (The Godfather Part II)', image: 'https://m.media-amazon.com/images/M/MV5BNzdmOWJmNzYtODgwOS00M2E1LTliMDktNmUxM2U4YmVkZDAxXkEyXkFqcGc@._V1_SX300.jpg', category: 'movie' },
-      { id: 'tt0050083', title: '12 Homens e uma Sentença (12 Angry Men)', image: 'https://m.media-amazon.com/images/M/MV5BYjE4NzdmOTcgNDExMC00NTA2LThlMDAtMmQ1YmU3OTQ1OTc2XkEyXkFqcGc@._V1_SX300.jpg', category: 'movie' },
-      { id: 'tt0108052', title: 'A Lista de Schindler (Schindler\'s List)', image: 'https://m.media-amazon.com/images/M/MV5BNjM1ZDQxYWUtMzQyZS00MTE1LWJmZGYtNGUyNTdlYjM3ZmVmXkEyXkFqcGc@._V1_SX300.jpg', category: 'movie' },
-      { id: 'tt0167260', title: 'O Senhor dos Anéis: O Retorno do Rei', image: 'https://m.media-amazon.com/images/M/MV5BMTZkMjBjNWMtZGI5OC00MGU0LTk4ZTItODg2NWM3NTVmNWQ4XkEyXkFqcGc@._V1_SX300.jpg', category: 'movie' },
-      { id: 'tt0110912', title: 'Pulp Fiction: Tempo de Violência', image: 'https://m.media-amazon.com/images/M/MV5BYTViYTE3NWMtNmRhFi00NzRiLWIxOTAtNGY0ZTU0MTNmZTA4XkEyXkFqcGc@._V1_SX300.jpg', category: 'movie' },
-      { id: 'tt0060196', title: 'Três Homens em Conflito (The Good, the Bad and the Ugly)', image: 'https://m.media-amazon.com/images/M/MV5BNjRmMmMxOGItMzEyNy00OWVmLWFkN2EtZjVjZjc5OTA1MjVlXkEyXkFqcGc@._V1_SX300.jpg', category: 'movie' },
-      { id: 'tt0137523', title: 'Clube da Luta (Fight Club)', image: 'https://m.media-amazon.com/images/M/MV5BOTgyOGQ1NDItNGU3Ny00MjU3LTg2YWEtNmFkNjk2Yzg4NDgoXkEyXkFqcGc@._V1_SX300.jpg', category: 'movie' },
-      { id: 'tt1375666', title: 'A Origem (Inception)', image: 'https://m.media-amazon.com/images/M/MV5BMjAxMzY3NjcxNF5BMl5BanBnXkFtZTcwNTI5OTM0Mw@@._V1_SX300.jpg', category: 'movie' },
-      { id: 'tt0816692', title: 'Interestelar (Interstellar)', image: 'https://m.media-amazon.com/images/M/MV5BYzdjMDAxZGItMjI2My00ODA1LTlkNzItOWFjMDU5ZDJlYWY3XkEyXkFqcGc@._V1_SX300.jpg', category: 'movie' },
-      { id: 'tt0133093', title: 'Matrix (The Matrix)', image: 'https://m.media-amazon.com/images/M/MV5BN2NmN2VhMTQtMDNiOS00NDlhLTliMjgtODE2ZTY0ODQyNDRhXkEyXkFqcGc@._V1_SX300.jpg', category: 'movie' },
-      { id: 'tt0099685', title: 'Os Bons Companheiros (Goodfellas)', image: 'https://m.media-amazon.com/images/M/MV5BN2E5NzI2ZGMtY2UxOS00ZjhjLWEzNGYtM2ZmNGVkZjBlMmZiXkEyXkFqcGc@._V1_SX300.jpg', category: 'movie' },
-      { id: 'tt0080684', title: 'Star Wars: O Império Contra-Ataca', image: 'https://m.media-amazon.com/images/M/MV5BMTkxNGFlNDktZmJkNC00MDdhLTg0MTEtZjZiYWI3MGE5NWIxXkEyXkFqcGc@._V1_SX300.jpg', category: 'movie' },
-      { id: 'tt0245429', title: 'A Viagem de Chihiro (Spirited Away)', image: 'https://m.media-amazon.com/images/M/MV5BNTEyNmEwOWUtYzkyOC00ZTQ4LTllZmUtMjk0Y2Q5YzgxN2ZmL2ltYWdlXkEyXkFqcGc@._V1_SX300.jpg', category: 'movie' }
+      { id: 'tt0111161', title: 'Um Sonho de Liberdade (The Shawshank Redemption)', image: 'https://m.media-amazon.com/images/M/MV5BMDAyY2FhYjctNDc5OS00MDNlLThiMGUtY2UxYWVkNGY2ZjljXkEyXkFqcGc@._V1_QL75_UX380_CR0,4,380,562_.jpg', category: 'movie' },
+      { id: 'tt0068646', title: 'O Poderoso Chefão (The Godfather)', image: 'https://m.media-amazon.com/images/M/MV5BNGEwYjgwOGQtYjg5ZS00Njc1LTk2ZGEtM2QwZWQ2NjdhZTE5XkEyXkFqcGc@._V1_QL75_UY562_CR8,0,380,562_.jpg', category: 'movie' },
+      { id: 'tt0468569', title: 'Batman: O Cavaleiro das Trevas (The Dark Knight)', image: 'https://m.media-amazon.com/images/M/MV5BMTMxNTMwODM0NF5BMl5BanBnXkFtZTcwODAyMTk2Mw@@._V1_QL75_UX380_CR0,0,380,562_.jpg', category: 'movie' },
+      { id: 'tt0071562', title: 'O Poderoso Chefão II (The Godfather Part II)', image: 'https://m.media-amazon.com/images/M/MV5BMDIxMzBlZDktZjMxNy00ZGI4LTgxNDEtYWRlNzRjMjJmOGQ1XkEyXkFqcGc@._V1_QL75_UX380_CR0,4,380,562_.jpg', category: 'movie' },
+      { id: 'tt0050083', title: '12 Homens e uma Sentença (12 Angry Men)', image: 'https://m.media-amazon.com/images/M/MV5BYjE4NzdmOTYtYjc5Yi00YzBiLWEzNDEtNTgxZGQ2MWVkN2NiXkEyXkFqcGc@._V1_QL75_UX380_CR0,11,380,562_.jpg', category: 'movie' },
+      { id: 'tt0108052', title: 'A Lista de Schindler (Schindler\'s List)', image: 'https://m.media-amazon.com/images/M/MV5BNjM1ZDQxYWUtMzQyZS00MTE1LWJmZGYtNGUyNTdlYjM3ZmVmXkEyXkFqcGc@._V1_QL75_UX380_CR0,4,380,562_.jpg', category: 'movie' },
+      { id: 'tt0167260', title: 'O Senhor dos Anéis: O Retorno do Rei', image: 'https://m.media-amazon.com/images/M/MV5BMTZkMjBjNWMtZGI5OC00MGU0LTk4ZTItODg2NWM3NTVmNWQ4XkEyXkFqcGc@._V1_QL75_UX380_CR0,0,380,562_.jpg', category: 'movie' },
+      { id: 'tt0110912', title: 'Pulp Fiction: Tempo de Violência', image: 'https://m.media-amazon.com/images/M/MV5BYTViYTE3ZGQtNDBlMC00ZTAyLTkyODMtZGRiZDg0MjA2YThkXkEyXkFqcGc@._V1_QL75_UY562_CR3,0,380,562_.jpg', category: 'movie' },
+      { id: 'tt0060196', title: 'Três Homens em Conflito (The Good, the Bad and the Ugly)', image: 'https://m.media-amazon.com/images/M/MV5BMWM5ZjQxM2YtNDlmYi00ZDNhLWI4MWUtN2VkYjBlMTY1ZTkwXkEyXkFqcGc@._V1_QL75_UX380_CR0,4,380,562_.jpg', category: 'movie' },
+      { id: 'tt0137523', title: 'Clube da Luta (Fight Club)', image: 'https://m.media-amazon.com/images/M/MV5BOTgyOGQ1NDItNGU3Ny00MjU3LTg2YWEtNmEyYjBiMjI1Y2M5XkEyXkFqcGc@._V1_QL75_UX380_CR0,4,380,562_.jpg', category: 'movie' },
+      { id: 'tt1375666', title: 'A Origem (Inception)', image: 'https://m.media-amazon.com/images/M/MV5BMjAxMzY3NjcxNF5BMl5BanBnXkFtZTcwNTI5OTM0Mw@@._V1_QL75_UX380_CR0,0,380,562_.jpg', category: 'movie' },
+      { id: 'tt0816692', title: 'Interestelar (Interstellar)', image: 'https://m.media-amazon.com/images/M/MV5BYzdjMDAxZGItMjI2My00ODA1LTlkNzItOWFjMDU5ZDJlYWY3XkEyXkFqcGc@._V1_QL75_UX380_CR0,0,380,562_.jpg', category: 'movie' },
+      { id: 'tt0133093', title: 'Matrix (The Matrix)', image: 'https://m.media-amazon.com/images/M/MV5BN2NmN2VhMTQtMDNiOS00NDlhLTliMjgtODE2ZTY0ODQyNDRhXkEyXkFqcGc@._V1_QL75_UX380_CR0,4,380,562_.jpg', category: 'movie' },
+      { id: 'tt0099685', title: 'Os Bons Companheiros (Goodfellas)', image: 'https://m.media-amazon.com/images/M/MV5BN2E5NzI2ZGMtY2VjNi00YTRjLWI1MDUtZGY5OWU1MWJjZjRjXkEyXkFqcGc@._V1_QL75_UX380_CR0,3,380,562_.jpg', category: 'movie' },
+      { id: 'tt0080684', title: 'Star Wars: O Império Contra-Ataca', image: 'https://m.media-amazon.com/images/M/MV5BMTkxNGFlNDktZmJkNC00MDdhLTg0MTEtZjZiYWI3MGE5NWIwXkEyXkFqcGc@._V1_SX300.jpg', category: 'movie' },
+      { id: 'tt0245429', title: 'A Viagem de Chihiro (Spirited Away)', image: 'https://m.media-amazon.com/images/M/MV5BNTEyNmEwOWUtYzkyOC00ZTQ4LTllZmUtMjk0Y2YwOGUzYjRiXkEyXkFqcGc@._V1_QL75_UX380_CR0,0,380,562_.jpg', category: 'movie' }
     ]
   }
 };
@@ -11109,16 +11778,38 @@ function getPoolItemsBySource(source) {
 let stagedTournamentContenders = [];
 
 function initTournamentContenders() {
-  if (!stagedTournamentContenders || stagedTournamentContenders.length === 0) {
-    const existing = typeof getExistingBoardItems === 'function' ? getExistingBoardItems() : [];
-    if (existing && existing.length >= 2) {
-      stagedTournamentContenders = [...existing];
-    } else if (PRESETS && PRESETS.boardgames && PRESETS.boardgames.items) {
-      stagedTournamentContenders = [...PRESETS.boardgames.items];
-    } else {
-      stagedTournamentContenders = [];
-    }
+  if (!stagedTournamentContenders) {
+    stagedTournamentContenders = [];
   }
+
+  // Ensure staged contenders have valid fresh image URLs
+  if (stagedTournamentContenders && stagedTournamentContenders.length > 0 && typeof PRESETS !== 'undefined') {
+    const presetMap = new Map();
+    Object.values(PRESETS).forEach(p => {
+      if (p.items) p.items.forEach(it => {
+        if (it.id) presetMap.set(it.id.toLowerCase(), it);
+        if (it.title) presetMap.set(it.title.toLowerCase(), it);
+      });
+    });
+    stagedTournamentContenders.forEach(c => {
+      if (!c) return;
+      const keyId = (c.id || '').toLowerCase();
+      const keyTitle = (c.title || '').toLowerCase();
+      if (presetMap.has(keyId) || presetMap.has(keyTitle)) {
+        const fresh = presetMap.get(keyId) || presetMap.get(keyTitle);
+        if (!c.image || c.image.includes('__micro') || c.image.includes('x3zxjr7URqiFcBLfdHqQuw')) {
+          c.image = fresh.image;
+        }
+      }
+      if (c.image && c.image.includes('__micro')) {
+        c.image = c.image.replace('__micro', '__small');
+      }
+      if (c.image && c.image.startsWith('http://')) {
+        c.image = 'https://' + c.image.slice(7);
+      }
+    });
+  }
+
   renderTournamentContenders('arena');
   renderTournamentContenders('bracket');
 }
@@ -11145,19 +11836,26 @@ function renderTournamentContenders(mode = 'arena') {
   if (count === 0) {
     container.innerHTML = `
       <div class="tournament-staging-empty">
-        Nenhum competidor selecionado. Adicione itens digitando acima, escolha um Preset rápido ou clique em "Puxar da Tierlist".
+        ${currentLang === 'en'
+          ? 'No contenders selected yet. Add items by typing above, choose a Preset, or import your collection.'
+          : 'Nenhum competidor selecionado. Adicione itens digitando acima, escolha um Preset ou importe sua coleção.'}
       </div>
     `;
     return;
   }
 
-  container.innerHTML = stagedTournamentContenders.map((c, idx) => `
-    <div class="tournament-chip" title="${escapeHtml(c.title)}">
-      <img src="${escapeHtml(c.image || '../assets/mascot-trimmed.png')}" class="tournament-chip-thumb" alt="${escapeHtml(c.title)}" onerror="this.src='../assets/mascot-trimmed.png'">
-      <span class="tournament-chip-name">${escapeHtml(c.title)}</span>
-      <button type="button" class="tournament-chip-remove" onclick="removeContenderAt(${idx})" title="Remover competidor">&times;</button>
-    </div>
-  `).join('');
+  container.innerHTML = stagedTournamentContenders.map((c, idx) => {
+    const rawImg = c.image || '';
+    const safeSrc = rawImg ? escapeHtml(rawImg) : '../assets/mascot-trimmed.png';
+    const proxyUrl = rawImg ? escapeHtml(`${LUDOPEDIA_PROXY_BASE}/img?url=` + encodeURIComponent(rawImg)) : '';
+    return `
+      <div class="tournament-chip" title="${escapeHtml(c.title)}">
+        <img src="${safeSrc}" class="tournament-chip-thumb" alt="${escapeHtml(c.title)}" data-proxy-tried="false" onerror="if(this.dataset.proxyTried!=='true'&amp;&amp;'${proxyUrl}'){this.dataset.proxyTried='true';this.src='${proxyUrl}';}else{this.onerror=null;this.src='../assets/mascot-trimmed.png';}">
+        <span class="tournament-chip-name">${escapeHtml(c.title)}</span>
+        <button type="button" class="tournament-chip-remove" onclick="removeContenderAt(${idx})" title="Remover competidor">&times;</button>
+      </div>
+    `;
+  }).join('');
 }
 
 async function addContenderFromInput(mode = 'arena') {
@@ -11412,15 +12110,26 @@ function loadPresetIntoTierlist(cat, presetId) {
   if (!unplayedTier) return;
   if (!state.items[unplayedTier.id]) state.items[unplayedTier.id] = [];
 
-  const existingIds = new Set();
+  const existingMap = new Map();
   Object.values(state.items).forEach(arr => {
-    (arr || []).forEach(it => { if (it && (it.id || it.title)) existingIds.add((it.id || it.title).toLowerCase()); });
+    (arr || []).forEach(it => {
+      if (it && (it.id || it.title)) {
+        existingMap.set((it.id || it.title).toLowerCase(), it);
+      }
+    });
   });
 
   let added = 0;
+  let updated = 0;
   preset.items.forEach(item => {
     const key = (item.id || item.title).toLowerCase();
-    if (!existingIds.has(key)) {
+    const existing = existingMap.get(key);
+    if (existing) {
+      if (item.image && (!existing.image || existing.image !== item.image || existing.image.includes('__micro') || existing.image.includes('mascot-trimmed'))) {
+        existing.image = item.image;
+        updated++;
+      }
+    } else {
       state.items[unplayedTier.id].push({
         id: item.id || `preset_${Date.now()}_${Math.random()}`,
         title: item.title,
@@ -11428,7 +12137,7 @@ function loadPresetIntoTierlist(cat, presetId) {
         category: item.category || cat,
         source: 'preset'
       });
-      existingIds.add(key);
+      existingMap.set(key, item);
       added++;
     }
   });
@@ -11705,7 +12414,9 @@ function renderFighterCards(itemA, itemB) {
   const titleLeft = document.getElementById('fighterTitleLeft');
   const metaLeft = document.getElementById('fighterMetaLeft');
   if (leftCard) leftCard.className = 'fighter-card fighter-left';
-  if (imgLeft) imgLeft.src = itemA?.image || '../assets/mascot-trimmed.png';
+  if (imgLeft) {
+    attachImageWithFallback(imgLeft, itemA?.image);
+  }
   if (titleLeft) titleLeft.textContent = itemA?.title || '';
   if (metaLeft) {
     metaLeft.innerHTML = `
@@ -11721,7 +12432,9 @@ function renderFighterCards(itemA, itemB) {
   const titleRight = document.getElementById('fighterTitleRight');
   const metaRight = document.getElementById('fighterMetaRight');
   if (rightCard) rightCard.className = 'fighter-card fighter-right';
-  if (imgRight) imgRight.src = itemB?.image || '../assets/mascot-trimmed.png';
+  if (imgRight) {
+    attachImageWithFallback(imgRight, itemB?.image);
+  }
   if (titleRight) titleRight.textContent = itemB?.title || '';
   if (metaRight) {
     metaRight.innerHTML = `
@@ -12346,6 +13059,26 @@ class BracketEngine {
     this.restoreSnapshot(snap);
     return true;
   }
+
+  getRankedStandings() {
+    const finalRankings = [this.champion, this.runnerUp, this.thirdPlaceWinner].filter(Boolean);
+    const seen = new Set(finalRankings.map(r => r.id || r.title));
+    for (let s = this.stages.length - 1; s >= 0; s--) {
+      for (const m of this.stages[s].matches) {
+        if (m.loser && !seen.has(m.loser.id || m.loser.title)) {
+          finalRankings.push(m.loser);
+          seen.add(m.loser.id || m.loser.title);
+        }
+      }
+    }
+    for (const item of this.originalItems) {
+      if (!seen.has(item.id || item.title)) {
+        finalRankings.push(item);
+        seen.add(item.id || item.title);
+      }
+    }
+    return finalRankings;
+  }
 }
 
 function getBracketStageNameByDistance(stagesFromEnd) {
@@ -12394,13 +13127,18 @@ function buildWorldCupBracketHTML(engineOrItems, isPreview = false) {
     const tADoneClass = isDone ? (winId === teamA?.id ? 'winner' : 'loser') : '';
     const tBDoneClass = isDone ? (winId === teamB?.id ? 'winner' : 'loser') : '';
 
-    const labelA = teamA?.title || (m.prevM1 ? `Vencedor ${m.prevM1.stageName} #${m.prevM1.matchIndex + 1}` : 'A definir');
-    const labelB = teamB?.title || (m.prevM2 ? `Vencedor ${m.prevM2.stageName} #${m.prevM2.matchIndex + 1}` : (!m.prevM2 && !m.teamB ? '🛡️ Bye (Avança)' : 'A definir'));
+    const winnerWord = currentLang === 'en' ? 'Winner' : 'Vencedor';
+    const tbdWord = currentLang === 'en' ? 'TBD' : 'A definir';
+    const advancesWord = currentLang === 'en' ? 'Advances to' : 'Avança para';
+    const byeWord = currentLang === 'en' ? '🛡️ Bye (Advances)' : '🛡️ Bye (Avança)';
+
+    const labelA = teamA?.title || (m.prevM1 ? `${winnerWord} ${m.prevM1.stageName} #${m.prevM1.matchIndex + 1}` : tbdWord);
+    const labelB = teamB?.title || (m.prevM2 ? `${winnerWord} ${m.prevM2.stageName} #${m.prevM2.matchIndex + 1}` : (!m.prevM2 && !m.teamB ? byeWord : tbdWord));
 
     const destHTML = m.nextStageName ? `
-      <div class="wc-match-dest" title="Avança para ${m.nextStageName} #${m.nextMatchIndex + 1}">
+      <div class="wc-match-dest" title="${advancesWord} ${m.nextStageName} #${m.nextMatchIndex + 1}">
         <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" style="width:12px; height:12px; min-width:12px; min-height:12px; flex-shrink:0;"><polyline points="9 18 15 12 9 6"/></svg>
-        <span>Avança para <strong>${m.nextStageName} #${m.nextMatchIndex + 1}</strong></span>
+        <span>${advancesWord} <strong>${m.nextStageName} #${m.nextMatchIndex + 1}</strong></span>
       </div>
     ` : '';
 
@@ -12424,7 +13162,7 @@ function buildWorldCupBracketHTML(engineOrItems, isPreview = false) {
           </div>
           <div class="wc-match-dest" style="color:#10b981; border-color:rgba(16,185,129,0.3); background:rgba(16,185,129,0.08);">
             <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" style="width:12px; height:12px; min-width:12px; min-height:12px; flex-shrink:0;"><polyline points="9 18 15 12 9 6"/></svg>
-            <span>Classificado direto</span>
+            <span>${currentLang === 'en' ? 'Direct qualifier' : 'Classificado direto'}</span>
           </div>
           ${destHTML}
         </div>
@@ -12435,20 +13173,20 @@ function buildWorldCupBracketHTML(engineOrItems, isPreview = false) {
       <div class="wc-match-card ${isLive ? 'is-live' : ''} ${isDone ? 'is-done' : ''}" id="wcCard_${m.id}" data-match-id="${m.id}" ${nextAttr} ${feeder1Attr} ${feeder2Attr} onmouseenter="highlightBracketPath('${m.id}')" onmouseleave="clearBracketHighlight()">
         <div class="wc-match-header">
           <span class="wc-match-stage">${matchNumLabel || m.stageName}</span>
-          ${isLive ? '<span class="wc-badge-live">⚔️ AO VIVO</span>' : ''}
-          ${isDone ? '<span class="wc-badge-done">✓ CONCLUÍDO</span>' : ''}
-          ${(!isLive && !isDone) ? '<span class="wc-badge-pending">PENDENTE</span>' : ''}
+          ${isLive ? `<span class="wc-badge-live">${currentLang === 'en' ? '⚔️ LIVE' : '⚔️ AO VIVO'}</span>` : ''}
+          ${isDone ? `<span class="wc-badge-done">${currentLang === 'en' ? '✓ DONE' : '✓ CONCLUÍDO'}</span>` : ''}
+          ${(!isLive && !isDone) ? `<span class="wc-badge-pending">${currentLang === 'en' ? 'PENDING' : 'PENDENTE'}</span>` : ''}
         </div>
         <div class="wc-team-row ${tADoneClass}">
           <div class="wc-team-info">
-            <img class="wc-team-thumb" src="${escapeHtml(teamA?.image || defaultImg)}" alt="" onerror="this.src='${defaultImg}'">
+            <img class="wc-team-thumb" src="${escapeHtml(teamA?.image || defaultImg)}" alt="" onerror="if(!this.dataset.proxied &amp;&amp; this.src &amp;&amp; !this.src.startsWith('data:') &amp;&amp; !this.src.includes('mascot-trimmed')){ this.dataset.proxied='1'; this.src='https://ludoproxy.boardbots.workers.dev/img?url=' + encodeURIComponent(this.src); } else { this.src='${defaultImg}'; }">
             <span class="wc-team-name" title="${escapeHtml(labelA)}">${escapeHtml(labelA)}</span>
           </div>
           ${winId && winId === teamA?.id ? '<span style="font-size:0.85em;">👑</span>' : ''}
         </div>
         <div class="wc-team-row ${tBDoneClass}">
           <div class="wc-team-info">
-            <img class="wc-team-thumb" src="${escapeHtml(teamB?.image || defaultImg)}" alt="" onerror="this.src='${defaultImg}'">
+            <img class="wc-team-thumb" src="${escapeHtml(teamB?.image || defaultImg)}" alt="" onerror="if(!this.dataset.proxied &amp;&amp; this.src &amp;&amp; !this.src.startsWith('data:') &amp;&amp; !this.src.includes('mascot-trimmed')){ this.dataset.proxied='1'; this.src='https://ludoproxy.boardbots.workers.dev/img?url=' + encodeURIComponent(this.src); } else { this.src='${defaultImg}'; }">
             <span class="wc-team-name" title="${escapeHtml(labelB)}">${escapeHtml(labelB)}</span>
           </div>
           ${winId && winId === teamB?.id ? '<span style="font-size:0.85em;">👑</span>' : ''}
@@ -12460,7 +13198,7 @@ function buildWorldCupBracketHTML(engineOrItems, isPreview = false) {
 
   const roundsBeforeFinal = stages.slice(0, stages.length - 1);
   const roundsColumnsHTML = roundsBeforeFinal.map((s, sIdx) => {
-    const stageTitle = s.matches[0]?.stageName || `Rodada ${sIdx + 1}`;
+    const stageTitle = s.matches[0]?.stageName || (currentLang === 'en' ? `Round ${sIdx + 1}` : `Rodada ${sIdx + 1}`);
     let matchesContent = '';
     for (let i = 0; i < s.matches.length; i += 2) {
       const m1 = s.matches[i];
@@ -12489,19 +13227,19 @@ function buildWorldCupBracketHTML(engineOrItems, isPreview = false) {
   const championObj = champion || finalMatch.winner || null;
   const finalsColumnHTML = `
     <div class="wc-finals-column">
-      <div class="wc-round-header" style="color:var(--gold-bright); border-color:rgba(245,158,11,0.4);">Grande Final</div>
+      <div class="wc-round-header" style="color:var(--gold-bright); border-color:rgba(245,158,11,0.4);">${currentLang === 'en' ? 'Grand Final' : 'Grande Final'}</div>
       <div class="wc-trophy-banner">
         <div class="wc-trophy-icon">🏆</div>
-        <div class="wc-trophy-title">Grande Campeão da Copa</div>
-        ${championObj ? `<div class="wc-champion-badge">👑 ${championObj.title}</div>` : `<div style="font-size:0.75em; color:var(--text-dim); margin-top:4px;">A definir</div>`}
+        <div class="wc-trophy-title">${currentLang === 'en' ? 'Knockout Cup Champion' : 'Grande Campeão da Copa'}</div>
+        ${championObj ? `<div class="wc-champion-badge">👑 ${championObj.title}</div>` : `<div style="font-size:0.75em; color:var(--text-dim); margin-top:4px;">${currentLang === 'en' ? 'TBD' : 'A definir'}</div>`}
       </div>
       <div class="wc-matches-list">
-        ${renderMatchCard(finalMatch, 'Grande Final')}
+        ${renderMatchCard(finalMatch, currentLang === 'en' ? 'Grand Final' : 'Grande Final')}
       </div>
       ${thirdMatch ? `
-        <div class="wc-3rd-banner" style="margin-top:16px; font-weight:700; color:var(--brass-bright); font-size:0.8rem; text-align:center;">🥉 Disputa de 3º Lugar</div>
+        <div class="wc-3rd-banner" style="margin-top:16px; font-weight:700; color:var(--brass-bright); font-size:0.8rem; text-align:center;">🥉 ${currentLang === 'en' ? '3rd Place Playoff' : 'Disputa de 3º Lugar'}</div>
         <div class="wc-matches-list" style="margin-top:6px;">
-          ${renderMatchCard(thirdMatch, 'Disputa de 3º Lugar')}
+          ${renderMatchCard(thirdMatch, currentLang === 'en' ? '3rd Place Playoff' : 'Disputa de 3º Lugar')}
         </div>
       ` : ''}
     </div>
@@ -12541,7 +13279,9 @@ function renderWorldCupBracketTree() {
   const mount = document.getElementById('worldCupBracketTreeMount');
   if (!mount) return;
   if (!currentBracketEngine) {
-    const candidates = typeof getExistingBoardItems === 'function' ? getExistingBoardItems() : [];
+    const candidates = (stagedTournamentContenders && stagedTournamentContenders.length > 0)
+      ? stagedTournamentContenders
+      : (typeof getExistingBoardItems === 'function' ? getExistingBoardItems() : []);
     mount.innerHTML = buildWorldCupBracketHTML(candidates.slice(0, 16), true);
     return;
   }
@@ -12576,17 +13316,17 @@ function showTournamentResults(sortedItems) {
 
   const img1 = document.getElementById('podiumImg1');
   const t1 = document.getElementById('podiumTitle1');
-  if (img1 && top1) img1.src = top1.image || '../assets/mascot-trimmed.png';
+  if (img1 && top1) attachImageWithFallback(img1, top1.image);
   if (t1 && top1) t1.textContent = top1.title;
 
   const img2 = document.getElementById('podiumImg2');
   const t2 = document.getElementById('podiumTitle2');
-  if (img2 && top2) img2.src = top2.image || '../assets/mascot-trimmed.png';
+  if (img2 && top2) attachImageWithFallback(img2, top2.image);
   if (t2 && top2) t2.textContent = top2.title;
 
   const img3 = document.getElementById('podiumImg3');
   const t3 = document.getElementById('podiumTitle3');
-  if (img3 && top3) img3.src = top3.image || '../assets/mascot-trimmed.png';
+  if (img3 && top3) attachImageWithFallback(img3, top3.image);
   if (t3 && top3) t3.textContent = top3.title;
 
   const listEl = document.getElementById('resultsListScroll');
@@ -12605,8 +13345,8 @@ function showTournamentResults(sortedItems) {
 
       const img = document.createElement('img');
       img.className = 'results-rank-img';
-      img.src = game.image || '../assets/mascot-trimmed.png';
       img.alt = game.title;
+      attachImageWithFallback(img, game.image);
 
       const name = document.createElement('div');
       name.className = 'results-rank-name';
@@ -12626,9 +13366,28 @@ function showTournamentResults(sortedItems) {
 }
 
 function openDistributeModal() {
+  if (!currentRankedResults || currentRankedResults.length === 0) {
+    if (activeStudioMode === 'bracket' && currentBracketEngine && typeof currentBracketEngine.getRankedStandings === 'function') {
+      currentRankedResults = currentBracketEngine.getRankedStandings();
+    } else if (activeStudioMode === 'arena' && currentTournament && typeof currentTournament.getRankedStandings === 'function') {
+      currentRankedResults = currentTournament.getRankedStandings();
+    } else if (currentBracketEngine && typeof currentBracketEngine.getRankedStandings === 'function') {
+      currentRankedResults = currentBracketEngine.getRankedStandings();
+    } else if (currentTournament && typeof currentTournament.getRankedStandings === 'function') {
+      currentRankedResults = currentTournament.getRankedStandings();
+    }
+  }
+
+  if (!currentRankedResults || currentRankedResults.length === 0) {
+    alert(currentLang === 'en'
+      ? 'No tournament results found to distribute. Start a 1v1 battle or Knockout Cup first!'
+      : 'Nenhum resultado de torneio encontrado para distribuir. Inicie uma Batalha 1x1 ou Copa primeiro!');
+    return;
+  }
+
   closeModal('rankingResultsModal');
   openModal('distributeModal');
-  selectDistributeMode(selectedDistributeMode || 'percentile');
+  selectDistributeMode(selectedDistributeMode || (activeStudioMode === 'bracket' ? 'cup' : 'percentile'));
 }
 
 function selectDistributeMode(mode) {
@@ -13148,11 +13907,107 @@ function handleImdbCsvUpload(event) {
 }
 
 function openExportModalForTournament() {
-  openExportModal();
+  openModal('exportBracketModal');
 }
 
 function openExportModalForBracket() {
-  openExportModal();
+  openModal('exportBracketModal');
+}
+
+async function captureBracketCanvas() {
+  const mount = document.getElementById('worldCupBracketTreeMount');
+  if (!mount) throw new Error('Bracket container not found');
+  const target = mount.querySelector('.wc-bracket-wrapper') || mount.querySelector('.wc-stages-row') || mount;
+
+  if (typeof html2canvas !== 'function') {
+    throw new Error('html2canvas library is not loaded');
+  }
+
+  const origOverflow = mount.style.overflow;
+  mount.style.overflow = 'visible';
+
+  try {
+    const canvas = await html2canvas(target, {
+      scale: 2,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: '#120a06',
+      logging: false,
+      scrollX: 0,
+      scrollY: 0,
+      windowWidth: target.scrollWidth + 100,
+      width: target.scrollWidth,
+      height: target.scrollHeight
+    });
+    return canvas;
+  } finally {
+    mount.style.overflow = origOverflow;
+  }
+}
+
+async function downloadBracketImage(format = 'png') {
+  const btn = document.getElementById('btnDownloadBracketPng');
+  const origText = btn ? btn.innerHTML : '';
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = `<span class="spinner" style="display:inline-block; width:14px; height:14px; border:2px solid currentColor; border-top-color:transparent; border-radius:50%; animation:spin 0.8s linear infinite; margin-right:6px;"></span> ${currentLang === 'en' ? 'Generating...' : 'Gerando...'}`;
+  }
+  try {
+    const canvas = await captureBracketCanvas();
+    const link = document.createElement('a');
+    link.download = `chave-copa-mata-mata-${new Date().toISOString().slice(0, 10)}.png`;
+    link.href = canvas.toDataURL('image/png');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    closeModal('exportBracketModal');
+    showToast(currentLang === 'en' ? 'Bracket image exported successfully!' : 'Chaveamento exportado com sucesso!');
+  } catch (err) {
+    console.error('Failed to export bracket image:', err);
+    alert(currentLang === 'en' ? 'Could not generate bracket image. Please try again.' : 'Não foi possível gerar a imagem da chave. Tente novamente.');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = origText;
+    }
+  }
+}
+
+async function downloadBracketPDF() {
+  const btn = document.getElementById('btnDownloadBracketPdf');
+  const origText = btn ? btn.innerHTML : '';
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = `<span class="spinner" style="display:inline-block; width:14px; height:14px; border:2px solid currentColor; border-top-color:transparent; border-radius:50%; animation:spin 0.8s linear infinite; margin-right:6px;"></span> ${currentLang === 'en' ? 'Generating...' : 'Gerando...'}`;
+  }
+  try {
+    const canvas = await captureBracketCanvas();
+    const imgData = canvas.toDataURL('image/jpeg', 0.95);
+    if (window.jspdf && window.jspdf.jsPDF) {
+      const orientation = canvas.width > canvas.height ? 'landscape' : 'portrait';
+      const doc = new window.jspdf.jsPDF({
+        orientation,
+        unit: 'px',
+        format: [canvas.width, canvas.height]
+      });
+      doc.addImage(imgData, 'JPEG', 0, 0, canvas.width, canvas.height);
+      doc.save(`chave-copa-mata-mata-${Date.now()}.pdf`);
+      closeModal('exportBracketModal');
+      showToast(currentLang === 'en' ? 'Bracket PDF exported successfully!' : 'PDF do chaveamento exportado com sucesso!');
+    } else {
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(`<img src="${imgData}" style="max-width:100%;">`);
+      printWindow.print();
+    }
+  } catch (err) {
+    console.error('Failed to export bracket PDF:', err);
+    alert(currentLang === 'en' ? 'Could not generate bracket PDF. Please try again.' : 'Não foi possível gerar o PDF da chave. Tente novamente.');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = origText;
+    }
+  }
 }
 
 // Studio boot initializer
@@ -13202,6 +14057,9 @@ window.parseScrapedContent = parseScrapedContent;
 window.handleImdbCsvUpload = handleImdbCsvUpload;
 window.openExportModalForTournament = openExportModalForTournament;
 window.openExportModalForBracket = openExportModalForBracket;
+window.captureBracketCanvas = captureBracketCanvas;
+window.downloadBracketImage = downloadBracketImage;
+window.downloadBracketPDF = downloadBracketPDF;
 window.openRankingSetupModal = openRankingSetupModal;
 window.switchRankingTab = switchRankingTab;
 window.fetchBggForRanking = fetchBggForRanking;
