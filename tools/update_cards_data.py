@@ -1,4 +1,13 @@
-{
+#!/usr/bin/env python3
+"""
+update_cards_data.py
+Aplica todas as correções validadas pelo Thiago na planilha de revisão em cards_data.json.
+"""
+
+import json
+import os
+
+CARDS_DATA = {
   "S.01": {
     "id": "S.01",
     "type": "basic",
@@ -36,17 +45,8 @@
         "titlePt": "Mover Sonda (Alcance 3)",
         "titleEn": "Move Probe (Range 3)",
         "range": 3,
-        "planets": [
-          "Saturno",
-          "Marte",
-          "Júpiter",
-          "Vênus"
-        ],
-        "preference": [
-          "moon",
-          "orbiter",
-          "lander"
-        ],
+        "planets": ["Saturno", "Marte", "Júpiter", "Vênus"],
+        "preference": ["moon", "orbiter", "lander"],
         "descPt": "Mova a sonda da Terra (alcance 3): Saturno > Marte > Júpiter > Vênus. Preferência: Lua (descartando tec de sonda) > Orbitador > Aterrissador.",
         "descEn": "Move probe from Earth (range 3): Saturn > Mars > Jupiter > Venus. Prefers Moon (discarding probe tech) > Orbiter > Lander."
       }
@@ -142,17 +142,8 @@
         "titlePt": "Mover Sonda (Alcance 3)",
         "titleEn": "Move Probe (Range 3)",
         "range": 3,
-        "planets": [
-          "Júpiter",
-          "Marte",
-          "Saturno",
-          "Vênus"
-        ],
-        "preference": [
-          "moon",
-          "orbiter",
-          "lander"
-        ],
+        "planets": ["Júpiter", "Marte", "Saturno", "Vênus"],
+        "preference": ["moon", "orbiter", "lander"],
         "descPt": "Mova a sonda da Terra (alcance 3): Júpiter > Marte > Saturno > Vênus. Preferência: Lua (descartando tec) > Orbitador > Aterrissador.",
         "descEn": "Move probe from Earth (range 3): Jupiter > Mars > Saturn > Venus. Prefers Moon (discarding tech) > Orbiter > Lander."
       },
@@ -289,17 +280,8 @@
         "titlePt": "Mover Sonda (Alcance 4)",
         "titleEn": "Move Probe (Range 4)",
         "range": 4,
-        "planets": [
-          "Urano",
-          "Júpiter",
-          "Mercúrio",
-          "Vênus"
-        ],
-        "preference": [
-          "moon",
-          "lander",
-          "orbiter"
-        ],
+        "planets": ["Urano", "Júpiter", "Mercúrio", "Vênus"],
+        "preference": ["moon", "lander", "orbiter"],
         "descPt": "Mova a sonda (alcance 4): Urano > Júpiter > Mercúrio > Vênus. Preferência: Lua (desc tec) > Aterrissador > Orbitador.",
         "descEn": "Move probe (range 4): Uranus > Jupiter > Mercury > Venus. Prefers Moon (discard tech) > Lander > Orbiter."
       },
@@ -443,17 +425,8 @@
         "titlePt": "Mover Sonda (Alcance 4)",
         "titleEn": "Move Probe (Range 4)",
         "range": 4,
-        "planets": [
-          "Mercúrio",
-          "Saturno",
-          "Júpiter",
-          "Vênus"
-        ],
-        "preference": [
-          "moon",
-          "lander",
-          "orbiter"
-        ],
+        "planets": ["Mercúrio", "Saturno", "Júpiter", "Vênus"],
+        "preference": ["moon", "lander", "orbiter"],
         "descPt": "Mova a sonda (alcance 4): Mercúrio > Saturno > Júpiter > Vênus. Preferência: Lua (desc tec) > Aterrissador > Orbitador.",
         "descEn": "Move probe (range 4): Mercury > Saturn > Jupiter > Venus. Prefers Moon (discard tech) > Lander > Orbiter."
       }
@@ -471,17 +444,8 @@
         "titlePt": "Mover Sonda (Alcance 4)",
         "titleEn": "Move Probe (Range 4)",
         "range": 4,
-        "planets": [
-          "Netuno",
-          "Urano",
-          "Marte",
-          "Vênus"
-        ],
-        "preference": [
-          "moon",
-          "lander",
-          "orbiter"
-        ],
+        "planets": ["Netuno", "Urano", "Marte", "Vênus"],
+        "preference": ["moon", "lander", "orbiter"],
         "descPt": "Mova a sonda (alcance 4): Netuno > Urano > Marte > Vênus. Preferência: Lua (desc tec) > Aterrissador > Orbitador.",
         "descEn": "Move probe (range 4): Neptune > Uranus > Mars > Venus. Prefers Moon (discard tech) > Lander > Orbiter."
       },
@@ -574,14 +538,8 @@
         "titlePt": "Mover Sonda (Saturno 4 / Júpiter 5) + Coletar Amostra",
         "titleEn": "Move Probe (Saturn 4 / Jupiter 5) + Sample",
         "range": 5,
-        "planets": [
-          "Saturno",
-          "Júpiter"
-        ],
-        "preference": [
-          "moon",
-          "lander"
-        ],
+        "planets": ["Saturno", "Júpiter"],
+        "preference": ["moon", "lander"],
         "descPt": "Mova a sonda para Saturno (alcance 4) ou Júpiter (alcance 5). Preferência: Lua (desc tec) > Aterrissador. Pegue aleatoriamente uma amostra do planeta e coloque-a virada para cima no tabuleiro desta espécie (ignore recompensa). Ignore se a sonda não consegue chegar em Saturno ou Júpiter.",
         "descEn": "Move probe to Saturn (range 4) or Jupiter (range 5). Prefers Moon (discard tech) > Lander. Randomly take a planetary sample and place it faceup on this species board (ignore reward). Skip if probe cannot reach Saturn or Jupiter."
       }
@@ -624,13 +582,8 @@
         "titlePt": "Mover Sonda para 'Oumuamua",
         "titleEn": "Move Probe to 'Oumuamua",
         "range": 4,
-        "planets": [
-          "'Oumuamua"
-        ],
-        "preference": [
-          "lander",
-          "orbiter"
-        ],
+        "planets": ["'Oumuamua"],
+        "preference": ["lander", "orbiter"],
         "descPt": "Mova a sonda para 'Oumuamua (alcance 4). Preferência: Aterrissador > Orbitador. Realiza apenas se a sonda consegue chegar em Oumuamua.",
         "descEn": "Move probe to 'Oumuamua (range 4). Prefers Lander > Orbiter. Only performs if probe can reach 'Oumuamua."
       },
@@ -756,20 +709,8 @@
         "titlePt": "Mover Sonda para Planeta com Glifo",
         "titleEn": "Move Probe to Glyph Planet",
         "range": 4,
-        "planets": [
-          "Mercúrio",
-          "Netuno",
-          "Urano",
-          "Saturno",
-          "Júpiter",
-          "Marte",
-          "Vênus"
-        ],
-        "preference": [
-          "moon",
-          "lander",
-          "orbiter"
-        ],
+        "planets": ["Mercúrio", "Netuno", "Urano", "Saturno", "Júpiter", "Marte", "Vênus"],
+        "preference": ["moon", "lander", "orbiter"],
         "descPt": "Verifique APENAS planetas com ficha de glifo (alcance 4): Mercúrio > Netuno > Urano > Saturno > Júpiter > Marte > Vênus. Preferência: Lua (desc tec) > Aterrissador > Orbitador.",
         "descEn": "Check ONLY planets with glyph token (range 4): Mercury > Neptune > Uranus > Saturn > Jupiter > Mars > Venus. Prefers Moon (discard tech) > Lander > Orbiter."
       },
@@ -785,3 +726,9 @@
     ]
   }
 }
+
+target_path = "/Users/thiagocarvalho/Documents/Board games/boardbots/assets/art/seti/cards_data.json"
+with open(target_path, "w", encoding="utf-8") as f:
+    json.dump(CARDS_DATA, f, indent=2, ensure_ascii=False)
+
+print(f"cards_data.json atualizado com sucesso com {len(CARDS_DATA)} cartas!")
