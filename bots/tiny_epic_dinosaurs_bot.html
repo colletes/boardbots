@@ -1072,6 +1072,33 @@
             margin-top: 6px;
         }
 
+        /* Floating Help Button */
+        .btn-help-float {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: var(--bg-card, #1a2218);
+            color: var(--amber, #f59e0b);
+            border: 2px solid var(--border, #2d3e2b);
+            font-size: 1.4rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+            z-index: 99;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+        .btn-help-float:hover {
+            transform: scale(1.08);
+            background: var(--amber, #f59e0b);
+            color: #111;
+        }
+
         /* Scoring Inputs */
         .score-grid {
             display: grid;
@@ -1889,54 +1916,17 @@
 
     </div>
 
+    <!-- Floating Help Button -->
+    <button class="btn-help-float" onclick="toggleHelpModal(true)" aria-label="Ajuda / Rules" title="Ajuda / Rules">?</button>
+
     <!-- RULES MODAL -->
-    <div id="helpModal" class="modal-overlay hidden">
+    <div id="helpModal" class="modal-overlay hidden" onclick="if(event.target===this)toggleHelpModal(false)">
         <div class="modal-content">
             <div class="modal-header">
                 <h3 class="modal-title" data-i18n="modal_rules_title">Regras do Rival Rancher & Variante</h3>
                 <button class="modal-close" onclick="toggleHelpModal(false)">&times;</button>
             </div>
-            <div class="modal-body">
-                <details class="custom-details" open>
-                    <summary><strong data-i18n="rule_sec1_title">1. Bloqueios Parciais por Tabuleiro</strong></summary>
-                    <div class="details-body">
-                        <p data-i18n="rule_sec1_desc">Diferente das regras oficiais que bloqueiam o tabuleiro inteiro, cada carta bloqueia apenas parte dele com 1 Rancher:</p>
-                        <ul>
-                            <li><strong>Tabuleiro A:</strong> 1 Dino bloqueia FREE RANGE ESQUERDA (Estego/Raptor). 2 Dinos bloqueia FREE RANGE DIREITA (Braquio/Alosauro). Se ambas as cartas forem jogadas, bloqueia TODO o tabuleiro A.</li>
-                            <li><strong>Tabuleiro D:</strong> 1 Dino bloqueia RECURSOS ESQUERDA. 2 Dinos bloqueia RECURSOS DIREITA.</li>
-                            <li><strong>Tabuleiros B e C:</strong> 1 Dino bloqueia as ações de BARREIRAS (CINZA). 2 Dinos bloqueia as ações de CONTRATOS & PESQUISA (ROXO e AZUL).</li>
-                        </ul>
-                    </div>
-                </details>
-
-                <details class="custom-details">
-                    <summary><strong data-i18n="rule_sec2_title">2. Turno do Rival (Ordem de Resolução)</strong></summary>
-                    <div class="details-body">
-                        <p data-i18n="rule_sec2_1"><strong>Passo 1: Revela a Carta</strong> e coloca acima do tabuleiro correspondente.</p>
-                        <p data-i18n="rule_sec2_2"><strong>Passo 2: Checagem de Contratos</strong> — Verifica a fileira de Contratos Públicos da esquerda para a direita. Se o Rival tiver os dinos no rancho para cumprir um contrato: ele descarta os dinos de cima para baixo, pega a carta e <em>SEU TURNO TERMINA IMEDIATAMENTE</em> (pula o passo 3)!</p>
-                        <p data-i18n="rule_sec2_3"><strong>Passo 3: Dinossauro ou Ação</strong> — Se o jogador tiver Ranchers nos espaços que esta carta bloqueia → o Rival executa a Ação do compartimento livre mais abaixo na coluna do dino. Se o espaço estiver livre → o Rival ganha os dinos da carta!</p>
-                    </div>
-                </details>
-
-                <details class="custom-details">
-                    <summary><strong data-i18n="rule_sec3_title">3. Recursos Máximos (13)</strong></summary>
-                    <div class="details-body">
-                        <p data-i18n="rule_sec3_desc">Quando o Rival atinge 13 em qualquer recurso, ele ativa imediatamente a Ação de Recurso Máximo indicada no seu rancho, e o recurso é zerado (excedentes são perdidos). Recursos adicionais provenientes não disparam acúmulo de novos recursos (carne, plantas ou suprimentos), evitando reações em cadeia. Se múltiplos atingirem 13 juntos, resolve-se na ordem: Plantas → Carne → Suprimentos.</p>
-                    </div>
-                </details>
-
-                <details class="custom-details">
-                    <summary><strong data-i18n="rule_sec4_title">4. Fim de Jogo & Pontuação</strong></summary>
-                    <div class="details-body">
-                        <p data-i18n="rule_sec4_desc">Após a 6ª Rodada, somam-se os pontos:</p>
-                        <ul>
-                            <li>Dinos no Rancho: Estegossauro = 2 VP | Velociraptor = 3 VP | Braquiossauro = 3 VP | Alosauro = 4 VP.</li>
-                            <li>Cartas de Contrato cumpridas: Valor impresso na carta.</li>
-                            <li>Cartas de Pesquisa obtidas: Valor direto de VP de cada carta (habilidades ignoradas).</li>
-                        </ul>
-                    </div>
-                </details>
-            </div>
+            <div class="modal-body" data-i18n-html="help_body"></div>
         </div>
     </div>
 
@@ -2118,16 +2108,74 @@
                 mod_original_mode_desc: "Ordem oficial do manual: o Rival executa sua ação primeiro e, em seguida, adquire um contrato.",
                 active_mods_label: "Modificadores:",
                 modal_rules_title: "Regras do Rival Rancher & Variante",
-                rule_sec1_title: "1. Bloqueios Parciais por Tabuleiro",
-                rule_sec1_desc: "Diferente das regras oficiais que bloqueiam o tabuleiro inteiro, cada carta bloqueia apenas parte dele com 1 Rancher:",
-                rule_sec2_title: "2. Turno do Rival (Ordem de Resolução)",
-                rule_sec2_1: "Passo 1: Revela a Carta e coloca acima do tabuleiro correspondente.",
-                rule_sec2_2: "Passo 2: Checagem de Contratos — Verifica a fileira de Contratos Públicos da esquerda para a direita. Se o Rival tiver os dinos no rancho para cumprir um contrato: ele descarta os dinos de cima para baixo, pega a carta e SEU TURNO TERMINA IMEDIATAMENTE (pula o passo 3)!",
-                rule_sec2_3: "Passo 3: Dinossauro ou Ação — Se o jogador tiver Ranchers nos espaços que esta carta bloqueia → o Rival executa a Ação do compartimento livre mais abaixo na coluna do dino. Se o espaço estiver livre → o Rival ganha os dinos da carta!",
-                rule_sec3_title: "3. Recursos Máximos (13)",
-                rule_sec3_desc: "Quando o Rival atinge 13 em qualquer recurso, ele ativa imediatamente a Ação de Recurso Máximo indicada no seu rancho, e o recurso é zerado (excedentes são perdidos). Recursos adicionais provenientes não disparam acúmulo de novos recursos (carne, plantas ou suprimentos), evitando reações em cadeia. Se múltiplos atingirem 13 juntos, resolve-se na ordem: Plantas → Carne → Suprimentos.",
-                rule_sec4_title: "4. Fim de Jogo & Pontuação",
-                rule_sec4_desc: "Após a 6ª Rodada, somam-se os pontos de dinossauros, contratos e pesquisas.",
+                help_body: `<details class="custom-details" open>
+<summary><strong>1. Visão Geral & Filosofia do Automa</strong></summary>
+<div class="details-body">
+<p>O <b>Rival Rancher</b> é o oponente solo oficial para <i>Tiny Epic Dinosaurs</i> (Gamelyn Games / Scott Almes). Este assistente incorpora a premiada variante <b>Re-tuned Solo Mode</b> (por Ryan Lopez DeVinaspre), ajustando o bloqueio de tabuleiros para uma experiência estratégica e justa.</p>
+<p>O Rival simula um fazendeiro concorrente na ilha: ele bloqueia posições estratégicas de ação nos tabuleiros centrais, captura dinossauros para seus próprios cercados, cumpre Contratos Públicos da mesa e adquire Cartas de Pesquisa genéticas.</p>
+</div>
+</details>
+
+<details class="custom-details">
+<summary><strong>2. Setup Físico, Oponentes & Ajustes Solo</strong></summary>
+<div class="details-body">
+<ul>
+  <li><b>Montagem Central:</b> Disponha os 4 Tabuleiros de Ação em linha (A, B, C e D) no centro da mesa usando o lado de 2 jogadores.</li>
+  <li><b>Esteiras e Decks:</b> Posicione a esteira de Rodadas (marcador na Rodada 1). Revele 3 Contratos Públicos em linha. Revele 3 Cartas de Pesquisa abertas.</li>
+  <li><b>Seu Rancho:</b> Você recebe 2 Contratos Privados (escolha 1 secreto e descarte o outro), 0 Plantas, 0 Carnes e 0 Suprimentos.</li>
+  <li><b>Oponente Rival:</b> Escolha uma das 4 personalidades no app (Breeder, Contractor, Poacher ou Scientist) — cada um possui uma Ação Especial única quando seus cercados enchem.</li>
+  <li><b>Iniciativa:</b> O Rival Rancher sempre começa com o marcador de <b>Primeiro Jogador</b>. Posicione o <i>Lead Rancher</i> (Capataz) do Rival na Rodada 4 da trilha de rodadas.</li>
+</ul>
+</div>
+</details>
+
+<details class="custom-details">
+<summary><strong>3. Fluxo de Ações & Tomada de Decisão</strong></summary>
+<div class="details-body">
+<p>No turno do Rival, clique em <b>Revelar Ação do Rival</b> e siga os passos na tela:</p>
+<ol>
+  <li><b>Passo 1: Revelação da Carta:</b> A carta indica o tabuleiro afetado (A, B, C ou D) e os dinossauros/ações em disputa. Posicione a carta física acima do tabuleiro correspondente.</li>
+  <li><b>Passo 2: Checagem de Contratos:</b> O Rival inspeciona os Contratos Públicos abertos da esquerda para a direita. Se tiver os dinossauros necessários em seus cercados: descarta os dinos (de cima para baixo), pega a carta de Contrato e <b>SEU TURNO TERMINA IMEDIATAMENTE</b>!</li>
+  <li><b>Passo 3: Alocação ou Ação:</b> Se nenhum contrato for cumprido:
+    <ul>
+      <li><i>Se os espaços bloqueados pela carta estiverem livres de Ranchers seus:</i> O Rival ganha os dinossauros da carta e os coloca nos cercados do seu rancho!</li>
+      <li><i>Se você já possuir Ranchers nesses espaços bloqueados:</i> O Rival executa a Ação do compartimento livre mais abaixo na coluna daquele dinossauro!</li>
+    </ul>
+  </li>
+</ol>
+<p><b>Bloqueios Parciais (Variante Re-tuned):</b> Cada carta bloqueia apenas metade do tabuleiro com 1 Rancher:</p>
+<ul>
+  <li><b>Tabuleiro A:</b> 1 Dino bloqueia Free Range Esquerda (Estego/Raptor). 2 Dinos bloqueia Free Range Direita (Braquio/Alossauro).</li>
+  <li><b>Tabuleiro D:</b> 1 Dino bloqueia Recursos Esquerda. 2 Dinos bloqueia Recursos Direita.</li>
+  <li><b>Tabuleiros B e C:</b> 1 Dino bloqueia Barreiras (Cinza). 2 Dinos bloqueia Contratos & Pesquisa (Roxo e Azul).</li>
+</ul>
+</div>
+</details>
+
+<details class="custom-details">
+<summary><strong>4. Recursos Máximos (13), Desempates & Casos Especiais</strong></summary>
+<div class="details-body">
+<ul>
+  <li><b>Limite de Recursos (13):</b> Quando o marcador do Rival atinge 13 em qualquer recurso (Plantas, Carne ou Suprimentos), ele ativa imediatamente a <i>Ação de Recurso Máximo</i> impressa e o recurso é zerado. Excedentes são perdidos e ganhos imediatos não geram reações em cadeia. Ordem de resolução simultânea: Plantas &rarr; Carne &rarr; Suprimentos.</li>
+  <li><b>Cercados Cheios & Ação Especial:</b> Se uma coluna de dinossauro já tiver todos os 3 compartimentos preenchidos e o Rival for colocar mais dinos ou ativar ações nela, ele ativa a sua <b>Ação Especial de Oponente</b>!</li>
+  <li><b>Lead Rancher (Rodadas 4 a 6):</b> A partir da Rodada 4, o Rival despacha seu Lead Rancher, passando a comprar e resolver <b>5 cartas por rodada</b> em vez de 4.</li>
+  <li><b>Rancho Seguro:</b> O Rival não precisa de cercas físicas para separar espécies nem alimenta seus dinossauros na Fase 4 (seus dinos nunca fogem nem causam estragos no rancho dele).</li>
+</ul>
+</div>
+</details>
+
+<details class="custom-details">
+<summary><strong>5. Fim de Jogo & Pontuação Solo</strong></summary>
+<div class="details-body">
+<p>A partida termina após a <b>6ª Rodada</b>. Utilize a calculadora de pontuação final no app:</p>
+<ul>
+  <li><b>Dinossauros no Rancho do Rival:</b> Estegossauro = 2 VP cada | Velociraptor = 3 VP cada | Braquiossauro = 3 VP cada | Alossauro = 4 VP cada.</li>
+  <li><b>Contratos Cumpridos:</b> Pontos de vitória integrais impressos nas cartas de contrato adquiridas pelo Rival.</li>
+  <li><b>Cartas de Pesquisa:</b> Pontos de vitória impressos no canto das cartas de pesquisa (habilidades são ignoradas).</li>
+</ul>
+<p>Some seus pontos seguindo a pontuação padrão do manual. O rancho com maior pontuação total conquista o controle da ilha!</p>
+</div>
+</details>`,
                 modal_score_title: "Calculadora de Pontuação Final",
                 score_rival_title: "Rival Rancher",
                 score_player_title: "Seu Rancho",
@@ -2239,16 +2287,74 @@
                 mod_original_mode_desc: "Official rulebook sequence: the Rival performs its action first, and then acquires a public contract.",
                 active_mods_label: "Modifiers:",
                 modal_rules_title: "Rival Rancher Rules & Variant",
-                rule_sec1_title: "1. Partial Mat Blocking",
-                rule_sec1_desc: "Unlike the official rules where cards block the entire mat, each card only blocks part of it with 1 Rancher:",
-                rule_sec2_title: "2. Rival Turn Resolution Order",
-                rule_sec2_1: "Step 1: Draw & Place card above matching Action Mat.",
-                rule_sec2_2: "Step 2: Check Contracts — Check face-up Public Contracts left to right. If Rival has dinosaurs: discards them top-to-bottom, takes card, and TURN ENDS IMMEDIATELY (skip step 3)!",
-                rule_sec2_3: "Step 3: Dinosaurs or Action — If you have ranchers on the blocked spaces → Rival performs Action in lowest open enclosure of that column. If spaces were free → Rival gains the Dinosaur(s)!",
-                rule_sec3_title: "3. Maximum Resources (13)",
-                rule_sec3_desc: "When the Rival hits 13 in any resource, it immediately triggers its Resource Max Action and resets that resource to 0 (excess is lost). Additional resources stemming from it do not trigger accumulation of new resources (meat, plants, or supplies), preventing chain reactions. Order: Plants → Meat → Supplies.",
-                rule_sec4_title: "4. End Game & Scoring",
-                rule_sec4_desc: "After Round 6, total points from ranch dinosaurs, contracts, and research cards.",
+                help_body: `<details class="custom-details" open>
+<summary><strong>1. Overview & Automa Philosophy</strong></summary>
+<div class="details-body">
+<p>The <b>Rival Rancher</b> is the official solo opponent for <i>Tiny Epic Dinosaurs</i> (Gamelyn Games / Scott Almes). This companion incorporates the acclaimed <b>Re-tuned Solo Mode</b> variant (designed by Ryan Lopez DeVinaspre), refining board blocking mechanics for a fairer, highly competitive solo match.</p>
+<p>The Rival acts as a relentless competitor on the island: blocking crucial action worker spaces, harvesting and storing dinosaurs in its private enclosures, snapping up lucrative Public Contracts, and collecting breakthrough Research Cards.</p>
+</div>
+</details>
+
+<details class="custom-details">
+<summary><strong>2. Physical Setup, Opponents & Solo Adjustments</strong></summary>
+<div class="details-body">
+<ul>
+  <li><b>Main Setup:</b> Arrange the 4 Action Mats side-by-side (A, B, C, and D) using their 2-player sides.</li>
+  <li><b>Round Track & Decks:</b> Place the Round Track mat (round marker on Round 1). Deal 3 Public Contracts in a face-up row. Deal 3 face-up Research Cards.</li>
+  <li><b>Player Ranch:</b> Take 2 Private Contracts (choose 1 in secret and discard the other), 0 Plants, 0 Meat, and 0 Supplies.</li>
+  <li><b>Rival Personality:</b> Pick one of the 4 rivals in the app (Breeder, Contractor, Poacher, or Scientist) — each has a unique Special Action triggered when its enclosures are full.</li>
+  <li><b>Turn Order:</b> The Rival Rancher always starts with the <b>First Player Token</b>. Place the Rival's <i>Lead Rancher</i> figure on Round 4 of the round mat.</li>
+</ul>
+</div>
+</details>
+
+<details class="custom-details">
+<summary><strong>3. Action Flow & Decision Hierarchy</strong></summary>
+<div class="details-body">
+<p>On the Rival's turn, tap <b>Reveal Rival Action</b> and follow the on-screen steps:</p>
+<ol>
+  <li><b>Step 1: Reveal Action Card:</b> The card indicates which Action Mat (A, B, C, or D) is targeted and the species/actions in contest. Place the physical card above that mat.</li>
+  <li><b>Step 2: Check Public Contracts:</b> The Rival checks the public contract row from left to right. If it has the necessary dinosaurs in its ranch enclosures: discard those dinosaurs (top to bottom), claim the Contract Card, and <b>ITS TURN ENDS IMMEDIATELY</b>!</li>
+  <li><b>Step 3: Dinosaurs or Action:</b> If no contract can be fulfilled:
+    <ul>
+      <li><i>If the card's blocked spaces are free of your ranchers:</i> The Rival claims the card's dinosaur(s) into its enclosures!</li>
+      <li><i>If you already occupy those blocked spaces:</i> The Rival executes the Action of the lowest unoccupied slot in that dinosaur's column!</li>
+    </ul>
+  </li>
+</ol>
+<p><b>Partial Board Blocking (Re-tuned Variant):</b> Each card only blocks half of a mat with 1 Rancher:</p>
+<ul>
+  <li><b>Mat A:</b> 1 Dino blocks Free Range Left (Stego/Raptor). 2 Dinos blocks Free Range Right (Brachio/Allosaurus).</li>
+  <li><b>Mat D:</b> 1 Dino blocks Resources Left. 2 Dinos blocks Resources Right.</li>
+  <li><b>Mats B & C:</b> 1 Dino blocks Barrier actions (Gray). 2 Dinos blocks Contracts & Research (Purple/Blue).</li>
+</ul>
+</div>
+</details>
+
+<details class="custom-details">
+<summary><strong>4. Max Resources (13), Tie-breakers & Edge Cases</strong></summary>
+<div class="details-body">
+<ul>
+  <li><b>Maximum Resource Cap (13):</b> When any resource reaches 13, the Rival immediately fires its <i>Resource Max Action</i> and that resource resets to 0. Excess is discarded and new resources gained during this action do not trigger cascades. Simultaneous order: Plants &rarr; Meat &rarr; Supplies.</li>
+  <li><b>Full Enclosures & Special Action:</b> When a dinosaur column already has all 3 slots full and the Rival would add more dinos or trigger that column's action, it triggers its <b>Rival Personality Special Action</b>!</li>
+  <li><b>Lead Rancher (Rounds 4 to 6):</b> Beginning in Round 4, the Rival brings out its Lead Rancher, drawing and resolving <b>5 cards per round</b> instead of 4.</li>
+  <li><b>Worry-Free Ranch:</b> The Rival never needs physical barriers between species and does not need to feed dinosaurs during Phase 4 (its dinos never escape or rampage).</li>
+</ul>
+</div>
+</details>
+
+<details class="custom-details">
+<summary><strong>5. Game End & Solo Scoring</strong></summary>
+<div class="details-body">
+<p>The game concludes after <b>Round 6</b>. Use the integrated scoring calculator in the app:</p>
+<ul>
+  <li><b>Ranch Dinosaurs:</b> Stegosaurus = 2 VP each | Velociraptor = 3 VP each | Brachiosaurus = 3 VP each | Allosaurus = 4 VP each.</li>
+  <li><b>Contracts Fulfilled:</b> Full printed VP value on all contracts claimed by the Rival.</li>
+  <li><b>Research Cards:</b> Flat victory point values in the upper corner of each research card (text effects ignored).</li>
+</ul>
+<p>Tally your own score following standard rulebook scoring. The rancher with the most victory points claims dominance over Dino Island!</p>
+</div>
+</details>`,
                 modal_score_title: "Final Score Calculator",
                 score_rival_title: "Rival Rancher",
                 score_player_title: "Your Ranch",
@@ -3458,6 +3564,13 @@
             // Initial text and labels setup
             updateTexts();
             renderUI();
+
+            window.addEventListener('keydown', e => {
+                if (e.key === 'Escape') {
+                    toggleHelpModal(false);
+                    toggleScoreModal(false);
+                }
+            });
         });
     </script>
 </body>

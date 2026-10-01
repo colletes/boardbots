@@ -259,6 +259,37 @@
     .modal-tabs button{ padding:12px 24px; font-size:0.9em; width:auto; border-radius: 12px; }
     .modal-tabs button.active{ background:linear-gradient(135deg, #d84315, #b71c1c); color:#fff; border-color:#bf360c; }
 
+    .help-section {
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 8px;
+        padding: 14px 16px;
+        margin-bottom: 14px;
+        text-align: left;
+    }
+    .help-section h4 {
+        margin: 0 0 8px 0;
+        color: var(--accent);
+        font-size: 1.05rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-family: var(--font-display, sans-serif);
+    }
+    .help-section p, .help-section li {
+        font-size: 0.92rem;
+        line-height: 1.5;
+        color: var(--chalk-dim);
+    }
+    .help-section strong {
+        color: var(--chalk);
+    }
+    .help-section ul, .help-section ol {
+        margin: 6px 0 6px 18px;
+        padding: 0;
+    }
+
+
     details{ margin-bottom:8px; background: rgba(255,255,255,0.05); border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); padding: 0 12px; }
     details > summary{ cursor:pointer; font-weight:700; color:var(--chalk); padding:14px 0; list-style:none; display:flex; align-items:center; gap:10px; font-family:var(--font-display); font-size: 1.1em; }
     details > summary::-webkit-details-marker{ display:none; }
@@ -516,7 +547,7 @@
 
 <a class="bmc-inline" href="https://www.buymeacoffee.com/colletes" target="_blank" rel="noopener" aria-label="Buy me a coffee"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h13a2 2 0 0 1 2 2v1a3 3 0 0 1-3 3h-1"/><path d="M4 8h13v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V8Z"/><path d="M8 3c-.6 1 .5 1.6 0 3M12 3c-.6 1 .5 1.6 0 3"/></svg><span data-i18n="bmcBtn">Me pague um café</span></a>
 
-<div id="helpModal" class="modal-overlay">
+<div id="helpModal" class="modal-overlay" onclick="if(event.target===this)closeHelp()">
     <div class="modal-content">
         <button class="modal-close" onclick="closeHelp()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
         <div class="modal-tabs">
@@ -608,14 +639,70 @@ const I18N = {
         logServe: (turn, coinsGained, coinsBefore, coinsAfter, becameRegular, regularsCount) => `Turno ${turn}: o Capybot atende um cliente no balcão, faturando ${coinsGained} moeda(s). Moedas ${coinsBefore}→${coinsAfter}.${becameRegular ? ' Um novo Regular se acomoda na mesa de sempre! (Regulares: '+regularsCount+')' : ''}`,
         logUndo: (turn) => `O Capybot resmunga e desfaz o turno ${turn}.`,
         endGameTriggered: (regulars) => `<svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9L2.5 18a2 2 0 0 0 1.7 3h15.6a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg> O Capybot vira a placa para "fechando em breve" — conquistou seu ${regulars}º Regular! Cada jogador (incluindo você) joga mais 1 turno completo, depois o café encerra o expediente.`,
-        helpBody: `<h2 data-i18n="tabHelp"><svg class="icon-inline-title" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 4.9.8c0 1.7-2.4 1.7-2.4 3.7M12 17h.01"/></svg>Como Usar o App</h2>
-            <p>Este app conduz o Capybot, um oponente automático para o modo solo de <em>Café Baras</em>, usando uma árvore de decisão (como as automas de David Turczi) em vez de apenas "sempre pegue a carta mais à direita".</p>
-            <h3>Preparação</h3>
-            <p>Preencha a Configuração da Partida (jogadores, carta de Balcão do Capybot, moedas iniciais) e toque em Iniciar.</p>
-            <h3>No turno do Capybot</h3>
-            <p>Leia as 4 cartas da exibição física. Compare-as com as linhas numeradas da Decisão do Capybot (use a primeira que se aplicar) e escolha a carta indicada. Depois, toque em "Capybot ADICIONA" ou "Capybot SERVE" e preencha os poucos campos pedidos (custo, tipo, moedas ganhas etc.) — o app calcula e guarda o resto automaticamente (moedas, alimentos, decorações, regulares).</p>
-            <h3>Fim de jogo e pontuação</h3>
-            <p>O app avisa automaticamente quando o Capybot conquista o Regular que aciona o fim de jogo. Ao final, use a seção Pontuação Final para somar Clientes Especiais satisfeitos e quaisquer bônus condicionais — o app já soma Regulares×4 e Moedas÷2.</p>`,
+        helpBody: `<div class="help-section">
+  <h4>1. Visão Geral &amp; Filosofia do Automa</h4>
+  <p>Em <strong>Café Baras</strong> (design de Roberta Taylor), você e o <em>Capybot</em> competem para criar a cafeteria de capivaras mais acolhedora e lucrativa da cidade, atraindo clientes fiéis e atendendo aos paladares mais exigentes.</p>
+  <p>O Capybot utiliza uma <strong>árvore de decisão prioritária</strong> (inspirada no estilo de David Turczi): em vez de compras aleatórias, ele analisa ativamente as 4 cartas da vitrine, avalia custos, equilibra alimentos com decorações, busca converter clientes em <em>Regulares</em> e maximiza as pontuações de Clientes Especiais.</p>
+</div>
+
+<div class="help-section">
+  <h4>2. Setup Físico &amp; Ajustes Solo</h4>
+  <ul>
+    <li><strong>Baralho de Café (83 cartas):</strong> Embaralhe e revele 4 cartas viradas para cima formando a <em>Exibição Central</em>. Deixe espaço para o baralho de compra e o descarte.</li>
+    <li><strong>Mecânica de Deslizamento da Vitrine:</strong> Sempre que uma carta for retirada da exibição (por você ou pelo Capybot), deslize as cartas restantes à esquerda do espaço vazio para a direita, e compre uma nova carta do baralho colocando-a sempre na posição 1 (mais à esquerda).</li>
+    <li><strong>Clientes Especiais:</strong> Embaralhe as 12 cartas e revele <strong>5 cartas</strong> ao lado da exibição. Ambos competem para cumprir seus requisitos até o fim do jogo.</li>
+    <li><strong>Seu Café (Humano):</strong> Receba 7 moedas, compre 4 cartas de Café para a sua mão (em segredo) e receba 1 carta de Balcão aleatória (Café ou Chá).</li>
+    <li><strong>Café do Capybot:</strong> Sorteie 1 carta de Balcão (Café ou Chá) e configure no app; defina as moedas iniciais (7 no padrão). O Capybot não tem mão secreta de cartas.</li>
+  </ul>
+</div>
+
+<div class="help-section">
+  <h4>3. Fluxo de Ações &amp; Tomada de Decisão</h4>
+  <p>Você e o Capybot alternam turnos na mesa (o jogador humano começa).</p>
+  <ol>
+    <li><strong>Turno do Jogador:</strong>
+      <ul>
+        <li><strong>Ação:</strong> Jogue 1 carta da sua mão para <em>Adicionar</em> ao seu café (pagando o custo em moedas da metade superior) OU para <em>Servir</em> (usando a metade inferior: ganhe moedas para cada desejo alimentício que seu café já oferece; se cumprir os 3 desejos + decoração preferida, guarde a carta sob seu Balcão como <em>Regular</em>).</li>
+        <li><strong>Compra &amp; Deslizamento:</strong> Escolha 1 das 4 cartas da vitrine para repor sua mão e deslize/reponha a vitrine.</li>
+      </ul>
+    </li>
+    <li><strong>Turno do Capybot:</strong>
+      <ul>
+        <li><strong>1. Avaliação da Árvore de Decisão:</strong> Olhe as 4 cartas na vitrine física e consulte a lista numerada <em>"Decisão do Capybot"</em> no app. Teste as condições de 1 a 6 e execute a primeira válida.</li>
+        <li><strong>2. Execução da Ação:</strong> Toque no botão correspondente:
+          <ul>
+            <li><strong>Capybot ADICIONA uma carta:</strong> Insira o custo e tipo (alimento/decoração). Coloque a carta física na fileira do café do bot.</li>
+            <li><strong>Capybot SERVE um cliente:</strong> Insira as moedas faturadas e marque se virou Regular. Se virou Regular, guarde sob a carta de Balcão do bot; se não, envie a carta ao descarte.</li>
+          </ul>
+        </li>
+        <li><strong>3. Manutenção da Mesa:</strong> Deslize as cartas remanescentes da vitrine e revele a nova carta na posição 1.</li>
+      </ul>
+    </li>
+  </ol>
+</div>
+
+<div class="help-section">
+  <h4>4. Regras de Desempate, Habilidades &amp; Casos Especiais</h4>
+  <ul>
+    <li><strong>Desempate na Vitrine:</strong> Caso mais de uma carta satisfaça o mesmo critério da árvore de decisão, o Capybot escolhe a carta <strong>mais à direita</strong> (a mais antiga na vitrine).</li>
+    <li><strong>Habilidades Contínuas (Caixa Branca):</strong> Cartas de café com fundo branco conferem poderes contínuos ou bônus de pontuação. O app permite salvar uma nota rápida sobre o efeito para consulta.</li>
+    <li><strong>Economia do Bot:</strong> O Capybot nunca fica com saldo negativo de moedas. Se não tiver moedas suficientes para adicionar a carta desejada, a árvore de decisão desce automaticamente para opções de Servir e capitalizar.</li>
+    <li><strong>Diferença Alimento vs Decoração:</strong> Alimentos atendem pedidos diretos e rendem moedas imediatas. Decorações não rendem moedas ao servir, mas são cruciais para transformar clientes em Regulares e desbloquear Clientes Especiais.</li>
+  </ul>
+</div>
+
+<div class="help-section">
+  <h4>5. Fim de Jogo &amp; Pontuação Solo</h4>
+  <p><strong>Gatilho de Término:</strong> O final do jogo é acionado imediatamente quando qualquer jogador conquista seu <strong>4º Cliente Regular</strong> (em disputa de 2 jogadores / solo contra bot) OU quando o baralho de Café for reembaralhado pela 2ª vez.</p>
+  <p>Após o gatilho, todos os outros jogadores realizam mais <strong>1 turno final completo</strong> antes da contagem de pontos.</p>
+  <ul>
+    <li><strong>Clientes Regulares:</strong> Cada cliente Regular sob o balcão vale <strong>4 pontos</strong> (calculado automaticamente pelo app).</li>
+    <li><strong>Reserva Financeira:</strong> Cada 2 moedas restantes valem <strong>1 ponto</strong> (Moedas ÷ 2, arredondado para baixo).</li>
+    <li><strong>Clientes Especiais:</strong> Verifique as 5 cartas de Clientes Especiais reveladas. Para cada uma que o café do Capybot (ou o seu) satisfizer integralmente, adicione seus pontos correspondentes.</li>
+    <li><strong>Cartas de Café com Bônus:</strong> Some os pontos fixos e condicionais das cartas adicionadas ao café.</li>
+    <li><strong>Critério de Vitória:</strong> Quem acumular mais pontos vence a partida! Em caso de empate, vence quem tiver mais Regulares; persistindo o empate, quem tiver mais moedas restantes.</li>
+  </ul>
+</div>`,
         rulesBody: `<h2 data-i18n="tabRules"><svg class="icon-inline-title" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Regras Rápidas</h2>
             <h3>Cada carta é duas coisas</h3>
             <p>A parte de cima é algo para Adicionar ao seu café (alimento ou decoração, com um custo em moedas). A parte de baixo é um cliente que você pode Servir (mostra 3 desejos de alimento e uma decoração preferida).</p>
@@ -679,14 +766,70 @@ const I18N = {
         logServe: (turn, coinsGained, coinsBefore, coinsAfter, becameRegular, regularsCount) => `Turn ${turn}: the Capybot serves a customer at the counter, earning ${coinsGained} coin(s). Coins ${coinsBefore}→${coinsAfter}.${becameRegular ? ' A new Regular settles into their usual seat! (Regulars: '+regularsCount+')' : ''}`,
         logUndo: (turn) => `The Capybot grumbles and undoes turn ${turn}.`,
         endGameTriggered: (regulars) => `<svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9L2.5 18a2 2 0 0 0 1.7 3h15.6a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg> The Capybot flips the sign to "closing soon" — it just earned its ${regulars}${regulars===1?'st':(regulars===2?'nd':(regulars===3?'rd':'th'))} Regular! Every player (including you) takes one more full turn, then the café calls it a day.`,
-        helpBody: `<h2 data-i18n="tabHelp"><svg class="icon-inline-title" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 4.9.8c0 1.7-2.4 1.7-2.4 3.7M12 17h.01"/></svg>How to Use the App</h2>
-            <p>This app drives the Capybot, an automated opponent for <em>Café Baras</em>'s solo mode, using a decision tree (in the style of David Turczi's automas) instead of just "always take the rightmost card".</p>
-            <h3>Setup</h3>
-            <p>Fill in Match Setup (players, Capybot's Counter card, starting coins) and tap Start.</p>
-            <h3>On the Capybot's turn</h3>
-            <p>Read the 4 physical display cards. Compare them against the numbered lines in Capybot's Decision (use the first one that applies) and pick the indicated card. Then tap "Capybot ADDS" or "Capybot SERVES" and fill in the few requested fields (cost, type, coins gained, etc.) — the app computes and tracks the rest automatically (coins, food, decoration, regulars).</p>
-            <h3>End game and scoring</h3>
-            <p>The app automatically warns you when the Capybot earns the Regular that triggers the end game. At the end, use the Final Score section to add satisfied Special Customers and any conditional bonuses — the app already sums Regulars×4 and Coins÷2.</p>`,
+        helpBody: `<div class="help-section">
+  <h4>1. Overview &amp; Automa Philosophy</h4>
+  <p>In <strong>Café Baras</strong> (designed by Roberta Taylor), you and <em>Capybot</em> compete to run the coziest, most prosperous capybara café in town, welcoming delighted customers and catering to every gourmet preference.</p>
+  <p>Capybot uses a <strong>prioritized decision tree</strong> (inspired by David Turczi's automa methodology): rather than random drafts, it actively evaluates the 4 display cards, balances food versus decorative ambiance, optimizes coin economy, targets <em>Regulars</em>, and competes aggressively for Special Customers.</p>
+</div>
+
+<div class="help-section">
+  <h4>2. Physical Setup &amp; Solo Adjustments</h4>
+  <ul>
+    <li><strong>Café Deck (83 cards):</strong> Shuffle and reveal 4 faceup cards to form the <em>Display</em>. Leave room for the draw pile and discard pile.</li>
+    <li><strong>Display Sliding Mechanic:</strong> Whenever a card is drafted from the display (by you or Capybot), slide all remaining cards to the left of the empty slot one position to the right, and insert the newly drawn card at position 1 (far left).</li>
+    <li><strong>Special Customers:</strong> Shuffle the 12 cards and reveal <strong>5 cards</strong> next to the display. Both players compete to satisfy their conditions by the end of the game.</li>
+    <li><strong>Your Café (Human):</strong> Take 7 starting coins, deal 4 Café cards into your hand (kept secret), and receive 1 random Counter card (Coffee or Tea).</li>
+    <li><strong>Capybot's Café:</strong> Draw 1 Counter card (Coffee or Tea) and set it in the app; configure starting coins (default 7). Capybot holds no hand of cards.</li>
+  </ul>
+</div>
+
+<div class="help-section">
+  <h4>3. Action Flow &amp; Decision Hierarchy</h4>
+  <p>Players alternate taking turns (the human player takes the first turn).</p>
+  <ol>
+    <li><strong>Human Turn:</strong>
+      <ul>
+        <li><strong>Action:</strong> Play 1 card from hand to <em>Add</em> to your café (paying the coin cost on the top half) OR to <em>Serve</em> a customer (using the bottom half: earn coins for each desired food your café already serves; if all 3 food wishes + preferred decoration are met, tuck the card under your Counter as a <em>Regular</em>).</li>
+        <li><strong>Draft &amp; Slide:</strong> Draft 1 card from the 4 display slots to refill your hand to 4, then slide and refill the display.</li>
+      </ul>
+    </li>
+    <li><strong>Capybot Turn:</strong>
+      <ul>
+        <li><strong>1. Decision Tree Evaluation:</strong> Inspect the 4 physical display cards and check the numbered lines under <em>"Capybot's Decision"</em> in the app. Evaluate from top to bottom (1 to 6) and pick the first matching card.</li>
+        <li><strong>2. Execute Action:</strong> Tap the corresponding button:
+          <ul>
+            <li><strong>Capybot ADDS a card:</strong> Enter the coin cost and type (food/decoration). Place the physical card into Capybot's café tableau.</li>
+            <li><strong>Capybot SERVES a customer:</strong> Enter coins earned and indicate if the customer became a Regular. If Regular, tuck under Capybot's counter; otherwise, place in the discard pile.</li>
+          </ul>
+        </li>
+        <li><strong>3. Table Maintenance:</strong> Slide the remaining display cards and reveal the replacement card at slot 1.</li>
+      </ul>
+    </li>
+  </ol>
+</div>
+
+<div class="help-section">
+  <h4>4. Tie-breakers, Abilities &amp; Edge Cases</h4>
+  <ul>
+    <li><strong>Display Tie-breaker:</strong> If multiple display cards qualify under the same decision rule, Capybot always chooses the card <strong>furthest to the right</strong> (the oldest card in the display).</li>
+    <li><strong>Continuous Abilities (White Box):</strong> Café cards with white ability banners provide ongoing perks or endgame scoring bonuses. The app provides a quick note field to record active abilities.</li>
+    <li><strong>Bot Economy:</strong> Capybot cannot spend coins into negative numbers. If unable to afford adding a card, the decision tree naturally drops down to serving actions to replenish its till.</li>
+    <li><strong>Food vs Decoration:</strong> Food satisfies orders and earns immediate coins. Decorations do not grant coins when serving, but are indispensable for converting customers into Regulars and qualifying for Special Customers.</li>
+  </ul>
+</div>
+
+<div class="help-section">
+  <h4>5. Game End &amp; Solo Scoring</h4>
+  <p><strong>Game End Trigger:</strong> The game end is triggered immediately when any player secures their <strong>4th Regular</strong> (in a 2-player game / solo against the bot) OR when the Café deck is exhausted and reshuffled for the 2nd time.</p>
+  <p>Once triggered, all other players take <strong>1 final turn</strong> before closing time.</p>
+  <ul>
+    <li><strong>Regular Customers:</strong> Each Regular tucked under the counter scores <strong>4 points</strong> (auto-calculated by the app).</li>
+    <li><strong>Coin Savings:</strong> Every 2 leftover coins score <strong>1 point</strong> (Coins ÷ 2, rounded down).</li>
+    <li><strong>Special Customers:</strong> Check the 5 revealed Special Customers. For each one Capybot's café (or yours) satisfies, add its points in the scoring tool.</li>
+    <li><strong>Café Card Bonuses:</strong> Add any flat or conditional victory points printed on the cards added to the café tableau.</li>
+    <li><strong>Victory Criteria:</strong> The player with the highest total score wins! Ties are broken by most Regulars; if still tied, by most remaining coins.</li>
+  </ul>
+</div>`,
         rulesBody: `<h2 data-i18n="tabRules"><svg class="icon-inline-title" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Quick Rules</h2>
             <h3>Every card is two things</h3>
             <p>The top is something to Add to your café (food or decoration, with a coin cost). The bottom is a customer you can Serve (shows 3 food wishes and a preferred decoration).</p>
@@ -1035,6 +1178,10 @@ function switchTab(tab){
 }
 function openHelp(tab){ document.getElementById('helpModal').classList.add('open'); switchTab(tab || 'help'); }
 function closeHelp(){ document.getElementById('helpModal').classList.remove('open'); }
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeHelp();
+});
 
 // --- Init ---
 loadState();

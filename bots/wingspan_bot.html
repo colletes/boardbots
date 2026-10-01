@@ -1144,6 +1144,92 @@ body {
     font-size: 1.4rem;
     cursor: pointer;
 }
+.modal-close:hover {
+    color: var(--accent);
+}
+
+/* Floating Help Button */
+.btn-help-float {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: var(--surface);
+    border: 2px solid var(--accent);
+    color: var(--accent);
+    font-size: 1.5rem;
+    font-weight: 700;
+    cursor: pointer;
+    z-index: 99;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5), 0 0 12px var(--accent-glow);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+.btn-help-float:hover {
+    background: var(--accent);
+    color: #1a241b;
+    transform: scale(1.08);
+}
+@media (max-width: 600px) {
+    .btn-help-float {
+        bottom: 16px;
+        right: 16px;
+        width: 44px;
+        height: 44px;
+        font-size: 1.3rem;
+    }
+}
+
+/* Accordion Help Sections */
+.help-section {
+    background: var(--surface-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    margin-bottom: 12px;
+    transition: all 0.2s ease;
+}
+.help-section[open] {
+    border-color: var(--accent);
+    background: var(--surface-2);
+}
+.help-section summary {
+    font-family: var(--font-display);
+    font-size: 0.98rem;
+    font-weight: 700;
+    color: var(--accent);
+    cursor: pointer;
+    user-select: none;
+    outline: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.help-section summary svg {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+}
+.help-section .help-body {
+    margin-top: 10px;
+    color: var(--text);
+    line-height: 1.6;
+    font-size: 0.92rem;
+}
+.help-section ol, .help-section ul {
+    margin: 8px 0;
+    padding-left: 20px;
+}
+.help-section li {
+    margin-bottom: 6px;
+}
+.help-section p {
+    margin-bottom: 8px;
+}
 .score-table {
     width: 100%;
     border-collapse: collapse;
@@ -1999,7 +2085,7 @@ body {
         </div>
 
         <!-- ==================== SCORE MODAL ==================== -->
-        <div class="modal-overlay hidden" id="modal-score">
+        <div class="modal-overlay hidden" id="modal-score" onclick="if(event.target===this)closeScoreModal()">
             <div class="modal-window">
                 <div class="modal-head">
                     <h3 class="modal-title" data-i18n="score_modal_title">Calculadora de Pontuação Final</h3>
@@ -2078,36 +2164,18 @@ body {
         </div>
 
         <!-- ==================== HELP MODAL ==================== -->
-        <div class="modal-overlay hidden" id="modal-help">
+        <div class="modal-overlay hidden" id="modal-help" onclick="if(event.target===this)closeHelpModal()">
             <div class="modal-window">
                 <div class="modal-head">
                     <h3 class="modal-title" data-i18n="help_modal_title">Regras da Automa & Guia de Consulta</h3>
                     <button class="modal-close" onclick="closeHelpModal()">&times;</button>
                 </div>
-                <div style="font-size:0.92rem; line-height:1.55; display:flex; flex-direction:column; gap:14px;">
-                    <div>
-                        <strong style="color:var(--accent);">🦅 Como a Automa Joga:</strong>
-                        A Automa não possui tabuleiro pessoal nem recursos em mão. Ela executa apenas a linha correspondente à rodada atual da carta revelada. Aves compradas por ela vão viradas para baixo (valendo pontos no fim do jogo).
-                    </div>
-                    <div>
-                        <strong style="color:var(--accent);">🏛️ Sociedade Automubon (Expert):</strong>
-                        Carta especial que adiciona competição feroz pelos objetivos de fim de rodada, colocando cubos em praticamente todas as ações.
-                    </div>
-                    <div>
-                        <strong style="color:var(--accent);">🦤 RAOUtoma (Oceania):</strong>
-                        Carta de ação acelerada da Oceania que dispara postura de ovos maciça em rodadas avançadas e manipulação de néctar.
-                    </div>
-                    <div>
-                        <strong style="color:var(--accent);">🎲 Torre de Dados / Comedouro:</strong>
-                        O jogador rola os dados reais na mesa. O bot orienta a prioridade de remoção (Invertebrado ➔ Semente ➔ Peixe ➔ Fruta ➔ Roedor ➔ Néctar). A Automa sempre remove todos os dados disponíveis da primeira comida da fila.
-                    </div>
-                    <div>
-                        <strong style="color:var(--accent);">🌺 Néctar:</strong>
-                        O selo de flor rosa nas cartas de ação e no comedouro representa o Néctar (introduzido na Oceania). A Automa disputa o néctar nos três habitats para a pontuação de final de partida.
-                    </div>
-                </div>
+                <div id="help-modal-body"></div>
             </div>
         </div>
+
+        <!-- Floating Help Button -->
+        <button class="btn-help-float" onclick="openHelpModal()" aria-label="Ajuda / Rules" title="Ajuda / Rules">?</button>
 
     </main>
 
@@ -2849,6 +2917,7 @@ function setLanguage(lang) {
     document.getElementById('btn-lang-en').classList.toggle('active', lang === 'en');
     localStorage.setItem('boardbots_lang', lang);
     updatePriorityStrip();
+    if (typeof renderHelpModal === 'function') renderHelpModal();
     if (STATE.gameStarted && STATE.currentCard) {
         renderCurrentNativeCard();
     }
@@ -3846,12 +3915,235 @@ function calcTotalScore() {
 }
 
 /* ==================== HELP MODAL ==================== */
+const HELP_CONTENT = {
+    pt: `
+        <details class="help-section" open>
+            <summary>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+                1. Visão Geral & Filosofia da Automa
+            </summary>
+            <div class="help-body">
+                <p>A <strong>Automa</strong> simula um oponente experiente e veloz para <em>Wingspan</em> (Elizabeth Hargrave / Stonemaier Games), projetada pela Automa Factory (David Studley). Ela não possui tabuleiro pessoal, não estoca alimentos nem cartas na mão, jogando com foco exclusivo em pontuação matemática:</p>
+                <ul>
+                    <li><strong>Aves Viradas para Baixo:</strong> Armazenadas em sua pilha secreta de aves. Cada uma vale 3, 4 ou 5 PV no fim da partida, conforme a dificuldade escolhida.</li>
+                    <li><strong>Ovos:</strong> Armazenados na reserva geral da Automa (cada ovo vale 1 PV no fim do jogo).</li>
+                    <li><strong>Objetivos de Fim de Rodada:</strong> Disputa direta pelos 4 objetivos com cubos marcadores colocados na esteira de metas.</li>
+                    <li><strong>Cartas de Bônus:</strong> A Automa pontua suas cartas de bônus baseando-se estritamente na quantidade total de aves em sua pilha.</li>
+                    <li><strong>Néctar Gasto (Expansão Oceania):</strong> Disputa a maioria de néctar nos três habitats (Floresta, Campo e Alagado).</li>
+                </ul>
+                <p><strong>Níveis de Dificuldade Oficiais:</strong></p>
+                <ul>
+                    <li><strong>Águia-Pescadora (Eaglet - Fácil):</strong> 3 PV por ave virada para baixo • 1 ovo bônus a cada 5 fichas de reserva.</li>
+                    <li><strong>Águia-Real (Eagle - Médio):</strong> 4 PV por ave virada para baixo • 1 ovo bônus a cada 4 fichas de reserva.</li>
+                    <li><strong>Olho-de-Águia (Eagle-eyed Eagle - Difícil):</strong> 5 PV por ave virada para baixo • 1 ovo bônus a cada 3 fichas de reserva.</li>
+                </ul>
+            </div>
+        </details>
+
+        <details class="help-section">
+            <summary>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                2. Setup Físico & Ajustes Solo
+            </summary>
+            <div class="help-body">
+                <ol>
+                    <li>Monte seu tabuleiro de jogador normalmente: compre 5 cartas de ave, pegue 5 fichas de comida (descarte 1 comida para cada ave mantida) e receba 2 cartas de bônus (escolha 1 para manter).</li>
+                    <li>Monte a bandeja com 3 cartas de ave abertas e abasteça o comedouro com os 5 dados rolados.</li>
+                    <li>Prepare o tabuleiro de objetivos de fim de rodada com 4 fichas aleatórias de metas (Lado Verde com pontuação por posição ou Lado Azul por quantidade).</li>
+                    <li>Separe os cubos de cor da Automa para pontuar nos objetivos de fim de rodada e no mapa de Dueto (se jogar com a expansão Ásia).</li>
+                    <li>Configure no app a dificuldade e as expansões ativas (Oceania com Néctar, Expansão Europeia, Ásia Dueto, Américas com Beija-flores, Sociedade Automubon ou RAOUtoma).</li>
+                </ol>
+            </div>
+        </details>
+
+        <details class="help-section">
+            <summary>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"/></svg>
+                3. Fluxo de Ações & Tomada de Decisão
+            </summary>
+            <div class="help-body">
+                <p>A cada turno da Automa, clique em <strong>Confirmar Ação & Próximo Turno</strong>. O app revela a carta ativa e destaca a linha da <strong>rodada em andamento (1, 2, 3 ou 4)</strong>:</p>
+                <ol>
+                    <li><strong>Baixar Ave (Play a Bird):</strong> A Automa compra 1 ave da bandeja (ou do topo do baralho) e aloca na sua pilha virada para baixo. Se a carta do bot indicar ovos, adicione os ovos na ave.</li>
+                    <li><strong>Pegar Comida (Gain Food):</strong> A Automa retira dados do comedouro físico seguindo a ordem de prioridade. Guarde os dados removidos fora do comedouro até a próxima rolagem.</li>
+                    <li><strong>Botar Ovos (Lay Eggs):</strong> A Automa ganha o número de ovos indicado na linha da rodada, colocando-os em sua reserva.</li>
+                    <li><strong>Comprar Cartas (Draw Cards):</strong> A Automa compra cartas e as guarda viradas para baixo em sua pilha.</li>
+                    <li><strong>Poderes Rosas:</strong> Se a ação da Automa exibir o ícone rosa <em>(Poder Rosa Ativado)</em>, você pode acionar quaisquer habilidades rosas de suas aves na mesa que reajam àquela ação!</li>
+                </ol>
+            </div>
+        </details>
+
+        <details class="help-section">
+            <summary>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                4. Desempates, Comedouro, Néctar & Expansões
+            </summary>
+            <div class="help-body">
+                <p><strong>Prioridade de Remoção do Comedouro:</strong></p>
+                <p style="color:var(--accent); font-weight:bold;">Invertebrado ➔ Semente ➔ Peixe ➔ Fruta ➔ Roedor ➔ Néctar</p>
+                <ul>
+                    <li>A Automa remove <em>todos</em> os dados que mostrarem a primeira comida disponível na sequência acima.</li>
+                    <li>Se todos os dados no comedouro forem idênticos (ou se estiver vazio), você <strong>deve rerrolar todos os 5 dados</strong> na torre antes da remoção da Automa!</li>
+                </ul>
+                <p><strong>Desempates na Bandeja de Aves:</strong></p>
+                <ul>
+                    <li>Ao comprar ave da bandeja aberta, a Automa escolhe a ave de <strong>maior envergadura</strong> em centímetros. Em caso de empate, escolhe a carta <strong>mais à esquerda</strong> na esteira. Reponha a bandeja imediatamente com a carta do topo.</li>
+                </ul>
+                <p><strong>Expansões Especiais:</strong></p>
+                <ul>
+                    <li><strong>🌺 Néctar (Oceania):</strong> A Automa gasta e acumula néctar nos três habitats (Floresta, Campo e Alagado). No fim da partida, dispute as maiorias de néctar (5 PV para 1º lugar, 2 PV para 2º).</li>
+                    <li><strong>🏛️ Sociedade Automubon (Expert):</strong> Adiciona a carta de especialista *base_12*, acelerando os cubos da Automa em objetivos de rodada (+1 cubo quase contínuo).</li>
+                    <li><strong>🦤 RAOUtoma (Oceania):</strong> Adiciona a carta de alta performance *oceania_10*, acelerando ovos nas rodadas 3 e 4.</li>
+                    <li><strong>🗺️ Dueto da Ásia:</strong> A Automa coloca fichas no mapa de dueto por quadrantes e disputa maior aglomerado contíguo.</li>
+                </ul>
+            </div>
+        </details>
+
+        <details class="help-section">
+            <summary>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+                5. Fim de Jogo & Calculadora de Pontuação
+            </summary>
+            <div class="help-body">
+                <p>A partida termina após a conclusão das 5 ações da Rodada 4. Abra a <strong>Calculadora de Pontuação Final</strong> no botão de encerramento do app:</p>
+                <ul>
+                    <li><strong>Aves Viradas para Baixo:</strong> O app multiplica a quantidade de aves acumuladas pelo multiplicador da dificuldade (3, 4 ou 5 PV cada).</li>
+                    <li><strong>Ovos:</strong> 1 PV por ovo na reserva da Automa.</li>
+                    <li><strong>Objetivos de Fim de Rodada:</strong> Some os pontos obtidos pela Automa em cada uma das 4 rodadas.</li>
+                    <li><strong>Cartas de Bônus:</strong> A Automa pontua suas cartas de bônus baseando-se no total de aves da sua pilha.</li>
+                    <li><strong>Maiorias de Néctar (Oceania):</strong> Compare o total de néctar gasto em cada habitat para atribuir 5 PV ao 1º lugar e 2 PV ao 2º.</li>
+                    <li><strong>Fichas de Reserva / Acúmulo:</strong> Fichas ganhas por poderes que beneficiam outros jogadores são convertidas em ovos.</li>
+                </ul>
+                <p><strong>Vitória & Desempates:</strong> Quem tiver a maior pontuação total vence a partida! Em caso de empate, vence quem possuir mais comida não gasta, seguido por mais ovos no tabuleiro e depois mais aves na reserva.</p>
+            </div>
+        </details>
+    `,
+    en: `
+        <details class="help-section" open>
+            <summary>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+                1. Overview & Automa Philosophy
+            </summary>
+            <div class="help-body">
+                <p>The <strong>Automa</strong> simulates a skilled, swift opponent for <em>Wingspan</em> (Elizabeth Hargrave / Stonemaier Games), designed by Automa Factory (David Studley). She does not have a player mat, does not hoard food, and holds no cards in hand, focusing purely on streamlined scoring efficiency:</p>
+                <ul>
+                    <li><strong>Face-Down Birds:</strong> Stored in her secret bird stash. Each card scores 3, 4, or 5 VP at game end depending on the selected difficulty.</li>
+                    <li><strong>Eggs:</strong> Accumulated in the Automa's egg supply (1 VP each at game end).</li>
+                    <li><strong>End-of-Round Goals:</strong> Direct competition for round goals with action cubes placed on the goal board.</li>
+                    <li><strong>Bonus Cards:</strong> The Automa scores bonus cards based strictly on her total number of face-down birds.</li>
+                    <li><strong>Spent Nectar (Oceania Expansion):</strong> Competes for nectar majorities across all three habitats (Forest, Grassland, and Wetland).</li>
+                </ul>
+                <p><strong>Official Difficulty Levels:</strong></p>
+                <ul>
+                    <li><strong>Eaglet (Easy):</strong> 3 VP per face-down bird • 1 bonus egg per 5 reserve tokens.</li>
+                    <li><strong>Eagle (Medium):</strong> 4 VP per face-down bird • 1 bonus egg per 4 reserve tokens.</li>
+                    <li><strong>Eagle-eyed Eagle (Hard):</strong> 5 VP per face-down bird • 1 bonus egg per 3 reserve tokens.</li>
+                </ul>
+            </div>
+        </details>
+
+        <details class="help-section">
+            <summary>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                2. Physical Setup & Table Adjustments
+            </summary>
+            <div class="help-body">
+                <ol>
+                    <li>Set up your player mat normally: draw 5 bird cards, take 5 food tokens (discard 1 food per bird kept), and take 2 bonus cards (keep 1).</li>
+                    <li>Set out the bird tray with 3 face-up bird cards and stock the birdfeeder with the 5 rolled dice.</li>
+                    <li>Set up the end-of-round goal board with 4 random goal tiles (Green side for position scoring or Blue side for quantity scoring).</li>
+                    <li>Reserve the Automa's action cubes for end-of-round goals and the Asia Duet map (if using Asia Expansion).</li>
+                    <li>Configure difficulty and active modules in the app (Oceania with Nectar, European Expansion, Asia Duet, Americas with Hummingbird Garden, Automubon Society, or RAOUtoma).</li>
+                </ol>
+            </div>
+        </details>
+
+        <details class="help-section">
+            <summary>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"/></svg>
+                3. Action Flow & Decision Hierarchy
+            </summary>
+            <div class="help-body">
+                <p>On each Automa turn, click <strong>Confirm Action & Next Turn</strong>. The app reveals the active card and highlights the action row for the <strong>current round (1, 2, 3, or 4)</strong>:</p>
+                <ol>
+                    <li><strong>Play a Bird:</strong> The Automa draws 1 bird from the tray (or deck top) and tucks it face down into her stash. If eggs are indicated, place the eggs on the bird.</li>
+                    <li><strong>Gain Food:</strong> The Automa removes dice from the physical birdfeeder following official priority. Set removed dice aside until the next feeder reroll.</li>
+                    <li><strong>Lay Eggs:</strong> The Automa collects the number of eggs indicated on that round's action row into her egg supply.</li>
+                    <li><strong>Draw Cards:</strong> The Automa takes cards from the deck/tray into her face-down stash.</li>
+                    <li><strong>Pink Powers:</strong> If the Automa action displays the pink icon <em>(Pink Power Trigger)</em>, you may activate any of your pink bird powers that react to opponents' actions!</li>
+                </ol>
+            </div>
+        </details>
+
+        <details class="help-section">
+            <summary>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                4. Tie-Breakers, Birdfeeder, Nectar & Expansions
+            </summary>
+            <div class="help-body">
+                <p><strong>Birdfeeder Removal Priority:</strong></p>
+                <p style="color:var(--accent); font-weight:bold;">Invertebrate ➔ Seed ➔ Fish ➔ Fruit ➔ Rodent ➔ Nectar</p>
+                <ul>
+                    <li>The Automa removes <em>all</em> dice matching the first available food type in the sequence above.</li>
+                    <li>If all dice in the birdfeeder are identical (or if the feeder is empty), you <strong>must reroll all 5 dice</strong> into the feeder tower before Automa takes food!</li>
+                </ul>
+                <p><strong>Tray Bird Tie-Breakers:</strong></p>
+                <ul>
+                    <li>When drafting from the open bird tray, the Automa selects the bird with the <strong>largest wingspan</strong>. In case of a tie, she takes the <strong>leftmost card</strong> in the tray. Immediately replenish the tray from the deck.</li>
+                </ul>
+                <p><strong>Special Expansions:</strong></p>
+                <ul>
+                    <li><strong>🌺 Nectar (Oceania):</strong> The Automa spends and logs nectar in the three habitats (Forest, Grassland, Wetland). At game end, compete for majorities (5 VP for 1st, 2 VP for 2nd).</li>
+                    <li><strong>🏛️ Automubon Society (Expert):</strong> Adds the official expert card *base_12*, driving hyper-competitive goal cube placement (+1 cube almost continuously).</li>
+                    <li><strong>🦤 RAOUtoma (Oceania):</strong> Adds the high-output card *oceania_10*, boosting egg output in rounds 3 and 4.</li>
+                    <li><strong>🗺️ Asia Duet:</strong> Automa places tokens onto the Duet map by quadrant and contends for the largest continuous cluster.</li>
+                </ul>
+            </div>
+        </details>
+
+        <details class="help-section">
+            <summary>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+                5. Game End & Scoring Calculator
+            </summary>
+            <div class="help-body">
+                <p>The game concludes after round 4's final turn. Click <strong>Calculate Final Match Score</strong> to open the integrated score sheet:</p>
+                <ul>
+                    <li><strong>Face-Down Birds:</strong> The app multiplies the Automa's bird stash by the difficulty rate (3, 4, or 5 VP each).</li>
+                    <li><strong>Eggs:</strong> 1 VP per egg in the Automa's egg supply.</li>
+                    <li><strong>End-of-Round Goals:</strong> Sum the points earned by Automa goal cubes across all 4 rounds.</li>
+                    <li><strong>Bonus Cards:</strong> The Automa scores bonus cards according to the total count of birds in her stash.</li>
+                    <li><strong>Nectar Majorities (Oceania):</strong> Compare spent nectar in each habitat to award 5 VP to 1st place and 2 VP to 2nd.</li>
+                    <li><strong>Reserve / Hoard Tokens:</strong> Tokens collected from benefits are converted to eggs.</li>
+                </ul>
+                <p><strong>Victory & Tie-Breakers:</strong> The player with the highest total score wins! Ties are broken by most unspent food tokens, then most eggs on player mats, and finally most birds in hand.</p>
+            </div>
+        </details>
+    `
+};
+
+function renderHelpModal() {
+    const el = document.getElementById('help-modal-body');
+    if (el) {
+        el.innerHTML = HELP_CONTENT[STATE.lang] || HELP_CONTENT.pt;
+    }
+}
+
 function openHelpModal() {
+    renderHelpModal();
     document.getElementById('modal-help').classList.remove('hidden');
 }
+
 function closeHelpModal() {
     document.getElementById('modal-help').classList.add('hidden');
 }
+
+window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        closeHelpModal();
+        if (typeof closeScoreModal === 'function') closeScoreModal();
+    }
+});
 
 /* ==================== INITIALIZATION ==================== */
 window.addEventListener('DOMContentLoaded', () => {

@@ -1,0 +1,1874 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>SETI: Search for Extraterrestrial Intelligence Solo Automa — O Rival | Board Bots</title>
+    <link rel="icon" href="../assets/mascot-trimmed.png" type="image/png">
+    <meta name="description" content="Automa oficial e companion app solo para SETI: Search for Extraterrestrial Intelligence. Enfrente o Rival nos 5 níveis de dificuldade com suporte ao jogo base e à expansão Agências Espaciais.">
+    <link rel="canonical" href="https://colletes.github.io/boardbots/bots/seti_bot.html">
+
+    <!-- Open Graph / Facebook / WhatsApp -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Board Bots">
+    <meta property="og:title" content="SETI Solo Automa — O Rival | Board Bots">
+    <meta property="og:description" content="Automa oficial e companion app solo para SETI: Search for Extraterrestrial Intelligence com suporte ao jogo base e à expansão Agências Espaciais.">
+    <meta property="og:url" content="https://colletes.github.io/boardbots/bots/seti_bot.html">
+    <meta property="og:image" content="https://colletes.github.io/boardbots/assets/art/seti.webp">
+
+    <!-- Twitter Cards -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="SETI Solo Automa — O Rival | Board Bots">
+    <meta name="twitter:description" content="Automa oficial e companion app solo para SETI: Search for Extraterrestrial Intelligence.">
+    <meta name="twitter:image" content="https://colletes.github.io/boardbots/assets/art/seti.webp">
+
+    <!-- Schema.org WebApplication -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "SETI Solo Rival Automa",
+      "applicationCategory": "GameApplication",
+      "operatingSystem": "All",
+      "browserRequirements": "Requires JavaScript. Requires HTML5.",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "description": "Automa oficial solo para SETI: Search for Extraterrestrial Intelligence."
+    }
+    </script>
+    <link rel="stylesheet" href="../assets/theme-kit.css">
+    <script src="../assets/theme-kit.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Inter:wght@400;500;600;700;800&family=Poppins:wght@600;700;800&display=swap');
+
+        :root {
+            --space-bg-deep: #060a12;
+            --space-bg-card: rgba(14, 22, 38, 0.92);
+            --space-border: #1e314b;
+            --space-border-glow: #00e5ff;
+            --cyan-radar: #00e5ff;
+            --cyan-glow: rgba(0, 229, 255, 0.35);
+            --amber-telemetry: #ffb703;
+            --amber-glow: rgba(255, 183, 3, 0.4);
+            --orange-alert: #fb8500;
+            --green-active: #10b981;
+            --purple-chip: #8b5cf6;
+            --text-main: #f1f5f9;
+            --text-dim: #94a3b8;
+            --font-ui: 'Inter', system-ui, sans-serif;
+            --font-mono: 'Share Tech Mono', monospace;
+            --font-display: 'Poppins', sans-serif;
+
+            /* ThemeKit credits override */
+            --tk-credits-border-top: 1px dashed #1e314b;
+            --tk-credits-padding: 20px 0 0;
+            --tk-credits-img-radius: 6px;
+            --tk-credits-img-border: 1px solid var(--space-border);
+            --tk-credits-font-size: 0.95rem;
+            --tk-credits-color: #94a3b8;
+            --tk-credits-link-color: var(--cyan-radar);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { -webkit-text-size-adjust: 100%; }
+        body {
+            font-family: var(--font-ui);
+            background-color: var(--space-bg-deep);
+            background-image:
+                radial-gradient(circle at 50% 5%, rgba(0, 229, 255, 0.08) 0%, transparent 60%),
+                radial-gradient(circle at 80% 80%, rgba(255, 183, 3, 0.05) 0%, transparent 50%),
+                linear-gradient(rgba(6, 10, 18, 0.90), rgba(6, 10, 18, 0.92)),
+                url('../assets/textures/hull-panel.jpg');
+            background-size: auto, auto, auto, 512px 512px;
+            background-repeat: no-repeat, no-repeat, no-repeat, repeat;
+            background-attachment: fixed;
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 16px;
+            padding-bottom: max(30px, env(safe-area-inset-bottom));
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Responsive Layout Container */
+        .app-container {
+            width: 100%;
+            max-width: 1200px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        /* Floating buttons & language switch */
+        .floating-controls {
+            position: fixed;
+            top: 14px;
+            right: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 100;
+        }
+        .btn-float {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(14, 22, 38, 0.9);
+            border: 1px solid var(--space-border);
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            backdrop-filter: blur(8px);
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        }
+        .btn-float:hover {
+            border-color: var(--cyan-radar);
+            color: var(--cyan-radar);
+            transform: scale(1.05);
+        }
+        .lang-switch {
+            display: flex;
+            background: rgba(14, 22, 38, 0.9);
+            border: 1px solid var(--space-border);
+            border-radius: 20px;
+            overflow: hidden;
+            backdrop-filter: blur(8px);
+        }
+        .lang-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-dim);
+            padding: 7px 12px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .lang-btn.active {
+            background: var(--cyan-radar);
+            color: #000;
+        }
+
+        /* Hero Banner */
+        .hero {
+            position: relative;
+            width: 100%;
+            height: 180px;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--space-border);
+            background: #000;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+        }
+        .hero img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: 50% 35%;
+            filter: brightness(0.85);
+        }
+        .hero-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to right, rgba(6, 10, 18, 0.92) 0%, rgba(6, 10, 18, 0.4) 50%, rgba(6, 10, 18, 0.85) 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 24px;
+        }
+        .hero-title {
+            font-family: var(--font-display);
+            font-size: 2.1rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+            background: linear-gradient(135deg, #fff 0%, var(--cyan-radar) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+        }
+        .hero-subtitle {
+            font-family: var(--font-mono);
+            font-size: 0.95rem;
+            color: var(--amber-telemetry);
+            letter-spacing: 1px;
+            margin-top: 4px;
+            text-transform: uppercase;
+        }
+
+        /* Chamfered Sci-Fi Card Panels */
+        .sci-card {
+            background: var(--space-bg-card);
+            border: 1px solid var(--space-border);
+            border-radius: 10px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+            position: relative;
+        }
+        .sci-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 24px; height: 2px;
+            background: var(--cyan-radar);
+        }
+
+        /* Setup View */
+        .setup-section-title {
+            font-family: var(--font-display);
+            font-size: 1.2rem;
+            color: var(--text-main);
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .setup-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        .setup-option-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .option-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .option-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .btn-choice {
+            flex: 1;
+            min-width: 60px;
+            padding: 10px 14px;
+            background: rgba(30, 49, 75, 0.4);
+            border: 1px solid var(--space-border);
+            border-radius: 6px;
+            color: var(--text-main);
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+        .btn-choice:hover {
+            border-color: var(--cyan-radar);
+            background: rgba(0, 229, 255, 0.1);
+        }
+        .btn-choice.active {
+            background: var(--cyan-radar);
+            color: #060a12;
+            border-color: var(--cyan-radar);
+            box-shadow: 0 0 12px var(--cyan-glow);
+        }
+
+        /* Toggle Button */
+        .toggle-btn {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: rgba(30, 49, 75, 0.4);
+            border: 1px solid var(--space-border);
+            border-radius: 6px;
+            cursor: pointer;
+            color: var(--text-main);
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .toggle-btn.active {
+            border-color: var(--amber-telemetry);
+            background: rgba(255, 183, 3, 0.12);
+        }
+        .toggle-indicator {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #475569;
+            transition: all 0.2s;
+        }
+        .toggle-btn.active .toggle-indicator {
+            background: var(--amber-telemetry);
+            box-shadow: 0 0 8px var(--amber-glow);
+        }
+
+        /* Setup Checklist */
+        details.checklist {
+            background: rgba(10, 16, 28, 0.6);
+            border: 1px dashed var(--space-border);
+            border-radius: 8px;
+            padding: 14px;
+            margin-top: 14px;
+        }
+        details.checklist summary {
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--cyan-radar);
+            outline: none;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .checklist-items {
+            list-style: none;
+            margin-top: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            font-size: 0.9rem;
+            color: var(--text-dim);
+        }
+        .checklist-items li {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        .checklist-items input[type="checkbox"] {
+            margin-top: 3px;
+            accent-color: var(--cyan-radar);
+        }
+
+        /* Primary Action Button */
+        .btn-primary {
+            width: 100%;
+            padding: 16px 24px;
+            background: linear-gradient(135deg, var(--cyan-radar) 0%, #0099cc 100%);
+            border: none;
+            border-radius: 8px;
+            color: #060a12;
+            font-family: var(--font-display);
+            font-size: 1.1rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 18px var(--cyan-glow);
+            margin-top: 10px;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 22px rgba(0, 229, 255, 0.5);
+        }
+
+        /* GAME VIEW: 2-Column Responsive Grid */
+        #game-view { display: none; }
+        .game-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+        @media (min-width: 900px) {
+            .game-grid {
+                grid-template-columns: 1.05fr 1fr;
+            }
+        }
+
+        /* Telemetry Header */
+        .telemetry-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            background: rgba(14, 22, 38, 0.95);
+            border: 1px solid var(--space-border);
+            border-radius: 8px;
+            padding: 12px 18px;
+            font-family: var(--font-mono);
+        }
+        .telemetry-item {
+            display: flex;
+            flex-direction: column;
+        }
+        .telemetry-label {
+            font-size: 0.72rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+        }
+        .telemetry-val {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--cyan-radar);
+        }
+
+        /* Active Card Display */
+        .card-stage {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 14px;
+        }
+        .card-view-frame {
+            position: relative;
+            width: 100%;
+            max-width: 380px;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 2px solid var(--space-border);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            background: #0b111e;
+        }
+        .card-img-active {
+            width: 100%;
+            height: auto;
+            display: block;
+            transition: opacity 0.3s;
+        }
+        .decision-arrow-indicator {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(6, 10, 18, 0.85);
+            border: 1px solid var(--cyan-radar);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            color: var(--cyan-radar);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 0 10px var(--cyan-glow);
+        }
+
+        /* Action Resolver Accordion */
+        .action-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 100%;
+        }
+        .action-item {
+            background: rgba(14, 22, 38, 0.8);
+            border: 1px solid var(--space-border);
+            border-radius: 8px;
+            padding: 12px 16px;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .action-item:hover {
+            border-color: var(--cyan-radar);
+        }
+        .action-item.active-action {
+            border-color: var(--cyan-radar);
+            background: rgba(0, 229, 255, 0.08);
+            box-shadow: 0 0 12px rgba(0, 229, 255, 0.15);
+        }
+        .action-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+        .action-badge {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: rgba(255,255,255,0.1);
+        }
+        .action-item.active-action .action-badge {
+            background: var(--cyan-radar);
+            color: #000;
+        }
+        .action-desc {
+            margin-top: 6px;
+            font-size: 0.88rem;
+            color: var(--text-dim);
+            line-height: 1.4;
+        }
+
+        /* Action Buttons */
+        .action-control-bar {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+            margin-top: 14px;
+        }
+        .btn-sub {
+            flex: 1;
+            padding: 12px;
+            background: rgba(30, 49, 75, 0.5);
+            border: 1px solid var(--space-border);
+            border-radius: 6px;
+            color: var(--text-main);
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-sub:hover {
+            border-color: var(--text-main);
+        }
+        .btn-turn {
+            flex: 2;
+            padding: 14px;
+            background: linear-gradient(135deg, var(--cyan-radar), #0099cc);
+            border: none;
+            border-radius: 6px;
+            color: #060a12;
+            font-family: var(--font-display);
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 14px var(--cyan-glow);
+        }
+        .btn-turn:hover {
+            transform: scale(1.02);
+        }
+
+        /* Right Column: Rival State Dashboard */
+        .state-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* Progress Track Box */
+        .progress-box {
+            background: rgba(14, 22, 38, 0.9);
+            border: 1px solid var(--space-border);
+            border-radius: 8px;
+            padding: 14px;
+        }
+        .track-meter {
+            height: 16px;
+            background: #0f172a;
+            border-radius: 8px;
+            overflow: hidden;
+            margin: 10px 0;
+            border: 1px solid var(--space-border);
+            position: relative;
+        }
+        .track-fill {
+            height: 100%;
+            background: linear-gradient(to right, #0099cc, var(--cyan-radar));
+            width: 0%;
+            transition: width 0.4s ease;
+        }
+        .track-controls {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            justify-content: flex-end;
+        }
+        .btn-pill {
+            padding: 4px 10px;
+            border-radius: 4px;
+            background: rgba(30, 49, 75, 0.5);
+            border: 1px solid var(--space-border);
+            color: var(--text-main);
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .btn-pill:hover { border-color: var(--cyan-radar); }
+
+        /* Computer Matrix */
+        .computer-box {
+            background: rgba(14, 22, 38, 0.9);
+            border: 1px solid var(--space-border);
+            border-radius: 8px;
+            padding: 14px;
+        }
+        .comp-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin: 10px 0;
+        }
+        .comp-slot {
+            height: 44px;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px dashed var(--space-border);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-family: var(--font-mono);
+            color: var(--text-dim);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .comp-slot.filled {
+            background: rgba(0, 229, 255, 0.15);
+            border: 1px solid var(--cyan-radar);
+            color: var(--cyan-radar);
+            box-shadow: inset 0 0 8px rgba(0, 229, 255, 0.3);
+        }
+
+        /* Objectives Section */
+        .objectives-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .obj-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+        .obj-tile-card {
+            background: rgba(14, 22, 38, 0.9);
+            border: 1px solid var(--space-border);
+            border-radius: 8px;
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+        .obj-tile-img {
+            width: 100%;
+            height: auto;
+            border-radius: 4px;
+        }
+        .btn-obj-done {
+            width: 100%;
+            padding: 6px;
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid var(--green-active);
+            color: var(--green-active);
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .btn-obj-done:hover {
+            background: var(--green-active);
+            color: #000;
+        }
+
+        /* Long Term Objectives (Expansion) */
+        .lt-container {
+            border: 1px solid var(--amber-telemetry);
+            border-radius: 8px;
+            padding: 12px;
+            background: rgba(255, 183, 3, 0.04);
+        }
+
+        /* Log Panel */
+        .log-panel {
+            background: rgba(10, 16, 28, 0.95);
+            border: 1px solid var(--space-border);
+            border-radius: 8px;
+            padding: 12px;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            max-height: 180px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .log-entry {
+            line-height: 1.4;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding-bottom: 4px;
+        }
+        .log-time { color: var(--amber-telemetry); margin-right: 6px; }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        .modal.open { display: flex; }
+        .modal-content {
+            background: var(--space-bg-card);
+            border: 1px solid var(--cyan-radar);
+            border-radius: 12px;
+            max-width: 650px;
+            width: 100%;
+            max-height: 85vh;
+            overflow-y: auto;
+            padding: 24px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.9), 0 0 20px var(--cyan-glow);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--space-border);
+        }
+        .close-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-dim);
+            font-size: 1.6rem;
+            cursor: pointer;
+        }
+        .close-btn:hover { color: #fff; }
+
+        /* Accordion Help Sections */
+        .help-section {
+            background: rgba(10, 20, 36, 0.6);
+            border: 1px solid var(--space-border);
+            border-radius: 8px;
+            margin-bottom: 12px;
+            padding: 10px 14px;
+            text-align: left;
+        }
+        .help-section summary {
+            font-family: var(--font-display);
+            font-weight: 700;
+            color: var(--cyan-radar);
+            cursor: pointer;
+            font-size: 0.98rem;
+            outline: none;
+        }
+        .help-section summary::-webkit-details-marker {
+            color: var(--cyan-radar);
+        }
+        .help-section[open] summary {
+            margin-bottom: 10px;
+            border-bottom: 1px solid var(--space-border);
+            padding-bottom: 6px;
+        }
+        .help-section p {
+            margin: 6px 0;
+            font-size: 0.88rem;
+            line-height: 1.5;
+            color: var(--text-dim);
+        }
+        .help-section ul, .help-section ol {
+            margin: 6px 0 6px 20px;
+            font-size: 0.88rem;
+            color: var(--text-dim);
+        }
+        .help-section li {
+            margin-bottom: 5px;
+        }
+        .help-section strong {
+            color: var(--text-main);
+        }
+
+        /* Footer Credits */
+        footer {
+            margin-top: 30px;
+            width: 100%;
+            max-width: 1200px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+        }
+        .btn-home {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: rgba(30, 49, 75, 0.4);
+            border: 1px solid var(--space-border);
+            border-radius: 20px;
+            color: var(--text-main);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .btn-home:hover {
+            border-color: var(--cyan-radar);
+            color: var(--cyan-radar);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Floating Top Controls -->
+    <div class="floating-controls">
+        <div class="lang-switch">
+            <button class="lang-btn active" id="btn-lang-pt" onclick="setLang('pt')">PT</button>
+            <button class="lang-btn" id="btn-lang-en" onclick="setLang('en')">EN</button>
+        </div>
+        <button class="btn-float" onclick="openHelp()" title="Ajuda / Regras" aria-label="Ajuda">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+        </button>
+        <button class="btn-float" onclick="confirmReset()" title="Reiniciar Partida" aria-label="Reiniciar">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+        </button>
+    </div>
+
+    <div class="app-container">
+        <!-- Hero Banner -->
+        <header class="hero">
+            <img src="../assets/art/seti.webp" alt="SETI Box Art">
+            <div class="hero-overlay">
+                <h1 class="hero-title" data-i18n="hero_title">SETI</h1>
+                <div class="hero-subtitle" data-i18n="hero_subtitle">RIVAL RESEARCH INSTITUTE &bull; SOLO COMPANION</div>
+            </div>
+        </header>
+
+        <!-- SETUP VIEW -->
+        <div id="setup-view" class="sci-card">
+            <h2 class="setup-section-title">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--cyan-radar)" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                <span data-i18n="setup_title">Configuração da Missão Solo</span>
+            </h2>
+
+            <div class="setup-grid">
+                <!-- Dificuldade -->
+                <div class="setup-option-group">
+                    <span class="option-label" data-i18n="difficulty_label">Nível de Dificuldade</span>
+                    <div class="option-buttons">
+                        <button class="btn-choice" data-dif="1" onclick="setDifficulty(1)">1★</button>
+                        <button class="btn-choice active" data-dif="2" onclick="setDifficulty(2)">2★</button>
+                        <button class="btn-choice" data-dif="3" onclick="setDifficulty(3)">3★</button>
+                        <button class="btn-choice" data-dif="4" onclick="setDifficulty(4)">4★</button>
+                        <button class="btn-choice" data-dif="5" onclick="setDifficulty(5)">5★</button>
+                    </div>
+                </div>
+
+                <!-- Expansão Toggle -->
+                <div class="setup-option-group">
+                    <span class="option-label" data-i18n="expansion_label">Módulo de Expansão</span>
+                    <button class="toggle-btn" id="btn-toggle-expansion" onclick="toggleExpansion()">
+                        <span id="label-expansion" data-i18n="expansion_off">Jogo Base (5 Rodadas)</span>
+                        <div class="toggle-indicator"></div>
+                    </button>
+                </div>
+
+                <!-- Primeiro Jogador -->
+                <div class="setup-option-group">
+                    <span class="option-label" data-i18n="first_player_label">Primeiro Jogador</span>
+                    <div class="option-buttons">
+                        <button class="btn-choice active" id="btn-first-human" onclick="setFirstPlayer('human')" data-i18n="player_you">Você (+1 PV)</button>
+                        <button class="btn-choice" id="btn-first-rival" onclick="setFirstPlayer('rival')" data-i18n="player_rival">Rival (+1 PV)</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Physical Setup Checklist -->
+            <details class="checklist">
+                <summary data-i18n="checklist_summary">Checklist de Montagem da Mesa Física</summary>
+                <ul class="checklist-items">
+                    <li><input type="checkbox"> <span data-i18n="chk_1">Prepare o tabuleiro para 2 jogadores. Entregue todas as peças de uma cor ao Rival.</span></li>
+                    <li><input type="checkbox"> <span data-i18n="chk_2">Coloque o marcador de progresso do Rival na posição inicial de sua trilha.</span></li>
+                    <li><input type="checkbox"> <span data-i18n="chk_3">Ambos os jogadores iniciam com 4 de Publicidade. O 1º jogador começa com 1 PV e o 2º com 2 PV.</span></li>
+                    <li><input type="checkbox"> <span data-i18n="chk_4">Coloque as tecnologias preferidas do Rival correspondentes ao tabuleiro da dificuldade.</span></li>
+                    <li><input type="checkbox"> <span data-i18n="chk_5">Deixe as cartas de ação do Rival e tiles de objetivos ao lado (o app cuidará dos sorteios).</span></li>
+                </ul>
+            </details>
+
+            <button class="btn-primary" onclick="startMission()" data-i18n="btn_start_mission">Iniciar Missão</button>
+        </div>
+
+        <!-- GAME VIEW -->
+        <div id="game-view">
+            <!-- Telemetry Bar -->
+            <div class="telemetry-bar">
+                <div class="telemetry-item">
+                    <span class="telemetry-label" data-i18n="round_label">Rodada</span>
+                    <span class="telemetry-val" id="disp-round">1 / 5</span>
+                </div>
+                <div class="telemetry-item">
+                    <span class="telemetry-label" data-i18n="turn_label">Turno</span>
+                    <span class="telemetry-val" id="disp-turn">1</span>
+                </div>
+                <div class="telemetry-item">
+                    <span class="telemetry-label" data-i18n="first_label">Iniciativa</span>
+                    <span class="telemetry-val" id="disp-first-player" style="color:var(--amber-telemetry)">Você</span>
+                </div>
+                <div class="telemetry-item">
+                    <span class="telemetry-label" data-i18n="deck_label">Deck Rival</span>
+                    <span class="telemetry-val" id="disp-deck-count">5</span>
+                </div>
+            </div>
+
+            <div class="game-grid" style="margin-top: 16px;">
+                <!-- LEFT COLUMN: RIVAL ACTION RESOLVER -->
+                <div class="sci-card card-stage">
+                    <div style="width:100%; display:flex; justify-content:space-between; align-items:center;">
+                        <h3 style="font-family:var(--font-display); font-size:1.1rem; color:var(--cyan-radar);" data-i18n="active_card_title">Ordem de Operações do Rival</h3>
+                        <span id="disp-card-id" class="action-badge" style="font-size:0.9rem;">S.01</span>
+                    </div>
+
+                    <!-- Card Image with Decision Arrow -->
+                    <div class="card-view-frame">
+                        <img id="card-active-img" class="card-img-active" src="../assets/art/seti/cards/S.01.webp" alt="Active Card">
+                        <div class="decision-arrow-indicator" id="decision-arrow-tag">
+                            <span id="arrow-symbol">&larr;</span>
+                            <span id="arrow-text">ESQUERDA</span>
+                        </div>
+                    </div>
+
+                    <!-- Action List (Cascading Priority) -->
+                    <div class="action-list" id="action-list-container">
+                        <!-- Populated dynamically -->
+                    </div>
+
+                    <!-- Action Navigation Buttons -->
+                    <div class="action-control-bar">
+                        <button class="btn-sub" onclick="skipAction()" data-i18n="btn_action_infeasible">Ação Inviável &darr;</button>
+                        <button class="btn-turn" onclick="executeAndNextTurn()" data-i18n="btn_next_rival_turn">Executar &bull; Próximo Turno</button>
+                    </div>
+                </div>
+
+                <!-- RIGHT COLUMN: RIVAL STATE & OBJECTIVES -->
+                <div class="state-panel">
+                    <!-- Progress & Resources Card -->
+                    <div class="sci-card">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                            <h3 style="font-family:var(--font-display); font-size:1.1rem;" data-i18n="rival_state_title">Telemetria do Rival</h3>
+                            <div style="display:flex; gap:12px; font-family:var(--font-mono);">
+                                <span><strong style="color:var(--amber-telemetry);" data-i18n="pv_label">PV:</strong> <span id="disp-rival-vp">2</span></span>
+                                <span><strong style="color:var(--cyan-radar);" data-i18n="pub_label">PUB:</strong> <span id="disp-rival-pub">4</span></span>
+                            </div>
+                        </div>
+
+                        <!-- Trilha de Progresso -->
+                        <div class="progress-box">
+                            <div style="display:flex; justify-content:space-between; font-size:0.85rem; font-family:var(--font-mono);">
+                                <span data-i18n="progress_track_title">Trilha de Progresso</span>
+                                <span id="disp-progress-num">0 / 24</span>
+                            </div>
+                            <div class="track-meter">
+                                <div class="track-fill" id="track-progress-fill"></div>
+                            </div>
+                            <div class="track-controls">
+                                <span style="font-size:0.75rem; color:var(--text-dim); margin-right:auto;" data-i18n="advance_track">Avançar:</span>
+                                <button class="btn-pill" onclick="advanceProgress(1)">+1</button>
+                                <button class="btn-pill" onclick="advanceProgress(2)">+2</button>
+                                <button class="btn-pill" onclick="advanceProgress(3)">+3</button>
+                                <button class="btn-pill" onclick="advanceProgress(4)">+4</button>
+                            </div>
+                        </div>
+
+                        <!-- Computador do Rival -->
+                        <div class="computer-box" style="margin-top:14px;">
+                            <div style="display:flex; justify-content:space-between; font-size:0.85rem; font-family:var(--font-mono);">
+                                <span data-i18n="computer_title">Computador do Rival (Dados)</span>
+                                <span id="disp-comp-count">0 / 6</span>
+                            </div>
+                            <div class="comp-grid" id="computer-slots-grid">
+                                <!-- Populated dynamically -->
+                            </div>
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <div style="display:flex; gap:6px;">
+                                    <button class="btn-pill" onclick="addComputerData(1)" data-i18n="btn_add_data">+1 Dado</button>
+                                    <button class="btn-pill" onclick="addComputerData(-1)">-1</button>
+                                </div>
+                                <button class="btn-pill" style="border-color:var(--orange-alert); color:var(--orange-alert);" onclick="clearComputer()" data-i18n="btn_clear_data">Limpar (Analisar)</button>
+                            </div>
+                        </div>
+
+                        <!-- Publicidade & Recursos Manuais -->
+                        <div style="display:flex; gap:8px; margin-top:12px;">
+                            <button class="btn-choice" onclick="adjustPublicity(1)">+1 Pub</button>
+                            <button class="btn-choice" onclick="adjustPublicity(-1)">-1 Pub</button>
+                            <button class="btn-choice" onclick="adjustVp(1)">+1 PV</button>
+                            <button class="btn-choice" onclick="adjustVp(-1)">-1 PV</button>
+                        </div>
+                    </div>
+
+                    <!-- Objectives Manager -->
+                    <div class="sci-card objectives-container" id="objectives-panel">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <h3 style="font-family:var(--font-display); font-size:1.1rem; color:var(--amber-telemetry);" data-i18n="objectives_title">Objetivos Solo Ativos</h3>
+                            <button class="btn-pill" style="border-color:var(--amber-telemetry); color:var(--amber-telemetry);" onclick="endRound()" data-i18n="btn_end_round">Concluir Rodada &rarr;</button>
+                        </div>
+
+                        <!-- Regular Objectives (3 Slots) -->
+                        <div class="obj-cards-grid" id="obj-grid-container">
+                            <!-- Populated dynamically -->
+                        </div>
+
+                        <!-- Long Term Objectives (if expansion) -->
+                        <div class="lt-container" id="lt-objectives-container" style="display:none;">
+                            <div style="font-size:0.85rem; font-weight:700; color:var(--amber-telemetry); margin-bottom:8px;" data-i18n="lt_title">Objetivos de Longo Prazo (Expansão)</div>
+                            <div class="obj-cards-grid" id="lt-grid-container">
+                                <!-- Populated dynamically -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tactical Log -->
+                    <div class="sci-card">
+                        <h3 style="font-family:var(--font-display); font-size:0.95rem; margin-bottom:8px;" data-i18n="log_title">Log de Escuta do Observatório</h3>
+                        <div class="log-panel" id="tactical-log">
+                            <div class="log-entry"><span class="log-time">[00:00]</span> <span data-i18n="log_init">Telemetria inicializada. Pronto para o 1º turno.</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Help / Rules Modal -->
+        <div class="modal" id="helpModal" onclick="closeHelpOnBackdrop(event)">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 style="font-family:var(--font-display); font-size:1.3rem; color:var(--cyan-radar);" data-i18n="help_title">Guia Tático do Rival &bull; Regras</h2>
+                    <button class="close-btn" onclick="closeHelp()">&times;</button>
+                <div id="helpModalBody" data-i18n-html="help_body"></div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer>
+            <a href="../index.html" class="btn-home">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                <span data-i18n="btn_back_home">Voltar aos Bots</span>
+            </a>
+            <div class="credits">
+                <img src="../assets/art/seti.webp" alt="SETI Thumb">
+                <div class="credits-text">
+                    <strong>SETI: Search for Extraterrestrial Intelligence</strong> &bull; Game designed by Tomáš Holek &copy; Czech Games Edition. Solo Automa Companion App developed for BoardBots.
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // --- EMBEDDED CONSTANTS & DATABASE ---
+        const CARDS_DATA = {"S.01": {"id": "S.01", "type": "basic", "arrow": "left", "image": "../assets/art/seti/cards/S.01.webp", "actions": [{"num": 1, "type": "analyze", "titlePt": "Analisar (Computador)", "titleEn": "Analyze (Computer)", "descPt": "Se o computador estiver cheio: limpa os dados e ganha benefícios. Se tiver uma tecnologia de computador, descarte para +3 PV e +1 progresso.", "descEn": "If computer is full: clear all data and gain benefits. Discard computer tech for +3 VP and +1 progress."}, {"num": 2, "type": "launch_probe", "titlePt": "Sonda na Terra", "titleEn": "Probe on Earth", "descPt": "Lança uma sonda na Terra, caso não tenha uma, e ganha 1 de publicidade.", "descEn": "Launch a probe on Earth if there isn't one, and gain 1 Publicity."}, {"num": 3, "type": "tech", "titlePt": "Pesquisar Tecnologia (6 Pub)", "titleEn": "Research Technology (6 Pub)", "cost": 6, "descPt": "Gasta 6 de Publicidade para adquirir sua tecnologia preferida (ou a próxima com 2 PV na trilha).", "descEn": "Spends 6 Publicity to take preferred technology (or next with 2 VP on track)."}, {"num": 4, "type": "move_probe", "titlePt": "Mover Sonda (Alcance 3)", "titleEn": "Move Probe (Range 3)", "range": 3, "planets": ["Saturno", "Marte", "Júpiter", "Vênus"], "preference": ["moon", "orbiter", "lander"], "descPt": "Mova a sonda da Terra (alcance 3): Saturno > Marte > Júpiter > Vênus. Preferência: Lua (descartando tec de sonda) > Orbitador > Aterrissador.", "descEn": "Move probe from Earth (range 3): Saturn > Mars > Jupiter > Venus. Prefers Moon (discarding probe tech) > Orbiter > Lander."}]}, "S.02": {"id": "S.02", "type": "basic", "arrow": "right", "image": "../assets/art/seti/cards/S.02.webp", "actions": [{"num": 1, "type": "analyze", "titlePt": "Analisar (Computador)", "titleEn": "Analyze (Computer)", "descPt": "Se o computador estiver cheio: limpa os dados e ganha benefícios. Se o rival tiver uma tecnologia de computador, descarte para +3 PV e +1 progresso.", "descEn": "If computer is full: clear data and gain benefits. Discard computer tech for +3 VP and +1 progress."}, {"num": 2, "type": "tech", "titlePt": "Pesquisar Tecnologia (6 Pub)", "titleEn": "Research Technology (6 Pub)", "cost": 6, "descPt": "Gasta 6 de Publicidade para adquirir sua tecnologia preferida (ou a próxima com 2 PV na trilha).", "descEn": "Spends 6 Publicity to take preferred technology (or next with 2 VP on track)."}, {"num": 3, "type": "telescope", "titlePt": "Telescópio (Varredura)", "titleEn": "Telescope (Scan)", "signals": 3, "descPt": "Marca 3 sinais (1 da Terra e 2 das cartas da fileira, usando a seta para escolher o lado). Se o rival tiver uma tecnologia de telescópio, descarte para +1 sinal extra da fileira.", "descEn": "Mark 3 signals (1 Earth, 2 from card row using decision arrow). Discard telescope tech for +1 extra signal from row."}]}, "S.03": {"id": "S.03", "type": "basic", "arrow": "left", "image": "../assets/art/seti/cards/S.03.webp", "actions": [{"num": 1, "type": "species_check", "speciesSlot": 1, "titlePt": "Checagem de Espécie 1", "titleEn": "Species 1 Check", "descPt": "Se a 1ª espécie alienígena foi descoberta: substitua esta carta pela carta especial correspondente e resolva-a. Se não, tente a próxima ação.", "descEn": "If the 1st alien species was discovered: replace this card with the corresponding special card and resolve it. Otherwise, proceed to next action."}, {"num": 2, "type": "tech", "titlePt": "Pesquisar Tecnologia (6 Pub)", "titleEn": "Research Technology (6 Pub)", "cost": 6, "descPt": "Gasta 6 de Publicidade para adquirir sua tecnologia preferida (ou a próxima com 2 PV na trilha).", "descEn": "Spends 6 Publicity to take preferred technology (or next with 2 VP on track)."}, {"num": 3, "type": "telescope", "titlePt": "Telescópio (Varredura)", "titleEn": "Telescope (Scan)", "signals": 3, "descPt": "Marca 3 sinais (1 da Terra e 2 das cartas da fileira, usando a seta para escolher o lado). Se o rival tiver uma tecnologia de telescópio, descarte para +1 sinal extra da fileira.", "descEn": "Mark 3 signals (1 Earth, 2 from card row using decision arrow). Discard telescope tech for +1 extra signal from row."}]}, "S.04": {"id": "S.04", "type": "basic", "arrow": "right", "image": "../assets/art/seti/cards/S.04.webp", "actions": [{"num": 1, "type": "species_check", "speciesSlot": 2, "titlePt": "Checagem de Espécie 2", "titleEn": "Species 2 Check", "descPt": "Se a 2ª espécie alienígena foi descoberta: substitua esta carta pela carta especial correspondente e resolva-a. Se não, tente a próxima ação.", "descEn": "If the 2nd alien species was discovered: replace this card with the corresponding special card and resolve it. Otherwise, proceed to next action."}, {"num": 2, "type": "move_probe", "titlePt": "Mover Sonda (Alcance 3)", "titleEn": "Move Probe (Range 3)", "range": 3, "planets": ["Júpiter", "Marte", "Saturno", "Vênus"], "preference": ["moon", "orbiter", "lander"], "descPt": "Mova a sonda da Terra (alcance 3): Júpiter > Marte > Saturno > Vênus. Preferência: Lua (descartando tec) > Orbitador > Aterrissador.", "descEn": "Move probe from Earth (range 3): Jupiter > Mars > Saturn > Venus. Prefers Moon (discarding tech) > Orbiter > Lander."}, {"num": 3, "type": "tech_free", "titlePt": "Tecnologia Grátis (+1 Progresso)", "titleEn": "Free Technology (+1 Progress)", "cost": 0, "descPt": "Adquire sua tecnologia preferida sem gastar publicidade (ou a próxima com 2 PV na trilha). +1 progresso. Nunca pula.", "descEn": "Take preferred technology without spending publicity (or next with 2 VP on track). +1 progress. Never skips."}]}, "S.05": {"id": "S.05", "type": "advanced", "arrow": "left", "image": "../assets/art/seti/cards/S.05.webp", "actions": [{"num": 1, "type": "analyze", "titlePt": "Analisar (Computador)", "titleEn": "Analyze (Computer)", "descPt": "Se o computador estiver cheio: limpa os dados e ganha 3 PV + benefícios. Se tiver uma tecnologia de computador, descarte para +3 PV e +1 progresso.", "descEn": "If computer is full: clear data and gain 3 VP + benefits. Discard computer tech for +3 VP and +1 progress."}, {"num": 2, "type": "tech", "titlePt": "Pesquisar Tecnologia (6 Pub)", "titleEn": "Research Technology (6 Pub)", "cost": 6, "descPt": "Gasta 6 de Publicidade para adquirir sua tecnologia preferida (ou a próxima com 2 PV na trilha).", "descEn": "Spends 6 Publicity to take preferred technology (or next with 2 VP on track)."}, {"num": 3, "type": "telescope", "titlePt": "Telescópio (Varredura)", "titleEn": "Telescope (Scan)", "signals": 3, "descPt": "Marca 3 sinais (1 da Terra e 2 das cartas da fileira, usando a seta para escolher o lado). Se o rival tiver uma tecnologia de telescópio, descarte para +1 sinal extra da fileira.", "descEn": "Mark 3 signals (1 Earth, 2 from card row using decision arrow). Discard telescope tech for +1 extra signal from row."}]}, "S.06": {"id": "S.06", "type": "advanced", "arrow": "left", "image": "../assets/art/seti/cards/S.06.webp", "actions": [{"num": 1, "type": "tech", "titlePt": "Pesquisar Tecnologia (6 Pub)", "titleEn": "Research Technology (6 Pub)", "cost": 6, "descPt": "Gasta 6 de Publicidade para adquirir sua tecnologia preferida (ou a próxima com 2 PV na trilha).", "descEn": "Spends 6 Publicity to take preferred technology (or next with 2 VP on track)."}, {"num": 2, "type": "launch_probe", "titlePt": "Sonda na Terra (+1 Progresso)", "titleEn": "Probe on Earth (+1 Progress)", "descPt": "Lança uma sonda na Terra, caso não tenha uma, e ganha 1 de publicidade e um avanço no progresso.", "descEn": "Launch a probe on Earth if there isn't one, gain 1 Publicity and +1 progress."}, {"num": 3, "type": "telescope", "titlePt": "Telescópio (Varredura)", "titleEn": "Telescope (Scan)", "signals": 3, "descPt": "Marca 3 sinais (1 da Terra e 2 das cartas da fileira, usando a seta para escolher o lado). Se o rival tiver uma tecnologia de telescópio, descarte para +1 sinal extra da fileira.", "descEn": "Mark 3 signals (1 Earth, 2 from card row using decision arrow). Discard telescope tech for +1 extra signal from row."}]}, "S.07": {"id": "S.07", "type": "advanced", "arrow": "right", "image": "../assets/art/seti/cards/S.07.webp", "actions": [{"num": 1, "type": "tech", "titlePt": "Pesquisar Tecnologia (6 Pub, +1 Prog)", "titleEn": "Research Technology (6 Pub, +1 Prog)", "cost": 6, "descPt": "Gasta 6 de Publicidade para adquirir sua tecnologia preferida (ou a próxima com 2 PV na trilha). Avança um em progresso.", "descEn": "Spends 6 Publicity to take preferred technology (or next with 2 VP on track). +1 progress."}, {"num": 2, "type": "launch_probe", "titlePt": "Sonda na Terra (+1 Progresso)", "titleEn": "Probe on Earth (+1 Progress)", "descPt": "Lança uma sonda na Terra, caso não tenha uma, e ganha 1 de publicidade e um avanço no progresso.", "descEn": "Launch a probe on Earth if there isn't one, gain 1 Publicity and +1 progress."}, {"num": 3, "type": "telescope", "titlePt": "Telescópio (Varredura)", "titleEn": "Telescope (Scan)", "signals": 3, "descPt": "Marca 3 sinais (1 da Terra e 2 das cartas da fileira, usando a seta para escolher o lado). Se o rival tiver uma tecnologia de telescópio, descarte para +1 sinal extra da fileira.", "descEn": "Mark 3 signals (1 Earth, 2 from card row using decision arrow). Discard telescope tech for +1 extra signal from row."}]}, "S.08": {"id": "S.08", "type": "advanced", "arrow": "left", "image": "../assets/art/seti/cards/S.08.webp", "actions": [{"num": 1, "type": "analyze", "titlePt": "Analisar (Computador)", "titleEn": "Analyze (Computer)", "descPt": "Se o computador estiver cheio: limpa os dados e ganha 3 PV + benefícios. Se tiver uma tecnologia de computador, descarte para +3 PV e +1 progresso.", "descEn": "If computer is full: clear data and gain 3 VP + benefits. Discard computer tech for +3 VP and +1 progress."}, {"num": 2, "type": "move_probe", "titlePt": "Mover Sonda (Alcance 4)", "titleEn": "Move Probe (Range 4)", "range": 4, "planets": ["Urano", "Júpiter", "Mercúrio", "Vênus"], "preference": ["moon", "lander", "orbiter"], "descPt": "Mova a sonda (alcance 4): Urano > Júpiter > Mercúrio > Vênus. Preferência: Lua (desc tec) > Aterrissador > Orbitador.", "descEn": "Move probe (range 4): Uranus > Jupiter > Mercury > Venus. Prefers Moon (discard tech) > Lander > Orbiter."}, {"num": 3, "type": "telescope", "titlePt": "Telescópio (Varredura)", "titleEn": "Telescope (Scan)", "signals": 3, "descPt": "Marca 3 sinais (1 da Terra e 2 das cartas da fileira, usando a seta para escolher o lado). Se o rival tiver uma tecnologia de telescópio, descarte para +1 sinal extra da fileira.", "descEn": "Mark 3 signals (1 Earth, 2 from card row using decision arrow). Discard telescope tech for +1 extra signal from row."}]}, "S.09": {"id": "S.09", "type": "advanced", "arrow": "right", "image": "../assets/art/seti/cards/S.09.webp", "actions": [{"num": 1, "type": "analyze", "titlePt": "Analisar (Computador)", "titleEn": "Analyze (Computer)", "descPt": "Se o computador estiver cheio: limpa os dados e ganha 3 PV + benefícios. Se tiver uma tecnologia de computador, descarte para +3 PV e +1 progresso.", "descEn": "If computer is full: clear data and gain 3 VP + benefits. Discard computer tech for +3 VP and +1 progress."}, {"num": 2, "type": "launch_probe", "titlePt": "Sonda na Terra (+1 Progresso)", "titleEn": "Probe on Earth (+1 Progress)", "descPt": "Lança uma sonda na Terra, caso não tenha uma, e ganha 1 de publicidade e um avanço no progresso.", "descEn": "Launch a probe on Earth if there isn't one, gain 1 Publicity and +1 progress."}, {"num": 3, "type": "telescope", "titlePt": "Telescópio (Varredura)", "titleEn": "Telescope (Scan)", "signals": 3, "descPt": "Marca 3 sinais (1 da Terra e 2 das cartas da fileira, usando a seta para escolher o lado). Se o rival tiver uma tecnologia de telescópio, descarte para +1 sinal extra da fileira.", "descEn": "Mark 3 signals (1 Earth, 2 from card row using decision arrow). Discard telescope tech for +1 extra signal from row."}]}, "S.10": {"id": "S.10", "type": "advanced", "arrow": "right", "image": "../assets/art/seti/cards/S.10.webp", "actions": [{"num": 1, "type": "analyze", "titlePt": "Analisar (Computador)", "titleEn": "Analyze (Computer)", "descPt": "Se o computador estiver cheio: limpa os dados e ganha 3 PV + benefícios. Se tiver uma tecnologia de computador, descarte para +3 PV e +1 progresso.", "descEn": "If computer is full: clear data and gain 3 VP + benefits. Discard computer tech for +3 VP and +1 progress."}, {"num": 2, "type": "launch_probe", "titlePt": "Sonda na Terra (+1 Progresso)", "titleEn": "Probe on Earth (+1 Progress)", "descPt": "Lança uma sonda na Terra, caso não tenha uma, e ganha 1 de publicidade e um avanço no progresso.", "descEn": "Launch a probe on Earth if there isn't one, gain 1 Publicity and +1 progress."}, {"num": 3, "type": "telescope", "titlePt": "Telescópio (Varredura)", "titleEn": "Telescope (Scan)", "signals": 3, "descPt": "Marca 3 sinais (1 da Terra e 2 das cartas da fileira, usando a seta para escolher o lado). Se o rival tiver uma tecnologia de telescópio, descarte para +1 sinal extra da fileira.", "descEn": "Mark 3 signals (1 Earth, 2 from card row using decision arrow). Discard telescope tech for +1 extra signal from row."}]}, "S.11": {"id": "S.11", "type": "advanced", "arrow": "right", "image": "../assets/art/seti/cards/S.11.webp", "actions": [{"num": 1, "type": "tech", "titlePt": "Pesquisar Tecnologia (6 Pub, +1 Prog)", "titleEn": "Research Technology (6 Pub, +1 Prog)", "cost": 6, "descPt": "Gasta 6 de Publicidade para adquirir sua tecnologia preferida (ou a próxima com 2 PV na trilha). Ganha +1 progresso.", "descEn": "Spends 6 Publicity to take preferred technology (or next with 2 VP on track). +1 progress."}, {"num": 2, "type": "analyze", "titlePt": "Analisar (Computador)", "titleEn": "Analyze (Computer)", "descPt": "Se o computador estiver cheio: limpa os dados e ganha 3 PV + benefícios. Se tiver uma tecnologia de computador, descarte para +3 PV e +1 progresso.", "descEn": "If computer is full: clear data and gain 3 VP + benefits. Discard computer tech for +3 VP and +1 progress."}, {"num": 3, "type": "telescope", "titlePt": "Telescópio (Varredura)", "titleEn": "Telescope (Scan)", "signals": 3, "descPt": "Marca 3 sinais (1 da Terra e 2 das cartas da fileira, usando a seta para escolher o lado). Se o rival tiver uma tecnologia de telescópio, descarte para +1 sinal extra da fileira.", "descEn": "Mark 3 signals (1 Earth, 2 from card row using decision arrow). Discard telescope tech for +1 extra signal from row."}]}, "S.12": {"id": "S.12", "type": "advanced", "arrow": "left", "image": "../assets/art/seti/cards/S.12.webp", "actions": [{"num": 1, "type": "tech", "titlePt": "Pesquisar Tecnologia (6 Pub, +1 Prog)", "titleEn": "Research Technology (6 Pub, +1 Prog)", "cost": 6, "descPt": "Gasta 6 de Publicidade para adquirir sua tecnologia preferida (ou a próxima com 2 PV na trilha). Avança um em progresso.", "descEn": "Spends 6 Publicity to take preferred technology (or next with 2 VP on track). +1 progress."}, {"num": 2, "type": "launch_probe", "titlePt": "Sonda na Terra (+1 Progresso)", "titleEn": "Probe on Earth (+1 Progress)", "descPt": "Lança uma sonda na Terra, caso não tenha uma, e ganha 1 de publicidade e um avanço no progresso.", "descEn": "Launch a probe on Earth if there isn't one, gain 1 Publicity and +1 progress."}, {"num": 3, "type": "move_probe", "titlePt": "Mover Sonda (Alcance 4)", "titleEn": "Move Probe (Range 4)", "range": 4, "planets": ["Mercúrio", "Saturno", "Júpiter", "Vênus"], "preference": ["moon", "lander", "orbiter"], "descPt": "Mova a sonda (alcance 4): Mercúrio > Saturno > Júpiter > Vênus. Preferência: Lua (desc tec) > Aterrissador > Orbitador.", "descEn": "Move probe (range 4): Mercury > Saturn > Jupiter > Venus. Prefers Moon (discard tech) > Lander > Orbiter."}]}, "S.13": {"id": "S.13", "type": "advanced", "arrow": "left", "image": "../assets/art/seti/cards/S.13.webp", "actions": [{"num": 1, "type": "move_probe", "titlePt": "Mover Sonda (Alcance 4)", "titleEn": "Move Probe (Range 4)", "range": 4, "planets": ["Netuno", "Urano", "Marte", "Vênus"], "preference": ["moon", "lander", "orbiter"], "descPt": "Mova a sonda (alcance 4): Netuno > Urano > Marte > Vênus. Preferência: Lua (desc tec) > Aterrissador > Orbitador.", "descEn": "Move probe (range 4): Neptune > Uranus > Mars > Venus. Prefers Moon (discard tech) > Lander > Orbiter."}, {"num": 2, "type": "analyze", "titlePt": "Analisar (Computador)", "titleEn": "Analyze (Computer)", "descPt": "Se o computador estiver cheio: limpa os dados e ganha 3 PV + benefícios. Se tiver uma tecnologia de computador, descarte para +3 PV e +1 progresso.", "descEn": "If computer is full: clear data and gain 3 VP + benefits. Discard computer tech for +3 VP and +1 progress."}, {"num": 3, "type": "telescope", "titlePt": "Telescópio (Varredura)", "titleEn": "Telescope (Scan)", "signals": 3, "descPt": "Marca 3 sinais (1 da Terra e 2 das cartas da fileira, usando a seta para escolher o lado). Se o rival tiver uma tecnologia de telescópio, descarte para +1 sinal extra da fileira.", "descEn": "Mark 3 signals (1 Earth, 2 from card row using decision arrow). Discard telescope tech for +1 extra signal from row."}]}, "S.14": {"id": "S.14", "type": "advanced", "arrow": "right", "image": "../assets/art/seti/cards/S.14.webp", "actions": [{"num": 1, "type": "launch_probe", "titlePt": "Sonda na Terra (+1 Progresso)", "titleEn": "Probe on Earth (+1 Progress)", "descPt": "Lança uma sonda na Terra, caso não tenha uma, e ganha 1 de publicidade e um avanço no progresso.", "descEn": "Launch a probe on Earth if there isn't one, gain 1 Publicity and +1 progress."}, {"num": 2, "type": "tech", "titlePt": "Pesquisar Tecnologia (6 Pub, +1 Prog)", "titleEn": "Research Technology (6 Pub, +1 Prog)", "cost": 6, "descPt": "Gasta 6 de Publicidade para adquirir sua tecnologia preferida (ou a próxima com 2 PV na trilha). Avança um em progresso.", "descEn": "Spends 6 Publicity to take preferred technology (or next with 2 VP on track). +1 progress."}, {"num": 3, "type": "telescope", "titlePt": "Telescópio (Varredura)", "titleEn": "Telescope (Scan)", "signals": 3, "descPt": "Marca 3 sinais (1 da Terra e 2 das cartas da fileira, usando a seta para escolher o lado). Se o rival tiver uma tecnologia de telescópio, descarte para +1 sinal extra da fileira.", "descEn": "Mark 3 signals (1 Earth, 2 from card row using decision arrow). Discard telescope tech for +1 extra signal from row."}]}, "S.EXP1": {"id": "S.EXP1", "type": "expansion", "arrow": "left", "image": "../assets/art/seti/cards/S.EXP1.webp", "actions": [{"num": 1, "type": "wild_life_trace", "titlePt": "Vestígio de Vida Selvagem (+ Progresso por Dificuldade)", "titleEn": "Wild Life Trace (+ Difficulty Progress)", "descPt": "O rival marca o espaço mais abaixo disponível na coluna de qualquer espécie alienígena (seta para desempate). + 1 de progresso para cada estrela de dificuldade do bot.", "descEn": "The rival marks the lowest available space in the column of any alien species (arrow ties). +1 progress for each difficulty star of the bot."}]}, "species_mascamitas": {"id": "species_mascamitas", "type": "species", "arrow": "right", "image": "../assets/art/seti/cards/species_mascamitas.webp", "actions": [{"num": 1, "type": "launch_probe", "titlePt": "Sonda na Terra", "titleEn": "Probe on Earth", "descPt": "Lança uma sonda na Terra, caso não tenha uma, e ganha 1 de publicidade.", "descEn": "Launch a probe on Earth if there isn't one, and gain 1 Publicity."}, {"num": 2, "type": "move_probe", "titlePt": "Mover Sonda (Saturno 4 / Júpiter 5) + Coletar Amostra", "titleEn": "Move Probe (Saturn 4 / Jupiter 5) + Sample", "range": 5, "planets": ["Saturno", "Júpiter"], "preference": ["moon", "lander"], "descPt": "Mova a sonda para Saturno (alcance 4) ou Júpiter (alcance 5). Preferência: Lua (desc tec) > Aterrissador. Pegue aleatoriamente uma amostra do planeta e coloque-a virada para cima no tabuleiro desta espécie (ignore recompensa). Ignore se a sonda não consegue chegar em Saturno ou Júpiter.", "descEn": "Move probe to Saturn (range 4) or Jupiter (range 5). Prefers Moon (discard tech) > Lander. Randomly take a planetary sample and place it faceup on this species board (ignore reward). Skip if probe cannot reach Saturn or Jupiter."}]}, "species_anomalias": {"id": "species_anomalias", "type": "species", "arrow": "left", "image": "../assets/art/seti/cards/species_anomalias.webp", "actions": [{"num": 1, "type": "species_effect", "titlePt": "Marcar Anomalia", "titleEn": "Mark Anomaly", "descPt": "Se o rival não estiver ganhando a próxima anomalia, ele marca o vestígio daquela cor para esta espécie e ganha +3 PV.", "descEn": "If rival is not winning the next anomaly, mark the life trace of that color for this species and gain +3 VP."}, {"num": 2, "type": "tech_free", "titlePt": "Tecnologia Grátis (+1 Progresso)", "titleEn": "Free Technology (+1 Progress)", "cost": 0, "descPt": "Adquire sua tecnologia preferida sem gastar publicidade (ou a próxima com 2 PV na trilha). +1 progresso. Nunca pula.", "descEn": "Take preferred technology without spending publicity (or next with 2 VP on track). +1 progress. Never skips."}]}, "species_oumuamua": {"id": "species_oumuamua", "type": "species", "arrow": "left", "image": "../assets/art/seti/cards/species_oumuamua.webp", "actions": [{"num": 1, "type": "move_probe", "titlePt": "Mover Sonda para 'Oumuamua", "titleEn": "Move Probe to 'Oumuamua", "range": 4, "planets": ["'Oumuamua"], "preference": ["lander", "orbiter"], "descPt": "Mova a sonda para 'Oumuamua (alcance 4). Preferência: Aterrissador > Orbitador. Realiza apenas se a sonda consegue chegar em Oumuamua.", "descEn": "Move probe to 'Oumuamua (range 4). Prefers Lander > Orbiter. Only performs if probe can reach 'Oumuamua."}, {"num": 2, "type": "telescope", "titlePt": "Telescópio Especial", "titleEn": "Special Telescope", "signals": 3, "descPt": "Marca 3 sinais (1 da Terra e 2 das cartas da fileira, usando a seta para escolher o lado). Se o rival tiver uma tecnologia de telescópio, descarte para +1 sinal extra da fileira.", "descEn": "Mark 3 signals (1 Earth, 2 from card row using decision arrow). Discard telescope tech for +1 extra signal from row."}]}, "species_centaurianos": {"id": "species_centaurianos", "type": "species", "arrow": "right", "image": "../assets/art/seti/cards/species_centaurianos.webp", "actions": [{"num": 1, "type": "species_effect", "titlePt": "Marcador +15 Pontos", "titleEn": "Marker +15 Points", "descPt": "Se o rival ainda tiver marcador em sua reserva e nenhum na trilha de pontuação, coloque um +15 à frente de sua pontuação atual. Em seguida, +1 progresso.", "descEn": "If rival has a message marker and none on track, place it 15 VP ahead. Then +1 progress."}, {"num": 2, "type": "telescope", "titlePt": "Telescópio (Varredura)", "titleEn": "Telescope (Scan)", "signals": 3, "descPt": "Marca 3 sinais (1 da Terra e 2 das cartas da fileira, usando a seta para escolher o lado). Se o rival tiver uma tecnologia de telescópio, descarte para +1 sinal extra da fileira.", "descEn": "Mark 3 signals (1 Earth, 2 from card row using decision arrow). Discard telescope tech for +1 extra signal from row."}]}, "species_exertianos": {"id": "species_exertianos", "type": "species", "arrow": "right", "image": "../assets/art/seti/cards/species_exertianos.webp", "actions": [{"num": 1, "type": "species_effect", "titlePt": "Carta Exertiana Secreta", "titleEn": "Secret Exertian Card", "descPt": "Conte o número de cartas de rival jogadas e vestígios do rival no tabuleiro desta espécie. Se o total for menor que 5, o rival joga secretamente uma carta.", "descEn": "Count rival played cards and traces on this species board. If total < 5, play a secret card."}, {"num": 2, "type": "telescope", "titlePt": "Telescópio (Varredura)", "titleEn": "Telescope (Scan)", "signals": 3, "descPt": "Marca 3 sinais (1 da Terra e 2 das cartas da fileira, usando a seta para escolher o lado). Se o rival tiver uma tecnologia de telescópio, descarte para +1 sinal extra da fileira.", "descEn": "Mark 3 signals (1 Earth, 2 from card row using decision arrow). Discard telescope tech for +1 extra signal from row."}]}, "species_amoeba": {"id": "species_amoeba", "type": "species", "arrow": "right", "image": "../assets/art/seti/cards/species_amoeba.webp", "actions": [{"num": 1, "type": "species_effect", "titlePt": "Bônus de Organela Ameba", "titleEn": "Amoeba Organelle Bonus", "descPt": "Se uma das seções no tabuleiro da Ameba tiver 3 fichas de organela, o rival ganha todos os bônus de organela dessa seção (e move as fichas normalmente).", "descEn": "If one section on Amoeba board has 3 organelles, rival gains all bonuses and moves them."}, {"num": 2, "type": "tech_free", "titlePt": "Tecnologia Grátis (+1 Progresso)", "titleEn": "Free Technology (+1 Progress)", "cost": 0, "descPt": "Adquire sua tecnologia preferida sem gastar publicidade (ou a próxima com 2 PV na trilha). +1 progresso. Nunca pula.", "descEn": "Take preferred technology without spending publicity (or next with 2 VP on track). +1 progress. Never skips."}]}, "species_arkhos": {"id": "species_arkhos", "type": "species", "arrow": "right", "image": "../assets/art/seti/cards/species_arkhos.webp", "actions": [{"num": 1, "type": "species_effect", "titlePt": "Romper Carta de Segurança Arkhos", "titleEn": "Break Arkhos Security Card", "descPt": "O rival rompe uma de suas cartas de segurança aleatoriamente e marca um espaço excedente abaixo desta espécie na cor correspondente (+3 PV). Em seguida, ganha +2 recompensas menores de exploração.", "descEn": "The rival breaks one of its security cards randomly and marks an excess space below this species in the corresponding color (+3 VP). Then, gains +2 minor exploration rewards."}, {"num": 2, "type": "wild_life_trace", "titlePt": "Vestígio de Vida Selvagem", "titleEn": "Wild Life Trace", "descPt": "O rival marca um vestígio de vida selvagem na coluna de menor espaço disponível.", "descEn": "Rival marks a wild life trace on the lowest available column space."}]}, "species_glyphids": {"id": "species_glyphids", "type": "species", "arrow": "left", "image": "../assets/art/seti/cards/species_glyphids.webp", "actions": [{"num": 1, "type": "move_probe", "titlePt": "Mover Sonda para Planeta com Glifo", "titleEn": "Move Probe to Glyph Planet", "range": 4, "planets": ["Mercúrio", "Netuno", "Urano", "Saturno", "Júpiter", "Marte", "Vênus"], "preference": ["moon", "lander", "orbiter"], "descPt": "Verifique APENAS planetas com ficha de glifo (alcance 4): Mercúrio > Netuno > Urano > Saturno > Júpiter > Marte > Vênus. Preferência: Lua (desc tec) > Aterrissador > Orbitador.", "descEn": "Check ONLY planets with glyph token (range 4): Mercury > Neptune > Uranus > Saturn > Jupiter > Mars > Venus. Prefers Moon (discard tech) > Lander > Orbiter."}, {"num": 2, "type": "telescope", "titlePt": "Telescópio (Varredura)", "titleEn": "Telescope (Scan)", "signals": 3, "descPt": "Marca 3 sinais (1 da Terra e 2 das cartas da fileira, usando a seta para escolher o lado). Se o rival tiver uma tecnologia de telescópio, descarte para +1 sinal extra da fileira.", "descEn": "Mark 3 signals (1 Earth, 2 from card row using decision arrow). Discard telescope tech for +1 extra signal from row."}]}};
+        const OBJECTIVES_DATA = {"I": ["../assets/art/seti/objectives/obj_I_01.webp", "../assets/art/seti/objectives/obj_I_02.webp", "../assets/art/seti/objectives/obj_I_03.webp", "../assets/art/seti/objectives/obj_I_04.webp"], "II": ["../assets/art/seti/objectives/obj_II_01.webp", "../assets/art/seti/objectives/obj_II_02.webp", "../assets/art/seti/objectives/obj_II_03.webp", "../assets/art/seti/objectives/obj_II_04.webp", "../assets/art/seti/objectives/obj_II_05.webp", "../assets/art/seti/objectives/obj_II_06.webp", "../assets/art/seti/objectives/obj_II_07.webp", "../assets/art/seti/objectives/obj_II_08.webp", "../assets/art/seti/objectives/obj_II_09.webp", "../assets/art/seti/objectives/obj_II_10.webp", "../assets/art/seti/objectives/obj_II_11.webp"], "III": ["../assets/art/seti/objectives/obj_III_01.webp", "../assets/art/seti/objectives/obj_III_02.webp", "../assets/art/seti/objectives/obj_III_03.webp", "../assets/art/seti/objectives/obj_III_04.webp", "../assets/art/seti/objectives/obj_III_05.webp", "../assets/art/seti/objectives/obj_III_06.webp", "../assets/art/seti/objectives/obj_III_07.webp", "../assets/art/seti/objectives/obj_III_08.webp", "../assets/art/seti/objectives/obj_III_09.webp"], "LT": ["../assets/art/seti/objectives/long_term_01.webp", "../assets/art/seti/objectives/long_term_02.webp", "../assets/art/seti/objectives/long_term_03.webp"]};
+
+        const I18N = {
+            pt: {
+                hero_title: 'SETI',
+                hero_subtitle: 'INSTITUTO DE PESQUISA RIVAL • MODO SOLO',
+                setup_title: 'Configuração da Missão Solo',
+                difficulty_label: 'Nível de Dificuldade',
+                expansion_label: 'Módulo de Expansão',
+                expansion_off: 'Jogo Base (5 Rodadas)',
+                expansion_on: 'Com Expansão (4 Rodadas)',
+                first_player_label: 'Primeiro Jogador',
+                player_you: 'Você (+1 PV)',
+                player_rival: 'Rival (+1 PV)',
+                checklist_summary: 'Checklist de Montagem da Mesa Física',
+                chk_1: 'Prepare o tabuleiro para 2 jogadores. Entregue todas as peças de uma cor ao Rival.',
+                chk_2: 'Coloque o marcador de progresso do Rival na posição inicial de sua trilha.',
+                chk_3: 'Ambos os jogadores iniciam com 4 de Publicidade. O 1º jogador começa com 1 PV e o 2º com 2 PV.',
+                chk_4: 'Coloque as tecnologias preferidas do Rival correspondentes ao tabuleiro da dificuldade.',
+                chk_5: 'Deixe as cartas de ação do Rival e tiles de objetivos ao lado (o app cuidará dos sorteios).',
+                btn_start_mission: 'Iniciar Missão',
+                round_label: 'Rodada',
+                turn_label: 'Turno',
+                first_label: 'Iniciativa',
+                deck_label: 'Deck Rival',
+                active_card_title: 'Ordem de Operações do Rival',
+                btn_action_infeasible: 'Ação Inviável ↓',
+                btn_next_rival_turn: 'Executar • Próximo Turno',
+                rival_state_title: 'Telemetria do Rival',
+                pv_label: 'PV:',
+                pub_label: 'PUB:',
+                progress_track_title: 'Trilha de Progresso',
+                advance_track: 'Avançar:',
+                computer_title: 'Computador do Rival (Dados)',
+                btn_add_data: '+1 Dado',
+                btn_clear_data: 'Limpar (Analisar)',
+                objectives_title: 'Objetivos Solo Ativos',
+                btn_end_round: 'Concluir Rodada →',
+                lt_title: 'Objetivos de Longo Prazo (Expansão)',
+                log_title: 'Log de Escuta do Observatório',
+                log_init: 'Telemetria inicializada. Pronto para o 1º turno.',
+                btn_back_home: 'Voltar aos Bots',
+                help_title: 'Guia Tático do Rival • Regras',
+                help_body: `<details class="help-section" open>
+<summary>1. Visão Geral & Filosofia do Automa</summary>
+<p>O <b>Instituto Rival de Pesquisa</b> é o bot solo oficial para <i>SETI: Search for Extraterrestrial Intelligence</i> (Czech Games Edition / Tomáš Holek). Ele simula uma agência científica concorrente altamente eficiente e agressiva.</p>
+<p>O Rival compete diretamente com você no envio de sondas pelo Sistema Solar, realiza varreduras de rádio no Telescópio, processa dados científicos em seu computador central e pesquisa tecnologias de ponta. Ele não gerencia créditos ou energia como um humano, mas opera através de Publicidade (PUB), Trilha de Progresso e cartas de prioridade com Setas de Decisão.</p>
+</details>
+
+<details class="help-section">
+<summary>2. Setup Físico & Ajustes Solo</summary>
+<ul>
+  <li><b>Tabuleiro Principal:</b> Monte o jogo para 2 jogadores (utilizando o lado de 2 jogadores / solo). Escolha uma cor para você e entregue todos os componentes da outra cor ao Rival.</li>
+  <li><b>Recursos Iniciais:</b> Ambos os jogadores iniciam com <b>4 de Publicidade</b>.
+    <ul>
+      <li>Se você for o 1º jogador: você inicia com 1 PV e o Rival com 2 PV.</li>
+      <li>Se o Rival for o 1º jogador: o Rival inicia com 1 PV e você com 2 PV.</li>
+    </ul>
+  </li>
+  <li><b>Trilha de Progresso:</b> Posicione o marcador de progresso do Rival na casa inicial (posição 0).</li>
+  <li><b>Tecnologias Preferidas:</b> Separe as fichas de tecnologias preferidas do Rival conforme o nível de dificuldade escolhido.</li>
+  <li><b>Baralho de Ação e Objetivos:</b> O app gerencia automaticamente o baralho de ação do Rival e o sorteio dos Objetivos Solo das Rodadas 1 a 5.</li>
+</ul>
+</details>
+
+<details class="help-section">
+<summary>3. Fluxo de Ações & Tomada de Decisão</summary>
+<p>A cada turno do Rival, uma carta de ação é revelada com uma <b>Seta de Decisão (&larr; / &rarr;)</b> e uma lista de ações em ordem de prioridade:</p>
+<ul>
+  <li><b>Hierarquia Estrita de Execução:</b> O Rival sempre resolve a <b>1ª ação viável</b> (do topo para baixo). Se a ação atual for inviável (exemplo: mover sonda da Terra, mas ele não tem nenhuma sonda na Terra), toque em <b>Ação Inviável &darr;</b> para descer para a próxima.</li>
+  <li><b>Tipos Principais de Ação:</b>
+    <ul>
+      <li><b>Analisar (Computador):</b> Quando o computador atinge a capacidade máxima (ou quando a ação é ativada), limpa os dados, ganhando Pontos de Vitória (PV) e avanços de progresso. Se possuir tecnologia de computador, descarta-a para +3 PV e +1 progresso.</li>
+      <li><b>Sonda na Terra:</b> Lança uma sonda nova na Terra (se não houver uma presente) e ganha +1 de Publicidade (e avanço de progresso se for carta avançada).</li>
+      <li><b>Mover Sonda (Alcance X):</b> Move uma sonda da Terra ou de órbita pelo Sistema Solar na ordem de preferência de planetas indicada na carta. Prioridade em cada planeta: <b>Lua</b> (descartando tecnologia de sonda se tiver) &gt; <b>Aterrissador</b> &gt; <b>Orbitador</b>.</li>
+      <li><b>Telescópio (Varredura):</b> Marca sinais no telescópio (1 da Terra e 2 das cartas da fileira de projetos, usando a Seta de Decisão para escolher o lado da fileira). Descarta tecnologia de telescópio para +1 sinal extra.</li>
+      <li><b>Pesquisar Tecnologia:</b> Gasta 6 de Publicidade para adquirir sua tecnologia preferida da rodada (ou a próxima com 2 PV na trilha).</li>
+    </ul>
+  </li>
+  <li>Após executar a ação no tabuleiro físico, toque em <b>Executar &bull; Próximo Turno</b> no app.</li>
+</ul>
+</details>
+
+<details class="help-section">
+<summary>4. Regras de Desempate, Espécies Alienígenas & Casos Especiais</summary>
+<ul>
+  <li><b>Seta de Decisão (&larr; / &rarr;):</b> Resolve todos os empates do Rival:
+    <ul>
+      <li>Lado da fileira de cartas de projetos de onde retirar cartas para varredura do telescópio.</li>
+      <li>Escolha entre duas luas disponíveis no mesmo planeta.</li>
+      <li>Escolha de colunas para marcar vestígios de vida alienígena.</li>
+    </ul>
+  </li>
+  <li><b>Desempates no Telescópio:</b> Para decidir onde alocar sinais entre os setores:
+    <ol>
+      <li>Setor onde o sinal garante a maioria imediata.</li>
+      <li>Setor onde pontua o 2º sinal.</li>
+      <li>Setor onde o Rival já possui o maior número de marcadores.</li>
+      <li>Setor de maior capacidade total.</li>
+    </ol>
+  </li>
+  <li><b>Descoberta de Espécies Alienígenas:</b> Ao confirmar o contato com a 1ª e a 2ª espécie alienígena durante a partida, as cartas de checagem do baralho (S.03 / S.04) são substituídas pelas cartas específicas daquela espécie (Mascamitas, 'Oumuamua, Centaurianos, etc.), aplicando comportamentos temáticos exclusivos.</li>
+</ul>
+</details>
+
+<details class="help-section">
+<summary>5. Fim de Rodada, Penalidade de Objetivos & Fim de Jogo</summary>
+<ul>
+  <li><b>Manutenção de Fim de Rodada (Rodadas 1 a 4):</b>
+    <ul>
+      <li>O jogador humano deve cumprir e descartar um número de <b>Objetivos Solo</b> concluídos exatamente igual ao número da rodada atual (1 na R1, 2 na R2, 3 na R3, 4 na R4).</li>
+      <li><b>Penalidade Severa:</b> Para cada objetivo faltante que você NÃO conseguir entregar, o Rival avança <b>3 espaços</b> na Trilha de Progresso!</li>
+      <li>Gire os anéis do Sistema Solar, reembaralhe o baralho de descarte do Rival com o deck de compras e inicie a próxima rodada.</li>
+    </ul>
+  </li>
+  <li><b>Fim de Jogo (Final da 5ª Rodada):</b>
+    <ul>
+      <li>Cada Objetivo Solo ainda não cumprido concede <b>+5 PV diretos para o Rival</b>!</li>
+      <li>Some a pontuação do Rival: PV acumulados na trilha + PV de tecnologias adquiridas + bônus de espécies alienígenas + penalidade de objetivos restantes.</li>
+      <li>Compare sua pontuação total com a do Rival: se sua pontuação for estritamente maior, a humanidade lidera a era do primeiro contato extraterrestre!</li>
+    </ul>
+  </li>
+</ul>
+</details>`
+            },
+            en: {
+                hero_title: 'SETI',
+                hero_subtitle: 'RIVAL RESEARCH INSTITUTE • SOLO COMPANION',
+                setup_title: 'Solo Mission Setup',
+                difficulty_label: 'Difficulty Level',
+                expansion_label: 'Expansion Module',
+                expansion_off: 'Base Game (5 Rounds)',
+                expansion_on: 'With Expansion (4 Rounds)',
+                first_player_label: 'First Player',
+                player_you: 'You (+1 VP)',
+                player_rival: 'Rival (+1 VP)',
+                checklist_summary: 'Physical Board Setup Checklist',
+                chk_1: 'Set up 2-player board. Give all pieces of one color to Rival.',
+                chk_2: 'Place Rival progress marker at the starting position on its track.',
+                chk_3: 'Both players start with 4 Publicity. 1st player starts with 1 VP, 2nd player starts with 2 VP.',
+                chk_4: 'Place preferred technology tiles based on the difficulty board.',
+                chk_5: 'Keep action deck and objective tiles nearby (app manages draws).',
+                btn_start_mission: 'Launch Mission',
+                round_label: 'Round',
+                turn_label: 'Turn',
+                first_label: 'Initiative',
+                deck_label: 'Rival Deck',
+                active_card_title: 'Rival Order of Operations',
+                btn_action_infeasible: 'Infeasible Action ↓',
+                btn_next_rival_turn: 'Execute • Next Turn',
+                rival_state_title: 'Rival Telemetry',
+                pv_label: 'VP:',
+                pub_label: 'PUB:',
+                progress_track_title: 'Progress Track',
+                advance_track: 'Advance:',
+                computer_title: 'Rival Computer (Data)',
+                btn_add_data: '+1 Data',
+                btn_clear_data: 'Clear (Analyze)',
+                objectives_title: 'Active Solo Objectives',
+                btn_end_round: 'End Round →',
+                lt_title: 'Long-Term Objectives (Expansion)',
+                log_title: 'Observatory Radio Log',
+                log_init: 'Telemetry initialized. Ready for round 1.',
+                btn_back_home: 'Back to Bots',
+                help_title: 'Rival Tactical Guide • Rules',
+                help_body: `<details class="help-section" open>
+<summary>1. Overview & Automa Philosophy</summary>
+<p>The <b>Rival Research Institute</b> is the official solo automa for <i>SETI: Search for Extraterrestrial Intelligence</i> (Czech Games Edition / Tomáš Holek). It simulates a swift, fiercely competitive rival space agency.</p>
+<p>The Rival contends directly with you across the Solar System, deploying probes, conducting radio telescope scans, crunching astronomical data in its central computer, and researching breakthrough technologies. Rather than managing human energy or credits, it runs on Publicity (PUB), a Progress Track, and prioritized action cards directed by Decision Arrows.</p>
+</details>
+
+<details class="help-section">
+<summary>2. Physical Setup & Table Adjustments</summary>
+<ul>
+  <li><b>Main Board:</b> Set up the game using the 2-player / solo board side. Choose your color and allocate all components of the other color to the Rival.</li>
+  <li><b>Initial Resources:</b> Both players start with <b>4 Publicity</b>.
+    <ul>
+      <li>If you are 1st player: You start with 1 VP, Rival starts with 2 VP.</li>
+      <li>If Rival is 1st player: Rival starts with 1 VP, you start with 2 VP.</li>
+    </ul>
+  </li>
+  <li><b>Progress Track:</b> Place the Rival's progress marker on space 0 of its track.</li>
+  <li><b>Preferred Technologies:</b> Lay out the Rival's preferred technology tiles in order according to chosen difficulty.</li>
+  <li><b>Deck & Objectives:</b> The app automatically manages the Rival's action deck progression and deals solo objectives for Rounds 1 through 5.</li>
+</ul>
+</details>
+
+<details class="help-section">
+<summary>3. Action Flow & Decision Hierarchy</summary>
+<p>On each Rival turn, an action card is revealed featuring a <b>Decision Arrow (&larr; / &rarr;)</b> and a prioritized list of actions:</p>
+<ul>
+  <li><b>Strict Priority Resolution:</b> The Rival always executes the <b>1st feasible action</b> from top to bottom. If the top action cannot be performed (e.g., move a probe from Earth when it has none on Earth), tap <b>Infeasible Action &darr;</b> to step down to the next action.</li>
+  <li><b>Key Action Types:</b>
+    <ul>
+      <li><b>Analyze (Computer):</b> When the computer reaches capacity (or triggered by card), clears all data for VP and progress steps. Discards computer tech for +3 VP and +1 progress.</li>
+      <li><b>Probe on Earth:</b> Launches a new probe to Earth (if none present) and gains +1 Publicity (+1 progress on advanced cards).</li>
+      <li><b>Move Probe (Range X):</b> Moves a probe from Earth or orbit along the planet preference list printed on the card. At each planet, prefers: <b>Moon</b> (discarding probe tech if available) &gt; <b>Lander</b> &gt; <b>Orbiter</b>.</li>
+      <li><b>Telescope (Scan):</b> Marks signals (1 on Earth, 2 from card draft row using Decision Arrow). Discards telescope tech for +1 extra signal.</li>
+      <li><b>Research Technology:</b> Spends 6 Publicity to take its preferred technology (or the next 2-VP tech on the track).</li>
+    </ul>
+  </li>
+  <li>After carrying out the action on the physical board, tap <b>Execute &bull; Next Turn</b> in the app.</li>
+</ul>
+</details>
+
+<details class="help-section">
+<summary>4. Tie-breakers, Alien Species & Edge Cases</summary>
+<ul>
+  <li><b>Decision Arrow (&larr; / &rarr;):</b> Resolves all Rival ambiguities:
+    <ul>
+      <li>Which side of the project card draft row to scan signals from.</li>
+      <li>Choosing between two candidate moons on the same planet.</li>
+      <li>Tie-breaking alien life trace columns.</li>
+    </ul>
+  </li>
+  <li><b>Telescope Signal Placement Ties:</b> When deciding which telescope sector receives signals:
+    <ol>
+      <li>Sector where the signal secures an immediate majority.</li>
+      <li>Sector where it scores the 2nd signal bonus.</li>
+      <li>Sector where the Rival currently has the most markers.</li>
+      <li>Sector with the largest overall capacity.</li>
+    </ol>
+  </li>
+  <li><b>Alien Species Contact:</b> Upon discovering the 1st and 2nd alien species during the game, the generic species check cards (S.03 / S.04) are replaced by the unique cards for those specific alien civilizations (Mascamitas, 'Oumuamua, Centaurians, etc.), triggering thematic powers.</li>
+</ul>
+</details>
+
+<details class="help-section">
+<summary>5. Round End, Objective Penalty & Game End</summary>
+<ul>
+  <li><b>Round End Maintenance (Rounds 1 to 4):</b>
+    <ul>
+      <li>The player must fulfill and discard completed <b>Solo Objectives</b> equal to the round number (1 in R1, 2 in R2, 3 in R3, 4 in R4).</li>
+      <li><b>Harsh Penalty:</b> For every missing uncompleted objective, the Rival advances <b>3 spaces</b> on the Progress Track!</li>
+      <li>Rotate Solar System orbit rings, reshuffle the Rival discard pile into its deck, and begin the next round.</li>
+    </ul>
+  </li>
+  <li><b>Game End (End of Round 5):</b>
+    <ul>
+      <li>Each remaining uncompleted Solo Objective awards <b>+5 direct VP to the Rival</b>!</li>
+      <li>Calculate the Rival's final score: Track VP + Technology VP + Alien Species milestones + unfulfilled objective penalties.</li>
+      <li>Compare final VP totals: If your score strictly exceeds the Rival, humanity triumphs in the search for extraterrestrial intelligence!</li>
+    </ul>
+  </li>
+</ul>
+</details>`
+            }
+        };
+
+        // --- GAME STATE ---
+        let currentLang = localStorage.getItem('boardbots_lang') || 'pt';
+        let difficulty = 2;
+        let withExpansion = false;
+        let firstPlayer = 'human';
+        let currentRound = 1;
+        let currentTurn = 1;
+        let rivalVp = 2;
+        let humanVp = 1;
+        let rivalPublicity = 4;
+        let rivalProgress = 0;
+        let rivalComputerData = 0;
+        let computerCapacity = 6;
+        let progressMax = 24;
+
+        let activeDeck = [];
+        let discardPile = [];
+        let currentCard = null;
+        let currentActionIndex = 0;
+        let advancedCardsReserve = [];
+
+        let activeObjectives = [];
+        let completedObjectivesPool = 0;
+        let longTermObjectives = [];
+
+        // Setup functions
+        function setLang(lang) {
+            currentLang = lang;
+            localStorage.setItem('boardbots_lang', lang);
+            document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(`btn-lang-${lang}`).classList.add('active');
+            applyTranslations();
+            renderActiveCard();
+        }
+
+        function applyTranslations() {
+            const dict = I18N[currentLang] || I18N.pt;
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (dict[key]) el.innerText = dict[key];
+            });
+            document.querySelectorAll('[data-i18n-html]').forEach(el => {
+                const key = el.getAttribute('data-i18n-html');
+                if (dict[key]) el.innerHTML = dict[key];
+            });
+            document.getElementById('label-expansion').innerText = withExpansion ? dict.expansion_on : dict.expansion_off;
+        }
+
+        function setDifficulty(d) {
+            difficulty = d;
+            document.querySelectorAll('[data-dif]').forEach(b => b.classList.remove('active'));
+            document.querySelector(`[data-dif="${d}"]`).classList.add('active');
+            playSfx('seti:terminal-click', 0.4);
+        }
+
+        function toggleExpansion() {
+            withExpansion = !withExpansion;
+            const btn = document.getElementById('btn-toggle-expansion');
+            btn.classList.toggle('active', withExpansion);
+            applyTranslations();
+            playSfx('seti:terminal-click', 0.5);
+        }
+
+        function setFirstPlayer(p) {
+            firstPlayer = p;
+            document.getElementById('btn-first-human').classList.toggle('active', p === 'human');
+            document.getElementById('btn-first-rival').classList.toggle('active', p === 'rival');
+            playSfx('seti:terminal-click', 0.4);
+        }
+
+        function playSfx(name, vol = 0.5) {
+            if (window.ThemeKit) {
+                window.ThemeKit.playSfx(name, { volume: vol });
+            }
+        }
+
+        function logTactical(msg) {
+            const log = document.getElementById('tactical-log');
+            const now = new Date();
+            const timeStr = `[${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}]`;
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = `<span class="log-time">${timeStr}</span> ${msg}`;
+            log.prepend(entry);
+        }
+
+        // --- MISSION START ---
+        function startMission() {
+            playSfx('seti:signal-scan', 0.7);
+            if ('vibrate' in navigator) navigator.vibrate(30);
+
+            // Scores and initiative
+            if (firstPlayer === 'human') {
+                humanVp = 1; rivalVp = 2;
+            } else {
+                humanVp = 2; rivalVp = 1;
+            }
+            rivalPublicity = 4;
+            rivalProgress = 0;
+            rivalComputerData = 0;
+            currentRound = 1;
+            currentTurn = 1;
+
+            // Setup Board specs by difficulty
+            if (difficulty <= 2) {
+                computerCapacity = 6;
+                progressMax = 20;
+            } else if (difficulty === 3) {
+                computerCapacity = 6;
+                progressMax = 24;
+            } else if (difficulty === 4) {
+                computerCapacity = 7;
+                progressMax = 26;
+            } else {
+                computerCapacity = 8;
+                progressMax = 28;
+            }
+
+            // Build Decks
+            buildDecks();
+
+            // Build Objectives
+            buildObjectives();
+
+            // Switch to Game View
+            document.getElementById('setup-view').style.display = 'none';
+            document.getElementById('game-view').style.display = 'block';
+
+            updateTelemetry();
+            renderComputerGrid();
+            drawRivalCard();
+
+            logTactical(currentLang === 'pt'
+                ? `Missão iniciada. Dificuldade ${difficulty}★. ${withExpansion ? 'Expansão Ativa.' : 'Jogo Base.'}`
+                : `Mission launched. Difficulty ${difficulty}★. ${withExpansion ? 'Expansion Active.' : 'Base Game.'}`);
+        }
+
+        function buildDecks() {
+            // Basic cards
+            activeDeck = ['S.01', 'S.02', 'S.03', 'S.04'];
+
+            // Advanced cards pool
+            advancedCardsReserve = ['S.05', 'S.06', 'S.07', 'S.08', 'S.09', 'S.10', 'S.11', 'S.12', 'S.13', 'S.14'];
+            shuffleArray(advancedCardsReserve);
+
+            // Difficulty 3+ starts with 1 random advanced card
+            if (difficulty >= 3) {
+                const extraAdv = advancedCardsReserve.pop();
+                activeDeck.push(extraAdv);
+            }
+
+            // If expansion, add S.EXP1
+            if (withExpansion) {
+                activeDeck.push('S.EXP1');
+            }
+
+            shuffleArray(activeDeck);
+            discardPile = [];
+        }
+
+        function buildObjectives() {
+            if (difficulty === 1) {
+                document.getElementById('objectives-panel').style.display = 'none';
+                return;
+            }
+            document.getElementById('objectives-panel').style.display = 'flex';
+
+            let pool = [];
+            if (!withExpansion) {
+                // Base composition by difficulty
+                let iCount = 2, iiCount = 4, iiiCount = 6;
+                if (difficulty === 3) { iiCount = 5; iiiCount = 6; }
+                if (difficulty === 4) { iiCount = 6; iiiCount = 7; }
+                if (difficulty === 5) { iiCount = 7; iiiCount = 8; }
+
+                let t1 = [...OBJECTIVES_DATA.I]; shuffleArray(t1);
+                let t2 = [...OBJECTIVES_DATA.II]; shuffleArray(t2);
+                let t3 = [...OBJECTIVES_DATA.III]; shuffleArray(t3);
+
+                // Stack: III at bottom, II in middle, I on top
+                pool = [...t3.slice(0, iiiCount), ...t2.slice(0, iiCount), ...t1.slice(0, iCount)];
+            } else {
+                // Expansion: remove Tier I, reveal 2 Long-Term
+                let iiCount = 4, iiiCount = 6;
+                if (difficulty === 3) { iiCount = 5; iiiCount = 6; }
+                if (difficulty === 4) { iiCount = 6; iiiCount = 7; }
+                if (difficulty === 5) { iiCount = 7; iiiCount = 8; }
+
+                let t2 = [...OBJECTIVES_DATA.II]; shuffleArray(t2);
+                let t3 = [...OBJECTIVES_DATA.III]; shuffleArray(t3);
+                pool = [...t3.slice(0, iiiCount), ...t2.slice(0, iiCount)];
+
+                let lt = [...OBJECTIVES_DATA.LT]; shuffleArray(lt);
+                longTermObjectives = lt.slice(0, 2);
+                document.getElementById('lt-objectives-container').style.display = 'block';
+                renderLongTermObjectives();
+            }
+
+            // Draw top 3 active objectives
+            activeObjectives = [pool.pop(), pool.pop(), pool.pop()];
+            window.objectivePoolRemaining = pool;
+            renderObjectives();
+        }
+
+        function renderObjectives() {
+            const grid = document.getElementById('obj-grid-container');
+            grid.innerHTML = '';
+            activeObjectives.forEach((url, idx) => {
+                if (!url) return;
+                const card = document.createElement('div');
+                card.className = 'obj-tile-card';
+                card.innerHTML = `
+                    <img src="${url}" class="obj-tile-img" alt="Objective">
+                    <button class="btn-obj-done" onclick="completeObjective(${idx})">${currentLang === 'pt' ? 'Concluir ✓' : 'Complete ✓'}</button>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function renderLongTermObjectives() {
+            const grid = document.getElementById('lt-grid-container');
+            grid.innerHTML = '';
+            longTermObjectives.forEach((url, idx) => {
+                if (!url) return;
+                const card = document.createElement('div');
+                card.className = 'obj-tile-card';
+                card.innerHTML = `
+                    <img src="${url}" class="obj-tile-img" alt="Long Term Objective">
+                    <button class="btn-obj-done" onclick="completeLongTerm(${idx})">${currentLang === 'pt' ? 'Concluir Tarefa' : 'Complete Task'}</button>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function completeObjective(idx) {
+            playSfx('seti:data-process', 0.6);
+            completedObjectivesPool++;
+            if (window.objectivePoolRemaining && window.objectivePoolRemaining.length > 0) {
+                activeObjectives[idx] = window.objectivePoolRemaining.pop();
+            } else {
+                activeObjectives[idx] = null;
+            }
+            renderObjectives();
+            logTactical(currentLang === 'pt'
+                ? `Objetivo concluído! Total concluído na rodada: ${completedObjectivesPool}.`
+                : `Objective completed! Total in round: ${completedObjectivesPool}.`);
+        }
+
+        function completeLongTerm(idx) {
+            playSfx('seti:data-process', 0.6);
+            logTactical(currentLang === 'pt'
+                ? `Tarefa de Objetivo de Longo Prazo marcada no tabuleiro físico.`
+                : `Long-Term objective task marked on physical board.`);
+        }
+
+        // --- DRAW AND RESOLVE RIVAL CARD ---
+        function drawRivalCard() {
+            if (activeDeck.length === 0) {
+                handleRivalPass();
+                return;
+            }
+
+            playSfx('card-draw', 0.5);
+            const cardId = activeDeck.pop();
+            currentCard = CARDS_DATA[cardId] || CARDS_DATA['S.01'];
+            currentActionIndex = 0;
+
+            renderActiveCard();
+            updateTelemetry();
+        }
+
+        function renderActiveCard() {
+            if (!currentCard) return;
+
+            document.getElementById('disp-card-id').innerText = currentCard.id;
+            const img = document.getElementById('card-active-img');
+            img.src = currentCard.image;
+
+            const arrowTag = document.getElementById('decision-arrow-tag');
+            const arrowSym = document.getElementById('arrow-symbol');
+            const arrowTxt = document.getElementById('arrow-text');
+
+            if (currentCard.arrow === 'left') {
+                arrowSym.innerHTML = '&larr;';
+                arrowTxt.innerText = currentLang === 'pt' ? 'ESQUERDA' : 'LEFT';
+            } else {
+                arrowSym.innerHTML = '&rarr;';
+                arrowTxt.innerText = currentLang === 'pt' ? 'DIREITA' : 'RIGHT';
+            }
+
+            // Render Actions
+            const container = document.getElementById('action-list-container');
+            container.innerHTML = '';
+
+            currentCard.actions.forEach((act, idx) => {
+                const item = document.createElement('div');
+                item.className = 'action-item' + (idx === currentActionIndex ? ' active-action' : '');
+                item.onclick = () => selectActionIndex(idx);
+
+                const title = currentLang === 'pt' ? act.titlePt : act.titleEn;
+                const desc = currentLang === 'pt' ? act.descPt : act.descEn;
+
+                item.innerHTML = `
+                    <div class="action-header">
+                        <span>${act.num}. ${title}</span>
+                        <span class="action-badge">${idx === currentActionIndex ? (currentLang === 'pt' ? 'PRIORITÁRIA' : 'PRIORITY') : ''}</span>
+                    </div>
+                    <div class="action-desc">${desc}</div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        function selectActionIndex(idx) {
+            currentActionIndex = idx;
+            renderActiveCard();
+            playSfx('seti:terminal-click', 0.4);
+        }
+
+        function skipAction() {
+            if (!currentCard) return;
+            if (currentActionIndex < currentCard.actions.length - 1) {
+                currentActionIndex++;
+                renderActiveCard();
+                playSfx('seti:terminal-click', 0.5);
+                logTactical(currentLang === 'pt'
+                    ? `Ação anterior inviável. Avançando para Ação ${currentActionIndex + 1}.`
+                    : `Previous action infeasible. Advancing to Action ${currentActionIndex + 1}.`);
+            } else {
+                logTactical(currentLang === 'pt' ? 'Nenhuma outra ação na carta.' : 'No further actions on card.');
+            }
+        }
+
+        function executeAndNextTurn() {
+            if (!currentCard) return;
+
+            const act = currentCard.actions[currentActionIndex];
+            const title = currentLang === 'pt' ? act.titlePt : act.titleEn;
+
+            // Trigger specific SFX based on action type
+            if (act.type === 'move_probe' || act.type === 'launch_probe') {
+                playSfx('seti:probe-launch', 0.7);
+            } else if (act.type === 'telescope') {
+                playSfx('seti:signal-scan', 0.6);
+            } else if (act.type === 'analyze') {
+                playSfx('seti:data-process', 0.6);
+            } else {
+                playSfx('seti:terminal-click', 0.5);
+            }
+
+            discardPile.push(currentCard.id);
+            logTactical(currentLang === 'pt'
+                ? `Rival executou: <strong>${title}</strong> (${currentCard.id}).`
+                : `Rival executed: <strong>${title}</strong> (${currentCard.id}).`);
+
+            currentTurn++;
+            drawRivalCard();
+        }
+
+        function handleRivalPass() {
+            playSfx('seti:contact-alert', 0.7);
+            advanceProgress(1); // Picking round end card advances progress by 1
+
+            logTactical(currentLang === 'pt'
+                ? `Baralho do Rival esgotado. O Rival <strong>PASSA</strong> (+1 avanço na trilha). Gire o Sistema Solar se ele passou primeiro.`
+                : `Rival deck exhausted. Rival <strong>PASSES</strong> (+1 on progress track). Rotate Solar System if Rival passed first.`);
+
+            alert(currentLang === 'pt'
+                ? 'O Rival passou! Ele recolhe a carta de fim de rodada (+1 avanço na trilha). Lembre-se de girar o Sistema Solar caso ele tenha sido o primeiro a passar.'
+                : 'Rival passed! Picks up round-end card (+1 progress). Rotate Solar System if Rival was first to pass.');
+        }
+
+        // --- PROGRESS AND RESOURCES ---
+        function advanceProgress(amount) {
+            playSfx('seti:data-process', 0.5);
+            const oldProg = rivalProgress;
+            rivalProgress = Math.min(progressMax, rivalProgress + amount);
+
+            // Check if passed card milestone (e.g. at 5, 11, 17)
+            if (oldProg < 5 && rivalProgress >= 5) triggerNewAdvancedCard();
+            if (oldProg < 11 && rivalProgress >= 11) triggerNewAdvancedCard();
+            if (oldProg < 17 && rivalProgress >= 17) triggerNewAdvancedCard();
+
+            updateTelemetry();
+        }
+
+        function triggerNewAdvancedCard() {
+            playSfx('seti:contact-alert', 0.8);
+            if (advancedCardsReserve.length > 0) {
+                const newCard = advancedCardsReserve.pop();
+                activeDeck.push(newCard); // Enters on top of deck
+                logTactical(currentLang === 'pt'
+                    ? `Marco de Trilha alcançado! Carta avançada <strong>${newCard}</strong> adicionada ao topo do baralho do Rival.`
+                    : `Milestone reached! Advanced card <strong>${newCard}</strong> placed on top of Rival deck.`);
+                alert(currentLang === 'pt'
+                    ? `O Rival atingiu um marco na Trilha de Progresso! Nova carta avançada (${newCard}) adicionada ao baralho.`
+                    : `Rival reached a Progress Track milestone! New advanced card (${newCard}) added to deck.`);
+            } else if (withExpansion) {
+                // Expansion fallback: advance progress
+                rivalProgress = Math.min(progressMax, rivalProgress + 2);
+                logTactical(currentLang === 'pt'
+                    ? 'Cartas avançadas esgotadas. Rival ganha avanço na trilha (Regra de Expansão).'
+                    : 'Advanced cards exhausted. Rival gains track progress (Expansion Rule).');
+            }
+        }
+
+        function addComputerData(amt) {
+            rivalComputerData = Math.max(0, Math.min(computerCapacity, rivalComputerData + amt));
+            playSfx('seti:terminal-click', 0.4);
+            renderComputerGrid();
+            if (rivalComputerData === computerCapacity) {
+                playSfx('turn-notify', 0.7);
+                logTactical(currentLang === 'pt'
+                    ? 'Computador do Rival CHEIO! Ação Analisar disponível.'
+                    : 'Rival Computer is FULL! Analyze action available.');
+            }
+        }
+
+        function clearComputer() {
+            playSfx('seti:data-process', 0.7);
+            rivalComputerData = 0;
+            renderComputerGrid();
+            logTactical(currentLang === 'pt'
+                ? 'Computador do Rival limpo. Dados processados.'
+                : 'Rival Computer cleared. Data processed.');
+        }
+
+        function renderComputerGrid() {
+            const grid = document.getElementById('computer-slots-grid');
+            grid.innerHTML = '';
+            for (let i = 0; i < computerCapacity; i++) {
+                const slot = document.createElement('div');
+                slot.className = 'comp-slot' + (i < rivalComputerData ? ' filled' : '');
+                slot.innerText = i < rivalComputerData ? 'DATA' : (i + 1);
+                slot.onclick = () => addComputerData(i < rivalComputerData ? -1 : 1);
+                grid.appendChild(slot);
+            }
+            document.getElementById('disp-comp-count').innerText = `${rivalComputerData} / ${computerCapacity}`;
+        }
+
+        function adjustPublicity(amt) {
+            rivalPublicity = Math.max(0, rivalPublicity + amt);
+            playSfx('seti:terminal-click', 0.4);
+            updateTelemetry();
+        }
+
+        function adjustVp(amt) {
+            rivalVp = Math.max(0, rivalVp + amt);
+            playSfx('seti:terminal-click', 0.4);
+            updateTelemetry();
+        }
+
+        function updateTelemetry() {
+            document.getElementById('disp-round').innerText = `${currentRound} / ${withExpansion ? 4 : 5}`;
+            document.getElementById('disp-turn').innerText = currentTurn;
+            document.getElementById('disp-deck-count').innerText = activeDeck.length;
+            document.getElementById('disp-rival-vp').innerText = rivalVp;
+            document.getElementById('disp-rival-pub').innerText = rivalPublicity;
+
+            document.getElementById('disp-progress-num').innerText = `${rivalProgress} / ${progressMax}`;
+            const pct = Math.min(100, (rivalProgress / progressMax) * 100);
+            document.getElementById('track-progress-fill').style.width = `${pct}%`;
+        }
+
+        // --- ROUND END & PENALTIES ---
+        function endRound() {
+            const maxRounds = withExpansion ? 4 : 5;
+            const requiredObjectives = currentRound; // R1 requires 1, R2 requires 2, etc.
+
+            playSfx('seti:contact-alert', 0.7);
+
+            let penaltyAdv = 0;
+            if (completedObjectivesPool < requiredObjectives && difficulty >= 2) {
+                const missing = requiredObjectives - completedObjectivesPool;
+                penaltyAdv = missing * 3;
+                advanceProgress(penaltyAdv);
+                alert(currentLang === 'pt'
+                    ? `Fim da Rodada ${currentRound}: Você completou ${completedObjectivesPool}/${requiredObjectives} objetivos necessários. Faltaram ${missing}! O Rival avança ${penaltyAdv} espaços na trilha.`
+                    : `Round ${currentRound} End: You completed ${completedObjectivesPool}/${requiredObjectives} required objectives. Missing: ${missing}! Rival advances ${penaltyAdv} on track.`);
+            }
+
+            // Reset completed pool for next round
+            completedObjectivesPool = 0;
+
+            if (currentRound < maxRounds) {
+                currentRound++;
+                currentTurn = 1;
+                // Invert first player
+                firstPlayer = firstPlayer === 'human' ? 'rival' : 'human';
+                document.getElementById('disp-first-player').innerText = firstPlayer === 'human'
+                    ? (currentLang === 'pt' ? 'Você' : 'You')
+                    : 'Rival';
+
+                // Re-shuffle rival deck
+                activeDeck = [...activeDeck, ...discardPile];
+                discardPile = [];
+                shuffleArray(activeDeck);
+
+                updateTelemetry();
+                drawRivalCard();
+
+                logTactical(currentLang === 'pt'
+                    ? `Iniciando Rodada ${currentRound}. Baralho do Rival reembaralhado.`
+                    : `Starting Round ${currentRound}. Rival deck reshuffled.`);
+            } else {
+                endGameFinalScoring();
+            }
+        }
+
+        function endGameFinalScoring() {
+            playSfx('seti:contact-alert', 0.9);
+            // In round 5 (or 4 with exp), rival scores 5 VP for each incomplete objective
+            let remainingObj = (activeObjectives.filter(x => x !== null).length) + (window.objectivePoolRemaining ? window.objectivePoolRemaining.length : 0);
+            let objVp = remainingObj * 5;
+            rivalVp += objVp;
+
+            updateTelemetry();
+
+            const msg = currentLang === 'pt'
+                ? `FIM DE JOGO!\n\nO Rival marcou +${objVp} PV pelos ${remainingObj} objetivos não concluídos.\nPontuação Final do Rival: ${rivalVp} PV.\n\nCompare com a sua pontuação no tabuleiro para determinar o vencedor!`
+                : `GAME OVER!\n\nRival scored +${objVp} VP for ${remainingObj} uncompleted objectives.\nRival Final Score: ${rivalVp} VP.\n\nCompare with your board score to determine the winner!`;
+
+            alert(msg);
+            logTactical(msg);
+        }
+
+        function confirmReset() {
+            if (confirm(currentLang === 'pt' ? 'Deseja reiniciar a partida?' : 'Reset mission?')) {
+                document.getElementById('game-view').style.display = 'none';
+                document.getElementById('setup-view').style.display = 'block';
+                playSfx('ui-click', 0.5);
+            }
+        }
+
+        function openHelp() {
+            document.getElementById('helpModal').classList.add('open');
+            playSfx('ui-click', 0.4);
+        }
+        function closeHelp() {
+            document.getElementById('helpModal').classList.remove('open');
+            playSfx('ui-click', 0.4);
+        }
+        function closeHelpOnBackdrop(e) {
+            if (e.target.id === 'helpModal') closeHelp();
+        }
+
+        window.addEventListener('keydown', e => {
+            if (e.key === 'Escape') closeHelp();
+        });
+
+        function shuffleArray(arr) {
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+        }
+
+        // Initialize on load
+        window.addEventListener('DOMContentLoaded', () => {
+            setLang(currentLang);
+            if (window.ThemeKit) {
+                window.ThemeKit.preloadSfx([
+                    'card-draw', 'card-flip', 'token-place', 'ui-click', 'turn-notify',
+                    'seti:signal-scan', 'seti:data-process', 'seti:probe-launch', 'seti:terminal-click', 'seti:contact-alert'
+                ]);
+            }
+        });
+    </script>
+</body>
+</html>

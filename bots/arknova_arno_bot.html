@@ -435,8 +435,90 @@ input:checked + .slider::before{ transform:translateX(20px); }
 .modal h3{ color:var(--wood); font-family: var(--font-display); font-size: 1.25em; margin-bottom: 10px; }
 .modal-close{ float:right; background: transparent; border: none; font-size: 1.4em; font-weight: bold; color: var(--wood); padding: 0; box-shadow: none; min-height: 0; cursor: pointer; }
 .icon-inline{ display:inline-flex; vertical-align:-0.15em; }
-.icon-inline svg, svg.icon-inline{ width:1.1em; height:1.1em; }
 .modal p { margin-bottom: 10px; font-size: 0.9em; line-height: 1.5; color: var(--text); }
+
+/* Floating Help Button */
+.btn-help-float {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: var(--paper);
+  border: 2px solid var(--wood);
+  color: var(--wood);
+  font-size: 1.5rem;
+  font-weight: 800;
+  cursor: pointer;
+  z-index: 99;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+.btn-help-float:hover {
+  background: var(--wood);
+  color: var(--paper);
+  transform: scale(1.08);
+}
+@media (max-width: 600px) {
+  .btn-help-float {
+    bottom: 14px;
+    right: 14px;
+    width: 44px;
+    height: 44px;
+    font-size: 1.3rem;
+  }
+}
+
+/* Accordion Help Sections */
+.help-section {
+  background: rgba(222, 213, 184, 0.45);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  transition: all 0.2s ease;
+}
+.help-section[open] {
+  border-color: var(--wood);
+  background: rgba(222, 213, 184, 0.75);
+}
+.help-section summary {
+  font-family: var(--font-display);
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: var(--wood);
+  cursor: pointer;
+  user-select: none;
+  outline: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.help-section summary svg {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+}
+.help-section .help-body {
+  margin-top: 10px;
+  color: var(--text);
+  line-height: 1.6;
+  font-size: 0.9rem;
+}
+.help-section ol, .help-section ul {
+  margin: 8px 0;
+  padding-left: 20px;
+}
+.help-section li {
+  margin-bottom: 6px;
+}
+.help-section p {
+  margin-bottom: 8px;
+}
 
 /* Standard Buy Me a Coffee Button */
 .bmc-btn, .bmc-inline, .bmc-float {
@@ -640,6 +722,9 @@ input:checked + .slider::before{ transform:translateX(20px); }
   <a class="bmc-inline" href="https://www.buymeacoffee.com/colletes" target="_blank" rel="noopener" aria-label="Buy me a coffee"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h13a2 2 0 0 1 2 2v1a3 3 0 0 1-3 3h-1"/><path d="M4 8h13v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V8Z"/><path d="M8 3c-.6 1 .5 1.6 0 3M12 3c-.6 1 .5 1.6 0 3"/></svg><span data-i18n="bmcBtn">Me pague um café</span></a>
 </div>
 
+<!-- Floating Help Button -->
+<button class="btn-help-float" onclick="document.getElementById('helpModal').classList.remove('hidden')" aria-label="Ajuda / Rules" title="Ajuda / Rules">?</button>
+
 <div id="helpModal" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
   <div class="modal">
     <button class="modal-close" onclick="document.getElementById('helpModal').classList.add('hidden')">✕</button>
@@ -741,13 +826,84 @@ const I18N = {
     dieHintD8: 'Dado: D8 (1–2→#2, 3–4→#3, 5–6→#4, 7–8→#5).',
     dieHintD12: 'Dado: D12 (1–3→#2, 4–6→#3, 7–9→#4, 10–12→#5).',
     helpTitle: 'Como jogar contra o ARNO',
-    helpBody: `<p>Toque em <b>Rolar Dado</b> para o app rolar o dado virtual (com animação) e resolver o turno do ARNO sozinho — inclusive rerolando automaticamente em 1 ou 6 no D6. Se preferir usar um dado físico, abra "Prefere digitar o valor de um dado físico?" para digitar o resultado manualmente.</p>
-      <p>O ARNO sempre executa a ação <b>Animais</b> (Atração +X, onde X é a posição sorteada) e, além dela, a ação que estiver no espaço sorteado (2–5). Todos os valores numéricos (Atração, Reputação, Conservação, Pausa, Cartas, Zoos, Universidades, Associados, Fichas de Pontuação Final) são calculados e aplicados automaticamente ao painel — os botões +/− continuam disponíveis para qualquer correção manual.</p>
-      <p>Os valores já consideram o nível de dificuldade e o lado (I ou II) de cada carta — toque no botão I/II sobre cada carta para marcá-la como melhorada quando isso acontecer no jogo físico.</p>
-      <p>Na ação <b>Patrocinadores</b>, a Pausa aumenta em +X (o valor da posição sorteada, não sempre +1) e o ARNO também coloca uma ficha de Pontuação Final a cada vez; ao atingir 6 fichas, ele passa a ganhar Conservação +2 no lugar da ficha.</p>
-      <p>Na ação <b>Associação</b>, cada associado só pode ocupar uma das 4 tarefas (Reputação/Zoo/Universidade/Projeto). Se a tarefa sorteada já tiver um associado, o app redireciona automaticamente para a próxima tarefa livre (preferindo uma posição maior). Sem associados livres, o ARNO ganha Conservação +1, Pausa +2 e um Zoo Parceiro OU Universidade (escolhido automaticamente, priorizando o tipo que ele tem menos).</p>
-      <p>O <b>histórico de rodadas</b> abaixo do resultado mostra as últimas jogadas resolvidas em tempo real com tradução dinâmica.</p>
-      <p><b>Marine Worlds</b> e o <b>módulo de condição variável do Projeto de Conservação</b> são ativados como lembretes; consulte as regras impressas para os detalhes específicos de cada um.</p>`
+    helpBody: `<details class="help-section" open>
+<summary>1. Visão Geral & Filosofia do Automa</summary>
+<p>O <b>ARNO</b> (Ark Nova Solo Automa v3.0) simula um oponente humano competitivo, dinâmico e veloz para <i>Ark Nova</i>. Ele não mantém um mapa de zoológico físico nem coloca cercados de animais, mas compete ferozmente por todos os recursos globais: trilha de Atração, Conservação, Reputação, Zoos Parceiros, Universidades e Projetos de Conservação.</p>
+<p>Todos os valores numéricos, níveis de dificuldade e regras de desempate são processados pelo assistente, permitindo que você foque na sua gestão de zoológico sem sobrecarga mental de manutenção.</p>
+</details>
+
+<details class="help-section">
+<summary>2. Setup Físico & Ajustes Solo</summary>
+<ul>
+  <li><b>Seu Setup:</b> Prepare o jogo para 2 jogadores normalmente. Você joga com as regras padrão.</li>
+  <li><b>Setup do ARNO:</b>
+    <ul>
+      <li>Escolha uma cor para o ARNO. Posicione os marcadores dele no início da trilha de Atração, Reputação e Conservação.</li>
+      <li>Coloque 1 marcador de trabalhador dele no tabuleiro de Associação (os outros 3 ficam na reserva de trabalhadores do ARNO).</li>
+      <li>O app já sorteia e posiciona aleatoriamente as 4 cartas de Ação nos espaços <b>2 a 5</b>. Não é necessário embaralhar cartas físicas para o ARNO.</li>
+      <li>A carta <b>Animais</b> fica fixa no espaço 1 virtual (sempre ativada conjuntamente).</li>
+    </ul>
+  </li>
+  <li><b>Display de Cartas:</b> O display de 6 cartas abertas e o deck de compra funcionam exatamente como em 2 jogadores.</li>
+</ul>
+</details>
+
+<details class="help-section">
+<summary>3. Fluxo de Ações & Tomada de Decisão</summary>
+<p>A cada turno do ARNO, toque em <b>Rolar Dado</b> (ou insira o valor manual se usar dado físico):</p>
+<ul>
+  <li><b>Ação Dupla Obrigatória:</b> O ARNO sempre executa <b>duas ações</b> por turno:
+    <ol>
+      <li><b>Ação Animais (Espaço 1):</b> Sempre ativada! Ele ganha <b>Atração +X</b> (onde X é o número do espaço sorteado, de 2 a 5).</li>
+      <li><b>Ação Sorteada (Espaços 2–5):</b> Executa a ação da carta que ocupa o espaço sorteado pelo dado.</li>
+    </ol>
+  </li>
+  <li><b>Resolução de cada Carta:</b>
+    <ul>
+      <li><b>Cartas (Cards):</b> Descarta cartas do display público e/ou compra cartas do deck, avançando Reputação ou Pausa conforme a dificuldade.</li>
+      <li><b>Construção (Build):</b> Avança Atração e Conservação simuladas conforme a força da posição e nível de dificuldade.</li>
+      <li><b>Patrocinadores (Sponsors):</b> Avança a Pausa em <b>+X</b> (posição sorteada) e ganha 1 <i>Ficha de Pontuação Final</i>. Ao atingir 6 fichas, converte futuras ativações em Conservação +2.</li>
+      <li><b>Associação (Association):</b> Envia 1 trabalhador para a tarefa da posição sorteada (Reputação, Zoo Parceiro, Universidade ou Projeto de Conservação).</li>
+    </ul>
+  </li>
+  <li><b>Ciclo das Cartas:</b> No jogo físico, a carta ativada desliza para o espaço 1 e as outras deslizam para a direita. No app, você pode acompanhar ou ajustar as posições no painel interativo.</li>
+</ul>
+</details>
+
+<details class="help-section">
+<summary>4. Regras de Desempate, Upgrades & Casos Especiais</summary>
+<ul>
+  <li><b>Redirecionamento na Associação:</b> Cada trabalhador do ARNO só pode ocupar uma tarefa por ciclo de Pausa. Se a tarefa sorteada já estiver ocupada por ele:
+    <ul>
+      <li>O app redireciona automaticamente para a próxima tarefa livre de maior valor (priorizando espaços 5 &gt; 4 &gt; 3 &gt; 2).</li>
+      <li>Se todos os seus trabalhadores já estiverem alocados no tabuleiro de Associação, ele ganha <b>Conservação +1, Pausa +2</b> e pega 1 Zoo Parceiro OU Universidade (o app escolhe automaticamente o tipo que ele tem menos).</li>
+    </ul>
+  </li>
+  <li><b>Melhoria de Cartas (I para II):</b> Quando o ARNO atinge marcos que concedem melhoria de ação (como na trilha de Conservação em 2 pontos ou bônus de tabuleiro), toque no botão <b>I/II</b> da carta correspondente no app para virá-la para o lado dourado (melhorado).</li>
+  <li><b>Expansão Marine Worlds:</b> Se ativada no setup inicial, aplica as regras de descarte por efeito de onda e ativações aquáticas adicionais descritas no manual da expansão.</li>
+  <li><b>Pausa (Break):</b> Quando o marcador de Pausa atinge o final da trilha, resolve-se a Pausa normalmente para ambos os jogadores (recolher trabalhadores da Associação, descartar cartas excedentes, receber renda). O ARNO recolhe todos os seus trabalhadores de volta para a sua reserva ativa.</li>
+</ul>
+</details>
+
+<details class="help-section">
+<summary>5. Fim de Jogo & Pontuação Solo</summary>
+<ul>
+  <li><b>Gatilho de Término:</b> O fim de jogo é acionado no exato momento em que os marcadores de <b>Atração</b> e <b>Conservação</b> de qualquer jogador se cruzarem na trilha de pontuação.</li>
+  <li><b>Turno Final:</b>
+    <ul>
+      <li>Se você cruzou os marcadores, o ARNO joga exatamente mais um turno final.</li>
+      <li>Se o ARNO cruzou os marcadores, você tem exatamente mais um turno final.</li>
+    </ul>
+  </li>
+  <li><b>Pontuação Final do ARNO:</b>
+    <ul>
+      <li>O ARNO converte suas <b>Fichas de Pontuação Final</b> acumuladas em pontos de Conservação/Atração conforme a escala oficial de ARNO 3.0.</li>
+      <li>Ele pontua seus Projetos de Conservação e bônus acumulados de fim de jogo.</li>
+    </ul>
+  </li>
+  <li><b>Cálculo de Vitória:</b> Calcule a pontuação padrão de Ark Nova (100 pontos base na interseção das trilhas). O jogador com maior pontuação final positiva é o grande vencedor!</li>
+</ul>
+</details>`
   },
   en: {
     pageTitle: 'ARNO — Ark Nova Solo Automa',
@@ -794,13 +950,84 @@ const I18N = {
     dieHintD8: 'Die: D8 (1–2→#2, 3–4→#3, 5–6→#4, 7–8→#5).',
     dieHintD12: 'Die: D12 (1–3→#2, 4–6→#3, 7–9→#4, 10–12→#5).',
     helpTitle: 'How to play against ARNO',
-    helpBody: `<p>Tap <b>Roll Die</b> for the app to roll the virtual die (with animation) and resolve ARNO's turn automatically — including automatic rerolls on 1 or 6 for D6. If you'd rather use a physical die, open "Prefer to type in a physical die result?" to enter results manually.</p>
-      <p>ARNO always performs the <b>Animals</b> action (Appeal +X, where X is the rolled position) plus the action sitting in the rolled slot (2–5). Every numeric value (Appeal, Reputation, Conservation, Break, Cards, Zoos, Universities, Workers, Final Scoring tokens) is calculated and applied automatically — the +/− buttons remain available for any manual adjustment.</p>
-      <p>Values automatically adjust based on difficulty level and card side (I or II) — tap the I/II button on each card to flip it once upgraded in your physical game.</p>
-      <p>On the <b>Sponsors</b> action, Break increases by +X (the rolled position, not always +1) and ARNO also places a Final Scoring token each time; once 6 tokens are placed, he gains Conservation +2 instead of a token.</p>
-      <p>On the <b>Association</b> action, each worker can only occupy one of the 4 tasks (Reputation/Zoo/University/Project). If the rolled task already has a worker, the app automatically redirects to the next free task. With no free workers left, ARNO gains Conservation +1, Break +2, and a Partner Zoo OR University (auto-picked, favoring whichever he has fewer of).</p>
-      <p>The <b>round history</b> below the result displays all resolved turns with real-time translation.</p>
-      <p><b>Marine Worlds</b> and the <b>variable Conservation Project condition module</b> are enabled as reminders; consult the printed rulebook for specific effects.</p>`
+    helpBody: `<details class="help-section" open>
+<summary>1. Overview & Automa Philosophy</summary>
+<p><b>ARNO</b> (Ark Nova Solo Automa v3.0) simulates a fast, highly competitive human opponent for <i>Ark Nova</i>. It does not maintain a physical zoo map board or place enclosure tiles; instead, it contends directly for all shared board resources: Appeal, Conservation, Reputation, Partner Zoos, Universities, and Conservation Projects.</p>
+<p>All numeric formulas, difficulty balancing, and tie-breaking priorities are automatically executed by this app, allowing you to focus on your zoo strategy without rules overhead.</p>
+</details>
+
+<details class="help-section">
+<summary>2. Physical Setup & Table Adjustments</summary>
+<ul>
+  <li><b>Player Setup:</b> Set up the game for 2 players following standard rules. You play normally.</li>
+  <li><b>ARNO Setup:</b>
+    <ul>
+      <li>Choose a player color for ARNO. Place its counters at the start of the Appeal, Reputation, and Conservation tracks.</li>
+      <li>Place 1 of ARNO's association workers in its Association reserve on the board (the other 3 remain in its worker reserve).</li>
+      <li>The app automatically deals and assigns the 4 Action cards into slots <b>2 to 5</b>. No physical shuffling needed for ARNO.</li>
+      <li>The <b>Animals</b> action card stays permanently in virtual slot 1 (always executed every turn).</li>
+    </ul>
+  </li>
+  <li><b>Card Display:</b> The 6-card display row and draw deck function exactly as in a standard 2-player game.</li>
+</ul>
+</details>
+
+<details class="help-section">
+<summary>3. Action Flow & Decision Hierarchy</summary>
+<p>Each turn, tap <b>Roll Die</b> (or enter your physical die roll):</p>
+<ul>
+  <li><b>Mandatory Dual Action:</b> ARNO resolves <b>two actions</b> on every turn:
+    <ol>
+      <li><b>Animals Action (Slot 1):</b> Always executed! ARNO gains <b>Appeal +X</b> (where X is the rolled slot number, 2 to 5).</li>
+      <li><b>Rolled Action (Slots 2–5):</b> ARNO resolves the specific action sitting in the rolled slot.</li>
+    </ol>
+  </li>
+  <li><b>Card Resolution Details:</b>
+    <ul>
+      <li><b>Cards:</b> Discards cards from the public display and/or draws from the deck, advancing Reputation or Break based on difficulty.</li>
+      <li><b>Build:</b> Awards simulated Appeal and Conservation based on slot strength and difficulty level.</li>
+      <li><b>Sponsors:</b> Advances Break by <b>+X</b> (rolled slot value) and places 1 <i>Final Scoring Token</i>. Once 6 tokens are placed, future activations yield Conservation +2 instead.</li>
+      <li><b>Association:</b> Places 1 worker on the task matching the rolled slot (Reputation, Partner Zoo, University, or Conservation Project).</li>
+    </ul>
+  </li>
+  <li><b>Card Cycling:</b> In the physical game, the resolved card slides to slot 1 and preceding cards shift right. In the app, card positions update and can be tracked visually.</li>
+</ul>
+</details>
+
+<details class="help-section">
+<summary>4. Tie-breakers, Upgrades & Edge Cases</summary>
+<ul>
+  <li><b>Association Worker Redirects:</b> Each worker can only occupy one Association task per Break cycle. If the rolled task is already occupied by ARNO:
+    <ul>
+      <li>The app automatically redirects the worker to the next available free task of highest value (favoring slots 5 &gt; 4 &gt; 3 &gt; 2).</li>
+      <li>If all ARNO workers are already placed on the Association board, ARNO gains <b>Conservation +1, Break +2</b> and acquires 1 Partner Zoo OR University (auto-picked to balance whichever type it has fewer of).</li>
+    </ul>
+  </li>
+  <li><b>Card Upgrades (Side I to Side II):</b> When ARNO reaches a milestone that awards an action upgrade (such as reaching 2 Conservation points), tap the <b>I/II</b> toggle button on that card in the app to flip it to its upgraded golden side.</li>
+  <li><b>Marine Worlds Expansion:</b> When enabled in setup, applies wave discarding effects, reef dwelling triggers, and alternate action deck rules per the official expansion.</li>
+  <li><b>Break Phase:</b> When the Break marker reaches the end of the track, resolve standard Break steps for both players. ARNO returns all placed workers from the Association board to its active pool.</li>
+</ul>
+</details>
+
+<details class="help-section">
+<summary>5. Game End & Scoring</summary>
+<ul>
+  <li><b>End Game Trigger:</b> The game end triggers immediately when either player's (or ARNO's) <b>Appeal</b> and <b>Conservation</b> markers pass each other on the scoring track.</li>
+  <li><b>Final Turn:</b>
+    <ul>
+      <li>If you triggered game end, ARNO takes one final turn.</li>
+      <li>If ARNO triggered game end, you take one final turn.</li>
+    </ul>
+  </li>
+  <li><b>ARNO Final Scoring:</b>
+    <ul>
+      <li>ARNO scores its accumulated <b>Final Scoring Tokens</b> according to the official ARNO 3.0 scale.</li>
+      <li>It tallies supported Conservation Projects and accumulated endgame bonuses.</li>
+    </ul>
+  </li>
+  <li><b>Determining the Winner:</b> Calculate standard Ark Nova scoring (100 base points minus distance between Appeal and Conservation markers). The highest positive score wins!</li>
+</ul>
+</details>`
   }
 };
 
@@ -1428,6 +1655,13 @@ if(load()){
   document.getElementById('game-area').classList.remove('hidden');
 }
 applyI18n();
+
+window.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    const m = document.getElementById('helpModal');
+    if (m && !m.classList.contains('hidden')) m.classList.add('hidden');
+  }
+});
 </script>
 <script type="module" src="../assets/analytics.js"></script>
 <script type="module" src="../assets/bot-view.js"></script>

@@ -987,8 +987,66 @@ details .setup-list li {
   height: 20px !important;
   stroke: #000000 !important;
   fill: none !important;
-  flex-shrink: 0 !important;
-  vertical-align: middle !important;
+/* Help Accordion Sections */
+.help-section {
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+}
+.help-section summary {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 1.05rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  outline: none;
+}
+.help-section summary:hover {
+  color: #ffd88a;
+}
+.help-section p, .help-section ul, .help-section ol {
+  margin-top: 8px;
+  color: #f5ede1;
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+.help-section ul {
+  padding-left: 20px;
+}
+
+/* Floating Help Button */
+.btn-help-float {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #30251b;
+  border: 2px solid var(--border);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.6);
+  z-index: 900;
+  transition: all 0.2s ease;
+}
+.btn-help-float:hover {
+  transform: translateY(-2px) scale(1.05);
+  border-color: var(--accent);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.8);
+  color: #ffd88a;
+}
+.btn-help-float svg {
+  width: 24px;
+  height: 24px;
 }
 </style>
     <script src="../assets/logger.js"></script>
@@ -1290,6 +1348,11 @@ details .setup-list li {
 
 </div>
 
+<!-- Floating Help Button -->
+<button class="btn-help-float" id="btnHelpFloat" onclick="openHelp()" title="Ajuda / Regras" aria-label="Ajuda / Regras">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.7-2.5 2-2.5 4"/><circle cx="12" cy="17" r="0.6" fill="currentColor"/></svg>
+</button>
+
 <!-- Help Modal -->
 <div id="helpModal" class="modal-overlay" onclick="if(event.target===this)closeHelp()">
     <div class="modal-content">
@@ -1306,6 +1369,10 @@ details .setup-list li {
 
         function openHelp(){ document.getElementById('helpModal').classList.add('open'); }
         function closeHelp(){ document.getElementById('helpModal').classList.remove('open'); }
+
+        window.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeHelp();
+        });
 
         const LOCATIONS = {
             2: { name: {pt:"Pedreira (Pedra)", en:"Stone Quarry"}, type: "resource", resource: "stone" },
@@ -1380,51 +1447,66 @@ details .setup-list li {
                 roundLabelPrefix: "Rodada ",
                 helpTitle: "Como funciona este assistente",
                 helpBody: `
-                    <h3>O que este app faz</h3>
-                    <p>Ele substitui o segundo jogador humano por um <strong>Automa</strong> simplificado: a cada turno dele, você rola 2d6 aqui no app, que calcula o local do tabuleiro onde ele "trabalharia" e converte o resultado diretamente em pontos, seguindo a variante solo criada por César Augusto Borja.</p>
-                    <h3>Passo a passo de uma rodada</h3>
-                    <ul class="rules-list">
-                        <li>Enquanto você (jogador solo) ainda tiver trabalhadores não alocados, mantenha a caixinha marcada — o Automa só joga enquanto ela estiver marcada.</li>
-                        <li>Toque em "Rolar Alocação do Automato" para rolar 2d6 pelo Automa. O app já calcula automaticamente o próximo local livre, caso o local sorteado já esteja ocupado.</li>
-                        <li>Se o local for um recurso, ferramenta, acasalamento ou agricultura, os pontos/efeitos são aplicados automaticamente.</li>
-                        <li>Se for uma carta de civilização ou construção, revele a carta/peça física e use o formulário que aparece para resolver a bonificação em pontos.</li>
-                        <li>Toque em algum local do grid para marcá-lo manualmente como ocupado por você (isso bloqueia o Automa de usá-lo, exatamente como no jogo físico).</li>
-                        <li>Ao final da rodada, toque em "Encerrar Rodada / Nova Rodada" para liberar todos os locais novamente.</li>
-                    </ul>
-                    <h3>Lembretes de Regras</h3>
-                    <ul class="rules-list">
-                        <li><strong>Primeiro jogador:</strong> o Automa é sempre o primeiro a jogar em toda rodada.</li>
-                        <li><strong>Ordem:</strong> o Automa só aloca um trabalhador se você ainda tiver trabalhadores não alocados no seu tabuleiro.</li>
-                        <li><strong>Bloqueio de Recursos:</strong> locais de coleta (madeira, barro, pedra, ouro) só podem ser usados por um único jogador na rodada.</li>
-                        <li><strong>Regra N+2:</strong> o número máximo de trabalhadores que você pode colocar em um local com múltiplos espaços é N+2, sendo N os trabalhadores do Automa já alocados lá.</li>
-                        <li><strong>Ocupação:</strong> o Automa aloca apenas 1 trabalhador por vez, bloqueando o local inteiro, inclusive a cabana de acasalamento.</li>
-                        <li><strong>Fim do turno de alocação:</strong> quando todos os seus trabalhadores estiverem alocados, o turno termina, mesmo que o Automa ainda tenha trabalhadores livres.</li>
-                        <li><strong>Alimentação:</strong> ao fim de cada rodada, apenas você alimenta sua tribo. O Automa não participa da fase de alimentação.</li>
-                        <li><strong>Cartas de civilização:</strong> ao fim de cada rodada, cartas não adquiridas são descartadas e 2 novas são reveladas.</li>
-                        <li><strong>Locais da Aldeia (Regra 2 Jogadores):</strong> em 2 jogadores, apenas 2 dos 3 locais da aldeia (Ferramentas, Cabana de Acasalamento, Agricultura) podem ser ocupados por rodada. Se você e o Automa já ocuparam 2 deles, marque o 3º como ocupado no grid para respeitar o limite oficial.</li>
-                        <li><strong>Fim de partida:</strong> a partida termina se o monte de cartas de civilização acabar ou se todas as construções forem adquiridas.</li>
-                        <li><strong>Pontuação final:</strong> use as mesmas regras de pontuação final do jogo para 2 jogadores.</li>
-                    </ul>
-                    <h3>Civilização e Construções</h3>
-                    <p>O Automa nunca administra recursos de verdade — tudo vira pontos na hora, segundo esta tabela de conversão:</p>
-                    <table>
-                        <tr><th>Recurso</th><th>Pontos por unidade</th></tr>
-                        <tr><td><span class="res-cell"><svg class="loc-icon" viewBox="0 0 24 24" fill="none" stroke="var(--wood)" stroke-width="2"><path d="M12 2v20M8 6l4-4 4 4M8 12l4-4 4 4M8 18l4-4 4 4"/></svg>Madeira</span></td><td style="text-align:center;">1</td></tr>
-                        <tr><td><span class="res-cell"><svg class="loc-icon" viewBox="0 0 24 24" fill="none" stroke="var(--clay)" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>Barro</span></td><td style="text-align:center;">2</td></tr>
-                        <tr><td><span class="res-cell"><svg class="loc-icon" viewBox="0 0 24 24" fill="none" stroke="var(--stone)" stroke-width="2"><path d="M4 15 9 4h6l5 11-3 5H7Z"/></svg>Pedra</span></td><td style="text-align:center;">3</td></tr>
-                        <tr><td><span class="res-cell"><svg class="loc-icon" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><path d="M12 2 2 9l10 13L22 9Z"/></svg>Ouro</span></td><td style="text-align:center;">4</td></tr>
-                    </table>
-                    <ul class="rules-list">
-                        <li><strong>Bônus de Pontos:</strong> a carta dá uma quantidade fixa de pontos impressa nela.</li>
-                        <li><strong>Bônus de Recurso Único:</strong> a carta dá X unidades de um único tipo de recurso (às vezes à sua escolha). Escolha sempre o recurso de <strong>maior valor</strong> disponível — <em>ex.: "2 recursos quaisquer" = 2 Ouros = 2 × 4 = 8 pontos</em>.</li>
-                        <li><strong>Bônus de Recursos Diversos (2 dados):</strong> role os 2 dados pelo botão dedicado; o recurso indicado pela carta física para o <strong>maior</strong> valor sorteado é o que o Automa recebe.</li>
-                        <li><strong>Bônus de Comida:</strong> a quantidade de comida da carta vira pontos na mesma proporção (3 comidas = 3 pontos).</li>
-                        <li><strong>Bônus de Agricultura:</strong> avança 1 espaço na trilha de agricultura do Automa.</li>
-                        <li><strong>Bônus de Ferramenta:</strong> o Automa recebe a próxima ferramenta (máximo 3) — só conta para a pontuação final.</li>
-                        <li><strong>Bônus de Carta:</strong> o Automa compra imediatamente outra carta de civilização e resolve a bonificação dela em seguida.</li>
-                        <li><strong>Construção de pontuação fixa:</strong> digite os pontos impressos na peça.</li>
-                        <li><strong>Construção 4x / 5x / 7x:</strong> informe quantos dados a peça manda rolar e a soma vira os pontos da construção.</li>
-                    </ul>`,
+                    <div class="space-y-3" style="display:flex; flex-direction:column; gap:10px;">
+                      <details open class="help-section">
+                        <summary>1. Visão Geral & Filosofia do Automa</summary>
+                        <p>Nesta variante solo para <strong>Stone Age</strong> criada por <strong>César Augusto Borja</strong>, o segundo jogador humano é substituído por um <strong>Automa</strong> inteligente e ágil.</p>
+                        <p>O Automa compete ferozmente pelos mesmos espaços do tabuleiro de 2 jogadores, bloqueando áreas de recursos, ferramentas, agricultura e cartas. Diferente de um jogador comum, ele não acumula estoque nem gerencia comida: cada alocação e cada recurso ou carta obtida é imediatamente convertida em <strong>Pontos de Vitória (PV)</strong> instantâneos!</p>
+                      </details>
+
+                      <details open class="help-section">
+                        <summary>2. Setup Físico & Ajustes Solo</summary>
+                        <ul>
+                          <li><strong>Tabuleiro do Automa:</strong> Pegue um tabuleiro individual extra e coloque <strong>5 trabalhadores</strong> de uma cor neutra sobre ele. Coloque o cubo de agricultura dessa cor na posição <strong>0</strong> da trilha.</li>
+                          <li><strong>Jogador Humano:</strong> Inicie com 5 trabalhadores da sua cor, 12 comidas e agricultura na posição 0.</li>
+                          <li><strong>Mercado & Construções:</strong> Monte o tabuleiro principal como em uma partida de 2 jogadores: 4 cartas de civilização abertas na esteira e 4 pilhas de 7 peças de construção.</li>
+                          <li><strong>Iniciativa:</strong> O Automa é <strong>sempre o primeiro jogador</strong> a alocar em todas as rodadas.</li>
+                          <li><strong>Controle de Turnos:</strong> Enquanto você ainda tiver trabalhadores não alocados no seu tabuleiro individual, mantenha a opção <em>"Jogador solo ainda tem trabalhadores não alocados"</em> marcada no app.</li>
+                        </ul>
+                      </details>
+
+                      <details open class="help-section">
+                        <summary>3. Fluxo de Ações & Tomada de Decisão</summary>
+                        <p><strong>1. Turno de Alocação:</strong></p>
+                        <ul>
+                          <li>Toque em <em>"Rolar Alocação do Automato (2d6)"</em>. O aplicativo rola 2 dados e soma seus valores (de 2 a 12), determinando o local exato do tabuleiro físico onde o Automa aloca 1 trabalhador.</li>
+                          <li><strong>Desvio Automático (Regra de Ocupação):</strong> Se o local sorteado já estiver ocupado por você ou pelo próprio Automa, o app avança automaticamente para o próximo local livre no sentido numérico/horário.</li>
+                          <li><strong>Seu Turno de Alocação:</strong> Aloque seus próprios trabalhadores no tabuleiro físico. Toque no local correspondente no grid do aplicativo para marcá-lo como ocupado — isso garante que o Automa não tente alocar trabalhadores onde você já está!</li>
+                          <li>Alterne as alocações até que todos os seus trabalhadores tenham sido posicionados. Quando você não tiver mais trabalhadores, desmarque a caixa e o turno de alocação se encerra.</li>
+                        </ul>
+                        <p><strong>2. Resolução de Ações & Conversão de Pontos:</strong></p>
+                        <ul>
+                          <li><strong>Recursos (Madeira, Barro, Pedra, Ouro):</strong> O Automa ganha pontos imediatos (1 PV/Madeira, 2 PV/Barro, 3 PV/Pedra, 4 PV/Ouro).</li>
+                          <li><strong>Cabana de Ferramentas:</strong> O Automa ganha +1 ferramenta (máximo de 3). Ferramentas contam para a pontuação final de civilização.</li>
+                          <li><strong>Cabana de Acasalamento:</strong> O Automa ganha +1 trabalhador para a próxima rodada (máximo de 10).</li>
+                          <li><strong>Cabana de Agricultura:</strong> O Automa avança +1 espaço na trilha de agricultura.</li>
+                          <li><strong>Cartas de Civilização:</strong> Revele a carta física comprada e utilize o formulário do app para registrar a bonificação (recursos viram pontos instantâneos, comida vira PV direto).</li>
+                          <li><strong>Construções:</strong> Digite os pontos fixos da peça ou role os dados variáveis indicados pela construção para somar os pontos ao Automa.</li>
+                        </ul>
+                      </details>
+
+                      <details open class="help-section">
+                        <summary>4. Regras de Desempate, Bloqueios & Casos Especiais</summary>
+                        <ul>
+                          <li><strong>Regra Oficial de 2 Jogadores na Aldeia:</strong> Apenas <strong>2 dos 3 locais da aldeia</strong> (Ferramentas, Cabana de Acasalamento e Agricultura) podem ser ocupados em uma mesma rodada. Se você e o Automa já ocuparam 2 deles, marque o 3º como ocupado no grid para impedir o uso.</li>
+                          <li><strong>Bloqueio Total de Recursos:</strong> Os locais de coleta de matérias-primas só comportam trabalhadores de 1 único jogador por rodada. Se o Automa estiver na Floresta, você não poderá coletar Madeira nesta rodada.</li>
+                          <li><strong>Regra N+2 em Espaços Múltiplos:</strong> O limite máximo de trabalhadores que você pode alocar em um espaço com múltiplos trabalhadores é N+2 (sendo N o número de trabalhadores que o Automa já posicionou ali).</li>
+                          <li><strong>Poder de Bloqueio do Automa:</strong> O Automa coloca apenas 1 trabalhador por vez, mas bloqueia o espaço por inteiro (inclusive a Cabana de Acasalamento).</li>
+                          <li><strong>Escolha de Recursos nas Cartas:</strong> Quando uma carta oferecer "recurso à sua escolha", o Automa escolhe sempre o recurso de <strong>maior valor</strong> disponível (Ouro = 4 PV).</li>
+                          <li><strong>Descarte de Fim de Rodada:</strong> Ao final da rodada de alocação, descarte as cartas de civilização restantes não compradas e abra 2 novas cartas no mercado.</li>
+                        </ul>
+                      </details>
+
+                      <details open class="help-section">
+                        <summary>5. Fim de Jogo & Pontuação Solo</summary>
+                        <ul>
+                          <li><strong>Condição de Término:</strong> A partida termina imediatamente no fim da rodada em que o baralho de cartas de civilização não puder ser reposto com 4 cartas, ou se qualquer uma das 4 pilhas de construções for totalmente esgotada.</li>
+                          <li><strong>Fase de Alimentação:</strong> Apenas você alimenta sua tribo consumindo comida (ou recursos/PV se faltar comida). O Automa é imune à fome e não gasta comida.</li>
+                          <li><strong>Pontuação Final:</strong> Some seus próprios pontos normais de jogo físico (recursos, agricultura, ferramentas, multiplicadores de civilização e construções). O aplicativo já acumulou a pontuação do Automa ao longo do jogo.</li>
+                          <li>Se a sua pontuação final superar os pontos acumulados pelo Automa, sua tribo lidera a Idade da Pedra com glória eterna!</li>
+                        </ul>
+                      </details>
+                    </div>`,
                 creditsText: `Feito por <strong>Thiago Colletes de Carvalho</strong> (<a href="mailto:colletes@gmail.com">colletes@gmail.com</a>) — variante solo com Automa que pontua criada por <a href="https://ludopedia.com.br/usuario/caborja" target="_blank" rel="noopener"><strong>César Augusto Borja</strong></a>. Stone Age © Hans im Glück / Z-Man Games. Uso pessoal, sem fins comerciais.`,
                 bmcBtn: 'Me pague um café',
                 civFormTitle: "Resolver Carta de Civilização: ",
@@ -1568,30 +1650,68 @@ details .setup-list li {
                 officialLoseBanner: "<svg class=\"icon\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\"><circle cx=\"12\" cy=\"12\" r=\"9\"/><circle cx=\"9\" cy=\"10\" r=\"1\" fill=\"currentColor\"/><circle cx=\"15\" cy=\"10\" r=\"1\" fill=\"currentColor\"/><path d=\"M8 16h1M11 16.5h1M14 16h1\"/></svg> Derrota — seu Limite de Exaustão chegou a 0.",
 
                 helpBodyOfficial: `
-                    <h3>O que este modo faz</h3>
-                    <p>Neste modo você joga sozinho com as 4 cores, sem um Automa oponente. O app funciona como um <strong>painel de controle</strong>: acompanha sua Comida, seu Limite de Exaustão, sua Agricultura e suas construções descartadas, além de calcular automaticamente a comida extra devida a cada rodada.</p>
-                    <h3>Estrutura de uma rodada</h3>
-                    <ul class="rules-list">
-                        <li><strong>Fase 1 (Colocação):</strong> role 1 dado para cada figura que for colocar, seguindo a ordem de iniciativa (menor primeiro); depois de colocar, mova seu marcador de iniciativa para o fim da fila.</li>
-                        <li><strong>Fase 2 (Ações):</strong> resolva as ações dos espaços ocupados, na mesma ordem em que as figuras foram colocadas.</li>
-                        <li><strong>Fase 3 (Alimentação):</strong> escolha o tipo da carta coberta no espaço de custo 4, confira a comida devida calculada pelo app e toque em "Aplicar Alimentação". Se faltar comida, o app reduz automaticamente seu Limite de Exaustão pela diferença.</li>
-                        <li>Descarte a(s) construção(ões) indicada(s) pelo seu nível de dificuldade (toque no botão correspondente) — se não puder, toque em "Não Consegui Descartar" para perder 3 de Exaustão.</li>
-                        <li>Toque em "Encerrar Rodada / Nova Rodada" para avançar, revelar novas cartas de civilização e escolher o próximo tipo de carta de custo 4.</li>
-                    </ul>
-                    <h3>Comida Extra por Tipo de Carta (custo 4)</h3>
-                    <table>
-                        <tr><th>Tipo</th><th>Comida extra</th></tr>
-                        <tr><td><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="7"/></svg> Verde</td><td style="text-align:center;">Fixo: +4</td></tr>
-                        <tr><td><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l6 4-2 8H8l-2-8z"/><circle cx="12" cy="20" r="1" fill="currentColor"/></svg> Feiticeiro</td><td style="text-align:center;">+1 por figura da cor com mais figuras no tabuleiro</td></tr>
-                        <tr><td><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="9" width="7" height="5"/><rect x="13" y="9" width="7" height="5"/><rect x="8.5" y="14" width="7" height="5"/></svg> Construtor</td><td style="text-align:center;">+1 por construção descartada até agora (acumulado)</td></tr>
-                        <tr><td><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20V8M12 8c0-2 -2-4-4-4 0 2 2 4 4 4zM12 8c0-2 2-4 4-4 0 2-2 4-4 4z"/></svg> Fazendeiro</td><td style="text-align:center;">+1 por posição do marcador de Agricultura</td></tr>
-                        <tr><td><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 6l4 4-8 8-4-4z"/><path d="M6 18l-2 2"/></svg> Ferramenteiro</td><td style="text-align:center;">+1 por ferramenta que você possui</td></tr>
-                    </table>
-                    <h3>Fim de Jogo</h3>
-                    <ul class="rules-list">
-                        <li><strong>Derrota:</strong> se seu Limite de Exaustão chegar a 0, a partida termina imediatamente (detectado automaticamente pelo app).</li>
-                        <li><strong>Vitória:</strong> se as cartas de civilização acabarem antes disso, toque em "Fiquei sem Cartas de Civilização" para declarar vitória.</li>
-                    </ul>`,
+                    <div class="space-y-3" style="display:flex; flex-direction:column; gap:10px;">
+                      <details open class="help-section">
+                        <summary>1. Visão Geral & Filosofia do Solo Oficial</summary>
+                        <p>O <strong>Modo Solo Oficial</strong> de <em>Stone Age</em> foi desenvolvido pela editora alemã <strong>Hans im Glück</strong> (com tradução de Raphael Gurian). Neste modo você não enfrenta um Automa: você lidera todas as <strong>4 cores de tribo</strong> cooperativamente contra a escassez extrema, o tempo implacável e o perigo iminente de fome e exaustão.</p>
+                        <p>O aplicativo atua como o seu <strong>painel de controle central</strong>: calcula a demanda crescente de comida gerada pela misteriosa carta de custo 4, rastreia seu <strong>Limite de Exaustão</strong> (que nunca pode chegar a 0), gerencia suas reservas e monitora os descartes obrigatórios de construções.</p>
+                      </details>
+
+                      <details open class="help-section">
+                        <summary>2. Setup Físico & Ajustes Solo</summary>
+                        <ul>
+                          <li>Coloque <strong>5 trabalhadores de cada uma das 4 cores</strong> (Azul, Amarelo, Verde e Vermelho) nos respectivos tabuleiros de jogadores.</li>
+                          <li>Posicione os 4 marcadores de ordem de iniciativa (1º ao 4º) ao lado do tabuleiro.</li>
+                          <li>Embaralhe as cartas de civilização e monte a esteira com 4 cartas: as posições de custo 1, 2 e 3 ficam abertas normalmente, mas a carta na <strong>posição de custo 4 deve ser colocada virada para baixo (coberta)</strong>!</li>
+                          <li>Defina o nível de dificuldade no aplicativo:
+                            <ul>
+                              <li><strong>Fácil:</strong> Limite de Exaustão 10 • Descarte 1 construção a cada 2 rodadas.</li>
+                              <li><strong>Normal:</strong> Limite de Exaustão 10 • Descarte 1 construção por rodada.</li>
+                              <li><strong>Difícil:</strong> Limite de Exaustão 8 • Descarte 1 construção por rodada.</li>
+                              <li><strong>Extremo:</strong> Limite de Exaustão 7 • Descarte 1 construção por rodada e perca 1 ferramenta inicial.</li>
+                            </ul>
+                          </li>
+                        </ul>
+                      </details>
+
+                      <details open class="help-section">
+                        <summary>3. Fluxo de Ações & Tomada de Decisão</summary>
+                        <p>Cada rodada segue 4 fases rigorosas:</p>
+                        <ul>
+                          <li><strong>Fase 1 (Colocação):</strong> Para cada uma das 4 cores, respeitando a ordem de iniciativa atual, role 1 dado para definir a alocação de trabalhadores. Após colocar trabalhadores de uma cor, mova o marcador de iniciativa dela para o final da fila.</li>
+                          <li><strong>Fase 2 (Resolução):</strong> Execute as ações de todos os trabalhadores na mesma sequência de iniciativa em que foram colocados.</li>
+                          <li><strong>Fase 3 (Alimentação & Demanda de Custo 4):</strong>
+                            <ul>
+                              <li>Revele a carta coberta no espaço de custo 4 e selecione sua categoria no aplicativo (Verde, Feiticeiro, Construtor, Fazendeiro ou Ferramenteiro).</li>
+                              <li>O aplicativo calcula a Comida Básica total da sua tribo somada à <strong>Comida Extra exigida pela carta</strong>.</li>
+                              <li>Confira seu estoque e toque em <em>"Aplicar Alimentação"</em>. Se faltar comida, o app subtrai automaticamente a diferença diretamente do seu Limite de Exaustão!</li>
+                            </ul>
+                          </li>
+                          <li><strong>Fase 4 (Descarte de Construções):</strong> Conforme a dificuldade escolhida, descarte a construção exigida tocando no botão correspondente. Se você não possuir construções válidas para descartar, toque em <em>"Não Consegui Descartar"</em> para sofrer penalidade de <strong>-3 no Limite de Exaustão</strong>.</li>
+                          <li>Toque em <em>"Encerrar Rodada / Nova Rodada"</em> para deslizar as cartas de civilização, colocar uma nova carta coberta no custo 4 e avançar a contagem.</li>
+                        </ul>
+                      </details>
+
+                      <details open class="help-section">
+                        <summary>4. Tabela de Demanda Extra da Carta Custo 4</summary>
+                        <p>A carta oculta revela as exigências do inverno para a fase de alimentação:</p>
+                        <ul>
+                          <li><strong>Carta Verde:</strong> Exige sempre um valor fixo de <strong>+4 Comidas</strong> adicionais.</li>
+                          <li><strong>Feiticeiro:</strong> Exige +1 Comida para cada figura pertencente à cor que tiver mais figuras presentes no tabuleiro.</li>
+                          <li><strong>Construtor:</strong> Exige +1 Comida para cada construção que já tenha sido descartada desde o início da partida (efeito cumulativo!).</li>
+                          <li><strong>Fazendeiro:</strong> Exige +1 Comida para cada ponto atual na trilha de Agricultura.</li>
+                          <li><strong>Ferramenteiro:</strong> Exige +1 Comida para cada ferramenta que seus povos possuem.</li>
+                        </ul>
+                      </details>
+
+                      <details open class="help-section">
+                        <summary>5. Condições de Vitória & Derrota</summary>
+                        <ul>
+                          <li><strong>Derrota Imediata (Exaustão Fatal):</strong> Se em qualquer momento seu Limite de Exaustão for reduzido a <strong>0</strong> devido à falta de comida ou falha no descarte de construções, a partida é imediatamente perdida! A fome aniquilou a tribo.</li>
+                          <li><strong>Vitória na Sobrevivência:</strong> Se você conseguir sobreviver a todas as rodadas até que o baralho de cartas de civilização se esgote por completo sem que seu Limite de Exaustão atinja 0, você triunfou sobre as adversidades da pré-história! Toque em <em>"Fiquei sem Cartas de Civilização"</em> para registrar sua vitória épica.</li>
+                        </ul>
+                      </details>
+                    </div>`,
                 creditsTextOfficial: `Feito por <strong>Thiago Colletes de Carvalho</strong> (<a href="mailto:colletes@gmail.com">colletes@gmail.com</a>) — Modo Solo Oficial de Stone Age, tradução de <strong>Raphael Gurian</strong>. Stone Age © 2020 Hans im Glück Verlags-GmbH. Uso pessoal, sem fins comerciais.`
             },
             en: {
@@ -1640,51 +1760,66 @@ details .setup-list li {
                 roundLabelPrefix: "Round ",
                 helpTitle: "How this assistant works",
                 helpBody: `
-                    <h3>What this app does</h3>
-                    <p>It replaces the second human player with a simplified <strong>Automa</strong>: on its turn, you roll 2d6 here in the app, which works out the board location it would "work" and converts the result directly into points, following the solo variant created by César Augusto Borja.</p>
-                    <h3>Step-by-step for a round</h3>
-                    <ul class="rules-list">
-                        <li>While you (the solo player) still have unplaced workers, keep the checkbox checked — the Automa only plays while it's checked.</li>
-                        <li>Tap "Roll Automa Allocation" to roll 2d6 for the Automa. The app automatically advances to the next free location if the rolled one is already occupied.</li>
-                        <li>If the location is a resource, tool, mating, or agriculture space, points/effects are applied automatically.</li>
-                        <li>If it's a civilization card or building, reveal the matching physical card/piece and use the form that appears to resolve its bonus into points.</li>
-                        <li>Tap a location in the grid to manually mark it as occupied by you (this blocks the Automa from using it, exactly like on the physical board).</li>
-                        <li>At the end of the round, tap "End Round / New Round" to free up all locations again.</li>
-                    </ul>
-                    <h3>Rules Reminders</h3>
-                    <ul class="rules-list">
-                        <li><strong>First player:</strong> the Automa always goes first every round.</li>
-                        <li><strong>Order:</strong> the Automa only allocates a worker if you still have unplaced workers on your board.</li>
-                        <li><strong>Resource blocking:</strong> gathering locations (wood, clay, stone, gold) can only be used by a single player per round.</li>
-                        <li><strong>N+2 rule:</strong> the maximum number of workers you may place on a multi-space location is N+2, where N is the Automa's workers already there.</li>
-                        <li><strong>Occupation:</strong> the Automa allocates only 1 worker at a time, blocking the whole location, including the Hut of Procreation.</li>
-                        <li><strong>End of the allocation turn:</strong> once all your workers are placed, the turn ends, even if the Automa still has free workers.</li>
-                        <li><strong>Feeding:</strong> at the end of each round, only you feed your tribe. The Automa doesn't take part in the feeding phase.</li>
-                        <li><strong>Civilization cards:</strong> at the end of each round, unclaimed cards are discarded and 2 new ones are revealed.</li>
-                        <li><strong>Village Spaces (2-Player Rule):</strong> in a 2-player game, only 2 of the 3 village places (Toolmaker, Hut of Procreation, Agriculture) can be taken per round. If you and the Automa take 2, mark the 3rd as occupied on the grid to enforce the official 2p limit.</li>
-                        <li><strong>End of game:</strong> the game ends if the civilization card deck runs out or all buildings are claimed.</li>
-                        <li><strong>Final scoring:</strong> use the same final-scoring rules as the 2-player game.</li>
-                    </ul>
-                    <h3>Civilization Cards & Buildings</h3>
-                    <p>The Automa never manages real resources — everything becomes points immediately, using this conversion table:</p>
-                    <table>
-                        <tr><th>Resource</th><th>Points per unit</th></tr>
-                        <tr><td><span class="res-cell"><svg class="loc-icon" viewBox="0 0 24 24" fill="none" stroke="var(--wood)" stroke-width="2"><path d="M12 2v20M8 6l4-4 4 4M8 12l4-4 4 4M8 18l4-4 4 4"/></svg>Wood</span></td><td style="text-align:center;">1</td></tr>
-                        <tr><td><span class="res-cell"><svg class="loc-icon" viewBox="0 0 24 24" fill="none" stroke="var(--clay)" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>Clay</span></td><td style="text-align:center;">2</td></tr>
-                        <tr><td><span class="res-cell"><svg class="loc-icon" viewBox="0 0 24 24" fill="none" stroke="var(--stone)" stroke-width="2"><path d="M4 15 9 4h6l5 11-3 5H7Z"/></svg>Stone</span></td><td style="text-align:center;">3</td></tr>
-                        <tr><td><span class="res-cell"><svg class="loc-icon" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><path d="M12 2 2 9l10 13L22 9Z"/></svg>Gold</span></td><td style="text-align:center;">4</td></tr>
-                    </table>
-                    <ul class="rules-list">
-                        <li><strong>Point bonus:</strong> the card gives a fixed amount of points printed on it.</li>
-                        <li><strong>Single resource bonus:</strong> the card gives X units of a single resource type (sometimes your choice). Always pick the <strong>highest-value</strong> resource available — <em>e.g. "2 of any resource" = 2 Gold = 2 × 4 = 8 points</em>.</li>
-                        <li><strong>Mixed resources bonus (2 dice):</strong> roll the 2 dice with the dedicated button; the resource indicated by the physical card for the <strong>higher</strong> die is what the Automa receives.</li>
-                        <li><strong>Food bonus:</strong> the card's food amount becomes points at the same rate (3 food = 3 points).</li>
-                        <li><strong>Agriculture bonus:</strong> advances 1 space on the Automa's agriculture track.</li>
-                        <li><strong>Tool bonus:</strong> the Automa receives the next tool (max 3) — only counts toward final scoring.</li>
-                        <li><strong>Card bonus:</strong> the Automa immediately draws another civilization card and resolves its bonus right after.</li>
-                        <li><strong>Fixed-score building:</strong> enter the points printed on the piece.</li>
-                        <li><strong>4x / 5x / 7x building:</strong> enter how many dice the piece calls for and the sum becomes the building's points.</li>
-                    </ul>`,
+                    <div class="space-y-3" style="display:flex; flex-direction:column; gap:10px;">
+                      <details open class="help-section">
+                        <summary>1. Overview & Automa Philosophy</summary>
+                        <p>In this solo variant for <strong>Stone Age</strong> created by <strong>César Augusto Borja</strong>, the second human player is replaced by a clever and swift <strong>Automa</strong>.</p>
+                        <p>The Automa fiercely competes for the exact same spots on the 2-player board, blocking critical resource zones, tools, agriculture, and cards. Unlike a human player, it does not stockpile resources or manage food: every worker allocation and card gained is immediately converted into instant <strong>Victory Points (VP)</strong>!</p>
+                      </details>
+
+                      <details open class="help-section">
+                        <summary>2. Physical Setup & Solo Adjustments</summary>
+                        <ul>
+                          <li><strong>Automa Player Board:</strong> Take an extra individual player board and place <strong>5 workers</strong> of an unused color on it. Place that color's agriculture cube at position <strong>0</strong> on the track.</li>
+                          <li><strong>Human Player:</strong> Begin with 5 workers of your chosen color, 12 food, and your agriculture marker at position 0.</li>
+                          <li><strong>Market & Buildings:</strong> Set up the main board according to standard 2-player rules: 4 face-up civilization cards on the track and 4 building stacks of 7 tiles each.</li>
+                          <li><strong>Turn Initiative:</strong> The Automa is <strong>always the first player</strong> to place a worker in every round.</li>
+                          <li><strong>Turn Tracking:</strong> Keep <em>"Solo player still has unplaced workers"</em> checked in the app as long as you have workers available on your player board.</li>
+                        </ul>
+                      </details>
+
+                      <details open class="help-section">
+                        <summary>3. Action Flow & Decision Hierarchy</summary>
+                        <p><strong>1. Placement Turn:</strong></p>
+                        <ul>
+                          <li>Tap <em>"Roll Automa Allocation (2d6)"</em>. The app rolls 2 dice and sums their values (from 2 to 12), determining the exact space on the physical board where the Automa places 1 worker.</li>
+                          <li><strong>Automatic Diversion (Occupancy Rule):</strong> If the rolled space is already occupied by either you or an earlier Automa worker, the app automatically advances clockwise/numerically to the next free location.</li>
+                          <li><strong>Your Placement Turn:</strong> Place your workers on the physical table. Tap the corresponding button on the app grid to flag it as occupied — this guarantees the Automa won't attempt to place where you already stand!</li>
+                          <li>Alternate placements until all your workers are placed on the board. When you have no workers left, uncheck the box and the placement phase concludes.</li>
+                        </ul>
+                        <p><strong>2. Action Resolution & VP Conversion:</strong></p>
+                        <ul>
+                          <li><strong>Resources (Wood, Clay, Stone, Gold):</strong> The Automa scores immediate points (1 VP/Wood, 2 VP/Clay, 3 VP/Stone, 4 VP/Gold).</li>
+                          <li><strong>Toolmaker's Hut:</strong> The Automa gains +1 tool (max 3). Tools score during final civilization scoring.</li>
+                          <li><strong>Hut of Procreation:</strong> The Automa gains +1 worker for the next round (max 10).</li>
+                          <li><strong>Agriculture Hut:</strong> The Automa advances +1 space on the agriculture track.</li>
+                          <li><strong>Civilization Cards:</strong> Reveal the drawn physical card and use the app form to credit its bonus (resources become instant VP, food becomes direct VP).</li>
+                          <li><strong>Buildings:</strong> Enter the printed fixed points or roll the variable dice shown on the tile to credit points to the Automa.</li>
+                        </ul>
+                      </details>
+
+                      <details open class="help-section">
+                        <summary>4. Tie-Breakers, Blocking & Edge Cases</summary>
+                        <ul>
+                          <li><strong>Official 2-Player Village Rule:</strong> Only <strong>2 of the 3 village places</strong> (Toolmaker, Hut of Procreation, Agriculture) may be occupied in a single round. Once 2 are taken, mark the 3rd as occupied in the grid to enforce the rule.</li>
+                          <li><strong>Total Resource Blocking:</strong> Raw material gathering spots may only host workers from 1 single player per round. If the Automa occupies the Forest, you cannot collect Wood this round.</li>
+                          <li><strong>N+2 Rule on Multi-Worker Spaces:</strong> The maximum number of workers you can place on a multi-space spot is N+2, where N is the number of Automa workers already present.</li>
+                          <li><strong>Automa Blocking Power:</strong> The Automa places only 1 worker at a time, but it locks down the entire location (including the Hut of Procreation).</li>
+                          <li><strong>Resource Choice Cards:</strong> When a card provides "resource of your choice", the Automa always claims the <strong>highest-value resource</strong> available (Gold = 4 VP).</li>
+                          <li><strong>Round-End Discard:</strong> At the end of the round, discard unbought civilization cards and reveal 2 new cards into the market.</li>
+                        </ul>
+                      </details>
+
+                      <details open class="help-section">
+                        <summary>5. Game End & Solo Scoring</summary>
+                        <ul>
+                          <li><strong>End Game Trigger:</strong> The game ends at the end of the round in which the civilization deck cannot refill 4 cards, or if any 1 of the 4 building stacks is completely emptied.</li>
+                          <li><strong>Feeding Phase:</strong> Only you feed your tribe with food (or resources/VP if short). The Automa never consumes food and suffers no hunger penalties.</li>
+                          <li><strong>Final Scoring:</strong> Tally your standard tabletop score (resources, agriculture, tools, civilization multipliers, and buildings). The app has recorded all Automa points accumulated throughout the game.</li>
+                          <li>If your total final score exceeds the Automa's score, your tribe leads the Stone Age to lasting glory!</li>
+                        </ul>
+                      </details>
+                    </div>`,
                 creditsText: `Made by <strong>Thiago Colletes de Carvalho</strong> (<a href="mailto:colletes@gmail.com">colletes@gmail.com</a>) — scoring Automa solo variant created by <a href="https://ludopedia.com.br/usuario/caborja" target="_blank" rel="noopener"><strong>César Augusto Borja</strong></a>. Stone Age © Hans im Glück / Z-Man Games. Personal, non-commercial use.`,
                 bmcBtn: 'Buy me a coffee',
                 civFormTitle: "Resolve Civilization Card: ",
@@ -1828,30 +1963,68 @@ details .setup-list li {
                 officialLoseBanner: "<svg class=\"icon\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\"><circle cx=\"12\" cy=\"12\" r=\"9\"/><circle cx=\"9\" cy=\"10\" r=\"1\" fill=\"currentColor\"/><circle cx=\"15\" cy=\"10\" r=\"1\" fill=\"currentColor\"/><path d=\"M8 16h1M11 16.5h1M14 16h1\"/></svg> Defeat — your Exhaustion Limit reached 0.",
 
                 helpBodyOfficial: `
-                    <h3>What this mode does</h3>
-                    <p>In this mode you play alone with all 4 colors, with no Automa opponent. The app works as a <strong>control panel</strong>: it tracks your Food, Exhaustion Limit, Agriculture, and discarded buildings, and automatically calculates the extra food owed each round.</p>
-                    <h3>Structure of a round</h3>
-                    <ul class="rules-list">
-                        <li><strong>Phase 1 (Placement):</strong> roll 1 die for each figure you're placing, following initiative order (lowest first); after placing, move your initiative marker to the back of the line.</li>
-                        <li><strong>Phase 2 (Actions):</strong> resolve the actions of the occupied spaces, in the same order the figures were placed.</li>
-                        <li><strong>Phase 3 (Feeding):</strong> choose the type of the covered cost-4 card, check the food owed calculated by the app, and tap "Apply Feeding". If you're short on food, the app automatically reduces your Exhaustion Limit by the difference.</li>
-                        <li>Discard the building(s) indicated by your difficulty level (tap the matching button) — if you can't, tap "Couldn't Discard" to lose 3 Exhaustion.</li>
-                        <li>Tap "End Round / New Round" to advance, reveal new civilization cards, and choose the next cost-4 card type.</li>
-                    </ul>
-                    <h3>Extra Food by Card Type (cost 4)</h3>
-                    <table>
-                        <tr><th>Type</th><th>Extra food</th></tr>
-                        <tr><td><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="7"/></svg> Green</td><td style="text-align:center;">Flat: +4</td></tr>
-                        <tr><td><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l6 4-2 8H8l-2-8z"/><circle cx="12" cy="20" r="1" fill="currentColor"/></svg> Sorcerer</td><td style="text-align:center;">+1 per figure of the color with the most figures on the board</td></tr>
-                        <tr><td><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="9" width="7" height="5"/><rect x="13" y="9" width="7" height="5"/><rect x="8.5" y="14" width="7" height="5"/></svg> Builder</td><td style="text-align:center;">+1 per building discarded so far (accumulated)</td></tr>
-                        <tr><td><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20V8M12 8c0-2 -2-4-4-4 0 2 2 4 4 4zM12 8c0-2 2-4 4-4 0 2-2 4-4 4z"/></svg> Farmer</td><td style="text-align:center;">+1 per position of the Agriculture marker</td></tr>
-                        <tr><td><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 6l4 4-8 8-4-4z"/><path d="M6 18l-2 2"/></svg> Toolsmith</td><td style="text-align:center;">+1 per tool you own</td></tr>
-                    </table>
-                    <h3>End of Game</h3>
-                    <ul class="rules-list">
-                        <li><strong>Defeat:</strong> if your Exhaustion Limit reaches 0, the game ends immediately (detected automatically by the app).</li>
-                        <li><strong>Victory:</strong> if the civilization cards run out before that, tap "Ran Out of Civilization Cards" to declare victory.</li>
-                    </ul>`,
+                    <div class="space-y-3" style="display:flex; flex-direction:column; gap:10px;">
+                      <details open class="help-section">
+                        <summary>1. Overview & Official Solo Philosophy</summary>
+                        <p>The <strong>Official Solo Mode</strong> for <em>Stone Age</em> was designed by publisher <strong>Hans im Glück</strong> (with English/Portuguese translations by Raphael Gurian). In this mode you do not face an Automa: you command all <strong>4 tribe colors</strong> cooperatively against extreme scarcity, relentless time, and the looming threats of starvation and exhaustion.</p>
+                        <p>The app acts as your <strong>central command console</strong>: it calculates escalating food demands from the mysterious cost-4 card, tracks your <strong>Exhaustion Limit</strong> (which must never hit 0), manages supplies, and oversees mandatory building discards.</p>
+                      </details>
+
+                      <details open class="help-section">
+                        <summary>2. Physical Setup & Solo Adjustments</summary>
+                        <ul>
+                          <li>Place <strong>5 workers of each of the 4 colors</strong> (Blue, Yellow, Green, Red) onto their respective player boards.</li>
+                          <li>Place the 4 initiative order markers (1st through 4th) beside the main board.</li>
+                          <li>Shuffle the civilization deck and set up the 4-card display: cost positions 1, 2, and 3 are face-up as usual, but the card at the <strong>cost 4 space must be placed face-down (covered)</strong>!</li>
+                          <li>Select your difficulty in the app:
+                            <ul>
+                              <li><strong>Easy:</strong> Exhaustion Limit 10 • Discard 1 building every 2 rounds.</li>
+                              <li><strong>Normal:</strong> Exhaustion Limit 10 • Discard 1 building per round.</li>
+                              <li><strong>Hard:</strong> Exhaustion Limit 8 • Discard 1 building per round.</li>
+                              <li><strong>Extreme:</strong> Exhaustion Limit 7 • Discard 1 building per round and lose 1 starting tool.</li>
+                            </ul>
+                          </li>
+                        </ul>
+                      </details>
+
+                      <details open class="help-section">
+                        <summary>3. Action Flow & Decision Hierarchy</summary>
+                        <p>Each round unfolds across 4 structured phases:</p>
+                        <ul>
+                          <li><strong>Phase 1 (Placement):</strong> For each of the 4 colors, in current initiative order, roll 1 die to determine worker placement. Once placed, move that color's initiative token to the back of the queue.</li>
+                          <li><strong>Phase 2 (Actions):</strong> Execute worker actions in the same initiative order as they were placed on the board.</li>
+                          <li><strong>Phase 3 (Feeding & Cost-4 Demands):</strong>
+                            <ul>
+                              <li>Reveal the face-down card at the cost 4 spot and select its category in the app (Green, Sorcerer, Builder, Farmer, or Toolsmith).</li>
+                              <li>The app calculates your base tribe food obligation plus the <strong>Extra Food demanded by the revealed card</strong>.</li>
+                              <li>Check your inventory and tap <em>"Apply Feeding"</em>. If you lack enough food, each missing food is automatically deducted directly from your Exhaustion Limit!</li>
+                            </ul>
+                          </li>
+                          <li><strong>Phase 4 (Building Discard):</strong> According to your difficulty level, discard the required building tile by tapping the matching button. If you cannot discard, tap <em>"Couldn't Discard"</em> to suffer a <strong>-3 penalty to your Exhaustion Limit</strong>.</li>
+                          <li>Tap <em>"End Round / New Round"</em> to shift civilization cards, place a new face-down card at cost 4, and advance the round.</li>
+                        </ul>
+                      </details>
+
+                      <details open class="help-section">
+                        <summary>4. Extra Food Reference (Cost-4 Cards)</summary>
+                        <p>The hidden card reveals winter hardships during the feeding phase:</p>
+                        <ul>
+                          <li><strong>Green Card:</strong> Demands a flat rate of <strong>+4 Food</strong>.</li>
+                          <li><strong>Sorcerer:</strong> Demands +1 Food for each figure of the color with the most figures currently on the board.</li>
+                          <li><strong>Builder:</strong> Demands +1 Food for every building tile discarded since the start of the game (cumulative!).</li>
+                          <li><strong>Farmer:</strong> Demands +1 Food for each step reached on the Agriculture track.</li>
+                          <li><strong>Toolsmith:</strong> Demands +1 Food for each tool owned across your tribes.</li>
+                        </ul>
+                      </details>
+
+                      <details open class="help-section">
+                        <summary>5. Victory & Defeat Conditions</summary>
+                        <ul>
+                          <li><strong>Immediate Defeat (Fatal Exhaustion):</strong> If at any point your Exhaustion Limit drops to <strong>0</strong> due to starvation or failed building discards, the game ends immediately in defeat!</li>
+                          <li><strong>Survival Victory:</strong> If you endure all rounds until the civilization card deck is completely exhausted without your Exhaustion Limit reaching 0, you have survived prehistoric adversity! Tap <em>"Ran Out of Civilization Cards"</em> to claim victory.</li>
+                        </ul>
+                      </details>
+                    </div>`,
                 creditsTextOfficial: `Made by <strong>Thiago Colletes de Carvalho</strong> (<a href="mailto:colletes@gmail.com">colletes@gmail.com</a>) — Stone Age Official Solo Mode, translated by <strong>Raphael Gurian</strong>. Stone Age © 2020 Hans im Glück Verlags-GmbH. Personal, non-commercial use.`
             }
         };

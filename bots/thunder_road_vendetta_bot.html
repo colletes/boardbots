@@ -398,6 +398,52 @@
         #dice-box canvas { width:100% !important; height:100% !important; display:block; }
         
         .help-panel { max-width: 800px; height: auto; max-height: 90vh; padding: 20px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+        .help-section {
+            background: rgba(20, 20, 20, 0.85);
+            border: 1px solid #444;
+            border-radius: 6px;
+            padding: 12px 16px;
+            margin-bottom: 12px;
+            transition: all 0.2s ease;
+        }
+        .help-section[open] {
+            border-color: var(--yellow);
+            background: rgba(26, 26, 26, 0.95);
+        }
+        .help-section summary {
+            font-size: 0.95rem;
+            font-weight: bold;
+            color: var(--yellow);
+            cursor: pointer;
+            user-select: none;
+            outline: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        .help-section summary svg {
+            flex-shrink: 0;
+            width: 18px;
+            height: 18px;
+        }
+        .help-section .help-body {
+            margin-top: 12px;
+            color: #ddd;
+            line-height: 1.6;
+            font-size: 0.92rem;
+        }
+        .help-section ol, .help-section ul {
+            margin: 8px 0;
+            padding-left: 20px;
+        }
+        .help-section li {
+            margin-bottom: 6px;
+        }
+        .help-section p {
+            margin-bottom: 8px;
+        }
 
         .config-sidebar { width: 100%; background: #141414; border-bottom: 2px solid #333; display: flex; flex-direction: column; max-height: 40vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
         .file-controls { padding: 15px; border-bottom: 2px solid #444; background: #000; display: flex; flex-direction: column; gap: 10px; }
@@ -745,11 +791,11 @@
 
     <button class="btn-help-float" onclick="openHelpModal()">?</button>
 
-    <div id="help-modal" class="modal-overlay hidden">
+    <div id="help-modal" class="modal-overlay hidden" onclick="if(event.target===this)closeHelpModal()">
         <div class="config-panel help-panel">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--rust); padding-bottom: 15px; margin-bottom: 20px; flex-wrap:nowrap; gap:10px;">
                 <h2 style="margin:0; color:var(--rust); letter-spacing: 2px; text-transform: uppercase; font-size: 1.2em;"><svg class="icon-inline-title" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg><span data-i18n="helpModalTitle">Manuais: TRV-9000</span></h2>
-                <button onclick="closeHelpModal()" class="btn-small" style="flex-shrink:0; border-color: #ff3333; color: #ff3333; background: rgba(255,0,0,0.1); font-weight:bold;" style="border-color: #ff3333; color: #ff3333; background: rgba(255,0,0,0.1); font-weight:bold;" data-i18n="btnClose">FECHAR X</button>
+                <button onclick="closeHelpModal()" class="btn-small" style="flex-shrink:0; border-color: #ff3333; color: #ff3333; background: rgba(255,0,0,0.1); font-weight:bold; cursor:pointer;" data-i18n="btnClose">FECHAR X</button>
             </div>
             
             <div id="help-content" style="font-size: 0.95em; line-height: 1.6; color: #ddd;"></div>
@@ -1282,6 +1328,16 @@
     // --- CONTROLES DOS MODAIS E NAVEGAÇÃO ---
     function openHelpModal() { document.getElementById('help-modal').classList.remove('hidden'); }
     function closeHelpModal() { document.getElementById('help-modal').classList.add('hidden'); }
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closeHelpModal();
+            if (typeof closeConfigModal === 'function') closeConfigModal();
+            const diceIntro = document.getElementById('dice-intro-overlay');
+            if (diceIntro && !diceIntro.classList.contains('hidden')) {
+                diceIntro.classList.add('hidden');
+            }
+        }
+    });
     function toggleHelp() {
         const modal = document.getElementById('help-modal');
         if (!modal) return;
@@ -1371,112 +1427,184 @@
     // --- CONTEÚDO DO MANUAL (BILÍNGUE) ---
     const HELP_CONTENT = {
         pt: `
-            <h3 style="color: var(--yellow); border-left: 4px solid var(--yellow); padding-left: 10px;"><span class="icon-inline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span> INICIALIZAÇÃO</h3>
-            <ul style="padding-left: 20px; margin-bottom: 25px;">
-                <li>Os bots <strong>não usam dados de movimento OU o dado de estrada</strong>. Eles se guiam pelas cartas, que são reveladas 1 a 1, mostrando qual carro se move e a direção. Eles usam os painéis normalmente, entretanto, para controlar o dano. Utilizam também os dados de combate normalmente.</li>
-                <li>Role <strong>1d6</strong> para verificar onde posicionar o carro do bot na pista inicial. O número se resolve de cima para baixo, i.e., 1 é o espaço mais acima e 6 o mais abaixo.</li>
-                <li>Escolha a quantidade de bots, a cor e o time. Os times especiais fornecem desafios adicionais e suas habilidades são somadas às do protocolo básico. Escolha também o <strong>Nível de Dificuldade do Protocolo Básico (1 a 4)</strong>: quanto maior o nível, mais habilidades básicas ficam ativas ao mesmo tempo, tornando o bot mais difícil.</li>
-                <li>Você pode adicionar opcionalmente o <strong>SDBR (Big Rig Autônomo)</strong> e/ou o <strong>SDFF (Final Five Autônomo)</strong> como oponentes extras da expansão "Maximum Chrome".</li>
-            </ul>
+            <details class="help-section" open>
+                <summary>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+                    1. Visão Geral & Filosofia do TRV-9000
+                </summary>
+                <div class="help-body">
+                    <p>O <strong>TRV-9000</strong> simula gangues rivais sanguinárias acelerando pela rodovia pós-apocalíptica em <em>Thunder Road: Vendetta</em> (Restoration Games). Ele foi projetado para agir com ferocidade implacável e velocidade de jogo relâmpago:</p>
+                    <ul>
+                        <li><strong>Sem Dados de Movimento ou Estrada:</strong> Os bots não usam dados de movimento nem o dado de perigo de estrada. Suas manobras são determinadas diretamente pelas cartas de ativação, reveladas uma a uma, mostrando qual veículo ativa e sua sequência de micro-movimentos lineares.</li>
+                        <li><strong>Painéis & Combate Normais:</strong> Eles utilizam os painéis de dano físicos normalmente para registrar avarias e usam os dados de combate (dados de tiro e colisão) exatamente como um jogador humano.</li>
+                        <li><strong>Expansões Integradas (Maximum Chrome):</strong> Compatibilidade total com equipes especiais personalizadas, o colosso <strong>Big Rig Autônomo (SDBR)</strong> e o esquadrão motoqueiro <strong>Final Five Autônomo (SDFF)</strong>.</li>
+                    </ul>
+                </div>
+            </details>
 
-            <h3 style="color: var(--yellow); border-left: 4px solid var(--yellow); padding-left: 10px;"><span class="icon-inline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 13l1.5-4.5A2 2 0 0 1 6.4 7h9.2a2 2 0 0 1 1.9 1.4L19 13"/><rect x="2" y="13" width="20" height="5" rx="1"/><circle cx="7" cy="18" r="1.5"/><circle cx="17" cy="18" r="1.5"/></svg></span> FASE DE MOVIMENTO</h3>
-            <ul style="padding-left: 20px; margin-bottom: 25px;">
-                <li>Durante este turno, ative o carro designado pela letra S, M ou L, presente no início da linha de ativação revelada. Se este carro não estiver operável (destruído), avance a carta de ativação para revelar e ativar o próximo carro. Se todos os carros operáveis já tiverem sido ativados nesta rodada, realize <strong>1 EMBALO (COAST)</strong> com o maior carro operável na carta de ativação.</li>
-                <li>A fase de movimento é dividida em vários micro-movimentos na forma de uma linha de símbolos de movimento a serem executados em ordem, da esquerda para a direita. Para cada símbolo, sempre tente mover o carro ativado o maior número de espaços possível, na direção indicada. Cada símbolo de movimento indica o número máximo de espaços que ele pode se mover, e a direção fixa na qual deve se mover.</li>
-                <li><strong style="color:var(--rust);">🔥 Condição de Fogo:</strong> Aplique apenas se o carro ativado estiver pegando fogo. É um <strong>pré-resultado</strong> (não role o dado de fogo): os símbolos +1 e +2 não são movimentos obrigatórios, são micro-movimentos bônus, sempre em linha reta à frente, respeitando as regras de movimento do TRV9000.</li>
-                <li><strong>Lama, Gosma Tóxica, Planícies de Sal:</strong> Trate como espaços de estrada, não aplique nenhum efeito.</li>
-                <li><strong>Vidro do Deserto, Mancha de Óleo, Rampa, Fogo! e Ficha de Perigo virada para baixo:</strong> Aplique as regras normais, como para um jogador.</li>
-                <li><strong>Borda do tabuleiro, Espaços intransponíveis, Veículo da mesma equipe, Rampa Eliminatória, Ficha de perigo de Mina, Vidro do deserto (movendo-se em direção aos espaços mencionados acima):</strong> Causam uma mudança de direção. Pare o micro-movimento atual no espaço anterior e execute o próximo símbolo de movimento na linha de ativação.</li>
-                <li><strong style="color:var(--rust);">💥 Slam:</strong> O TRV9000 nunca dá Slam em carros da própria equipe (isso encerra o símbolo atual no espaço anterior e executa o próximo). Ao dar Slam em qualquer outro veículo, se o resultado mover o carro do TRV9000 e ele tiver direito a rerrolar (por ser o veículo maior), <strong>sempre rerrola</strong>.</li>
-                <li><strong>Resumo:</strong> Nunca se mova para um espaço onde você sabe de antemão que inevitavelmente resultará em dano ou na eliminação de um carro TRV9000.</li>
-                <li>Após executar o último símbolo, um SLAM, um SALTO ou receber DANO: <strong>encerre a fase de movimento e inicie a fase de tiro</strong>.</li>
-            </ul>
+            <details class="help-section">
+                <summary>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="3" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                    2. Setup Físico & Posicionamento Inicial
+                </summary>
+                <div class="help-body">
+                    <ol>
+                        <li>Monte os 3 tabuleiros de rodovia do percurso e distribua as fichas de perigo iniciais conforme o manual base.</li>
+                        <li>Escolha o número de gangues do TRV-9000 na partida, definindo suas cores e equipes táticas.</li>
+                        <li><strong>Dificuldade do Protocolo (1 a 4):</strong> O Nível 1 aplica apenas movimentação e tiro. Níveis 2 a 4 ativam habilidades agressivas cumulativas (reparos automáticos de emergência, desvios táticos e miras travadas).</li>
+                        <li><strong>Posicionamento Inicial (Parking Lot):</strong> Toque no botão de rolagem inicial (ou jogue 1d6 roxo para cada veículo). O número sorteado (1 a 6) indica o espaço exato na pista de largada, contado estritamente de cima para baixo (1 = topo, 6 = base).</li>
+                        <li>Se jogar com SDBR ou SDFF, posicione o Big Rig ou as motos de acordo com as regras de Maximum Chrome.</li>
+                    </ol>
+                </div>
+            </details>
 
-            <h3 style="color: var(--yellow); border-left: 4px solid var(--yellow); padding-left: 10px;"><span class="icon-inline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg></span> TIRO</h3>
-            <ul style="padding-left: 20px; margin-bottom: 25px;">
-                <li>Se um veículo adversário estiver no arco frontal do carro ativado, atire.</li>
-                <li>Se houver vários veículos adversários presentes, dê prioridade àquele marcado com o símbolo de prioridade de tiro (no topo da carta de ativação). O carro ativado atira primeiro no espaço designado pela prioridade (Cima para Baixo ou Baixo para Cima). Se este espaço estiver vazio, atire no próximo espaço seguindo a prioridade.</li>
-            </ul>
+            <details class="help-section">
+                <summary>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 13l1.5-4.5A2 2 0 0 1 6.4 7h9.2a2 2 0 0 1 1.9 1.4L19 13"/><rect x="2" y="13" width="20" height="5" rx="1"/><circle cx="7" cy="18" r="1.5"/><circle cx="17" cy="18" r="1.5"/></svg>
+                    3. Fluxo de Ações & Movimentação
+                </summary>
+                <div class="help-body">
+                    <ol>
+                        <li><strong>Carro Ativado:</strong> Observe a letra inicial da carta revelada: <strong>S</strong> (Small / Pequeno), <strong>M</strong> (Medium / Médio) ou <strong>L</strong> (Large / Grande). Se esse carro estiver destruído, avance imediatamente a carta para ativar o próximo veículo operável.</li>
+                        <li><strong>Embalo (Coast):</strong> Se todos os carros operáveis da equipe já tiverem ativado na rodada, realize 1 movimento de EMBALO com o maior carro ainda operável (avança 1 espaço na direção da prioridade de mira).</li>
+                        <li><strong>Execução dos Micro-Movimentos:</strong> Resolva cada símbolo da linha sequencialmente, da esquerda para a direita. Para cada seta/símbolo, desloque o carro o número máximo de espaços possíveis na direção fixa indicada.</li>
+                        <li><strong>Fase de Tiro:</strong> Ao concluir o movimento (ou após receber dano/colisão), se houver algum veículo adversário no arco frontal do carro ativado, ele dispara!</li>
+                        <li><strong>Prioridade de Tiro:</strong> Se houver mais de um alvo no cone frontal, atire primeiro no espaço indicado pelo ícone de prioridade no topo da carta (↓ Cima para Baixo ou ↑ Baixo para Cima).</li>
+                    </ol>
+                </div>
+            </details>
 
-            <h3 style="color: var(--yellow); border-left: 4px solid var(--yellow); padding-left: 10px;"><span class="icon-inline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 8h13a3 3 0 1 0-3-3M3 13h17a3 3 0 1 1-3 3M3 18h9a3 3 0 1 1-3 3"/></svg></span> EMBALO (COAST)</h3>
-            <ul style="padding-left: 20px; margin-bottom: 25px;">
-                <li>Se o TRV9000 precisar realizar uma fase de movimento e todos os seus carros operáveis já tiverem sido ativados nesta rodada, realize 1 movimento de EMBALO (COAST) com o seu maior carro operável na carta de ativação.</li>
-                <li>Durante a fase de movimento, mova este carro 1 único espaço para frente, usando o símbolo de prioridade de tiro (no topo da carta de ativação) como sua prioridade de direção.</li>
-                <li>Ao fazer este movimento, certifique-se de nunca se mover para um espaço que você sabe que causará dano ou eliminará o carro.</li>
-            </ul>
+            <details class="help-section">
+                <summary>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    4. Desempates, Perigos, Slam & Expansões
+                </summary>
+                <div class="help-body">
+                    <p><strong>Filosofia de Preservação (Sem Suicídio):</strong> O TRV-9000 nunca entra voluntariamente em um espaço que cause destruição inevitável de seu carro se puder ser evitado.</p>
+                    <p><strong>Resolução de Perigos & Obstáculos:</strong></p>
+                    <ul>
+                        <li><strong>Lama, Gosma Tóxica, Planícies de Sal:</strong> Trate como estrada limpa (o bot ignora penalidades).</li>
+                        <li><strong>Vidro do Deserto, Manchas de Óleo, Fogo, Rampas e Fichas Ocultas:</strong> Aplique as regras padrão normalmente.</li>
+                        <li><strong>Borda da Rodovia, Rochas Intransponíveis, Minas e Carros Aliados:</strong> Causam interrupção de rota! Pare o micro-movimento atual no espaço imediatamente anterior e passe para o próximo símbolo da carta.</li>
+                        <li><strong>💥 Colisão (Slam):</strong> O TRV-9000 <em>nunca</em> dá Slam em carros da própria equipe. Ao colidir com veículos inimigos, se for o veículo maior com direito a rerrolagem, <strong>sempre rerrola o dado de colisão</strong> para infligir estrago máximo!</li>
+                        <li><strong>🔥 Condição de Fogo:</strong> Se o carro estiver em chamas, os símbolos +1/+2 são micro-movimentos bônus em linha reta à frente (não role o dado de fogo).</li>
+                    </ul>
+                    <p><strong>Expansões Maximum Chrome:</strong></p>
+                    <ul>
+                        <li><strong>🚛 SDBR (Big Rig Autônomo):</strong> Dividido em 3 seções (Frente, Meio, Trás). Dado de comando é fixado em 3 (sempre prioriza Reparo). O anel de mira gira em sentido horário ↻ ou anti-horário ↺ ao redor do caminhão. A cabine dianteira utiliza Direção Hidráulica para mudar de faixa livremente.</li>
+                        <li><strong>🏍️ SDFF (Final Five Autônomo):</strong> Opera 5 motos autônomas em duplas por linha. A linha especial marcada com ★ aciona o comando superior da carta (Ataque Aéreo, Reparo ou Renascer).</li>
+                    </ul>
+                </div>
+            </details>
 
-            <h3 style="color: var(--rust); border-left: 4px solid var(--rust); padding-left: 10px;">🚛 EXPANSÃO: SDBR (BIG RIG AUTÔNOMO)</h3>
-            <ul style="padding-left: 20px; margin-bottom: 25px;">
-                <li>O SDBR é um caminhão gigante dividido em 3 seções: <strong>FRENTE, MEIO e TRAS</strong>. Cada carta revela, seção por seção (na ordem indicada na carta), 1 micro-movimento e 1 comando daquela seção.</li>
-                <li>O <strong>círculo de prioridade</strong> no topo da carta é diferente do TRV9000 base: em vez de uma prioridade linear (Cima/Baixo), ele mostra um <strong>sentido de rotação</strong> (↻ horário ou ↺ anti-horário) ao redor do Big Rig. Comece pela posição indicada pela mira e siga girando no sentido mostrado até encontrar o primeiro alvo válido — esse mesmo sentido também define a direção do EMBALO (COAST).</li>
-                <li>Cada seção tem <strong>duas caixas distintas</strong> na carta original: a caixa esquerda (dado + seta pretos) tem o dado sempre fixo em <strong>3</strong> — ou seja, aquela seção <strong>sempre prioriza Reparo</strong> (remove 1 dano); a seta só indica, caso o comando de Reparo esteja danificado demais no tabuleiro físico (informação que este app não rastreia), para qual lado pular para o próximo comando disponível daquela seção. A caixa direita (dado + seta vermelha) define o <strong>movimento real</strong>: o valor do dado é o total de espaços que a seção anda em linha reta; a seta (↗ ou ↘) só se aplica na <strong>primeira vez</strong> que o SDBR encontrar um espaço do tipo indicado pelo <span style="color:#e62e00;">▲ ícone vermelho (ficha de perigo)</span> ou <span style="color:#9c6b30;">▲ marrom (outro terreno)</span>, mudando de faixa uma única vez antes de continuar reto pelo restante do movimento; se nenhum espaço desse tipo for cruzado, ela anda todo o valor em linha reta.</li>
-                <li><strong>Direção Hidráulica</strong> (cabine dianteira): a qualquer momento no turno do SDBR, ele pode mudar de faixa até um número de vezes igual ao valor de movimento indicado na seção FRENTE nesta carta.</li>
-                <li>Como o dado de ativação é sempre 3, na prática toda seção sempre executa <strong>Reparo</strong>; a seta de ativação exibida no card serve apenas como lembrete de para qual lado pular caso o Reparo físico daquela seção já esteja esgotado no tabuleiro.</li>
-            </ul>
-
-            <h3 style="color: var(--rust); border-left: 4px solid var(--rust); padding-left: 10px;">🏍️ EXPANSÃO: SDFF (FINAL FIVE AUTÔNOMO)</h3>
-            <ul style="padding-left: 20px;">
-                <li>O SDFF representa um esquadrão de <strong>5 motocicletas pequenas</strong> autônomas. Cada carta revela, linha por linha (de cima para baixo), qual ativação ocorre naquele turno.</li>
-                <li>Em <strong>2 das 3 linhas</strong>, duas motocicletas marcadas (símbolos ‖ ✕ ⌃ ◎ S) se movem simultaneamente, cada uma com seu próprio micro-movimento.</li>
-                <li>Na linha marcada com <strong>★</strong>, a motocicleta marcada nesta linha ativa o <strong>comando do topo da carta</strong> (Reparo, Ataque Aéreo ou Renascer) em vez de uma segunda motocicleta se mover.</li>
-                <li><strong>🔥 Ignição:</strong> quando este ícone aparece (sem valor numérico), a motocicleta pega fogo imediatamente neste turno, antes de se mover.</li>
-                <li><strong>🔥 Bônus de Fogo (+1/+2):</strong> mesma regra do TRV9000 base — aplique apenas se a motocicleta já estiver pegando fogo; é um micro-movimento bônus em linha reta à frente.</li>
-                <li>O símbolo de prioridade no topo da carta funciona como no TRV9000 base para definir o alvo do Ataque Aéreo e a direção do Renascer.</li>
-            </ul>
+            <details class="help-section">
+                <summary>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+                    5. Fim de Jogo, Eliminação & Condições de Vitória
+                </summary>
+                <div class="help-body">
+                    <ul>
+                        <li><strong>Eliminação de Equipes:</strong> Uma gangue é totalmente eliminada da partida se todos os seus veículos forem destruídos (carcaças em chamas) OU ficarem para trás na pista descartada quando a rodovia avança (Board Drop).</li>
+                        <li><strong>Ataque Aéreo:</strong> Disparado contra o líder da corrida ou o veículo de maior porte no alcance da aeronave.</li>
+                        <li><strong>Condição de Vitória:</strong>
+                            <ul>
+                                <li>Você vence se conseguir cruzar a linha de chegada no segmento final da rodovia OU se for o último sobrevivente na pista!</li>
+                                <li>Se todos os seus carros forem destruídos ou abandonados para trás pelo avanço do asfalto, os bots vencem a batalha da Thunder Road!</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </details>
         `,
         en: `
-            <h3 style="color: var(--yellow); border-left: 4px solid var(--yellow); padding-left: 10px;"><span class="icon-inline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span> SETUP</h3>
-            <ul style="padding-left: 20px; margin-bottom: 25px;">
-                <li>Bots <strong>do not use movement dice OR the road die</strong>. They are guided by cards, revealed one at a time, showing which car moves and in which direction. They use damage panels normally, however, to track damage. They also use combat dice normally.</li>
-                <li>Roll <strong>1d6</strong> to determine where to place the bot's car on the starting track. The number resolves top to bottom, i.e. 1 is the topmost space and 6 the bottommost.</li>
-                <li>Choose the number of bots, their color and team. Special teams provide extra challenges and their abilities stack with the basic protocol's. Also choose the <strong>Basic Protocol Difficulty Level (1 to 4)</strong>: the higher the level, the more basic abilities are active at once, making the bot harder.</li>
-                <li>You may optionally add the <strong>SDBR (Autonomous Big Rig)</strong> and/or the <strong>SDFF (Autonomous Final Five)</strong> as extra opponents from the "Maximum Chrome" expansion.</li>
-            </ul>
+            <details class="help-section" open>
+                <summary>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+                    1. Overview & TRV-9000 Philosophy
+                </summary>
+                <div class="help-body">
+                    <p>The <strong>TRV-9000</strong> automates lethal rival crews tearing down the post-apocalyptic asphalt in <em>Thunder Road: Vendetta</em> (Restoration Games). Designed for ruthless aggression and fast table resolution:</p>
+                    <ul>
+                        <li><strong>No Movement or Road Dice:</strong> The bots never roll movement dice or the road hazard die. Their maneuvers are guided strictly by pre-programmed activation cards, revealing which car operates and its exact chain of micro-movements.</li>
+                        <li><strong>Standard Dashboards & Combat:</strong> They use physical dashboards to track damage and roll combat dice (shooting and slam dice) just like a human player.</li>
+                        <li><strong>Maximum Chrome Support:</strong> Full modular support for specialized crew abilities, the behemoth <strong>Autonomous Big Rig (SDBR)</strong>, and the <strong>Autonomous Final Five (SDFF)</strong> motorcycle gang.</li>
+                    </ul>
+                </div>
+            </details>
 
-            <h3 style="color: var(--yellow); border-left: 4px solid var(--yellow); padding-left: 10px;"><span class="icon-inline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 13l1.5-4.5A2 2 0 0 1 6.4 7h9.2a2 2 0 0 1 1.9 1.4L19 13"/><rect x="2" y="13" width="20" height="5" rx="1"/><circle cx="7" cy="18" r="1.5"/><circle cx="17" cy="18" r="1.5"/></svg></span> MOVEMENT PHASE</h3>
-            <ul style="padding-left: 20px; margin-bottom: 25px;">
-                <li>During this turn, activate the car designated by the letter S, M or L at the start of the revealed activation row. If this car is not operational (destroyed), advance the activation card to reveal and activate the next car. If all operational cars have already been activated this round, perform <strong>1 COAST</strong> with the largest operational car on the activation card.</li>
-                <li>The movement phase is split into several micro-movements shown as a row of movement symbols to be executed in order, left to right. For each symbol, always try to move the activated car the maximum number of spaces possible, in the indicated direction. Each movement symbol shows the maximum number of spaces it may move, and the fixed direction it must move in.</li>
-                <li><strong style="color:var(--rust);">🔥 Fire Condition:</strong> Apply only if the activated car is currently on fire. It is a <strong>pre-result</strong> (do not roll the fire die): the +1 and +2 symbols are not mandatory moves, they are bonus micro-movements, always straight ahead, following TRV9000 movement rules.</li>
-                <li><strong>Mud, Toxic Sludge, Salt Flats:</strong> Treat as road spaces, apply no effect.</li>
-                <li><strong>Desert Glass, Oil Slick, Ramp, Fire! and face-down Hazard token:</strong> Apply the normal rules, as for a player.</li>
-                <li><strong>Board edge, impassable spaces, a vehicle from the same team, Elimination Ramp, Mine hazard token, Desert Glass (moving toward the spaces mentioned above):</strong> Cause a direction change. Stop the current micro-movement on the previous space and execute the next movement symbol on the activation row.</li>
-                <li><strong style="color:var(--rust);">💥 Slam:</strong> The TRV9000 never Slams cars from its own team (this ends the current symbol on the previous space and moves to the next). When Slamming any other vehicle, if the result moves the TRV9000's car and it is entitled to a reroll (for being the larger vehicle), it <strong>always rerolls</strong>.</li>
-                <li><strong>Summary:</strong> Never move to a space you know in advance will inevitably result in damage or elimination of a TRV9000 car.</li>
-                <li>After executing the last symbol, a SLAM, a JUMP, or taking DAMAGE: <strong>end the movement phase and start the shooting phase</strong>.</li>
-            </ul>
+            <details class="help-section">
+                <summary>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="3" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                    2. Physical Setup & Initial Placement
+                </summary>
+                <div class="help-body">
+                    <ol>
+                        <li>Assemble the 3 road boards for the scenario and place initial hazard tokens per the base game rulebook.</li>
+                        <li>Choose the number of TRV-9000 crews, their vehicle colors, and optional faction powers.</li>
+                        <li><strong>Protocol Difficulty (1 to 4):</strong> Level 1 uses standard movement and shooting. Levels 2 to 4 unlock cumulative combat protocols (emergency auto-repairs, evasive steering, locked targeting).</li>
+                        <li><strong>Starting Grid (Parking Lot):</strong> Roll for each car's starting lane (or roll a physical purple 1d6). The result (1 to 6) indicates the starting lane strictly top to bottom (1 = top, 6 = bottom).</li>
+                        <li>If playing with SDBR or SDFF, deploy the Big Rig or motorcycles per the Maximum Chrome rules.</li>
+                    </ol>
+                </div>
+            </details>
 
-            <h3 style="color: var(--yellow); border-left: 4px solid var(--yellow); padding-left: 10px;"><span class="icon-inline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg></span> SHOOTING</h3>
-            <ul style="padding-left: 20px; margin-bottom: 25px;">
-                <li>If an enemy vehicle is in the activated car's front arc, shoot.</li>
-                <li>If several enemy vehicles are present, give priority to the one marked with the shooting priority symbol (at the top of the activation card). The activated car shoots first at the space designated by priority (Top to Bottom or Bottom to Top). If this space is empty, shoot at the next space following priority.</li>
-            </ul>
+            <details class="help-section">
+                <summary>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 13l1.5-4.5A2 2 0 0 1 6.4 7h9.2a2 2 0 0 1 1.9 1.4L19 13"/><rect x="2" y="13" width="20" height="5" rx="1"/><circle cx="7" cy="18" r="1.5"/><circle cx="17" cy="18" r="1.5"/></svg>
+                    3. Action Flow & Movement Phases
+                </summary>
+                <div class="help-body">
+                    <ol>
+                        <li><strong>Active Vehicle:</strong> Check the letter on the active row: <strong>S</strong> (Small), <strong>M</strong> (Medium), or <strong>L</strong> (Large). If that car is inoperable or wrecked, immediately advance to activate the next operational car.</li>
+                        <li><strong>Coast:</strong> If all operational cars of the crew have already activated this round, perform 1 COAST move with the largest operational car (advances 1 space toward the shooting priority direction).</li>
+                        <li><strong>Executing Micro-Movements:</strong> Resolve each symbol left to right. Move the vehicle the maximum possible distance in the fixed direction indicated.</li>
+                        <li><strong>Shooting Phase:</strong> After completing movement (or after taking damage/slamming), if an enemy vehicle is in the car's front arc, it fires!</li>
+                        <li><strong>Target Priority:</strong> If multiple targets are present, fire at the lane matching the priority symbol at the top of the card (↓ Top to Bottom or ↑ Bottom to Top).</li>
+                    </ol>
+                </div>
+            </details>
 
-            <h3 style="color: var(--yellow); border-left: 4px solid var(--yellow); padding-left: 10px;"><span class="icon-inline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 8h13a3 3 0 1 0-3-3M3 13h17a3 3 0 1 1-3 3M3 18h9a3 3 0 1 1-3 3"/></svg></span> COAST</h3>
-            <ul style="padding-left: 20px; margin-bottom: 25px;">
-                <li>If the TRV9000 needs to perform a movement phase and all its operational cars have already been activated this round, perform 1 COAST movement with its largest operational car on the activation card.</li>
-                <li>During the movement phase, move this car 1 single space forward, using the shooting priority symbol (at the top of the activation card) as its direction priority.</li>
-                <li>When making this move, make sure to never move to a space you know will cause damage or eliminate the car.</li>
-            </ul>
+            <details class="help-section">
+                <summary>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    4. Tie-Breakers, Hazards, Slam & Expansions
+                </summary>
+                <div class="help-body">
+                    <p><strong>Self-Preservation Rule:</strong> The TRV-9000 will never voluntarily enter a space that leads to certain destruction of its own vehicle if an alternative exists.</p>
+                    <p><strong>Hazards & Terrain Resolution:</strong></p>
+                    <ul>
+                        <li><strong>Mud, Toxic Sludge, Salt Flats:</strong> Treated as clear road (the bot ignores negative penalties).</li>
+                        <li><strong>Desert Glass, Oil Slicks, Fire, Ramps, and Hidden Tokens:</strong> Apply standard rules as for a human player.</li>
+                        <li><strong>Board Edges, Impassable Rocks, Mines, and Allied Cars:</strong> Force a course redirection! Stop the micro-movement in the preceding space and move to the next movement symbol.</li>
+                        <li><strong>💥 Slam:</strong> The TRV-9000 <em>never</em> slams teammates. When slamming enemy cars, if it is the larger vehicle entitled to a reroll, it <strong>always rerolls</strong> to maximize carnage!</li>
+                        <li><strong>🔥 Fire Condition:</strong> If on fire, +1/+2 symbols are bonus straight-ahead micro-movements (do not roll the fire die).</li>
+                    </ul>
+                    <p><strong>Maximum Chrome Expansions:</strong></p>
+                    <ul>
+                        <li><strong>🚛 SDBR (Autonomous Big Rig):</strong> Resolved section by section (Front, Middle, Rear). Command die is fixed at 3 (always prioritizes physical Repair). The priority sight sweeps clockwise ↻ or counter-clockwise ↺ around the truck. Front cab can use Hydraulic Steering to shift lanes freely.</li>
+                        <li><strong>🏍️ SDFF (Autonomous Final Five):</strong> Moves pairs of bikes per row. The row marked with ★ triggers command actions (Airstrike, Repair, or Respawn).</li>
+                    </ul>
+                </div>
+            </details>
 
-            <h3 style="color: var(--rust); border-left: 4px solid var(--rust); padding-left: 10px;">🚛 EXPANSION: SDBR (AUTONOMOUS BIG RIG)</h3>
-            <ul style="padding-left: 20px; margin-bottom: 25px;">
-                <li>The SDBR is a giant truck split into 3 sections: <strong>FRONT, MIDDLE and REAR</strong>. Each card reveals, section by section (in the order shown on the card), 1 micro-movement and 1 command for that section.</li>
-                <li>The <strong>priority circle</strong> at the top of the card is different from the base TRV9000: instead of a linear priority (Top/Bottom), it shows a <strong>rotation direction</strong> (↻ clockwise or ↺ counter-clockwise) around the Big Rig. Start at the position marked by the sight and keep sweeping in the shown direction until you find the first valid target — this same direction also sets the COAST direction.</li>
-                <li>Each section has <strong>two distinct boxes</strong> on the original card: the left box (black die + arrow) always has its die fixed at <strong>3</strong> — meaning that section <strong>always prioritizes Repair</strong> (removes 1 damage); the arrow only indicates, in case the Repair command is too damaged on the physical board (information this app doesn't track), which side to skip to for that section's next available command. The right box (die + red arrow) defines the <strong>actual movement</strong>: the die value is the total number of spaces the section moves in a straight line; the arrow (↗ or ↘) only applies the <strong>first time</strong> the SDBR reaches a space of the type shown by the <span style="color:#e62e00;">▲ red icon (hazard token)</span> or <span style="color:#9c6b30;">▲ brown icon (other terrain)</span>, changing lanes once before continuing straight for the rest of the movement; if no such space is crossed, it moves the full value in a straight line.</li>
-                <li><strong>Hydraulic Steering</strong> (front cab): at any point during the SDBR's turn, it may change lanes up to a number of times equal to the movement value shown on the FRONT section of this card.</li>
-                <li>Since the activation die is always 3, every section effectively always performs <strong>Repair</strong>; the activation arrow shown on the card is just a reminder of which side to skip to if that section's physical Repair is already exhausted on the board.</li>
-            </ul>
-
-            <h3 style="color: var(--rust); border-left: 4px solid var(--rust); padding-left: 10px;">🏍️ EXPANSION: SDFF (AUTONOMOUS FINAL FIVE)</h3>
-            <ul style="padding-left: 20px;">
-                <li>The SDFF represents a squad of <strong>5 small autonomous motorcycles</strong>. Each card reveals, row by row (top to bottom), which activation happens that turn.</li>
-                <li>On <strong>2 of the 3 rows</strong>, two marked motorcycles (symbols ‖ ✕ ⌃ ◎ S) move simultaneously, each with its own micro-movement.</li>
-                <li>On the row marked with <strong>★</strong>, the motorcycle marked on that row activates the <strong>command at the top of the card</strong> (Repair, Airstrike or Respawn) instead of a second motorcycle moving.</li>
-                <li><strong>🔥 Ignite:</strong> when this icon appears (with no numeric value), the motorcycle catches fire immediately this turn, before moving.</li>
-                <li><strong>🔥 Fire Bonus (+1/+2):</strong> same rule as the base TRV9000 — apply only if the motorcycle is already on fire; it's a bonus straight-ahead micro-movement.</li>
-                <li>The priority symbol at the top of the card works like the base TRV9000 to set the Airstrike target and the Respawn direction.</li>
-            </ul>
+            <details class="help-section">
+                <summary>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+                    5. Game End, Elimination & Victory Conditions
+                </summary>
+                <div class="help-body">
+                    <ul>
+                        <li><strong>Crew Elimination:</strong> A crew is eliminated once all its vehicles are wrecked OR left behind on the dropped rear board tile (Board Drop).</li>
+                        <li><strong>Airstrike:</strong> Targets the race leader or the heaviest vehicle within strike range.</li>
+                        <li><strong>Victory Conditions:</strong>
+                            <ul>
+                                <li>You win if your vehicle crosses the finish line on the final board OR if you are the last surviving operational crew on the road!</li>
+                                <li>If all player vehicles are destroyed or eliminated before the finish line, the bots triumph across the wasteland!</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </details>
         `
     };
     function renderHelpContent() {

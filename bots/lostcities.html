@@ -525,6 +525,32 @@ h1, h2 { text-transform: uppercase; letter-spacing: 2px; border-bottom: 2px soli
 .modal-content ul { margin: 0 0 12px 0; padding-left: 20px; }
 .modal-content li { margin-bottom: 6px; }
 
+.help-section {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(220, 163, 49, 0.25);
+    border-radius: 6px;
+    padding: 14px 16px;
+    margin-bottom: 14px;
+}
+.help-section h4 {
+    margin: 0 0 8px 0;
+    color: var(--accent);
+    font-size: 1.05rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.help-section p, .help-section li {
+    font-size: 0.92rem;
+    line-height: 1.5;
+    color: var(--text-main);
+}
+.help-section ul, .help-section ol {
+    margin: 6px 0 6px 18px;
+    padding: 0;
+}
+
+
 
 .hero {
     position:relative; border-radius:4px; overflow:hidden;
@@ -747,7 +773,7 @@ h1, h2 { text-transform: uppercase; letter-spacing: 2px; border-bottom: 2px soli
       <span class="sand-mote"></span><span class="sand-mote"></span><span class="sand-mote"></span><span class="sand-mote"></span><span class="sand-mote"></span>
     </div>
 
-    <button class="btn-help-float" onclick="document.getElementById('helpModal').style.display='flex'" aria-label="Help">?</button>
+    <button class="btn-help-float" onclick="openHelpModal()" aria-label="Help">?</button>
     <button class="btn-reset-float hidden" id="btnResetGame" onclick="resetGame()"><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v6h6M20 20v-6h-6"/><path d="M4 10a8 8 0 0 1 14-5.3M20 14a8 8 0 0 1-14 5.3"/></svg> <span data-i18n="resetBtn">Nova Partida</span></button>
     <div class="lang-switch">
         <button class="lang-btn" id="langBtnPt" onclick="setLang('pt')">PT</button>
@@ -1031,21 +1057,11 @@ h1, h2 { text-transform: uppercase; letter-spacing: 2px; border-bottom: 2px soli
 
 
     <!-- Help Modal -->
-    <div id="helpModal" class="modal-overlay">
-        <div class="modal-content">
-            <button class="modal-close" onclick="document.getElementById('helpModal').style.display='none'">✕</button>
-            <h3 data-i18n="helpRulesTitle">Regras do Automa</h3>
-            <p data-i18n-html="helpRulesIntro">Na vez do automa, ele precisa receber uma carta. Você deve comprá-la e apresentá-la ao app usando os botões.</p>
-            
-            <h3 data-i18n="helpDrawTitle">Compra (Deck vs Descarte)</h3>
-            <p data-i18n-html="helpDrawText">O automa sempre compra a carta do topo do <strong>baralho</strong>, com UMA exceção: se o <strong>descarte</strong> de alguma cor tiver uma carta que seja exatamente <strong>um valor acima</strong> da maior carta do automa naquela cor (ou um Aperto de Mão, se ele não tiver nenhum número), o automa <strong>comprará do descarte</strong>.</p>
-            
-            <h3 data-i18n="helpDecisionsTitle">Decisões</h3>
-            <ul data-i18n-html="helpDecisionsList">
-                <li><strong>Jogar:</strong> Se a carta for maior que o topo da coluna, ele joga.</li>
-                <li><strong>Substituir:</strong> Se não puder jogar normalmente, mas a carta for pouca coisa menor que o topo da coluna, ele descarta o topo atual e joga a nova no lugar.</li>
-                <li><strong>Descartar:</strong> Se não servir para a coluna, a carta vai para o descarte.</li>
-            </ul>
+    <div id="helpModal" class="modal-overlay" onclick="if(event.target===this)closeHelpModal()">
+        <div class="modal-content" style="max-width: 680px; max-height: 85vh; overflow-y: auto;">
+            <button class="modal-close" onclick="closeHelpModal()">✕</button>
+            <h2 style="color:var(--accent); font-family:var(--font-header, serif); margin-top:0;" data-i18n="helpRulesTitle">Regras &amp; Operação do Automa</h2>
+            <div id="helpModalBody" data-i18n-html="helpBodyHtml"></div>
         </div>
     </div>
 
@@ -1163,12 +1179,81 @@ Object.assign(window.I18N.pt, {
   
   heroTitle: "The Rival Explorer",
   heroSubtitle: "Lost Cities — Automa",
-  helpRulesTitle: "Regras do Automa",
-  helpRulesIntro: "Na vez do automa, ele recebe uma carta. Você deve comprá-la e apresentá-la ao app usando os botões abaixo.",
-  helpDrawTitle: "Compra (Deck vs Descarte)",
-  helpDrawText: "O automa sempre compra do <strong>baralho</strong>, EXCETO se o <strong>descarte</strong> tiver uma das cartas indicadas no painel abaixo do tabuleiro. No nível Médio, Difícil ou Deuses, ele também tentará pegar cartas menores para preencher buracos em suas expedições!",
-  helpDecisionsTitle: "Decisões (Jogar, Encaixar, Descartar)",
-  helpDecisionsList: "<li><strong>Configuração das Opções por Dificuldade:</strong> O app permite ligar e desligar as regras especiais do Automa (Provisões de Expedição, Retração e Seguro de Aperto de Mão). No Fácil, todas vêm desligadas; no Médio, Provisões de Expedição e Retração vêm ligadas; no Difícil, todas vêm ligadas. No Desafio dos Deuses, todas vêm ligadas e fixas, acompanhadas da regra exclusiva de trapaça dos Deuses Antigos.</li><li><strong>Fácil:</strong> Joga em ordem estritamente crescente, sem encaixes reversos. Se ligar Provisões de Expedição, começa com 2 cartas.</li><li><strong>Médio:</strong> Encaixa cartas de até 2 valores menores (-1 ou -2) que a carta mais alta da expedição sem descartá-la. Apertos de Mão (valor 1) podem ser encaixados antes do 2 ou 3.</li><li><strong>Difícil:</strong> Encaixa cartas de até 3 valores menores (-1, -2 ou -3) que a carta mais alta da expedição sem descartá-la. Apertos de Mão (valor 1) podem ser encaixados antes do 2, 3 ou 4.</li><li><strong>Desafio dos Deuses:</strong> O Automa trapaceia! Ele joga todas as cartas que recebe, ordenando-as magicamente fora de ordem.</li><li><strong>Provisões de Expedição:</strong> O Rival Explorer inicia recebendo suprimentos extras na reserva (2 cartas no Fácil, 3 no Médio, 4 no Difícil/Desafio), podendo jogá-las no tabuleiro ou guardá-las.</li><li><strong>Seguro de Aperto de Mão:</strong> O multiplicador de <svg class='icon-inline' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M3 12h5l2.5-2.5L13 12h5'/><circle cx='12' cy='12' r='2.2'/></svg> só aumenta pontuações positivas; o bot não multiplica pontuações negativas em expedições com prejuízo.</li><li><strong>Retração de Expedição Fracassada:</strong> Expedições com até 2 cartas cuja soma não alcance 20 pontos são consideradas abandonadas e pontuam 0 em vez de prejuízo negativo.</li><li><strong>Reserva do Automa:</strong> O bot guarda cartas na sua reserva e as joga automaticamente quando uma jogada futura desbloquear a coluna. Cartas de valor alto (8, 9, 10) e Apertos de Mão são protegidos contra descarte.</li>",
+  helpRulesTitle: "Regras & Operação do Automa",
+  helpBodyHtml: `<div class="help-section">
+  <h4>1. Visão Geral &amp; Filosofia do Automa</h4>
+  <p>Em <strong>Lost Cities</strong> (clássico genial de Reiner Knizia), o <em>Rival Explorer</em> emula um arqueólogo expedicionário calculista e voraz, disputando as cinco rotas lendárias (Himalaia, Floresta Tropical, Deserto, Vulcões e Netuno).</p>
+  <p>O Automa possui uma <strong>mão virtual (reserva)</strong> e processa suas cartas dinamicamente: decide se joga imediatamente na expedição, se guarda o recurso na reserva para abrir uma coluna no momento oportuno, ou se descarta no tabuleiro central. Além disso, ele vigia o descarte com precisão cirúrgica, aproveitando oportunidades deixadas pelo jogador humano.</p>
+</div>
+
+<div class="help-section">
+  <h4>2. Setup Físico &amp; Ajustes Solo</h4>
+  <ul>
+    <li><strong>Baralho de 60 Cartas:</strong> 5 cores (Amarelo, Azul, Branco, Verde, Vermelho). Cada cor possui 3 cartas de Investimento/Aperto de Mão (Handshake) e cartas numeradas de 2 a 10.</li>
+    <li><strong>Distribuição Inicial:</strong> Embaralhe todas as 60 cartas. Distribua <strong>8 cartas</strong> para a sua mão (jogador humano).</li>
+    <li><strong>Mão Inicial do Bot:</strong> Compre 8 cartas para o Rival Explorer e marque-as na tela de preparação inicial do app para alimentar a reserva estratégica do bot.</li>
+    <li><strong>Centro da Mesa:</strong> Posicione o baralho restante virado para baixo no centro da mesa (Baralho de Compra) ao lado do tabuleiro ou dos 5 espaços de descarte de cada cor.</li>
+    <li><strong>Níveis de Dificuldade:</strong>
+      <ul>
+        <li><strong>Fácil:</strong> Joga em ordem estritamente crescente. Sem encaixes reversos. Opções avançadas desativadas por padrão.</li>
+        <li><strong>Médio:</strong> Encaixa cartas de até 2 valores abaixo (-1 e -2) do topo da coluna. Retração de Expedição ativada.</li>
+        <li><strong>Difícil:</strong> Encaixa cartas de até 3 valores abaixo (-1, -2 e -3). Todas as opções ativadas por padrão.</li>
+        <li><strong>Desafio dos Deuses:</strong> O Automa trapaceia magicamente, ordenando todas as cartas recebidas em qualquer posição.</li>
+      </ul>
+    </li>
+  </ul>
+</div>
+
+<div class="help-section">
+  <h4>3. Fluxo de Turno &amp; Tomada de Decisão</h4>
+  <p>O jogador e o Rival Explorer alternam turnos (o jogador humano inicia).</p>
+  <ol>
+    <li><strong>Turno do Jogador:</strong>
+      <ul>
+        <li><strong>Ação 1:</strong> Jogue 1 carta da sua mão em uma de suas expedições (sempre em ordem crescente de valor) OU descarte 1 carta aberta na pilha de descarte da cor correspondente.</li>
+        <li><strong>Ação 2:</strong> Compre 1 carta para repor sua mão: pegue a carta do topo do Baralho de Compra fechado OU pegue a carta do topo de qualquer uma das 5 pilhas de descarte.</li>
+      </ul>
+    </li>
+    <li><strong>Turno do Rival Explorer:</strong>
+      <ul>
+        <li><strong>1. Verificação de Compra (Baralho vs Descarte):</strong> Observe o painel de interesse do app (<em>"O Automa compra do BARALHO, exceto se o DESCARTE tiver..."</em>). Se alguma das cartas indicadas estiver visível no topo de uma pilha de descarte na mesa, retire-a do descarte; caso contrário, compre a carta do topo do baralho fechado.</li>
+        <li><strong>2. Registro no App:</strong> Selecione a cor e o número/aperto da carta comprada e clique em <em>Processar Carta</em>.</li>
+        <li><strong>3. Resolução da Ação:</strong> O app determinará a ação exata do bot:
+          <ul>
+            <li><strong>JOGAR NA EXPEDIÇÃO:</strong> Coloque a carta na coluna do bot na mesa.</li>
+            <li><strong>ENCAIXAR NA EXPEDIÇÃO:</strong> Encaixe a carta intermediária na sequência da coluna do bot mantendo a ordem numérica crescente.</li>
+            <li><strong>GUARDAR NA RESERVA:</strong> Coloque a carta separada na reserva física do bot.</li>
+            <li><strong>DESCARTAR:</strong> Coloque a carta no descarte da cor correspondente na mesa.</li>
+            <li><strong>Ações Extras de Reserva:</strong> Se indicado pelo app, o bot poderá resgatar cartas guardadas anteriormente e baixá-las na mesa na mesma rodada!</li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ol>
+</div>
+
+<div class="help-section">
+  <h4>4. Regras Especiais, Reserva &amp; Desempates</h4>
+  <ul>
+    <li><strong>Reserva do Automa:</strong> O bot possui capacidade inteligente de retenção. Cartas de valor alto (8, 9, 10) e Apertos de Mão são prioritariamente protegidos contra descarte acidental.</li>
+    <li><strong>Encaixe Reverso (Slotting):</strong> Nos níveis Médio e Difícil, cartas intermediárias recebidas tardiamente preenchem lacunas na expedição sem descartar as superiores. Apertos de Mão contam como valor 1 para encaixe antes de 2, 3 ou 4.</li>
+    <li><strong>Retração de Expedição Fracassada (Regra Opcional):</strong> Expedições iniciadas pelo bot com apenas 1 ou 2 cartas cuja soma seja inferior a 20 pontos são consideradas canceladas/abandonadas e pontuam 0 em vez de receber o prejuízo fixo de -20.</li>
+    <li><strong>Seguro de Aperto de Mão (Regra Opcional):</strong> Os multiplicadores de aperto de mão do bot ampliam apenas pontuações positivas; expedições negativas não multiplicam a dívida final.</li>
+  </ul>
+</div>
+
+<div class="help-section">
+  <h4>5. Fim de Jogo &amp; Pontuação Solo</h4>
+  <p><strong>Gatilho de Término:</strong> A partida (ou rodada) encerra no exato instante em que a <strong>última carta do Baralho de Compra for retirada</strong> (as 60 cartas chegam ao fim). A carta final é jogada e a rodada termina imediatamente sem novas compras.</p>
+  <p>Ao clicar em <em>Terminar Rodada</em>, o app executa a <strong>Resolução Final da Reserva</strong> (baixando cartas remanescentes que aumentem os lucros do bot) e abre a Calculadora Oficial:</p>
+  <ul>
+    <li><strong>Custo de Expedição:</strong> Cada cor em que você ou o bot colocou ao menos 1 carta tem um custo fixo de <strong>-20 pontos</strong>. Expedições virgens (0 cartas) pontuam 0.</li>
+    <li><strong>Soma Numérica:</strong> Some os valores numéricos das cartas daquela cor e subtraia os 20 do custo base.</li>
+    <li><strong>Multiplicadores:</strong> Se houver cartas de Aperto de Mão, multiplique o subtotal (1 aperto = ×2, 2 apertos = ×3, 3 apertos = ×4).</li>
+    <li><strong>Bônus de Extensão:</strong> Se a expedição tiver 8 ou mais cartas (incluindo apertos), adicione <strong>+20 pontos de bônus</strong> (não multiplicado).</li>
+    <li><strong>Formato da Disputa:</strong> Jogue 1 Rodada Rápida ou o clássico torneio em <strong>Melhor de 3 Rodadas</strong>, somando as pontuações para decidir o grande vencedor!</li>
+  </ul>
+</div>`,
   creditsText: "Criado por <strong>Thiago Colletes de Carvalho</strong> (<a href='mailto:colletes@gmail.com'>colletes@gmail.com</a>) — regras da variante originais. Lost Cities criado por Reiner Knizia, © KOSMOS. Uso pessoal e não comercial.",
   c_yellow: "Amarelo", c_blue: "Azul", c_white: "Branco", c_green: "Verde", c_red: "Vermelho"
 });
@@ -1271,7 +1356,81 @@ Object.assign(window.I18N.en, {
   lc_opt_insurance_desc: "Handshake multipliers only boost positive scores; negative scores are not multiplied.",
   lc_deck_status: "Deck:",
   lc_deck_cards: "left",
-  helpDecisionsList: "<li><strong>Options by Difficulty:</strong> The app lets you toggle the Automa's special rules (Expedition Supplies, Retraction, and Handshake Insurance). On Easy, all are off by default; on Medium, Expedition Supplies and Retraction are on; on Hard, all are on. In Challenge of the Gods, all are locked on, along with the exclusive Ancient Gods cheat rule.</li><li><strong>Easy:</strong> Plays in strictly ascending order, without reverse slotting. If Expedition Supplies is enabled, begins with 2 cards.</li><li><strong>Medium:</strong> Slotting rule: if the drawn card is up to 2 values lower (-1 or -2) than the highest card in the expedition, it is slotted in without discarding the higher card. Handshakes count as value 1 for slotting (can slot before a 2 or 3).</li><li><strong>Hard:</strong> Slots in cards up to 3 values lower (-1, -2 or -3) than the highest card in the expedition without discarding the higher card. Handshakes (value 1) can slot before a 2, 3, or 4.</li><li><strong>Ancient Gods:</strong> The Automa cheats! It plays every card it receives, magically sorting them out of order into its expedition.</li><li><strong>Expedition Supplies:</strong> The Rival Explorer starts with extra supplies in reserve (2 cards on Easy, 3 on Medium, 4 on Hard/Challenge), which may be played to the board or kept.</li><li><strong>Handshake Insurance:</strong> <svg class='icon-inline' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M3 12h5l2.5-2.5L13 12h5'/><circle cx='12' cy='12' r='2.2'/></svg> multipliers only boost positive scores; negative expedition scores are not multiplied.</li><li><strong>Expedition Retraction:</strong> Expeditions with up to 2 cards that fail to reach 20 points are considered abandoned and score 0 instead of negative penalties.</li><li><strong>Automa Reserve:</strong> The bot holds cards in its reserve and automatically deploys them when a future play opens up the column. High cards (8, 9, 10) and Wagers are protected against eviction.</li>",
+  helpRulesTitle: "Automa Rules & Operation",
+  helpBodyHtml: `<div class="help-section">
+  <h4>1. Overview &amp; Automa Philosophy</h4>
+  <p>In <strong>Lost Cities</strong> (Reiner Knizia's two-player expedition masterpiece), <em>The Rival Explorer</em> emulates a sharp, relentless archaeologist racing to discover lost treasures across five expeditions (Himalayas, Rainforest, Desert, Volcanoes, and Neptune).</p>
+  <p>The Automa manages a <strong>virtual hand (reserve)</strong> and dynamically processes drawn cards: it decides whether to immediately establish or advance an expedition, reserve high-potential cards for when columns open up, or discard to the central board. It also keeps an eagle eye on public discard piles to snatch valuable cards discarded by the human player.</p>
+</div>
+
+<div class="help-section">
+  <h4>2. Physical Setup &amp; Solo Adjustments</h4>
+  <ul>
+    <li><strong>60-Card Deck:</strong> 5 expedition colors (Yellow, Blue, White, Green, Red). Each suit contains 3 Investment/Handshake cards and numbered cards from 2 through 10.</li>
+    <li><strong>Initial Deal:</strong> Shuffle all 60 cards thoroughly. Deal <strong>8 cards</strong> to your hand (human player).</li>
+    <li><strong>Bot Starting Hand:</strong> Deal 8 cards for the Rival Explorer and select them on the setup screen to populate the bot's strategic reserve.</li>
+    <li><strong>Board Center:</strong> Place the remaining draw pile facedown between players next to the 5 discard zones (one per suit).</li>
+    <li><strong>Difficulty Tiers:</strong>
+      <ul>
+        <li><strong>Easy:</strong> Plays in strictly ascending order without reverse slotting. Special aids disabled by default.</li>
+        <li><strong>Medium:</strong> Reverse slots cards up to 2 values lower (-1 or -2) than the column leader. Expedition Retraction active.</li>
+        <li><strong>Hard:</strong> Reverse slots cards up to 3 values lower (-1, -2, or -3). All options enabled by default.</li>
+        <li><strong>Challenge of the Gods:</strong> The Automa cheats by divine right, magically sorting any card into its optimal column slot.</li>
+      </ul>
+    </li>
+  </ul>
+</div>
+
+<div class="help-section">
+  <h4>3. Action Flow &amp; Decision Hierarchy</h4>
+  <p>Players take turns alternating; the human player takes the first turn.</p>
+  <ol>
+    <li><strong>Human Player Turn:</strong>
+      <ul>
+        <li><strong>Action 1:</strong> Play 1 card from your hand into one of your expeditions (strictly ascending order) OR discard 1 card faceup onto its matching discard pile.</li>
+        <li><strong>Action 2:</strong> Draw 1 card to replenish your hand to 8: take the top card of the facedown draw deck OR take the top card of any of the 5 discard piles.</li>
+      </ul>
+    </li>
+    <li><strong>Rival Explorer Turn:</strong>
+      <ul>
+        <li><strong>1. Draw Inspection (Deck vs Discard):</strong> Check the app's wanted card alert (<em>"The Automa draws from the DECK, unless the DISCARD pile has..."</em>). If any listed card is currently on top of a discard pile on the board, draw it from that discard pile; otherwise, draw from the top of the facedown deck.</li>
+        <li><strong>2. Input Card:</strong> Click the suit and value/handshake of the drawn card and tap <em>Process Card</em>.</li>
+        <li><strong>3. Execute Instructions:</strong> The app outputs the bot's decision:
+          <ul>
+            <li><strong>PLAY ON EXPEDITION:</strong> Place the card on the bot's expedition column on the table.</li>
+            <li><strong>SLOT INTO EXPEDITION:</strong> Slot the intermediate card into the bot's column, keeping ascending order.</li>
+            <li><strong>HOLD IN RESERVE:</strong> Keep the card aside in the bot's physical reserve area.</li>
+            <li><strong>DISCARD:</strong> Place the card on top of the matching discard pile on the board.</li>
+            <li><strong>Reserve Chain Reactions:</strong> If indicated, the bot may immediately deploy previously held reserve cards to the table!</li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ol>
+</div>
+
+<div class="help-section">
+  <h4>4. Special Rules, Reserve &amp; Tie-breakers</h4>
+  <ul>
+    <li><strong>Strategic Reserve:</strong> The bot holds high-potential cards and deploys them as soon as future plays unblock the suit. High cards (8, 9, 10) and Handshakes are protected from premature eviction.</li>
+    <li><strong>Reverse Slotting:</strong> On Medium and Hard, late-arriving low cards fill internal gaps in the expedition without discarding higher cards. Handshakes count as value 1 for slotting before 2, 3, or 4.</li>
+    <li><strong>Expedition Retraction (Optional Rule):</strong> Expeditions started by the bot with only 1 or 2 cards summing under 20 points are abandoned and score 0 instead of incurring the -20 expedition penalty.</li>
+    <li><strong>Handshake Insurance (Optional Rule):</strong> The bot's handshake multipliers boost only positive scores; failing expeditions are not multiplied further into debt.</li>
+  </ul>
+</div>
+
+<div class="help-section">
+  <h4>5. Game End &amp; Solo Scoring</h4>
+  <p><strong>Game End Trigger:</strong> The round ends immediately when the <strong>very last card of the Draw Deck is drawn</strong> (the 60 cards are exhausted). The final drawn card is played/processed normally, and the round concludes instantly with no further draws.</p>
+  <p>Clicking <em>End Round</em> triggers the <strong>Final Reserve Resolution</strong> (auto-playing any viable remaining cards from reserve) and launches the Official Calculator:</p>
+  <ul>
+    <li><strong>Expedition Cost:</strong> Each expedition with at least 1 played card costs a flat <strong>-20 points</strong>. Unstarted expeditions score 0.</li>
+    <li><strong>Point Sum:</strong> Sum the face values of all number cards in the suit and subtract the 20-point investment cost.</li>
+    <li><strong>Investment Multipliers:</strong> If Handshake cards are present, multiply the subtotal (1 handshake = ×2, 2 handshakes = ×3, 3 handshakes = ×4).</li>
+    <li><strong>Expedition Length Bonus:</strong> If an expedition has 8 or more cards (including handshakes), award a <strong>+20 point bonus</strong> (unmultiplied).</li>
+    <li><strong>Match Duration:</strong> Play a 1-Round sprint or the standard <strong>Best-of-3 Rounds</strong> tournament, aggregating cumulative points to crown the victor!</li>
+  </ul>
+</div>`,
 
   wantedPanelText: "The Automa draws from the <strong>DECK</strong>, unless the <strong>DISCARD</strong> pile has:",
   wantedNone: "None (Always deck)",
@@ -1282,11 +1441,6 @@ Object.assign(window.I18N.en, {
   
   heroTitle: "The Rival Explorer",
   heroSubtitle: "Lost Cities — Automa",
-  helpRulesTitle: "Automa Rules",
-  helpRulesIntro: "On the automa's turn, it receives a card. You must draw it and present it to the app using the buttons below.",
-  helpDrawTitle: "Drawing (Deck vs Discard)",
-  helpDrawText: "The automa always draws from the <strong>deck</strong>, UNLESS the <strong>discard pile</strong> has one of the specific cards listed in the panel below the board. On Medium, Hard or Gods difficulty, it will also try to snipe slightly lower cards to fill gaps in its expeditions!",
-  helpDecisionsTitle: "Decisions (Play, Slot, Discard)",
   creditsText: "Made by <strong>Thiago Colletes de Carvalho</strong> (<a href='mailto:colletes@gmail.com'>colletes@gmail.com</a>) — original variant rules. Lost Cities designed by Reiner Knizia, © KOSMOS. Personal, non-commercial use.",
   c_yellow: "Yellow", c_blue: "Blue", c_white: "White", c_green: "Green", c_red: "Red"
 });
@@ -2773,6 +2927,26 @@ applyI18n = function() {
 }
 
 window.addEventListener('boardbots:langchange', applyI18n);
+
+function openHelpModal() {
+    const m = document.getElementById('helpModal');
+    if (m) m.style.display = 'flex';
+}
+
+function closeHelpModal() {
+    const m = document.getElementById('helpModal');
+    if (m) m.style.display = 'none';
+}
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        closeHelpModal();
+        const resM = document.getElementById('resultModal');
+        if (resM) resM.style.display = 'none';
+        const endM = document.getElementById('endAutomaModal');
+        if (endM) endM.style.display = 'none';
+    }
+});
 
 applyDifficultyPresets(difficulty);
 setTimeout(applyI18n, 100);
