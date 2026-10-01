@@ -148,6 +148,78 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
         margin: 16px auto 24px;
         padding: 0 16px;
     }
+
+    /* Standardized Help Sections & Floating Button */
+    .help-section {
+        margin-bottom: 12px;
+        border: 1px solid var(--burgundy-border);
+        border-radius: 6px;
+        background: rgba(43, 31, 26, 0.4);
+        overflow: hidden;
+        transition: all 0.2s ease;
+    }
+    .help-section summary {
+        cursor: pointer;
+        padding: 12px 16px;
+        font-family: var(--font-display);
+        font-weight: 700;
+        font-size: 0.95rem;
+        color: var(--burgundy-gold);
+        background: rgba(60, 42, 35, 0.6);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        user-select: none;
+    }
+    .help-section summary:hover {
+        background: rgba(197, 160, 89, 0.2);
+    }
+    .help-section[open] summary {
+        border-bottom: 1px solid var(--burgundy-border);
+    }
+    .help-section-body {
+        padding: 14px 16px;
+        font-size: 0.88rem;
+        line-height: 1.6;
+        color: #ddd;
+    }
+    .help-section-body ol, .help-section-body ul {
+        padding-left: 20px;
+        margin: 8px 0;
+    }
+    .help-section-body li {
+        margin-bottom: 6px;
+    }
+    .btn-help-float {
+        position: fixed;
+        bottom: 22px;
+        right: 22px;
+        z-index: 90;
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #4a1525, #2b1f1a);
+        border: 2px solid var(--burgundy-gold);
+        color: var(--burgundy-gold);
+        font-family: var(--font-display);
+        font-size: 1.5rem;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+        transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .btn-help-float:hover {
+        transform: scale(1.08);
+        box-shadow: 0 0 20px rgba(197, 160, 89, 0.6);
+        color: #fff;
+    }
+    .btn-help-float:active {
+        transform: scale(0.92);
+    }
+
     .hero {
         position: relative;
         border-radius: 8px;
@@ -602,115 +674,79 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
 
 <!-- Rules modal -->
 <div class="modal-overlay" id="rulesModal" style="display:none;" onclick="if(event.target===this)closeModal('rulesModal')">
-    <div class="modal-box">
-        <button class="modal-close" onclick="closeModal('rulesModal')"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
-        <h2 data-i18n="rulesTitle"><svg class="icon-inline" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5c3 0 6 1 8 3v11c-2-2-5-3-8-3V5Z"/><path d="M20 5c-3 0-6 1-8 3v11c2-2 5-3 8-3V5Z"/></svg> Regras — AutoDuque</h2>
-
-        <div class="rules-section">
-            <h3 data-i18n="rulesS1Title">1. Turno do AutoDuque</h3>
-            <ol>
-                <li data-i18n="rulesS1L1">O <strong>dado branco</strong> (rolado pelo 1º jogador humano) indica a carta de vila escolhida: <strong>1–4 = Carta Esquerda</strong>, <strong>5–6 = Carta Direita</strong>.</li>
-                <li data-i18n="rulesS1L2">Role o <strong>dado colorido</strong> do AutoDuque — esse é o depósito inicial de busca.</li>
-                <li data-i18n="rulesS1L3">Busque uma peça para preencher a carta de vila escolhida (sempre de cima para baixo, e da esquerda para a direita).</li>
-            </ol>
-            <div class="rules-highlight" style="margin-top: 10px;" data-i18n="rulesS1Extra1">
-                <strong>Ordem de busca da peça:</strong><br>
-                1. No depósito indicado pelo dado colorido.<br>
-                2. Nos próximos depósitos do tabuleiro, em sentido horário.<br>
-                3. Na <strong>área de reserva</strong> (os 7 espaços no tabuleiro do AutoDuque).<br>
-                4. No <strong>espaço curinga</strong> (hexágono preto na reserva).<br>
-                5. Se o espaço curinga estiver vazio, pegue uma peça aleatória do <strong>Depósito Paralelo</strong> (mercado negro) e coloque virada para baixo no curinga.<br>
-                6. Se nada disso for possível, o AutoDuque ganha <strong>+2 peças de prata</strong>.
-            </div>
-            <div class="rules-highlight" data-i18n="rulesS1Extra2">
-                <strong><svg class="icon-inline" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" stroke="none"><path d="M13 2 3 14h7l-1 8 11-14h-7l1-6Z"/></svg> Fim do turno (Compra Automática):</strong> Se o AutoDuque terminar o turno com 2 ou mais peças de prata, ele gasta 2 peças para comprar 1 peça do Depósito Paralelo (sempre priorizando a cor que ele ainda não tem na reserva).
-            </div>
+    <div class="modal-box" style="max-width:680px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid var(--burgundy-gold); padding-bottom:10px; margin-bottom:16px;">
+            <h2 style="margin:0; font-size:1.25rem;" data-i18n="rulesTitle"><svg class="icon-inline" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5c3 0 6 1 8 3v11c-2-2-5-3-8-3V5Z"/><path d="M20 5c-3 0-6 1-8 3v11c2-2 5-3 8-3V5Z"/></svg> Regras & Guia — AutoDuque</h2>
+            <button class="modal-close" style="position:static; margin:0;" onclick="closeModal('rulesModal')"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
         </div>
 
-        <!-- Depot diagram -->
-        <div class="rules-section">
-            <h3 data-i18n="rulesDepotTitle"><svg class="icon-inline" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3 3 5v16l6-2 6 2 6-2V3l-6 2-6-2Z"/><path d="M9 3v16M15 5v16"/></svg> Diagrama dos Depósitos</h3>
-            <p style="font-size:0.88em; color:#555; margin-bottom:8px;" data-i18n="rulesDepotDesc">Os 6 depósitos do tabuleiro são numerados 1–6 em sentido horário. O dado colorido indica o depósito de partida; busque nos seguintes em sentido ↻.</p>
-            <div style="display:flex; justify-content:center; margin: 10px 0;">
-                <svg viewBox="0 0 220 220" width="200" height="200" xmlns="http://www.w3.org/2000/svg">
-                    <defs>
-                        <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto">
-                            <polygon points="0 0, 8 3, 0 6" fill="#c5a059"/>
-                        </marker>
-                    </defs>
-                    <!-- Clockwise arrow circle -->
-                    <path d="M 110,110 m -68,0 a 68,68 0 1,1 68,68" fill="none" stroke="#c5a059" stroke-width="2.5" stroke-dasharray="4,3" marker-end="url(#arrowhead)"/>
-                    <!-- Depot hexagons (approximate positions) -->
-                    <!-- 1 = top -->
-                    <polygon points="110,25 124,34 124,50 110,59 96,50 96,34" fill="#e6c875" stroke="#630f25" stroke-width="2"/>
-                    <text x="110" y="47" text-anchor="middle" font-size="16" font-weight="bold" fill="#630f25">1</text>
-                    <!-- 2 = top-right -->
-                    <polygon points="168,57 182,66 182,82 168,91 154,82 154,66" fill="#e6c875" stroke="#630f25" stroke-width="2"/>
-                    <text x="168" y="79" text-anchor="middle" font-size="16" font-weight="bold" fill="#630f25">2</text>
-                    <!-- 3 = bottom-right -->
-                    <polygon points="168,127 182,136 182,152 168,161 154,152 154,136" fill="#e6c875" stroke="#630f25" stroke-width="2"/>
-                    <text x="168" y="149" text-anchor="middle" font-size="16" font-weight="bold" fill="#630f25">3</text>
-                    <!-- 4 = bottom -->
-                    <polygon points="110,161 124,170 124,186 110,195 96,186 96,170" fill="#e6c875" stroke="#630f25" stroke-width="2"/>
-                    <text x="110" y="183" text-anchor="middle" font-size="16" font-weight="bold" fill="#630f25">4</text>
-                    <!-- 5 = bottom-left -->
-                    <polygon points="52,127 66,136 66,152 52,161 38,152 38,136" fill="#e6c875" stroke="#630f25" stroke-width="2"/>
-                    <text x="52" y="149" text-anchor="middle" font-size="16" font-weight="bold" fill="#630f25">5</text>
-                    <!-- 6 = top-left -->
-                    <polygon points="52,57 66,66 66,82 52,91 38,82 38,66" fill="#e6c875" stroke="#630f25" stroke-width="2"/>
-                    <text x="52" y="79" text-anchor="middle" font-size="16" font-weight="bold" fill="#630f25">6</text>
-                    <!-- Center label -->
-                    <text x="110" y="107" text-anchor="middle" font-size="10" fill="#888" data-i18n="depotCenter1">Tabuleiro</text>
-                    <text x="110" y="120" text-anchor="middle" font-size="10" fill="#888" data-i18n="depotCenter2">Principal</text>
-                </svg>
-            </div>
-            <p style="font-size:0.82em; text-align:center; color:#555; font-style:italic;" data-i18n="rulesDepotEx">Ex: dado colorido = 3 → busque em 3, depois 4, 5, 6, 1, 2...</p>
-        </div>
+        <details class="help-section" open>
+            <summary><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> <span data-i18n="rulesS1Title">1. Visão Geral & Filosofia do AutoDuque</span></summary>
+            <div class="help-section-body" data-i18n-html="rulesS1Text"></div>
+        </details>
 
-        <!-- How to mark a card -->
-        <div class="rules-section">
-            <h3 data-i18n="rulesCardTitle"><svg class="icon-inline" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M12 8v8M8 12h8"/></svg> Como Preencher a Carta de Vila</h3>
-            <p style="font-size:0.88em; color:#555; margin-bottom:8px;" data-i18n="rulesCardDesc">Cada carta de vila tem hexágonos a preencher. O AutoDuque sempre preenche de <strong>cima para baixo</strong>, e da <strong>esquerda para a direita</strong>. O hexágono com o símbolo de livro/baú é o próximo a ser preenchido.</p>
-            <div style="display:flex; gap:16px; align-items:flex-start; flex-wrap:wrap; justify-content:center; margin: 10px 0;">
-                <div style="text-align:center;">
-                    <img src="../assets/art/burgundy_cards/card_2.jpg" alt="Exemplo de carta" style="width:120px; border-radius:8px; box-shadow:0 4px 8px rgba(0,0,0,0.2);">
-                    <p style="font-size:0.78em; color:#555; margin-top:6px; max-width:120px;" data-i18n="rulesCardEx1">Carta 2: O hexágono verde-escuro/vermelho (topo-direito) é o próximo a preencher.</p>
+        <details class="help-section">
+            <summary><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 21V9h3V6h2v3h2V6h2v3h2V6h2v3h3v12Z"/><path d="M4 21h16"/></svg> <span data-i18n="rulesS2Title">2. Setup Físico & Tabuleiro de Reserva</span></summary>
+            <div class="help-section-body">
+                <div style="text-align:center; margin: 8px 0;">
+                    <img src="../assets/art/burgundy_cards/board_front.jpg" alt="Tabuleiro de Reserva" style="max-width:100%; max-height:180px; border-radius:6px; box-shadow:0 4px 12px rgba(0,0,0,0.3); border:1px solid var(--burgundy-border);">
                 </div>
-                <div style="flex:1; min-width:160px;">
-                    <div style="background:rgba(197,160,89,0.1); border-left:3px solid var(--burgundy-gold); padding:10px; border-radius:4px; font-size:0.85em; line-height:1.7;">
-                        <strong data-i18n="rulesCardOrderLabel">Ordem de preenchimento:</strong><br>
-                        <span data-i18n="rulesCardOrder">① Topo-esquerdo → ② Topo-direito<br>③ Meio-esquerdo → ④ Meio-direito<br>⑤ Base-esquerdo → ⑥ Base-direito</span>
-                    </div>
-                    <div style="margin-top:10px; background:rgba(197,160,89,0.1); border-left:3px solid var(--burgundy-gold); padding:10px; border-radius:4px; font-size:0.85em; line-height:1.6;" data-i18n="rulesCardTip">
-                        <svg class="icon-inline" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.3h6c0-1 .4-1.8 1-2.3A7 7 0 0 0 12 2Z"/></svg> <strong>Dica:</strong> O hexágono com o ícone de livro/baú na carta indica qual tipo de peça deve ir naquele espaço. Pegue a peça desse tipo no depósito indicado pelo dado colorido (ou nos seguintes).
+                <div data-i18n-html="rulesS2Text"></div>
+            </div>
+        </details>
+
+        <details class="help-section">
+            <summary><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M12 8v8M8 12h8"/></svg> <span data-i18n="rulesS3Title">3. Fluxo de Ações & Preenchimento de Vila</span></summary>
+            <div class="help-section-body">
+                <div style="display:flex; gap:14px; align-items:center; flex-wrap:wrap; justify-content:center; margin-bottom:10px;">
+                    <img src="../assets/art/burgundy_cards/card_2.jpg" alt="Exemplo de carta" style="width:110px; border-radius:6px; box-shadow:0 4px 8px rgba(0,0,0,0.3); border:1px solid var(--burgundy-border);">
+                    <div style="flex:1; min-width:180px; font-size:0.86rem; line-height:1.6;" data-i18n-html="rulesS3CardTip">
+                        <strong>Ordem de Preenchimento:</strong><br>
+                        ① Topo-esquerdo → ② Topo-direito<br>
+                        ③ Meio-esquerdo → ④ Meio-direito<br>
+                        ⑤ Base-esquerdo → ⑥ Base-direito
                     </div>
                 </div>
+                <div data-i18n-html="rulesS3Text"></div>
             </div>
-        </div>
+        </details>
 
-        <!-- Reserve board -->
-        <div class="rules-section">
-            <h3 data-i18n="rulesReserveTitle"><svg class="icon-inline" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V9h3V6h2v3h2V6h2v3h2V6h2v3h3v12Z"/><path d="M4 21h16"/></svg> Tabuleiro de Reserva</h3>
-            <p style="font-size:0.88em; color:#555; margin-bottom:8px;" data-i18n="rulesReserveDesc">O tabuleiro de reserva do AutoDuque tem 7 espaços coloridos + 1 espaço curinga (hexágono preto). As peças compradas do Depósito Paralelo ficam aqui até serem usadas para preencher uma carta de vila.</p>
-            <div style="text-align:center; margin: 8px 0;">
-                <img src="../assets/art/burgundy_cards/board_front.jpg" alt="Tabuleiro de Reserva" style="max-width:100%; max-height:200px; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.2);">
+        <details class="help-section">
+            <summary><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3 3 5v16l6-2 6 2 6-2V3l-6 2-6-2Z"/><path d="M9 3v16M15 5v16"/></svg> <span data-i18n="rulesS4Title">4. Desempates, Ordem de Busca & Prata</span></summary>
+            <div class="help-section-body">
+                <div style="display:flex; justify-content:center; margin: 6px 0;">
+                    <svg viewBox="0 0 220 220" width="180" height="180" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto">
+                                <polygon points="0 0, 8 3, 0 6" fill="#c5a059"/>
+                            </marker>
+                        </defs>
+                        <path d="M 110,110 m -68,0 a 68,68 0 1,1 68,68" fill="none" stroke="#c5a059" stroke-width="2.5" stroke-dasharray="4,3" marker-end="url(#arrowhead)"/>
+                        <polygon points="110,25 124,34 124,50 110,59 96,50 96,34" fill="#e6c875" stroke="#630f25" stroke-width="2"/>
+                        <text x="110" y="47" text-anchor="middle" font-size="16" font-weight="bold" fill="#630f25">1</text>
+                        <polygon points="168,57 182,66 182,82 168,91 154,82 154,66" fill="#e6c875" stroke="#630f25" stroke-width="2"/>
+                        <text x="168" y="79" text-anchor="middle" font-size="16" font-weight="bold" fill="#630f25">2</text>
+                        <polygon points="168,127 182,136 182,152 168,161 154,152 154,136" fill="#e6c875" stroke="#630f25" stroke-width="2"/>
+                        <text x="168" y="149" text-anchor="middle" font-size="16" font-weight="bold" fill="#630f25">3</text>
+                        <polygon points="110,161 124,170 124,186 110,195 96,186 96,170" fill="#e6c875" stroke="#630f25" stroke-width="2"/>
+                        <text x="110" y="183" text-anchor="middle" font-size="16" font-weight="bold" fill="#630f25">4</text>
+                        <polygon points="52,127 66,136 66,152 52,161 38,152 38,136" fill="#e6c875" stroke="#630f25" stroke-width="2"/>
+                        <text x="52" y="149" text-anchor="middle" font-size="16" font-weight="bold" fill="#630f25">5</text>
+                        <polygon points="52,57 66,66 66,82 52,91 38,82 38,66" fill="#e6c875" stroke="#630f25" stroke-width="2"/>
+                        <text x="52" y="79" text-anchor="middle" font-size="16" font-weight="bold" fill="#630f25">6</text>
+                        <text x="110" y="107" text-anchor="middle" font-size="10" fill="#c5a059" data-i18n="depotCenter1">Tabuleiro</text>
+                        <text x="110" y="120" text-anchor="middle" font-size="10" fill="#c5a059" data-i18n="depotCenter2">Principal</text>
+                    </svg>
+                </div>
+                <div data-i18n-html="rulesS4Text"></div>
             </div>
-            <div style="font-size:0.83em; color:#555; margin-top:8px;" data-i18n="rulesReserveEx">
-                <strong>Espaço Curinga (hexágono preto):</strong> Pode ser preenchido com qualquer tipo de peça. Se estiver vazio quando necessário, puxe uma peça aleatória do Depósito Paralelo e coloque-a virada para baixo.
-            </div>
-        </div>
+        </details>
 
-        <div class="rules-section">
-            <h3 data-i18n="rulesS2Title">2. Efeitos das Peças</h3>
-            <ul id="tileEffectsList" data-i18n-html="tileEffectsHtml">
-                <li><strong>Castelo (Verde-escuro):</strong> Busca imediatamente uma peça extra para sua vila.</li>
-                <li><strong>Navio (Azul):</strong> Avança no indicador de ordem de turno e recolhe mercadorias do depósito.</li>
-                <li><strong>Mina (Cinza):</strong> Garante +1 peça de prata ao final de cada fase.</li>
-                <li><strong>Animais (Verde-claro):</strong> Pontua imediatamente pelo tipo e quantidade de animais.</li>
-                <li><strong>Construções (Marrom):</strong> Executa a ação imediata do edifício construído.</li>
-                <li><strong>Monastérios (Amarelo):</strong> Concede bônus contínuos ou pontuação especial de fim de jogo.</li>
-            </ul>
-        </div>
+        <details class="help-section">
+            <summary><svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 4h10v3a5 5 0 01-10 0V4z"/><path d="M7 5H4a3 3 0 003 4M17 5h3a3 3 0 01-3 4"/><path d="M12 12v4"/><rect x="9" y="17" width="6" height="2" rx="1"/></svg> <span data-i18n="rulesS5Title">5. Efeitos das Peças, Fim de Jogo & Pontuação</span></summary>
+            <div class="help-section-body" data-i18n-html="rulesS5Text"></div>
+        </details>
+
         <button class="action-btn" style="margin-top:10px;" onclick="closeModal('rulesModal')" data-i18n="close">Fechar</button>
     </div>
 </div>
@@ -823,34 +859,49 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
             boardTip: "Clique nos hexágonos da reserva para marcar/desmarcar peças adquiridas.",
             completedCards: "Cartas Completadas",
             endGame: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 3v18\"/><path d=\"M5 4h13l-3 4 3 4H5\"/></svg> Encerrar Partida e Pontuar",
-            rulesTitle: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M4 5c3 0 6 1 8 3v11c-2-2-5-3-8-3V5Z\"/><path d=\"M20 5c-3 0-6 1-8 3v11c2-2 5-3 8-3V5Z\"/></svg> Regras — AutoDuque",
-            rulesS1Title: "1. Turno do AutoDuque",
-            rulesS1L1: "O <strong>dado branco</strong> (rolado pelo 1º jogador humano) indica a carta de vila escolhida: <strong>1–4 = Carta Esquerda</strong>, <strong>5–6 = Carta Direita</strong>.",
-            rulesS1L2: "Role o <strong>dado colorido</strong> do AutoDuque — esse é o depósito inicial de busca.",
-            rulesS1L3: "Busque uma peça para preencher a carta de vila escolhida (sempre de cima para baixo, e da esquerda para a direita).",
-            rulesS1Extra1: "<strong>Ordem de busca da peça:</strong><br>1. No depósito indicado pelo dado colorido.<br>2. Nos próximos depósitos do tabuleiro, em sentido horário.<br>3. Na <strong>área de reserva</strong> (os 7 espaços no tabuleiro do AutoDuque).<br>4. No <strong>espaço curinga</strong> (hexágono preto na reserva).<br>5. Se o espaço curinga estiver vazio, pegue uma peça aleatória do <strong>Depósito Paralelo</strong> (mercado negro) e coloque virada para baixo no curinga.<br>6. Se nada disso for possível, o AutoDuque ganha <strong>+2 peças de prata</strong>.",
-            rulesS1Extra2: "<strong><svg class=\"icon-inline\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"currentColor\" stroke=\"none\"><path d=\"M13 2 3 14h7l-1 8 11-14h-7l1-6Z\"/></svg> Fim do turno (Compra Automática):</strong> Se o AutoDuque terminar o turno com 2 ou mais peças de prata, ele gasta 2 peças para comprar 1 peça do Depósito Paralelo (sempre priorizando a cor que ele ainda não tem na reserva).",
-            rulesDepotTitle: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M9 3 3 5v16l6-2 6 2 6-2V3l-6 2-6-2Z\"/><path d=\"M9 3v16M15 5v16\"/></svg> Diagrama dos Depósitos",
-            rulesDepotDesc: "Os 6 depósitos do tabuleiro são numerados 1–6 em sentido horário. O dado colorido indica o depósito de partida; busque nos seguintes em sentido ↻.",
-            rulesDepotEx: "Ex: dado colorido = 3 → busque em 3, depois 4, 5, 6, 1, 2...",
-            rulesCardTitle: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"4\" y=\"3\" width=\"16\" height=\"18\" rx=\"2\"/><path d=\"M12 8v8M8 12h8\"/></svg> Como Preencher a Carta de Vila",
-            rulesCardDesc: "Cada carta de vila tem hexágonos a preencher. O AutoDuque sempre preenche de <strong>cima para baixo</strong>, e da <strong>esquerda para a direita</strong>. O hexágono com o símbolo de livro/baú é o próximo a ser preenchido.",
-            rulesCardEx1: "Carta 2: O hexágono verde-escuro/vermelho (topo-direito) é o próximo a preencher.",
-            rulesCardOrderLabel: "Ordem de preenchimento:",
-            rulesCardOrder: "① Topo-esquerdo → ② Topo-direito<br>③ Meio-esquerdo → ④ Meio-direito<br>⑤ Base-esquerdo → ⑥ Base-direito",
-            rulesCardTip: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M9 18h6M10 22h4\"/><path d=\"M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.3h6c0-1 .4-1.8 1-2.3A7 7 0 0 0 12 2Z\"/></svg> <strong>Dica:</strong> O hexágono com o ícone de livro/baú na carta indica qual tipo de peça deve ir naquele espaço. Pegue a peça desse tipo no depósito indicado pelo dado colorido (ou nos seguintes).",
-            rulesReserveTitle: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 21V9h3V6h2v3h2V6h2v3h2V6h2v3h3v12Z\"/><path d=\"M4 21h16\"/></svg> Tabuleiro de Reserva",
-            rulesReserveDesc: "O tabuleiro de reserva do AutoDuque tem 7 espaços coloridos + 1 espaço curinga (hexágono preto). As peças compradas do Depósito Paralelo ficam aqui até serem usadas para preencher uma carta de vila.",
-            rulesReserveEx: "<strong>Espaço Curinga (hexágono preto):</strong> Pode ser preenchido com qualquer tipo de peça. Se estiver vazio quando necessário, puxe uma peça aleatória do Depósito Paralelo e coloque-a virada para baixo.",
-            rulesS2Title: "2. Efeitos das Peças",
-            tileEffectsHtml: `
-                <li><strong>Castelo (Verde-escuro):</strong> Busca imediatamente uma peça extra para sua vila.</li>
-                <li><strong>Navio (Azul):</strong> Avança no indicador de ordem de turno e recolhe mercadorias do depósito.</li>
-                <li><strong>Mina (Cinza):</strong> Garante +1 peça de prata ao final de cada fase.</li>
-                <li><strong>Animais (Verde-claro):</strong> Pontua imediatamente pelo tipo e quantidade de animais.</li>
-                <li><strong>Construções (Marrom):</strong> Executa a ação imediata do edifício construído.</li>
-                <li><strong>Monastérios (Amarelo):</strong> Concede bônus contínuos ou pontuação especial de fim de jogo.</li>
-            `,
+            rulesTitle: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M4 5c3 0 6 1 8 3v11c-2-2-5-3-8-3V5Z\"/><path d=\"M20 5c-3 0-6 1-8 3v11c2-2 5-3 8-3V5Z\"/></svg> Regras & Guia — AutoDuque",
+            rulesS1Title: "1. Visão Geral & Filosofia do AutoDuque",
+            rulesS1Text: `<p>O <strong>AutoDuque</strong> simula um oponente nobre nos <em>Castles of Burgundy / Os Castelos da Borgonha</em> (Stefan Feld / Alea). Ele compete diretamente com você pelas peças hexagonais dos 6 depósitos do tabuleiro principal, acumulando cartas de vilas preenchidas, mercadorias, moedas de prata e pontos de vitória com eficiência matemática.</p>
+            <p>O jogador humano sempre atua como o 1º jogador e rola o <strong>Dado Branco</strong> junto com seus dados de ação. O dado branco define qual carta de vila o AutoDuque tentará preencher no turno dele.</p>`,
+            rulesS2Title: "2. Setup Físico & Tabuleiro de Reserva",
+            rulesS2Text: `<ol>
+                <li>Monte o tabuleiro principal normalmente com as peças dos 6 depósitos e mercadorias correspondentes à rodada.</li>
+                <li>Coloque ao lado o <strong>Tabuleiro de Reserva do AutoDuque</strong> contendo os 7 espaços coloridos mais o <strong>espaço curinga</strong> (hexágono preto).</li>
+                <li>Embaralhe as cartas de vila do AutoDuque e revele as 2 cartas ativas (Carta Esquerda e Carta Direita).</li>
+                <li>Crie o <strong>Depósito Paralelo</strong> (mercado negro / peças de reserva da rodada) ao lado do tabuleiro.</li>
+                <li>O AutoDuque inicia com 1 Castelo em sua primeira carta de vila, 1 Peça de Prata e 0 Trabalhadores.</li>
+            </ol>`,
+            rulesS3Title: "3. Fluxo de Ações & Preenchimento de Vila",
+            rulesS3Text: `<ol>
+                <li><strong>Seleção da Vila:</strong> O valor do <strong>Dado Branco</strong> define a carta-alvo do AutoDuque: <strong>1 a 4 = Carta Esquerda</strong> | <strong>5 ou 6 = Carta Direita</strong>.</li>
+                <li><strong>Determinação do Depósito:</strong> Role o <strong>dado colorido</strong> do bot (ou use o gerador de dados do app). Esse número marca o depósito de partida no tabuleiro.</li>
+                <li><strong>Identificação do Espaço Alvo:</strong> A carta de vila é preenchida rigorosamente de <em>cima para baixo</em> e da <em>esquerda para a direita</em> (① Topo-Esq → ② Topo-Dir → ③ Meio-Esq → ④ Meio-Dir → ⑤ Base-Esq → ⑥ Base-Dir). O próximo espaço vazio determina a cor/tipo de peça requerida.</li>
+                <li>Retire a peça correspondente do depósito físico e coloque-a sobre o espaço da carta no app/mesa.</li>
+                <li>Se a carta for completada com todas as peças, o AutoDuque pontua imediatamente a vila e abre uma nova carta!</li>
+            </ol>`,
+            rulesS3CardTip: `<strong>Ordem de Preenchimento:</strong><br>① Topo-esquerdo → ② Topo-direito<br>③ Meio-esquerdo → ④ Meio-direito<br>⑤ Base-esquerdo → ⑥ Base-direito`,
+            rulesS4Title: "4. Desempates, Ordem de Busca & Prata",
+            rulesS4Text: `<p>Para localizar a peça necessária para o hexágono ativo da vila, o AutoDuque segue estritamente esta ordem de busca:</p>
+            <ol>
+                <li><strong>No depósito inicial</strong> indicado pelo dado colorido.</li>
+                <li><strong>Nos próximos depósitos</strong> do tabuleiro principal, percorrendo em sentido horário (↻).</li>
+                <li><strong>No tabuleiro de reserva</strong> do AutoDuque (se ele já possuir a peça daquela cor guardada).</li>
+                <li><strong>No espaço curinga (hexágono preto)</strong> da sua reserva pessoal.</li>
+                <li>Se o curinga estiver vazio, puxe uma peça aleatória virada para baixo do <strong>Depósito Paralelo</strong> e aloque-a no curinga.</li>
+                <li>Se mesmo assim nenhuma peça compatível for encontrada, o AutoDuque ganha imediatamente <strong>+2 Peças de Prata</strong>.</li>
+            </ol>
+            <p><strong>Compra Automática no Fim do Turno:</strong> Se o AutoDuque terminar a rodada com <strong>2 ou mais peças de prata</strong>, ele gasta 2 pratas para comprar 1 peça do Depósito Paralelo, priorizando cores que ele ainda não possui na reserva!</p>`,
+            rulesS5Title: "5. Efeitos das Peças, Fim de Jogo & Pontuação",
+            rulesS5Text: `<p>Cada tipo de peça colocada na vila do AutoDuque gera efeitos imediatos ou bônus de pontuação:</p>
+            <ul>
+                <li><strong>Castelos (Verde-Escuro):</strong> Concede imediatamente uma busca extra de peça para a sua vila.</li>
+                <li><strong>Navios (Azul):</strong> Avança 1 espaço na trilha de ordem de turno e recolhe todas as mercadorias daquele depósito.</li>
+                <li><strong>Minas (Cinza):</strong> Rende +1 peça de prata ao final de cada fase (A até E).</li>
+                <li><strong>Animais (Verde-Claro):</strong> Pontua imediatamente pelo número e tipo de animais idênticos na mesma fazenda.</li>
+                <li><strong>Construções (Marrom):</strong> Executa o benefício imediato da construção (peças extras, moedas, trabalhadores).</li>
+                <li><strong>Monastérios (Amarelo):</strong> Concedem pontos de vitória adicionais de fim de jogo ou privilégios especiais.</li>
+            </ul>
+            <p><strong>Pontuação Final:</strong> No término da Fase E, toque no botão <em>Encerrar Partida e Pontuar</em>. O app calculará os pontos de vilas completadas, bônus de fase, mercadorias vendidas, moedas e peças na reserva comparando com o seu ducado!</p>`,
             depotCenter1: "Tabuleiro",
             depotCenter2: "Principal",
             close: "Fechar",
@@ -935,34 +986,49 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
             boardTip: "Click reserve hexes to mark/unmark tiles obtained.",
             completedCards: "Completed Cards",
             endGame: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 3v18\"/><path d=\"M5 4h13l-3 4 3 4H5\"/></svg> End Game and Score",
-            rulesTitle: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M4 5c3 0 6 1 8 3v11c-2-2-5-3-8-3V5Z\"/><path d=\"M20 5c-3 0-6 1-8 3v11c2-2 5-3 8-3V5Z\"/></svg> Rules — AutoDuque",
-            rulesS1Title: "1. AutoDuque Turn",
-            rulesS1L1: "The <strong>white die</strong> (rolled by the 1st human player) indicates the chosen estate card: <strong>1–4 = Left Card</strong>, <strong>5–6 = Right Card</strong>.",
-            rulesS1L2: "Roll the AutoDuque's <strong>colored die</strong> — this is the initial search depot.",
-            rulesS1L3: "Search for a tile to fill the chosen estate card (always top to bottom, and left to right).",
-            rulesS1Extra1: "<strong>Tile Search Order:</strong><br>1. In the depot indicated by the colored die.<br>2. In the next depots on the board, clockwise.<br>3. In the <strong>reserve area</strong> (the 7 spaces on the AutoDuque board).<br>4. In the <strong>wildcard space</strong> (black hex in the reserve).<br>5. If the wildcard space is empty, take a random tile from the <strong>Black Market</strong> and place it face down on the wildcard space.<br>6. If none of this is possible, AutoDuque gains <strong>+2 silverlings</strong>.",
-            rulesS1Extra2: "<strong><svg class=\"icon-inline\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"currentColor\" stroke=\"none\"><path d=\"M13 2 3 14h7l-1 8 11-14h-7l1-6Z\"/></svg> End of Turn (Auto Buy):</strong> If AutoDuque ends its turn with 2 or more silverlings, it spends 2 to buy 1 tile from the Black Market (always prioritizing a color it doesn't have in reserve).",
-            rulesDepotTitle: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M9 3 3 5v16l6-2 6 2 6-2V3l-6 2-6-2Z\"/><path d=\"M9 3v16M15 5v16\"/></svg> Depot Diagram",
-            rulesDepotDesc: "The 6 board depots are numbered 1–6 clockwise. The colored die indicates the starting depot; search the following ones clockwise ↻.",
-            rulesDepotEx: "Ex: colored die = 3 → search in 3, then 4, 5, 6, 1, 2...",
-            rulesCardTitle: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"4\" y=\"3\" width=\"16\" height=\"18\" rx=\"2\"/><path d=\"M12 8v8M8 12h8\"/></svg> How to Fill an Estate Card",
-            rulesCardDesc: "Each estate card has hexagons to fill. AutoDuque always fills <strong>top to bottom</strong>, and <strong>left to right</strong>. The hexagon with the book/chest icon is the next one to fill.",
-            rulesCardEx1: "Card 2: The dark green/red hex (top-right) is the next to fill.",
-            rulesCardOrderLabel: "Fill order:",
-            rulesCardOrder: "① Top-left → ② Top-right<br>③ Mid-left → ④ Mid-right<br>⑤ Bottom-left → ⑥ Bottom-right",
-            rulesCardTip: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M9 18h6M10 22h4\"/><path d=\"M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.3h6c0-1 .4-1.8 1-2.3A7 7 0 0 0 12 2Z\"/></svg> <strong>Tip:</strong> The hexagon with the book/chest icon on the card indicates what type of tile goes in that space. Get that tile type from the depot indicated by the colored die (or the next ones).",
-            rulesReserveTitle: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 21V9h3V6h2v3h2V6h2v3h2V6h2v3h3v12Z\"/><path d=\"M4 21h16\"/></svg> Reserve Board",
-            rulesReserveDesc: "The AutoDuque reserve board has 7 colored spaces + 1 wildcard space (black hexagon). Tiles bought from the Black Market stay here until used to fill an estate card.",
-            rulesReserveEx: "<strong>Wildcard Space (black hexagon):</strong> Can be filled with any type of tile. If empty when needed, draw a random tile from the Black Market and place it face down.",
-            rulesS2Title: "2. Tile Effects",
-            tileEffectsHtml: `
-                <li><strong>Castle (Dark Green):</strong> Immediately take an extra turn/action to place another tile.</li>
-                <li><strong>Ship (Blue):</strong> Advance on the turn order track and collect goods from the depot.</li>
-                <li><strong>Mine (Gray):</strong> Yields +1 silverling at the end of each phase.</li>
-                <li><strong>Animals (Light Green):</strong> Scores victory points immediately based on animal type/count.</li>
-                <li><strong>Buildings (Brown):</strong> Triggers the building's immediate special action.</li>
-                <li><strong>Monasteries (Yellow):</strong> Grants ongoing special abilities or endgame bonus VP.</li>
-            `,
+            rulesTitle: "<svg class=\"icon-inline\" viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M4 5c3 0 6 1 8 3v11c-2-2-5-3-8-3V5Z\"/><path d=\"M20 5c-3 0-6 1-8 3v11c2-2 5-3 8-3V5Z\"/></svg> Rules & Guide — AutoDuque",
+            rulesS1Title: "1. Overview & AutoDuque Philosophy",
+            rulesS1Text: `<p>The <strong>AutoDuque</strong> simulates a noble opponent in <em>The Castles of Burgundy</em> (Stefan Feld / Alea). He competes directly against you for hexagonal tiles from the 6 main board depots, gathering completed estate cards, goods, silverlings, and victory points with calculating efficiency.</p>
+            <p>The human player always acts as 1st player and rolls the <strong>White Die</strong> alongside their own action dice. The white die dictates which estate card the AutoDuque targets on his turn.</p>`,
+            rulesS2Title: "2. Physical Setup & Reserve Board",
+            rulesS2Text: `<ol>
+                <li>Set up the main board normally with tiles across the 6 numbered depots and goods tiles for the current round.</li>
+                <li>Place the <strong>AutoDuque Reserve Board</strong> nearby, featuring 7 color-coded spaces plus the <strong>wildcard space</strong> (black hexagon).</li>
+                <li>Shuffle the AutoDuque estate cards and reveal the 2 active cards (Left Card and Right Card).</li>
+                <li>Form the <strong>Parallel Depot</strong> (black market reserve tiles for the round) beside the main board.</li>
+                <li>The AutoDuque begins with 1 Castle on his first estate card, 1 Silverling, and 0 Workers.</li>
+            </ol>`,
+            rulesS3Title: "3. Action Flow & Estate Building",
+            rulesS3Text: `<ol>
+                <li><strong>Estate Selection:</strong> The <strong>White Die</strong> rolled by the human player chooses the AutoDuque's target card: <strong>1 to 4 = Left Card</strong> | <strong>5 or 6 = Right Card</strong>.</li>
+                <li><strong>Depot Determination:</strong> Roll the bot's <strong>colored die</strong> (or use the app's digital dice roller). This number marks the starting depot on the main board.</li>
+                <li><strong>Target Space Identification:</strong> The estate card is filled strictly <em>top to bottom</em> and <em>left to right</em> (① Top-Left → ② Top-Right → ③ Mid-Left → ④ Mid-Right → ⑤ Bottom-Left → ⑥ Bottom-Right). The next empty space specifies the required tile type/color.</li>
+                <li>Take the matching tile from the board depot and place it onto the estate card space.</li>
+                <li>When all spaces on a card are filled, AutoDuque immediately scores the estate and draws a new card!</li>
+            </ol>`,
+            rulesS3CardTip: `<strong>Fill Order:</strong><br>① Top-left → ② Top-right<br>③ Mid-left → ④ Mid-right<br>⑤ Bottom-left → ⑥ Bottom-right`,
+            rulesS4Title: "4. Tie-Breakers, Tile Search & Silver",
+            rulesS4Text: `<p>To retrieve the tile needed for the active estate hex, AutoDuque executes this search sequence:</p>
+            <ol>
+                <li><strong>In the starting depot</strong> matching the colored die.</li>
+                <li><strong>In the next depots</strong> on the main board, proceeding clockwise (↻).</li>
+                <li><strong>On the AutoDuque reserve board</strong> (if he already holds a tile of that color in storage).</li>
+                <li><strong>In the wildcard space (black hexagon)</strong> of his personal reserve.</li>
+                <li>If the wildcard space is empty, draw a random face-down tile from the <strong>Parallel Depot</strong> and place it on the wildcard space.</li>
+                <li>If no eligible tile can be acquired through any step, AutoDuque immediately gains <strong>+2 Silverlings</strong>.</li>
+            </ol>
+            <p><strong>End-of-Turn Auto-Purchase:</strong> Whenever AutoDuque finishes a turn holding <strong>2 or more silverlings</strong>, he expends 2 silverlings to purchase 1 tile from the Parallel Depot, prioritizing colors not currently held in his reserve!</p>`,
+            rulesS5Title: "5. Tile Effects, Game End & Scoring",
+            rulesS5Text: `<p>Each tile type placed on the AutoDuque's estate triggers immediate actions or endgame scoring:</p>
+            <ul>
+                <li><strong>Castles (Dark Green):</strong> Immediately triggers an extra tile search action for his estate.</li>
+                <li><strong>Ships (Blue):</strong> Advances 1 space along the turn order track and takes all goods from that depot.</li>
+                <li><strong>Mines (Gray):</strong> Generates +1 silverling at the end of each round phase (A through E).</li>
+                <li><strong>Animals (Light Green):</strong> Scores immediate VP based on the count and species of animals in that pasture.</li>
+                <li><strong>Buildings (Brown):</strong> Triggers the building's immediate special action (extra tiles, coins, workers).</li>
+                <li><strong>Monasteries (Yellow):</strong> Grants special abilities or endgame bonus VP calculations.</li>
+            </ul>
+            <p><strong>Final Scoring:</strong> At the conclusion of Phase E, click <em>End Game and Score</em>. The app calculates completed estate points, phase bonuses, sold goods, silverlings, and reserve tiles against your duchy's score!</p>`,
             depotCenter1: "Main",
             depotCenter2: "Board",
             close: "Close",
@@ -1544,9 +1610,21 @@ html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
         document.getElementById('difficulty').addEventListener('change', (e) => { difficulty = parseInt(e.target.value); saveState(); });
     }
 
+    // Keyboard ESC listener & Modal helpers
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeModal('rulesModal');
+            closeModal('scoringModal');
+        }
+    });
+    window.openHelp = () => openModal('rulesModal');
+    window.closeHelp = () => closeModal('rulesModal');
+
     init();
 </script>
 <script type="module" src="../assets/analytics.js"></script>
 <script type="module" src="../assets/bot-view.js"></script>
+
+<button class="btn-help-float" onclick="openModal('rulesModal')" aria-label="Help" title="Regras & Ajuda">?</button>
 </body>
 </html>

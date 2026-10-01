@@ -808,8 +808,112 @@ select:focus, input:focus { outline: none; border-color: #1b5e20; }
 .fixture-team.away{ text-align:right; }
 .fixture-score-wrap{ display:flex; align-items:center; gap:6px; }
 .fixture-score-input{ width:44px; height:34px; text-align:center; font-size:16px; font-weight:700; border:1px solid #90a4ae; border-radius:4px; padding:2px; }
-.fixture-vs{ color:#90a4ae; font-weight:800; font-size:12px; }
 .league-actions{ display:flex; gap:8px; flex-wrap:wrap; margin-top:14px; }
+
+/* Help Modal & Floating Button */
+.btn-help-float {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 99;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--card-yellow, #ffea00);
+  color: #1e293b;
+  border: 3px solid #263238;
+  font-weight: 900;
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.4);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.btn-help-float:hover {
+  transform: scale(1.08);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+}
+.btn-help-float:active {
+  transform: scale(0.95);
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.modal-overlay.hidden {
+  display: none !important;
+}
+.modal {
+  background: #ffffff;
+  color: #1e293b;
+  border-radius: 12px;
+  max-width: 720px;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  padding: 28px 24px;
+  position: relative;
+  box-shadow: 0 16px 40px rgba(0,0,0,0.5);
+  border: 3px solid #37474f;
+}
+.modal-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: #eceff1;
+  color: #37474f;
+  border: 1px solid #b0bec5;
+  border-radius: 6px;
+  width: 36px;
+  height: 36px;
+  font-size: 1.3rem;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.modal-close:hover {
+  background: #cfd8dc;
+  color: #000;
+}
+.help-section {
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+}
+.help-section summary {
+  cursor: pointer;
+  outline: none;
+  font-weight: 700;
+  color: #1b5e20;
+  font-size: 1.05rem;
+  margin-bottom: 6px;
+}
+.help-section-content {
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: #334155;
+}
+.help-section-content ul, .help-section-content ol {
+  margin: 8px 0;
+  padding-left: 20px;
+}
+.help-section-content li {
+  margin-bottom: 6px;
+}
 </style>
 <link rel="stylesheet" href="../assets/theme-kit.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -1072,10 +1176,10 @@ select:focus, input:focus { outline: none; border-color: #1b5e20; }
 
 <a class="bmc-inline" href="https://www.buymeacoffee.com/colletes" target="_blank" rel="noopener" aria-label="Buy me a coffee"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h13a2 2 0 0 1 2 2v1a3 3 0 0 1-3 3h-1"/><path d="M4 8h13v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V8Z"/><path d="M8 3c-.6 1 .5 1.6 0 3M12 3c-.6 1 .5 1.6 0 3"/></svg><span data-i18n="bmcBtn">Me pague um café</span></a>
 
-<button class="btn-help-float" onclick="document.getElementById('helpModal').classList.remove('hidden')">?</button>
+<button class="btn-help-float" onclick="openHelpModal()" aria-label="Ajuda e Regras">?</button>
 <div id="helpModal" class="modal-overlay hidden">
   <div class="modal">
-    <button class="btn modal-close" onclick="document.getElementById('helpModal').classList.add('hidden')" data-i18n="btnClose"></button>
+    <button class="btn modal-close" onclick="closeHelpModal()" data-i18n="btnClose">&times;</button>
     <h3 data-i18n="helpTitle"></h3>
     <div data-i18n-html="helpBody"></div>
   </div>
@@ -1088,6 +1192,30 @@ select:focus, input:focus { outline: none; border-color: #1b5e20; }
 <script src="js/eleven_league.js"></script>
 <script>
 document.addEventListener('touchstart', function(){}, {passive:true});
+
+function openHelpModal() {
+  const m = document.getElementById('helpModal');
+  if (m) m.classList.remove('hidden');
+}
+function closeHelpModal() {
+  const m = document.getElementById('helpModal');
+  if (m) m.classList.add('hidden');
+}
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    closeHelpModal();
+  }
+});
+document.addEventListener('DOMContentLoaded', function() {
+  const m = document.getElementById('helpModal');
+  if (m) {
+    m.addEventListener('click', function(e) {
+      if (e.target === m) {
+        closeHelpModal();
+      }
+    });
+  }
+});
 
 const LANG_KEY = 'boardbots_lang';
 
@@ -1134,11 +1262,75 @@ const I18N = {
     creditsLine2:'Eleven é um jogo de tabuleiro © Portal Games. Ferramenta de apoio não-oficial, sem fins comerciais.',
     bmcBtn:'Me pague um café',
     btnClose:'Fechar',
-    helpTitle:'Como Usar',
-    helpBody:`<p>Este é um app de apoio <strong>não-oficial</strong> ainda em fase alpha para o jogo de tabuleiro <strong>Eleven</strong>, com três ferramentas integradas:</p>
-      <p><strong>Gerador de Campanhas:</strong> escolha uma liga, um time real e algumas opções, e o app monta uma mini-campanha solo com capítulos, objetivos da temporada e mudanças de setup — usando um resumo real do time (via Wikipedia) e histórias geradas proceduralmente. Você pode exportar a visualização como PDF para imprimir ou consultar durante a partida.</p>
-      <p><strong>Resolvedor de Partidas:</strong> monte seu time e o time adversário informando o goleiro (força e luvas) e os jogadores de cada uma das 9 Zonas físicas do campo, exatamente como aparecem nas cartas e no tabuleiro (grade 3x3: Ataque/Meio/Defesa × Esquerda/Centro/Direita), marcando cada um como Atacante ou Defensor e sua força. Para a resolução da partida, as 3 Zonas de cada lado (Ponta, Meio e Zagueiro Esquerdo ou Direito) formam juntas uma única Ala, que enfrenta a Ala espelhada do adversário; já as 3 Zonas centrais (Ataque, Meio e Defesa Central) resolvem cada uma sozinha contra a Zona central espelhada do adversário — e os defensores mais fracos o suficiente para bloquear cada atacante são escalados de forma otimizada. O app mostra o placar e os artilheiros. Você também pode escolher uma Carta de Tática para o seu time: ela sugere uma Formação e aplica bônus ao resultado.</p>
-      <p><strong>Tabela da Liga (Campeonato Persistente):</strong> acompanhe a classificação do seu clube pelas 6 semanas da temporada oficial de Eleven, com confrontos da rodada, simulação realista das outras partidas, ordenação oficial de pontos e saldo de gols, zonas de acesso e rebaixamento, e integração direta para gravar o resultado resolvido no Solver diretamente na liga!</p>`,
+    helpTitle:'Manual Tático & Guia de Regras do Eleven',
+    helpBody:`
+      <details class="help-section" open>
+        <summary>1. Visão Geral & Filosofia da Plataforma</summary>
+        <div class="help-section-content">
+          <p>O aplicativo do <em>Eleven: Football Manager Board Game</em> (jogo de Thomas Jansen / Portal Games) atua como assistente tático e gerador de temporadas solo para jogadores e clubes.</p>
+          <ul>
+            <li><strong>Três Ferramentas Integradas:</strong>
+              <ul>
+                <li><strong>Gerador de Campanhas Procedurais:</strong> Constrói campanhas solo imersivas com base em histórias reais e dados históricos de clubes ao redor do mundo (via Wikipedia), com objetivos progressivos a cada capítulo.</li>
+                <li><strong>Resolvedor de Partidas (Match Solver):</strong> Calcula o resultado físico dos 90 minutos de jogo no tabuleiro de campo, atribuindo bloqueios de defesa, finalizações e luvas de goleiro com precisão analítica.</li>
+                <li><strong>Tabela da Liga (Campeonato Persistente):</strong> Rastreia as 6 semanas da temporada regular com simulação dos outros jogos, critérios oficiais de pontos/saldo de gols e zonas de acesso e rebaixamento.</li>
+              </ul>
+            </li>
+            <li><strong>Componentes de Mesa:</strong> Tabuleiro do clube, diretores, funcionários, estádio, cartas de patrocinador, finanças e marcadores de jogador continuam 100% físicos na sua mesa.</li>
+          </ul>
+        </div>
+      </details>
+
+      <details class="help-section" open>
+        <summary>2. Setup Físico & Ajustes da Partida</summary>
+        <div class="help-section-content">
+          <p><strong>Preparação da Mesa de Jogo:</strong></p>
+          <ul>
+            <li>Monte seu Tabuleiro do Clube (infraestrutura, arquibancadas, escritório e finanças) e o Tabuleiro de Campo (com sua grade 3×3 de Zonas).</li>
+            <li><strong>Adversário da Semana:</strong> No Resolvedor de Partidas, selecione a carta oficial correspondente da partida (OP001 a OP064) e clique em <em>Carregar Carta</em>. O app preenche automaticamente a força do goleiro adversário, luvas e a escalação dos jogadores rivais nas 9 zonas.</li>
+            <li><strong>Escalação do seu Time:</strong> Posicione fisicamente suas cartas/camisas de jogador nos setores correspondentes no campo da mesa e informe-os no app com sua Força e Tipo (Atacante ou Defensor).</li>
+          </ul>
+        </div>
+      </details>
+
+      <details class="help-section" open>
+        <summary>3. Fluxo de Ações & Resolução da Partida</summary>
+        <div class="help-section-content">
+          <p>A semana em Eleven é estruturada de Segunda a Sexta em decisões de diretoria e gestão, culminando no <strong>Fim de Semana (Dia de Jogo)</strong>:</p>
+          <ul>
+            <li><strong>Alas (Esquerda e Direita):</strong> As 3 Zonas da lateral esquerda (Ponta, Meio e Defesa Esquerda) formam uma única Ala, que enfrenta a Ala espelhada do adversário. O mesmo ocorre na lateral direita.</li>
+            <li><strong>Zonas Centrais:</strong> O Ataque Central, Meio Central e Defesa Central resolvem cada um seu duelo isolado contra a zona central espelhada correspondente do rival.</li>
+            <li><strong>Mecânica de Bloqueio Defensivo:</strong> Cada defensor é atribuído para bloquear o atacante mais fraco possível que ele consiga anular (força do defensor &ge; força do atacante). Atacantes não bloqueados avançam para chutar a gol!</li>
+            <li><strong>Intervenção do Goleiro:</strong> Cada Luva do goleiro anula automaticamente 1 chute livre a gol. Para chutes restantes, se a Força do goleiro for maior ou igual à força do atacante, o gol é defendido. Chutes que superem a força do goleiro convertem-se em gol!</li>
+            <li>O aplicativo apresenta o placar final oficial, gols e os números das camisas dos artilheiros.</li>
+          </ul>
+        </div>
+      </details>
+
+      <details class="help-section" open>
+        <summary>4. Regras de Desempate, Táticas & Campanhas</summary>
+        <div class="help-section-content">
+          <p><strong>Cartas de Tática & Formações:</strong> Selecione a carta de tática utilizada pelo seu treinador para obter a formação tática recomendada e receber bônus automáticos de força ou bloqueio em setores do campo.</p>
+          <p><strong>Adversário Acima na Tabela:</strong> Marque esta opção caso o adversário esteja à frente do seu clube na classificação para ativar regras e ajustes de motivação oficiais.</p>
+          <p><strong>Progressão e Risco de Demissão em Campanhas:</strong> Não atingir um objetivo comum não encerra a campanha, mas aumenta o nível de exigência para os próximos capítulos. Capítulos decisivos (sinalizados com ⚠ de rebaixamento ou ultimato da diretoria) resultam em demissão imediata em caso de fracasso.</p>
+        </div>
+      </details>
+
+      <details class="help-section" open>
+        <summary>5. Fim de Jogo & Pontuação da Liga</summary>
+        <div class="help-section-content">
+          <p><strong>Sistema de Pontuação da Liga:</strong> Vitória = 3 pontos, Empate = 1 ponto, Derrota = 0 pontos.</p>
+          <p><strong>Critérios Oficiais de Desempate na Tabela:</strong></p>
+          <ol>
+            <li>Maior número de Pontos conquistados (PTS).</li>
+            <li>Melhor Saldo de Gols (SG / GD = Gols Pró menos Gols Contra).</li>
+            <li>Maior número de Gols Pró marcados (GP / GF).</li>
+            <li>Confronto direto entre os clubes empatados.</li>
+          </ol>
+          <p><strong>Desfecho da Temporada (6 Semanas):</strong> Os 2 primeiros clubes garantem o Acesso à divisão superior (ou o Título de Campeão); os 2 últimos clubes são rebaixados. Conclua a partida somando os Pontos de Vitória de infraestrutura e diretoria conforme o manual oficial!</p>
+        </div>
+      </details>
+    `,
     leagueTitle:'Campeonato da Liga — Temporada Regular (6 Semanas)',
     leagueIntro:'Acompanhe a classificação do seu clube durante as 6 semanas da temporada de Eleven. Registre os resultados das partidas ou simule os confrontos dos outros times.',
     lblYourClub:'Seu Clube:',
@@ -1198,11 +1390,75 @@ const I18N = {
     creditsLine2:'Eleven is a board game © Portal Games. Unofficial support tool, not for commercial use.',
     bmcBtn:'Buy me a coffee',
     btnClose:'Close',
-    helpTitle:'How to Use',
-    helpBody:`<p>This is an <strong>unofficial</strong> support app, still in alpha stage, for the board game <strong>Eleven</strong>, with three integrated tools:</p>
-      <p><strong>Campaign Generator:</strong> pick a league, a real team, and a few options, and the app builds a mini solo campaign with chapters, season objectives, and setup changes — using a real summary of the team (via Wikipedia) and procedurally generated stories. You can export the preview as a PDF to print or consult during play.</p>
-      <p><strong>Match Solver:</strong> build your team and the opposing team by entering the goalkeeper (power and gloves) and the players in each of the 9 physical field Zones, exactly as printed on the cards and board (a 3x3 grid: Attack/Mid/Defense × Left/Center/Right), marking each as Attacker or Defender along with their power. For match resolution, the 3 Zones on each side (Forward, Midfielder and Left/Right Defender) combine into a single Wing, which faces the opponent's mirrored Wing; the 3 central Zones (Central Attack, Central Midfield, Central Defense) each resolve on their own against the opponent's mirrored central Zone — and the weakest defenders strong enough to block each attacker are assigned optimally. The app shows the score and the scorers. You can also pick a Tactic card for your team: it suggests a Formation and applies bonuses to the result.</p>
-      <p><strong>League Table (Persistent Championship):</strong> track your club's standings over the official 6-week Eleven season, with week fixtures, realistic simulation for other fixtures, official PTS/GD tie-breakers, promotion and relegation zones, and direct integration to record solver results into the league table!</p>`,
+    helpTitle:'Eleven Tactical Manual & Rulebook Guide',
+    helpBody:`
+      <details class="help-section" open>
+        <summary>1. Overview & Platform Architecture</summary>
+        <div class="help-section-content">
+          <p>The companion app for <em>Eleven: Football Manager Board Game</em> (designed by Thomas Jansen / Portal Games) provides an all-in-one tactical suite for solo managers.</p>
+          <ul>
+            <li><strong>Three Core Integrated Tools:</strong>
+              <ul>
+                <li><strong>Procedural Campaign Generator:</strong> Generates immersive solo storylines using real historical data and Wikipedia summaries for clubs across top international leagues, featuring scaled chapter objectives.</li>
+                <li><strong>Match Solver:</strong> Mathematically resolves the full 90-minute match day across all field sectors, assigning defensive marks, calculating shots on goal, and applying goalkeeper saves.</li>
+                <li><strong>Persistent League Championship:</strong> Tracks table standings over the official 6-week Eleven season, simulating league rivals, tracking promotion/relegation zones, and recording match scores.</li>
+              </ul>
+            </li>
+            <li><strong>Tabletop Role:</strong> Stadium infrastructure, board office, staff, sponsor cards, operational finances, and player tokens stay physical on your table.</li>
+          </ul>
+        </div>
+      </details>
+
+      <details class="help-section" open>
+        <summary>2. Physical Tabletop Setup & Match Preparation</summary>
+        <div class="help-section-content">
+          <p><strong>Tabletop Arrangement:</strong></p>
+          <ul>
+            <li>Arrange your Club Board (stadium sections, office staff, directors, and budget) and the Match Board (featuring its 3×3 grid of field Zones).</li>
+            <li><strong>Opponent Match Card:</strong> In the Match Solver, choose your fixture's official card (OP001 through OP064) and click <em>Load Card</em>. The app automatically populates the opposing goalkeeper's stats and places rival players into the 9 zones.</li>
+            <li><strong>Your Starting Lineup:</strong> Place your physical player cards/shirts onto the tabletop match board and enter them into the app with their Power and Type (Attacker or Defender).</li>
+          </ul>
+        </div>
+      </details>
+
+      <details class="help-section" open>
+        <summary>3. Action Flow & Match Resolution Hierarchy</summary>
+        <div class="help-section-content">
+          <p>The Eleven match week runs from Monday through Friday for board actions and transfers, culminating in the <strong>Weekend Match Day</strong>:</p>
+          <ul>
+            <li><strong>Wings (Left and Right):</strong> The 3 Zones on each flank (Forward, Midfield, and Defense) combine their power into a unified Wing contest against the opponent's mirrored Wing.</li>
+            <li><strong>Central Zones:</strong> Central Attack, Central Midfield, and Central Defense resolve independently against the opponent's mirrored central zone.</li>
+            <li><strong>Defensive Blocking:</strong> Defenders block opposing attackers in an optimal hierarchy (defender power &ge; attacker power, assigning the weakest sufficient defender). Unblocked attackers advance to shoot!</li>
+            <li><strong>Goalkeeper Protection:</strong> Each Goalkeeper Glove automatically nullifies 1 free shot on goal. For remaining shots, if Goalkeeper Power &ge; Attacker Power, the shot is saved. Shots that exceed Goalkeeper Power score goals!</li>
+            <li>The app generates full commentary, final score, and shirt numbers of all goalscorers.</li>
+          </ul>
+        </div>
+      </details>
+
+      <details class="help-section" open>
+        <summary>4. Tactical Cards, Tie-breakers & Solo Campaigns</summary>
+        <div class="help-section-content">
+          <p><strong>Tactic Cards & Formations:</strong> Select your manager's active tactic card to view the recommended formation and apply sector-specific bonuses.</p>
+          <p><strong>Opponent Above on Table:</strong> Toggle this option if the opponent sits higher than you in the standings to activate official morale modifiers.</p>
+          <p><strong>Campaign Progression & Sacking Rules:</strong> Failing a standard chapter objective does not terminate your campaign; it simply increases pressure on upcoming chapters. Only critical chapters (marked with a ⚠ relegation or board ultimatum flag) result in immediate sacking upon failure.</p>
+        </div>
+      </details>
+
+      <details class="help-section" open>
+        <summary>5. Game End & League Championship Scoring</summary>
+        <div class="help-section-content">
+          <p><strong>League Points System:</strong> Win = 3 points, Draw = 1 point, Loss = 0 points.</p>
+          <p><strong>Official Table Tie-breakers:</strong></p>
+          <ol>
+            <li>Total Points earned (PTS).</li>
+            <li>Goal Difference (GD = Goals For minus Goals Against).</li>
+            <li>Goals For (GF).</li>
+            <li>Head-to-head match result between tied teams.</li>
+          </ol>
+          <p><strong>Season Finale (Week 6):</strong> The top 2 clubs earn Promotion or the Championship Trophy; the bottom 2 clubs face Relegation. Conclude by calculating your club's final Victory Points per the official rulebook!</p>
+        </div>
+      </details>
+    `,
     leagueTitle:'League Championship — Regular Season (6 Weeks)',
     leagueIntro:'Track your club\'s standings over Eleven\'s 6-week season. Record match results or simulate the fixtures of other teams.',
     lblYourClub:'Your Club:',
