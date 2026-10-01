@@ -143,6 +143,12 @@ const SITE_I18N = {
     roadmap_suggest_desc: 'O BoardBots cresce com a comunidade! Envie uma sugestão de jogo, reporte melhorias ou ajude a manter os servidores ativos com um café.',
     roadmap_suggest_btn: 'Sugerir um Bot ou Jogo',
 
+    update_0_title: 'SETI Solo Bot, Correção Space Base & Padronização Global',
+    update_0_desc: 'Lançamento do bot completo para SETI com suporte à expansão Agências Espaciais, correção crítica na progressão do Automa de Space Base e modernização dos modais de ajuda em todos os bots.',
+    update_0_item1: '<strong>SETI: Search for Extraterrestrial Intelligence:</strong> enfrente o Rival em 5 níveis de dificuldade com suporte ao Jogo Base e à expansão Agências Espaciais, 23 cartas escaneadas em alta resolução, 4 tabuleiros solo, 27 tiles de objetivos e árvore de decisão para 8 espécies alienígenas.',
+    update_0_item2: '<strong>Space Base (Automa Joanna / Devin / Clarie):</strong> correção na progressão de mercado (Linha 1 = Nível 1, Linha 2 = Nível 2, Linha 3 = Nível 3), garantindo que o bot queime naves baratas no início da partida e avance para níveis mais altos conforme acumula pontos de vitória.',
+    update_0_item3: '<strong>Modais de Regras & Guias Solo Padronizados:</strong> reformulação unificada em 24 bots da plataforma com novo botão flutuante de ajuda, seções expansíveis de setup, desempates e regras do automa.',
+
     update_1_title: 'Castle Combo, Patchwork e Arena & Tierlist Studio',
     update_1_desc: 'Lançamento dos bots solo para Castle Combo e Patchwork, unificação das ferramentas em um estúdio completo e graduação de bots para o catálogo principal.',
     update_1_item1: '<strong>Castle Combo:</strong> enfrente Anton, um oponente solo astuto que desafia suas escolhas de vila e castelo 3x3 com decisões dinâmicas e contagem precisa de pontos.',
@@ -171,12 +177,11 @@ const SITE_I18N = {
     update_4_item3: '<strong>Eleven:</strong> narração de rodadas e partidas simuladas com tom de cobertura esportiva ao vivo.',
 
     roadmap_card_progress_title: 'Em Desenvolvimento',
+    roadmap_item_puerto_rico: '<strong>Implantação do Puertoma (Puerto Rico 1897 - Edição Especial):</strong> içando as velas no porto de San Juan! Implementação digitalizada e ágil do aclamado Puertoma com suporte a 1 jogador humano + 2 Puertomas, automação completa da escolha de papéis, edifícios, plantações, frotas e integração com as Expansões I e II.',
     roadmap_item_wingspan: '<strong>Estabilização dos Bots Alpha (Foco em Wingspan):</strong> calibrando e fortalecendo as asas do Automa — refinamento profundo das regras automatizadas em Wingspan, garantindo precisão milimétrica nas 4 expansões (Oceania, Europa, Ásia e Américas), objetivos de final de rodada e uma transição impecável para fora do Alpha.',
-    roadmap_item_seti: '<strong>Bot para SETI (Search for Extraterrestrial Intelligence):</strong> apontando os radiotelescópios rumo ao espaço profundo! Criação de um bot dedicado para orquestrar o rastreamento de frequências alienígenas, lançamento de sondas solares e disputa de dados científicos sem complexidade manual na mesa.',
 
     roadmap_card_radar_title: 'No Radar & Próximas Fronteiras',
     roadmap_item_worldwonders: '<strong>Estudo de Viabilidade de Bot para World Wonders:</strong> plantas arquitetônicas em análise! Avaliação de algoritmos de draft e ocupação espacial no mapa (posicionamento de estradas, torres e monumentos históricos) para criar um rival calculista e fluido na disputa pelas maravilhas da antiguidade.',
-    roadmap_item_puerto_rico: '<strong>Implantação do Puertoma (Puerto Rico):</strong> içando as velas no porto de San Juan! Implementação digitalizada e ágil do aclamado Puertoma, automatizando a escolha de papéis, aquisição de edifícios, cultivo de plantações e despacho de frotas de carga no clássico absoluto dos tabuleiros.',
   },
   en: {
     site_title: 'Board Bots',
@@ -319,6 +324,12 @@ const SITE_I18N = {
     roadmap_suggest_desc: 'BoardBots grows with the community! Submit a game idea, suggest improvements, or help keep the servers running by buying a coffee.',
     roadmap_suggest_btn: 'Suggest a Bot or Game',
 
+    update_0_title: 'SETI Solo Bot, Space Base Fix & Global Help Modals',
+    update_0_desc: 'Official launch of the SETI solo bot with Space Agencies expansion support, critical progression fix in Space Base Automa, and platform-wide rules guide modernization.',
+    update_0_item1: '<strong>SETI: Search for Extraterrestrial Intelligence:</strong> challenge the Rival across 5 difficulty levels with full Base Game and Space Agencies expansion support, 23 high-res scanned cards, 4 solo boards, 27 objective tiles, and decision logic for 8 alien species.',
+    update_0_item2: '<strong>Space Base (Automa Joanna / Devin / Clarie):</strong> fixed market progression mapping (Row 1 = Tier 1, Row 2 = Tier 2, Row 3 = Tier 3), ensuring the bot discards low-cost ships early on and advances to higher tiers as it scores victory points.',
+    update_0_item3: '<strong>Standardized Rules Guides & Modals:</strong> unified overhaul across 24 platform bots featuring floating quick-help buttons, collapsible setup accordions, tie-breakers, and automa rule reference.',
+
     update_1_title: 'Castle Combo, Patchwork & Arena Studio',
     update_1_desc: 'Launch of solo bots for Castle Combo and Patchwork, unification of tools into a complete tournament studio, and bot graduations into the main catalog.',
     update_1_item1: '<strong>Castle Combo:</strong> take on Anton, a clever solo rival who challenges your 3x3 castle and village grid drafting with dynamic priorities and accurate scoring.',
@@ -347,12 +358,11 @@ const SITE_I18N = {
     update_4_item3: '<strong>Eleven:</strong> procedural campaign commentary delivering broadcast-style match simulations.',
 
     roadmap_card_progress_title: 'In Development',
+    roadmap_item_puerto_rico: '<strong>Puertoma Implementation (Puerto Rico 1897 - Special Edition):</strong> hoisting sails at the port of San Juan! Digital implementation of the acclaimed Puertoma solo system supporting 1 human + 2 Puertomas, automating role picks, buildings, plantations, cargo ships, and Expansions I & II.',
     roadmap_item_wingspan: '<strong>Stabilizing Alpha Bots (Wingspan Focus):</strong> calibrating and strengthening the Automa\'s wings — deep refinement of automated rules in Wingspan, ensuring pinpoint accuracy across all 4 expansions (Oceania, Europe, Asia, and Americas), end-of-round goals, and a flawless graduation from Alpha.',
-    roadmap_item_seti: '<strong>Bot for SETI (Search for Extraterrestrial Intelligence):</strong> aiming radio telescopes into the deep cosmos! Designing a dedicated bot to orchestrate alien signal tracking, solar probe launches, and scientific data races without manual tabletop overhead.',
 
     roadmap_card_radar_title: 'On the Radar & Next Frontiers',
     roadmap_item_worldwonders: '<strong>Feasibility Study for World Wonders Bot:</strong> blueprints under review! Assessing drafting algorithms and spatial map placement (roads, towers, and historic monuments) to forge a cunning, smooth rival contesting the ancient wonders of the world.',
-    roadmap_item_puerto_rico: '<strong>Puertoma Implementation (Puerto Rico):</strong> hoisting sails at the port of San Juan! A sleek digital implementation of the acclaimed Puertoma solo system, automating role picks, building acquisitions, crop planting, and cargo shipping in the modern tabletop classic.',
   }
 };
 

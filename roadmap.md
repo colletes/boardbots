@@ -22,12 +22,12 @@ O **Boardbots** é uma coleção de bots e ferramentas web estáticas (HTML/CSS/
 O bot para **SETI: Search for Extraterrestrial Intelligence** automatiza completamente o Rival em todos os 5 níveis de dificuldade, suportando tanto o **Jogo Base puro** (5 rodadas) quanto a expansão **Agências Espaciais** (4 rodadas, novas espécies e objetivos de longo prazo).
 
 > [!NOTE]
-> **Status Atual em Staging (Fase 1 Concluída & Auditada):**
-> - **Branch:** `staging`
-> - **URL de Testes Públicos:** [https://colletes.github.io/boardbots/staging/bots/seti_bot.html](https://colletes.github.io/boardbots/staging/bots/seti_bot.html)
+> **Status Atual em Produção (Fase 1 Concluída, Auditada & Lançada):**
+> - **Branch:** `main` (Produção) & `staging`
+> - **URL de Produção:** [https://colletes.github.io/boardbots/bots/seti_bot.html](https://colletes.github.io/boardbots/bots/seti_bot.html)
 > - **Artes e Componentes:** 23 cartas escaneadas e alinhadas, 4 tabuleiros solo, 27 tiles de objetivos e 5 SFX espaciais customizados via `ThemeKit`.
 > - **Auditoria de Cartas & Espécies:** 100% revisada e validada via planilha Excel e galeria visual interativa (`tools/seti_review_gallery.html`).
-> - **Próximo Passo:** Testes de mesa física pelo jogador -> promoção para `main` (produção).
+> - **Status:** Oficialmente lançado e ativo no catálogo principal do BoardBots.
 
 O projeto segue uma abordagem de **Evolução em Duas Fases**:
 - **Fase 1 (Validação Rápida & Cartas Físicas):** Implementação completa de todas as regras mecânicas, lógica de IA e fluxo de jogo utilizando recortes em alta definição das cartas físicas reais. Permite testes imediatos e validação da experiência de jogo. (**Status: 100% Concluída & Auditada**).
@@ -260,14 +260,16 @@ flowchart LR
 
 ## 3. Próximos Passos e Melhorias Gerais da Plataforma Boardbots
 
-Além da implementação do bot de SETI, os seguintes tópicos formam o backlog estratégico da plataforma:
+Além da consolidação do bot de SETI, os seguintes projetos formam o roadmap ativo e backlog estratégico da plataforma:
 
-1. **Expansão de Catálogo de Automas:**
-   - Graduação de bots maduros da seção Alpha para a grade principal (Official Bots) após validação da comunidade.
-   - Avaliação e prototipação de novos bots solicitados por usuários (ex: *Voidfall*, *Revive*, *Nucleum*).
-2. **Infraestrutura e Componentes Compartilhados:**
-   - Evolução contínua do `ThemeKit` para abstrair pools de áudio complexos e ambient loops.
-   - Refinamento de acessibilidade (ARIA labels e suporte robusto a leitores de tela em seletores polares e mostradores de dados).
-3. **Comunidade e Engajamento:**
-   - Campanhas de divulgação em redes e fóruns especializados (BGG com BBCode estrito, Ludopédia em pt-BR sem emojis, Reddit).
-   - Coleta de feedbacks via sistema integrado de Like/Dislike e logs anônimos de depuração (`analyze-log`).
+1. **Em Desenvolvimento Ativo:**
+   - **Puertoma (Puerto Rico 1897 - Edição Especial):** Automatização solo em companion app para 1 humano + 2 Puertomas, replicando o algoritmo oficial das 8 Cartas de Desempate, fluxo de papéis (Governante, Minerador, etc.), compra de edifícios, lavouras e compatibilidade com as Expansões I (Novos Edifícios) e II (Cidadãos). Plano técnico detalhado em `plan_puertoma.md`.
+   - **Estabilização de Wingspan:** Refinamento contínuo das automações do Automa para as 4 expansões (Oceania, Europa, Ásia e Américas).
+
+2. **Aprimoramentos Recentes Entregues (Outubro 2026):**
+   - **Space Base Bot:** Correção de progressão das fileiras do mercado de naves (Linha 1 = Nível 1, Linha 2 = Nível 2, Linha 3 = Nível 3) conforme manual solo oficial de Joanna, com geração de planilha auditada (`Space_Base_Automa_Cards.xlsx`).
+   - **Padronização Global dos Modais de Ajuda:** Unificação dos guias solo e botões flutuantes de suporte rápido em 24 bots da plataforma.
+
+3. **No Radar & Próximas Fronteiras:**
+   - **World Wonders:** Avaliação de algoritmos para ocupação espacial de mapas e draft de maravilhas.
+   - **Evolução de Infraestrutura:** Expansão contínua do `ThemeKit` (áudios diegéticos táteis) e suporte a acessibilidade aprimorada.
