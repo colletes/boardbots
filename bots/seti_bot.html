@@ -544,27 +544,102 @@
             gap: 16px;
         }
 
-        /* Progress Track Box */
+        /* Circular 12-Step Tech Track */
         .progress-box {
             background: rgba(14, 22, 38, 0.9);
             border: 1px solid var(--space-border);
             border-radius: 8px;
             padding: 14px;
         }
-        .track-meter {
-            height: 16px;
-            background: #0f172a;
-            border-radius: 8px;
-            overflow: hidden;
+        .tech-track-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            font-family: var(--font-mono);
+            letter-spacing: 0.5px;
+        }
+        .tech-track-badge.color-blue {
+            background: rgba(0, 153, 255, 0.2);
+            border: 1px solid #00b4d8;
+            color: #38bdf8;
+        }
+        .tech-track-badge.color-magenta {
+            background: rgba(236, 72, 153, 0.2);
+            border: 1px solid #f43f5e;
+            color: #f472b6;
+        }
+        .tech-track-badge.color-orange {
+            background: rgba(249, 115, 22, 0.2);
+            border: 1px solid #fb923c;
+            color: #fb923c;
+        }
+        .tech-track-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 6px;
             margin: 10px 0;
-            border: 1px solid var(--space-border);
+        }
+        @media (max-width: 480px) {
+            .tech-track-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+        .tech-slot {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 6px 2px;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
             position: relative;
         }
-        .track-fill {
-            height: 100%;
-            background: linear-gradient(to right, #0099cc, var(--cyan-radar));
-            width: 0%;
-            transition: width 0.4s ease;
+        .tech-slot:hover {
+            border-color: var(--cyan-radar);
+        }
+        .tech-slot-num {
+            font-size: 0.7rem;
+            font-family: var(--font-mono);
+            color: var(--text-dim);
+            line-height: 1;
+        }
+        .tech-slot-name {
+            font-size: 0.72rem;
+            font-weight: 700;
+            margin-top: 3px;
+            line-height: 1;
+        }
+        .tech-slot.color-blue { border-bottom: 3px solid #0099ff; }
+        .tech-slot.color-magenta { border-bottom: 3px solid #ec4899; }
+        .tech-slot.color-orange { border-bottom: 3px solid #f97316; }
+
+        .tech-slot.color-blue .tech-slot-name { color: #38bdf8; }
+        .tech-slot.color-magenta .tech-slot-name { color: #f472b6; }
+        .tech-slot.color-orange .tech-slot-name { color: #fb923c; }
+
+        .tech-slot.active {
+            box-shadow: 0 0 10px rgba(0, 229, 255, 0.45);
+            background: rgba(0, 229, 255, 0.15);
+            transform: scale(1.04);
+            border-color: var(--cyan-radar);
+        }
+        .tech-slot.active .tech-slot-num {
+            color: #fff;
+            font-weight: 800;
+        }
+        .tech-slot.active::after {
+            content: "▲";
+            position: absolute;
+            bottom: -8px;
+            font-size: 8px;
+            color: var(--cyan-radar);
         }
         .track-controls {
             display: flex;
@@ -584,6 +659,26 @@
             transition: all 0.15s;
         }
         .btn-pill:hover { border-color: var(--cyan-radar); }
+
+        /* Computer Matrix & Bonuses */
+        .comp-bonus-badge {
+            font-size: 0.65rem;
+            font-weight: 700;
+            padding: 1px 4px;
+            border-radius: 3px;
+            letter-spacing: 0.3px;
+            margin-top: 2px;
+        }
+        .comp-bonus-pub {
+            background: rgba(0, 229, 255, 0.2);
+            color: var(--cyan-radar);
+            border: 1px solid rgba(0, 229, 255, 0.4);
+        }
+        .comp-bonus-prog {
+            background: rgba(255, 183, 3, 0.2);
+            color: var(--amber-telemetry);
+            border: 1px solid rgba(255, 183, 3, 0.4);
+        }
 
         /* Computer Matrix */
         .computer-box {
@@ -948,17 +1043,18 @@
                             </div>
                         </div>
 
-                        <!-- Trilha de Progresso -->
+                        <!-- Trilha Circular de Tecnologia (12 Passos) -->
                         <div class="progress-box">
-                            <div style="display:flex; justify-content:space-between; font-size:0.85rem; font-family:var(--font-mono);">
-                                <span data-i18n="progress_track_title">Trilha de Progresso</span>
-                                <span id="disp-progress-num">0 / 24</span>
+                            <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.85rem; font-family:var(--font-mono);">
+                                <span data-i18n="progress_track_title">Trilha de Tecnologia (12)</span>
+                                <span id="disp-tech-badge" class="tech-track-badge color-blue">Azul 1</span>
                             </div>
-                            <div class="track-meter">
-                                <div class="track-fill" id="track-progress-fill"></div>
+                            <div class="tech-track-grid" id="tech-track-grid">
+                                <!-- 12 slots rendered dynamically -->
                             </div>
                             <div class="track-controls">
                                 <span style="font-size:0.75rem; color:var(--text-dim); margin-right:auto;" data-i18n="advance_track">Avançar:</span>
+                                <button class="btn-pill" onclick="advanceProgress(-1)" title="-1 casa">&minus;1</button>
                                 <button class="btn-pill" onclick="advanceProgress(1)">+1</button>
                                 <button class="btn-pill" onclick="advanceProgress(2)">+2</button>
                                 <button class="btn-pill" onclick="advanceProgress(3)">+3</button>
@@ -975,10 +1071,14 @@
                             <div class="comp-grid" id="computer-slots-grid">
                                 <!-- Populated dynamically -->
                             </div>
+                            <div style="font-size:0.75rem; color:var(--text-dim); margin-bottom:8px; display:flex; gap:10px; font-family:var(--font-mono);">
+                                <span style="color:var(--cyan-radar);">● 2º Dado: +1 Pub</span>
+                                <span style="color:var(--amber-telemetry);">● 4º Dado: +4 Progresso</span>
+                            </div>
                             <div style="display:flex; justify-content:space-between; align-items:center;">
                                 <div style="display:flex; gap:6px;">
                                     <button class="btn-pill" onclick="addComputerData(1)" data-i18n="btn_add_data">+1 Dado</button>
-                                    <button class="btn-pill" onclick="addComputerData(-1)">-1</button>
+                                    <button class="btn-pill" onclick="addComputerData(-1)">&minus;1</button>
                                 </div>
                                 <button class="btn-pill" style="border-color:var(--orange-alert); color:var(--orange-alert);" onclick="clearComputer()" data-i18n="btn_clear_data">Limpar (Analisar)</button>
                             </div>
@@ -1084,11 +1184,12 @@
                 rival_state_title: 'Telemetria do Rival',
                 pv_label: 'PV:',
                 pub_label: 'PUB:',
-                progress_track_title: 'Trilha de Progresso',
+                progress_track_title: 'Trilha de Tecnologia (12)',
                 advance_track: 'Avançar:',
                 computer_title: 'Computador do Rival (Dados)',
                 btn_add_data: '+1 Dado',
                 btn_clear_data: 'Limpar (Analisar)',
+                chk_discard_comp_tech: 'Descartar Tecnologia de Computador (+3 PV, +1 Progresso)',
                 objectives_title: 'Objetivos Solo Ativos',
                 btn_end_round: 'Concluir Rodada →',
                 lt_title: 'Objetivos de Longo Prazo (Expansão)',
@@ -1206,11 +1307,12 @@
                 rival_state_title: 'Rival Telemetry',
                 pv_label: 'VP:',
                 pub_label: 'PUB:',
-                progress_track_title: 'Progress Track',
+                progress_track_title: 'Technology Track (12)',
                 advance_track: 'Advance:',
                 computer_title: 'Rival Computer (Data)',
                 btn_add_data: '+1 Data',
                 btn_clear_data: 'Clear (Analyze)',
+                chk_discard_comp_tech: 'Discard Computer Tech (+3 VP, +1 Progress)',
                 objectives_title: 'Active Solo Objectives',
                 btn_end_round: 'End Round →',
                 lt_title: 'Long-Term Objectives (Expansion)',
@@ -1312,10 +1414,12 @@
         let rivalVp = 2;
         let humanVp = 1;
         let rivalPublicity = 4;
-        let rivalProgress = 0;
+        let rivalProgress = 1;
         let rivalComputerData = 0;
         let computerCapacity = 6;
-        let progressMax = 24;
+        let progressMax = 12;
+        let bonus2Claimed = false;
+        let bonus4Claimed = false;
 
         let activeDeck = [];
         let discardPile = [];
@@ -1400,24 +1504,24 @@
                 humanVp = 2; rivalVp = 1;
             }
             rivalPublicity = 4;
-            rivalProgress = 0;
             rivalComputerData = 0;
+            bonus2Claimed = false;
+            bonus4Claimed = false;
             currentRound = 1;
             currentTurn = 1;
 
-            // Setup Board specs by difficulty
-            if (difficulty <= 2) {
+            // Circular Tech Track has 12 spaces across all difficulties
+            progressMax = 12;
+            const trackCfg = getTrackConfig(difficulty);
+            rivalProgress = trackCfg.startPos;
+
+            // Computer capacity by difficulty
+            if (difficulty <= 3) {
                 computerCapacity = 6;
-                progressMax = 20;
-            } else if (difficulty === 3) {
-                computerCapacity = 6;
-                progressMax = 24;
             } else if (difficulty === 4) {
                 computerCapacity = 7;
-                progressMax = 26;
             } else {
                 computerCapacity = 8;
-                progressMax = 28;
             }
 
             // Build Decks
@@ -1604,12 +1708,26 @@
                 const title = currentLang === 'pt' ? act.titlePt : act.titleEn;
                 const desc = currentLang === 'pt' ? act.descPt : act.descEn;
 
+                let extraOptionHtml = '';
+                if (act.type === 'analyze' && idx === currentActionIndex) {
+                    const optLabel = currentLang === 'pt' 
+                        ? 'Descartar Tecnologia de Computador (+3 PV, +1 Progresso)' 
+                        : 'Discard Computer Tech (+3 VP, +1 Progress)';
+                    extraOptionHtml = `
+                        <div style="margin-top:8px; padding-top:8px; border-top:1px dashed rgba(255,255,255,0.15); font-size:0.8rem; display:flex; align-items:center; gap:8px;" onclick="event.stopPropagation();">
+                            <input type="checkbox" id="chk-discard-comp-tech" style="transform:scale(1.2); cursor:pointer;">
+                            <label for="chk-discard-comp-tech" style="cursor:pointer; color:var(--amber-telemetry); font-weight:600;">${optLabel}</label>
+                        </div>
+                    `;
+                }
+
                 item.innerHTML = `
                     <div class="action-header">
                         <span>${act.num}. ${title}</span>
                         <span class="action-badge">${idx === currentActionIndex ? (currentLang === 'pt' ? 'PRIORITÁRIA' : 'PRIORITY') : ''}</span>
                     </div>
                     <div class="action-desc">${desc}</div>
+                    ${extraOptionHtml}
                 `;
                 container.appendChild(item);
             });
@@ -1641,6 +1759,58 @@
             const act = currentCard.actions[currentActionIndex];
             const title = currentLang === 'pt' ? act.titlePt : act.titleEn;
 
+            // Automated Resource Management
+            let autoChanges = [];
+
+            if (act.type === 'tech') {
+                adjustPublicity(-6);
+                autoChanges.push('-6 Pub');
+                if (currentCard.id === 'S.07' || currentCard.id === 'S.11' || currentCard.id === 'S.12' || currentCard.id === 'S.14') {
+                    advanceProgress(1);
+                    autoChanges.push('+1 Prog');
+                }
+            } else if (act.type === 'tech_free') {
+                advanceProgress(1);
+                autoChanges.push('+1 Prog');
+            } else if (act.type === 'launch_probe') {
+                adjustPublicity(1);
+                autoChanges.push('+1 Pub');
+                if (['S.06', 'S.07', 'S.09', 'S.10', 'S.12', 'S.14'].includes(currentCard.id)) {
+                    advanceProgress(1);
+                    autoChanges.push('+1 Prog');
+                }
+            } else if (act.type === 'analyze') {
+                let vpGained = 0;
+                // S.05 to S.13 grant 3 VP directly
+                if (['S.05', 'S.08', 'S.09', 'S.10', 'S.11', 'S.13'].includes(currentCard.id)) {
+                    vpGained += 3;
+                }
+                const chkDiscard = document.getElementById('chk-discard-comp-tech');
+                if (chkDiscard && chkDiscard.checked) {
+                    vpGained += 3;
+                    advanceProgress(1);
+                    autoChanges.push('+3 PV & +1 Prog (Descarte Tec Computador)');
+                }
+                if (vpGained > 0) {
+                    adjustVp(vpGained);
+                    if (!chkDiscard || !chkDiscard.checked) autoChanges.push(`+${vpGained} PV`);
+                }
+                clearComputer();
+                autoChanges.push('Computador Limpo');
+            } else if (act.type === 'wild_life_trace' && currentCard.id === 'S.EXP1') {
+                advanceProgress(difficulty);
+                autoChanges.push(`+${difficulty} Prog (Dificuldade)`);
+            } else if (currentCard.id === 'species_anomalias' && act.type === 'species_effect') {
+                adjustVp(3);
+                autoChanges.push('+3 PV');
+            } else if (currentCard.id === 'species_centaurianos' && act.type === 'species_effect') {
+                advanceProgress(1);
+                autoChanges.push('+1 Prog');
+            } else if (currentCard.id === 'species_arkhos' && act.type === 'species_effect') {
+                adjustVp(3);
+                autoChanges.push('+3 PV');
+            }
+
             // Trigger specific SFX based on action type
             if (act.type === 'move_probe' || act.type === 'launch_probe') {
                 playSfx('seti:probe-launch', 0.7);
@@ -1653,9 +1823,10 @@
             }
 
             discardPile.push(currentCard.id);
+            const autoSummary = autoChanges.length > 0 ? ` [${autoChanges.join(', ')}]` : '';
             logTactical(currentLang === 'pt'
-                ? `Rival executou: <strong>${title}</strong> (${currentCard.id}).`
-                : `Rival executed: <strong>${title}</strong> (${currentCard.id}).`);
+                ? `Rival executou: <strong>${title}</strong> (${currentCard.id})${autoSummary}.`
+                : `Rival executed: <strong>${title}</strong> (${currentCard.id})${autoSummary}.`);
 
             currentTurn++;
             drawRivalCard();
@@ -1674,16 +1845,58 @@
                 : 'Rival passed! Picks up round-end card (+1 progress). Rotate Solar System if Rival was first to pass.');
         }
 
-        // --- PROGRESS AND RESOURCES ---
+        // --- TRACK CONFIGURATION & CIRCULAR ENGINE ---
+        function getTrackConfig(dif) {
+            let startPos = 1;
+            let order = ['blue', 'magenta', 'orange'];
+            if (dif === 3) {
+                order = ['magenta', 'orange', 'blue'];
+                startPos = 1;
+            } else if (dif === 4) {
+                order = ['blue', 'magenta', 'orange'];
+                startPos = 4;
+            } else if (dif === 5) {
+                order = ['orange', 'blue', 'magenta'];
+                startPos = 9;
+            } else {
+                // dif 1 and 2
+                order = ['blue', 'magenta', 'orange'];
+                startPos = 1;
+            }
+
+            const slots = [];
+            let posCounter = 1;
+            order.forEach(col => {
+                for (let step = 1; step <= 4; step++) {
+                    slots.push({ pos: posCounter++, color: col, step: step });
+                }
+            });
+
+            return { startPos, slots };
+        }
+
         function advanceProgress(amount) {
             playSfx('seti:data-process', 0.5);
-            const oldProg = rivalProgress;
-            rivalProgress = Math.min(progressMax, rivalProgress + amount);
+            if (amount === 0) return;
 
-            // Check if passed card milestone (e.g. at 5, 11, 17)
-            if (oldProg < 5 && rivalProgress >= 5) triggerNewAdvancedCard();
-            if (oldProg < 11 && rivalProgress >= 11) triggerNewAdvancedCard();
-            if (oldProg < 17 && rivalProgress >= 17) triggerNewAdvancedCard();
+            if (amount < 0) {
+                // Step back without triggering milestones
+                let raw = rivalProgress + amount;
+                while (raw < 1) raw += 12;
+                rivalProgress = ((raw - 1) % 12) + 1;
+                updateTelemetry();
+                return;
+            }
+
+            const rawNew = rivalProgress + amount;
+            const loops = Math.floor((rawNew - 1) / 12);
+            rivalProgress = ((rawNew - 1) % 12) + 1;
+
+            if (loops > 0) {
+                for (let i = 0; i < loops; i++) {
+                    triggerNewAdvancedCard();
+                }
+            }
 
             updateTelemetry();
         }
@@ -1694,23 +1907,42 @@
                 const newCard = advancedCardsReserve.pop();
                 activeDeck.push(newCard); // Enters on top of deck
                 logTactical(currentLang === 'pt'
-                    ? `Marco de Trilha alcançado! Carta avançada <strong>${newCard}</strong> adicionada ao topo do baralho do Rival.`
-                    : `Milestone reached! Advanced card <strong>${newCard}</strong> placed on top of Rival deck.`);
+                    ? `Volta na Trilha de Tecnologia completada! Carta avançada <strong>${newCard}</strong> adicionada ao topo do baralho do Rival.`
+                    : `Technology Track loop completed! Advanced card <strong>${newCard}</strong> placed on top of Rival deck.`);
                 alert(currentLang === 'pt'
-                    ? `O Rival atingiu um marco na Trilha de Progresso! Nova carta avançada (${newCard}) adicionada ao baralho.`
-                    : `Rival reached a Progress Track milestone! New advanced card (${newCard}) added to deck.`);
+                    ? `O Rival completou a volta na Trilha de Tecnologia! Nova carta avançada (${newCard}) adicionada ao baralho.`
+                    : `Rival completed a Technology Track loop! New advanced card (${newCard}) added to deck.`);
             } else if (withExpansion) {
-                // Expansion fallback: advance progress
-                rivalProgress = Math.min(progressMax, rivalProgress + 2);
+                rivalPublicity = Math.max(0, rivalPublicity + 2);
                 logTactical(currentLang === 'pt'
-                    ? 'Cartas avançadas esgotadas. Rival ganha avanço na trilha (Regra de Expansão).'
-                    : 'Advanced cards exhausted. Rival gains track progress (Expansion Rule).');
+                    ? 'Cartas avançadas esgotadas. Rival ganha +2 Publicidade (Regra de Expansão).'
+                    : 'Advanced cards exhausted. Rival gains +2 Publicity (Expansion Rule).');
             }
         }
 
         function addComputerData(amt) {
+            const oldData = rivalComputerData;
             rivalComputerData = Math.max(0, Math.min(computerCapacity, rivalComputerData + amt));
             playSfx('seti:terminal-click', 0.4);
+
+            // Computer Milestones
+            if (oldData < 2 && rivalComputerData >= 2 && !bonus2Claimed) {
+                bonus2Claimed = true;
+                adjustPublicity(1);
+                playSfx('turn-notify', 0.7);
+                logTactical(currentLang === 'pt'
+                    ? 'Computador atingiu 2 dados: Rival ganha <strong>+1 de Publicidade</strong>!'
+                    : 'Computer reached 2 dice: Rival gains <strong>+1 Publicity</strong>!');
+            }
+            if (oldData < 4 && rivalComputerData >= 4 && !bonus4Claimed) {
+                bonus4Claimed = true;
+                advanceProgress(4);
+                playSfx('turn-notify', 0.7);
+                logTactical(currentLang === 'pt'
+                    ? 'Computador atingiu 4 dados: Rival avança <strong>+4 casas</strong> na trilha de tecnologia!'
+                    : 'Computer reached 4 dice: Rival advances <strong>+4 spaces</strong> on the technology track!');
+            }
+
             renderComputerGrid();
             if (rivalComputerData === computerCapacity) {
                 playSfx('turn-notify', 0.7);
@@ -1723,23 +1955,80 @@
         function clearComputer() {
             playSfx('seti:data-process', 0.7);
             rivalComputerData = 0;
+            bonus2Claimed = false;
+            bonus4Claimed = false;
             renderComputerGrid();
             logTactical(currentLang === 'pt'
-                ? 'Computador do Rival limpo. Dados processados.'
-                : 'Rival Computer cleared. Data processed.');
+                ? 'Computador do Rival limpo. Marcos de dados resetados.'
+                : 'Rival Computer cleared. Dice milestones reset.');
         }
 
         function renderComputerGrid() {
             const grid = document.getElementById('computer-slots-grid');
+            if (!grid) return;
             grid.innerHTML = '';
             for (let i = 0; i < computerCapacity; i++) {
                 const slot = document.createElement('div');
+                const slotNum = i + 1;
                 slot.className = 'comp-slot' + (i < rivalComputerData ? ' filled' : '');
-                slot.innerText = i < rivalComputerData ? 'DATA' : (i + 1);
+                
+                let bonusBadgeHtml = '';
+                if (slotNum === 2) {
+                    bonusBadgeHtml = `<span class="comp-bonus-badge comp-bonus-pub">+1 PUB</span>`;
+                } else if (slotNum === 4) {
+                    bonusBadgeHtml = `<span class="comp-bonus-badge comp-bonus-prog">+4 PROG</span>`;
+                }
+
+                slot.innerHTML = `
+                    <div style="display:flex; flex-direction:column; align-items:center; line-height:1.1;">
+                        <span>${i < rivalComputerData ? 'DADO' : slotNum}</span>
+                        ${bonusBadgeHtml}
+                    </div>
+                `;
                 slot.onclick = () => addComputerData(i < rivalComputerData ? -1 : 1);
                 grid.appendChild(slot);
             }
             document.getElementById('disp-comp-count').innerText = `${rivalComputerData} / ${computerCapacity}`;
+        }
+
+        function renderTechTrackGrid() {
+            const grid = document.getElementById('tech-track-grid');
+            if (!grid) return;
+            grid.innerHTML = '';
+
+            const cfg = getTrackConfig(difficulty);
+            cfg.slots.forEach(slot => {
+                const el = document.createElement('div');
+                const isActive = slot.pos === rivalProgress;
+                el.className = `tech-slot color-${slot.color}` + (isActive ? ' active' : '');
+
+                const colorNameMapPt = { blue: 'AZUL', magenta: 'MAGENTA', orange: 'LARANJA' };
+                const colorNameMapEn = { blue: 'BLUE', magenta: 'MAGENTA', orange: 'ORANGE' };
+                const cName = currentLang === 'pt' ? colorNameMapPt[slot.color] : colorNameMapEn[slot.color];
+
+                el.innerHTML = `
+                    <span class="tech-slot-num">#${slot.pos}</span>
+                    <span class="tech-slot-name">${cName[0]}${slot.step}</span>
+                `;
+                el.title = `${cName} ${slot.step} (Posição ${slot.pos})`;
+                el.onclick = () => {
+                    rivalProgress = slot.pos;
+                    playSfx('seti:terminal-click', 0.4);
+                    updateTelemetry();
+                };
+                grid.appendChild(el);
+            });
+
+            // Update badge text and class
+            const currentSlot = cfg.slots.find(s => s.pos === rivalProgress) || cfg.slots[0];
+            const badge = document.getElementById('disp-tech-badge');
+            if (badge && currentSlot) {
+                badge.className = `tech-track-badge color-${currentSlot.color}`;
+                const colorNameMapPt = { blue: 'Azul', magenta: 'Magenta', orange: 'Laranja' };
+                const colorNameMapEn = { blue: 'Blue', magenta: 'Magenta', orange: 'Orange' };
+                const colLabel = currentLang === 'pt' ? colorNameMapPt[currentSlot.color] : colorNameMapEn[currentSlot.color];
+                badge.innerText = `${colLabel} ${currentSlot.step} (Pos ${currentSlot.pos})`;
+            }
         }
 
         function adjustPublicity(amt) {
@@ -1761,9 +2050,7 @@
             document.getElementById('disp-rival-vp').innerText = rivalVp;
             document.getElementById('disp-rival-pub').innerText = rivalPublicity;
 
-            document.getElementById('disp-progress-num').innerText = `${rivalProgress} / ${progressMax}`;
-            const pct = Math.min(100, (rivalProgress / progressMax) * 100);
-            document.getElementById('track-progress-fill').style.width = `${pct}%`;
+            renderTechTrackGrid();
         }
 
         // --- ROUND END & PENALTIES ---
