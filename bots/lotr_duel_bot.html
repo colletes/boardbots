@@ -2469,7 +2469,7 @@
         alliesToggleTitle: 'Expansão Aliados (Allies)',
         alliesToggleDesc: 'Habilita os 14 Aliados da Sociedade e de Sauron com Fichas de Poder e regras automáticas para o Automa.',
         setupAlliesTitle: '6. Expansão Aliados (Poder & Aliados)',
-        setupAlliesDesc: '<ul><li><strong>Fichas de Poder Iniciais:</strong> O jogador humano recebe <strong>1 ficha de Poder</strong> e o Bot recebe <strong>1 ficha de Poder</strong>.</li><li><strong>Regra do Bot (Sem Recursos):</strong> Como o Bot não gasta recursos, ele <strong>NÃO precisa de Fichas de Poder</strong> para usar ou convocar seus Aliados! Porém, o Bot <strong>coleta normalmente as Fichas de Poder</strong> que revelar na estrutura da mesa para a sua reserva, <strong>impedindo que você as pegue</strong>.</li><li><strong>Aliados Secretos:</strong> O jogador sorteia 3 cartas de Aliados da sua facção. Para o Bot, escolha a facção (Sociedade ou Sauron) e selecione abaixo as 3 cartas sorteadas fisicamente (ou use o botão Sortear)!</li><li><strong>Fichas de Poder nos Capítulos:</strong> Posicione 2 fichas de Poder na estrutura conforme indicado (Cap. 1: Linha 2, cartas 1 e 3). Quem revelar a carta pega a ficha de Poder antes de virá-la.</li></ul>',
+        setupAlliesDesc: '<ul><li><strong>Fichas de Poder Iniciais:</strong> O jogador humano recebe <strong>1 ficha de Poder</strong> e o Bot recebe <strong>1 ficha de Poder</strong>.</li><li><strong>Regra do Bot (Fichas de Poder):</strong> O Bot precisa de <strong>1 ficha de Poder para Entrada</strong> e <strong>2 fichas de Poder para Saída</strong> de seus Aliados (ele gasta essas fichas ao agir). O Bot sempre <strong>prioriza a Saída antes da Entrada</strong> de um novo Aliado. O Bot também coleta normalmente as Fichas de Poder que revelar na estrutura da mesa para a sua reserva, impedindo que você as pegue.</li><li><strong>Aliados Secretos:</strong> O jogador sorteia 3 cartas de Aliados da sua facção. Para o Bot, escolha a facção (Sociedade ou Sauron) e selecione abaixo as 3 cartas sorteadas fisicamente (ou use o botão Sortear)!</li><li><strong>Fichas de Poder nos Capítulos:</strong> Posicione 2 fichas de Poder na estrutura conforme indicado (Cap. 1: Linha 2, cartas 1 e 3). Quem revelar a carta pega a ficha de Poder antes de virá-la.</li></ul>',
         setupAlliesPickerTitle: 'Aliados do Bot (Escolha 3)',
         setupAlliesFactionLabel: 'Facção dos Aliados do Bot:',
         allyFactionFellowship: 'Sociedade do Anel',
@@ -2669,7 +2669,7 @@
         alliesToggleTitle: 'Allies Expansion',
         alliesToggleDesc: 'Enables 14 Fellowship and Sauron Allies with Power tokens and automated Automa triggers.',
         setupAlliesTitle: '6. Allies Expansion (Power & Allies)',
-        setupAlliesDesc: '<ul><li><strong>Starting Power Tokens:</strong> The human player receives <strong>1 Power token</strong> and the Bot receives <strong>1 Power token</strong>.</li><li><strong>Bot Rule (No Resources):</strong> As the Bot does not spend resources, it <strong>DOES NOT need Power tokens</strong> to enter or exit its Allies! However, the Bot <strong>normally collects Power tokens</strong> it reveals from the table structure into its pool, <strong>preventing you from taking them</strong>.</li><li><strong>Secret Allies:</strong> The human player draws 3 Ally cards of their faction. For the Bot, choose the faction (Fellowship or Sauron) and select the 3 physically drawn Ally cards below or use the Randomize button!</li><li><strong>Power Tokens in Chapters:</strong> Place 2 Power tokens on the structure as instructed (Ch. 1: Row 2, cards 1 and 3). Whoever reveals the card claims the Power token before flipping it.</li></ul>',
+        setupAlliesDesc: '<ul><li><strong>Starting Power Tokens:</strong> The human player receives <strong>1 Power token</strong> and the Bot receives <strong>1 Power token</strong>.</li><li><strong>Bot Rule (Power Tokens):</strong> The Bot requires <strong>1 Power token for Enter</strong> and <strong>2 Power tokens for Exit</strong> of its Allies (it spends these tokens when acting). The Bot always <strong>prioritizes Exit before Entering</strong> a new Ally. The Bot also normally collects Power tokens it reveals from the table structure into its pool, preventing you from taking them.</li><li><strong>Secret Allies:</strong> The human player draws 3 Ally cards of their faction. For the Bot, choose the faction (Fellowship or Sauron) and select the 3 physically drawn Ally cards below or use the Randomize button!</li><li><strong>Power Tokens in Chapters:</strong> Place 2 Power tokens on the structure as instructed (Ch. 1: Row 2, cards 1 and 3). Whoever reveals the card claims the Power token before flipping it.</li></ul>',
         setupAlliesPickerTitle: "Bot's Allies (Choose 3)",
         setupAlliesFactionLabel: "Bot's Allies Faction:",
         allyFactionFellowship: 'Fellowship of the Ring',
@@ -3221,6 +3221,9 @@
         const dict = I18N[state.lang] || I18N.pt;
         addLog({ type: 'generic', text: dict.logCollectPower.replace('{count}', state.botPowerTokens) });
       }
+      if (state.useAllies && state.currentCard) {
+        checkBotAllySuggestion(state.currentCard);
+      }
       updateUI();
       saveState();
     }
@@ -3238,12 +3241,13 @@
         return;
       }
 
-      // Check if Bot can do an Exit action (requires active ally) or Enter action (requires hidden ally)
-      // Note: As the Bot does not spend resources, it does NOT need Power tokens to play an ally!
+      // Rule: Exit requires 2 Power tokens. Enter requires 1 Power token.
+      // The Bot always prioritizes Exit before Enter of a new ally.
+      const power = state.botPowerTokens || 0;
       const activeAllies = (state.botAllies || []).filter(a => a.status === 'active');
       const hiddenAllies = (state.botAllies || []).filter(a => a.status === 'hidden');
 
-      if (activeAllies.length > 0) {
+      if (activeAllies.length > 0 && power >= 2) {
         // Exit action takes precedence
         const ally = activeAllies[0];
         state.suggestedAllyAction = {
@@ -3251,7 +3255,7 @@
           allyId: ally.id,
           faction: ally.faction
         };
-      } else if (hiddenAllies.length > 0) {
+      } else if (hiddenAllies.length > 0 && power >= 1) {
         // Enter action
         const ally = hiddenAllies[0];
         state.suggestedAllyAction = {
@@ -3276,6 +3280,9 @@
       const isEnter = action.type === 'enter';
       const effectText = isEnter ? (isPt ? cardData.enterPt : cardData.enterEn) : (isPt ? cardData.exitPt : cardData.exitEn);
       const ruleText = isEnter ? (isPt ? cardData.botEnterRulePt : cardData.botEnterRuleEn) : (isPt ? cardData.botExitRulePt : cardData.botExitRuleEn);
+      const costBadge = isEnter
+        ? (isPt ? 'Custo: 1 Poder' : 'Cost: 1 Power')
+        : (isPt ? 'Custo: 2 Poder' : 'Cost: 2 Power');
 
       let customHelper = '';
       if (cardData.id === 'warg') {
@@ -3293,14 +3300,14 @@
       const repeatName = card.repeat === 'eye' ? (isPt ? 'Olho de Sauron' : 'Eye of Sauron') : (isPt ? 'Árvore Branca' : 'White Tree');
       document.getElementById('allyActionTitle').textContent = `${dict.allyActionBannerTitle} • ${repeatName}`;
       document.getElementById('allyActionContent').innerHTML = `
-        <div><strong>${isEnter ? (isPt ? 'Convocar Entrada:' : 'Call upon Enter:') : (isPt ? 'Ativar Saída:' : 'Trigger Exit:')}</strong> <span style="color:#bae6fd; font-weight:700;">${allyName}</span> <span style="font-size:0.75rem; color:#86efac;">(${isPt ? 'Sem custo de Poder p/ Bot' : 'Free for Bot'})</span></div>
+        <div><strong>${isEnter ? (isPt ? 'Convocar Entrada:' : 'Call upon Enter:') : (isPt ? 'Ativar Saída:' : 'Trigger Exit:')}</strong> <span style="color:#bae6fd; font-weight:700;">${allyName}</span> <span style="font-size:0.75rem; color:#fde047; font-weight:600;">(${costBadge})</span></div>
         <div style="margin-top:4px; color:#f0f9ff;">${effectText}</div>
         <div style="margin-top:4px; color:#93c5fd; font-size:0.76rem;"><em>${ruleText}</em></div>
         ${customHelper}
       `;
       document.getElementById('btnExecuteAllyText').textContent = isEnter
-        ? `${isPt ? 'Convocar' : 'Call'} ${allyName}`
-        : `${isPt ? 'Finalizar' : 'Exit'} ${allyName}`;
+        ? `${isPt ? 'Convocar' : 'Call'} ${allyName} (-1⚡)`
+        : `${isPt ? 'Finalizar' : 'Exit'} ${allyName} (-2⚡)`;
 
       banner.style.display = 'block';
     }
@@ -3313,6 +3320,10 @@
       if (ally) {
         ally.status = type === 'enter' ? 'active' : 'discarded';
       }
+
+      // Deduct power token cost (1 for enter, 2 for exit)
+      const cost = type === 'enter' ? 1 : 2;
+      state.botPowerTokens = Math.max(0, (state.botPowerTokens || 0) - cost);
 
       const cardData = ALLIES_DATA[faction]?.find(a => a.id === allyId);
       const isPt = state.lang === 'pt';
@@ -3343,7 +3354,19 @@
       const ally = (state.botAllies || []).find(a => a.id === allyId);
       if (!ally) return;
 
+      const cost = type === 'enter' ? 1 : 2;
+      const power = state.botPowerTokens || 0;
+      if (power < cost) {
+        const isPt = state.lang === 'pt';
+        alert(isPt 
+          ? `O Bot precisa de pelo menos ${cost} ficha(s) de Poder para esta ação (possui ${power}).`
+          : `The Bot needs at least ${cost} Power token(s) for this action (currently has ${power}).`
+        );
+        return;
+      }
+
       ally.status = type === 'enter' ? 'active' : 'discarded';
+      state.botPowerTokens = Math.max(0, power - cost);
 
       const cardData = ALLIES_DATA[ally.faction]?.find(a => a.id === allyId);
       const isPt = state.lang === 'pt';
@@ -3358,6 +3381,10 @@
       playLotrSfx('lotr/ring-whisper', { volume: 0.7 });
       if (state.suggestedAllyAction && state.suggestedAllyAction.allyId === allyId) {
         dismissAllySuggestion();
+      }
+
+      if (state.useAllies && state.currentCard) {
+        checkBotAllySuggestion(state.currentCard);
       }
 
       updateUI();
@@ -3395,7 +3422,7 @@
           `;
           actionsHtml = `
             <button class="btn-ally-action btn-ally-enter" onclick="manualTriggerAlly('${ally.id}', 'enter')">
-              <svg class="icon-inline" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></svg> ${dict.allyEnterBtn}
+              <svg class="icon-inline" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></svg> ${dict.allyEnterBtn} (1⚡)
             </button>
           `;
         } else if (ally.status === 'active') {
@@ -3407,7 +3434,7 @@
           `;
           actionsHtml = `
             <button class="btn-ally-action btn-ally-exit" onclick="manualTriggerAlly('${ally.id}', 'exit')">
-              <svg class="icon-inline" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></svg> ${dict.allyExitBtn}
+              <svg class="icon-inline" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></svg> ${dict.allyExitBtn} (2⚡)
             </button>
           `;
         } else {
