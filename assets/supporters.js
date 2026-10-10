@@ -8,6 +8,7 @@
 // count: only used for type 'coffee' (number of coffees in that purchase)
 // level: only used for type 'membership' (membership tier name)
 const SUPPORTERS = [
+  { name: '@cassiodoyle', type: 'recurring' },
   { name: 'Brunno Igor', type: 'coffee', count: 1 },
   { name: 'Lucas Lima (Mesa para Um)', type: 'coffee', count: 1 },
   { name: 'Bruno BG', type: 'coffee', count: 1 },
@@ -42,8 +43,11 @@ function describe(supporter){
   }
 }
 
-function heartIcon(){
-  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.5s-7.5-4.6-10-9.2C.4 8 1.9 4.5 5.3 3.6c2-.5 4 .3 5 2 .9 1.6.7 1.6 1.7 0 1-1.7 3-2.5 5-2 3.4.9 4.9 4.4 3.3 7.7-2.5 4.6-10 9.2-10 9.2Z"/></svg>';
+function supporterIcon(type){
+  if (type === 'recurring' || type === 'membership') {
+    return '<svg class="supporter-icon supporter-icon--star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>';
+  }
+  return '<svg class="supporter-icon supporter-icon--heart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.5s-7.5-4.6-10-9.2C.4 8 1.9 4.5 5.3 3.6c2-.5 4 .3 5 2 .9 1.6.7 1.6 1.7 0 1-1.7 3-2.5 5-2 3.4.9 4.9 4.4 3.3 7.7-2.5 4.6-10 9.2-10 9.2Z"/></svg>';
 }
 
 function render(list){
@@ -59,7 +63,11 @@ function render(list){
   empty?.classList.add('hidden');
   wrap.classList.remove('hidden');
 
-  const chips = list.map(sup => `<span class="supporter-chip">${heartIcon()}${describe(sup)}</span>`).join('');
+  const chips = list.map(sup => {
+    const isVip = sup.type === 'recurring' || sup.type === 'membership';
+    const extraClass = isVip ? ' supporter-chip--vip' : '';
+    return `<span class="supporter-chip${extraClass}">${supporterIcon(sup.type)}${describe(sup)}</span>`;
+  }).join('');
   // Content is duplicated so the CSS marquee (translateX -50%) loops seamlessly.
   wrap.innerHTML = `<div class="supporters-track">${chips}${chips}</div>`;
 }
