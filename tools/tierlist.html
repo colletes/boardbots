@@ -3179,7 +3179,7 @@ footer {
       <div class="search-box-wrapper">
         <div class="search-input-group">
           <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-          <input type="text" id="gameSearchInput" class="search-input" placeholder="Buscar jogo na Ludopedia &amp; BGG (ex: Catan, Ark Nova, Stone Age)..." autocomplete="off" onkeydown="if(event.key==='Enter') handleSearchEnterKey(event)">
+          <input type="text" id="gameSearchInput" class="search-input" placeholder="Buscar jogo na Ludopedia &amp; BGG (ex: Catan, Ark Nova, Stone Age)..." autocomplete="off" oninput="handleSearchInput(this.value)" onfocus="handleSearchFocus(this.value)" onkeydown="if(event.key==='Enter') handleSearchEnterKey(event)">
           <button id="searchClearBtn" class="search-clear-btn" onclick="clearSearch()">&times;</button>
           <div id="searchSpinner" class="search-spinner"></div>
         </div>
@@ -6459,28 +6459,113 @@ function calculateGameMatchScore(game, query) {
   return 0;
 }
 
+const CURATED_BOARD_GAMES = [
+  { id: 'bgg_13', bggId: '13', title: 'Catan', alt: 'The Settlers of Catan Os Colonizadores de Catan', year: '1995', image: 'https://cf.geekdo-images.com/W3Bsga_uLP9kO91gZ7H8yw__small/img/q_v4oKx9u0a8V2yE4tE1hU8aW_w=/fit-in/200x150/filters:strip_icc()/pic2419375.jpg', bggScore: '7.1', bggRank: 500, source: 'bgg' },
+  { id: 'bgg_822', bggId: '822', title: 'Carcassonne', alt: 'Carcassonne', year: '2000', image: 'https://cf.geekdo-images.com/ok7LddvdcT42KGn_8s_2Zw__small/img/uV2rG4G2bB5hB4A4B4A=/fit-in/200x150/filters:strip_icc()/pic6544250.png', bggScore: '7.4', bggRank: 220, source: 'bgg' },
+  { id: 'bgg_9209', bggId: '9209', title: 'Ticket to Ride', alt: 'Ticket to Ride USA TTR', year: '2004', image: 'https://cf.geekdo-images.com/ZWJg0dCgah2fvVOPvtNsOw__small/img/yT1mN2eJ3Y9s_8gB9s=/fit-in/200x150/filters:strip_icc()/pic38668.jpg', bggScore: '7.4', bggRank: 240, source: 'bgg' },
+  { id: 'bgg_14996', bggId: '14996', title: 'Ticket to Ride: Europe', alt: 'Ticket to Ride Europe TTR', year: '2005', image: 'https://cf.geekdo-images.com/0K1AOqpD4w_8nV0K_Small/img/fit-in/200x150/pic448375.jpg', bggScore: '7.5', bggRank: 170, source: 'bgg' },
+  { id: 'bgg_230802', bggId: '230802', title: 'Azul', alt: 'Azul', year: '2017', image: 'https://cf.geekdo-images.com/aPSH6VBo_ZWcdK_Small/img/fit-in/200x150/pic3718275.jpg', bggScore: '7.7', bggRank: 75, source: 'bgg' },
+  { id: 'bgg_266192', bggId: '266192', title: 'Wingspan', alt: 'Wingspan', year: '2019', image: 'https://cf.geekdo-images.com/yLrmOBYs9Small/img/fit-in/200x150/pic4458123.jpg', bggScore: '8.0', bggRank: 30, source: 'bgg' },
+  { id: 'bgg_148228', bggId: '148228', title: 'Splendor', alt: 'Splendor', year: '2014', image: 'https://cf.geekdo-images.com/rwOMRxw8Small/img/fit-in/200x150/pic1904079.jpg', bggScore: '7.4', bggRank: 215, source: 'bgg' },
+  { id: 'bgg_68448', bggId: '68448', title: '7 Wonders', alt: '7 Wonders', year: '2010', image: 'https://cf.geekdo-images.com/Rvfv5Small/img/fit-in/200x150/pic860217.jpg', bggScore: '7.7', bggRank: 95, source: 'bgg' },
+  { id: 'bgg_173346', bggId: '173346', title: '7 Wonders Duel', alt: '7 Wonders Duel', year: '2015', image: 'https://cf.geekdo-images.com/zdagMskTF7wJBPjX74XsRw__small/img/gV1-ckZSIC-dCxxpq1Y7GmPITzQ=/fit-in/200x150/filters:strip_icc()/pic2576399.jpg', bggScore: '8.1', bggRank: 19, source: 'bgg' },
+  { id: 'bgg_170216', bggId: '170216', title: 'Blood Rage', alt: 'Blood Rage', year: '2015', image: 'https://cf.geekdo-images.com/Small/pic2439223.jpg', bggScore: '7.9', bggRank: 48, source: 'bgg' },
+  { id: 'bgg_237182', bggId: '237182', title: 'Root', alt: 'Root', year: '2018', image: 'https://cf.geekdo-images.com/Small/pic4254509.jpg', bggScore: '8.1', bggRank: 28, source: 'bgg' },
+  { id: 'bgg_198773', bggId: '198773', title: 'Everdell', alt: 'Everdell', year: '2018', image: 'https://cf.geekdo-images.com/Small/pic3918905.jpg', bggScore: '8.0', bggRank: 36, source: 'bgg' },
+  { id: 'bgg_342942', bggId: '342942', title: 'Ark Nova', alt: 'Ark Nova', year: '2021', image: 'https://cf.geekdo-images.com/SoU8p28Sk1s8MSvoM4N8pQ__small/img/4KuHNTWSMPf8vTNDKSRMMI3oOv8=/fit-in/200x150/filters:strip_icc()/pic6293412.jpg', bggScore: '8.5', bggRank: 4, source: 'bgg' },
+  { id: 'bgg_224517', bggId: '224517', title: 'Brass: Birmingham', alt: 'Brass Birmingham', year: '2018', image: 'https://cf.geekdo-images.com/x3zxjr-Vw5iU4yDPg70Jgw__small/img/o18rjEemoWaVru9Y2TyPwuIaRfE=/fit-in/200x150/filters:strip_icc()/pic3490053.jpg', bggScore: '8.6', bggRank: 1, source: 'bgg' },
+  { id: 'bgg_316554', bggId: '316554', title: 'Dune: Imperium', alt: 'Dune Imperium', year: '2020', image: 'https://cf.geekdo-images.com/PhjygpWSo-0labGrPBMyyg__small/img/JGgY-nBmkyB8WRp8vcoBLlNMQ5U=/fit-in/200x150/filters:strip_icc()/pic5666597.jpg', bggScore: '8.4', bggRank: 6, source: 'bgg' },
+  { id: 'bgg_167791', bggId: '167791', title: 'Terraforming Mars', alt: 'Terraforming Mars', year: '2016', image: 'https://cf.geekdo-images.com/wg9oOLcsKvDesSUdZQ4rxw__small/img/BTxqxgYay5tHJfVoJ2NF5g43_gA=/fit-in/200x150/filters:strip_icc()/pic3536616.jpg', bggScore: '8.4', bggRank: 7, source: 'bgg' },
+  { id: 'bgg_169786', bggId: '169786', title: 'Scythe', alt: 'Scythe', year: '2016', image: 'https://cf.geekdo-images.com/7k_nOxpO9OGIjhLq2BUZdA__small/img/eQ69OEDdjYjfKg6q5Navee87skU=/fit-in/200x150/filters:strip_icc()/pic3163924.jpg', bggScore: '8.1', bggRank: 17, source: 'bgg' },
+  { id: 'bgg_277659', bggId: '277659', title: 'Final Girl', alt: 'Final Girl', year: '2021', image: 'https://cf.geekdo-images.com/TUtzY-F7gKTIKm9y8e1AQw__listitem/img/P3Z91UYAI6r1-ncYML2pQwap2So=/fit-in/175x175/filters:strip_icc()/pic6520382.jpg', bggScore: '8.2', bggRank: 80, source: 'bgg' },
+  { id: 'bgg_366013', bggId: '366013', title: 'Heat: Pedal to the Metal', alt: 'Heat Pedal to the Metal', year: '2022', image: 'https://cf.geekdo-images.com/Small/pic6894084.jpg', bggScore: '8.0', bggRank: 40, source: 'bgg' },
+  { id: 'bgg_314040', bggId: '314040', title: 'Cascadia', alt: 'Cascadia', year: '2021', image: 'https://cf.geekdo-images.com/Small/pic5825222.jpg', bggScore: '8.0', bggRank: 45, source: 'bgg' },
+  { id: 'bgg_178900', bggId: '178900', title: 'Codenames', alt: 'Codenames Código Secreto', year: '2015', image: 'https://cf.geekdo-images.com/Small/pic2582929.jpg', bggScore: '7.5', bggRank: 120, source: 'bgg' },
+  { id: 'bgg_244521', bggId: '244521', title: 'The Quacks of Quedlinburg', alt: 'The Quacks of Quedlinburg Charlatães de Quedlinburgo', year: '2018', image: 'https://cf.geekdo-images.com/Small/pic4010328.jpg', bggScore: '7.8', bggRank: 65, source: 'bgg' },
+  { id: 'bgg_34798', bggId: '34798', title: 'Stone Age', alt: 'Stone Age Era da Pedra', year: '2008', image: 'https://cf.geekdo-images.com/Small/pic337677.jpg', bggScore: '7.5', bggRank: 155, source: 'bgg' },
+  { id: 'bgg_174430', bggId: '174430', title: 'Gloomhaven', alt: 'Gloomhaven', year: '2017', image: 'https://cf.geekdo-images.com/sZYp_3BTDGjh2unaZfZmuA__small/img/veqFeP4d_3zNhFc3GNBkV95rBEQ=/fit-in/200x150/filters:strip_icc()/pic2437871.jpg', bggScore: '8.5', bggRank: 3, source: 'bgg' },
+  { id: 'bgg_162886', bggId: '162886', title: 'Spirit Island', alt: 'Spirit Island', year: '2017', image: 'https://cf.geekdo-images.com/kjCm4ZvPjIZxS-mYgSPy1g__small/img/aUlIih2_R7P8IYKeyNl2heLQbu8=/fit-in/200x150/filters:strip_icc()/pic7013651.jpg', bggScore: '8.3', bggRank: 11, source: 'bgg' },
+  { id: 'bgg_271349', bggId: '271349', title: 'The Castles of Burgundy', alt: 'The Castles of Burgundy Castelos da Borgonha', year: '2019', image: 'https://cf.geekdo-images.com/sH2YTQ10dHj1ibfS-KKtGA__small/img/f5zFXdTcH9RNY0iMNBppd8D-_r0=/fit-in/200x150/filters:strip_icc()/pic8745814.jpg', bggScore: '8.1', bggRank: 15, source: 'bgg' },
+  { id: 'bgg_124361', bggId: '124361', title: 'Concordia', alt: 'Concordia', year: '2013', image: 'https://cf.geekdo-images.com/CzwSm8i7tkLz6cBnrILZBg__small/img/ESPSltYYSFK-aJw6jOTdQrJGpOc=/fit-in/200x150/filters:strip_icc()/pic3453267.jpg', bggScore: '8.1', bggRank: 22, source: 'bgg' },
+  { id: 'bgg_233078', bggId: '233078', title: 'Twilight Imperium: Fourth Edition', alt: 'Twilight Imperium 4th TI4', year: '2017', image: 'https://cf.geekdo-images.com/_Ppn5lssO5OaildSE-FgFA__small/img/lfEukJE0JsoZZObaF9K9YnFp62E=/fit-in/200x150/filters:strip_icc()/pic3727516.jpg', bggScore: '8.6', bggRank: 5, source: 'bgg' }
+];
+
 function searchCuratedDatabase(query) {
   const qNorm = normalizeSearchStr(query);
   if (!qNorm) return [];
 
-  return BOARD_GAMES_DATABASE
-    .map(g => ({
-      game: {
-        id: 'db_' + (g.ludoId || g.title.replace(/\s+/g, '_').toLowerCase()),
+  const pool = [];
+  const seen = new Set();
+
+  const addGameToPool = (g, defaultSrc = 'bgg') => {
+    if (!g || !g.title) return;
+    const key = normalizeSearchStr(g.title);
+    if (!seen.has(key)) {
+      seen.add(key);
+      pool.push({
+        id: g.id || `game_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+        bggId: g.bggId || null,
         ludoId: g.ludoId || null,
         title: g.title,
-        slug: g.slug || '',
-        alt: g.alt || '',
-        image: g.image,
-        year: g.year,
-        source: 'ludopedia',
-        link: g.link || (g.slug ? `https://ludopedia.com.br/jogo/${g.slug}` : '')
-      },
-      score: calculateGameMatchScore(g, query)
-    }))
+        alt: g.alt || g.title,
+        image: g.image || '',
+        year: g.year ? String(g.year).replace(/[()]/g, '') : '',
+        designer: g.designer || '',
+        score: g.score || g.bggScore || null,
+        bggScore: g.bggScore || g.score || null,
+        bggRank: g.bggRank || null,
+        source: g.source || defaultSrc,
+        link: g.link || (g.bggId ? `https://boardgamegeek.com/boardgame/${g.bggId}` : '')
+      });
+    }
+  };
+
+  CURATED_BOARD_GAMES.forEach(g => addGameToPool(g, 'bgg'));
+
+  if (typeof PRESETS !== 'undefined' && PRESETS.boardgames?.items) {
+    PRESETS.boardgames.items.forEach(g => addGameToPool(g, 'bgg'));
+  }
+
+  if (Array.isArray(BOARD_GAMES_DATABASE)) {
+    BOARD_GAMES_DATABASE.forEach(g => addGameToPool(g, 'ludopedia'));
+  }
+
+  if (typeof state !== 'undefined' && state.items) {
+    Object.values(state.items).flat().forEach(g => addGameToPool(g, g.source || 'custom'));
+  }
+
+  return pool
+    .map(g => ({ game: g, score: calculateGameMatchScore(g, query) }))
     .filter(item => item.score > 0)
     .sort((a, b) => b.score - a.score)
     .map(item => item.game);
+}
+
+function handleSearchInput(val) {
+  const clearBtn = document.getElementById('searchClearBtn');
+  const q = (val || '').trim();
+  if (clearBtn) clearBtn.style.display = q.length > 0 ? 'block' : 'none';
+  clearTimeout(searchDebounceTimer);
+  if (!q || q.length < 2) {
+    const dropdown = document.getElementById('searchResultsDropdown');
+    if (dropdown) {
+      dropdown.classList.remove('visible');
+      dropdown.innerHTML = '';
+    }
+    const spinner = document.getElementById('searchSpinner');
+    if (spinner) spinner.style.display = 'none';
+    return;
+  }
+  searchDebounceTimer = setTimeout(() => {
+    performSearch(q);
+  }, 220);
+}
+
+function handleSearchFocus(val) {
+  const q = (val || '').trim();
+  if (q.length >= 2) {
+    performSearch(q);
+  }
 }
 
 let activeSearchCategory = 'boardgame';
@@ -6695,6 +6780,120 @@ function handleSearchEnterKey(e) {
   quickAddCustomItem(query, activeSearchCategory);
 }
 
+let currentSearchRequestId = 0;
+
+function renderSearchResultsInDropdown(query, games, isSearchingMore = false) {
+  const dropdown = document.getElementById('searchResultsDropdown');
+  if (!dropdown) return;
+
+  dropdown.innerHTML = '';
+
+  // 1. ALWAYS PREPEND QUICK ADD CARD AT THE TOP OF DROPDOWN
+  const quickAddRow = document.createElement('div');
+  quickAddRow.className = 'search-result-item quick-add-row';
+  quickAddRow.style.background = 'rgba(233, 200, 117, 0.12)';
+  quickAddRow.style.borderLeft = '3px solid var(--brass-bright)';
+  quickAddRow.innerHTML = `
+    <div class="search-result-thumb" style="display:flex;align-items:center;justify-content:center;background:#2a1a10;color:var(--brass-bright);font-size:1.3rem;font-weight:bold;">+</div>
+    <div class="search-result-info">
+      <div class="search-result-title" style="color:var(--brass-bright);">Adicionar "${escapeHtml(query)}" à lista</div>
+      <div class="search-result-meta"><span class="source-badge ${activeSearchCategory}">${activeSearchCategory.toUpperCase()}</span> Pressione Enter ou clique para adicionar agora</div>
+    </div>
+    <button class="search-result-add-btn">+ Adicionar</button>
+  `;
+  quickAddRow.onclick = () => {
+    quickAddCustomItem(query, activeSearchCategory);
+  };
+  dropdown.appendChild(quickAddRow);
+
+  // 2. Render matching results
+  const renderList = (games || []).slice(0, 15);
+  renderList.forEach(game => {
+    const itemRow = document.createElement('div');
+    itemRow.className = 'search-result-item';
+
+    const thumb = document.createElement('img');
+    thumb.className = 'search-result-thumb';
+    thumb.src = game.image || generateItemSvgCover(game.title, game.source || activeSearchCategory);
+    thumb.alt = game.title;
+    thumb.onerror = () => { thumb.src = generateItemSvgCover(game.title, game.source || activeSearchCategory); };
+
+    const info = document.createElement('div');
+    info.className = 'search-result-info';
+
+    const title = document.createElement('div');
+    title.className = 'search-result-title';
+    title.textContent = game.title;
+
+    const meta = document.createElement('div');
+    meta.className = 'search-result-meta';
+
+    const badge = document.createElement('span');
+    badge.className = `source-badge ${game.source || 'custom'}`;
+    badge.textContent = (game.source || 'ITEM').toUpperCase();
+    meta.appendChild(badge);
+
+    if (game.year) {
+      const yearSpan = document.createElement('span');
+      yearSpan.textContent = `(${String(game.year).replace(/[()]/g, '')})`;
+      meta.appendChild(yearSpan);
+    }
+
+    if (game.bggRank) {
+      const rankSpan = document.createElement('span');
+      rankSpan.textContent = `• 🏆 #${Number(game.bggRank).toLocaleString()}`;
+      meta.appendChild(rankSpan);
+    } else if (game.bggScore || game.score) {
+      const scoreSpan = document.createElement('span');
+      scoreSpan.textContent = `• ⭐ ${Number(game.bggScore || game.score).toFixed(1)}`;
+      meta.appendChild(scoreSpan);
+    }
+
+    if (game.designer) {
+      const designerSpan = document.createElement('span');
+      designerSpan.textContent = `• 👤 ${game.designer}`;
+      designerSpan.style.maxWidth = '180px';
+      designerSpan.style.overflow = 'hidden';
+      designerSpan.style.textOverflow = 'ellipsis';
+      designerSpan.style.whiteSpace = 'nowrap';
+      meta.appendChild(designerSpan);
+    }
+
+    info.appendChild(title);
+    info.appendChild(meta);
+
+    const addBtn = document.createElement('button');
+    addBtn.className = 'search-result-add-btn';
+    addBtn.textContent = '+';
+    addBtn.title = 'Adicionar';
+
+    itemRow.appendChild(thumb);
+    itemRow.appendChild(info);
+    itemRow.appendChild(addBtn);
+
+    itemRow.onclick = () => {
+      addGameToTierlist(game);
+      dropdown.classList.remove('visible');
+      document.getElementById('gameSearchInput').value = '';
+      document.getElementById('searchClearBtn').style.display = 'none';
+    };
+
+    dropdown.appendChild(itemRow);
+  });
+
+  if (isSearchingMore) {
+    const loadingRow = document.createElement('div');
+    loadingRow.className = 'search-result-status';
+    loadingRow.style.fontSize = '0.78rem';
+    loadingRow.style.padding = '8px 12px';
+    loadingRow.style.color = '#a89382';
+    loadingRow.textContent = currentLang === 'en' ? 'Searching online databases...' : 'Consultando Ludopedia & BGG...';
+    dropdown.appendChild(loadingRow);
+  }
+
+  dropdown.classList.add('visible');
+}
+
 async function performSearch(query) {
   const dropdown = document.getElementById('searchResultsDropdown');
   const spinner = document.getElementById('searchSpinner');
@@ -6703,8 +6902,11 @@ async function performSearch(query) {
   if (!query || query.length < 2) {
     dropdown.classList.remove('visible');
     dropdown.innerHTML = '';
+    if (spinner) spinner.style.display = 'none';
     return;
   }
+
+  const reqId = ++currentSearchRequestId;
 
   // Only trigger collection import if explicitly a collection URL, a @handle, or ludo: prefix
   const isExplicitCollection = query.startsWith('@') || 
@@ -6714,7 +6916,7 @@ async function performSearch(query) {
   if (isExplicitCollection) {
     const ludoCol = parseLudopediaCollectionUrl(query, true);
     if (ludoCol && ludoCol.username) {
-      spinner.style.display = 'none';
+      if (spinner) spinner.style.display = 'none';
       dropdown.innerHTML = `
         <div class="search-result-item" style="background:rgba(233, 200, 117, 0.15); border-left:3px solid var(--brass);">
           <div class="search-result-thumb" style="display:flex;align-items:center;justify-content:center;background:#2a1b0c;color:var(--brass-bright);font-size:1.3rem;">📚</div>
@@ -6727,7 +6929,7 @@ async function performSearch(query) {
       `;
       dropdown.classList.add('visible');
       dropdown.querySelector('.search-result-item').onclick = async () => {
-        spinner.style.display = 'block';
+        if (spinner) spinner.style.display = 'block';
         dropdown.innerHTML = `<div class="search-result-status">Consultando coleção de @${escapeHtml(ludoCol.username)} na Ludopedia...</div>`;
         try {
           const payload = await fetchLudopediaCollection(ludoCol.username);
@@ -6738,7 +6940,7 @@ async function performSearch(query) {
         } catch (err) {
           alert('Erro ao importar coleção da Ludopedia: ' + (err.message || err));
         } finally {
-          spinner.style.display = 'none';
+          if (spinner) spinner.style.display = 'none';
         }
       };
       return;
@@ -6752,7 +6954,7 @@ async function performSearch(query) {
     query.includes('imdb.com/chart/');
 
   if (isListUrl) {
-    spinner.style.display = 'none';
+    if (spinner) spinner.style.display = 'none';
     const listLabel = query.includes('ggapp.io') ? 'GGapp.io' : (isBggGeekList(query) ? 'BGG GeekList' : 'IMDb');
     dropdown.innerHTML = `
       <div class="search-result-item" style="background:rgba(233, 200, 117, 0.15); border-left:3px solid var(--brass);">
@@ -6766,7 +6968,7 @@ async function performSearch(query) {
     `;
     dropdown.classList.add('visible');
     dropdown.querySelector('.search-result-item').onclick = async () => {
-      spinner.style.display = 'block';
+      if (spinner) spinner.style.display = 'block';
       dropdown.innerHTML = `<div class="search-result-status">Carregando lista ${listLabel}...</div>`;
       try {
         if (query.includes('ggapp.io')) {
@@ -6802,7 +7004,7 @@ async function performSearch(query) {
       } catch (err) {
         alert('Erro ao importar lista: ' + (err.message || err));
       } finally {
-        spinner.style.display = 'none';
+        if (spinner) spinner.style.display = 'none';
       }
     };
     return;
@@ -6810,7 +7012,7 @@ async function performSearch(query) {
 
   const isUrl = query.startsWith('http://') || query.startsWith('https://');
   if (isUrl) {
-    spinner.style.display = 'none';
+    if (spinner) spinner.style.display = 'none';
     dropdown.innerHTML = `
       <div class="search-result-item" style="background:rgba(99, 102, 241, 0.15); border-left:3px solid var(--accent-indigo);">
         <div class="search-result-thumb" style="display:flex;align-items:center;justify-content:center;background:#1e1b4b;color:#a5b4fc;font-size:1.3rem;">🔗</div>
@@ -6823,7 +7025,7 @@ async function performSearch(query) {
     `;
     dropdown.classList.add('visible');
     dropdown.querySelector('.search-result-item').onclick = async () => {
-      spinner.style.display = 'block';
+      if (spinner) spinner.style.display = 'block';
       dropdown.innerHTML = `<div class="search-result-status">Extraindo dados do link...</div>`;
       const extracted = await extractGameFromLink(query);
       if (extracted) {
@@ -6832,37 +7034,73 @@ async function performSearch(query) {
       dropdown.classList.remove('visible');
       document.getElementById('gameSearchInput').value = '';
       document.getElementById('searchClearBtn').style.display = 'none';
-      spinner.style.display = 'none';
+      if (spinner) spinner.style.display = 'none';
     };
     return;
   }
 
-  spinner.style.display = 'block';
-  dropdown.innerHTML = `<div class="search-result-status">${t('search_loading')}</div>`;
-  dropdown.classList.add('visible');
+  // PROGRESSIVE RENDERING: 1. Curated & Local matches immediately (0ms)
+  let curatedMatches = [];
+  let vgPresetMatches = [];
+  let moviePresetMatches = [];
+
+  if (activeSearchCategory === 'boardgame' || activeSearchCategory === 'all') {
+    curatedMatches = searchCuratedDatabase(query);
+  }
+  if (activeSearchCategory === 'videogame' || activeSearchCategory === 'all') {
+    if (typeof PRESETS !== 'undefined' && PRESETS.videogames?.items) {
+      vgPresetMatches = PRESETS.videogames.items
+        .filter(g => calculateGameMatchScore(g, query) > 0)
+        .map(g => ({ ...g, source: 'videogame' }));
+    }
+  }
+  if (activeSearchCategory === 'movie' || activeSearchCategory === 'all') {
+    if (typeof PRESETS !== 'undefined' && PRESETS.movies?.items) {
+      moviePresetMatches = PRESETS.movies.items
+        .filter(m => calculateGameMatchScore(m, query) > 0)
+        .map(m => ({ ...m, source: 'movie' }));
+    }
+  }
+
+  const initialFastMatches = [...curatedMatches, ...vgPresetMatches, ...moviePresetMatches];
+  if (initialFastMatches.length > 0) {
+    renderSearchResultsInDropdown(query, initialFastMatches, true);
+  } else {
+    dropdown.innerHTML = `<div class="search-result-status">${t('search_loading')}</div>`;
+    dropdown.classList.add('visible');
+  }
+
+  if (spinner) spinner.style.display = 'block';
 
   try {
     let apiMatches = [];
     let bggMatches = [];
     let vgMatches = [];
     let movieMatches = [];
-    let curatedMatches = [];
 
     if (activeSearchCategory === 'boardgame' || activeSearchCategory === 'all') {
-      curatedMatches = searchCuratedDatabase(query);
-      [apiMatches, bggMatches] = await Promise.all([
+      const [ludoRes, bggRes] = await Promise.allSettled([
         searchLudopediaAPI(query),
         searchBGGAPI(query)
       ]);
+      apiMatches = (ludoRes.status === 'fulfilled' && Array.isArray(ludoRes.value)) ? ludoRes.value : [];
+      bggMatches = (bggRes.status === 'fulfilled' && Array.isArray(bggRes.value)) ? bggRes.value : [];
     }
 
     if (activeSearchCategory === 'videogame' || activeSearchCategory === 'all') {
-      vgMatches = await searchVideogamesAPI(query);
+      try {
+        vgMatches = await searchVideogamesAPI(query);
+      } catch (e) {}
     }
 
     if (activeSearchCategory === 'movie' || activeSearchCategory === 'all') {
-      movieMatches = await searchMoviesAPI(query);
+      try {
+        movieMatches = await searchMoviesAPI(query);
+      } catch (e) {}
     }
+
+    // Ignore if user typed something new while waiting
+    if (reqId !== currentSearchRequestId) return;
 
     // Merge results with de-duplication
     const seenTitles = new Set();
@@ -6875,7 +7113,6 @@ async function performSearch(query) {
         seenTitles.add(normTitle);
         let score = calculateGameMatchScore(game, query);
         if (!score || score <= 0) {
-          // If returned by an active API search, preserve it with baseline score so results are never lost
           score = (game.source === 'ludopedia' || game.source === 'bgg' || activeSearchCategory === 'videogame' || activeSearchCategory === 'movie') ? 100 : 0;
         }
         if (score > 0) {
@@ -6892,108 +7129,24 @@ async function performSearch(query) {
 
     merged.sort((a, b) => b.score - a.score);
 
-    spinner.style.display = 'none';
-    dropdown.innerHTML = '';
-
-    // ALWAYS PREPEND QUICK ADD CARD AT THE TOP OF DROPDOWN
-    const quickAddRow = document.createElement('div');
-    quickAddRow.className = 'search-result-item quick-add-row';
-    quickAddRow.style.background = 'rgba(233, 200, 117, 0.12)';
-    quickAddRow.style.borderLeft = '3px solid var(--brass-bright)';
-    quickAddRow.innerHTML = `
-      <div class="search-result-thumb" style="display:flex;align-items:center;justify-content:center;background:#2a1a10;color:var(--brass-bright);font-size:1.3rem;font-weight:bold;">+</div>
-      <div class="search-result-info">
-        <div class="search-result-title" style="color:var(--brass-bright);">Adicionar "${escapeHtml(query)}" à lista</div>
-        <div class="search-result-meta"><span class="source-badge ${activeSearchCategory}">${activeSearchCategory.toUpperCase()}</span> Pressione Enter ou clique para adicionar agora</div>
-      </div>
-      <button class="search-result-add-btn">+ Adicionar</button>
-    `;
-    quickAddRow.onclick = () => {
-      quickAddCustomItem(query, activeSearchCategory);
-    };
-    dropdown.appendChild(quickAddRow);
-
-    // Render up to 15 matching results
-    merged.slice(0, 15).forEach(({ game }) => {
-      const itemRow = document.createElement('div');
-      itemRow.className = 'search-result-item';
-
-      const thumb = document.createElement('img');
-      thumb.className = 'search-result-thumb';
-      thumb.src = game.image || generateItemSvgCover(game.title, game.source || activeSearchCategory);
-      thumb.alt = game.title;
-      thumb.onerror = () => { thumb.src = generateItemSvgCover(game.title, game.source || activeSearchCategory); };
-
-      const info = document.createElement('div');
-      info.className = 'search-result-info';
-
-      const title = document.createElement('div');
-      title.className = 'search-result-title';
-      title.textContent = game.title;
-
-      const meta = document.createElement('div');
-      meta.className = 'search-result-meta';
-
-      const badge = document.createElement('span');
-      badge.className = `source-badge ${game.source || 'custom'}`;
-      badge.textContent = (game.source || 'ITEM').toUpperCase();
-      meta.appendChild(badge);
-
-      if (game.year) {
-        const yearSpan = document.createElement('span');
-        yearSpan.textContent = `(${game.year})`;
-        meta.appendChild(yearSpan);
-      }
-
-      if (game.bggRank) {
-        const rankSpan = document.createElement('span');
-        rankSpan.textContent = `• 🏆 #${game.bggRank.toLocaleString()}`;
-        meta.appendChild(rankSpan);
-      } else if (game.bggScore || game.score) {
-        const scoreSpan = document.createElement('span');
-        scoreSpan.textContent = `• ⭐ ${Number(game.bggScore || game.score).toFixed(1)}`;
-        meta.appendChild(scoreSpan);
-      }
-
-      if (game.designer) {
-        const designerSpan = document.createElement('span');
-        designerSpan.textContent = `• 👤 ${game.designer}`;
-        designerSpan.style.maxWidth = '180px';
-        designerSpan.style.overflow = 'hidden';
-        designerSpan.style.textOverflow = 'ellipsis';
-        designerSpan.style.whiteSpace = 'nowrap';
-        meta.appendChild(designerSpan);
-      }
-
-      info.appendChild(title);
-      info.appendChild(meta);
-
-      const addBtn = document.createElement('button');
-      addBtn.className = 'search-result-add-btn';
-      addBtn.textContent = '+';
-      addBtn.title = 'Adicionar';
-
-      itemRow.appendChild(thumb);
-      itemRow.appendChild(info);
-      itemRow.appendChild(addBtn);
-
-      itemRow.onclick = () => {
-        addGameToTierlist(game);
-        dropdown.classList.remove('visible');
-        document.getElementById('gameSearchInput').value = '';
-        document.getElementById('searchClearBtn').style.display = 'none';
-      };
-
-      dropdown.appendChild(itemRow);
-    });
+    renderSearchResultsInDropdown(query, merged.map(m => m.game), false);
 
   } catch (e) {
     console.error('performSearch error:', e);
-    spinner.style.display = 'none';
-    dropdown.innerHTML = `
-      <div class="search-result-item" onclick="quickAddCustomItem('${escapeHtml(query)}', activeSearchCategory)">
-        <div class="search-result-info"><div class="search-result-title">+ Adicionar "${escapeHtml(query)}" à lista</div></div>
-      </div>`;
+    if (reqId === currentSearchRequestId) {
+      if (initialFastMatches.length > 0) {
+        renderSearchResultsInDropdown(query, initialFastMatches, false);
+      } else {
+        dropdown.innerHTML = `
+          <div class="search-result-item" onclick="quickAddCustomItem('${escapeHtml(query)}', activeSearchCategory)">
+            <div class="search-result-info"><div class="search-result-title">+ Adicionar "${escapeHtml(query)}" à lista</div></div>
+          </div>`;
+      }
+    }
+  } finally {
+    if (reqId === currentSearchRequestId && spinner) {
+      spinner.style.display = 'none';
+    }
   }
 }
 
@@ -9375,6 +9528,38 @@ async function executeOnlineImportFromInput() {
     return;
   }
 
+  // 1. BGG GeekList
+  if (typeof isBggGeekList === 'function' && isBggGeekList(raw)) {
+    try {
+      if (btn) btn.disabled = true;
+      if (spinner) {
+        spinner.style.display = 'flex';
+        if (statusText) statusText.textContent = currentLang === 'en'
+          ? 'Connecting to BGG and loading GeekList...'
+          : 'Conectando ao BGG e carregando GeekList...';
+      }
+      const gl = await fetchBggGeekList(raw);
+      closeModal('importSourceModal');
+      const payload = {
+        sourceLabel: 'BGG GeekList',
+        badgeClass: 'bgg',
+        fileName: gl.title || 'BGG GeekList',
+        allGames: gl.items,
+        baseGames: gl.items,
+        expansions: []
+      };
+      openImportCollectionModal(payload);
+    } catch (err) {
+      console.error('Erro ao importar GeekList do BGG:', err);
+      alert(err.message || 'Erro ao consultar GeekList no BGG.');
+    } finally {
+      if (btn) btn.disabled = false;
+      if (spinner) spinner.style.display = 'none';
+    }
+    return;
+  }
+
+  // 2. BGG Collection / User
   if (raw.toLowerCase().startsWith('bgg:') || raw.includes('boardgamegeek.com')) {
     let bggUser = raw.replace(/^bgg:/i, '').trim();
     if (raw.includes('boardgamegeek.com')) {
@@ -9977,18 +10162,13 @@ window.addEventListener('DOMContentLoaded', () => {
 
   if (searchInput) {
     searchInput.addEventListener('input', (e) => {
-      const q = e.target.value.trim();
-      clearBtn.style.display = q.length > 0 ? 'block' : 'none';
-      clearTimeout(searchDebounceTimer);
-      searchDebounceTimer = setTimeout(() => {
-        performSearch(q);
-      }, 350);
+      handleSearchInput(e.target.value);
     });
 
     searchInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         clearTimeout(searchDebounceTimer);
-        performSearch(searchInput.value.trim());
+        handleSearchEnterKey(e);
       }
     });
   }
@@ -11034,6 +11214,86 @@ async function fetchBggGeekList(geekListInput, onProgress) {
 
   if (onProgress) onProgress(currentLang === 'en' ? `Loading GeekList #${listId}...` : `Carregando GeekList #${listId}...`);
 
+  // STRATEGY 1: Official public BGG JSON API (api.geekdo.com) - Full CORS, no token required, exact CDN image hashes!
+  try {
+    let listTitle = `GeekList #${listId}`;
+    try {
+      const metaRes = await fetch(`https://api.geekdo.com/api/geeklists/${listId}`, {
+        headers: { 'Accept': 'application/json' }
+      });
+      if (metaRes.ok) {
+        const metaJson = await metaRes.json();
+        if (metaJson && metaJson.name) listTitle = metaJson.name;
+      }
+    } catch (eMeta) {}
+
+    const allItems = [];
+    let page = 1;
+    let hasMore = true;
+    const maxPages = 20; // Up to 500 items
+
+    while (hasMore && page <= maxPages) {
+      if (onProgress) onProgress(currentLang === 'en' ? `Loading page ${page}...` : `Carregando página ${page}...`);
+      const pageRes = await fetch(`https://api.geekdo.com/api/listitems?listid=${listId}&page=${page}`, {
+        headers: { 'Accept': 'application/json' }
+      });
+
+      if (!pageRes.ok) break;
+
+      const pageJson = await pageRes.json();
+      const data = (pageJson && Array.isArray(pageJson.data)) ? pageJson.data : [];
+      if (data.length === 0) break;
+
+      data.forEach(entry => {
+        const thing = entry.item;
+        if (!thing || !thing.id || !thing.name) return;
+
+        // Extract high-resolution CDN image
+        const img = entry.linkedImage?.image?.['src@2x'] ||
+          entry.linkedImage?.image?.src ||
+          thing.imageSets?.square100?.['src@2x'] ||
+          thing.imageSets?.square100?.src ||
+          thing.imageSets?.mediacard?.['src@2x'] ||
+          thing.imageSets?.mediacard?.src ||
+          '';
+
+        const yearDesc = thing.descriptors?.find(d => d.name === 'yearpublished');
+        const year = yearDesc && yearDesc.displayValue ? `(${yearDesc.displayValue})` : '';
+
+        allItems.push({
+          id: `bgg-${thing.id}`,
+          bggId: String(thing.id),
+          title: thing.name,
+          year: year,
+          image: img || generateItemSvgCover(thing.name, 'boardgame'),
+          category: 'boardgame',
+          score: entry.stats?.average ? Math.round(entry.stats.average * 10) / 10 : null,
+          bggScore: entry.stats?.average ? Math.round(entry.stats.average * 10) / 10 : null,
+          bggRank: (entry.stats?.rank && entry.stats.rank > 0) ? entry.stats.rank : null,
+          source: `BGG GeekList (${listTitle})`,
+          link: `https://boardgamegeek.com/boardgame/${thing.id}`
+        });
+      });
+
+      const totalItems = pageJson.pagination?.total || 0;
+      if (allItems.length >= totalItems || data.length < 25) {
+        hasMore = false;
+      } else {
+        page++;
+      }
+    }
+
+    if (allItems.length > 0) {
+      return {
+        title: listTitle,
+        items: allItems
+      };
+    }
+  } catch (errJson) {
+    console.warn('Geekdo JSON API fetch failed, trying XML fallback:', errJson);
+  }
+
+  // STRATEGY 2: Legacy XML API fallback
   let xmlText = null;
   let attempts = 0;
   const maxAttempts = 6;
@@ -11043,10 +11303,7 @@ async function fetchBggGeekList(geekListInput, onProgress) {
     let res = null;
     try {
       res = await fetch(`https://boardgamegeek.com/xmlapi/geeklist/${listId}`, {
-        headers: {
-          'Accept': 'application/xml, text/xml',
-          'Authorization': 'Bearer cdb528f3-d81c-464a-acf6-44e16b2f47a8'
-        }
+        headers: { 'Accept': 'application/xml, text/xml' }
       });
     } catch (e) {}
 
@@ -11109,24 +11366,28 @@ async function fetchBggGeekList(geekListInput, onProgress) {
         id: `bgg-${objectId}`,
         objectId,
         title: objectName,
-        image: imageid ? `https://cf.geekdo-images.com/thumb/img/${imageid}.jpg` : '',
+        imageid: imageid || '',
+        image: '',
         subtype: subtype || 'boardgame'
       });
       objectIds.push(objectId);
     }
   });
 
-  let metadataMap = new Map();
-  try {
-    if (objectIds.length > 0) {
-      const things = await fetchBggThings(objectIds.slice(0, 50));
-      things.forEach(t => {
-        if (t && t.bggId) metadataMap.set(String(t.bggId), t);
-      });
+  // Fetch images via api.geekdo.com/api/images/ for any item with imageid
+  const imageMap = new Map();
+  await Promise.all(rawItems.slice(0, 40).map(async it => {
+    if (it.imageid) {
+      try {
+        const imgRes = await fetch(`https://api.geekdo.com/api/images/${it.imageid}`);
+        if (imgRes.ok) {
+          const imgJson = await imgRes.json();
+          const foundUrl = imgJson.images?.medium?.url || imgJson.images?.small?.url || imgJson.images?.large?.url || '';
+          if (foundUrl) imageMap.set(it.objectId, foundUrl);
+        }
+      } catch (eImg) {}
     }
-  } catch (err) {
-    console.warn('GeekList metadata enrichment warning:', err);
-  }
+  }));
 
   const finalItems = [];
   const seenIds = new Set();
@@ -11135,13 +11396,13 @@ async function fetchBggGeekList(geekListInput, onProgress) {
     if (seenIds.has(it.objectId)) return;
     seenIds.add(it.objectId);
 
-    const meta = metadataMap.get(it.objectId);
+    const resolvedImg = imageMap.get(it.objectId) || generateItemSvgCover(it.title, 'boardgame');
     finalItems.push({
       id: it.id,
       bggId: it.objectId,
-      title: (meta && meta.title) ? meta.title : it.title,
-      year: (meta && meta.year) ? `(${meta.year})` : '',
-      image: (meta && meta.image) ? meta.image : (it.image || generateItemSvgCover(it.title, 'boardgame')),
+      title: it.title,
+      year: '',
+      image: resolvedImg,
       category: 'boardgame',
       source: `BGG GeekList (${listTitle})`
     });
@@ -14078,6 +14339,18 @@ async function executeWebScraperImport() {
 }
 
 async function fetchWebScraperItems(sourceUrl) {
+  // If BGG GeekList, fetch directly with full JSON API and signed images
+  if (typeof isBggGeekList === 'function' && isBggGeekList(sourceUrl)) {
+    try {
+      const gl = await fetchBggGeekList(sourceUrl);
+      if (gl && gl.items && gl.items.length > 0) {
+        return gl.items;
+      }
+    } catch (e) {
+      console.warn('BGG GeekList fetch failed, falling back to web scraper:', e);
+    }
+  }
+
   // If GGapp.io URL, use the native GGapp GraphQL client first for 100% complete list
   if (sourceUrl.toLowerCase().includes('ggapp.io')) {
     try {
@@ -14640,8 +14913,8 @@ async function renderTournamentRankingCanvas() {
   const width = isStory ? 720 : 960;
   const cols = (!isStory && items.length > 10) ? 2 : 1;
   const rowsCount = Math.ceil(items.length / cols);
-  const headerH = isStory ? 130 : 110;
-  const podiumH = 260;
+  const headerH = isStory ? 140 : 120;
+  const podiumH = isStory ? 295 : 285;
   const listHeaderH = 48;
   const rowH = 54;
   const footerH = 56;
@@ -14674,29 +14947,44 @@ async function renderTournamentRankingCanvas() {
   const titleInput = document.getElementById('tierlistCustomTitle') || document.getElementById('tierlistTitleInput');
   const customTitle = (titleInput && titleInput.value ? titleInput.value.trim() : '') || (isBracket ? 'Copa Mata-Mata' : 'Ranking 1x1');
   ctx.fillStyle = '#e9c875';
-  ctx.font = '900 26px Cinzel, Georgia, serif';
+  ctx.font = '900 24px Cinzel, Georgia, serif';
   ctx.textAlign = 'center';
-  ctx.fillText(`🏆 ${customTitle.toUpperCase()}`, width / 2, 58);
+
+  let rawHeader = `🏆 ${customTitle.toUpperCase()}`;
+  while (rawHeader.length > 6 && ctx.measureText(rawHeader).width > width - 80) {
+    rawHeader = rawHeader.slice(0, -1);
+  }
+  if (rawHeader.length < `🏆 ${customTitle.toUpperCase()}`.length) {
+    rawHeader = rawHeader.slice(0, -1) + '…';
+  }
+  ctx.fillText(rawHeader, width / 2, 54);
 
   ctx.fillStyle = '#b8a390';
   ctx.font = '600 15px Inter, sans-serif';
   ctx.fillText(
     `${isBracket ? 'Classificação da Copa Mata-Mata' : 'Classificação do Duelo 1x1'} • ${items.length} Jogos`,
     width / 2,
-    86
+    84
   );
 
   // Preload Top 3 + list images concurrently
   const loadedImages = await Promise.all(items.map(it => loadCorsSafeImage(it?.image, 3500)));
 
-  // Draw Podium (2nd, 1st, 3rd)
+  // Draw Podium (2nd, 1st, 3rd) with zero overlap and clean symmetrical spacing
+  const gap = isStory ? 18 : 28;
+  const w1 = isStory ? 170 : 190;
+  const w23 = isStory ? 145 : 160;
+  const x1 = Math.round(width / 2 - w1 / 2);
+  const x2 = x1 - gap - w23;
+  const x3 = x1 + w1 + gap;
+
   const podiumSlots = [
-    { rank: 1, item: items[1], img: loadedImages[1], x: width / 2 - 220, w: 155, pedH: 55, imgS: 80, color: '#cbd5e1', label: '🥈 2º LUGAR' },
-    { rank: 0, item: items[0], img: loadedImages[0], x: width / 2 - 90, w: 180, pedH: 78, imgS: 98, color: '#f59e0b', label: '👑 1º CAMPEÃO' },
-    { rank: 2, item: items[2], img: loadedImages[2], x: width / 2 + 105, w: 155, pedH: 42, imgS: 74, color: '#d97706', label: '🥉 3º LUGAR' }
+    { rank: 1, item: items[1], img: loadedImages[1], x: x2, w: w23, pedH: 56, imgS: isStory ? 76 : 84, color: '#cbd5e1', label: '🥈 2º LUGAR' },
+    { rank: 0, item: items[0], img: loadedImages[0], x: x1, w: w1, pedH: 76, imgS: isStory ? 92 : 100, color: '#f59e0b', label: '👑 1º CAMPEÃO' },
+    { rank: 2, item: items[2], img: loadedImages[2], x: x3, w: w23, pedH: 42, imgS: isStory ? 72 : 78, color: '#d97706', label: '🥉 3º LUGAR' }
   ];
 
-  const podiumBottomY = headerH + podiumH - 16;
+  const podiumBottomY = headerH + podiumH - 12;
 
   for (const slot of podiumSlots) {
     if (!slot.item) continue;
@@ -14708,12 +14996,19 @@ async function renderTournamentRankingCanvas() {
     ctx.fill();
     ctx.stroke();
 
-    // Title on pedestal
+    // Title on pedestal - accurately truncated to never spill outside pedestal
     ctx.fillStyle = '#ffffff';
-    ctx.font = '700 13px Inter, sans-serif';
+    ctx.font = '700 12px Inter, sans-serif';
     ctx.textAlign = 'center';
-    const shortTitle = (slot.item.title || '').length > 20 ? slot.item.title.slice(0, 18) + '…' : (slot.item.title || '');
-    ctx.fillText(shortTitle, slot.x + slot.w / 2, pedY + slot.pedH / 2 + 5);
+    let shortTitle = slot.item.title || '';
+    const maxTitleW = slot.w - 14;
+    while (shortTitle.length > 2 && ctx.measureText(shortTitle).width > maxTitleW) {
+      shortTitle = shortTitle.slice(0, -1);
+    }
+    if (shortTitle.length < (slot.item.title || '').length) {
+      shortTitle = shortTitle.slice(0, Math.max(1, shortTitle.length - 1)) + '…';
+    }
+    ctx.fillText(shortTitle, slot.x + slot.w / 2, pedY + slot.pedH / 2 + 4);
 
     // Cover image above pedestal
     const imgX = slot.x + (slot.w - slot.imgS) / 2;

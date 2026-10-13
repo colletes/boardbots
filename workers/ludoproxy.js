@@ -192,21 +192,32 @@ export default {
       }
     }
 
-    // Route: /bgg/... -> BoardGameGeek XML API
+    // Route: /bgg/... -> BoardGameGeek XML API / Geekdo API
     // BGG's terms require a registered application + Bearer token:
     // https://boardgamegeek.com/using_the_xml_api
-    // Register at https://boardgamegeek.com/applications, then: wrangler secret put BGG_TOKEN
     if (url.pathname.startsWith('/bgg/') || url.pathname.startsWith('/api/bgg/')) {
       let bggPath = url.pathname.replace(/^\/api\/bgg/, '').replace(/^\/bgg/, '');
       bggPath = bggPath.replace(/^\/xmlapi2/, '');
       if (!bggPath.startsWith('/')) bggPath = '/' + bggPath;
-      const bggTarget = new URL(BGG_API_BASE + bggPath + url.search);
+
+      // Handle legacy xmlapi /geeklist/:id or public api.geekdo.com
+      let bggTarget;
+      if (bggPath.startsWith('/geeklist/')) {
+        bggTarget = new URL('https://boardgamegeek.com/xmlapi' + bggPath + url.search);
+      } else if (bggPath.startsWith('/geeklists/') || bggPath.startsWith('/listitems/') || bggPath.startsWith('/images/')) {
+        bggTarget = new URL('https://api.geekdo.com/api' + bggPath + url.search);
+      } else {
+        bggTarget = new URL(BGG_API_BASE + bggPath + url.search);
+      }
+
       const bggHeaders = {
         'User-Agent': 'TierListGen/1.0 (+https://boardbots.online)',
-        'Accept': 'application/xml, text/xml'
+        'Accept': bggPath.startsWith('/geeklists/') || bggPath.startsWith('/listitems/') || bggPath.startsWith('/images/')
+          ? 'application/json'
+          : 'application/xml, text/xml'
       };
       const bggToken = env.BGG_TOKEN || 'cdb528f3-d81c-464a-acf6-44e16b2f47a8';
-      if (bggToken) {
+      if (bggToken && !bggTarget.hostname.includes('api.geekdo.com')) {
         bggHeaders['Authorization'] = `Bearer ${bggToken}`;
       }
       try {
@@ -215,10 +226,11 @@ export default {
           headers: bggHeaders
         });
         const body = await bggResponse.text();
+        const contentType = bggResponse.headers.get('Content-Type') || (bggTarget.hostname.includes('api.geekdo.com') ? 'application/json; charset=utf-8' : 'application/xml; charset=utf-8');
         return new Response(body, {
           status: bggResponse.status,
           headers: {
-            'Content-Type': 'application/xml; charset=utf-8',
+            'Content-Type': contentType,
             ...CORS_HEADERS,
             'Cache-Control': bggResponse.ok ? 'public, max-age=86400, s-maxage=86400' : 'no-cache'
           }
