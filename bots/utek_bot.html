@@ -622,7 +622,7 @@ select:focus, input[type=text]:focus{ outline: none; border-color: var(--crimson
       <div id="movementControls" class="row hidden" style="justify-content:center; margin-top:4px; margin-bottom:8px;">
         <button type="button" class="btn-outline secondary" id="rerollMovementBtn" onclick="rerollMovement()" style="min-height:36px; padding:6px 14px; font-size:0.82em;">
           <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
-          <span data-i18n="rerollMovementBtn">Re-rolar Movimento</span>
+          <span id="rerollMovementLabel" data-i18n="rerollMovementBtn">Re-rolar Movimento</span>
         </button>
       </div>
       <p class="small" style="margin:0;" data-i18n="compassSpinHintText">Spins to the last Compass roll — use it for army/region resolution on the physical board.</p>
@@ -1268,16 +1268,27 @@ function spinMovementArrowTo(targetNumber){
 }
 
 function rerollMovement(){
-  if(!state || (state.currentAction !== 'patrol' && state.currentAction !== 'quest')) return;
-  state.lastMovementRoll = rollCompassDie();
-  logMsg(lang==='pt'
-    ? '🧭 Nova rolagem de direção de movimento para o Bot (seta dourada): '+state.lastMovementRoll+'.'
-    : '🧭 New movement direction roll for Dummy (golden arrow): '+state.lastMovementRoll+'.');
-  spinMovementArrowTo(state.lastMovementRoll);
-  renderedMovementRoll = state.lastMovementRoll;
-  save();
-  renderGuidance();
-  updateCenterLabel(state.lastCompassRoll, state.currentAction);
+  if(!state) return;
+  if(state.currentAction === 'patrol' || state.currentAction === 'quest'){
+    state.lastMovementRoll = rollCompassDie();
+    logMsg(lang==='pt'
+      ? '🧭 Nova rolagem de direção de movimento para o Bot (seta dourada): '+state.lastMovementRoll+'.'
+      : '🧭 New movement direction roll for Dummy (golden arrow): '+state.lastMovementRoll+'.');
+    spinMovementArrowTo(state.lastMovementRoll);
+    renderedMovementRoll = state.lastMovementRoll;
+    save();
+    renderGuidance();
+    updateCenterLabel(state.lastCompassRoll, state.currentAction);
+  } else if(state.currentAction === 'expand' && state.activeSide === 'you'){
+    state.lastCompassRoll = rollCompassDie();
+    state.lastCompassStartRoll = state.lastCompassRoll;
+    logMsg(lang==='pt'
+      ? '🧭 Nova rolagem da Bússola para guiar a Expansão do Bot: '+state.lastCompassRoll+'.'
+      : '🧭 New Compass roll to guide Dummy\'s Expansion: '+state.lastCompassRoll+'.');
+    renderedCompassRoll = null;
+    save();
+    render();
+  }
 }
 
 function updateCenterLabel(rollNumber, actionKey){
@@ -1302,8 +1313,8 @@ function spinCompassTo(finalNumber, startNumber){
   const isSkip = startNumber && startNumber !== finalNumber;
   const firstStop = isSkip ? startNumber : finalNumber;
   const phase = state ? state.compassPhase : 'day';
-  const firstAction = getCompassAction(firstStop, phase);
-  const finalAction = getCompassAction(finalNumber, phase);
+  const firstAction = (state && state.activeSide === 'you' && state.currentAction) ? state.currentAction : getCompassAction(firstStop, phase);
+  const finalAction = (state && state.activeSide === 'you' && state.currentAction) ? state.currentAction : getCompassAction(finalNumber, phase);
   if (typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
     window.ThemeKit.playSfx('utek/astrolabe-turn', { volume: 0.65 });
   }
@@ -1359,17 +1370,26 @@ function renderCompassWheel(){
     updateCenterLabel(roll, state.currentAction);
   }
 
-  // Handle movement arrow (Patrol / Quest)
+  // Handle movement arrow (Patrol / Quest) and controls for Expand
   const arrow = document.getElementById('compassArrow');
   const moveCtrl = document.getElementById('movementControls');
+  const rerollLabel = document.getElementById('rerollMovementLabel');
   const isMovementAction = (state.currentAction === 'patrol' || state.currentAction === 'quest');
+  const isExpandAction = (state.currentAction === 'expand' && state.activeSide === 'you');
+
   if(isMovementAction && state.lastMovementRoll){
     if(arrow) arrow.classList.remove('hidden');
     if(moveCtrl) moveCtrl.classList.remove('hidden');
+    if(rerollLabel) rerollLabel.textContent = t('rerollMovementBtn');
     if(state.lastMovementRoll !== renderedMovementRoll){
       spinMovementArrowTo(state.lastMovementRoll);
       renderedMovementRoll = state.lastMovementRoll;
     }
+  } else if(isExpandAction && state.lastCompassRoll){
+    if(arrow) arrow.classList.add('hidden');
+    if(moveCtrl) moveCtrl.classList.remove('hidden');
+    if(rerollLabel) rerollLabel.textContent = lang==='pt' ? 'Re-rolar Direção' : 'Re-roll Direction';
+    renderedMovementRoll = null;
   } else {
     if(arrow) arrow.classList.add('hidden');
     if(moveCtrl) moveCtrl.classList.add('hidden');
@@ -1629,6 +1649,11 @@ function toggleChip(key){
     state.currentActionBy = null;
     state.turnLocked = false;
     state.lastMovementRoll = null;
+    if(key === 'expand') {
+      state.lastCompassRoll = null;
+      state.lastCompassStartRoll = null;
+      renderedCompassRoll = null;
+    }
     logMsg(lang==='pt' ? 'Meu senhor, a ordem de "'+ACTION_NAMES[key]+'" foi retirada.' : 'My lord, the order for "'+ACTION_NAMES[key]+'" has been withdrawn.');
   } else if(cur === null){
     state.actions[key] = side;
@@ -1642,6 +1667,13 @@ function toggleChip(key){
         logMsg(lang==='pt'
           ? '🧭 O Bot prepara o movimento — direção sorteada na seta dourada: '+state.lastMovementRoll+'.'
           : '🧭 Dummy prepares movement — direction rolled on golden arrow: '+state.lastMovementRoll+'.');
+      } else if(key === 'expand'){
+        state.lastCompassRoll = rollCompassDie();
+        state.lastCompassStartRoll = state.lastCompassRoll;
+        state.lastMovementRoll = null;
+        logMsg(lang==='pt'
+          ? '🧭 A Bússola gira para guiar a Expansão do Bot: '+state.lastCompassRoll+'.'
+          : '🧭 The Compass turns to guide Dummy\'s Expansion: '+state.lastCompassRoll+'.');
       } else {
         state.lastMovementRoll = null;
       }
@@ -1809,7 +1841,8 @@ const GUIDANCE = {
 
 // movement note shared by Official-mode Patrol/Quest/Expand guidance:
 // Day side selects the unit closest to the compass; Night side selects the unit farthest from the compass.
-// For Patrol and Quest, the golden movement arrow dictates the direction to start looking clockwise for a valid target.
+// For Patrol and Quest, the golden movement arrow dictates the direction.
+// For Expand, the main compass needle roll dictates the starting direction.
 function officialMoveNote(){
   if(!state) return '';
   const isNight = state.compassPhase === 'night';
@@ -1817,16 +1850,27 @@ function officialMoveNote(){
     ? (lang==='pt' ? 'a unidade mais longe da bússola' : 'the unit farthest from the compass')
     : (lang==='pt' ? 'a unidade mais próxima da bússola' : 'the unit closest to the compass');
   const moveRoll = state.lastMovementRoll;
+  const compassRoll = state.lastCompassRoll;
   if(lang==='pt'){
-    return 'Lado <strong>'+(isNight?'Noite 🌙':'Dia ☀️')+'</strong>: seleciona <strong>'+unitTarget+'</strong>. '
-      + (moveRoll
-        ? 'Direção do movimento (seta dourada): <strong>'+moveRoll+'</strong>. Começando por esse número, mova no sentido horário pelo território até chegar a um destino válido.'
-        : 'Usando a bússola, mova no sentido horário pelo território até chegar a um destino válido.');
+    let dirText = '';
+    if(moveRoll){
+      dirText = ' Direção do movimento (seta dourada): <strong>'+moveRoll+'</strong>. Começando por esse número, mova no sentido horário pelo território até chegar a um destino válido.';
+    } else if(state.currentAction === 'expand' && compassRoll){
+      dirText = ' Direção da bússola: <strong>'+compassRoll+'</strong>. Começando por esse número, mova no sentido horário pelo território até chegar a uma região aberta válida para expandir.';
+    } else {
+      dirText = ' Usando a bússola, mova no sentido horário pelo território até chegar a um destino válido.';
+    }
+    return 'Lado <strong>'+(isNight?'Noite 🌙':'Dia ☀️')+'</strong>: seleciona <strong>'+unitTarget+'</strong>.' + dirText;
   }
-  return '<strong>'+(isNight?'Night 🌙':'Day ☀️')+'</strong> side: selects <strong>'+unitTarget+'</strong>. '
-    + (moveRoll
-      ? 'Movement direction (golden arrow): <strong>'+moveRoll+'</strong>. Starting at that number, move clockwise around the territory until reaching a valid destination.'
-      : 'Using the compass, move clockwise around the territory until reaching a valid destination.');
+  let dirText = '';
+  if(moveRoll){
+    dirText = ' Movement direction (golden arrow): <strong>'+moveRoll+'</strong>. Starting at that number, move clockwise around the territory until reaching a valid destination.';
+  } else if(state.currentAction === 'expand' && compassRoll){
+    dirText = ' Compass direction: <strong>'+compassRoll+'</strong>. Starting at that number, move clockwise around the territory until reaching a valid open region to expand into.';
+  } else {
+    dirText = ' Using the compass, move clockwise around the territory until reaching a valid destination.';
+  }
+  return '<strong>'+(isNight?'Night 🌙':'Day ☀️')+'</strong> side: selects <strong>'+unitTarget+'</strong>.' + dirText;
 }
 
 const GUIDANCE_OFFICIAL = {
