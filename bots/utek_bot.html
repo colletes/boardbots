@@ -335,6 +335,22 @@ button:active, .btn:active{ transform: translateY(1px); box-shadow: 0 2px 4px rg
   background: linear-gradient(to bottom, #142e18, #071008);
   clip-path: polygon(50% 100%, 100% 0%, 0% 0%);
 }
+.compass-arrow{
+  position: absolute; top: 50%; left: 50%; width: 18px; height: 118px; margin-left: -9px; margin-top: -118px;
+  transform-origin: 50% 100%;
+  background: linear-gradient(to top, #704d16 0%, var(--gold-dark) 22%, var(--gold) 55%, var(--gold-light) 100%);
+  clip-path: polygon(50% 0%, 100% 28%, 68% 28%, 68% 100%, 32% 100%, 32% 28%, 0% 28%);
+  z-index: 11;
+  filter: drop-shadow(0 3px 6px rgba(0,0,0,0.65)) drop-shadow(0 0 5px rgba(255, 215, 0, 0.45));
+  pointer-events: none;
+  transition: transform 1.2s cubic-bezier(0.22, 1.4, 0.36, 1), opacity 0.25s ease;
+  opacity: 1;
+}
+.compass-arrow.hidden{
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
 .compass-center-label{
   position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
   width: 84px; height: 84px; border-radius: 50%;
@@ -590,17 +606,24 @@ select:focus, input[type=text]:focus{ outline: none; border-color: var(--crimson
         <div class="compass-tick" style="transform: rotate(30deg) translateY(-114px) rotate(-30deg);"><span class="tick-num">1</span><span data-i18n="actionResearch">Research</span></div>
         <div class="compass-tick" style="transform: rotate(60deg) translateY(-114px) rotate(-60deg);"><span class="tick-num">2</span><span data-i18n="actionTrade">Trade</span></div>
         <div class="compass-tick" style="transform: rotate(90deg) translateY(-114px) rotate(-90deg);"><span class="tick-num">3</span><span data-i18n="actionBuild">Build</span></div>
-        <div class="compass-tick" style="transform: rotate(120deg) translateY(-114px) rotate(-120deg);"><span class="tick-num">4</span><span data-i18n="actionPatrol">Patrol</span></div>
-        <div class="compass-tick" style="transform: rotate(150deg) translateY(-114px) rotate(-150deg);"><span class="tick-num">5</span><span data-i18n="actionQuest">Quest</span></div>
+        <div class="compass-tick" style="transform: rotate(120deg) translateY(-114px) rotate(-120deg);"><span class="tick-num">4</span><span id="compassTickLabel4" data-i18n="actionQuest">Quest</span></div>
+        <div class="compass-tick" style="transform: rotate(150deg) translateY(-114px) rotate(-150deg);"><span class="tick-num">5</span><span id="compassTickLabel5" data-i18n="actionPatrol">Patrol</span></div>
         <div class="compass-tick" style="transform: rotate(180deg) translateY(-114px) rotate(-180deg);"><span class="tick-num">6</span><span data-i18n="actionExpand">Expand</span></div>
         <div class="compass-tick" style="transform: rotate(210deg) translateY(-114px) rotate(-210deg);"><span class="tick-num">7</span><span data-i18n="actionResearch">Research</span></div>
         <div class="compass-tick" style="transform: rotate(240deg) translateY(-114px) rotate(-240deg);"><span class="tick-num">8</span><span data-i18n="actionTrade">Trade</span></div>
         <div class="compass-tick" style="transform: rotate(270deg) translateY(-114px) rotate(-270deg);"><span class="tick-num">9</span><span data-i18n="actionBuild">Build</span></div>
-        <div class="compass-tick" style="transform: rotate(300deg) translateY(-114px) rotate(-300deg);"><span class="tick-num">10</span><span data-i18n="actionPatrol">Patrol</span></div>
-        <div class="compass-tick" style="transform: rotate(330deg) translateY(-114px) rotate(-330deg);"><span class="tick-num">11</span><span data-i18n="actionQuest">Quest</span></div>
+        <div class="compass-tick" style="transform: rotate(300deg) translateY(-114px) rotate(-300deg);"><span class="tick-num">10</span><span id="compassTickLabel10" data-i18n="actionQuest">Quest</span></div>
+        <div class="compass-tick" style="transform: rotate(330deg) translateY(-114px) rotate(-330deg);"><span class="tick-num">11</span><span id="compassTickLabel11" data-i18n="actionPatrol">Patrol</span></div>
         <div class="compass-tick" style="transform: rotate(0deg) translateY(-114px) rotate(0deg);"><span class="tick-num">12</span><span data-i18n="actionExpand">Expand</span></div>
         <div class="compass-needle" id="compassNeedle"></div>
+        <div class="compass-arrow hidden" id="compassArrow"></div>
         <div class="compass-center-label" id="compassCenterLabel">—</div>
+      </div>
+      <div id="movementControls" class="row hidden" style="justify-content:center; margin-top:4px; margin-bottom:8px;">
+        <button type="button" class="btn-outline secondary" id="rerollMovementBtn" onclick="rerollMovement()" style="min-height:36px; padding:6px 14px; font-size:0.82em;">
+          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+          <span data-i18n="rerollMovementBtn">Re-rolar Movimento</span>
+        </button>
       </div>
       <p class="small" style="margin:0;" data-i18n="compassSpinHintText">Spins to the last Compass roll — use it for army/region resolution on the physical board.</p>
     </div>
@@ -781,6 +804,7 @@ en: {
   roundTrackerTitle: 'Round Tracker',
   roundTrackerIntroHtml: 'The lead player alternates by round — the Dummy always leads odd rounds (starting with Round 1), you lead even rounds. Only 5 of the 6 actions are used per round; the round automatically clears and rotates lead once the 5th is taken. Only one action can be picked per turn: click your cube (<strong style="color:var(--burgundy-dark);">burgundy</strong>) on your turn, then press Next Turn — the Dummy\'s cube (<strong style="color:var(--forest-dark);">green</strong>) is chosen automatically the instant it becomes its turn.',
   nextTurnBtn: 'Next Turn',
+  rerollMovementBtn: 'Re-roll Movement',
   actionResearch: 'Research', actionTrade: 'Trade', actionBuild: 'Build', actionPatrol: 'Patrol', actionQuest: 'Quest', actionExpand: 'Expand',
   compassSpinHintText: 'Spins to the last Compass roll — use it for army/region resolution on the physical board.',
   endGameBtn: 'End Game &amp; Reveal Scoring',
@@ -953,6 +977,7 @@ pt: {
   roundTrackerTitle: 'Rastreador de Rodadas',
   roundTrackerIntroHtml: 'O jogador líder se alterna a cada rodada — o Bot sempre lidera as rodadas ímpares (começando pela Rodada 1), você lidera as rodadas pares. Apenas 5 das 6 ações são usadas por rodada; a rodada se encerra automaticamente e o líder se alterna assim que a 5ª ação é tomada. Apenas uma ação pode ser escolhida por turno: clique no seu cubo (<strong style="color:var(--burgundy-dark);">bordô</strong>) no seu turno, depois pressione Próximo Turno — o cubo do Bot (<strong style="color:var(--forest-dark);">verde</strong>) é escolhido automaticamente assim que chega o turno dele.',
   nextTurnBtn: 'Próximo Turno',
+  rerollMovementBtn: 'Re-rolar Movimento',
   actionResearch: 'Pesquisar', actionTrade: 'Comerciar', actionBuild: 'Construir', actionPatrol: 'Patrulhar', actionQuest: 'Missão', actionExpand: 'Expandir',
   compassSpinHintText: 'Gira até o último resultado da Bússola — use-o para resolver qual exército/região no tabuleiro físico.',
   endGameBtn: 'Encerrar Partida e Revelar Pontuação',
@@ -1123,9 +1148,20 @@ function applyI18n(){
   ACTION_NAMES.research = t('actionResearch');
   ACTION_NAMES.expand = t('actionExpand');
   ACTION_NAMES.trade = t('actionTrade');
+  const isNight = state ? state.compassPhase==='night' : false;
+  const l4 = document.getElementById('compassTickLabel4');
+  const l5 = document.getElementById('compassTickLabel5');
+  const l10 = document.getElementById('compassTickLabel10');
+  const l11 = document.getElementById('compassTickLabel11');
+  const act4_10 = isNight ? 'patrol' : 'quest';
+  const act5_11 = isNight ? 'quest' : 'patrol';
+  if(l4){ l4.textContent = ACTION_NAMES[act4_10]; l4.setAttribute('data-i18n', act4_10==='quest'?'actionQuest':'actionPatrol'); }
+  if(l5){ l5.textContent = ACTION_NAMES[act5_11]; l5.setAttribute('data-i18n', act5_11==='quest'?'actionQuest':'actionPatrol'); }
+  if(l10){ l10.textContent = ACTION_NAMES[act4_10]; l10.setAttribute('data-i18n', act4_10==='quest'?'actionQuest':'actionPatrol'); }
+  if(l11){ l11.textContent = ACTION_NAMES[act5_11]; l11.setAttribute('data-i18n', act5_11==='quest'?'actionQuest':'actionPatrol'); }
   syncModeUI(state ? state.mode : pendingMode);
   syncAdjustmentInputs(state ? state.adjustments : pendingAdjustments);
-  if(state){ renderedCompassRoll = null; render(); }
+  if(state){ renderedCompassRoll = null; renderedMovementRoll = null; render(); }
 }
 
 function setLang(l){
@@ -1165,15 +1201,26 @@ let state = null;
 const AI_PRIORITY = ['patrol','quest','build','research','expand'];
 const ACTION_NAMES = {patrol:'Patrol',quest:'Quest',build:'Build',research:'Research',expand:'Expand',trade:'Trade'};
 
-// Official Compass Card ring, read clockwise off the physical card (both Day and Night sides share this same ring):
-// each action sits opposite its own number pair, 6 apart (1&7 Research, 2&8 Trade, 3&9 Build, 4&10 Patrol, 5&11 Quest, 6&12 Expand).
-const COMPASS_ACTION_BY_NUMBER = {1:'research',2:'trade',3:'build',4:'patrol',5:'quest',6:'expand',7:'research',8:'trade',9:'build',10:'patrol',11:'quest',12:'expand'};
+// Official Compass Card ring:
+// Day side: 1 Research, 2 Trade, 3 Build, 4 Quest, 5 Patrol, 6 Expand, 7 Research, 8 Trade, 9 Build, 10 Quest, 11 Patrol, 12 Expand
+// Night side: 1 Research, 2 Trade, 3 Build, 4 Patrol, 5 Quest, 6 Expand, 7 Research, 8 Trade, 9 Build, 10 Patrol, 11 Quest, 12 Expand
+const COMPASS_ACTIONS_DAY = {1:'research',2:'trade',3:'build',4:'quest',5:'patrol',6:'expand',7:'research',8:'trade',9:'build',10:'quest',11:'patrol',12:'expand'};
+const COMPASS_ACTIONS_NIGHT = {1:'research',2:'trade',3:'build',4:'patrol',5:'quest',6:'expand',7:'research',8:'trade',9:'build',10:'patrol',11:'quest',12:'expand'};
+
+function getCompassAction(number, phase){
+  const map = phase === 'night' ? COMPASS_ACTIONS_NIGHT : COMPASS_ACTIONS_DAY;
+  return map[number];
+}
 
 function rollCompassDie(){ return 1 + Math.floor(Math.random()*12); }
 
 // current cumulative needle rotation in degrees; kept increasing so every new roll always spins forward, never snaps backward
 let compassRotation = 0;
 let renderedCompassRoll = null;
+
+// movement arrow rotation (second pointer for Patrol and Quest)
+let movementArrowRotation = 0;
+let renderedMovementRoll = null;
 
 function rotateNeedleTo(targetNumber, extraSpins, transition){
   const needle = document.getElementById('compassNeedle');
@@ -1187,23 +1234,87 @@ function rotateNeedleTo(targetNumber, extraSpins, transition){
   needle.style.transform = 'rotate('+compassRotation+'deg)';
 }
 
+function rotateMovementArrowTo(targetNumber, extraSpins, transition){
+  const arrow = document.getElementById('compassArrow');
+  if(!arrow) return;
+  const targetAngle = (targetNumber % 12) * 30;
+  const current = ((movementArrowRotation % 360) + 360) % 360;
+  let delta = targetAngle - current;
+  if(delta <= 0) delta += 360;
+  movementArrowRotation += delta + 360 * extraSpins;
+  arrow.style.transition = transition;
+  arrow.style.transform = 'rotate('+movementArrowRotation+'deg)';
+}
+
+function snapMovementArrowTo(number){
+  const arrow = document.getElementById('compassArrow');
+  if(!arrow) return;
+  movementArrowRotation = (number % 12) * 30;
+  const prevTransition = arrow.style.transition;
+  arrow.style.transition = 'none';
+  arrow.style.transform = 'rotate('+movementArrowRotation+'deg)';
+  arrow.offsetHeight;
+  arrow.style.transition = prevTransition;
+}
+
+function spinMovementArrowTo(targetNumber){
+  const arrow = document.getElementById('compassArrow');
+  if(!arrow) return;
+  arrow.classList.remove('hidden');
+  if (typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
+    window.ThemeKit.playSfx('utek/astrolabe-turn', { volume: 0.55 });
+  }
+  rotateMovementArrowTo(targetNumber, 1, 'transform 1.2s cubic-bezier(0.22,1.4,0.36,1)');
+}
+
+function rerollMovement(){
+  if(!state || (state.currentAction !== 'patrol' && state.currentAction !== 'quest')) return;
+  state.lastMovementRoll = rollCompassDie();
+  logMsg(lang==='pt'
+    ? '🧭 Nova rolagem de direção de movimento para o Bot (seta dourada): '+state.lastMovementRoll+'.'
+    : '🧭 New movement direction roll for Dummy (golden arrow): '+state.lastMovementRoll+'.');
+  spinMovementArrowTo(state.lastMovementRoll);
+  renderedMovementRoll = state.lastMovementRoll;
+  save();
+  renderGuidance();
+  updateCenterLabel(state.lastCompassRoll, state.currentAction);
+}
+
+function updateCenterLabel(rollNumber, actionKey){
+  const label = document.getElementById('compassCenterLabel');
+  if(!label) return;
+  const act = actionKey || (state ? state.currentAction : null) || (rollNumber ? getCompassAction(rollNumber, state ? state.compassPhase : 'day') : null);
+  const actionText = act ? ACTION_NAMES[act] : '—';
+  const moveRoll = (state && (state.currentAction==='patrol'||state.currentAction==='quest')) ? state.lastMovementRoll : null;
+  if(moveRoll){
+    label.innerHTML = '<span style="font-size:1.15em">'+(rollNumber||'—')+'</span> <span style="color:#d49d28;font-size:0.95em;">➔ '+moveRoll+'</span><br>'+actionText;
+  } else if(rollNumber){
+    label.innerHTML = '<span style="font-size:1.3em">'+rollNumber+'</span><br>'+actionText;
+  } else {
+    label.innerHTML = '—';
+  }
+}
+
 // spins the needle to the die roll; if that number's action was already taken this round, first lands
 // on the raw roll, then hops forward to the resolved slot — mirroring the rulebook's clockwise-advance rule
 function spinCompassTo(finalNumber, startNumber){
   const label = document.getElementById('compassCenterLabel');
   const isSkip = startNumber && startNumber !== finalNumber;
   const firstStop = isSkip ? startNumber : finalNumber;
+  const phase = state ? state.compassPhase : 'day';
+  const firstAction = getCompassAction(firstStop, phase);
+  const finalAction = getCompassAction(finalNumber, phase);
   if (typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
     window.ThemeKit.playSfx('utek/astrolabe-turn', { volume: 0.65 });
   }
   rotateNeedleTo(firstStop, 2, 'transform 1.4s cubic-bezier(0.22,1.4,0.36,1)');
-  if(label) label.innerHTML = '<span style="font-size:1.3em">'+firstStop+'</span><br>'+ACTION_NAMES[COMPASS_ACTION_BY_NUMBER[firstStop]];
+  updateCenterLabel(firstStop, firstAction);
   if(!isSkip) return;
   setTimeout(()=>{
-    if(label) label.innerHTML = '<span style="font-size:0.82em;opacity:0.8">'+ACTION_NAMES[COMPASS_ACTION_BY_NUMBER[firstStop]]+(lang==='pt' ? ' usada \u2014 avan\u00e7ando\u2026' : ' taken \u2014 advancing\u2026')+'</span>';
+    if(label) label.innerHTML = '<span style="font-size:0.82em;opacity:0.8">'+ACTION_NAMES[firstAction]+(lang==='pt' ? ' usada \u2014 avan\u00e7ando\u2026' : ' taken \u2014 advancing\u2026')+'</span>';
     setTimeout(()=>{
       rotateNeedleTo(finalNumber, 0, 'transform 0.7s cubic-bezier(0.3,1.2,0.4,1)');
-      if(label) label.innerHTML = '<span style="font-size:1.3em">'+finalNumber+'</span><br>'+ACTION_NAMES[COMPASS_ACTION_BY_NUMBER[finalNumber]];
+      updateCenterLabel(finalNumber, finalAction);
     }, 550);
   }, 1450);
 }
@@ -1227,20 +1338,51 @@ function renderCompassWheel(){
   wrap.classList.toggle('is-night', isNight);
   const badge = document.getElementById('compassPhaseBadge');
   if(badge) badge.innerHTML = isNight ? MOON_ICON_SVG : SUN_ICON_SVG;
+
+  // Update dynamic tick labels for 4, 5, 10, 11 (Day vs Night)
+  const l4 = document.getElementById('compassTickLabel4');
+  const l5 = document.getElementById('compassTickLabel5');
+  const l10 = document.getElementById('compassTickLabel10');
+  const l11 = document.getElementById('compassTickLabel11');
+  const act4_10 = isNight ? 'patrol' : 'quest';
+  const act5_11 = isNight ? 'quest' : 'patrol';
+  if(l4){ l4.textContent = ACTION_NAMES[act4_10]; l4.setAttribute('data-i18n', act4_10==='quest'?'actionQuest':'actionPatrol'); }
+  if(l5){ l5.textContent = ACTION_NAMES[act5_11]; l5.setAttribute('data-i18n', act5_11==='quest'?'actionQuest':'actionPatrol'); }
+  if(l10){ l10.textContent = ACTION_NAMES[act4_10]; l10.setAttribute('data-i18n', act4_10==='quest'?'actionQuest':'actionPatrol'); }
+  if(l11){ l11.textContent = ACTION_NAMES[act5_11]; l11.setAttribute('data-i18n', act5_11==='quest'?'actionQuest':'actionPatrol'); }
+
   const roll = state.lastCompassRoll;
-  const label = document.getElementById('compassCenterLabel');
-  if(!roll && label) label.innerHTML = '—';
   if(roll && roll !== renderedCompassRoll){
     spinCompassTo(roll, state.lastCompassStartRoll);
     renderedCompassRoll = roll;
+  } else {
+    updateCenterLabel(roll, state.currentAction);
+  }
+
+  // Handle movement arrow (Patrol / Quest)
+  const arrow = document.getElementById('compassArrow');
+  const moveCtrl = document.getElementById('movementControls');
+  const isMovementAction = (state.currentAction === 'patrol' || state.currentAction === 'quest');
+  if(isMovementAction && state.lastMovementRoll){
+    if(arrow) arrow.classList.remove('hidden');
+    if(moveCtrl) moveCtrl.classList.remove('hidden');
+    if(state.lastMovementRoll !== renderedMovementRoll){
+      spinMovementArrowTo(state.lastMovementRoll);
+      renderedMovementRoll = state.lastMovementRoll;
+    }
+  } else {
+    if(arrow) arrow.classList.add('hidden');
+    if(moveCtrl) moveCtrl.classList.add('hidden');
+    renderedMovementRoll = null;
   }
 }
 
 // starting at startRoll, advance clockwise (wrapping 12->1) until landing on an action not yet used this round
 function resolveCompassAction(startRoll){
   let n = startRoll;
+  const phase = state ? state.compassPhase : 'day';
   for(let i=0;i<12;i++){
-    const action = COMPASS_ACTION_BY_NUMBER[n];
+    const action = getCompassAction(n, phase);
     if(state.actions[action]===null) return {roll:n, action};
     n = (n===12) ? 1 : n+1;
   }
@@ -1357,17 +1499,27 @@ function pickAiTurn(){
       state.currentActionBy = 'ai';
       state.lastCompassRoll = result.roll;
       state.lastCompassStartRoll = startRoll;
+      if(result.action === 'patrol' || result.action === 'quest'){
+        state.lastMovementRoll = rollCompassDie();
+      } else {
+        state.lastMovementRoll = null;
+      }
+      const startAction = getCompassAction(startRoll, state.compassPhase);
       const advancedNote = result.roll !== startRoll
-        ? (pt ? ' ('+ACTION_NAMES[COMPASS_ACTION_BY_NUMBER[startRoll]]+' já usada — avançou no sentido horário para '+result.roll+')' : ' ('+ACTION_NAMES[COMPASS_ACTION_BY_NUMBER[startRoll]]+' already taken — advanced clockwise to '+result.roll+')')
+        ? (pt ? ' ('+ACTION_NAMES[startAction]+' já usada — avançou no sentido horário para '+result.roll+')' : ' ('+ACTION_NAMES[startAction]+' already taken — advanced clockwise to '+result.roll+')')
+        : '';
+      const moveNote = state.lastMovementRoll
+        ? (pt ? ' | Direção de movimento (seta dourada): '+state.lastMovementRoll+'.' : ' | Movement direction (golden arrow): '+state.lastMovementRoll+'.')
         : '';
       logMsg(pt
-        ? '🧭 Meu senhor, a Bússola girou e marcou '+startRoll+advancedNote+'. O Bot segue o desígnio e escolhe '+ACTION_NAMES[result.action]+'.'
-        : '🧭 My lord, the Compass has turned and marked '+startRoll+advancedNote+'. The Dummy heeds its call and chooses '+ACTION_NAMES[result.action]+'.');
+        ? '🧭 Meu senhor, a Bússola girou e marcou '+startRoll+advancedNote+'. O Bot segue o desígnio e escolhe '+ACTION_NAMES[result.action]+'.'+moveNote
+        : '🧭 My lord, the Compass has turned and marked '+startRoll+advancedNote+'. The Dummy heeds its call and chooses '+ACTION_NAMES[result.action]+'.'+moveNote);
     } else {
       state.currentAction = null;
       state.currentActionBy = 'ai-collect';
       state.lastCompassRoll = startRoll;
       state.lastCompassStartRoll = startRoll;
+      state.lastMovementRoll = null;
       logMsg(pt
         ? '🧭 Meu senhor, a Bússola marcou '+startRoll+', mas nenhum caminho resta livre nesta rodada — o Bot recolhe o que os campos oferecem.'
         : '🧭 My lord, the Compass marked '+startRoll+', but no path remains open this round — the Dummy gathers what the land provides.');
@@ -1397,7 +1549,7 @@ function startGame(){
   const yourFaction = document.getElementById('setupYourFaction').value.trim() || (lang==='pt' ? 'Seu Reino' : 'Your Kingdom');
   const aiFaction = document.getElementById('setupAiFaction').value.trim() || (lang==='pt' ? 'O Jogador Bot' : 'The Dummy Player');
   state = {
-    version:6,
+    version:7,
     mode: pendingMode,
     round:1,
     activeSide:leaderForRound(1),
@@ -1409,6 +1561,7 @@ function startGame(){
     compassPhase:'day',
     lastCompassRoll:null,
     lastCompassStartRoll:null,
+    lastMovementRoll:null,
     adjustments: Object.assign({}, pendingAdjustments),
     you: Object.assign(defaultKingdom(), {faction:yourFaction}),
     ai: Object.assign(defaultKingdom(), {faction:aiFaction}),
@@ -1424,6 +1577,8 @@ function startGame(){
   if(continueBtn) continueBtn.classList.add('hidden');
   compassRotation = 0;
   renderedCompassRoll = null;
+  movementArrowRotation = 0;
+  renderedMovementRoll = null;
   if (typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
     window.ThemeKit.playSfx('utek/medieval-horn', { volume: 0.7 });
   }
@@ -1473,6 +1628,7 @@ function toggleChip(key){
     state.currentAction = null;
     state.currentActionBy = null;
     state.turnLocked = false;
+    state.lastMovementRoll = null;
     logMsg(lang==='pt' ? 'Meu senhor, a ordem de "'+ACTION_NAMES[key]+'" foi retirada.' : 'My lord, the order for "'+ACTION_NAMES[key]+'" has been withdrawn.');
   } else if(cur === null){
     state.actions[key] = side;
@@ -1481,11 +1637,14 @@ function toggleChip(key){
     state.turnLocked = true;
     logMsg(state.you.faction+(lang==='pt' ? ' avança para ' : ' marches toward ')+ACTION_NAMES[key]+'.');
     if(state.mode==='official'){
-      // the Dummy still needs a Compass roll to resolve army/region selection when it's just following your action
-      // (this reuses the raw roll verbatim as a movement direction — the clockwise "already taken" advance only applies to picking an action, not to this)
-      state.lastCompassRoll = rollCompassDie();
-      state.lastCompassStartRoll = state.lastCompassRoll;
-      logMsg(lang==='pt' ? '🧭 Meu senhor, a Bússola gira mais uma vez para guiar o Bot: '+state.lastCompassRoll+'.' : '🧭 My lord, the Compass turns once more to guide the Dummy: '+state.lastCompassRoll+'.');
+      if(key === 'patrol' || key === 'quest'){
+        state.lastMovementRoll = rollCompassDie();
+        logMsg(lang==='pt'
+          ? '🧭 O Bot prepara o movimento — direção sorteada na seta dourada: '+state.lastMovementRoll+'.'
+          : '🧭 Dummy prepares movement — direction rolled on golden arrow: '+state.lastMovementRoll+'.');
+      } else {
+        state.lastMovementRoll = null;
+      }
     }
   } else {
     return;
@@ -1500,6 +1659,7 @@ function startNewRound(){
   state.turnLocked = false;
   state.lastCompassRoll = null;
   state.lastCompassStartRoll = null;
+  state.lastMovementRoll = null;
   if(state.mode==='official'){
     const wasDay = state.compassPhase!=='night';
     state.compassPhase = wasDay ? 'night' : 'day';
@@ -1535,6 +1695,7 @@ function nextTurn(){
   state.currentAction = null;
   state.currentActionBy = null;
   state.turnLocked = false;
+  state.lastMovementRoll = null;
   if (typeof window !== 'undefined' && window.ThemeKit && typeof window.ThemeKit.playSfx === 'function') {
     window.ThemeKit.playSfx('utek/troops-march', { volume: 0.55 });
   }
@@ -1646,12 +1807,26 @@ const GUIDANCE = {
   }
 };
 
-// movement note shared by Official-mode Patrol/Quest/Expand guidance — references the actual compass roll the app already tracked;
-// the specific army/region choice on the physical board is still something this app can't see or simulate
+// movement note shared by Official-mode Patrol/Quest/Expand guidance:
+// Day side selects the unit closest to the compass; Night side selects the unit farthest from the compass.
+// For Patrol and Quest, the golden movement arrow dictates the direction to start looking clockwise for a valid target.
 function officialMoveNote(){
-  const n = state.lastCompassRoll;
-  if(lang==='pt') return 'Usando a rolagem da bússola de <strong>'+(n||'—')+'</strong>, começando por esse número, mova no sentido horário pelo território até chegar a um exército/região válido para este movimento.';
-  return 'Using the compass roll of <strong>'+(n||'—')+'</strong>, starting at that number, move clockwise around the territory until you reach a valid army/region for this move.';
+  if(!state) return '';
+  const isNight = state.compassPhase === 'night';
+  const unitTarget = isNight
+    ? (lang==='pt' ? 'a unidade mais longe da bússola' : 'the unit farthest from the compass')
+    : (lang==='pt' ? 'a unidade mais próxima da bússola' : 'the unit closest to the compass');
+  const moveRoll = state.lastMovementRoll;
+  if(lang==='pt'){
+    return 'Lado <strong>'+(isNight?'Noite 🌙':'Dia ☀️')+'</strong>: seleciona <strong>'+unitTarget+'</strong>. '
+      + (moveRoll
+        ? 'Direção do movimento (seta dourada): <strong>'+moveRoll+'</strong>. Começando por esse número, mova no sentido horário pelo território até chegar a um destino válido.'
+        : 'Usando a bússola, mova no sentido horário pelo território até chegar a um destino válido.');
+  }
+  return '<strong>'+(isNight?'Night 🌙':'Day ☀️')+'</strong> side: selects <strong>'+unitTarget+'</strong>. '
+    + (moveRoll
+      ? 'Movement direction (golden arrow): <strong>'+moveRoll+'</strong>. Starting at that number, move clockwise around the territory until reaching a valid destination.'
+      : 'Using the compass, move clockwise around the territory until reaching a valid destination.');
 }
 
 const GUIDANCE_OFFICIAL = {
@@ -1921,6 +2096,7 @@ function resetGame(){
   state = null;
   savedState = null;
   renderedCompassRoll = null;
+  renderedMovementRoll = null;
   document.getElementById('game').classList.add('hidden');
   document.getElementById('setup').classList.remove('hidden');
   const continueBtn = document.getElementById('continueSavedBtn');
@@ -1941,13 +2117,14 @@ function loadState(){
       parsed.adjustments = defaultAdjustments();
       parsed.version = 4;
     }
-    if(parsed && (parsed.version===4 || parsed.version===5 || parsed.version===6) && parsed.you && parsed.ai && parsed.actions){
+    if(parsed && (parsed.version===4 || parsed.version===5 || parsed.version===6 || parsed.version===7) && parsed.you && parsed.ai && parsed.actions){
       if(!parsed.adjustments) parsed.adjustments = defaultAdjustments();
       if(!parsed.mode) parsed.mode = 'gjj';
       if(!parsed.compassPhase) parsed.compassPhase = 'day';
       if(parsed.lastCompassRoll === undefined) parsed.lastCompassRoll = null;
       if(parsed.lastCompassStartRoll === undefined) parsed.lastCompassStartRoll = null;
-      parsed.version = 6;
+      if(parsed.lastMovementRoll === undefined) parsed.lastMovementRoll = null;
+      parsed.version = 7;
       savedState = parsed;
       const continueBtn = document.getElementById('continueSavedBtn');
       if(continueBtn) continueBtn.classList.remove('hidden');
@@ -1963,6 +2140,10 @@ function continueSavedGame(){
   if(state.lastCompassRoll){
     renderedCompassRoll = state.lastCompassRoll;
     snapCompassTo(state.lastCompassRoll);
+  }
+  if(state.lastMovementRoll){
+    renderedMovementRoll = state.lastMovementRoll;
+    snapMovementArrowTo(state.lastMovementRoll);
   }
   render();
 }
