@@ -6045,6 +6045,7 @@ function attachImageWithFallback(imgEl, originalUrl, fallback = '../assets/masco
 // BGG's XML API now requires a registered application + Bearer token
 // (see workers/ludoproxy.js BGG_TOKEN secret).
 const BGG_ENABLED = true;
+const BGG_BEARER_TOKEN = 'cdb528f3-d81c-464a-acf6-44e16b2f47a8';
 
 // Multi-tier Proxy & Cache Client for Ludopedia API
 const LUDO_SEARCH_CACHE = new Map();
@@ -6078,7 +6079,7 @@ async function fetchBggXml(apiPath) {
     const res = await fetch(`https://boardgamegeek.com/xmlapi2${cleanPath}`, {
       headers: {
         'Accept': 'application/xml',
-        'Authorization': 'Bearer cdb528f3-d81c-464a-acf6-44e16b2f47a8'
+        'Authorization': `Bearer ${BGG_BEARER_TOKEN}`
       }
     });
     if (res.ok) {
@@ -6265,14 +6266,18 @@ async function fetchBggThings(bggIds) {
   });
 
   if (missingIds.length > 0) {
-    const xml = await fetchBggXml(`/thing?id=${encodeURIComponent(missingIds.join(','))}&stats=1`);
-    if (xml) {
-      const things = parseBggThingsXml(xml);
-      things.forEach(t => {
-        if (t && t.bggId) {
-          BGG_THING_CACHE.set(String(t.bggId), t);
-        }
-      });
+    // BGG thing API has a hard limit of 20 IDs per request (returns 400 if >20)
+    for (let i = 0; i < missingIds.length; i += 20) {
+      const chunk = missingIds.slice(i, i + 20);
+      const xml = await fetchBggXml(`/thing?id=${encodeURIComponent(chunk.join(','))}&stats=1`);
+      if (xml) {
+        const things = parseBggThingsXml(xml);
+        things.forEach(t => {
+          if (t && t.bggId) {
+            BGG_THING_CACHE.set(String(t.bggId), t);
+          }
+        });
+      }
     }
   }
 
@@ -6460,29 +6465,29 @@ function calculateGameMatchScore(game, query) {
 }
 
 const CURATED_BOARD_GAMES = [
-  { id: 'bgg_13', bggId: '13', title: 'Catan', alt: 'The Settlers of Catan Os Colonizadores de Catan', year: '1995', image: 'https://cf.geekdo-images.com/W3Bsga_uLP9kO91gZ7H8yw__small/img/q_v4oKx9u0a8V2yE4tE1hU8aW_w=/fit-in/200x150/filters:strip_icc()/pic2419375.jpg', bggScore: '7.1', bggRank: 500, source: 'bgg' },
-  { id: 'bgg_822', bggId: '822', title: 'Carcassonne', alt: 'Carcassonne', year: '2000', image: 'https://cf.geekdo-images.com/ok7LddvdcT42KGn_8s_2Zw__small/img/uV2rG4G2bB5hB4A4B4A=/fit-in/200x150/filters:strip_icc()/pic6544250.png', bggScore: '7.4', bggRank: 220, source: 'bgg' },
-  { id: 'bgg_9209', bggId: '9209', title: 'Ticket to Ride', alt: 'Ticket to Ride USA TTR', year: '2004', image: 'https://cf.geekdo-images.com/ZWJg0dCgah2fvVOPvtNsOw__small/img/yT1mN2eJ3Y9s_8gB9s=/fit-in/200x150/filters:strip_icc()/pic38668.jpg', bggScore: '7.4', bggRank: 240, source: 'bgg' },
-  { id: 'bgg_14996', bggId: '14996', title: 'Ticket to Ride: Europe', alt: 'Ticket to Ride Europe TTR', year: '2005', image: 'https://cf.geekdo-images.com/0K1AOqpD4w_8nV0K_Small/img/fit-in/200x150/pic448375.jpg', bggScore: '7.5', bggRank: 170, source: 'bgg' },
-  { id: 'bgg_230802', bggId: '230802', title: 'Azul', alt: 'Azul', year: '2017', image: 'https://cf.geekdo-images.com/aPSH6VBo_ZWcdK_Small/img/fit-in/200x150/pic3718275.jpg', bggScore: '7.7', bggRank: 75, source: 'bgg' },
-  { id: 'bgg_266192', bggId: '266192', title: 'Wingspan', alt: 'Wingspan', year: '2019', image: 'https://cf.geekdo-images.com/yLrmOBYs9Small/img/fit-in/200x150/pic4458123.jpg', bggScore: '8.0', bggRank: 30, source: 'bgg' },
-  { id: 'bgg_148228', bggId: '148228', title: 'Splendor', alt: 'Splendor', year: '2014', image: 'https://cf.geekdo-images.com/rwOMRxw8Small/img/fit-in/200x150/pic1904079.jpg', bggScore: '7.4', bggRank: 215, source: 'bgg' },
-  { id: 'bgg_68448', bggId: '68448', title: '7 Wonders', alt: '7 Wonders', year: '2010', image: 'https://cf.geekdo-images.com/Rvfv5Small/img/fit-in/200x150/pic860217.jpg', bggScore: '7.7', bggRank: 95, source: 'bgg' },
+  { id: 'bgg_13', bggId: '13', title: 'Catan', alt: 'The Settlers of Catan Os Colonizadores de Catan', year: '1995', image: 'https://cf.geekdo-images.com/0XODRpReiZBFUffEcqT5-Q__small/img/SNVfF23OQafv3u8xdFolJnMkBoM=/fit-in/200x150/filters:strip_icc()/pic9156909.png', bggScore: '7.1', bggRank: 500, source: 'bgg' },
+  { id: 'bgg_822', bggId: '822', title: 'Carcassonne', alt: 'Carcassonne', year: '2000', image: 'https://cf.geekdo-images.com/peUgu3A20LRmAXAMyDQfpQ__small/img/oEEslN-EGqh82sNI6Aj4_MFXYg0=/fit-in/200x150/filters:strip_icc()/pic8621446.jpg', bggScore: '7.4', bggRank: 220, source: 'bgg' },
+  { id: 'bgg_9209', bggId: '9209', title: 'Ticket to Ride', alt: 'Ticket to Ride USA TTR', year: '2004', image: 'https://cf.geekdo-images.com/kdWYkW-7AqG63HhqPL6ekA__small/img/5G46jv8MFh_BfX67iMSouTMhKxc=/fit-in/200x150/filters:strip_icc()/pic8937637.jpg', bggScore: '7.4', bggRank: 240, source: 'bgg' },
+  { id: 'bgg_14996', bggId: '14996', title: 'Ticket to Ride: Europe', alt: 'Ticket to Ride Europe TTR', year: '2005', image: 'https://cf.geekdo-images.com/EQJZDO1Jq8KL-HxmWLwL-Q__small/img/XE-BFNwHZ0NZVko1pCj3gdFaGxY=/fit-in/200x150/filters:strip_icc()/pic9580918.jpg', bggScore: '7.5', bggRank: 170, source: 'bgg' },
+  { id: 'bgg_230802', bggId: '230802', title: 'Azul', alt: 'Azul', year: '2017', image: 'https://cf.geekdo-images.com/aPSHJO0d0XOpQR5X-wJonw__small/img/ccsXKrdGJw-YSClWwzVUwk5Nh9Y=/fit-in/200x150/filters:strip_icc()/pic6973671.png', bggScore: '7.7', bggRank: 75, source: 'bgg' },
+  { id: 'bgg_266192', bggId: '266192', title: 'Wingspan', alt: 'Wingspan', year: '2019', image: 'https://cf.geekdo-images.com/yLZJCVLlIx4c7eJEWUNJ7w__small/img/VNToqgS2-pOGU6MuvIkMPKn_y-s=/fit-in/200x150/filters:strip_icc()/pic4458123.jpg', bggScore: '8.0', bggRank: 30, source: 'bgg' },
+  { id: 'bgg_148228', bggId: '148228', title: 'Splendor', alt: 'Splendor', year: '2014', image: 'https://cf.geekdo-images.com/vNFe4JkhKAERzi4T0Ntwpw__small/img/KKU_42Uswt4tKCpf1zY5kTzgr-g=/fit-in/200x150/filters:strip_icc()/pic8234167.png', bggScore: '7.4', bggRank: 215, source: 'bgg' },
+  { id: 'bgg_68448', bggId: '68448', title: '7 Wonders', alt: '7 Wonders', year: '2010', image: 'https://cf.geekdo-images.com/35h9Za_JvMMMtx_92kT0Jg__small/img/BUOso8b0M1aUOkU80FWlhE8uuxc=/fit-in/200x150/filters:strip_icc()/pic7149798.jpg', bggScore: '7.7', bggRank: 95, source: 'bgg' },
   { id: 'bgg_173346', bggId: '173346', title: '7 Wonders Duel', alt: '7 Wonders Duel', year: '2015', image: 'https://cf.geekdo-images.com/zdagMskTF7wJBPjX74XsRw__small/img/gV1-ckZSIC-dCxxpq1Y7GmPITzQ=/fit-in/200x150/filters:strip_icc()/pic2576399.jpg', bggScore: '8.1', bggRank: 19, source: 'bgg' },
-  { id: 'bgg_170216', bggId: '170216', title: 'Blood Rage', alt: 'Blood Rage', year: '2015', image: 'https://cf.geekdo-images.com/Small/pic2439223.jpg', bggScore: '7.9', bggRank: 48, source: 'bgg' },
-  { id: 'bgg_237182', bggId: '237182', title: 'Root', alt: 'Root', year: '2018', image: 'https://cf.geekdo-images.com/Small/pic4254509.jpg', bggScore: '8.1', bggRank: 28, source: 'bgg' },
-  { id: 'bgg_198773', bggId: '198773', title: 'Everdell', alt: 'Everdell', year: '2018', image: 'https://cf.geekdo-images.com/Small/pic3918905.jpg', bggScore: '8.0', bggRank: 36, source: 'bgg' },
+  { id: 'bgg_170216', bggId: '170216', title: 'Blood Rage', alt: 'Blood Rage', year: '2015', image: 'https://cf.geekdo-images.com/HkZSJfQnZ3EpS214xtuplg__small/img/NLhVdU8xazrgS5dA6nVCYmN2DNI=/fit-in/200x150/filters:strip_icc()/pic2439223.jpg', bggScore: '7.9', bggRank: 48, source: 'bgg' },
+  { id: 'bgg_237182', bggId: '237182', title: 'Root', alt: 'Root', year: '2018', image: 'https://cf.geekdo-images.com/JUAUWaVUzeBgzirhZNmHHw__small/img/ACovMZzGGIsBRyEQXFnsT8282NM=/fit-in/200x150/filters:strip_icc()/pic4254509.jpg', bggScore: '8.1', bggRank: 28, source: 'bgg' },
+  { id: 'bgg_198773', bggId: '198773', title: 'Everdell', alt: 'Everdell', year: '2018', image: 'https://cf.geekdo-images.com/TGHPcdYEnD3_QzMohEIrNw__small/img/0bZIFaJEW-3FquBb8jY-SqrrUx8=/fit-in/200x150/filters:strip_icc()/pic9206059.png', bggScore: '8.0', bggRank: 36, source: 'bgg' },
   { id: 'bgg_342942', bggId: '342942', title: 'Ark Nova', alt: 'Ark Nova', year: '2021', image: 'https://cf.geekdo-images.com/SoU8p28Sk1s8MSvoM4N8pQ__small/img/4KuHNTWSMPf8vTNDKSRMMI3oOv8=/fit-in/200x150/filters:strip_icc()/pic6293412.jpg', bggScore: '8.5', bggRank: 4, source: 'bgg' },
   { id: 'bgg_224517', bggId: '224517', title: 'Brass: Birmingham', alt: 'Brass Birmingham', year: '2018', image: 'https://cf.geekdo-images.com/x3zxjr-Vw5iU4yDPg70Jgw__small/img/o18rjEemoWaVru9Y2TyPwuIaRfE=/fit-in/200x150/filters:strip_icc()/pic3490053.jpg', bggScore: '8.6', bggRank: 1, source: 'bgg' },
   { id: 'bgg_316554', bggId: '316554', title: 'Dune: Imperium', alt: 'Dune Imperium', year: '2020', image: 'https://cf.geekdo-images.com/PhjygpWSo-0labGrPBMyyg__small/img/JGgY-nBmkyB8WRp8vcoBLlNMQ5U=/fit-in/200x150/filters:strip_icc()/pic5666597.jpg', bggScore: '8.4', bggRank: 6, source: 'bgg' },
   { id: 'bgg_167791', bggId: '167791', title: 'Terraforming Mars', alt: 'Terraforming Mars', year: '2016', image: 'https://cf.geekdo-images.com/wg9oOLcsKvDesSUdZQ4rxw__small/img/BTxqxgYay5tHJfVoJ2NF5g43_gA=/fit-in/200x150/filters:strip_icc()/pic3536616.jpg', bggScore: '8.4', bggRank: 7, source: 'bgg' },
   { id: 'bgg_169786', bggId: '169786', title: 'Scythe', alt: 'Scythe', year: '2016', image: 'https://cf.geekdo-images.com/7k_nOxpO9OGIjhLq2BUZdA__small/img/eQ69OEDdjYjfKg6q5Navee87skU=/fit-in/200x150/filters:strip_icc()/pic3163924.jpg', bggScore: '8.1', bggRank: 17, source: 'bgg' },
   { id: 'bgg_277659', bggId: '277659', title: 'Final Girl', alt: 'Final Girl', year: '2021', image: 'https://cf.geekdo-images.com/TUtzY-F7gKTIKm9y8e1AQw__listitem/img/P3Z91UYAI6r1-ncYML2pQwap2So=/fit-in/175x175/filters:strip_icc()/pic6520382.jpg', bggScore: '8.2', bggRank: 80, source: 'bgg' },
-  { id: 'bgg_366013', bggId: '366013', title: 'Heat: Pedal to the Metal', alt: 'Heat Pedal to the Metal', year: '2022', image: 'https://cf.geekdo-images.com/Small/pic6894084.jpg', bggScore: '8.0', bggRank: 40, source: 'bgg' },
-  { id: 'bgg_314040', bggId: '314040', title: 'Cascadia', alt: 'Cascadia', year: '2021', image: 'https://cf.geekdo-images.com/Small/pic5825222.jpg', bggScore: '8.0', bggRank: 45, source: 'bgg' },
-  { id: 'bgg_178900', bggId: '178900', title: 'Codenames', alt: 'Codenames Código Secreto', year: '2015', image: 'https://cf.geekdo-images.com/Small/pic2582929.jpg', bggScore: '7.5', bggRank: 120, source: 'bgg' },
-  { id: 'bgg_244521', bggId: '244521', title: 'The Quacks of Quedlinburg', alt: 'The Quacks of Quedlinburg Charlatães de Quedlinburgo', year: '2018', image: 'https://cf.geekdo-images.com/Small/pic4010328.jpg', bggScore: '7.8', bggRank: 65, source: 'bgg' },
-  { id: 'bgg_34798', bggId: '34798', title: 'Stone Age', alt: 'Stone Age Era da Pedra', year: '2008', image: 'https://cf.geekdo-images.com/Small/pic337677.jpg', bggScore: '7.5', bggRank: 155, source: 'bgg' },
+  { id: 'bgg_366013', bggId: '366013', title: 'Heat: Pedal to the Metal', alt: 'Heat Pedal to the Metal', year: '2022', image: 'https://cf.geekdo-images.com/-vOrd4bOspibyohYExLqWg__small/img/2GbaKvYOzWIxfgbYTk2R9puiyzo=/fit-in/200x150/filters:strip_icc()/pic6940449.png', bggScore: '8.0', bggRank: 40, source: 'bgg' },
+  { id: 'bgg_314040', bggId: '314040', title: 'Cascadia', alt: 'Cascadia', year: '2021', image: 'https://cf.geekdo-images.com/y0x1zbkpUXjddzWWnhekYw__small/img/hj0jDCs-hKfkgqG-oOWu-kM-I6E=/fit-in/200x150/filters:strip_icc()/pic5581457.jpg', bggScore: '8.0', bggRank: 45, source: 'bgg' },
+  { id: 'bgg_178900', bggId: '178900', title: 'Codenames', alt: 'Codenames Código Secreto', year: '2015', image: 'https://cf.geekdo-images.com/nC6ifPCDnAItwoKSKXVrnw__small/img/1iZav_8ZqurrDbvkZA9GcFhB5x0=/fit-in/200x150/filters:strip_icc()/pic8907965.jpg', bggScore: '7.5', bggRank: 120, source: 'bgg' },
+  { id: 'bgg_244521', bggId: '244521', title: 'The Quacks of Quedlinburg', alt: 'The Quacks of Quedlinburg Charlatães de Quedlinburgo', year: '2018', image: 'https://cf.geekdo-images.com/B1bLRWzTASZ-xx9NoAE79A__small/img/deG3pr-ORZ3JrGvQA-oQNrwh0l0=/fit-in/200x150/filters:strip_icc()/pic8780293.png', bggScore: '7.8', bggRank: 65, source: 'bgg' },
+  { id: 'bgg_34798', bggId: '34798', title: 'Stone Age', alt: 'Stone Age Era da Pedra', year: '2008', image: 'https://cf.geekdo-images.com/PJmdNZywUkoZ8oY_Epu2mw__small/img/VykQiS4ypXm_9JClRHRUWqfh8xY=/fit-in/200x150/filters:strip_icc()/pic1192603.jpg', bggScore: '7.5', bggRank: 155, source: 'bgg' },
   { id: 'bgg_174430', bggId: '174430', title: 'Gloomhaven', alt: 'Gloomhaven', year: '2017', image: 'https://cf.geekdo-images.com/sZYp_3BTDGjh2unaZfZmuA__small/img/veqFeP4d_3zNhFc3GNBkV95rBEQ=/fit-in/200x150/filters:strip_icc()/pic2437871.jpg', bggScore: '8.5', bggRank: 3, source: 'bgg' },
   { id: 'bgg_162886', bggId: '162886', title: 'Spirit Island', alt: 'Spirit Island', year: '2017', image: 'https://cf.geekdo-images.com/kjCm4ZvPjIZxS-mYgSPy1g__small/img/aUlIih2_R7P8IYKeyNl2heLQbu8=/fit-in/200x150/filters:strip_icc()/pic7013651.jpg', bggScore: '8.3', bggRank: 11, source: 'bgg' },
   { id: 'bgg_271349', bggId: '271349', title: 'The Castles of Burgundy', alt: 'The Castles of Burgundy Castelos da Borgonha', year: '2019', image: 'https://cf.geekdo-images.com/sH2YTQ10dHj1ibfS-KKtGA__small/img/f5zFXdTcH9RNY0iMNBppd8D-_r0=/fit-in/200x150/filters:strip_icc()/pic8745814.jpg', bggScore: '8.1', bggRank: 15, source: 'bgg' },
@@ -7117,6 +7122,19 @@ async function performSearch(query) {
         }
         if (score > 0) {
           merged.push({ game, score });
+        }
+      } else {
+        const existing = merged.find(m => normalizeSearchStr(m.game.title) === normTitle);
+        if (existing) {
+          if ((!existing.game.image || existing.game.image.startsWith('data:')) && game.image && !game.image.startsWith('data:')) {
+            existing.game.image = game.image;
+          }
+          if (!existing.game.bggId && game.bggId) existing.game.bggId = game.bggId;
+          if (!existing.game.ludoId && game.ludoId) existing.game.ludoId = game.ludoId;
+          if (!existing.game.designer && game.designer) existing.game.designer = game.designer;
+          if (!existing.game.year && game.year) existing.game.year = game.year;
+          if (!existing.game.bggRank && game.bggRank) existing.game.bggRank = game.bggRank;
+          if (!existing.game.bggScore && game.bggScore) existing.game.bggScore = game.bggScore;
         }
       }
     };
@@ -11114,7 +11132,7 @@ async function fetchBggUserCollection(username) {
         const directRes = await fetch(`https://boardgamegeek.com/xmlapi2${path}`, {
           headers: {
             'Accept': 'application/xml',
-            'Authorization': 'Bearer cdb528f3-d81c-464a-acf6-44e16b2f47a8'
+            'Authorization': `Bearer ${BGG_BEARER_TOKEN}`
           }
         });
         if (directRes.ok) raw = await directRes.text();
@@ -11214,96 +11232,19 @@ async function fetchBggGeekList(geekListInput, onProgress) {
 
   if (onProgress) onProgress(currentLang === 'en' ? `Loading GeekList #${listId}...` : `Carregando GeekList #${listId}...`);
 
-  // STRATEGY 1: Official public BGG JSON API (api.geekdo.com) - Full CORS, no token required, exact CDN image hashes!
-  try {
-    let listTitle = `GeekList #${listId}`;
-    try {
-      const metaRes = await fetch(`https://api.geekdo.com/api/geeklists/${listId}`, {
-        headers: { 'Accept': 'application/json' }
-      });
-      if (metaRes.ok) {
-        const metaJson = await metaRes.json();
-        if (metaJson && metaJson.name) listTitle = metaJson.name;
-      }
-    } catch (eMeta) {}
-
-    const allItems = [];
-    let page = 1;
-    let hasMore = true;
-    const maxPages = 20; // Up to 500 items
-
-    while (hasMore && page <= maxPages) {
-      if (onProgress) onProgress(currentLang === 'en' ? `Loading page ${page}...` : `Carregando página ${page}...`);
-      const pageRes = await fetch(`https://api.geekdo.com/api/listitems?listid=${listId}&page=${page}`, {
-        headers: { 'Accept': 'application/json' }
-      });
-
-      if (!pageRes.ok) break;
-
-      const pageJson = await pageRes.json();
-      const data = (pageJson && Array.isArray(pageJson.data)) ? pageJson.data : [];
-      if (data.length === 0) break;
-
-      data.forEach(entry => {
-        const thing = entry.item;
-        if (!thing || !thing.id || !thing.name) return;
-
-        // Extract high-resolution CDN image
-        const img = entry.linkedImage?.image?.['src@2x'] ||
-          entry.linkedImage?.image?.src ||
-          thing.imageSets?.square100?.['src@2x'] ||
-          thing.imageSets?.square100?.src ||
-          thing.imageSets?.mediacard?.['src@2x'] ||
-          thing.imageSets?.mediacard?.src ||
-          '';
-
-        const yearDesc = thing.descriptors?.find(d => d.name === 'yearpublished');
-        const year = yearDesc && yearDesc.displayValue ? `(${yearDesc.displayValue})` : '';
-
-        allItems.push({
-          id: `bgg-${thing.id}`,
-          bggId: String(thing.id),
-          title: thing.name,
-          year: year,
-          image: img || generateItemSvgCover(thing.name, 'boardgame'),
-          category: 'boardgame',
-          score: entry.stats?.average ? Math.round(entry.stats.average * 10) / 10 : null,
-          bggScore: entry.stats?.average ? Math.round(entry.stats.average * 10) / 10 : null,
-          bggRank: (entry.stats?.rank && entry.stats.rank > 0) ? entry.stats.rank : null,
-          source: `BGG GeekList (${listTitle})`,
-          link: `https://boardgamegeek.com/boardgame/${thing.id}`
-        });
-      });
-
-      const totalItems = pageJson.pagination?.total || 0;
-      if (allItems.length >= totalItems || data.length < 25) {
-        hasMore = false;
-      } else {
-        page++;
-      }
-    }
-
-    if (allItems.length > 0) {
-      return {
-        title: listTitle,
-        items: allItems
-      };
-    }
-  } catch (errJson) {
-    console.warn('Geekdo JSON API fetch failed, trying XML fallback:', errJson);
-  }
-
-  // STRATEGY 2: Legacy XML API fallback
   let xmlText = null;
   let attempts = 0;
-  const maxAttempts = 6;
+  const maxAttempts = 10;
 
   while (attempts < maxAttempts) {
     attempts++;
     let res = null;
     try {
       res = await fetch(`https://boardgamegeek.com/xmlapi/geeklist/${listId}`, {
-        headers: { 'Accept': 'application/xml, text/xml' }
+        headers: {
+          'Accept': 'application/xml, text/xml',
+          'Authorization': `Bearer ${BGG_BEARER_TOKEN}`
+        }
       });
     } catch (e) {}
 
@@ -11315,7 +11256,7 @@ async function fetchBggGeekList(geekListInput, onProgress) {
 
     if (res && res.ok) {
       xmlText = await res.text();
-      break;
+      if (xmlText && xmlText.includes('<geeklist')) break;
     }
 
     try {
@@ -11359,35 +11300,24 @@ async function fetchBggGeekList(geekListInput, onProgress) {
 
     const objectId = it.getAttribute('objectid');
     const objectName = it.getAttribute('objectname') || '';
-    const imageid = it.getAttribute('imageid');
 
     if (objectId && objectName) {
       rawItems.push({
         id: `bgg-${objectId}`,
         objectId,
         title: objectName,
-        imageid: imageid || '',
-        image: '',
         subtype: subtype || 'boardgame'
       });
       objectIds.push(objectId);
     }
   });
 
-  // Fetch images via api.geekdo.com/api/images/ for any item with imageid
-  const imageMap = new Map();
-  await Promise.all(rawItems.slice(0, 40).map(async it => {
-    if (it.imageid) {
-      try {
-        const imgRes = await fetch(`https://api.geekdo.com/api/images/${it.imageid}`);
-        if (imgRes.ok) {
-          const imgJson = await imgRes.json();
-          const foundUrl = imgJson.images?.medium?.url || imgJson.images?.small?.url || imgJson.images?.large?.url || '';
-          if (foundUrl) imageMap.set(it.objectId, foundUrl);
-        }
-      } catch (eImg) {}
-    }
-  }));
+  if (onProgress) onProgress(currentLang === 'en' ? `Loading covers & metadata (${objectIds.length} items)...` : `Carregando capas e dados (${objectIds.length} jogos)...`);
+
+  // Batch fetch details & covers using BGG XML API (in chunks of 20 to respect BGG hard limit)
+  if (objectIds.length > 0) {
+    await fetchBggThings(objectIds);
+  }
 
   const finalItems = [];
   const seenIds = new Set();
@@ -11396,15 +11326,26 @@ async function fetchBggGeekList(geekListInput, onProgress) {
     if (seenIds.has(it.objectId)) return;
     seenIds.add(it.objectId);
 
-    const resolvedImg = imageMap.get(it.objectId) || generateItemSvgCover(it.title, 'boardgame');
+    const detail = BGG_THING_CACHE.get(String(it.objectId));
+    const resolvedImg = (detail && (detail.image || detail.thumbnail)) || generateItemSvgCover(it.title, 'boardgame');
+
     finalItems.push({
       id: it.id,
       bggId: it.objectId,
-      title: it.title,
-      year: '',
+      title: (detail && detail.title) || it.title,
+      year: (detail && detail.year) ? String(detail.year) : '',
       image: resolvedImg,
-      category: 'boardgame',
-      source: `BGG GeekList (${listTitle})`
+      designer: (detail && detail.designer) || '',
+      artist: (detail && detail.artist) || '',
+      category: (detail && detail.category) || 'boardgame',
+      score: (detail && detail.score != null) ? detail.score : null,
+      bggScore: (detail && detail.bggScore != null) ? detail.bggScore : null,
+      bggRank: (detail && detail.bggRank != null) ? detail.bggRank : null,
+      players: (detail && detail.players) || '',
+      time: (detail && detail.time) || '',
+      source: `BGG GeekList (${listTitle})`,
+      link: (detail && detail.link) || `https://boardgamegeek.com/boardgame/${it.objectId}`,
+      bggLink: (detail && detail.bggLink) || `https://boardgamegeek.com/boardgame/${it.objectId}`
     });
   });
 
