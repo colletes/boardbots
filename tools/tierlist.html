@@ -6078,7 +6078,6 @@ async function fetchBggXml(apiPath) {
   try {
     const res = await fetch(`https://boardgamegeek.com/xmlapi2${cleanPath}`, {
       headers: {
-        'Accept': 'application/xml',
         'Authorization': `Bearer ${BGG_BEARER_TOKEN}`
       }
     });
@@ -6092,7 +6091,9 @@ async function fetchBggXml(apiPath) {
   // 2. Fallback: Cloudflare Worker proxy
   try {
     const res = await fetch(`${LUDOPEDIA_PROXY_BASE}/bgg${cleanPath}`, {
-      headers: { 'Accept': 'application/xml' }
+      headers: {
+        'Authorization': `Bearer ${BGG_BEARER_TOKEN}`
+      }
     });
     if (res.ok) {
       return await res.text();
@@ -11131,7 +11132,6 @@ async function fetchBggUserCollection(username) {
       try {
         const directRes = await fetch(`https://boardgamegeek.com/xmlapi2${path}`, {
           headers: {
-            'Accept': 'application/xml',
             'Authorization': `Bearer ${BGG_BEARER_TOKEN}`
           }
         });
@@ -11214,7 +11214,7 @@ function isBggGeekList(input) {
 function extractBggGeekListId(input) {
   if (!input) return null;
   const str = String(input).trim();
-  const directMatch = str.match(/^(?:geeklist|gl):?\s*(\d+)$/i);
+  const directMatch = str.match(/^(?:(?:geeklist|gl):?\s*)?(\d+)$/i);
   if (directMatch) return directMatch[1];
   try {
     const url = new URL(str.startsWith('http') ? str : 'https://' + str);
@@ -11222,6 +11222,108 @@ function extractBggGeekListId(input) {
     if (match) return match[1];
   } catch (e) {}
   return null;
+}
+
+async function fetchBggGeekListJson(listId, onProgress) {
+  let listTitle = `GeekList #${listId}`;
+  try {
+    const metaRes = await fetch(`https://r.jina.ai/https://api.geekdo.com/api/geeklists/${listId}`, {
+      headers: { 'Accept': 'text/plain' }
+    });
+    if (metaRes.ok) {
+      const metaText = await metaRes.text();
+      const jsonStart = metaText.indexOf('{');
+      if (jsonStart !== -1) {
+        const meta = JSON.parse(metaText.slice(jsonStart));
+        if (meta && meta.name) listTitle = meta.name;
+      }
+    }
+  } catch (e) {}
+
+  const allListItems = [];
+  let page = 1;
+  const maxPages = 15;
+  while (page <= maxPages) {
+    if (onProgress) onProgress(currentLang === 'en' ? `Loading items (page ${page})...` : `Carregando itens (página ${page})...`);
+    const url = `https://r.jina.ai/https://api.geekdo.com/api/listitems?listid=${listId}&pageid=${page}`;
+    let res = null;
+    try {
+      res = await fetch(url, { headers: { 'Accept': 'text/plain' } });
+    } catch (e) {}
+    if (!res || !res.ok) break;
+    const text = await res.text();
+    let data = null;
+    try {
+      const idx = text.indexOf('{');
+      if (idx !== -1) data = JSON.parse(text.slice(idx));
+    } catch (e) { break; }
+
+    const items = (data && data.data) || [];
+    if (!items.length) break;
+    allListItems.push(...items);
+
+    const total = data.pagination && data.pagination.total ? data.pagination.total : 0;
+    const perPage = data.pagination && data.pagination.perPage ? data.pagination.perPage : 25;
+    if (page >= Math.ceil(total / perPage)) break;
+    page++;
+  }
+
+  if (!allListItems.length) return null;
+
+  const finalItems = [];
+  const seenIds = new Set();
+  allListItems.forEach(it => {
+    const thing = it.item;
+    if (!thing || thing.type !== 'things') return;
+    const bggId = thing.id;
+    const title = thing.name || '';
+    if (!bggId || !title) return;
+    if (seenIds.has(String(bggId))) return;
+    seenIds.add(String(bggId));
+
+    let year = '';
+    if (Array.isArray(thing.descriptors)) {
+      const yd = thing.descriptors.find(d => d.name === 'yearpublished');
+      if (yd) year = String(yd.displayValue || '');
+    }
+
+    let img = '';
+    if (it.linkedImage && it.linkedImage.image) {
+      img = it.linkedImage.image['src@2x'] || it.linkedImage.image.src || '';
+    }
+    if (!img && thing.imageSets) {
+      if (thing.imageSets.mediacard) img = thing.imageSets.mediacard['src@2x'] || thing.imageSets.mediacard.src;
+      else if (thing.imageSets.square100) img = thing.imageSets.square100['src@2x'] || thing.imageSets.square100.src;
+    }
+    if (!img) img = generateItemSvgCover(title, 'boardgame');
+
+    const score = it.stats && it.stats.average ? Math.round(it.stats.average * 10) / 10 : null;
+    const bggRank = it.stats && it.stats.rank ? it.stats.rank : null;
+
+    finalItems.push({
+      id: `bgg-${bggId}`,
+      bggId: String(bggId),
+      title,
+      year,
+      image: img,
+      designer: '',
+      artist: '',
+      category: 'boardgame',
+      score,
+      bggScore: score,
+      bggRank,
+      players: '',
+      time: '',
+      source: `BGG GeekList (${listTitle})`,
+      link: `https://boardgamegeek.com/boardgame/${bggId}`,
+      bggLink: `https://boardgamegeek.com/boardgame/${bggId}`
+    });
+  });
+
+  return {
+    title: listTitle,
+    items: finalItems
+  };
 }
 
 async function fetchBggGeekList(geekListInput, onProgress) {
@@ -11242,7 +11344,6 @@ async function fetchBggGeekList(geekListInput, onProgress) {
     try {
       res = await fetch(`https://boardgamegeek.com/xmlapi/geeklist/${listId}`, {
         headers: {
-          'Accept': 'application/xml, text/xml',
           'Authorization': `Bearer ${BGG_BEARER_TOKEN}`
         }
       });
@@ -11260,7 +11361,11 @@ async function fetchBggGeekList(geekListInput, onProgress) {
     }
 
     try {
-      const proxyRes = await fetch(`${LUDOPEDIA_PROXY_BASE}/bgg/geeklist/${listId}`);
+      const proxyRes = await fetch(`${LUDOPEDIA_PROXY_BASE}/bgg/geeklist/${listId}`, {
+        headers: {
+          'Authorization': `Bearer ${BGG_BEARER_TOKEN}`
+        }
+      });
       if (proxyRes.ok) {
         xmlText = await proxyRes.text();
         if (xmlText && xmlText.includes('<geeklist')) break;
@@ -11271,6 +11376,15 @@ async function fetchBggGeekList(geekListInput, onProgress) {
   }
 
   if (!xmlText || !xmlText.includes('<geeklist')) {
+    try {
+      if (onProgress) onProgress(currentLang === 'en' ? 'Trying fallback GeekList API...' : 'Tentando via API alternativa...');
+      const fallbackData = await fetchBggGeekListJson(listId, onProgress);
+      if (fallbackData && fallbackData.items && fallbackData.items.length > 0) {
+        return fallbackData;
+      }
+    } catch (errJson) {
+      console.warn('GeekList JSON fallback error:', errJson);
+    }
     throw new Error(currentLang === 'en' ? 'Timeout loading GeekList from BGG. Make sure the list is public.' : 'Tempo esgotado ao buscar GeekList no BGG. Verifique se a lista é pública.');
   }
 

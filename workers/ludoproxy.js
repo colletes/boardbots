@@ -23,7 +23,7 @@ const ALLOWED_IMAGE_HOSTS = ['storage.googleapis.com', 'cf.geekdo-images.com'];
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, Accept',
   'Access-Control-Max-Age': '86400'
 };
 
@@ -216,7 +216,7 @@ export default {
           ? 'application/json'
           : 'application/xml, text/xml'
       };
-      const bggToken = env.BGG_TOKEN || 'cdb528f3-d81c-464a-acf6-44e16b2f47a8';
+      const bggToken = env.BGG_TOKEN || request.headers.get('Authorization')?.replace(/^Bearer\s+/i, '') || 'cdb528f3-d81c-464a-acf6-44e16b2f47a8';
       if (bggToken && !bggTarget.hostname.includes('api.geekdo.com')) {
         bggHeaders['Authorization'] = `Bearer ${bggToken}`;
       }
