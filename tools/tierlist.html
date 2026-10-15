@@ -14743,6 +14743,7 @@ function openExportModalForTournament() {
   if (cardBrack) cardBrack.style.display = 'flex';
   openModal('exportBracketModal');
   selectTournamentExportMode('ranking');
+  getTournamentShareUrlAsync('arena').catch(() => {});
 }
 
 function openExportModalForBracket() {
@@ -14751,9 +14752,82 @@ function openExportModalForBracket() {
   if (cardBrack) cardBrack.style.display = 'flex';
   openModal('exportBracketModal');
   selectTournamentExportMode('bracket');
+  getTournamentShareUrlAsync('bracket').catch(() => {});
+}
+
+let cachedTournamentShortUrl = null;
+let lastSharedTournamentSignature = null;
+
+async function getTournamentShareUrlAsync(modeOverride) {
+  const items = getActiveTournamentItemsForExport();
+  const mode = modeOverride || (currentTournamentType === 'bracket' || activeStudioMode === 'bracket' ? 'bracket' : 'arena');
+  const titleInput = document.getElementById('tierlistCustomTitle') || document.getElementById('tierlistTitleInput');
+  const customTitle = (titleInput && titleInput.value ? titleInput.value.trim() : '') || (mode === 'bracket' ? 'Copa Mata-Mata' : 'Ranking 1x1');
+
+  if (items && items.length >= 2) {
+    const signature = `${mode}:${customTitle}:${items.map(g => g.id || g.title).join(',')}`;
+    if (cachedTournamentShortUrl && lastSharedTournamentSignature === signature) {
+      return cachedTournamentShortUrl;
+    }
+
+    // 1. Primary: Firebase Firestore Shortlink (?t=X7k9Pq)
+    if (window.shareTournamentToFirestore) {
+      try {
+        const payload = {
+          mode,
+          title: customTitle,
+          candidates: items.slice(0, 128).map(c => ({
+            title: c.title || c.name || 'Item',
+            year: c.year ? String(c.year) : '',
+            image: c.image && !c.image.startsWith('data:') ? c.image : '',
+            bggId: c.bggId || null,
+            ludoId: c.ludoId || null
+          }))
+        };
+        const shortId = await window.shareTournamentToFirestore(payload);
+        if (shortId) {
+          const shortUrl = `https://colletes.github.io/boardbots/tools/tierlist.html?t=${shortId}`;
+          cachedTournamentShortUrl = shortUrl;
+          lastSharedTournamentSignature = signature;
+          return shortUrl;
+        }
+      } catch (errFs) {
+        console.warn('Firestore tournament shortlink error, falling back:', errFs);
+      }
+    }
+
+    // 2. Secondary fallback: Cloudflare Workers KV
+    try {
+      const payload = {
+        mode,
+        candidates: items.slice(0, 128).map(c => ({
+          title: c.title || c.name || 'Item',
+          year: c.year ? String(c.year) : '',
+          image: c.image && !c.image.startsWith('data:') ? c.image : ''
+        }))
+      };
+      const res = await fetch(`${LUDOPEDIA_PROXY_BASE}/api/tournaments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.id) {
+          const shortUrl = `https://colletes.github.io/boardbots/tools/tierlist.html?t=${data.id}`;
+          cachedTournamentShortUrl = shortUrl;
+          lastSharedTournamentSignature = signature;
+          return shortUrl;
+        }
+      }
+    } catch (eKv) {}
+  }
+
+  return buildTournamentShareUrl(modeOverride);
 }
 
 function buildTournamentShareUrl(modeOverride) {
+  if (cachedTournamentShortUrl) return cachedTournamentShortUrl;
   const mode = modeOverride || (currentTournamentType === 'bracket' || activeStudioMode === 'bracket' ? 'bracket' : 'arena');
   const baseUrl = 'https://colletes.github.io/boardbots/tools/tierlist.html';
   const items = getActiveTournamentItemsForExport().slice(0, 24);
@@ -14806,8 +14880,9 @@ function buildTournamentShareText(includeFullList = false) {
   return lines.join('\n');
 }
 
-function copyTournamentShareLink(modeOverride) {
-  const url = buildTournamentShareUrl(modeOverride);
+async function copyTournamentShareLink(modeOverride) {
+  showToast(currentLang === 'en' ? 'Generating tournament link...' : 'Gerando link do torneio...');
+  const url = await getTournamentShareUrlAsync(modeOverride);
   if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
     navigator.clipboard.writeText(url).then(() => {
       showToast(currentLang === 'en' ? '🔗 Tournament link copied to clipboard!' : '🔗 Link do torneio copiado para a área de transferência!');
@@ -14837,7 +14912,7 @@ async function getTournamentExportBlob(mime = 'image/png') {
 
 async function shareTournamentNative() {
   try {
-    const shareUrl = buildTournamentShareUrl();
+    const shareUrl = await getTournamentShareUrlAsync();
     const shareText = `${buildTournamentShareText(false)}\n\n🔗 ${shareUrl}`;
     const isBracket = selectedTournamentExportMode === 'bracket' || currentTournamentType === 'bracket' || activeStudioMode === 'bracket';
     const fileName = isBracket ? 'copa-mata-mata.png' : 'ranking-1x1.png';
@@ -14884,14 +14959,14 @@ async function shareTournamentInstagram() {
   }, 900);
 }
 
-function shareTournamentWhatsApp() {
-  const url = buildTournamentShareUrl();
+async function shareTournamentWhatsApp() {
+  const url = await getTournamentShareUrlAsync();
   const text = encodeURIComponent(`${buildTournamentShareText(true)}\n\n🔗 Dispute ou veja no Board Bots: ${url}`);
   window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
 }
 
-function shareTournamentTelegram() {
-  const url = encodeURIComponent(buildTournamentShareUrl());
+async function shareTournamentTelegram() {
+  const url = encodeURIComponent(await getTournamentShareUrlAsync());
   const text = encodeURIComponent(buildTournamentShareText(true));
   window.open(`https://t.me/share/url?url=${url}&text=${text}`, '_blank');
 }
@@ -15386,6 +15461,79 @@ async function downloadBracketPDF() {
   }
 }
 
+async function checkAndLoadSharedTournament(shortId) {
+  if (!shortId) return false;
+  showToast(currentLang === 'pt' ? 'Carregando torneio compartilhado...' : 'Loading shared tournament...');
+
+  // Wait up to 2 seconds for Firebase module to initialize
+  let attempts = 0;
+  while (!window.loadTournamentFromFirestore && attempts < 20) {
+    await new Promise(r => setTimeout(r, 100));
+    attempts++;
+  }
+
+  // 1. Try Firebase Firestore
+  if (window.loadTournamentFromFirestore) {
+    try {
+      const data = await window.loadTournamentFromFirestore(shortId);
+      if (data && Array.isArray(data.candidates) && data.candidates.length >= 2) {
+        applyLoadedTournament(data);
+        return true;
+      }
+    } catch (eFs) {
+      console.warn('Firestore load attempt failed:', eFs);
+    }
+  }
+
+  // 2. Fallback to Cloudflare Worker KV
+  try {
+    const res = await fetch(`${LUDOPEDIA_PROXY_BASE}/api/tournaments/${encodeURIComponent(shortId)}`);
+    if (res.ok) {
+      const data = await res.json();
+      if (data && Array.isArray(data.candidates) && data.candidates.length >= 2) {
+        applyLoadedTournament(data);
+        return true;
+      }
+    }
+  } catch (eKv) {}
+
+  return false;
+}
+
+function applyLoadedTournament(data) {
+  if (!data || !Array.isArray(data.candidates)) return;
+  stagedTournamentContenders = data.candidates.map((c, idx) => ({
+    id: `shared_${Date.now()}_${idx}`,
+    title: c.title || c.name || `Item #${idx + 1}`,
+    year: c.year ? String(c.year) : '',
+    image: c.image || (typeof generateItemSvgCover === 'function' ? generateItemSvgCover(c.title || c.name, 'boardgame') : ''),
+    bggId: c.bggId || null,
+    ludoId: c.ludoId || null,
+    source: 'shared'
+  }));
+
+  if (data.title) {
+    const titleInput = document.getElementById('tierlistCustomTitle');
+    if (titleInput) titleInput.value = data.title;
+    state.title = data.title;
+  }
+
+  const targetMode = data.mode === 'bracket' ? 'bracket' : 'arena';
+  if (typeof switchMainTab === 'function') {
+    switchMainTab(targetMode);
+  }
+  if (typeof renderTournamentContenders === 'function') {
+    renderTournamentContenders('arena');
+    renderTournamentContenders('bracket');
+  }
+  if (typeof updateStudioBadges === 'function') {
+    updateStudioBadges();
+  }
+  showToast(currentLang === 'en'
+    ? `🎉 Loaded ${stagedTournamentContenders.length} contenders from shared link!`
+    : `🎉 ${stagedTournamentContenders.length} competidores carregados do link compartilhado!`);
+}
+
 // Studio boot initializer
 if (typeof document !== 'undefined') {
   const initStudioBoot = () => {
@@ -15393,6 +15541,10 @@ if (typeof document !== 'undefined') {
     if (typeof initTournamentContenders === 'function') initTournamentContenders();
     try {
       const params = new URLSearchParams(window.location.search);
+      const shortId = params.get('t');
+      if (shortId) {
+        checkAndLoadSharedTournament(shortId);
+      }
       const titleParam = params.get('title');
       if (titleParam) {
         const titleInput = document.getElementById('tierlistCustomTitle');
@@ -15465,6 +15617,9 @@ window.openExportModalForBracket = openExportModalForBracket;
 window.selectTournamentExportMode = selectTournamentExportMode;
 window.setTournamentExportPreset = setTournamentExportPreset;
 window.updateTournamentExportPreview = updateTournamentExportPreview;
+window.getTournamentShareUrlAsync = getTournamentShareUrlAsync;
+window.checkAndLoadSharedTournament = checkAndLoadSharedTournament;
+window.applyLoadedTournament = applyLoadedTournament;
 window.buildTournamentShareUrl = buildTournamentShareUrl;
 window.buildTournamentShareText = buildTournamentShareText;
 window.copyTournamentShareLink = copyTournamentShareLink;
@@ -15564,7 +15719,46 @@ window.extractGgAppListSlug = extractGgAppListSlug;
 
 <script type="module">
 import { db, CONFIGURED } from '../assets/firebase-init.js';
-import { collection, doc, setDoc, getDocs, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
+import { collection, doc, setDoc, getDoc, getDocs, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
+
+function generateShortId(length = 6) {
+  const chars = '23456789abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ';
+  let result = '';
+  for (let i = 0; i < length; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+}
+
+// Expose Firestore tournament shortlink functions
+window.shareTournamentToFirestore = async function(payload) {
+  if (!CONFIGURED || !db) {
+    throw new Error('Firebase Firestore not configured');
+  }
+  if (!payload || !Array.isArray(payload.candidates) || payload.candidates.length < 2) {
+    throw new Error('Invalid candidates payload');
+  }
+
+  const shortId = generateShortId(6);
+  const ref = doc(db, 'tournaments', shortId);
+
+  await setDoc(ref, {
+    mode: payload.mode || 'arena',
+    title: payload.title || '',
+    candidates: payload.candidates,
+    createdAt: serverTimestamp()
+  });
+
+  return shortId;
+};
+
+window.loadTournamentFromFirestore = async function(shortId) {
+  if (!CONFIGURED || !db || !shortId) return null;
+  const ref = doc(db, 'tournaments', shortId);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) return null;
+  return snap.data();
+};
 
 // Expose community persist function globally
 window.persistGameToCommunityDB = async function(game) {
@@ -15636,6 +15830,12 @@ async function loadCommunityGames() {
 }
 
 loadCommunityGames();
+
+// Re-check after module initialization in case ?t= was present in URL
+const urlShortId = new URLSearchParams(window.location.search).get('t');
+if (urlShortId && typeof window.checkAndLoadSharedTournament === 'function') {
+  window.checkAndLoadSharedTournament(urlShortId);
+}
 </script>
 
 <script type="module" src="../assets/analytics.js"></script>
