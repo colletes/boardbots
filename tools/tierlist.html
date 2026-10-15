@@ -3983,25 +3983,26 @@ footer {
         </div>
       </div>
 
-      <!-- Ludopedia Collection Fetcher -->
+      <!-- Ludopedia Collection & Lists Fetcher -->
       <div style="background: rgba(233, 200, 117, 0.05); border: 1px solid rgba(233, 200, 117, 0.18); border-radius: 10px; padding: 14px;">
         <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px; color:var(--brass-bright); font-weight:700; font-size:0.92rem;">
           <span>🎲</span>
-          <span>Coleção da Ludopedia:</span>
+          <span>Coleção ou Lista da Ludopedia:</span>
         </div>
         <div style="display:flex; gap:8px;">
-          <input type="text" id="importOnlineInput" class="form-input" placeholder="Usuário ou link da coleção na Ludopedia..." style="flex:1;" onkeydown="if(event.key==='Enter') executeOnlineImportFromInput()">
+          <input type="text" id="importOnlineInput" class="form-input" placeholder="Usuário, link da coleção ou lista na Ludopedia..." style="flex:1;" onkeydown="if(event.key==='Enter') executeOnlineImportFromInput()">
           <button id="btnFetchOnlineCollection" class="tool-btn primary" onclick="executeOnlineImportFromInput()" style="white-space:nowrap;">
             Buscar
           </button>
         </div>
         <div class="service-badges-row" style="margin-top:6px;">
-          <span style="font-size:0.75rem; color:var(--text-dim); align-self:center;">Atalho:</span>
+          <span style="font-size:0.75rem; color:var(--text-dim); align-self:center;">Atalhos:</span>
           <button type="button" class="service-badge-btn" onclick="fillScraperUrl('importOnlineInput', 'colletes')">📚 colletes (Coleção)</button>
+          <button type="button" class="service-badge-btn" onclick="fillScraperUrl('importOnlineInput', 'https://ludopedia.com.br/lista/22745/mesa-para-um')">📋 Mesa para UM (Lista)</button>
         </div>
         <div id="importOnlineSpinner" style="display:none; font-size:0.82rem; color:var(--brass-bright); margin-top:8px; align-items:center; gap:8px;">
           <div class="search-spinner" style="display:inline-block; position:static; width:14px; height:14px; border-width:2px;"></div>
-          <span id="importOnlineStatusText">Carregando jogos da coleção...</span>
+          <span id="importOnlineStatusText">Carregando jogos da Ludopedia...</span>
         </div>
       </div>
     </div>
@@ -6953,15 +6954,22 @@ async function performSearch(query) {
     }
   }
 
-  // List URL detected in search input (e.g. GGapp list, BGG GeekList, IMDb chart/list)
+  // List URL detected in search input (e.g. GGapp list, BGG GeekList, Ludopedia list, IMDb chart/list)
   const isListUrl = (query.includes('ggapp.io') && query.includes('/lists/')) ||
     isBggGeekList(query) ||
+    (typeof isLudopediaList === 'function' && isLudopediaList(query)) ||
     query.includes('imdb.com/list/') ||
     query.includes('imdb.com/chart/');
 
   if (isListUrl) {
     if (spinner) spinner.style.display = 'none';
-    const listLabel = query.includes('ggapp.io') ? 'GGapp.io' : (isBggGeekList(query) ? 'BGG GeekList' : 'IMDb');
+    const listLabel = query.includes('ggapp.io')
+      ? 'GGapp.io'
+      : (isBggGeekList(query)
+          ? 'BGG GeekList'
+          : ((typeof isLudopediaList === 'function' && isLudopediaList(query))
+              ? 'Ludopedia Lista'
+              : 'IMDb'));
     dropdown.innerHTML = `
       <div class="search-result-item" style="background:rgba(233, 200, 117, 0.15); border-left:3px solid var(--brass);">
         <div class="search-result-thumb" style="display:flex;align-items:center;justify-content:center;background:#2a1b0c;color:var(--brass-bright);font-size:1.3rem;">📋</div>
@@ -7001,6 +7009,18 @@ async function performSearch(query) {
           renderBoard();
           updateStudioBadges();
           showToast(`🎉 ${gl.items.length} jogos importados de "${gl.title}" para a Tierlist!`);
+        } else if (typeof isLudopediaList === 'function' && isLudopediaList(query)) {
+          const ludoList = await fetchLudopediaList(query);
+          const unplayedTier = state.tiers.find(t => t.isUnplayed) || state.tiers[state.tiers.length - 1];
+          const targetId = unplayedTier.id;
+          if (!state.items[targetId]) state.items[targetId] = [];
+          ludoList.items.forEach(it => {
+            state.items[targetId].push(resolveGameToItem(it));
+          });
+          saveState();
+          renderBoard();
+          updateStudioBadges();
+          showToast(`🎉 ${ludoList.items.length} jogos importados de "${ludoList.title}" para a Tierlist!`);
         } else {
           await importFromPublicUrl(query, 'tierlist');
         }
@@ -9578,6 +9598,43 @@ async function executeOnlineImportFromInput() {
     return;
   }
 
+  // 1b. Ludopedia List
+  if (typeof isLudopediaList === 'function' && isLudopediaList(raw)) {
+    try {
+      if (btn) btn.disabled = true;
+      if (spinner) {
+        spinner.style.display = 'flex';
+        if (statusText) statusText.textContent = currentLang === 'en'
+          ? 'Connecting to Ludopedia and loading list...'
+          : 'Conectando à Ludopedia e carregando lista...';
+      }
+      const listData = await fetchLudopediaList(raw, (cur, total) => {
+        if (statusText) {
+          statusText.textContent = currentLang === 'en'
+            ? `Loading Ludopedia list (page ${cur} of ${total})...`
+            : `Carregando lista da Ludopedia (página ${cur} de ${total})...`;
+        }
+      });
+      closeModal('importSourceModal');
+      const payload = {
+        sourceLabel: 'Ludopedia Lista',
+        badgeClass: 'ludopedia',
+        fileName: listData.title || 'Ludopedia Lista',
+        allGames: listData.items,
+        baseGames: listData.items,
+        expansions: []
+      };
+      openImportCollectionModal(payload);
+    } catch (err) {
+      console.error('Erro ao importar lista da Ludopedia:', err);
+      alert(err.message || 'Erro ao consultar lista na Ludopedia.');
+    } finally {
+      if (btn) btn.disabled = false;
+      if (spinner) spinner.style.display = 'none';
+    }
+    return;
+  }
+
   // 2. BGG Collection / User
   if (raw.toLowerCase().startsWith('bgg:') || raw.includes('boardgamegeek.com')) {
     let bggUser = raw.replace(/^bgg:/i, '').trim();
@@ -11469,6 +11526,219 @@ async function fetchBggGeekList(geekListInput, onProgress) {
   };
 }
 
+/* ========================================================== */
+/* LUDOPEDIA LIST IMPORTER                                    */
+/* ========================================================== */
+function isLudopediaList(input) {
+  if (!input || typeof input !== 'string') return false;
+  const str = input.trim();
+  if (/^ludo:(?:lista:)?\d+$/i.test(str)) return true;
+  return /ludopedia\.com\.br\/lista\/\d+/i.test(str);
+}
+
+function extractLudopediaListInfo(input) {
+  if (!input || typeof input !== 'string') return null;
+  const str = input.trim();
+  const directMatch = str.match(/^ludo:(?:lista:)?(\d+)$/i);
+  if (directMatch) {
+    return {
+      listId: directMatch[1],
+      slug: '',
+      baseUrl: `https://ludopedia.com.br/lista/${directMatch[1]}`
+    };
+  }
+  try {
+    const urlStr = str.startsWith('http') ? str : 'https://' + str;
+    const u = new URL(urlStr);
+    if (!u.hostname.includes('ludopedia.com.br')) return null;
+    const m = u.pathname.match(/\/lista\/(\d+)(?:\/([^/?#]+))?/i);
+    if (m) {
+      const listId = m[1];
+      const slug = m[2] ? decodeURIComponent(m[2]) : '';
+      return {
+        listId,
+        slug,
+        baseUrl: slug ? `https://ludopedia.com.br/lista/${listId}/${slug}` : `https://ludopedia.com.br/lista/${listId}`
+      };
+    }
+  } catch (e) {}
+  return null;
+}
+
+function parseLudopediaListItemsFromHtml(html, listTitle = '') {
+  const items = [];
+  if (!html) return items;
+
+  // Primary: regex chunking by <div class="lista-item...
+  const chunks = html.split(/<div class=\"lista-item[\s\"][^>]*>/i).slice(1);
+  for (const chunk of chunks) {
+    const h3Match = chunk.match(/<h3[^>]*>([\s\S]*?)<\/h3>/i);
+    if (!h3Match) continue;
+    let title = h3Match[1].replace(/<span[\s\S]*?<\/span>/gi, '').replace(/<[^>]+>/g, '').trim();
+    title = title.replace(/^\d+[\s.-]+/, '').trim();
+    if (!title) continue;
+
+    const linkMatch = chunk.match(/href=\"(https?:\/\/[^\"]*ludopedia\.com\.br\/jogo\/[^\"]+)\"/i);
+    const link = linkMatch ? linkMatch[1] : '';
+
+    const imgMatch = chunk.match(/(?:src|background-image:\s*url\(['\"]?)(https:\/\/storage\.googleapis\.com\/ludopedia-capas\/\d+_[st]\.jpg)/i);
+    let image = imgMatch ? imgMatch[1].replace(/_[st]\.jpg/i, '_m.jpg') : '';
+
+    const idFromImg = imgMatch ? imgMatch[1].match(/\/(\d+)_[st]\.jpg/i) : null;
+    const slugMatch = link ? link.match(/\/jogo\/([^/?#]+)/i) : null;
+    const ludoId = (idFromImg && idFromImg[1]) || (slugMatch && slugMatch[1]) || '';
+
+    items.push({
+      id: ludoId ? `ludo_${ludoId}` : `ludo_${Math.random().toString(36).slice(2, 9)}`,
+      title,
+      image,
+      link,
+      source: listTitle ? `Ludopedia Lista (${listTitle})` : 'Ludopedia Lista',
+      ludoId: ludoId || null
+    });
+  }
+
+  // Fallback: if regex yielded nothing, try DOMParser in browser
+  if (items.length === 0 && typeof DOMParser !== 'undefined') {
+    try {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+      const itemEls = doc.querySelectorAll('.lista-item');
+      itemEls.forEach(el => {
+        const header = el.querySelector('h3, .media-heading');
+        if (!header) return;
+        const clone = header.cloneNode(true);
+        clone.querySelectorAll('.text-item-like, span, .badge').forEach(s => s.remove());
+        let title = clone.textContent.trim().replace(/^\d+[\s.-]+/, '').trim();
+        if (!title) return;
+
+        const linkEl = el.querySelector('a[href*="/jogo/"]');
+        const link = linkEl ? linkEl.href : '';
+
+        const imgEl = el.querySelector('img[src*="ludopedia-capas"], img[data-src*="ludopedia-capas"], .img-capa-sm-background');
+        let image = '';
+        if (imgEl) {
+          const style = imgEl.getAttribute('style') || '';
+          const bgMatch = style.match(/url\(['"]?(https:\/\/[^'"]+)['"]?\)/i);
+          image = bgMatch ? bgMatch[1] : (imgEl.getAttribute('data-src') || imgEl.getAttribute('src') || '');
+        }
+        if (image) image = image.replace(/_[st]\.jpg(\?.*)?$/i, '_m.jpg');
+
+        let ludoId = null;
+        if (image) {
+          const m = image.match(/\/(\d+)_m\.jpg/i);
+          if (m) ludoId = m[1];
+        }
+        if (!ludoId && link) {
+          const m = link.match(/\/jogo\/([^/?#]+)/i);
+          if (m) ludoId = m[1];
+        }
+
+        items.push({
+          id: ludoId ? `ludo_${ludoId}` : `ludo_${Math.random().toString(36).slice(2, 9)}`,
+          title,
+          image,
+          link,
+          source: listTitle ? `Ludopedia Lista (${listTitle})` : 'Ludopedia Lista',
+          ludoId
+        });
+      });
+    } catch (e) {
+      console.warn('DOMParser fallback error:', e);
+    }
+  }
+
+  return items;
+}
+
+async function fetchLudopediaList(input, onProgress) {
+  const info = extractLudopediaListInfo(input);
+  if (!info) {
+    throw new Error(currentLang === 'en' ? 'Invalid Ludopedia list URL or ID' : 'Link ou ID de lista da Ludopedia inválido');
+  }
+
+  const baseUrl = info.baseUrl;
+  let currentPage = 1;
+  let totalPages = 1;
+  let listTitle = info.slug ? info.slug.replace(/[-_]+/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Ludopedia Lista';
+  const allItems = [];
+  const seen = new Set();
+  const maxPages = 15; // safety boundary
+
+  while (currentPage <= totalPages && currentPage <= maxPages) {
+    if (typeof onProgress === 'function') {
+      onProgress(currentPage, totalPages);
+    }
+    const pageUrl = baseUrl + (baseUrl.includes('?') ? '&' : '?') + 'pagina=' + currentPage;
+
+    let html = '';
+    try {
+      const res = await fetch(`https://r.jina.ai/${pageUrl}`, {
+        headers: { 'X-Return-Format': 'html' }
+      });
+      if (!res.ok) {
+        if (currentPage === 1) {
+          throw new Error(`HTTP ${res.status} ao consultar lista`);
+        }
+        break;
+      }
+      html = await res.text();
+    } catch (fetchErr) {
+      if (currentPage === 1) throw fetchErr;
+      break;
+    }
+
+    if (!html || html.length < 200) {
+      if (currentPage === 1) {
+        throw new Error(currentLang === 'en' ? 'Could not read Ludopedia list page' : 'Não foi possível ler a página da lista da Ludopedia');
+      }
+      break;
+    }
+
+    if (currentPage === 1) {
+      const titleMatch = html.match(/<title>([^<]+)<\/title>/i);
+      if (titleMatch && titleMatch[1]) {
+        const cleanedTitle = titleMatch[1]
+          .replace(/\s*\|\s*Lista\s*\|\s*Ludopedia.*$/i, '')
+          .replace(/\s*\|\s*Ludopedia.*$/i, '')
+          .trim();
+        if (cleanedTitle) listTitle = cleanedTitle;
+      }
+      const pageNums = [...html.matchAll(/[?&]pagina=(\d+)/gi)].map(m => parseInt(m[1], 10));
+      if (pageNums.length > 0) {
+        totalPages = Math.max(1, ...pageNums);
+      }
+    }
+
+    const pageItems = parseLudopediaListItemsFromHtml(html, listTitle);
+    if (!pageItems || pageItems.length === 0) {
+      break;
+    }
+
+    let addedCount = 0;
+    for (const item of pageItems) {
+      const key = item.ludoId ? `ludo_${item.ludoId}` : `title_${(item.title || '').toLowerCase()}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        allItems.push(item);
+        addedCount++;
+      }
+    }
+
+    if (addedCount === 0) break;
+    currentPage++;
+  }
+
+  if (allItems.length === 0) {
+    throw new Error(currentLang === 'en' ? 'No games found in this Ludopedia list' : 'Nenhum jogo encontrado nesta lista da Ludopedia');
+  }
+
+  return {
+    title: listTitle,
+    items: allItems
+  };
+}
+
 async function executeBggGeeklistImport() {
   const input = document.getElementById('importBggGeeklistInput');
   const query = (input ? input.value : '').trim();
@@ -11624,6 +11894,17 @@ async function importUniversalSourceToTournament(query, options = {}) {
       const gl = await fetchBggGeekList(raw);
       items = gl.items;
       sourceLabel = gl.title || 'BGG GeekList';
+    }
+    // 1b. Ludopedia List
+    else if (typeof isLudopediaList === 'function' && isLudopediaList(raw)) {
+      showToast(currentLang === 'en' ? 'Fetching Ludopedia list...' : 'Consultando lista na Ludopedia...');
+      const listData = await fetchLudopediaList(raw, (cur, total) => {
+        showToast(currentLang === 'en'
+          ? `Loading Ludopedia list (${cur}/${total})...`
+          : `Carregando lista da Ludopedia (${cur}/${total})...`);
+      });
+      items = listData.items;
+      sourceLabel = listData.title || 'Ludopedia Lista';
     }
     // 2. BGG Collection / User
     else if (raw.toLowerCase().startsWith('bgg:') || raw.toLowerCase().includes('boardgamegeek.com/user') || raw.toLowerCase().includes('boardgamegeek.com/collection')) {
@@ -14418,6 +14699,18 @@ async function fetchWebScraperItems(sourceUrl) {
     }
   }
 
+  // If Ludopedia List, use the native Ludopedia list crawler & parser
+  if (typeof isLudopediaList === 'function' && isLudopediaList(sourceUrl)) {
+    try {
+      const listData = await fetchLudopediaList(sourceUrl);
+      if (listData && listData.items && listData.items.length > 0) {
+        return listData.items;
+      }
+    } catch (e) {
+      console.warn('Ludopedia list fetch failed, falling back to web scraper:', e);
+    }
+  }
+
   let rawText = '';
   // 1. Primary: Jina Reader API (free, returns markdown, bypasses CF protection)
   try {
@@ -15712,6 +16005,10 @@ window.isBggGeekList = isBggGeekList;
 window.extractBggGeekListId = extractBggGeekListId;
 window.fetchGgAppList = fetchGgAppList;
 window.extractGgAppListSlug = extractGgAppListSlug;
+window.isLudopediaList = isLudopediaList;
+window.extractLudopediaListInfo = extractLudopediaListInfo;
+window.parseLudopediaListItemsFromHtml = parseLudopediaListItemsFromHtml;
+window.fetchLudopediaList = fetchLudopediaList;
 
 
 
