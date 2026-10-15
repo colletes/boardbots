@@ -6939,7 +6939,7 @@ async function performSearch(query) {
         if (spinner) spinner.style.display = 'block';
         dropdown.innerHTML = `<div class="search-result-status">Consultando coleção de @${escapeHtml(ludoCol.username)} na Ludopedia...</div>`;
         try {
-          const payload = await fetchLudopediaCollection(ludoCol.username);
+          const payload = await fetchLudopediaCollection(query.trim() || ludoCol.username);
           dropdown.classList.remove('visible');
           document.getElementById('gameSearchInput').value = '';
           document.getElementById('searchClearBtn').style.display = 'none';
@@ -9296,18 +9296,18 @@ function parseLudopediaCollectionUrl(input, allowRawUsername = false) {
       }
 
       if (idUsuario) {
-        return { username: String(idUsuario), idUsuario, lista };
+        return { username: String(idUsuario), idUsuario, lista, rawUrl: str };
       }
       if (usuario) {
-        return { username: usuario, lista };
+        return { username: usuario, lista, rawUrl: str };
       }
       const matchUser = url.pathname.match(/\/usuario\/([^/?#]+)/i);
       if (matchUser) {
-        return { username: decodeURIComponent(matchUser[1].trim()), lista: 'colecao' };
+        return { username: decodeURIComponent(matchUser[1].trim()), lista: 'colecao', rawUrl: str };
       }
       const matchCol = url.pathname.match(/\/colecao\/([^/?#]+)/i);
       if (matchCol) {
-        return { username: decodeURIComponent(matchCol[1].trim()), lista: 'colecao' };
+        return { username: decodeURIComponent(matchCol[1].trim()), lista: 'colecao', rawUrl: str };
       }
     }
   } catch (e) {}
@@ -9369,160 +9369,116 @@ async function resolveLudopediaUserId(input) {
   return null;
 }
 
-async function fetchLudopediaCollection(usernameOrUrl, options = {}) {
-  if (!usernameOrUrl) throw new Error(currentLang === 'en' ? 'Username or link not provided.' : 'Nome de usuário ou link não informado.');
-  let cleanUser = String(usernameOrUrl).trim().replace(/^@/, '');
-  const parsed = parseLudopediaCollectionUrl(cleanUser, true);
-  if (parsed && parsed.username) {
-    cleanUser = parsed.username;
+async function fetchLudopediaCollectionFromWeb(usernameOrUrl, cleanUserFallback) {
+  let cleanUser = cleanUserFallback;
+  if (!cleanUser) {
+    const parsed = parseLudopediaCollectionUrl(usernameOrUrl, true);
+    cleanUser = (parsed && parsed.username) ? parsed.username : String(usernameOrUrl).trim().replace(/^@/, '');
   }
 
-  const userId = await resolveLudopediaUserId(cleanUser);
-  if (!userId) {
-    throw new Error(currentLang === 'en'
-      ? `User "${cleanUser}" not found on Ludopedia. Please verify the username or link.`
-      : `Usuário "${cleanUser}" não encontrado na Ludopedia. Verifique o nome de usuário ou link.`);
-  }
-
-  const firstUrl = `${LUDOPEDIA_PROXY_BASE}/api/v1/colecao?id_usuario=${userId}&rows=100&page=1`;
-  const res = await fetch(firstUrl, { headers: { 'Accept': 'application/json' } });
-  if (!res.ok) {
-    if (res.status === 404) {
-      throw new Error(currentLang === 'en'
-        ? `Collection for "${cleanUser}" not found on Ludopedia.`
-        : `Coleção de "${cleanUser}" não encontrada na Ludopedia.`);
-    }
-    throw new Error(`Falha ao consultar coleção na Ludopedia (HTTP ${res.status}).`);
-  }
-
-  const data = await res.json();
-  if (!data || !Array.isArray(data.colecao)) {
-    throw new Error('Nenhum dado retornado para este usuário na Ludopedia.');
-  }
-
-  let rawGames = [...data.colecao];
-  const total = data.total || rawGames.length;
-  const totalPages = Math.ceil(total / 100);
-
-  const extraPagePromises = [];
-  for (let p = 2; p <= totalPages; p++) {
-    extraPagePromises.push(
-      fetch(`${LUDOPEDIA_PROXY_BASE}/api/v1/colecao?id_usuario=${userId}&rows=100&page=${p}`, {
-        headers: { 'Accept': 'application/json' }
-      }).then(r => r.ok ? r.json() : null).catch(() => null)
-    );
-  }
-
-  // Fetch expansions (tp_jogo=e) with id_usuario to ensure 100% accurate classification
-  const expPromise = (async () => {
+  let targetUrl = `https://ludopedia.com.br/colecao?usuario=${encodeURIComponent(cleanUser)}&modo=lista`;
+  if (typeof usernameOrUrl === 'string' && usernameOrUrl.includes('ludopedia.com.br/colecao')) {
     try {
-      const expRes = await fetch(`${LUDOPEDIA_PROXY_BASE}/api/v1/colecao?id_usuario=${userId}&tp_jogo=e&rows=100&page=1`, {
-        headers: { 'Accept': 'application/json' }
-      });
-      if (!expRes.ok) return [];
-      const expData = await expRes.json();
-      let expList = expData.colecao || [];
-      const expPages = Math.ceil((expData.total || 0) / 100);
-      if (expPages > 1) {
-        const extraExpPromises = [];
-        for (let ep = 2; ep <= expPages; ep++) {
-          extraExpPromises.push(
-            fetch(`${LUDOPEDIA_PROXY_BASE}/api/v1/colecao?id_usuario=${userId}&tp_jogo=e&rows=100&page=${ep}`, {
-              headers: { 'Accept': 'application/json' }
-            }).then(r => r.ok ? r.json() : null).catch(() => null)
-          );
-        }
-        const extraRes = await Promise.all(extraExpPromises);
-        extraRes.forEach(er => {
-          if (er && Array.isArray(er.colecao)) expList.push(...er.colecao);
-        });
-      }
-      return expList;
-    } catch (e) {
-      return [];
-    }
-  })();
+      const u = new URL(usernameOrUrl.startsWith('http') ? usernameOrUrl : 'https://' + usernameOrUrl);
+      if (!u.searchParams.has('modo')) u.searchParams.set('modo', 'lista');
+      targetUrl = u.toString();
+    } catch (e) {}
+  }
 
-  const [extraPagesData, expansionsList] = await Promise.all([
-    Promise.all(extraPagePromises),
-    expPromise
-  ]);
+  const jinaUrl = `https://r.jina.ai/${targetUrl}`;
+  const res = await fetch(jinaUrl);
+  if (!res.ok) {
+    throw new Error(currentLang === 'en'
+      ? `Failed to load public collection from Ludopedia (HTTP ${res.status}).`
+      : `Falha ao carregar coleção pública da Ludopedia (HTTP ${res.status}).`);
+  }
 
-  extraPagesData.forEach(pageData => {
-    if (pageData && Array.isArray(pageData.colecao)) {
-      rawGames.push(...pageData.colecao);
-    }
-  });
+  const md = await res.text();
+  const itemRegex = /\[!\[(?:Image \d+:\s*)?(?:Capa de\s*)?([^\]]*?)\]\((https:\/\/storage\.googleapis\.com\/ludopedia-capas\/\d+_[st]\.jpg)\)([\d,.]*|[A-Za-zçã]+)?\]\((https?:\/\/[^\s\)\"]*ludopedia\.com\.br\/jogo\/[^\s\)\"]+)(?:\s+(?:\"([^\"]+)\"|'([^']+)'))?\)/g;
 
-  const expansionIdSet = new Set((expansionsList || []).map(g => Number(g.id_jogo)));
+  const matches = [];
+  let m;
+  while ((m = itemRegex.exec(md)) !== null) {
+    matches.push({ m, index: m.index });
+  }
 
-  const seenMap = new Map();
+  if (matches.length === 0) {
+    throw new Error(currentLang === 'en'
+      ? `No games found in the public collection of "${cleanUser}". Check if the profile is public.`
+      : `Nenhum jogo encontrado na coleção pública de "${cleanUser}". Verifique se o perfil é público.`);
+  }
+
+  const seen = new Set();
   const allGames = [];
   const baseGames = [];
   const expansions = [];
 
-  for (const g of rawGames) {
-    if (!g || !g.nm_jogo) continue;
-    const ludoId = Number(g.id_jogo);
-    const norm = normalizeTitle(g.nm_jogo);
-    const dedupKey = ludoId ? `ludo_${ludoId}` : `title_${norm}`;
-    const normKey = `title_${norm}`;
+  for (let i = 0; i < matches.length; i++) {
+    const { m, index } = matches[i];
+    const nextIndex = (i + 1 < matches.length) ? matches[i + 1].index : md.length;
+    const block = md.slice(index, nextIndex);
 
-    let existing = seenMap.get(dedupKey) || (normKey ? seenMap.get(normKey) : null);
-    const plays = g.qt_partidas || 0;
-    const scoreVal = (g.vl_nota != null && !isNaN(Number(g.vl_nota)) && Number(g.vl_nota) > 0) ? Number(g.vl_nota) : null;
-    const isExp = expansionIdSet.has(ludoId);
+    const title = (m[5] || m[6] || m[1] || '').trim();
+    if (!title || seen.has(title)) continue;
+    seen.add(title);
 
-    if (existing) {
-      if (plays > (existing.plays || 0)) existing.plays = plays;
-      if (scoreVal != null && (existing.score == null || scoreVal > existing.score)) {
-        existing.score = scoreVal;
-        existing.userRating = scoreVal;
-      }
-      if (g.fl_tem) existing.fl_tem = g.fl_tem;
-      if (g.fl_jogou) existing.fl_jogou = g.fl_jogou;
-      if (g.fl_favorito) existing.fl_favorito = g.fl_favorito;
-      if (g.fl_quer) existing.fl_quer = g.fl_quer;
-      if (!existing.image && g.thumb) existing.image = (g.thumb || '').replace('_t.jpg', '_m.jpg');
-      if (!existing.year && g.ano_publicacao) existing.year = g.ano_publicacao;
-      continue;
+    const image = m[2].replace(/_[st]\.jpg/i, '_m.jpg');
+    const idMatch = image.match(/\/(\d+)_m\.jpg/i);
+    const ludoId = idMatch ? Number(idMatch[1]) : null;
+
+    const tag = (m[3] || '').trim();
+    let score = null;
+    let isExp = false;
+    if (/^expans[aã]o$/i.test(tag)) {
+      isExp = true;
+    } else if (tag && /^[\d,.]+$/.test(tag)) {
+      const parsedNum = parseFloat(tag.replace(',', '.'));
+      if (!isNaN(parsedNum) && parsedNum > 0) score = parsedNum;
     }
 
+    let plays = 0;
+    const playsMatch = block.match(/(\d+)\s+partidas?/i);
+    if (playsMatch) plays = parseInt(playsMatch[1], 10);
+
+    let players = '';
+    const playersMatch = block.match(/(\d+(?:[–-]\d+)?)\s+(?:jogadores|melhor com)/i);
+    if (playersMatch) players = playersMatch[1];
+
+    let time = '';
+    const timeMatch = block.match(/(\d+(?:–\d+)?)\s*min/i);
+    if (timeMatch) time = timeMatch[0];
+
     const item = {
-      title: g.nm_jogo,
-      image: (g.thumb || '').replace('_t.jpg', '_m.jpg'),
-      year: g.ano_publicacao || '',
-      ludoId: ludoId || null,
+      title,
+      image,
+      year: '',
+      ludoId,
       bggId: null,
       designer: '',
       artist: '',
       category: '',
       domain: '',
       mechanics: '',
-      players: '',
-      time: '',
+      players,
+      time,
       plays,
-      score: scoreVal,
-      userRating: scoreVal,
+      score,
+      userRating: score,
       bggScore: null,
       bggRank: null,
       bggSubranks: [],
       bggWeight: null,
       slug: '',
-      link: g.link || (ludoId ? `https://ludopedia.com.br/jogo/${ludoId}` : ''),
+      link: m[4] || (ludoId ? `https://ludopedia.com.br/jogo/${ludoId}` : ''),
       bggLink: '',
       isExpansion: isExp,
       source: 'ludopedia',
-      fl_tem: g.fl_tem,
-      fl_jogou: g.fl_jogou,
-      fl_favorito: g.fl_favorito,
-      fl_quer: g.fl_quer
+      fl_tem: 1,
+      fl_jogou: plays > 0 ? 1 : 0,
+      fl_favorito: 0,
+      fl_quer: 0
     };
 
-    seenMap.set(dedupKey, item);
-    if (normKey && normKey !== dedupKey) {
-      seenMap.set(normKey, item);
-    }
     allGames.push(item);
     if (isExp) expansions.push(item);
     else baseGames.push(item);
@@ -9533,9 +9489,181 @@ async function fetchLudopediaCollection(usernameOrUrl, options = {}) {
     sourceLabel: 'Ludopedia Coleção',
     badgeClass: 'ludopedia',
     allGames,
-    baseGames,
+    baseGames: baseGames.length > 0 ? baseGames : allGames,
     expansions
   };
+}
+
+async function fetchLudopediaCollection(usernameOrUrl, options = {}) {
+  if (!usernameOrUrl) throw new Error(currentLang === 'en' ? 'Username or link not provided.' : 'Nome de usuário ou link não informado.');
+  let cleanUser = String(usernameOrUrl).trim().replace(/^@/, '');
+  const parsed = parseLudopediaCollectionUrl(cleanUser, true);
+  if (parsed && parsed.username) {
+    cleanUser = parsed.username;
+  }
+
+  let apiSuccess = false;
+  let rawGames = [];
+  let expansionsList = [];
+  let expansionIdSet = new Set();
+
+  try {
+    const userId = await resolveLudopediaUserId(cleanUser);
+    if (userId) {
+      const firstUrl = `${LUDOPEDIA_PROXY_BASE}/api/v1/colecao?id_usuario=${userId}&rows=100&page=1`;
+      const res = await fetch(firstUrl, { headers: { 'Accept': 'application/json' } });
+      if (res.ok) {
+        const data = await res.json();
+        if (data && Array.isArray(data.colecao)) {
+          apiSuccess = true;
+          rawGames = [...data.colecao];
+          const total = data.total || rawGames.length;
+          const totalPages = Math.ceil(total / 100);
+
+          const extraPagePromises = [];
+          for (let p = 2; p <= totalPages; p++) {
+            extraPagePromises.push(
+              fetch(`${LUDOPEDIA_PROXY_BASE}/api/v1/colecao?id_usuario=${userId}&rows=100&page=${p}`, {
+                headers: { 'Accept': 'application/json' }
+              }).then(r => r.ok ? r.json() : null).catch(() => null)
+            );
+          }
+
+          // Fetch expansions (tp_jogo=e) with id_usuario to ensure accurate classification
+          const expPromise = (async () => {
+            try {
+              const expRes = await fetch(`${LUDOPEDIA_PROXY_BASE}/api/v1/colecao?id_usuario=${userId}&tp_jogo=e&rows=100&page=1`, {
+                headers: { 'Accept': 'application/json' }
+              });
+              if (!expRes.ok) return [];
+              const expData = await expRes.json();
+              let expList = expData.colecao || [];
+              const expPages = Math.ceil((expData.total || 0) / 100);
+              if (expPages > 1) {
+                const extraExpPromises = [];
+                for (let ep = 2; ep <= expPages; ep++) {
+                  extraExpPromises.push(
+                    fetch(`${LUDOPEDIA_PROXY_BASE}/api/v1/colecao?id_usuario=${userId}&tp_jogo=e&rows=100&page=${ep}`, {
+                      headers: { 'Accept': 'application/json' }
+                    }).then(r => r.ok ? r.json() : null).catch(() => null)
+                  );
+                }
+                const extraRes = await Promise.all(extraExpPromises);
+                extraRes.forEach(er => {
+                  if (er && Array.isArray(er.colecao)) expList.push(...er.colecao);
+                });
+              }
+              return expList;
+            } catch (e) {
+              return [];
+            }
+          })();
+
+          const [extraPagesData, expResList] = await Promise.all([
+            Promise.all(extraPagePromises),
+            expPromise
+          ]);
+
+          extraPagesData.forEach(pageData => {
+            if (pageData && Array.isArray(pageData.colecao)) {
+              rawGames.push(...pageData.colecao);
+            }
+          });
+
+          expansionsList = expResList || [];
+          expansionIdSet = new Set(expansionsList.map(g => Number(g.id_jogo)));
+        }
+      }
+    }
+  } catch (apiErr) {
+    console.warn('Ludopedia API query failed, falling back to public web scraper:', apiErr);
+  }
+
+  if (apiSuccess && rawGames.length > 0) {
+    const seenMap = new Map();
+    const allGames = [];
+    const baseGames = [];
+    const expansions = [];
+
+    for (const g of rawGames) {
+      if (!g || !g.nm_jogo) continue;
+      const ludoId = Number(g.id_jogo);
+      const norm = normalizeTitle(g.nm_jogo);
+      const dedupKey = ludoId ? `ludo_${ludoId}` : `title_${norm}`;
+      const normKey = `title_${norm}`;
+
+      let existing = seenMap.get(dedupKey) || (normKey ? seenMap.get(normKey) : null);
+      const plays = g.qt_partidas || 0;
+      const scoreVal = (g.vl_nota != null && !isNaN(Number(g.vl_nota)) && Number(g.vl_nota) > 0) ? Number(g.vl_nota) : null;
+      const isExp = expansionIdSet.has(ludoId);
+
+      if (existing) {
+        if (plays > (existing.plays || 0)) existing.plays = plays;
+        if (scoreVal != null && (existing.score == null || scoreVal > existing.score)) {
+          existing.score = scoreVal;
+          existing.userRating = scoreVal;
+        }
+        if (g.fl_tem) existing.fl_tem = g.fl_tem;
+        if (g.fl_jogou) existing.fl_jogou = g.fl_jogou;
+        if (g.fl_favorito) existing.fl_favorito = g.fl_favorito;
+        if (g.fl_quer) existing.fl_quer = g.fl_quer;
+        if (!existing.image && g.thumb) existing.image = (g.thumb || '').replace('_t.jpg', '_m.jpg');
+        if (!existing.year && g.ano_publicacao) existing.year = g.ano_publicacao;
+        continue;
+      }
+
+      const item = {
+        title: g.nm_jogo,
+        image: (g.thumb || '').replace('_t.jpg', '_m.jpg'),
+        year: g.ano_publicacao || '',
+        ludoId: ludoId || null,
+        bggId: null,
+        designer: '',
+        artist: '',
+        category: '',
+        domain: '',
+        mechanics: '',
+        players: '',
+        time: '',
+        plays,
+        score: scoreVal,
+        userRating: scoreVal,
+        bggScore: null,
+        bggRank: null,
+        bggSubranks: [],
+        bggWeight: null,
+        slug: '',
+        link: g.link || (ludoId ? `https://ludopedia.com.br/jogo/${ludoId}` : ''),
+        bggLink: '',
+        isExpansion: isExp,
+        source: 'ludopedia',
+        fl_tem: g.fl_tem,
+        fl_jogou: g.fl_jogou,
+        fl_favorito: g.fl_favorito,
+        fl_quer: g.fl_quer
+      };
+
+      seenMap.set(dedupKey, item);
+      if (normKey && normKey !== dedupKey) {
+        seenMap.set(normKey, item);
+      }
+      allGames.push(item);
+      if (isExp) expansions.push(item);
+      else baseGames.push(item);
+    }
+
+    return {
+      fileName: `Ludopedia (@${cleanUser})`,
+      sourceLabel: 'Ludopedia Coleção',
+      badgeClass: 'ludopedia',
+      allGames,
+      baseGames,
+      expansions
+    };
+  }
+
+  // Graceful fallback: scrape public web collection via Jina Reader
+  return await fetchLudopediaCollectionFromWeb(usernameOrUrl, cleanUser);
 }
 
 async function importLudopediaCollection(usernameOrUrl) {
@@ -9550,7 +9678,7 @@ async function importLudopediaCollection(usernameOrUrl) {
   }
 
   showToast(`Buscando coleção de @${username} na Ludopedia...`);
-  const payload = await fetchLudopediaCollection(username);
+  const payload = await fetchLudopediaCollection(usernameOrUrl || username);
   openImportCollectionModal(payload);
 }
 
@@ -9677,7 +9805,7 @@ async function executeOnlineImportFromInput() {
 
     const parsed = parseLudopediaCollectionUrl(raw, true);
     const username = parsed ? parsed.username : raw.replace(/^@/, '').trim();
-    const payload = await fetchLudopediaCollection(username);
+    const payload = await fetchLudopediaCollection(raw || username);
 
     closeModal('importSourceModal');
     openImportCollectionModal(payload);
@@ -11927,7 +12055,7 @@ async function importUniversalSourceToTournament(query, options = {}) {
       let ludoUser = raw.replace(/^ludo:/i, '').trim();
       const parsed = parseLudopediaCollectionUrl(ludoUser);
       if (parsed && parsed.username) ludoUser = parsed.username;
-      const payload = await fetchLudopediaCollection(ludoUser);
+      const payload = await fetchLudopediaCollection(raw || ludoUser);
       openImportCollectionModal(payload);
       return;
     }
@@ -12119,7 +12247,7 @@ async function fetchLudopediaForRanking() {
   if (statusEl) statusEl.innerHTML = `<span class="search-spinner" style="display:inline-block; margin-right:6px;"></span> ${currentLang === 'en' ? 'Connecting to Ludopedia...' : 'Conectando à Ludopedia...'}`;
 
   try {
-    const payload = await fetchLudopediaCollection(user);
+    const payload = await fetchLudopediaCollection(rawInput.trim() || user);
     ludoCachedGames = payload.allGames || [];
     if (statusEl) {
       statusEl.innerHTML = `✅ ${ludoCachedGames.length} ${currentLang === 'en' ? 'games loaded successfully from Ludopedia!' : 'jogos carregados com sucesso da Ludopedia!'}`;
@@ -15973,6 +16101,7 @@ window.setOnlineImportExample = setOnlineImportExample;
 window.parseLudopediaCollectionUrl = parseLudopediaCollectionUrl;
 window.resolveLudopediaUserId = resolveLudopediaUserId;
 window.fetchLudopediaCollection = fetchLudopediaCollection;
+window.fetchLudopediaCollectionFromWeb = fetchLudopediaCollectionFromWeb;
 window.importLudopediaCollection = importLudopediaCollection;
 window.executeOnlineImportFromInput = executeOnlineImportFromInput;
 window.fetchLudopediaForRanking = fetchLudopediaForRanking;
