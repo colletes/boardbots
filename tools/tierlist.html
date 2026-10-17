@@ -4148,10 +4148,26 @@ footer {
 
     <!-- Options -->
     <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:16px;">
-      <label id="importExpansionsLabel" style="display:flex; align-items:center; gap:10px; cursor:pointer; font-size:0.88rem; color:var(--text-main);">
-        <input type="checkbox" id="importOptExpansions" style="width:18px; height:18px; accent-color:var(--brass); cursor:pointer;" onchange="updateImportModalCounts()">
-        <span><span data-i18n="import_opt_expansions">Incluir expansões</span> (<span id="importExpansionsCount">0</span>)</span>
-      </label>
+      <!-- Type Filter: Base Games / All / Expansions -->
+      <div id="importTypeFilterCard" style="background:rgba(20,12,8,0.7); border:1px solid rgba(233,200,117,0.25); border-radius:8px; padding:10px 14px; margin-bottom:4px;">
+        <div style="font-size:0.82rem; font-weight:700; color:var(--brass-bright); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px;">
+          🎯 <span data-i18n="import_filter_type_heading">Filtrar por Tipo de Jogo:</span>
+        </div>
+        <div style="display:flex; gap:14px; flex-wrap:wrap;">
+          <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:0.86rem; color:var(--text-main);">
+            <input type="radio" name="importTypeFilter" value="base" id="importTypeBase" checked style="accent-color:var(--brass); cursor:pointer;" onchange="updateImportModalCounts()">
+            <span><span data-i18n="import_type_base">Apenas Jogos Base</span> (<span id="importCountBase">0</span>)</span>
+          </label>
+          <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:0.86rem; color:var(--text-main);">
+            <input type="radio" name="importTypeFilter" value="all" id="importTypeAll" style="accent-color:var(--brass); cursor:pointer;" onchange="updateImportModalCounts()">
+            <span><span data-i18n="import_type_all">Todos os Jogos</span> (<span id="importCountAll">0</span>)</span>
+          </label>
+          <label id="importTypeExpLabel" style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:0.86rem; color:var(--text-main);">
+            <input type="radio" name="importTypeFilter" value="expansions" id="importTypeExp" style="accent-color:var(--brass); cursor:pointer;" onchange="updateImportModalCounts()">
+            <span><span data-i18n="import_type_exp">Apenas Expansões</span> (<span id="importCountExp">0</span>)</span>
+          </label>
+        </div>
+      </div>
 
       <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-size:0.88rem; color:var(--text-main);">
         <input type="checkbox" id="importOptSkipDuplicates" checked style="width:18px; height:18px; accent-color:var(--brass); cursor:pointer;" onchange="updateImportModalCounts()">
@@ -4897,6 +4913,10 @@ const I18N = {
     import_guide_antidup_d: 'Jogos já presentes na sua lista não serão duplicados ao manter a opção ativa.',
     import_guide_formats_t: 'Formatos Aceitos:',
     import_guide_formats_d: 'BGG (.csv), Ludopedia/Ludohall (.csv, .xlsx), BGStats (.csv) e backup (.json).',
+    import_filter_type_heading: 'Filtrar por Tipo de Jogo:',
+    import_type_base: 'Apenas Jogos Base',
+    import_type_all: 'Todos os Jogos',
+    import_type_exp: 'Apenas Expansões',
     import_opt_expansions: 'Incluir expansões',
     import_opt_skip_duplicates: 'Ignorar jogos já adicionados à Tierlist',
     import_opt_only_rated: 'Apenas jogos com nota (avaliação pessoal)',
@@ -5064,6 +5084,10 @@ const I18N = {
     import_guide_antidup_d: 'Games already present on your board are skipped automatically when keeping this option checked.',
     import_guide_formats_t: 'Supported Formats:',
     import_guide_formats_d: 'BGG (.csv), Ludopedia/Ludohall (.csv, .xlsx), BGStats (.csv), and backup (.json).',
+    import_filter_type_heading: 'Filter by Game Type:',
+    import_type_base: 'Base Games Only',
+    import_type_all: 'All Games',
+    import_type_exp: 'Expansions Only',
     import_opt_expansions: 'Include expansions',
     import_opt_skip_duplicates: 'Skip games already in Tierlist',
     import_opt_fetch_bgg: 'Search covers on Ludopedia & BGG in background',
@@ -5118,6 +5142,10 @@ const I18N = {
     help_step3_d: 'Click any tier name to edit it, reorder with up/down arrows, or add new tiers (which smoothly blend into the Indigo-to-Red spectrum). Use the slider to resize covers.',
     help_step4_t: '4. Export & Social Sharing:',
     help_step4_d: 'Export to PNG, JPG, or PDF, or generate Feed (1:1) and Story (9:16) formats ready to post on Instagram, WhatsApp, and Telegram!',
+    import_filter_type_heading: 'Filter by Game Type:',
+    import_type_base: 'Base Games Only',
+    import_type_all: 'All Games',
+    import_type_exp: 'Expansions Only',
     import_opt_expansions: 'Include expansions',
     import_opt_skip_duplicates: 'Skip games already in Tierlist',
     import_opt_only_rated: 'Only rated games (personal rating)',
@@ -6223,7 +6251,7 @@ function parseBggThingItem(item) {
     bggId: item.getAttribute('id'),
     title: nameEl ? nameEl.getAttribute('value') : '',
     year: yearEl ? yearEl.getAttribute('value') : '',
-    image: (thumbEl && thumbEl.textContent.trim()) || (imageEl && imageEl.textContent.trim()) || '',
+    image: (imageEl && imageEl.textContent.trim()) || (thumbEl && thumbEl.textContent.trim()) || '',
     designer: designers,
     artist: artists,
     mechanics: mechanics,
@@ -6237,6 +6265,7 @@ function parseBggThingItem(item) {
     bggSubranks: bggSubranks,
     bggWeight: bggWeight,
     usersRated: usersRated,
+    isExpansion: item.getAttribute('type') === 'boardgameexpansion',
     link: `https://boardgamegeek.com/boardgame/${item.getAttribute('id')}`,
     bggLink: `https://boardgamegeek.com/boardgame/${item.getAttribute('id')}`
   };
@@ -6952,6 +6981,74 @@ async function performSearch(query) {
       };
       return;
     }
+  }
+
+  // Ludopedia Group Acervo detected in search input
+  const isLudopediaGroup = query.toLowerCase().includes('ludopedia.com.br/grupo/') || /^(?:ludo:)?grupo:\d+/i.test(query);
+  if (isLudopediaGroup) {
+    if (spinner) spinner.style.display = 'none';
+    dropdown.innerHTML = `
+      <div class="search-result-item" style="background:rgba(233, 200, 117, 0.15); border-left:3px solid var(--brass);">
+        <div class="search-result-thumb" style="display:flex;align-items:center;justify-content:center;background:#2a1b0c;color:var(--brass-bright);font-size:1.3rem;">🏰</div>
+        <div class="search-result-info">
+          <div class="search-result-title" style="color:var(--brass-bright);">Importar Acervo do Grupo (Ludopedia)</div>
+          <div class="search-result-meta"><span class="source-badge ludopedia">Ludopedia Grupo</span> Clique para carregar os jogos do grupo</div>
+        </div>
+        <button class="search-result-add-btn">📥</button>
+      </div>
+    `;
+    dropdown.classList.add('visible');
+    dropdown.querySelector('.search-result-item').onclick = async () => {
+      if (spinner) spinner.style.display = 'block';
+      dropdown.innerHTML = `<div class="search-result-status">Carregando acervo do grupo da Ludopedia...</div>`;
+      try {
+        const payload = await fetchLudopediaGroupAcervo(query.trim());
+        dropdown.classList.remove('visible');
+        document.getElementById('gameSearchInput').value = '';
+        document.getElementById('searchClearBtn').style.display = 'none';
+        openImportCollectionModal(payload);
+      } catch (err) {
+        alert('Erro ao importar acervo do grupo: ' + (err.message || err));
+      } finally {
+        if (spinner) spinner.style.display = 'none';
+      }
+    };
+    return;
+  }
+
+  // BGG Designer / Artist detected in search input
+  const isBggDesigner = query.toLowerCase().includes('boardgamegeek.com/boardgamedesigner') ||
+    query.toLowerCase().includes('boardgamegeek.com/boardgameartist') ||
+    /^bgg:(?:designer|artist):\d+/i.test(query);
+  if (isBggDesigner) {
+    if (spinner) spinner.style.display = 'none';
+    dropdown.innerHTML = `
+      <div class="search-result-item" style="background:rgba(233, 200, 117, 0.15); border-left:3px solid var(--brass);">
+        <div class="search-result-thumb" style="display:flex;align-items:center;justify-content:center;background:#2a1b0c;color:var(--brass-bright);font-size:1.3rem;">🎲</div>
+        <div class="search-result-info">
+          <div class="search-result-title" style="color:var(--brass-bright);">Importar Jogos do Designer (BGG)</div>
+          <div class="search-result-meta"><span class="source-badge bgg">BGG Designer</span> Clique para carregar os jogos do autor</div>
+        </div>
+        <button class="search-result-add-btn">📥</button>
+      </div>
+    `;
+    dropdown.classList.add('visible');
+    dropdown.querySelector('.search-result-item').onclick = async () => {
+      if (spinner) spinner.style.display = 'block';
+      dropdown.innerHTML = `<div class="search-result-status">Carregando jogos do designer no BGG...</div>`;
+      try {
+        const payload = await fetchBggDesignerGames(query.trim());
+        dropdown.classList.remove('visible');
+        document.getElementById('gameSearchInput').value = '';
+        document.getElementById('searchClearBtn').style.display = 'none';
+        openImportCollectionModal(payload);
+      } catch (err) {
+        alert('Erro ao importar jogos do designer BGG: ' + (err.message || err));
+      } finally {
+        if (spinner) spinner.style.display = 'none';
+      }
+    };
+    return;
   }
 
   // List URL detected in search input (e.g. GGapp list, BGG GeekList, Ludopedia list, IMDb chart/list)
@@ -9666,6 +9763,226 @@ async function fetchLudopediaCollection(usernameOrUrl, options = {}) {
   return await fetchLudopediaCollectionFromWeb(usernameOrUrl, cleanUser);
 }
 
+async function fetchLudopediaGroupAcervo(urlOrId) {
+  if (!urlOrId) throw new Error(currentLang === 'en' ? 'Group link or ID not provided.' : 'Link ou ID do grupo não informado.');
+  const str = String(urlOrId).trim();
+  const m = str.match(/ludopedia\.com\.br\/grupo\/(\d+)/i) || str.match(/(?:grupo\/|grupo:)?(\d+)/i);
+  if (!m) throw new Error(currentLang === 'en' ? 'Ludopedia group ID not found in link.' : 'ID do grupo da Ludopedia não encontrado no link.');
+  const groupId = m[1];
+
+  const firstUrl = `https://r.jina.ai/https://ludopedia.com.br/grupo/${groupId}/acervo`;
+  const res = await fetch(firstUrl, { headers: { 'X-Return-Format': 'html' } });
+  if (!res.ok) {
+    throw new Error(currentLang === 'en'
+      ? `Failed to load group collection from Ludopedia (HTTP ${res.status}).`
+      : `Falha ao carregar acervo do grupo na Ludopedia (HTTP ${res.status}).`);
+  }
+  const html1 = await res.text();
+
+  const titleMatch = html1.match(/<title>Ludopedia\s*\|\s*([^<]+)<\/title>/i);
+  const groupName = titleMatch ? titleMatch[1].trim() : (`Grupo #${groupId}`);
+
+  const pagMatches = [...html1.matchAll(/pagina=(\d+)/g)].map(x => parseInt(x[1], 10));
+  const maxPage = pagMatches.length > 0 ? Math.min(Math.max(...pagMatches), 20) : 1;
+
+  const htmlPages = [html1];
+  if (maxPage > 1) {
+    const promises = [];
+    for (let p = 2; p <= maxPage; p++) {
+      promises.push(
+        fetch(`https://r.jina.ai/https://ludopedia.com.br/grupo/${groupId}/acervo?id_grupo_jogo=${groupId}&pagina=${p}`, {
+          headers: { 'X-Return-Format': 'html' }
+        }).then(r => r.ok ? r.text() : '').catch(() => '')
+      );
+    }
+    const extraHtmls = await Promise.all(promises);
+    htmlPages.push(...extraHtmls);
+  }
+
+  const seenMap = new Map();
+  const allGames = [];
+  const linkRegex = /<a[^>]*href=\"(https?:\/\/[^\"]*ludopedia\.com\.br\/jogo\/[^\"]+)\"[^>]*>([\s\S]*?)<\/a>/gi;
+
+  for (const html of htmlPages) {
+    if (!html) continue;
+    linkRegex.lastIndex = 0;
+    let match;
+    while ((match = linkRegex.exec(html)) !== null) {
+      const link = match[1];
+      const inner = match[2];
+      const imgMatch = inner.match(/<img([^>]*)>/i);
+      if (!imgMatch) continue;
+      const imgTag = imgMatch[1];
+      const srcMatch = imgTag.match(/src=\"([^\"]+storage\.googleapis\.com\/ludopedia-capas\/(\d+)_[st]\.jpg)\"/i);
+      if (!srcMatch) continue;
+      const titleMatch = imgTag.match(/(?:data-original-title|title)=\"([^\"]+)\"/i);
+      const rawTitle = titleMatch ? titleMatch[1] : '';
+      const ownerMatch = rawTitle.match(/^(.*?)(?:\s*\(([^)]+)\)\s*)$/);
+      const title = (ownerMatch ? ownerMatch[1] : rawTitle).trim();
+      const owner = ownerMatch ? ownerMatch[2].trim() : '';
+      const ludoId = Number(srcMatch[2]);
+      const image = srcMatch[1].replace(/_[st]\.jpg/i, '_m.jpg');
+
+      if (!title) continue;
+      if (seenMap.has(ludoId)) {
+        const existing = seenMap.get(ludoId);
+        if (owner && existing.owner && !existing.owner.includes(owner)) {
+          existing.owner += ', ' + owner;
+        }
+        continue;
+      }
+
+      const item = {
+        title,
+        image,
+        year: '',
+        ludoId,
+        bggId: null,
+        designer: '',
+        artist: '',
+        category: '',
+        domain: '',
+        mechanics: '',
+        players: '',
+        time: '',
+        plays: 0,
+        score: null,
+        userRating: null,
+        bggScore: null,
+        bggRank: null,
+        bggSubranks: [],
+        bggWeight: null,
+        slug: '',
+        link,
+        bggLink: '',
+        isExpansion: false,
+        source: 'ludopedia',
+        owner,
+        fl_tem: 1
+      };
+
+      seenMap.set(ludoId, item);
+      allGames.push(item);
+    }
+  }
+
+  if (allGames.length === 0) {
+    throw new Error(currentLang === 'en'
+      ? `No games found in the collection of group "${groupName}".`
+      : `Nenhum jogo encontrado no acervo do grupo "${groupName}".`);
+  }
+
+  return {
+    fileName: `${groupName} (Acervo)`,
+    sourceLabel: 'Ludopedia Acervo',
+    badgeClass: 'ludopedia',
+    allGames,
+    baseGames: allGames,
+    expansions: []
+  };
+}
+
+async function fetchBggDesignerGames(urlOrId) {
+  if (!urlOrId) throw new Error(currentLang === 'en' ? 'Designer link or ID not provided.' : 'Link ou ID do designer não informado.');
+  const str = String(urlOrId).trim();
+  const m = str.match(/boardgame(?:designer|artist)\/(\d+)/i) || str.match(/(?:bgg:)?(?:designer:|artist:)?(\d+)/i);
+  if (!m) throw new Error(currentLang === 'en' ? 'BGG designer ID not found in link.' : 'ID do designer no BGG não encontrado no link.');
+  const designerId = m[1];
+
+  const jinaUrl = `https://r.jina.ai/https://api.geekdo.com/api/geekitems?objectid=${designerId}&objecttype=person`;
+  const res = await fetch(jinaUrl);
+  if (!res.ok) {
+    throw new Error(currentLang === 'en'
+      ? `Failed to load designer from BGG (HTTP ${res.status}).`
+      : `Falha ao carregar designer do BGG (HTTP ${res.status}).`);
+  }
+  const text = await res.text();
+  const jsonStart = text.indexOf('{"item":');
+  if (jsonStart === -1) {
+    throw new Error(currentLang === 'en'
+      ? 'No data returned for this designer on BGG.'
+      : 'Nenhum dado retornado para este designer no BGG.');
+  }
+  const data = JSON.parse(text.slice(jsonStart));
+
+  const designerName = data.item.name || (`Designer #${designerId}`);
+  const rawLinks = data.item.links?.boardgamedesigner || data.item.links?.boardgameartist || [];
+  if (!Array.isArray(rawLinks) || rawLinks.length === 0) {
+    throw new Error(currentLang === 'en'
+      ? `No games linked to designer "${designerName}" on BGG.`
+      : `Nenhum jogo vinculado encontrado para o designer "${designerName}" no BGG.`);
+  }
+
+  const gameMap = new Map();
+  for (const l of rawLinks) {
+    const bggId = Number(l.objectid);
+    if (!bggId) continue;
+    gameMap.set(bggId, {
+      title: l.name,
+      bggId,
+      image: '',
+      year: '',
+      designer: designerName,
+      artist: '',
+      category: '',
+      domain: '',
+      mechanics: '',
+      players: '',
+      time: '',
+      plays: 0,
+      score: null,
+      userRating: null,
+      bggScore: null,
+      bggRank: null,
+      bggSubranks: [],
+      bggWeight: null,
+      isExpansion: false,
+      link: l.canonical_link || (`https://boardgamegeek.com/boardgame/${bggId}`),
+      bggLink: l.canonical_link || (`https://boardgamegeek.com/boardgame/${bggId}`),
+      source: 'bgg',
+      fl_tem: 1
+    });
+  }
+
+  // Enrich with images, year, stats and expansion classification via fetchBggThings
+  const bggIds = Array.from(gameMap.keys());
+  try {
+    const enrichedThings = await fetchBggThings(bggIds);
+    enrichedThings.forEach(t => {
+      if (t && t.bggId) {
+        const g = gameMap.get(Number(t.bggId));
+        if (g) {
+          if (t.image) g.image = t.image;
+          if (t.year) g.year = t.year;
+          if (t.isExpansion !== undefined) g.isExpansion = t.isExpansion;
+          if (t.bggScore) g.bggScore = t.bggScore;
+          if (t.bggRank) g.bggRank = t.bggRank;
+          if (t.bggWeight) g.bggWeight = t.bggWeight;
+          if (t.players) g.players = t.players;
+          if (t.time) g.time = t.time;
+          if (t.category) g.category = t.category;
+          if (t.mechanics) g.mechanics = t.mechanics;
+        }
+      }
+    });
+  } catch (errEnrich) {
+    console.warn('Erro ao enriquecer dados dos jogos do designer BGG:', errEnrich);
+  }
+
+  const allGames = Array.from(gameMap.values());
+  const baseGames = allGames.filter(g => !g.isExpansion);
+  const expansions = allGames.filter(g => g.isExpansion);
+
+  return {
+    fileName: `${designerName} (BGG Designer)`,
+    sourceLabel: 'BGG Designer',
+    badgeClass: 'bgg',
+    allGames,
+    baseGames: baseGames.length > 0 ? baseGames : allGames,
+    expansions
+  };
+}
+
 async function importLudopediaCollection(usernameOrUrl) {
   let username = usernameOrUrl;
   const parsed = parseLudopediaCollectionUrl(usernameOrUrl);
@@ -9763,6 +10080,52 @@ async function executeOnlineImportFromInput() {
     return;
   }
 
+  // 1c. BGG Designer / Artist
+  if (raw.toLowerCase().includes('boardgamedesigner') || raw.toLowerCase().includes('boardgameartist') || /^bgg:(?:designer|artist):/i.test(raw)) {
+    try {
+      if (btn) btn.disabled = true;
+      if (spinner) {
+        spinner.style.display = 'flex';
+        if (statusText) statusText.textContent = currentLang === 'en'
+          ? 'Connecting to BGG and loading designer games...'
+          : 'Conectando ao BGG e carregando jogos do designer...';
+      }
+      const payload = await fetchBggDesignerGames(raw);
+      closeModal('importSourceModal');
+      openImportCollectionModal(payload);
+    } catch (err) {
+      console.error('Erro ao importar jogos do designer BGG:', err);
+      alert(err.message || 'Erro ao consultar jogos do designer no BGG.');
+    } finally {
+      if (btn) btn.disabled = false;
+      if (spinner) spinner.style.display = 'none';
+    }
+    return;
+  }
+
+  // 1d. Ludopedia Group Acervo
+  if (raw.toLowerCase().includes('ludopedia.com.br/grupo/') || /^(?:ludo:)?grupo:\d+/i.test(raw)) {
+    try {
+      if (btn) btn.disabled = true;
+      if (spinner) {
+        spinner.style.display = 'flex';
+        if (statusText) statusText.textContent = currentLang === 'en'
+          ? 'Connecting to Ludopedia and loading group collection...'
+          : 'Conectando à Ludopedia e carregando acervo do grupo...';
+      }
+      const payload = await fetchLudopediaGroupAcervo(raw);
+      closeModal('importSourceModal');
+      openImportCollectionModal(payload);
+    } catch (err) {
+      console.error('Erro ao importar acervo do grupo da Ludopedia:', err);
+      alert(err.message || 'Erro ao consultar acervo do grupo na Ludopedia.');
+    } finally {
+      if (btn) btn.disabled = false;
+      if (spinner) spinner.style.display = 'none';
+    }
+    return;
+  }
+
   // 2. BGG Collection / User
   if (raw.toLowerCase().startsWith('bgg:') || raw.includes('boardgamegeek.com')) {
     let bggUser = raw.replace(/^bgg:/i, '').trim();
@@ -9826,25 +10189,38 @@ function openImportCollectionModal(payload) {
   const badge = document.getElementById('importSourceBadge');
   const fileNameEl = document.getElementById('importFileName');
   const statsTextEl = document.getElementById('importStatsText');
-  const expLabel = document.getElementById('importExpansionsLabel');
-  const expCountEl = document.getElementById('importExpansionsCount');
-  const expCheck = document.getElementById('importOptExpansions');
 
   badge.textContent = payload.sourceLabel || 'Arquivo';
   badge.className = 'source-badge ' + (payload.badgeClass || 'bgg');
   fileNameEl.textContent = payload.fileName || '';
 
-  const total = payload.allGames.length;
-  const baseCount = payload.baseGames.length;
-  const expCount = payload.expansions.length;
+  const total = payload.allGames ? payload.allGames.length : 0;
+  const baseCount = payload.baseGames ? payload.baseGames.length : 0;
+  const expCount = payload.expansions ? payload.expansions.length : 0;
 
-  if (expCount > 0) {
-    expLabel.style.display = 'flex';
-    if (expCountEl) expCountEl.textContent = expCount;
-    expCheck.checked = false;
+  const countBaseEl = document.getElementById('importCountBase');
+  const countAllEl = document.getElementById('importCountAll');
+  const countExpEl = document.getElementById('importCountExp');
+  const expRadio = document.getElementById('importTypeExp');
+  const expRadioLabel = document.getElementById('importTypeExpLabel');
+  const baseRadio = document.getElementById('importTypeBase');
+
+  if (countBaseEl) countBaseEl.textContent = baseCount;
+  if (countAllEl) countAllEl.textContent = total;
+  if (countExpEl) countExpEl.textContent = expCount;
+
+  if (expCount === 0) {
+    if (expRadio) expRadio.disabled = true;
+    if (expRadioLabel) expRadioLabel.style.opacity = '0.45';
+    if (baseRadio) baseRadio.checked = true;
   } else {
-    expLabel.style.display = 'none';
-    expCheck.checked = false;
+    if (expRadio) expRadio.disabled = false;
+    if (expRadioLabel) expRadioLabel.style.opacity = '1';
+    if (baseCount === 0 && expCount > 0) {
+      if (expRadio) expRadio.checked = true;
+    } else {
+      if (baseRadio) baseRadio.checked = true;
+    }
   }
 
   if (currentLang === 'en') {
@@ -9866,7 +10242,7 @@ function openImportCollectionModal(payload) {
 function updateImportModalCounts() {
   if (!currentImportPayload) return;
 
-  const includeExp = document.getElementById('importOptExpansions')?.checked;
+  const typeFilter = document.querySelector('input[name="importTypeFilter"]:checked')?.value || 'base';
   const skipDupes = document.getElementById('importOptSkipDuplicates')?.checked;
   const onlyOwned = document.getElementById('importOptOnlyOwned')?.checked;
   const includeWishlist = document.getElementById('importOptWishlist')?.checked;
@@ -9875,7 +10251,18 @@ function updateImportModalCounts() {
   const onlyPlayed = document.getElementById('importOptOnlyPlayed')?.checked;
   const summaryEl = document.getElementById('importActionSummary');
 
-  let candidates = includeExp ? currentImportPayload.allGames : currentImportPayload.baseGames;
+  let candidates = [];
+  if (typeFilter === 'expansions') {
+    candidates = currentImportPayload.expansions || [];
+  } else if (typeFilter === 'all') {
+    candidates = currentImportPayload.allGames || [];
+  } else {
+    // 'base'
+    candidates = (currentImportPayload.baseGames && currentImportPayload.baseGames.length > 0)
+      ? currentImportPayload.baseGames
+      : (currentImportPayload.allGames || []);
+  }
+
   if (onlyOwned) {
     candidates = candidates.filter(g => {
       const isOwned = (g.owned !== false && g.fl_tem !== 0 && g.fl_tem !== false);
@@ -9939,7 +10326,7 @@ function updateImportModalCounts() {
 function executeCollectionImport() {
   if (!currentImportPayload || !currentImportPayload.allGames) return;
 
-  const includeExpansions = document.getElementById('importOptExpansions')?.checked;
+  const typeFilter = document.querySelector('input[name="importTypeFilter"]:checked')?.value || 'base';
   const skipDuplicates = document.getElementById('importOptSkipDuplicates')?.checked;
   const onlyOwned = document.getElementById('importOptOnlyOwned')?.checked;
   const includeWishlist = document.getElementById('importOptWishlist')?.checked;
@@ -9947,6 +10334,17 @@ function executeCollectionImport() {
   const onlyUnplayed = document.getElementById('importOptOnlyUnplayed')?.checked;
   const onlyPlayed = document.getElementById('importOptOnlyPlayed')?.checked;
   const fetchBgg = document.getElementById('importOptFetchBgg')?.checked;
+
+  let candidates = [];
+  if (typeFilter === 'expansions') {
+    candidates = currentImportPayload.expansions || [];
+  } else if (typeFilter === 'all') {
+    candidates = currentImportPayload.allGames || [];
+  } else {
+    candidates = (currentImportPayload.baseGames && currentImportPayload.baseGames.length > 0)
+      ? currentImportPayload.baseGames
+      : (currentImportPayload.allGames || []);
+  }
 
   const unplayedTier = state.tiers.find(t => t.isUnplayed) || state.tiers[state.tiers.length - 1];
   const targetId = unplayedTier.id;
@@ -9957,7 +10355,6 @@ function executeCollectionImport() {
   const existingLudoIds = new Set(existingItems.filter(i => i.ludoId).map(i => Number(i.ludoId)));
   const existingTitles = new Set(existingItems.map(i => normalizeTitle(i.title)));
 
-  let candidates = includeExpansions ? currentImportPayload.allGames : currentImportPayload.baseGames;
   if (onlyOwned) {
     candidates = candidates.filter(g => {
       const isOwned = (g.owned !== false && g.fl_tem !== 0 && g.fl_tem !== false);
@@ -12033,6 +12430,20 @@ async function importUniversalSourceToTournament(query, options = {}) {
       });
       items = listData.items;
       sourceLabel = listData.title || 'Ludopedia Lista';
+    }
+    // 1c. BGG Designer / Artist
+    else if (raw.toLowerCase().includes('boardgamedesigner') || raw.toLowerCase().includes('boardgameartist') || /^bgg:(?:designer|artist):/i.test(raw)) {
+      showToast(currentLang === 'en' ? 'Fetching BGG designer games...' : 'Consultando jogos do designer no BGG...');
+      const payload = await fetchBggDesignerGames(raw);
+      openImportCollectionModal(payload);
+      return;
+    }
+    // 1d. Ludopedia Group Acervo
+    else if (raw.toLowerCase().includes('ludopedia.com.br/grupo/') || /^(?:ludo:)?grupo:\d+/i.test(raw)) {
+      showToast(currentLang === 'en' ? 'Fetching Ludopedia group collection...' : 'Consultando acervo do grupo na Ludopedia...');
+      const payload = await fetchLudopediaGroupAcervo(raw);
+      openImportCollectionModal(payload);
+      return;
     }
     // 2. BGG Collection / User
     else if (raw.toLowerCase().startsWith('bgg:') || raw.toLowerCase().includes('boardgamegeek.com/user') || raw.toLowerCase().includes('boardgamegeek.com/collection')) {
@@ -16102,6 +16513,8 @@ window.parseLudopediaCollectionUrl = parseLudopediaCollectionUrl;
 window.resolveLudopediaUserId = resolveLudopediaUserId;
 window.fetchLudopediaCollection = fetchLudopediaCollection;
 window.fetchLudopediaCollectionFromWeb = fetchLudopediaCollectionFromWeb;
+window.fetchLudopediaGroupAcervo = fetchLudopediaGroupAcervo;
+window.fetchBggDesignerGames = fetchBggDesignerGames;
 window.importLudopediaCollection = importLudopediaCollection;
 window.executeOnlineImportFromInput = executeOnlineImportFromInput;
 window.fetchLudopediaForRanking = fetchLudopediaForRanking;
