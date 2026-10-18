@@ -7016,18 +7016,26 @@ async function performSearch(query) {
     return;
   }
 
-  // BGG Designer / Artist detected in search input
-  const isBggDesigner = query.toLowerCase().includes('boardgamegeek.com/boardgamedesigner') ||
+  // BGG Designer / Artist / Publisher detected in search input
+  const isBggEntity = query.toLowerCase().includes('boardgamegeek.com/boardgamedesigner') ||
     query.toLowerCase().includes('boardgamegeek.com/boardgameartist') ||
-    /^bgg:(?:designer|artist):\d+/i.test(query);
-  if (isBggDesigner) {
+    query.toLowerCase().includes('boardgamegeek.com/boardgamepublisher') ||
+    /^bgg:(?:designer|artist|publisher):\d+/i.test(query);
+  if (isBggEntity) {
+    const isPub = query.toLowerCase().includes('publisher');
+    const isArt = query.toLowerCase().includes('artist');
+    const roleTitlePt = isPub ? 'da Editora' : (isArt ? 'do Artista' : 'do Designer');
+    const roleBadge = isPub ? 'BGG Publisher' : (isArt ? 'BGG Artist' : 'BGG Designer');
+    const roleDesc = isPub ? 'os jogos da editora' : (isArt ? 'os jogos do artista' : 'os jogos do autor');
+    const icon = isPub ? '🏢' : (isArt ? '🎨' : '🎲');
+
     if (spinner) spinner.style.display = 'none';
     dropdown.innerHTML = `
       <div class="search-result-item" style="background:rgba(233, 200, 117, 0.15); border-left:3px solid var(--brass);">
-        <div class="search-result-thumb" style="display:flex;align-items:center;justify-content:center;background:#2a1b0c;color:var(--brass-bright);font-size:1.3rem;">🎲</div>
+        <div class="search-result-thumb" style="display:flex;align-items:center;justify-content:center;background:#2a1b0c;color:var(--brass-bright);font-size:1.3rem;">${icon}</div>
         <div class="search-result-info">
-          <div class="search-result-title" style="color:var(--brass-bright);">Importar Jogos do Designer (BGG)</div>
-          <div class="search-result-meta"><span class="source-badge bgg">BGG Designer</span> Clique para carregar os jogos do autor</div>
+          <div class="search-result-title" style="color:var(--brass-bright);">Importar Jogos ${roleTitlePt} (BGG)</div>
+          <div class="search-result-meta"><span class="source-badge bgg">${roleBadge}</span> Clique para carregar ${roleDesc}</div>
         </div>
         <button class="search-result-add-btn">📥</button>
       </div>
@@ -7035,7 +7043,7 @@ async function performSearch(query) {
     dropdown.classList.add('visible');
     dropdown.querySelector('.search-result-item').onclick = async () => {
       if (spinner) spinner.style.display = 'block';
-      dropdown.innerHTML = `<div class="search-result-status">Carregando jogos do designer no BGG...</div>`;
+      dropdown.innerHTML = `<div class="search-result-status">Carregando jogos ${roleTitlePt} no BGG...</div>`;
       try {
         const payload = await fetchBggDesignerGames(query.trim());
         dropdown.classList.remove('visible');
@@ -7043,7 +7051,7 @@ async function performSearch(query) {
         document.getElementById('searchClearBtn').style.display = 'none';
         openImportCollectionModal(payload);
       } catch (err) {
-        alert('Erro ao importar jogos do designer BGG: ' + (err.message || err));
+        alert('Erro ao importar jogos do BGG: ' + (err.message || err));
       } finally {
         if (spinner) spinner.style.display = 'none';
       }
@@ -9883,17 +9891,23 @@ async function fetchLudopediaGroupAcervo(urlOrId) {
 }
 
 async function fetchBggDesignerGames(urlOrId) {
-  if (!urlOrId) throw new Error(currentLang === 'en' ? 'Designer link or ID not provided.' : 'Link ou ID do designer não informado.');
+  if (!urlOrId) throw new Error(currentLang === 'en' ? 'BGG link or ID not provided.' : 'Link ou ID do BGG não informado.');
   const str = String(urlOrId).trim();
-  const m = str.match(/boardgame(?:designer|artist)\/(\d+)/i) || str.match(/(?:bgg:)?(?:designer:|artist:)?(\d+)/i);
-  if (!m) throw new Error(currentLang === 'en' ? 'BGG designer ID not found in link.' : 'ID do designer no BGG não encontrado no link.');
-  const designerId = m[1];
-  const role = (str.includes('boardgameartist') || str.includes('artist')) ? 'boardgameartist' : 'boardgamedesigner';
+  const m = str.match(/boardgame(?:designer|artist|publisher)\/(\d+)/i) || str.match(/(?:bgg:)?(?:designer:|artist:|publisher:)?(\d+)/i);
+  if (!m) throw new Error(currentLang === 'en' ? 'BGG ID not found in link.' : 'ID do BGG não encontrado no link.');
+  const entityId = m[1];
+  const isPublisher = str.includes('boardgamepublisher') || str.includes('publisher');
+  const isArtist = str.includes('boardgameartist') || str.includes('artist');
 
-  // Step 1: Initial parallel fetch - person details, catalog page 1, expansions page 1
-  const personUrl = `https://r.jina.ai/https://api.geekdo.com/api/geekitems?objectid=${designerId}&objecttype=person`;
-  const catalogP1Url = `https://r.jina.ai/https://api.geekdo.com/api/geekitem/linkeditems?objectid=${designerId}&objecttype=person&linkdata_index=${role}&pageid=1&showcount=50`;
-  const expP1Url = `https://r.jina.ai/https://api.geekdo.com/api/geekitem/linkeditems?objectid=${designerId}&objecttype=person&linkdata_index=${role}&pageid=1&showcount=50&categoryfilter=1042`;
+  const objecttype = isPublisher ? 'company' : 'person';
+  const role = isPublisher ? 'boardgame' : (isArtist ? 'boardgameartist' : 'boardgamedesigner');
+  const roleLabel = isPublisher ? 'Publisher' : (isArtist ? 'Artist' : 'Designer');
+  const roleLabelPt = isPublisher ? 'Editora' : (isArtist ? 'Artista' : 'Designer');
+
+  // Step 1: Initial parallel fetch - entity details, catalog page 1, expansions page 1
+  const personUrl = `https://r.jina.ai/https://api.geekdo.com/api/geekitems?objectid=${entityId}&objecttype=${objecttype}`;
+  const catalogP1Url = `https://r.jina.ai/https://api.geekdo.com/api/geekitem/linkeditems?objectid=${entityId}&objecttype=${objecttype}&linkdata_index=${role}&pageid=1&showcount=50`;
+  const expP1Url = `https://r.jina.ai/https://api.geekdo.com/api/geekitem/linkeditems?objectid=${entityId}&objecttype=${objecttype}&linkdata_index=${role}&pageid=1&showcount=50&categoryfilter=1042`;
 
   const [personRes, p1Res, exp1Res] = await Promise.allSettled([
     fetch(personUrl),
@@ -9901,7 +9915,7 @@ async function fetchBggDesignerGames(urlOrId) {
     fetch(expP1Url)
   ]);
 
-  let designerName = `Designer #${designerId}`;
+  let entityName = `${roleLabel} #${entityId}`;
   let fallbackLinks = [];
 
   if (personRes.status === 'fulfilled' && personRes.value.ok) {
@@ -9910,8 +9924,8 @@ async function fetchBggDesignerGames(urlOrId) {
       const idx = pText.indexOf('{"item":');
       if (idx !== -1) {
         const pData = JSON.parse(pText.slice(idx));
-        if (pData.item?.name) designerName = pData.item.name;
-        fallbackLinks = pData.item?.links?.[role] || pData.item?.links?.boardgamedesigner || pData.item?.links?.boardgameartist || [];
+        if (pData.item?.name) entityName = pData.item.name;
+        fallbackLinks = pData.item?.links?.[role] || pData.item?.links?.boardgame || pData.item?.links?.boardgamedesigner || pData.item?.links?.boardgameartist || [];
       }
     } catch (_) {}
   }
@@ -9978,7 +9992,7 @@ async function fetchBggDesignerGames(urlOrId) {
                 for (let i = 0; i < expPageNums.length; i += 3) {
                   const chunk = expPageNums.slice(i, i + 3);
                   const expChunks = await Promise.all(chunk.map(ep =>
-                    fetchBggGeekitemJson(`https://api.geekdo.com/api/geekitem/linkeditems?objectid=${designerId}&objecttype=person&linkdata_index=${role}&pageid=${ep}&showcount=50&categoryfilter=1042`)
+                    fetchBggGeekitemJson(`https://api.geekdo.com/api/geekitem/linkeditems?objectid=${entityId}&objecttype=${objecttype}&linkdata_index=${role}&pageid=${ep}&showcount=50&categoryfilter=1042`)
                   ));
                   expChunks.forEach((d, idx) => {
                     if (d && Array.isArray(d.items)) {
@@ -9992,7 +10006,7 @@ async function fetchBggDesignerGames(urlOrId) {
                 if (failedExpPages.length > 0) {
                   await new Promise(r => setTimeout(r, 800));
                   for (const ep of failedExpPages) {
-                    const d = await fetchBggGeekitemJson(`https://api.geekdo.com/api/geekitem/linkeditems?objectid=${designerId}&objecttype=person&linkdata_index=${role}&pageid=${ep}&showcount=50&categoryfilter=1042`, 3);
+                    const d = await fetchBggGeekitemJson(`https://api.geekdo.com/api/geekitem/linkeditems?objectid=${entityId}&objecttype=${objecttype}&linkdata_index=${role}&pageid=${ep}&showcount=50&categoryfilter=1042`, 3);
                     if (d && Array.isArray(d.items)) {
                       d.items.forEach(it => expansionIds.add(Number(it.objectid)));
                     }
@@ -10012,7 +10026,7 @@ async function fetchBggDesignerGames(urlOrId) {
           for (let i = 0; i < remainingPages.length; i += 3) {
             const chunk = remainingPages.slice(i, i + 3);
             const chunkResults = await Promise.all(chunk.map(p =>
-              fetchBggGeekitemJson(`https://api.geekdo.com/api/geekitem/linkeditems?objectid=${designerId}&objecttype=person&linkdata_index=${role}&pageid=${p}&showcount=50`)
+              fetchBggGeekitemJson(`https://api.geekdo.com/api/geekitem/linkeditems?objectid=${entityId}&objecttype=${objecttype}&linkdata_index=${role}&pageid=${p}&showcount=50`)
             ));
             chunkResults.forEach((d, idx) => {
               if (d && Array.isArray(d.items)) {
@@ -10030,7 +10044,7 @@ async function fetchBggDesignerGames(urlOrId) {
           if (failedPages.length > 0) {
             await new Promise(r => setTimeout(r, 1000));
             for (const p of failedPages) {
-              const d = await fetchBggGeekitemJson(`https://api.geekdo.com/api/geekitem/linkeditems?objectid=${designerId}&objecttype=person&linkdata_index=${role}&pageid=${p}&showcount=50`, 3);
+              const d = await fetchBggGeekitemJson(`https://api.geekdo.com/api/geekitem/linkeditems?objectid=${entityId}&objecttype=${objecttype}&linkdata_index=${role}&pageid=${p}&showcount=50`, 3);
               if (d && Array.isArray(d.items)) {
                 allRawItems.push(...d.items);
               }
@@ -10060,7 +10074,8 @@ async function fetchBggDesignerGames(urlOrId) {
         bggId,
         image: cover,
         year: it.yearpublished || '',
-        designer: designerName,
+        designer: isPublisher ? '' : entityName,
+        publisher: isPublisher ? entityName : '',
         artist: '',
         category: '',
         domain: '',
@@ -10091,7 +10106,8 @@ async function fetchBggDesignerGames(urlOrId) {
         bggId,
         image: '',
         year: '',
-        designer: designerName,
+        designer: isPublisher ? '' : entityName,
+        publisher: isPublisher ? entityName : '',
         artist: '',
         category: '',
         domain: '',
@@ -10137,8 +10153,8 @@ async function fetchBggDesignerGames(urlOrId) {
 
   if (gameMap.size === 0) {
     throw new Error(currentLang === 'en'
-      ? `No games linked to designer "${designerName}" on BGG.`
-      : `Nenhum jogo vinculado encontrado para o designer "${designerName}" no BGG.`);
+      ? `No games linked to ${roleLabel.toLowerCase()} "${entityName}" on BGG.`
+      : `Nenhum jogo vinculado encontrado para ${roleLabelPt.toLowerCase()} "${entityName}" no BGG.`);
   }
 
   // Check if any games lack cover images (rare, <1%) and enrich only those in small batches
@@ -10160,8 +10176,8 @@ async function fetchBggDesignerGames(urlOrId) {
   const expansions = allGames.filter(g => g.isExpansion);
 
   return {
-    fileName: `${designerName} (BGG ${role === 'boardgameartist' ? 'Artist' : 'Designer'})`,
-    sourceLabel: `BGG ${role === 'boardgameartist' ? 'Artist' : 'Designer'}`,
+    fileName: `${entityName} (BGG ${roleLabel})`,
+    sourceLabel: `BGG ${roleLabel}`,
     badgeClass: 'bgg',
     allGames,
     baseGames: baseGames.length > 0 ? baseGames : allGames,
@@ -10266,22 +10282,26 @@ async function executeOnlineImportFromInput() {
     return;
   }
 
-  // 1c. BGG Designer / Artist
-  if (raw.toLowerCase().includes('boardgamedesigner') || raw.toLowerCase().includes('boardgameartist') || /^bgg:(?:designer|artist):/i.test(raw)) {
+  // 1c. BGG Designer / Artist / Publisher
+  if (raw.toLowerCase().includes('boardgamedesigner') || raw.toLowerCase().includes('boardgameartist') || raw.toLowerCase().includes('boardgamepublisher') || /^bgg:(?:designer|artist|publisher):/i.test(raw)) {
     try {
       if (btn) btn.disabled = true;
+      const isPub = raw.toLowerCase().includes('publisher');
+      const isArt = raw.toLowerCase().includes('artist');
+      const rolePt = isPub ? 'da editora' : (isArt ? 'do artista' : 'do designer');
+      const roleEn = isPub ? 'publisher' : (isArt ? 'artist' : 'designer');
       if (spinner) {
         spinner.style.display = 'flex';
         if (statusText) statusText.textContent = currentLang === 'en'
-          ? 'Connecting to BGG and loading designer games...'
-          : 'Conectando ao BGG e carregando jogos do designer...';
+          ? `Connecting to BGG and loading ${roleEn} games...`
+          : `Conectando ao BGG e carregando jogos ${rolePt}...`;
       }
       const payload = await fetchBggDesignerGames(raw);
       closeModal('importSourceModal');
       openImportCollectionModal(payload);
     } catch (err) {
-      console.error('Erro ao importar jogos do designer BGG:', err);
-      alert(err.message || 'Erro ao consultar jogos do designer no BGG.');
+      console.error('Erro ao importar jogos do BGG:', err);
+      alert(err.message || 'Erro ao consultar jogos no BGG.');
     } finally {
       if (btn) btn.disabled = false;
       if (spinner) spinner.style.display = 'none';
@@ -12617,9 +12637,13 @@ async function importUniversalSourceToTournament(query, options = {}) {
       items = listData.items;
       sourceLabel = listData.title || 'Ludopedia Lista';
     }
-    // 1c. BGG Designer / Artist
-    else if (raw.toLowerCase().includes('boardgamedesigner') || raw.toLowerCase().includes('boardgameartist') || /^bgg:(?:designer|artist):/i.test(raw)) {
-      showToast(currentLang === 'en' ? 'Fetching BGG designer games...' : 'Consultando jogos do designer no BGG...');
+    // 1c. BGG Designer / Artist / Publisher
+    else if (raw.toLowerCase().includes('boardgamedesigner') || raw.toLowerCase().includes('boardgameartist') || raw.toLowerCase().includes('boardgamepublisher') || /^bgg:(?:designer|artist|publisher):/i.test(raw)) {
+      const isPub = raw.toLowerCase().includes('publisher');
+      const isArt = raw.toLowerCase().includes('artist');
+      const rolePt = isPub ? 'da editora' : (isArt ? 'do artista' : 'do designer');
+      const roleEn = isPub ? 'publisher' : (isArt ? 'artist' : 'designer');
+      showToast(currentLang === 'en' ? `Fetching BGG ${roleEn} games...` : `Consultando jogos ${rolePt} no BGG...`);
       const payload = await fetchBggDesignerGames(raw);
       openImportCollectionModal(payload);
       return;
