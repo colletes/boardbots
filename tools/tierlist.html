@@ -9888,85 +9888,271 @@ async function fetchBggDesignerGames(urlOrId) {
   const m = str.match(/boardgame(?:designer|artist)\/(\d+)/i) || str.match(/(?:bgg:)?(?:designer:|artist:)?(\d+)/i);
   if (!m) throw new Error(currentLang === 'en' ? 'BGG designer ID not found in link.' : 'ID do designer no BGG não encontrado no link.');
   const designerId = m[1];
+  const role = (str.includes('boardgameartist') || str.includes('artist')) ? 'boardgameartist' : 'boardgamedesigner';
 
-  const jinaUrl = `https://r.jina.ai/https://api.geekdo.com/api/geekitems?objectid=${designerId}&objecttype=person`;
-  const res = await fetch(jinaUrl);
-  if (!res.ok) {
-    throw new Error(currentLang === 'en'
-      ? `Failed to load designer from BGG (HTTP ${res.status}).`
-      : `Falha ao carregar designer do BGG (HTTP ${res.status}).`);
-  }
-  const text = await res.text();
-  const jsonStart = text.indexOf('{"item":');
-  if (jsonStart === -1) {
-    throw new Error(currentLang === 'en'
-      ? 'No data returned for this designer on BGG.'
-      : 'Nenhum dado retornado para este designer no BGG.');
-  }
-  const data = JSON.parse(text.slice(jsonStart));
+  // Step 1: Initial parallel fetch - person details, catalog page 1, expansions page 1
+  const personUrl = `https://r.jina.ai/https://api.geekdo.com/api/geekitems?objectid=${designerId}&objecttype=person`;
+  const catalogP1Url = `https://r.jina.ai/https://api.geekdo.com/api/geekitem/linkeditems?objectid=${designerId}&objecttype=person&linkdata_index=${role}&pageid=1&showcount=50`;
+  const expP1Url = `https://r.jina.ai/https://api.geekdo.com/api/geekitem/linkeditems?objectid=${designerId}&objecttype=person&linkdata_index=${role}&pageid=1&showcount=50&categoryfilter=1042`;
 
-  const designerName = data.item.name || (`Designer #${designerId}`);
-  const rawLinks = data.item.links?.boardgamedesigner || data.item.links?.boardgameartist || [];
-  if (!Array.isArray(rawLinks) || rawLinks.length === 0) {
+  const [personRes, p1Res, exp1Res] = await Promise.allSettled([
+    fetch(personUrl),
+    fetch(catalogP1Url),
+    fetch(expP1Url)
+  ]);
+
+  let designerName = `Designer #${designerId}`;
+  let fallbackLinks = [];
+
+  if (personRes.status === 'fulfilled' && personRes.value.ok) {
+    try {
+      const pText = await personRes.value.text();
+      const idx = pText.indexOf('{"item":');
+      if (idx !== -1) {
+        const pData = JSON.parse(pText.slice(idx));
+        if (pData.item?.name) designerName = pData.item.name;
+        fallbackLinks = pData.item?.links?.[role] || pData.item?.links?.boardgamedesigner || pData.item?.links?.boardgameartist || [];
+      }
+    } catch (_) {}
+  }
+
+  const allRawItems = [];
+  const expansionIds = new Set();
+
+  async function fetchBggGeekitemJson(targetUrl, maxRetries = 2) {
+    const jinaUrl = `https://r.jina.ai/${targetUrl}`;
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        const res = await fetch(jinaUrl);
+        const txt = await res.text();
+        const idx = txt.indexOf('{"items":');
+        if (idx !== -1) {
+          return JSON.parse(txt.slice(idx));
+        }
+        if (txt.includes('RateLimitTriggeredError') || res.status === 429) {
+          let waitMs = 1200;
+          try {
+            const errData = JSON.parse(txt);
+            if (errData.retryAfter) waitMs = (errData.retryAfter + 0.3) * 1000;
+          } catch (_) {}
+          await new Promise(r => setTimeout(r, waitMs));
+          continue;
+        }
+        return null;
+      } catch (e) {
+        if (attempt === maxRetries) return null;
+        await new Promise(r => setTimeout(r, 600));
+      }
+    }
+    return null;
+  }
+
+  if (p1Res.status === 'fulfilled' && p1Res.value.ok) {
+    try {
+      const p1Text = await p1Res.value.text();
+      const p1Idx = p1Text.indexOf('{"items":');
+      if (p1Idx !== -1) {
+        const p1Data = JSON.parse(p1Text.slice(p1Idx));
+        if (Array.isArray(p1Data.items)) {
+          allRawItems.push(...p1Data.items);
+        }
+        const totalItems = p1Data.config?.numitems || p1Data.items?.length || 0;
+        const totalPages = Math.min(Math.ceil(totalItems / 50), 30); // Up to 1500 items
+
+        // Process expansions page 1 and fetch remaining expansion pages
+        if (exp1Res.status === 'fulfilled' && exp1Res.value.ok) {
+          try {
+            const exp1Text = await exp1Res.value.text();
+            const exp1Idx = exp1Text.indexOf('{"items":');
+            if (exp1Idx !== -1) {
+              const exp1Data = JSON.parse(exp1Text.slice(exp1Idx));
+              if (Array.isArray(exp1Data.items)) {
+                exp1Data.items.forEach(it => expansionIds.add(Number(it.objectid)));
+              }
+              const totalExp = exp1Data.config?.numitems || 0;
+              const totalExpPages = Math.min(Math.ceil(totalExp / 50), 10);
+              if (totalExpPages > 1) {
+                const expPageNums = [];
+                for (let ep = 2; ep <= totalExpPages; ep++) expPageNums.push(ep);
+                const failedExpPages = [];
+                for (let i = 0; i < expPageNums.length; i += 3) {
+                  const chunk = expPageNums.slice(i, i + 3);
+                  const expChunks = await Promise.all(chunk.map(ep =>
+                    fetchBggGeekitemJson(`https://api.geekdo.com/api/geekitem/linkeditems?objectid=${designerId}&objecttype=person&linkdata_index=${role}&pageid=${ep}&showcount=50&categoryfilter=1042`)
+                  ));
+                  expChunks.forEach((d, idx) => {
+                    if (d && Array.isArray(d.items)) {
+                      d.items.forEach(it => expansionIds.add(Number(it.objectid)));
+                    } else {
+                      failedExpPages.push(chunk[idx]);
+                    }
+                  });
+                  if (i + 3 < expPageNums.length) await new Promise(r => setTimeout(r, 200));
+                }
+                if (failedExpPages.length > 0) {
+                  await new Promise(r => setTimeout(r, 800));
+                  for (const ep of failedExpPages) {
+                    const d = await fetchBggGeekitemJson(`https://api.geekdo.com/api/geekitem/linkeditems?objectid=${designerId}&objecttype=person&linkdata_index=${role}&pageid=${ep}&showcount=50&categoryfilter=1042`, 3);
+                    if (d && Array.isArray(d.items)) {
+                      d.items.forEach(it => expansionIds.add(Number(it.objectid)));
+                    }
+                  }
+                }
+              }
+            }
+          } catch (_) {}
+        }
+
+        // Fetch remaining catalog pages in batches of 3 with slight spacing to avoid rate limits
+        if (totalPages > 1) {
+          const remainingPages = [];
+          for (let p = 2; p <= totalPages; p++) remainingPages.push(p);
+
+          const failedPages = [];
+          for (let i = 0; i < remainingPages.length; i += 3) {
+            const chunk = remainingPages.slice(i, i + 3);
+            const chunkResults = await Promise.all(chunk.map(p =>
+              fetchBggGeekitemJson(`https://api.geekdo.com/api/geekitem/linkeditems?objectid=${designerId}&objecttype=person&linkdata_index=${role}&pageid=${p}&showcount=50`)
+            ));
+            chunkResults.forEach((d, idx) => {
+              if (d && Array.isArray(d.items)) {
+                allRawItems.push(...d.items);
+              } else {
+                failedPages.push(chunk[idx]);
+              }
+            });
+            if (i + 3 < remainingPages.length) {
+              await new Promise(r => setTimeout(r, 250));
+            }
+          }
+
+          // Single retry pass for any pages that failed due to rate limits
+          if (failedPages.length > 0) {
+            await new Promise(r => setTimeout(r, 1000));
+            for (const p of failedPages) {
+              const d = await fetchBggGeekitemJson(`https://api.geekdo.com/api/geekitem/linkeditems?objectid=${designerId}&objecttype=person&linkdata_index=${role}&pageid=${p}&showcount=50`, 3);
+              if (d && Array.isArray(d.items)) {
+                allRawItems.push(...d.items);
+              }
+            }
+          }
+        }
+      }
+    } catch (errP1) {
+      console.warn('Erro ao paginar linkeditems do BGG, utilizando fallback:', errP1);
+    }
+  }
+
+  const gameMap = new Map();
+
+  if (allRawItems.length > 0) {
+    for (const it of allRawItems) {
+      const bggId = Number(it.objectid);
+      if (!bggId || gameMap.has(bggId)) continue;
+      const isExp = expansionIds.has(bggId) || it.subtype === 'boardgameexpansion';
+      const cover = it.images?.original || it.images?.previewthumb || it.images?.thumb || '';
+      const bggScore = it.average ? Number(Number(it.average).toFixed(2)) : null;
+      const bggRank = it.rank && it.rank !== '0' ? Number(it.rank) : null;
+      const bggWeight = it.avgweight && it.avgweight !== '0' ? Number(Number(it.avgweight).toFixed(2)) : null;
+
+      gameMap.set(bggId, {
+        title: it.name,
+        bggId,
+        image: cover,
+        year: it.yearpublished || '',
+        designer: designerName,
+        artist: '',
+        category: '',
+        domain: '',
+        mechanics: '',
+        players: '',
+        time: '',
+        plays: 0,
+        score: null,
+        userRating: null,
+        bggScore,
+        bggRank,
+        bggSubranks: [],
+        bggWeight,
+        isExpansion: isExp,
+        link: it.href ? (`https://boardgamegeek.com${it.href}`) : (`https://boardgamegeek.com/boardgame/${bggId}`),
+        bggLink: it.href ? (`https://boardgamegeek.com${it.href}`) : (`https://boardgamegeek.com/boardgame/${bggId}`),
+        source: 'bgg',
+        fl_tem: 1
+      });
+    }
+  } else if (fallbackLinks.length > 0) {
+    // Graceful fallback to first 100 links from geekitems
+    for (const l of fallbackLinks) {
+      const bggId = Number(l.objectid);
+      if (!bggId || gameMap.has(bggId)) continue;
+      gameMap.set(bggId, {
+        title: l.name,
+        bggId,
+        image: '',
+        year: '',
+        designer: designerName,
+        artist: '',
+        category: '',
+        domain: '',
+        mechanics: '',
+        players: '',
+        time: '',
+        plays: 0,
+        score: null,
+        userRating: null,
+        bggScore: null,
+        bggRank: null,
+        bggSubranks: [],
+        bggWeight: null,
+        isExpansion: false,
+        link: l.canonical_link || (`https://boardgamegeek.com/boardgame/${bggId}`),
+        bggLink: l.canonical_link || (`https://boardgamegeek.com/boardgame/${bggId}`),
+        source: 'bgg',
+        fl_tem: 1
+      });
+    }
+
+    // Enrich fallback items via XMLAPI2
+    const bggIds = Array.from(gameMap.keys());
+    try {
+      const enriched = await fetchBggThings(bggIds);
+      enriched.forEach(t => {
+        if (t && t.bggId) {
+          const g = gameMap.get(Number(t.bggId));
+          if (g) {
+            if (t.image) g.image = t.image;
+            if (t.year) g.year = t.year;
+            if (t.isExpansion !== undefined) g.isExpansion = t.isExpansion;
+            if (t.bggScore) g.bggScore = t.bggScore;
+            if (t.bggRank) g.bggRank = t.bggRank;
+            if (t.bggWeight) g.bggWeight = t.bggWeight;
+          }
+        }
+      });
+    } catch (errEnrich) {
+      console.warn('Erro ao enriquecer dados dos jogos via fallback:', errEnrich);
+    }
+  }
+
+  if (gameMap.size === 0) {
     throw new Error(currentLang === 'en'
       ? `No games linked to designer "${designerName}" on BGG.`
       : `Nenhum jogo vinculado encontrado para o designer "${designerName}" no BGG.`);
   }
 
-  const gameMap = new Map();
-  for (const l of rawLinks) {
-    const bggId = Number(l.objectid);
-    if (!bggId) continue;
-    gameMap.set(bggId, {
-      title: l.name,
-      bggId,
-      image: '',
-      year: '',
-      designer: designerName,
-      artist: '',
-      category: '',
-      domain: '',
-      mechanics: '',
-      players: '',
-      time: '',
-      plays: 0,
-      score: null,
-      userRating: null,
-      bggScore: null,
-      bggRank: null,
-      bggSubranks: [],
-      bggWeight: null,
-      isExpansion: false,
-      link: l.canonical_link || (`https://boardgamegeek.com/boardgame/${bggId}`),
-      bggLink: l.canonical_link || (`https://boardgamegeek.com/boardgame/${bggId}`),
-      source: 'bgg',
-      fl_tem: 1
-    });
-  }
-
-  // Enrich with images, year, stats and expansion classification via fetchBggThings
-  const bggIds = Array.from(gameMap.keys());
-  try {
-    const enrichedThings = await fetchBggThings(bggIds);
-    enrichedThings.forEach(t => {
-      if (t && t.bggId) {
-        const g = gameMap.get(Number(t.bggId));
-        if (g) {
-          if (t.image) g.image = t.image;
-          if (t.year) g.year = t.year;
-          if (t.isExpansion !== undefined) g.isExpansion = t.isExpansion;
-          if (t.bggScore) g.bggScore = t.bggScore;
-          if (t.bggRank) g.bggRank = t.bggRank;
-          if (t.bggWeight) g.bggWeight = t.bggWeight;
-          if (t.players) g.players = t.players;
-          if (t.time) g.time = t.time;
-          if (t.category) g.category = t.category;
-          if (t.mechanics) g.mechanics = t.mechanics;
+  // Check if any games lack cover images (rare, <1%) and enrich only those in small batches
+  const missingCoverIds = Array.from(gameMap.values()).filter(g => !g.image).map(g => g.bggId).slice(0, 40);
+  if (missingCoverIds.length > 0) {
+    try {
+      const enrichedMissing = await fetchBggThings(missingCoverIds);
+      enrichedMissing.forEach(t => {
+        if (t && t.bggId && t.image) {
+          const g = gameMap.get(Number(t.bggId));
+          if (g) g.image = t.image;
         }
-      }
-    });
-  } catch (errEnrich) {
-    console.warn('Erro ao enriquecer dados dos jogos do designer BGG:', errEnrich);
+      });
+    } catch (_) {}
   }
 
   const allGames = Array.from(gameMap.values());
@@ -9974,8 +10160,8 @@ async function fetchBggDesignerGames(urlOrId) {
   const expansions = allGames.filter(g => g.isExpansion);
 
   return {
-    fileName: `${designerName} (BGG Designer)`,
-    sourceLabel: 'BGG Designer',
+    fileName: `${designerName} (BGG ${role === 'boardgameartist' ? 'Artist' : 'Designer'})`,
+    sourceLabel: `BGG ${role === 'boardgameartist' ? 'Artist' : 'Designer'}`,
     badgeClass: 'bgg',
     allGames,
     baseGames: baseGames.length > 0 ? baseGames : allGames,

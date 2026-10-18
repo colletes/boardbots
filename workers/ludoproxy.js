@@ -204,7 +204,7 @@ export default {
       let bggTarget;
       if (bggPath.startsWith('/geeklist/')) {
         bggTarget = new URL('https://boardgamegeek.com/xmlapi' + bggPath + url.search);
-      } else if (bggPath.startsWith('/geeklists/') || bggPath.startsWith('/listitems/') || bggPath.startsWith('/images/')) {
+      } else if (bggPath.startsWith('/geeklists/') || bggPath.startsWith('/listitems/') || bggPath.startsWith('/images/') || bggPath.startsWith('/geekitem') || bggPath.startsWith('/geekitems')) {
         bggTarget = new URL('https://api.geekdo.com/api' + bggPath + url.search);
       } else {
         bggTarget = new URL(BGG_API_BASE + bggPath + url.search);
@@ -212,7 +212,7 @@ export default {
 
       const bggHeaders = {
         'User-Agent': 'TierListGen/1.0 (+https://boardbots.online)',
-        'Accept': bggPath.startsWith('/geeklists/') || bggPath.startsWith('/listitems/') || bggPath.startsWith('/images/')
+        'Accept': bggPath.startsWith('/geeklists/') || bggPath.startsWith('/listitems/') || bggPath.startsWith('/images/') || bggPath.startsWith('/geekitem') || bggPath.startsWith('/geekitems')
           ? 'application/json'
           : 'application/xml, text/xml'
       };
