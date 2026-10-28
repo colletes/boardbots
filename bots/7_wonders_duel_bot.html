@@ -388,6 +388,8 @@
       font-weight: 600;
       border: 1px solid transparent;
     }
+    .tag-green { background: var(--green-soft); color: #4ade80; border-color: rgba(34, 197, 94, 0.3); }
+    .tag-red { background: var(--red-soft); color: #f87171; border-color: rgba(239, 68, 68, 0.3); }
     .tag-purple { background: var(--purple-soft); color: var(--purple); border-color: rgba(168, 85, 247, 0.3); }
     .tag-grey { background: var(--grey-soft); color: var(--grey); border-color: rgba(148, 163, 184, 0.3); }
     .tag-yellow { background: var(--yellow-soft); color: var(--yellow); border-color: rgba(234, 179, 8, 0.3); }
@@ -679,25 +681,39 @@
       display: flex;
       align-items: center;
       gap: 6px;
-      padding: 6px 12px;
+      padding: 6px 14px;
       border-radius: 20px;
       font-size: 0.85rem;
       font-weight: 700;
       border: 1px solid transparent;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
     }
+    .priority-item.tag-green { background: #15803d; color: #ffffff; border-color: rgba(34, 197, 94, 0.5); }
+    .priority-item.tag-red { background: #b91c1c; color: #ffffff; border-color: rgba(239, 68, 68, 0.5); }
+    .priority-item.tag-purple { background: #7e22ce; color: #ffffff; border-color: rgba(168, 85, 247, 0.5); }
+    .priority-item.tag-grey { background: #475569; color: #ffffff; border-color: rgba(148, 163, 184, 0.5); }
+    .priority-item.tag-yellow { background: #b45309; color: #ffffff; border-color: rgba(234, 179, 8, 0.5); }
+    .priority-item.tag-brown { background: #78350f; color: #ffffff; border-color: rgba(180, 83, 9, 0.5); }
+    .priority-item.tag-blue { background: #1d4ed8; color: #ffffff; border-color: rgba(59, 130, 246, 0.5); }
     .priority-arrow {
-      color: var(--text-muted);
-      font-size: 0.9rem;
+      color: var(--accent);
+      font-size: 0.95rem;
+      font-weight: bold;
     }
 
     .fallback-info {
       font-size: 0.82rem;
-      color: var(--text-dim);
+      color: var(--text);
       background: var(--surface-2);
-      padding: 8px 14px;
+      padding: 10px 14px;
       border-radius: var(--radius-sm);
       border: 1px solid var(--border);
       width: 100%;
+      line-height: 1.45;
+      text-align: left;
+    }
+    .fallback-info:empty {
+      display: none;
     }
 
     /* Extra Turn Banner */
@@ -1127,6 +1143,16 @@
           <!-- Fallback text -->
         </div>
 
+        <!-- Turn Action Guide (Accordion like LOTR Duel) -->
+        <details class="card-turn-guide" style="width:100%; text-align:left; background:var(--surface-2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px 14px; margin-top:2px;">
+          <summary style="font-size:0.82rem; font-weight:700; color:var(--accent); display:flex; align-items:center; gap:6px; cursor:pointer;">
+            <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+            <span data-i18n="turnGuideTitle">Como Resolver o Turno do Líder</span>
+          </summary>
+          <div style="font-size:0.8rem; color:var(--text-dim); line-height:1.5; margin-top:8px;" data-i18n-html="turnGuideDesc">
+          </div>
+        </details>
+
         <!-- Action Controls -->
         <div class="action-row">
           <button class="btn-primary" id="flipBtn" onclick="flipNextCard()">
@@ -1516,8 +1542,10 @@
         militaryWinAlert: '⚔️ VITÓRIA POR SUPREMACIA MILITAR! Você invadiu a capital inimiga!',
         militaryLoseAlert: '⚔️ DERROTA POR SUPREMACIA MILITAR! O Líder conquistou a sua capital!',
         scienceLoseAlert: '🔬 DERROTA POR SUPREMACIA CIENTÍFICA! O Líder reuniu 6 símbolos científicos distintos!',
-        scanFallbackLeft: 'Se nenhuma cor disponível: pegue a 1ª carta acessível da <strong>DIREITA para a ESQUERDA (←)</strong> a partir da base.',
-        scanFallbackRight: 'Se nenhuma cor disponível: pegue a 1ª carta acessível da <strong>ESQUERDA para a DIREITA (→)</strong> a partir da base.',
+        scanFallbackLeft: '<strong>Sentido da Varredura:</strong> Direita para a Esquerda (←)<br><span>Se nenhuma das 3 cores prioritárias estiver acessível: pegue a 1ª carta acessível da base seguindo a seta (←).</span>',
+        scanFallbackRight: '<strong>Sentido da Varredura:</strong> Esquerda para a Direita (→)<br><span>Se nenhuma das 3 cores prioritárias estiver acessível: pegue a 1ª carta acessível da base seguindo a seta (→).</span>',
+        turnGuideTitle: 'Como Resolver o Turno do Líder',
+        turnGuideDesc: '<ol style="padding-left:18px; margin:0; display:flex; flex-direction:column; gap:6px;"><li><strong>Varredura da Pirâmide:</strong> Siga a seta da carta (← ou →). O Líder procura a 1ª carta <em>descoberta e acessível</em> da <strong>1ª cor prioritária</strong>. Se não houver, busca a <strong>2ª cor</strong>; se não houver, a <strong>3ª cor</strong>.</li><li><strong>Regra de Fallback:</strong> Se nenhuma das 3 cores prioritárias estiver acessível, pegue a 1ª carta acessível da base no sentido da seta.</li><li><strong>Desempate:</strong> Se houver duas cartas elegíveis da mesma cor no mesmo nível da pirâmide, a mais próxima da ponta de onde a seta se origina tem prioridade estrita.</li><li><strong>Construção Instantânea:</strong> O Líder <em>não paga recursos nem moedas</em>: constrói a carta imediatamente de graça! Aplique escudos (Militar), registre símbolos (Ciência) ou colete PVs.</li><li><strong>Pares Científicos:</strong> Ao juntar o 2º símbolo científico idêntico, o Líder pega 1 Marcador de Progresso disponível.</li><li><strong>Turno Extra (↺):</strong> Se a carta de decisão exibir ↺ (cartas 11 ou 12), o Líder joga um segundo turno em sequência.</li></ol>',
         colorScience: 'Verde (Ciência)',
         colorMilitary: 'Vermelho (Militar)',
         cardCounter: 'Carta {id} de 12',
@@ -1644,8 +1672,10 @@
         militaryWinAlert: '⚔️ MILITARY SUPREMACY VICTORY! You invaded the enemy capital!',
         militaryLoseAlert: '⚔️ MILITARY SUPREMACY DEFEAT! The Leader conquered your capital!',
         scienceLoseAlert: '🔬 SCIENTIFIC SUPREMACY DEFEAT! The Leader collected 6 distinct scientific symbols!',
-        scanFallbackLeft: 'If no priority color available: take 1st accessible card from <strong>RIGHT to LEFT (←)</strong> starting at the base.',
-        scanFallbackRight: 'If no priority color available: take 1st accessible card from <strong>LEFT to RIGHT (→)</strong> starting at the base.',
+        scanFallbackLeft: '<strong>Scan Direction:</strong> Right to Left (←)<br><span>If none of the 3 priority colors are accessible: take the 1st accessible card from the base row following the arrow (←).</span>',
+        scanFallbackRight: '<strong>Scan Direction:</strong> Left to Right (→)<br><span>If none of the 3 priority colors are accessible: take the 1st accessible card from the base row following the arrow (→).</span>',
+        turnGuideTitle: 'How to Resolve the Leader’s Turn',
+        turnGuideDesc: '<ol style="padding-left:18px; margin:0; display:flex; flex-direction:column; gap:6px;"><li><strong>Pyramid Scan:</strong> Follow the card arrow (← or →). The Leader looks for the 1st <em>uncovered and accessible</em> card of the <strong>1st priority color</strong>. If none available, checks the <strong>2nd color</strong>; if none, the <strong>3rd color</strong>.</li><li><strong>Fallback Rule:</strong> If none of the 3 priority colors are accessible, take the 1st accessible card from the base row following the arrow direction.</li><li><strong>Tiebreaker:</strong> If two eligible cards share the same color on the same row of the pyramid, the card closest to where the arrow originates takes strict priority.</li><li><strong>Free Construction:</strong> The Leader <em>pays no coins or resources</em>: builds the card immediately for free! Apply shields (Military), register symbols (Science) or gain VPs.</li><li><strong>Science Pairs:</strong> Upon gathering a 2nd identical scientific symbol, the Leader claims 1 available Progress Token.</li><li><strong>Extra Turn (↺):</strong> If the decision card displays ↺ (cards 11 or 12), the Leader takes a second turn in a row.</li></ol>',
         colorScience: 'Green (Science)',
         colorMilitary: 'Red (Military)',
         cardCounter: 'Card {id} of 12',
@@ -1662,16 +1692,25 @@
       }
     };
 
+    function getStoredLang() {
+      try {
+        return localStorage.getItem(LANG_KEY) || 'pt';
+      } catch (e) {
+        return 'pt';
+      }
+    }
+
     /* ==========================================================
        3. APPLICATION STATE
     ========================================================== */
     let state = {
-      lang: localStorage.getItem(LANG_KEY) || 'pt',
+      lang: getStoredLang(),
       inGame: false,
       selectedLeader: 'caesar',
       deck: [],
       cardIndex: 0,
       currentCard: null,
+      cardResolved: false,
       extraTurnPending: false,
       military: 0, // -9 (Player win) to +9 (Leader win)
       leaderVp: 0,
@@ -1697,7 +1736,9 @@
 
     function setLang(lang) {
       state.lang = lang;
-      localStorage.setItem(LANG_KEY, lang);
+      try {
+        localStorage.setItem(LANG_KEY, lang);
+      } catch (e) {}
       document.getElementById('langPtBtn').classList.toggle('active', lang === 'pt');
       document.getElementById('langEnBtn').classList.toggle('active', lang === 'en');
       applyI18n();
@@ -1705,9 +1746,6 @@
       renderScienceChips();
       if (state.inGame) {
         showGameScreen();
-        if (state.currentCard) {
-          displayActiveCard(state.currentCard);
-        }
       }
       saveState();
     }
@@ -1781,6 +1819,7 @@
       state.inGame = true;
       state.deck = shuffleArray([...DECISION_CARDS]);
       state.cardIndex = 0;
+      state.cardResolved = false;
       // Strategy token pre-built gives Caesar's side +1 shield before the first card is played
       state.military = LEADERS[state.selectedLeader].startMilitary || 0;
       state.leaderVp = LEADERS[state.selectedLeader].endBonus || 0;
@@ -1809,13 +1848,29 @@
       document.getElementById('game-area').style.display = 'flex';
       document.getElementById('resetBtn').style.display = 'flex';
 
-      const leader = LEADERS[state.selectedLeader];
+      const leader = LEADERS[state.selectedLeader] || LEADERS.caesar;
       const isPt = state.lang === 'pt';
       document.getElementById('activeLeaderImg').src = leader.thumb;
       document.getElementById('activeLeaderName').textContent = leader.name;
       document.getElementById('activeLeaderDetails').textContent = `${isPt ? leader.colorNamePt : leader.colorNameEn} • 🏅 ${isPt ? leader.tokensPt : leader.tokensEn}`;
 
       updateUI();
+
+      if (state.currentCard) {
+        displayActiveCard(state.currentCard);
+        if (state.cardResolved) {
+          document.getElementById('flipBtn').style.display = 'inline-flex';
+          document.getElementById('resolveBtn').style.display = 'none';
+        } else {
+          document.getElementById('flipBtn').style.display = 'none';
+          document.getElementById('resolveBtn').style.display = 'inline-flex';
+        }
+      } else {
+        document.getElementById('flipBtn').style.display = 'inline-flex';
+        document.getElementById('resolveBtn').style.display = 'none';
+        document.getElementById('priorityList').innerHTML = '';
+        document.getElementById('fallbackInfo').innerHTML = '';
+      }
     }
 
     function shuffleArray(arr) {
@@ -1830,7 +1885,7 @@
       const notice = document.getElementById('deckNotice');
       notice.style.display = 'none';
 
-      if (state.cardIndex >= state.deck.length) {
+      if (!state.deck || state.deck.length === 0 || state.cardIndex >= state.deck.length) {
         state.deck = shuffleArray([...DECISION_CARDS]);
         state.cardIndex = 0;
         notice.style.display = 'block';
@@ -1840,6 +1895,7 @@
       const card = state.deck[state.cardIndex];
       state.currentCard = card;
       state.cardIndex++;
+      state.cardResolved = false;
 
       displayActiveCard(card);
 
@@ -1849,7 +1905,7 @@
       } else if (firstPriority === 'green') {
         play7wdSfx('7wd/papyrus-scroll', { volume: 0.65 });
       } else if (firstPriority === 'leader') {
-        const leader = LEADERS[state.selectedLeader];
+        const leader = LEADERS[state.selectedLeader] || LEADERS.caesar;
         if (leader.cardColor === 'purple') play7wdSfx('7wd/roman-salute', { volume: 0.65 });
         else if (leader.cardColor === 'grey') play7wdSfx('7wd/marble-sculpt', { volume: 0.65 });
         else if (leader.cardColor === 'blue') play7wdSfx('7wd/greek-kithara', { volume: 0.65 });
@@ -1865,9 +1921,10 @@
     }
 
     function displayActiveCard(card) {
-      const leader = LEADERS[state.selectedLeader];
+      if (!card) return;
+      const leader = LEADERS[state.selectedLeader] || LEADERS.caesar;
       const isPt = state.lang === 'pt';
-      const dict = I18N[state.lang];
+      const dict = I18N[state.lang] || I18N.pt;
 
       // Update card image
       const imgPath = `../assets/art/7wd/decision_cards/dc_${String(card.id).padStart(2, '0')}.webp`;
@@ -1924,6 +1981,7 @@
 
       play7wdSfx('7wd/drachma-pouch', { volume: 0.55 });
       addLog({ type: 'resolved', age: state.currentAge, cardId: card.id, extra: extra });
+      state.cardResolved = true;
 
       if (extra) {
         state.extraTurnPending = false;
@@ -2148,11 +2206,14 @@
     function confirmReset() {
       const dict = I18N[state.lang];
       if (confirm(dict.resetConfirmPrompt)) {
-        localStorage.removeItem(STORAGE_KEY);
+        try {
+          localStorage.removeItem(STORAGE_KEY);
+        } catch (e) {}
         state.inGame = false;
         state.deck = [];
         state.cardIndex = 0;
         state.currentCard = null;
+        state.cardResolved = false;
         showSetupScreen();
         saveState();
       }
@@ -2162,7 +2223,11 @@
        9. LOCAL STORAGE PERSISTENCE
     ========================================================== */
     function saveState() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      } catch (e) {
+        console.warn('Failed to save state to localStorage', e);
+      }
     }
 
     function loadState() {
