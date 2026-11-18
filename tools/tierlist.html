@@ -3328,7 +3328,7 @@ footer {
       <div class="launcher-bottom">
         <div id="arenaCandidateBadge" style="font-weight:700; color:var(--brass-bright);">0 jogos na lista</div>
         <div style="display:flex; gap:10px; flex-wrap:wrap;">
-          <button class="tool-btn" onclick="openImportSourceModal()" data-i18n="btn_import_more">+ Importar (BGG / Games / Filmes / CSV)</button>
+          <button class="tool-btn" onclick="openTournamentImportModal('arena')" data-i18n="btn_import_more">+ Importar (BGG / Games / Filmes / CSV)</button>
           <button class="tool-btn" onclick="copyTournamentShareLink('arena')" style="border-color:var(--brass); color:var(--brass-bright);">
             <span>🔗 Compartilhar Link 1x1</span>
           </button>
@@ -3440,7 +3440,7 @@ footer {
       <div class="launcher-bottom">
         <div id="bracketCandidateBadge" style="font-weight:700; color:var(--brass-bright);">0 competidores prontos</div>
         <div style="display:flex; gap:10px; flex-wrap:wrap;">
-          <button class="tool-btn" onclick="openImportSourceModal()" data-i18n="btn_import_more">+ Importar (BGG / Games / Filmes / CSV)</button>
+          <button class="tool-btn" onclick="openTournamentImportModal('bracket')" data-i18n="btn_import_more">+ Importar (BGG / Games / Filmes / CSV)</button>
           <button class="tool-btn" onclick="copyTournamentShareLink('bracket')" style="border-color:var(--brass); color:var(--brass-bright);">
             <span>🔗 Compartilhar Link da Copa</span>
           </button>
@@ -6983,6 +6983,43 @@ async function performSearch(query) {
     }
   }
 
+  // BGG Collection URL or bgg:username detected in search input
+  const isBggCollectionUrl = (/^bgg:/i.test(query) && !/^bgg:(?:designer|artist|publisher):/i.test(query)) ||
+    (query.toLowerCase().includes('boardgamegeek.com') && (query.toLowerCase().includes('/collection') || query.toLowerCase().includes('/user/')));
+  if (isBggCollectionUrl) {
+    const bggUser = typeof extractBggUsername === 'function' ? extractBggUsername(query) : query.replace(/^bgg:/i, '').trim();
+    if (bggUser) {
+      if (spinner) spinner.style.display = 'none';
+      dropdown.innerHTML = `
+        <div class="search-result-item" style="background:rgba(233, 200, 117, 0.15); border-left:3px solid var(--brass);">
+          <div class="search-result-thumb" style="display:flex;align-items:center;justify-content:center;background:#2a1b0c;color:var(--brass-bright);font-size:1.3rem;">🎲</div>
+          <div class="search-result-info">
+            <div class="search-result-title" style="color:var(--brass-bright);">Importar Coleção BGG (@${escapeHtml(bggUser)})</div>
+            <div class="search-result-meta"><span class="source-badge bgg">BGG</span> Clique para carregar os jogos online</div>
+          </div>
+          <button class="search-result-add-btn">📥</button>
+        </div>
+      `;
+      dropdown.classList.add('visible');
+      dropdown.querySelector('.search-result-item').onclick = async () => {
+        if (spinner) spinner.style.display = 'block';
+        dropdown.innerHTML = `<div class="search-result-status">Consultando coleção de @${escapeHtml(bggUser)} no BGG...</div>`;
+        try {
+          const payload = await fetchBggUserCollection(bggUser);
+          dropdown.classList.remove('visible');
+          document.getElementById('gameSearchInput').value = '';
+          document.getElementById('searchClearBtn').style.display = 'none';
+          openImportCollectionModal(payload);
+        } catch (err) {
+          alert('Erro ao importar coleção do BGG: ' + (err.message || err));
+        } finally {
+          if (spinner) spinner.style.display = 'none';
+        }
+      };
+      return;
+    }
+  }
+
   // Ludopedia Group Acervo detected in search input
   const isLudopediaGroup = query.toLowerCase().includes('ludopedia.com.br/grupo/') || /^(?:ludo:)?grupo:\d+/i.test(query);
   if (isLudopediaGroup) {
@@ -7619,10 +7656,19 @@ function resetTierlist() {
     tiers: defaultTiers(),
     items: {}
   };
+  stagedTournamentContenders = [];
+  contendersManuallyCleared = true;
   initItemSlots();
   document.getElementById('tierlistCustomTitle').value = state.title;
   updateTileSize(88);
   renderBoard();
+  if (typeof renderTournamentContenders === 'function') {
+    renderTournamentContenders('arena');
+    renderTournamentContenders('bracket');
+  }
+  if (typeof updateStudioBadges === 'function') {
+    updateStudioBadges();
+  }
 }
 
 /* =======================================================
@@ -9059,6 +9105,10 @@ function transformRowsToCollection(format, rows, fileName) {
       const bggScore = r.baverage && r.baverage !== 'N/A' && !isNaN(parseFloat(r.baverage)) ? Math.round(parseFloat(r.baverage) * 10) / 10 : null;
       const bggRank = r.rank && r.rank !== 'N/A' && !isNaN(parseInt(r.rank, 10)) ? parseInt(r.rank, 10) : null;
       const bggWeight = r.avgweight && r.avgweight !== 'N/A' && !isNaN(parseFloat(r.avgweight)) ? Math.round(parseFloat(r.avgweight) * 100) / 100 : null;
+      const hasOwnCol = r.own !== undefined && r.own !== '';
+      const own = hasOwnCol ? (String(r.own).trim() === '1' || String(r.own).trim().toLowerCase() === 'true') : true;
+      const wishlist = String(r.wishlist || '').trim() === '1' || String(r.wishlist || '').trim().toLowerCase() === 'true';
+      const wantToPlay = String(r.wanttoplay || '').trim() === '1' || String(r.wanttoplay || '').trim().toLowerCase() === 'true';
 
       if (seenMap.has(dedupKey)) {
         const existing = seenMap.get(dedupKey);
@@ -9068,6 +9118,12 @@ function transformRowsToCollection(format, rows, fileName) {
         if (bggScore != null && existing.bggScore == null) existing.bggScore = bggScore;
         if (bggRank != null && existing.bggRank == null) existing.bggRank = bggRank;
         if (bggWeight != null && existing.bggWeight == null) existing.bggWeight = bggWeight;
+        if (own) {
+          existing.own = true;
+          existing.owned = true;
+        }
+        if (wishlist) existing.wishlist = true;
+        if (wantToPlay) existing.wantToPlay = true;
         return;
       }
 
@@ -9082,6 +9138,10 @@ function transformRowsToCollection(format, rows, fileName) {
         bggScore,
         bggRank,
         bggWeight,
+        own,
+        owned: own,
+        wishlist,
+        wantToPlay,
         link: bggId ? `https://boardgamegeek.com/boardgame/${bggId}` : '',
         bggLink: bggId ? `https://boardgamegeek.com/boardgame/${bggId}` : '',
         isExpansion: isExp,
@@ -9344,10 +9404,10 @@ function importTierlistJson(event) {
   handleAnyImportFile(event);
 }
 
-let currentImportDestination = 'tierlist';
+let currentImportDestination = 'both';
 let currentImportTournamentMode = 'arena';
 
-function openImportSourceModal(destination = 'tierlist', mode = 'arena') {
+function openImportSourceModal(destination = 'both', mode = 'arena') {
   currentImportDestination = destination;
   currentImportTournamentMode = mode;
 
@@ -9371,7 +9431,7 @@ function openImportSourceModal(destination = 'tierlist', mode = 'arena') {
 }
 
 function openTournamentImportModal(mode = 'arena') {
-  openImportSourceModal('tournament', mode);
+  openImportSourceModal('both', mode);
 }
 
 function setOnlineImportExample(val) {
@@ -10334,14 +10394,7 @@ async function executeOnlineImportFromInput() {
 
   // 2. BGG Collection / User
   if (raw.toLowerCase().startsWith('bgg:') || raw.includes('boardgamegeek.com')) {
-    let bggUser = raw.replace(/^bgg:/i, '').trim();
-    if (raw.includes('boardgamegeek.com')) {
-      try {
-        const u = new URL(raw.startsWith('http') ? raw : 'https://' + raw);
-        const match = u.pathname.match(/\/user\/([^/?#]+)/i) || u.searchParams.get('username');
-        if (match) bggUser = (typeof match === 'string' ? match : match[1]).trim();
-      } catch (e) {}
-    }
+    const bggUser = typeof extractBggUsername === 'function' ? extractBggUsername(raw) : raw.replace(/^bgg:/i, '').trim();
     try {
       if (btn) btn.disabled = true;
       if (spinner) {
@@ -10387,33 +10440,56 @@ async function executeOnlineImportFromInput() {
   }
 }
 
-function openImportCollectionModal(payload) {
+function isCollectionGameOwned(g) {
+  if (!g) return false;
+  if (g.own === false || g.owned === false) return false;
+  if (g.fl_tem === 0 || g.fl_tem === '0' || g.fl_tem === false) return false;
+  return true;
+}
+
+function filterCollectionPoolByAttributes(pool, opts) {
+  if (!Array.isArray(pool)) return [];
+  let res = pool;
+  if (opts.onlyOwned) {
+    res = res.filter(g => {
+      const isOwned = isCollectionGameOwned(g);
+      const isWish = opts.includeWishlist && (g.wishlist === true || g.wantToPlay === true || g.fl_quer == 1 || g.fl_favorito == 1);
+      return isOwned || isWish;
+    });
+  } else if (opts.includeWishlist) {
+    res = res.filter(g => (g.wishlist === true || g.wantToPlay === true || g.fl_quer == 1 || g.fl_favorito == 1));
+  }
+  if (opts.onlyRated) {
+    res = res.filter(g => g.score != null && !isNaN(g.score) && g.score > 0);
+  }
+  if (opts.onlyUnplayed) {
+    res = res.filter(g => (!g.plays || g.plays <= 0) && (!g.fl_jogou || g.fl_jogou == 0));
+  }
+  if (opts.onlyPlayed) {
+    res = res.filter(g => (g.plays > 0 || g.fl_jogou == 1 || g.fl_jogou === true));
+  }
+  return res;
+}
+
+function openImportCollectionModal(payload, initialFilters = null) {
   currentImportPayload = payload;
   const modal = document.getElementById('importCollectionModal');
   if (!modal) return;
 
   const badge = document.getElementById('importSourceBadge');
   const fileNameEl = document.getElementById('importFileName');
-  const statsTextEl = document.getElementById('importStatsText');
 
   badge.textContent = payload.sourceLabel || 'Arquivo';
   badge.className = 'source-badge ' + (payload.badgeClass || 'bgg');
   fileNameEl.textContent = payload.fileName || '';
 
-  const total = payload.allGames ? payload.allGames.length : 0;
   const baseCount = payload.baseGames ? payload.baseGames.length : 0;
   const expCount = payload.expansions ? payload.expansions.length : 0;
 
-  const countBaseEl = document.getElementById('importCountBase');
-  const countAllEl = document.getElementById('importCountAll');
-  const countExpEl = document.getElementById('importCountExp');
   const expRadio = document.getElementById('importTypeExp');
   const expRadioLabel = document.getElementById('importTypeExpLabel');
   const baseRadio = document.getElementById('importTypeBase');
-
-  if (countBaseEl) countBaseEl.textContent = baseCount;
-  if (countAllEl) countAllEl.textContent = total;
-  if (countExpEl) countExpEl.textContent = expCount;
+  const allRadio = document.getElementById('importTypeAll');
 
   if (expCount === 0) {
     if (expRadio) expRadio.disabled = true;
@@ -10422,23 +10498,25 @@ function openImportCollectionModal(payload) {
   } else {
     if (expRadio) expRadio.disabled = false;
     if (expRadioLabel) expRadioLabel.style.opacity = '1';
-    if (baseCount === 0 && expCount > 0) {
+    if (initialFilters && initialFilters.includeExpansions) {
+      if (allRadio) allRadio.checked = true;
+    } else if (baseCount === 0 && expCount > 0) {
       if (expRadio) expRadio.checked = true;
     } else {
       if (baseRadio) baseRadio.checked = true;
     }
   }
 
-  if (currentLang === 'en') {
-    statsTextEl.textContent = `${total} games found (${baseCount} base games${expCount > 0 ? `, ${expCount} expansions` : ''})`;
-  } else {
-    statsTextEl.textContent = `${total} jogos encontrados (${baseCount} jogos base${expCount > 0 ? `, ${expCount} expansões` : ''})`;
-  }
-
+  const ownedOpt = document.getElementById('importOptOnlyOwned');
+  if (ownedOpt) ownedOpt.checked = initialFilters && initialFilters.onlyOwned !== undefined ? !!initialFilters.onlyOwned : true;
+  const wishOpt = document.getElementById('importOptWishlist');
+  if (wishOpt) wishOpt.checked = initialFilters ? !!initialFilters.wishlist : false;
+  const ratedOpt = document.getElementById('importOptOnlyRated');
+  if (ratedOpt) ratedOpt.checked = initialFilters ? !!initialFilters.onlyRated : false;
   const unplayedOpt = document.getElementById('importOptOnlyUnplayed');
-  if (unplayedOpt) unplayedOpt.checked = false;
+  if (unplayedOpt) unplayedOpt.checked = initialFilters ? !!initialFilters.onlyUnplayed : false;
   const playedOpt = document.getElementById('importOptOnlyPlayed');
-  if (playedOpt) playedOpt.checked = false;
+  if (playedOpt) playedOpt.checked = initialFilters ? (!initialFilters.onlyUnplayed && !!initialFilters.onlyPlayed) : false;
 
   applyI18n();
   updateImportModalCounts();
@@ -10456,36 +10534,39 @@ function updateImportModalCounts() {
   const onlyUnplayed = document.getElementById('importOptOnlyUnplayed')?.checked;
   const onlyPlayed = document.getElementById('importOptOnlyPlayed')?.checked;
   const summaryEl = document.getElementById('importActionSummary');
+  const statsTextEl = document.getElementById('importStatsText');
+
+  const filterOpts = { onlyOwned, includeWishlist, onlyRated, onlyUnplayed, onlyPlayed };
+  const rawAll = currentImportPayload.allGames || [];
+  const rawBase = Array.isArray(currentImportPayload.baseGames) ? currentImportPayload.baseGames : rawAll;
+  const rawExp = currentImportPayload.expansions || [];
+
+  const filteredAll = filterCollectionPoolByAttributes(rawAll, filterOpts);
+  const filteredBase = filterCollectionPoolByAttributes(rawBase, filterOpts);
+  const filteredExp = filterCollectionPoolByAttributes(rawExp, filterOpts);
+
+  const countBaseEl = document.getElementById('importCountBase');
+  const countAllEl = document.getElementById('importCountAll');
+  const countExpEl = document.getElementById('importCountExp');
+  if (countBaseEl) countBaseEl.textContent = filteredBase.length;
+  if (countAllEl) countAllEl.textContent = filteredAll.length;
+  if (countExpEl) countExpEl.textContent = filteredExp.length;
+
+  if (statsTextEl) {
+    if (currentLang === 'en') {
+      statsTextEl.textContent = `${filteredAll.length} games matching filters (${filteredBase.length} base games${rawExp.length > 0 ? `, ${filteredExp.length} expansions` : ''})`;
+    } else {
+      statsTextEl.textContent = `${filteredAll.length} jogos encontrados (${filteredBase.length} jogos base${rawExp.length > 0 ? `, ${filteredExp.length} expansões` : ''})`;
+    }
+  }
 
   let candidates = [];
   if (typeFilter === 'expansions') {
-    candidates = currentImportPayload.expansions || [];
+    candidates = filteredExp;
   } else if (typeFilter === 'all') {
-    candidates = currentImportPayload.allGames || [];
+    candidates = filteredAll;
   } else {
-    // 'base'
-    candidates = (currentImportPayload.baseGames && currentImportPayload.baseGames.length > 0)
-      ? currentImportPayload.baseGames
-      : (currentImportPayload.allGames || []);
-  }
-
-  if (onlyOwned) {
-    candidates = candidates.filter(g => {
-      const isOwned = (g.owned !== false && g.fl_tem !== 0 && g.fl_tem !== false);
-      const isWish = includeWishlist && (g.wishlist === true || g.fl_quer == 1 || g.fl_favorito == 1);
-      return isOwned || isWish;
-    });
-  } else if (includeWishlist) {
-    candidates = candidates.filter(g => (g.wishlist === true || g.fl_quer == 1 || g.fl_favorito == 1));
-  }
-  if (onlyRated) {
-    candidates = candidates.filter(g => g.score != null && !isNaN(g.score) && g.score > 0);
-  }
-  if (onlyUnplayed) {
-    candidates = candidates.filter(g => (!g.plays || g.plays <= 0) && (!g.fl_jogou || g.fl_jogou == 0));
-  }
-  if (onlyPlayed) {
-    candidates = candidates.filter(g => (g.plays > 0 || g.fl_jogou == 1 || g.fl_jogou === true));
+    candidates = filteredBase;
   }
 
   let countToAdd = candidates.length;
@@ -10541,15 +10622,18 @@ function executeCollectionImport() {
   const onlyPlayed = document.getElementById('importOptOnlyPlayed')?.checked;
   const fetchBgg = document.getElementById('importOptFetchBgg')?.checked;
 
+  const filterOpts = { onlyOwned, includeWishlist, onlyRated, onlyUnplayed, onlyPlayed };
+  const rawAll = currentImportPayload.allGames || [];
+  const rawBase = Array.isArray(currentImportPayload.baseGames) ? currentImportPayload.baseGames : rawAll;
+  const rawExp = currentImportPayload.expansions || [];
+
   let candidates = [];
   if (typeFilter === 'expansions') {
-    candidates = currentImportPayload.expansions || [];
+    candidates = filterCollectionPoolByAttributes(rawExp, filterOpts);
   } else if (typeFilter === 'all') {
-    candidates = currentImportPayload.allGames || [];
+    candidates = filterCollectionPoolByAttributes(rawAll, filterOpts);
   } else {
-    candidates = (currentImportPayload.baseGames && currentImportPayload.baseGames.length > 0)
-      ? currentImportPayload.baseGames
-      : (currentImportPayload.allGames || []);
+    candidates = filterCollectionPoolByAttributes(rawBase, filterOpts);
   }
 
   const unplayedTier = state.tiers.find(t => t.isUnplayed) || state.tiers[state.tiers.length - 1];
@@ -10561,26 +10645,8 @@ function executeCollectionImport() {
   const existingLudoIds = new Set(existingItems.filter(i => i.ludoId).map(i => Number(i.ludoId)));
   const existingTitles = new Set(existingItems.map(i => normalizeTitle(i.title)));
 
-  if (onlyOwned) {
-    candidates = candidates.filter(g => {
-      const isOwned = (g.owned !== false && g.fl_tem !== 0 && g.fl_tem !== false);
-      const isWish = includeWishlist && (g.wishlist === true || g.fl_quer == 1 || g.fl_favorito == 1);
-      return isOwned || isWish;
-    });
-  } else if (includeWishlist) {
-    candidates = candidates.filter(g => (g.wishlist === true || g.fl_quer == 1 || g.fl_favorito == 1));
-  }
-  if (onlyRated) {
-    candidates = candidates.filter(g => g.score != null && !isNaN(g.score) && g.score > 0);
-  }
-  if (onlyUnplayed) {
-    candidates = candidates.filter(g => (!g.plays || g.plays <= 0) && (!g.fl_jogou || g.fl_jogou == 0));
-  }
-  if (onlyPlayed) {
-    candidates = candidates.filter(g => (g.plays > 0 || g.fl_jogou == 1 || g.fl_jogou === true));
-  }
-
   const toAdd = [];
+  const toStage = [];
   const seenBatchIds = new Set();
   const seenBatchTitles = new Set();
 
@@ -10594,24 +10660,9 @@ function executeCollectionImport() {
     if (gLudoId && seenBatchIds.has('ludo_' + gLudoId)) continue;
     if (norm && seenBatchTitles.has(norm)) continue;
 
-    if (skipDuplicates) {
-      if (gBggId && existingBggIds.has(gBggId)) continue;
-      if (gLudoId && existingLudoIds.has(gLudoId)) continue;
-      if (existingTitles.has(norm)) continue;
-    }
-
-    if (gBggId) {
-      seenBatchIds.add('bgg_' + gBggId);
-      existingBggIds.add(gBggId);
-    }
-    if (gLudoId) {
-      seenBatchIds.add('ludo_' + gLudoId);
-      existingLudoIds.add(gLudoId);
-    }
-    if (norm) {
-      seenBatchTitles.add(norm);
-      existingTitles.add(norm);
-    }
+    if (gBggId) seenBatchIds.add('bgg_' + gBggId);
+    if (gLudoId) seenBatchIds.add('ludo_' + gLudoId);
+    if (norm) seenBatchTitles.add(norm);
 
     const newItem = {
       id: 'item_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
@@ -10638,10 +10689,25 @@ function executeCollectionImport() {
       bggLink: game.bggLink || (game.bggId ? `https://boardgamegeek.com/boardgame/${game.bggId}` : ''),
       source: game.source || 'manual'
     };
-    toAdd.push(newItem);
+
+    toStage.push(newItem);
+
+    const alreadyInBoard = (gBggId && existingBggIds.has(gBggId)) ||
+      (gLudoId && existingLudoIds.has(gLudoId)) ||
+      (norm && existingTitles.has(norm));
+
+    if (!skipDuplicates || !alreadyInBoard) {
+      if (gBggId) existingBggIds.add(gBggId);
+      if (gLudoId) existingLudoIds.add(gLudoId);
+      if (norm) existingTitles.add(norm);
+      toAdd.push(newItem);
+    }
   }
 
-  if (toAdd.length === 0) {
+  const destTournChecked = document.getElementById('importDestTournament')?.checked;
+  const destTierChecked = document.getElementById('importDestTierlist')?.checked ?? true;
+
+  if (toAdd.length === 0 && (!destTournChecked || toStage.length === 0)) {
     alert(currentLang === 'en'
       ? 'No new games to import (all games already exist in the tierlist or were filtered out).'
       : 'Nenhum jogo novo para importar (todos já constam na tierlist ou foram filtrados).');
@@ -10649,11 +10715,9 @@ function executeCollectionImport() {
     return;
   }
 
-  const destTournChecked = document.getElementById('importDestTournament')?.checked;
-  const destTierChecked = document.getElementById('importDestTierlist')?.checked ?? true;
-
-  if (destTournChecked) {
-    stagedTournamentContenders = toAdd.map((g, idx) => ({
+  if (destTournChecked && toStage.length > 0) {
+    contendersManuallyCleared = false;
+    stagedTournamentContenders = toStage.map((g, idx) => ({
       id: g.id || `contender_${Date.now()}_${idx}`,
       title: g.title,
       year: g.year || '',
@@ -10666,24 +10730,26 @@ function executeCollectionImport() {
     renderTournamentContenders('bracket');
   }
 
-  if (destTierChecked) {
+  if (destTierChecked && toAdd.length > 0) {
     state.items[targetId].push(...toAdd);
     saveState();
     renderBoard();
   }
 
+  updateStudioBadges();
   closeModal('importCollectionModal');
 
+  const importedCount = destTierChecked && toAdd.length > 0 ? toAdd.length : toStage.length;
   const destText = (destTournChecked && destTierChecked)
     ? 'para a Tierlist e Torneios'
     : (destTournChecked ? 'para os Torneios (Arena e Mata-Mata)' : `para "${unplayedTier.name}"`);
 
   showToast(currentLang === 'en'
-    ? `${toAdd.length} games imported!`
-    : `${toAdd.length} jogos importados ${destText}!`);
+    ? `${importedCount} games imported!`
+    : `${importedCount} jogos importados ${destText}!`);
 
-  if (fetchBgg) {
-    enrichImportedGames(toAdd);
+  if (fetchBgg && (toAdd.length > 0 || toStage.length > 0)) {
+    enrichImportedGames(toAdd.length > 0 ? toAdd : toStage);
   }
 }
 
@@ -11846,11 +11912,16 @@ function parseBggUserCollectionXml(xmlText, expansionIdSet = null) {
 
     let existing = parsedMap.get(dedupKey);
     if (!existing && normTitleKey) {
-      existing = parsedMap.get(normTitleKey);
+      const byTitle = parsedMap.get(normTitleKey);
+      if (byTitle && byTitle.isExpansion === isExpansion) {
+        existing = byTitle;
+      }
     }
 
     if (existing) {
-      if (!existing.isExpansion && isExpansion) existing.isExpansion = true;
+      if (!existing.isExpansion && isExpansion && (!existing.bggId || String(existing.bggId) === String(bggId))) {
+        existing.isExpansion = true;
+      }
       if (!existing.image && image) existing.image = image;
       if (!existing.year && year) existing.year = year;
       if (!existing.players && players) existing.players = players;
@@ -11866,7 +11937,10 @@ function parseBggUserCollectionXml(xmlText, expansionIdSet = null) {
       if (bggRank !== null && (existing.bggRank === null || bggRank < existing.bggRank)) {
         existing.bggRank = bggRank;
       }
-      if (own) existing.own = true;
+      if (own) {
+        existing.own = true;
+        existing.owned = true;
+      }
       if (wantToPlay) existing.wantToPlay = true;
       if (wishlist) existing.wishlist = true;
       if (!existing.bggId && bggId) {
@@ -11887,6 +11961,7 @@ function parseBggUserCollectionXml(xmlText, expansionIdSet = null) {
         score: userRating,
         userRating: userRating,
         own,
+        owned: own,
         wantToPlay,
         wishlist,
         isExpansion,
@@ -11898,7 +11973,7 @@ function parseBggUserCollectionXml(xmlText, expansionIdSet = null) {
         source: 'bgg'
       };
       parsedMap.set(dedupKey, entry);
-      if (normTitleKey && normTitleKey !== dedupKey) {
+      if (normTitleKey && normTitleKey !== dedupKey && !parsedMap.has(normTitleKey)) {
         parsedMap.set(normTitleKey, entry);
       }
     }
@@ -11907,9 +11982,31 @@ function parseBggUserCollectionXml(xmlText, expansionIdSet = null) {
   return Array.from(new Set(parsedMap.values()));
 }
 
+function extractBggUsername(input) {
+  if (!input) return '';
+  let str = String(input).trim();
+  str = str.replace(/^bgg:/i, '').replace(/^@/, '').trim();
+  if (str.toLowerCase().includes('boardgamegeek.com')) {
+    try {
+      const u = new URL(str.startsWith('http') ? str : 'https://' + str);
+      const colMatch = u.pathname.match(/\/collection\/user\/([^/?#]+)/i);
+      const userMatch = u.pathname.match(/\/user\/([^/?#]+)/i);
+      const paramUser = u.searchParams.get('username') || u.searchParams.get('user');
+      if (colMatch && colMatch[1]) return decodeURIComponent(colMatch[1]).trim();
+      if (userMatch && userMatch[1]) return decodeURIComponent(userMatch[1]).trim();
+      if (paramUser) return decodeURIComponent(paramUser).trim();
+    } catch (e) {}
+    const m = str.match(/\/(?:collection\/)?user\/([^/?#\s]+)/i);
+    if (m && m[1]) {
+      try { return decodeURIComponent(m[1]).trim(); } catch (e) { return m[1].trim(); }
+    }
+  }
+  return str;
+}
+
 // Helper to fetch BGG User Collection with accurate expansions identification
 async function fetchBggUserCollection(username) {
-  const cleanUser = String(username || '').trim().replace(/^@/, '');
+  const cleanUser = extractBggUsername(username);
   if (!cleanUser) {
     throw new Error(currentLang === 'en' ? 'BGG username not provided.' : 'Nome de usuário do BGG não informado.');
   }
@@ -11955,7 +12052,8 @@ async function fetchBggUserCollection(username) {
       }
       if (rawMain.includes('<items')) {
         xmlText = rawMain;
-        if (expXmlText || attempts >= 3) break;
+        const expStillQueued = !expXmlText && rawExp && rawExp.includes('<message>') && rawExp.includes('accepted');
+        if (expXmlText || (!expStillQueued && attempts >= 3) || attempts >= 6) break;
       }
     }
     await new Promise(r => setTimeout(r, 1800));
@@ -12658,14 +12756,7 @@ async function importUniversalSourceToTournament(query, options = {}) {
     // 2. BGG Collection / User
     else if (raw.toLowerCase().startsWith('bgg:') || raw.toLowerCase().includes('boardgamegeek.com/user') || raw.toLowerCase().includes('boardgamegeek.com/collection')) {
       showToast(currentLang === 'en' ? 'Fetching BGG user collection...' : 'Consultando coleção no BGG...');
-      let bggUser = raw.replace(/^bgg:/i, '').trim();
-      if (raw.toLowerCase().includes('boardgamegeek.com')) {
-        try {
-          const u = new URL(raw.startsWith('http') ? raw : 'https://' + raw);
-          const match = u.pathname.match(/\/user\/([^/?#]+)/i) || u.pathname.match(/\/collection\/user\/([^/?#]+)/i) || u.searchParams.get('username');
-          if (match) bggUser = (typeof match === 'string' ? match : match[1]).trim();
-        } catch (e) {}
-      }
+      const bggUser = extractBggUsername(raw);
       const payload = await fetchBggUserCollection(bggUser);
       openImportCollectionModal(payload);
       return;
@@ -12708,24 +12799,27 @@ async function importUniversalSourceToTournament(query, options = {}) {
     // 5. Fallback with source hint
     else if (options.sourceHint === 'ludopedia') {
       const payload = await fetchLudopediaCollection(raw);
-      items = (payload.baseGames && payload.baseGames.length > 0) ? payload.baseGames : payload.allGames;
+      const pool = (payload.baseGames && payload.baseGames.length > 0) ? payload.baseGames : payload.allGames;
+      items = pool.filter(isCollectionGameOwned);
       sourceLabel = `Ludopedia (@${raw})`;
     }
     else if (options.sourceHint === 'bgg') {
       const payload = await fetchBggUserCollection(raw);
-      items = (payload.baseGames && payload.baseGames.length > 0) ? payload.baseGames : payload.allGames;
+      const pool = (payload.baseGames && payload.baseGames.length > 0) ? payload.baseGames : payload.allGames;
+      items = pool.filter(isCollectionGameOwned);
       sourceLabel = `BGG (@${raw})`;
     }
     else {
       try {
         const payload = await fetchLudopediaCollection(raw);
         if (payload && payload.baseGames && payload.baseGames.length >= 2) {
-          items = payload.baseGames;
+          items = payload.baseGames.filter(isCollectionGameOwned);
           sourceLabel = `Ludopedia (@${raw})`;
         }
       } catch (errLudo) {
         const payloadBgg = await fetchBggUserCollection(raw);
-        items = (payloadBgg.baseGames && payloadBgg.baseGames.length > 0) ? payloadBgg.baseGames : payloadBgg.allGames;
+        const pool = (payloadBgg.baseGames && payloadBgg.baseGames.length > 0) ? payloadBgg.baseGames : payloadBgg.allGames;
+        items = pool.filter(isCollectionGameOwned);
         sourceLabel = `BGG (@${raw})`;
       }
     }
@@ -13166,6 +13260,7 @@ let currentTournamentType = 'arena'; // 'arena' (Merge Sort) or 'bracket' (Knock
 let currentBracketEngine = null;
 let activeStudioMode = 'tierlist';
 let selectedDistributeMode = 'percentile';
+let contendersManuallyCleared = false;
 
 function switchMainTab(tabId) {
   activeStudioMode = tabId;
@@ -13180,7 +13275,7 @@ function switchMainTab(tabId) {
 
   if (tabId === 'arena' || tabId === 'bracket') {
     const boardItems = typeof getExistingBoardItems === 'function' ? getExistingBoardItems() : [];
-    if (boardItems.length > 0 && (!stagedTournamentContenders || stagedTournamentContenders.length === 0)) {
+    if (!contendersManuallyCleared && boardItems.length > 0 && (!stagedTournamentContenders || stagedTournamentContenders.length === 0)) {
       stagedTournamentContenders = [...boardItems];
       renderTournamentContenders('arena');
       renderTournamentContenders('bracket');
@@ -13208,15 +13303,12 @@ function updateStudioBadges() {
   const tierCountEl = document.getElementById('tabBadgeTierlist') || document.getElementById('badgeTierlistCount');
   if (tierCountEl) tierCountEl.textContent = allItems.length;
 
-  const arenaCount = (stagedTournamentContenders && stagedTournamentContenders.length > 0)
-    ? stagedTournamentContenders.length
-    : allItems.length;
+  const contenderCount = Array.isArray(stagedTournamentContenders) ? stagedTournamentContenders.length : 0;
+  const arenaCount = contenderCount > 0 ? contenderCount : (contendersManuallyCleared ? 0 : allItems.length);
   const arenaCountEl = document.getElementById('tabBadgeArena') || document.getElementById('badgeArenaCount');
   if (arenaCountEl) arenaCountEl.textContent = arenaCount;
 
-  const bracketCount = (stagedTournamentContenders && stagedTournamentContenders.length > 0)
-    ? stagedTournamentContenders.length
-    : allItems.length;
+  const bracketCount = contenderCount > 0 ? contenderCount : (contendersManuallyCleared ? 0 : allItems.length);
   const bracketCountEl = document.getElementById('tabBadgeBracket') || document.getElementById('badgeBracketCount');
   if (bracketCountEl) bracketCountEl.textContent = bracketCount;
 }
@@ -13360,6 +13452,10 @@ function renderTournamentContenders(mode = 'arena') {
   if (badge) badge.textContent = label;
   if (bottomBadge) bottomBadge.textContent = label;
 
+  if (typeof updateStudioBadges === 'function') {
+    updateStudioBadges();
+  }
+
   if (!container) return;
 
   if (count === 0) {
@@ -13502,9 +13598,29 @@ function shuffleContenders(mode = 'arena') {
 function clearContenders(mode = 'arena') {
   if (stagedTournamentContenders.length === 0) return;
   if (confirm(currentLang === 'en' ? 'Clear all contenders?' : 'Deseja limpar todos os competidores da lista?')) {
+    const clearedBggIds = new Set(stagedTournamentContenders.filter(c => c && c.bggId).map(c => String(c.bggId)));
+    const clearedLudoIds = new Set(stagedTournamentContenders.filter(c => c && c.ludoId).map(c => String(c.ludoId)));
+    const clearedTitles = new Set(stagedTournamentContenders.filter(c => c && c.title).map(c => normalizeTitle(c.title)));
+
     stagedTournamentContenders = [];
+    contendersManuallyCleared = true;
+
+    const unplayedTier = state && state.tiers ? (state.tiers.find(t => t.isUnplayed) || state.tiers[state.tiers.length - 1]) : null;
+    if (unplayedTier && state.items && Array.isArray(state.items[unplayedTier.id]) && state.items[unplayedTier.id].length > 0) {
+      state.items[unplayedTier.id] = state.items[unplayedTier.id].filter(item => {
+        if (!item) return false;
+        if (item.bggId && clearedBggIds.has(String(item.bggId))) return false;
+        if (item.ludoId && clearedLudoIds.has(String(item.ludoId))) return false;
+        if (item.title && clearedTitles.has(normalizeTitle(item.title))) return false;
+        return true;
+      });
+      saveState();
+      renderBoard();
+    }
+
     renderTournamentContenders('arena');
     renderTournamentContenders('bracket');
+    updateStudioBadges();
   }
 }
 
@@ -13514,6 +13630,7 @@ function loadContendersFromTierlist(mode = 'arena') {
     alert(currentLang === 'en' ? 'No items found on Tierlist board.' : 'Nenhum item encontrado no tabuleiro da Tierlist.');
     return;
   }
+  contendersManuallyCleared = false;
   stagedTournamentContenders = [...items];
   renderTournamentContenders('arena');
   renderTournamentContenders('bracket');
@@ -13743,7 +13860,7 @@ function loadPresetIntoBracket(cat, presetId) {
 
 async function executeBggCollectionImport() {
   const usernameInput = document.getElementById('importBggUsername');
-  const user = (usernameInput ? usernameInput.value : '').trim();
+  const user = extractBggUsername(usernameInput ? usernameInput.value : '');
   if (!user) {
     alert(currentLang === 'en' ? 'Please enter your BGG username.' : 'Por favor, digite seu nome de usuário do BGG.');
     return;
@@ -13767,37 +13884,30 @@ async function executeBggCollectionImport() {
     const filterWishlist = document.getElementById('importBggFilterWishlist')?.checked;
     const includeExpansions = document.getElementById('importBggFilterExpansions')?.checked;
 
-    let targetPool = includeExpansions ? [...payload.allGames] : [...payload.baseGames];
+    const previewOpts = {
+      onlyOwned: filterOwned,
+      includeWishlist: filterWishlist,
+      onlyRated: filterRated,
+      onlyUnplayed: filterUnplayed,
+      onlyPlayed: filterPlayed
+    };
+    const checkPool = includeExpansions ? (payload.allGames || []) : (payload.baseGames || []);
+    const matched = filterCollectionPoolByAttributes(checkPool, previewOpts);
 
-    if (filterUnplayed) {
-      targetPool = targetPool.filter(g => !g.plays || g.plays === 0);
-    } else if (filterPlayed) {
-      targetPool = targetPool.filter(g => g.plays && g.plays > 0);
-    }
-
-    if (filterRated) {
-      targetPool = targetPool.filter(g => g.score !== null && g.score !== undefined && g.score > 0);
-    }
-
-    if (filterWishlist) {
-      targetPool = targetPool.filter(g => g.wishlist);
-    }
-
-    if (filterOwned) {
-      targetPool = targetPool.filter(g => g.owned !== false);
-    }
-
-    if (targetPool.length === 0) {
+    if (matched.length === 0) {
       alert(currentLang === 'en' ? 'No games matched the selected filters in this collection.' : 'Nenhum jogo encontrado com os filtros selecionados nesta coleção.');
       return;
     }
 
-    payload.allGames = targetPool;
-    payload.baseGames = targetPool.filter(g => !g.isExpansion);
-    payload.expansions = targetPool.filter(g => g.isExpansion);
-
     closeModal('importSourceModal');
-    openImportCollectionModal(payload);
+    openImportCollectionModal(payload, {
+      onlyOwned: filterOwned,
+      wishlist: filterWishlist,
+      onlyRated: filterRated,
+      onlyUnplayed: filterUnplayed,
+      onlyPlayed: filterPlayed,
+      includeExpansions: includeExpansions
+    });
   } catch (err) {
     alert(err.message || 'Erro ao importar do BGG.');
   } finally {

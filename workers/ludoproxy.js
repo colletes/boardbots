@@ -232,7 +232,7 @@ export default {
           headers: {
             'Content-Type': contentType,
             ...CORS_HEADERS,
-            'Cache-Control': bggResponse.ok ? 'public, max-age=86400, s-maxage=86400' : 'no-cache'
+            'Cache-Control': bggResponse.status === 200 ? 'public, max-age=86400, s-maxage=86400' : 'no-cache'
           }
         });
       } catch (err) {
