@@ -1,0 +1,1841 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Escape the Dark Castle Companion App | Board Bots</title>
+    <link rel="icon" href="../assets/mascot-trimmed.png" type="image/png">
+    <meta name="description" content="Ferramenta companheira gratuita para Escape the Dark Castle no navegador: controle de HP em correntes, marcador YOU, progresso dos 15 capítulos + Boss e áudio atmosférico.">
+    <link rel="canonical" href="https://colletes.github.io/boardbots/bots/escape_the_dark_castle_bot.html">
+
+    <!-- Open Graph / Facebook / WhatsApp -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Board Bots">
+    <meta property="og:title" content="Escape the Dark Castle Companion App | Board Bots">
+    <meta property="og:description" content="Ferramenta companheira gratuita para Escape the Dark Castle no navegador: controle de HP em correntes, marcador YOU, progresso dos 15 capítulos + Boss e áudio atmosférico.">
+    <meta property="og:url" content="https://colletes.github.io/boardbots/bots/escape_the_dark_castle_bot.html">
+    <meta property="og:image" content="https://colletes.github.io/boardbots/assets/art/escape_the_dark_castle.webp">
+
+    <!-- Twitter Cards -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Escape the Dark Castle Companion App | Board Bots">
+    <meta name="twitter:description" content="Ferramenta companheira gratuita para Escape the Dark Castle no navegador: controle de HP em correntes, marcador YOU, progresso dos 15 capítulos + Boss e áudio atmosférico.">
+    <meta name="twitter:image" content="https://colletes.github.io/boardbots/assets/art/escape_the_dark_castle.webp">
+
+    <!-- Schema.org WebApplication -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Escape the Dark Castle Companion App",
+      "applicationCategory": "GameApplication",
+      "operatingSystem": "All",
+      "browserRequirements": "Requires JavaScript. Requires HTML5.",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "description": "Ferramenta companheira gratuita para Escape the Dark Castle com controle de HP em correntes, marcador YOU e rastreador de capítulos."
+    }
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/theme-kit.css">
+    <script src="../assets/theme-kit.js"></script>
+
+    <style>
+        :root {
+            --bg-0: #09090b;
+            --bg-1: #121215;
+            --bg-2: #1b1b20;
+            --iron-dark: #25252b;
+            --iron-mid: #3e3e47;
+            --iron-light: #71717a;
+            --bone: #ebe6dc;
+            --bone-dim: #a6a095;
+            --blood: #b91c1c;
+            --blood-bright: #ef4444;
+            --blood-glow: rgba(239, 68, 68, 0.35);
+            --brass: #c89b3c;
+            --brass-glow: rgba(200, 155, 60, 0.3);
+            --emerald: #10b981;
+            --font-display: 'Cinzel', Georgia, serif;
+            --font-body: 'Inter', system-ui, sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+            --tk-credits-border-top: 1px solid rgba(255, 255, 255, 0.1);
+            --tk-credits-padding: 18px 0 0;
+            --tk-credits-img-radius: 6px;
+            --tk-credits-img-border: 1px solid rgba(255, 255, 255, 0.18);
+            --tk-credits-font-size: 0.85rem;
+            --tk-credits-color: var(--bone-dim);
+            --tk-credits-link-color: var(--brass);
+        }
+
+        * { box-sizing: border-box; }
+        html { -webkit-text-size-adjust: 100%; overflow-x: hidden; }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: var(--font-body);
+            color: var(--bone);
+            background-color: var(--bg-0);
+            background-image:
+                radial-gradient(circle at 50% 15%, rgba(185, 28, 28, 0.08) 0%, transparent 60%),
+                linear-gradient(rgba(9, 9, 11, 0.88), rgba(9, 9, 11, 0.94)),
+                url('../assets/textures/stone-slab.jpg');
+            background-size: auto, auto, 512px 512px;
+            background-repeat: no-repeat, no-repeat, repeat;
+            background-blend-mode: normal, normal, multiply;
+            background-attachment: fixed;
+            padding: 16px;
+            padding-left: max(16px, env(safe-area-inset-left));
+            padding-right: max(16px, env(safe-area-inset-right));
+            padding-bottom: max(84px, env(safe-area-inset-bottom));
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        button, select, input, summary { touch-action: manipulation; }
+
+        svg { max-width: 100%; }
+        .icon-inline, .btn-icon, .icon-h1, h1 svg, h2 svg, h3 svg, button svg, .modal-content svg {
+            display: inline-block !important;
+            width: 1.2em !important;
+            height: 1.2em !important;
+            max-width: 24px !important;
+            max-height: 24px !important;
+            flex-shrink: 0 !important;
+            vertical-align: -0.2em !important;
+        }
+
+        /* Atmospheric Particles */
+        .dungeon-embers {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: -1;
+            overflow: hidden;
+        }
+        .ember {
+            position: absolute;
+            bottom: -16px;
+            width: 3px;
+            height: 3px;
+            border-radius: 50%;
+            background: rgba(235, 230, 220, 0.25);
+            box-shadow: 0 0 6px rgba(200, 155, 60, 0.35);
+            opacity: 0;
+        }
+        @media (prefers-reduced-motion: no-preference) {
+            .ember {
+                animation: riseEmber linear infinite;
+            }
+            @keyframes riseEmber {
+                0% { transform: translateY(0) translateX(0) scale(0.8); opacity: 0; }
+                20% { opacity: 0.45; }
+                80% { opacity: 0.25; }
+                100% { transform: translateY(-100vh) translateX(24px) scale(1.2); opacity: 0; }
+            }
+            @keyframes heartbeatPulse {
+                0%, 100% { box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.4), 0 8px 28px rgba(185, 28, 28, 0.25); }
+                50% { box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.85), 0 8px 34px rgba(239, 68, 68, 0.45); }
+            }
+            .prisoner-card.critical {
+                animation: heartbeatPulse 1.1s ease-in-out infinite;
+            }
+        }
+
+        /* Floating Controls */
+        .lang-switch {
+            position: fixed;
+            top: 14px;
+            right: 14px;
+            z-index: 900;
+            display: flex;
+            gap: 4px;
+            background: rgba(18, 18, 21, 0.92);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            border-radius: 999px;
+            padding: 4px;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+        }
+        .lang-btn {
+            background: transparent;
+            border: none;
+            color: var(--bone-dim);
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 5px 10px;
+            border-radius: 999px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .lang-btn.active {
+            background: var(--bone);
+            color: var(--bg-0);
+        }
+
+        .top-left-floats {
+            position: fixed;
+            top: 14px;
+            left: 14px;
+            z-index: 900;
+            display: flex;
+            gap: 8px;
+        }
+
+        .float-btn {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: rgba(18, 18, 21, 0.92);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            color: var(--bone);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+            transition: transform 0.15s, border-color 0.2s, background 0.2s;
+        }
+        .float-btn:hover {
+            transform: translateY(-1px);
+            border-color: var(--brass);
+        }
+        .float-btn.active {
+            border-color: var(--brass);
+            color: var(--brass);
+        }
+
+        .btn-help-float {
+            position: fixed;
+            bottom: max(18px, env(safe-area-inset-bottom));
+            right: 18px;
+            z-index: 900;
+            width: 48px;
+            height: 48px;
+            font-family: var(--font-display);
+            font-size: 1.25rem;
+            font-weight: 800;
+        }
+
+        .btn-reset-float {
+            position: fixed;
+            bottom: max(18px, env(safe-area-inset-bottom));
+            left: 18px;
+            z-index: 900;
+            width: 48px;
+            height: 48px;
+        }
+
+        /* Main Shell */
+        .app-shell {
+            width: 100%;
+            max-width: 1200px;
+            margin-top: 44px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Hero Banner */
+        .hero {
+            position: relative;
+            width: 100%;
+            height: 170px;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            box-shadow: 0 14px 40px rgba(0, 0, 0, 0.75);
+            background: #000;
+        }
+        .hero img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center 28%;
+            filter: grayscale(35%) contrast(1.12) brightness(0.62);
+            display: block;
+        }
+        .hero::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(9, 9, 11, 0.15) 0%, rgba(9, 9, 11, 0.92) 100%);
+        }
+        .hero-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 2;
+            padding: 18px 22px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            gap: 4px;
+        }
+        .hero-kicker {
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--brass);
+        }
+        .hero h1 {
+            margin: 0;
+            font-family: var(--font-display);
+            font-size: clamp(1.45rem, 3.2vw, 2.25rem);
+            font-weight: 800;
+            letter-spacing: 0.04em;
+            color: var(--bone);
+            text-shadow: 0 2px 12px rgba(0, 0, 0, 0.9);
+        }
+        .hero-sub {
+            margin: 0;
+            font-size: 0.9rem;
+            color: var(--bone-dim);
+        }
+
+        /* Panels */
+        .panel {
+            background: linear-gradient(180deg, rgba(24, 24, 28, 0.95), rgba(14, 14, 17, 0.98));
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+        .panel-title {
+            margin: 0 0 14px;
+            font-family: var(--font-display);
+            font-size: 1.1rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            color: var(--bone);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 10px;
+        }
+
+        /* Setup Screen */
+        .setup-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+        @media (min-width: 900px) {
+            .setup-grid {
+                grid-template-columns: 1.35fr 0.95fr;
+                align-items: start;
+            }
+        }
+
+        .player-count-row {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+        @media (min-width: 600px) {
+            .player-count-row {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+        .count-btn {
+            background: var(--bg-2);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 8px;
+            padding: 12px 10px;
+            color: var(--bone);
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .count-btn:hover { border-color: rgba(255, 255, 255, 0.4); }
+        .count-btn.active {
+            background: rgba(200, 155, 60, 0.14);
+            border-color: var(--brass);
+            box-shadow: 0 0 16px var(--brass-glow);
+        }
+        .count-btn strong {
+            font-family: var(--font-display);
+            font-size: 1rem;
+        }
+        .count-btn span {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--bone-dim);
+        }
+
+        .prisoners-setup-list {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+        @media (min-width: 640px) {
+            .prisoners-setup-list {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        .prisoner-slot {
+            background: rgba(10, 10, 12, 0.75);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 10px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .prisoner-slot-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--brass);
+            text-transform: uppercase;
+        }
+        .prisoner-slot select,
+        .prisoner-slot input {
+            width: 100%;
+            background: var(--bg-2);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            border-radius: 6px;
+            color: var(--bone);
+            font-family: var(--font-body);
+            font-size: 0.92rem;
+            padding: 8px 10px;
+        }
+        .prisoner-slot select:focus,
+        .prisoner-slot input:focus {
+            outline: none;
+            border-color: var(--brass);
+        }
+        .trait-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.78rem;
+            color: var(--bone-dim);
+            background: rgba(255, 255, 255, 0.05);
+            padding: 4px 8px;
+            border-radius: 6px;
+        }
+
+        /* Checklist */
+        details.setup-checklist {
+            background: rgba(10, 10, 12, 0.65);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 10px;
+            padding: 12px 14px;
+        }
+        details.setup-checklist summary {
+            cursor: pointer;
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: var(--bone);
+            list-style: none;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        details.setup-checklist summary::-webkit-details-marker { display: none; }
+        .checklist-items {
+            margin: 12px 0 0;
+            padding: 0;
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .checklist-items label {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            font-size: 0.88rem;
+            color: var(--bone-dim);
+            cursor: pointer;
+            line-height: 1.4;
+        }
+        .checklist-items input[type="checkbox"] {
+            margin-top: 3px;
+            accent-color: var(--brass);
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+        }
+
+        .btn-primary {
+            width: 100%;
+            margin-top: 16px;
+            padding: 14px 20px;
+            border-radius: 8px;
+            border: 1px solid var(--brass);
+            background: linear-gradient(180deg, #d4a644, #a37a24);
+            color: #0b0b0c;
+            font-family: var(--font-display);
+            font-size: 1.05rem;
+            font-weight: 800;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(200, 155, 60, 0.25);
+            transition: transform 0.15s, filter 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn-primary:hover { filter: brightness(1.08); transform: translateY(-1px); }
+        .btn-primary:active { transform: translateY(0); }
+
+        .btn-secondary {
+            padding: 9px 14px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: var(--bg-2);
+            color: var(--bone);
+            font-family: var(--font-body);
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: border-color 0.2s, background 0.2s;
+        }
+        .btn-secondary:hover { border-color: var(--bone-dim); background: #26262d; }
+        .btn-secondary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        /* Game View Layout */
+        .hidden { display: none !important; }
+
+        .game-layout {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+        @media (min-width: 960px) {
+            .game-layout {
+                grid-template-columns: 1.65fr 0.95fr;
+                align-items: start;
+            }
+        }
+
+        /* Castle Chapter Tracker */
+        .castle-bar {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+        .chapter-header {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+        .chapter-badge {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .chapter-num-box {
+            min-width: 64px;
+            height: 54px;
+            padding: 0 12px;
+            border-radius: 8px;
+            background: #0a0a0c;
+            border: 2px solid var(--brass);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-display);
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--brass);
+            box-shadow: inset 0 0 14px rgba(200, 155, 60, 0.18);
+        }
+        .chapter-num-box.boss {
+            border-color: var(--blood-bright);
+            color: var(--blood-bright);
+            box-shadow: inset 0 0 14px var(--blood-glow);
+        }
+        .chapter-meta h2 {
+            margin: 0;
+            font-family: var(--font-display);
+            font-size: 1.15rem;
+            color: var(--bone);
+        }
+        .chapter-meta p {
+            margin: 2px 0 0;
+            font-size: 0.84rem;
+            color: var(--bone-dim);
+        }
+        .chapter-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .chapter-pips {
+            display: grid;
+            grid-template-columns: repeat(16, 1fr);
+            gap: 4px;
+        }
+        @media (max-width: 600px) {
+            .chapter-pips {
+                grid-template-columns: repeat(8, 1fr);
+            }
+        }
+        .pip {
+            height: 10px;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            transition: all 0.2s;
+        }
+        .pip.done {
+            background: rgba(200, 155, 60, 0.35);
+            border-color: rgba(200, 155, 60, 0.5);
+        }
+        .pip.current {
+            background: var(--brass);
+            border-color: #fff;
+            box-shadow: 0 0 8px var(--brass-glow);
+        }
+        .pip.boss-pip.current {
+            background: var(--blood-bright);
+            box-shadow: 0 0 10px var(--blood-glow);
+        }
+
+        /* Prisoners Grid */
+        .prisoners-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
+        @media (min-width: 640px) {
+            .prisoners-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .prisoner-card {
+            position: relative;
+            background: linear-gradient(180deg, rgba(28, 28, 34, 0.96), rgba(14, 14, 17, 0.98));
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            box-shadow: 0 10px 26px rgba(0, 0, 0, 0.55);
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .prisoner-card.has-you {
+            border-color: var(--brass);
+            box-shadow: 0 0 0 1px rgba(200, 155, 60, 0.35), 0 10px 28px rgba(0, 0, 0, 0.7);
+        }
+        .prisoner-card.dead {
+            border-color: var(--blood-bright);
+            opacity: 0.78;
+        }
+
+        .prisoner-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        .prisoner-identity h3 {
+            margin: 0;
+            font-family: var(--font-display);
+            font-size: 1.1rem;
+            color: var(--bone);
+        }
+        .prisoner-role {
+            font-size: 0.78rem;
+            color: var(--bone-dim);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 2px;
+        }
+
+        .you-btn {
+            padding: 5px 11px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--bone-dim);
+            font-family: var(--font-mono);
+            font-size: 0.74rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+        .you-btn.active {
+            background: linear-gradient(180deg, #deb04b, #9f7520);
+            border-color: #f3d078;
+            color: #0b0b0c;
+            box-shadow: 0 0 14px var(--brass-glow);
+        }
+
+        /* HP Shackles Display */
+        .hp-readout-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            background: rgba(8, 8, 10, 0.75);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            padding: 8px 12px;
+        }
+        .hp-number {
+            display: flex;
+            align-items: baseline;
+            gap: 4px;
+            font-family: var(--font-mono);
+        }
+        .hp-number strong {
+            font-size: 1.9rem;
+            line-height: 1;
+            color: var(--bone);
+        }
+        .prisoner-card.critical .hp-number strong {
+            color: var(--blood-bright);
+        }
+        .hp-number span {
+            font-size: 0.85rem;
+            color: var(--bone-dim);
+        }
+
+        .hp-step-btns {
+            display: flex;
+            gap: 8px;
+        }
+        .hp-btn {
+            width: 42px;
+            height: 38px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            background: var(--iron-dark);
+            color: var(--bone);
+            font-family: var(--font-mono);
+            font-size: 1.05rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.1s, background 0.15s, border-color 0.15s;
+        }
+        .hp-btn:hover:not(:disabled) {
+            background: var(--iron-mid);
+            border-color: var(--bone-dim);
+        }
+        .hp-btn:active:not(:disabled) { transform: scale(0.95); }
+        .hp-btn.dmg:hover:not(:disabled) {
+            border-color: var(--blood-bright);
+            color: #fecaca;
+        }
+        .hp-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+        /* Interactive Iron Chain Bar */
+        .chain-track {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            padding: 8px 6px;
+            background: #070709;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            user-select: none;
+            touch-action: none;
+            cursor: pointer;
+        }
+        .chain-link {
+            flex: 1;
+            height: 18px;
+            border-radius: 999px;
+            border: 2px solid #52525b;
+            background: linear-gradient(180deg, #3f3f46, #18181b);
+            box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.25), 0 2px 4px rgba(0, 0, 0, 0.8);
+            transition: transform 0.12s, border-color 0.15s, background 0.15s;
+        }
+        .chain-link.broken {
+            border-color: rgba(185, 28, 28, 0.45);
+            background: rgba(185, 28, 28, 0.12);
+            box-shadow: none;
+            transform: scaleY(0.7);
+        }
+        .prisoner-card.critical .chain-link:not(.broken) {
+            border-color: #ef4444;
+            background: linear-gradient(180deg, #991b1b, #450a0a);
+            box-shadow: 0 0 8px rgba(239, 68, 68, 0.45);
+        }
+
+        /* Chronicle / Log Panel */
+        .chronicle-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .log-list {
+            max-height: 360px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding-right: 4px;
+        }
+        .log-entry {
+            font-size: 0.84rem;
+            line-height: 1.45;
+            padding: 8px 10px;
+            border-radius: 8px;
+            background: rgba(9, 9, 11, 0.75);
+            border-left: 3px solid var(--iron-light);
+            color: var(--bone-dim);
+        }
+        .log-entry.dmg { border-left-color: var(--blood-bright); }
+        .log-entry.heal { border-left-color: var(--emerald); }
+        .log-entry.chapter { border-left-color: var(--brass); color: var(--bone); }
+        .log-time {
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            color: var(--iron-light);
+            margin-right: 6px;
+        }
+
+        /* Modals */
+        .modal {
+            position: fixed;
+            inset: 0;
+            z-index: 1200;
+            background: rgba(5, 5, 7, 0.84);
+            backdrop-filter: blur(6px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        .modal-content {
+            width: 100%;
+            max-width: 620px;
+            max-height: 86vh;
+            overflow-y: auto;
+            background: #141418;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 12px;
+            padding: 22px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9);
+            position: relative;
+        }
+        .modal-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+            padding-bottom: 12px;
+            margin-bottom: 14px;
+        }
+        .modal-head h2 {
+            margin: 0;
+            font-family: var(--font-display);
+            font-size: 1.2rem;
+            color: var(--bone);
+        }
+        .close-modal {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: var(--bone);
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+        .modal details {
+            background: rgba(9, 9, 11, 0.65);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 10px 12px;
+            margin-bottom: 10px;
+        }
+        .modal details summary {
+            cursor: pointer;
+            font-weight: 700;
+            color: var(--brass);
+        }
+        .modal details p, .modal details ul {
+            margin: 8px 0 0;
+            font-size: 0.88rem;
+            color: var(--bone-dim);
+            line-height: 1.5;
+        }
+        .soundtrack-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .soundtrack-links a {
+            color: var(--bone);
+            text-decoration: none;
+            font-size: 0.82rem;
+            padding: 6px 12px;
+            border-radius: 6px;
+            background: var(--bg-2);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+        }
+        .soundtrack-links a:hover { border-color: var(--brass); color: var(--brass); }
+
+        /* Outcome Banner inside Modal */
+        .outcome-box {
+            text-align: center;
+            padding: 10px 4px;
+        }
+        .outcome-box h2 {
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            margin: 8px 0;
+        }
+        .outcome-box.defeat h2 { color: var(--blood-bright); }
+        .outcome-box.victory h2 { color: var(--brass); }
+        .outcome-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 18px;
+        }
+
+        /* Footer */
+        footer.app-footer {
+            width: 100%;
+            max-width: 1200px;
+            margin-top: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 14px;
+        }
+        .footer-links {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px;
+        }
+        .bmc-inline, .btn-home {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 16px;
+            border-radius: 999px;
+            text-decoration: none;
+            font-size: 0.86rem;
+            font-weight: 600;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            background: rgba(18, 18, 21, 0.9);
+            color: var(--bone);
+            transition: border-color 0.2s, transform 0.15s;
+        }
+        .bmc-inline:hover, .btn-home:hover {
+            border-color: var(--brass);
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+<body>
+    <!-- Atmospheric Dungeon Embers -->
+    <div class="dungeon-embers" aria-hidden="true">
+        <span class="ember" style="left:12%; animation-duration:11s; animation-delay:0s;"></span>
+        <span class="ember" style="left:28%; animation-duration:14s; animation-delay:2s;"></span>
+        <span class="ember" style="left:45%; animation-duration:9s; animation-delay:4s;"></span>
+        <span class="ember" style="left:67%; animation-duration:13s; animation-delay:1s;"></span>
+        <span class="ember" style="left:84%; animation-duration:12s; animation-delay:3s;"></span>
+    </div>
+
+    <!-- Top-Left Audio Controls -->
+    <div class="top-left-floats">
+        <button id="btn-sfx-toggle" class="float-btn active" onclick="toggleSfx()" data-i18n-aria="sfx_toggle_aria" aria-label="Ativar ou silenciar efeitos sonoros" title="SFX">
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+        </button>
+        <button id="btn-ambient" class="float-btn" onclick="toggleAmbient()" data-i18n-aria="ambient_toggle_aria" aria-label="Som ambiente da masmorra" title="Dungeon Ambient">
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+        </button>
+    </div>
+
+    <!-- Top-Right Language Switch -->
+    <div class="lang-switch">
+        <button class="lang-btn" data-lang="pt" onclick="setLang('pt')">PT</button>
+        <button class="lang-btn" data-lang="en" onclick="setLang('en')">EN</button>
+    </div>
+
+    <!-- Bottom Floating Reset & Help -->
+    <button id="btn-reset-float" class="float-btn btn-reset-float" onclick="confirmReset()" data-i18n-aria="reset_aria" aria-label="Reiniciar partida" title="Reset">
+        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+    </button>
+    <button id="btn-help-float" class="float-btn btn-help-float" onclick="openHelpModal()" data-i18n-aria="help_aria" aria-label="Abrir guia de regras">?</button>
+
+    <main class="app-shell">
+        <!-- Hero Banner -->
+        <header class="hero">
+            <img src="../assets/art/escape_the_dark_castle.webp" alt="Escape the Dark Castle box art">
+            <div class="hero-overlay">
+                <span class="hero-kicker" data-i18n="hero_kicker">Companheiro de Mesa • Jogo Base</span>
+                <h1>Escape the Dark Castle</h1>
+                <p class="hero-sub" data-i18n="hero_sub">Correntes de HP, marcador YOU e descida pelos 15 capítulos do castelo.</p>
+            </div>
+        </header>
+
+        <!-- SETUP SCREEN -->
+        <section id="view-setup" class="setup-grid">
+            <div class="panel">
+                <h2 class="panel-title">
+                    <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    <span data-i18n="setup_players_title">Grupo de Prisioneiros</span>
+                </h2>
+
+                <div class="player-count-row" id="player-count-row">
+                    <button class="count-btn" data-players="1" onclick="selectPlayerCount(1)">
+                        <strong data-i18n="p1_label">1 Jogador</strong>
+                        <span data-i18n="p1_sub">2 Prisioneiros • 18 HP</span>
+                    </button>
+                    <button class="count-btn active" data-players="2" onclick="selectPlayerCount(2)">
+                        <strong data-i18n="p2_label">2 Jogadores</strong>
+                        <span data-i18n="p2_sub">2 Prisioneiros • 18 HP</span>
+                    </button>
+                    <button class="count-btn" data-players="3" onclick="selectPlayerCount(3)">
+                        <strong data-i18n="p3_label">3 Jogadores</strong>
+                        <span data-i18n="p3_sub">3 Prisioneiros • 14 HP</span>
+                    </button>
+                    <button class="count-btn" data-players="4" onclick="selectPlayerCount(4)">
+                        <strong data-i18n="p4_label">4 Jogadores</strong>
+                        <span data-i18n="p4_sub">4 Prisioneiros • 12 HP</span>
+                    </button>
+                </div>
+
+                <div class="prisoners-setup-list" id="prisoners-setup-list"></div>
+
+                <button class="btn-primary" onclick="startGame()">
+                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    <span data-i18n="btn_start_escape">Iniciar Fuga do Castelo</span>
+                </button>
+            </div>
+
+            <div class="panel">
+                <h2 class="panel-title">
+                    <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                    <span data-i18n="setup_checklist_title">Preparação Física da Mesa</span>
+                </h2>
+
+                <details class="setup-checklist" open>
+                    <summary>
+                        <span data-i18n="checklist_summary">Checklist do Jogo Base</span>
+                        <span aria-hidden="true">▾</span>
+                    </summary>
+                    <ul class="checklist-items">
+                        <li><label><input type="checkbox"><span data-i18n="chk_1">Embaralhe as cartas de Capítulo padrão e separe <strong>15 cartas</strong> viradas para baixo para formar o baralho do Castelo.</span></label></li>
+                        <li><label><input type="checkbox"><span data-i18n="chk_2">Sorteie <strong>1 carta de Boss</strong> aleatória e coloque-a virada para baixo <em>abaixo</em> das 15 cartas de Capítulo.</span></label></li>
+                        <li><label><input type="checkbox"><span data-i18n="chk_3">Coloque a carta <strong>Start</strong> no topo do baralho do Castelo com a ilustração voltada para cima.</span></label></li>
+                        <li><label><input type="checkbox"><span data-i18n="chk_4">Embaralhe o baralho de <strong>Itens</strong> ao lado do Castelo e deixe os Dados de Capítulo pretos em uma reserva central.</span></label></li>
+                        <li><label><input type="checkbox"><span data-i18n="chk_5">Cada jogador pega a carta do seu Prisioneiro e o respectivo <strong>Dado de Personagem</strong> (no modo Solo, 1 jogador controla 2 prisioneiros).</span></label></li>
+                    </ul>
+                </details>
+            </div>
+        </section>
+
+        <!-- GAME SCREEN -->
+        <section id="view-game" class="game-layout hidden">
+            <div style="display:flex; flex-direction:column; gap:18px;">
+                <!-- Castle Progress -->
+                <div class="panel castle-bar">
+                    <div class="chapter-header">
+                        <div class="chapter-badge">
+                            <div id="chapter-num-box" class="chapter-num-box">0</div>
+                            <div class="chapter-meta">
+                                <h2 id="chapter-title">Início da Fuga</h2>
+                                <p id="chapter-subtitle">Carta Start revelada — prepare-se para descer.</p>
+                            </div>
+                        </div>
+                        <div class="chapter-actions">
+                            <button id="btn-prev-chapter" class="btn-secondary" onclick="stepChapter(-1)">
+                                <span data-i18n="btn_prev_ch">Anterior</span>
+                            </button>
+                            <button id="btn-next-chapter" class="btn-secondary" onclick="stepChapter(1)" style="border-color:var(--brass); color:var(--brass);">
+                                <span data-i18n="btn_next_ch">Próximo Capítulo</span>
+                            </button>
+                            <button id="btn-boss-victory" class="btn-secondary hidden" onclick="triggerVictory()" style="border-color:var(--emerald); color:var(--emerald);">
+                                <span data-i18n="btn_boss_defeated">Boss Derrotado!</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="chapter-pips" class="chapter-pips" aria-label="Progresso dos capítulos"></div>
+                </div>
+
+                <!-- Prisoner Shackles Grid -->
+                <div id="prisoners-grid" class="prisoners-grid"></div>
+            </div>
+
+            <!-- Dungeon Chronicle -->
+            <aside class="panel chronicle-panel">
+                <h2 class="panel-title">
+                    <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                    <span data-i18n="chronicle_title">Crônica da Masmorra</span>
+                </h2>
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+                    <button id="btn-undo" class="btn-secondary" onclick="undoLastAction()" disabled>
+                        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>
+                        <span data-i18n="btn_undo">Desfazer</span>
+                    </button>
+                    <span id="alive-summary" style="font-family:var(--font-mono); font-size:0.78rem; color:var(--bone-dim);"></span>
+                </div>
+                <div id="logPanel" class="log-list" aria-live="polite"></div>
+            </aside>
+        </section>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <div class="credits">
+                <img src="../assets/art/escape_the_dark_castle.webp" alt="Escape the Dark Castle">
+                <div class="credits-text" data-i18n-html="credits_footer_html">
+                    <strong>Escape the Dark Castle</strong> © Themeborne Ltd. Companheiro não-oficial por Thiago Colletes.
+                </div>
+            </div>
+            <div class="footer-links">
+                <a class="bmc-inline" href="https://www.buymeacoffee.com/colletes" target="_blank" rel="noopener">
+                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h13a2 2 0 0 1 2 2v1a3 3 0 0 1-3 3h-1"/><path d="M4 8h13v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V8Z"/><path d="M8 3c-.6 1 .5 1.6 0 3M12 3c-.6 1 .5 1.6 0 3"/></svg>
+                    <span data-i18n="bmc_btn">Me pague um café</span>
+                </a>
+                <a class="btn-home" href="../index.html">
+                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                    <span data-i18n="home_btn">Início</span>
+                </a>
+            </div>
+        </footer>
+    </main>
+
+    <!-- Help & Rules Modal -->
+    <div id="helpModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="helpModalTitle">
+        <div class="modal-content">
+            <div class="modal-head">
+                <h2 id="helpModalTitle" data-i18n="help_title">Guia Rápido &amp; Trilha Sonora</h2>
+                <button class="close-modal" onclick="closeHelpModal()" aria-label="Fechar">×</button>
+            </div>
+
+            <details open>
+                <summary data-i18n="rule_hp_sum">HP Inicial, Correntes e Morte Instantânea</summary>
+                <p data-i18n-html="rule_hp_body">
+                    • <strong>1 ou 2 jogadores:</strong> 18 HP iniciais cada (no modo Solo, 1 jogador controla 2 prisioneiros).<br>
+                    • <strong>3 jogadores:</strong> 14 HP iniciais cada.<br>
+                    • <strong>4 jogadores:</strong> 12 HP iniciais cada.<br>
+                    • O HP inicial também é o <strong>HP máximo</strong>. Se <strong>qualquer</strong> prisioneiro chegar a 0 HP, a fuga termina imediatamente em derrota para todo o grupo.
+                </p>
+            </details>
+
+            <details>
+                <summary data-i18n="rule_you_sum">O Marcador "YOU" e Turnos</summary>
+                <p data-i18n="rule_you_body">
+                    O prisioneiro com o marcador YOU é quem vira a próxima carta de Capítulo e decide primeiro. Clique no botão YOU de outro prisioneiro para passar o marcador quando um efeito ou troca de turno exigir.
+                </p>
+            </details>
+
+            <details>
+                <summary data-i18n="rule_combat_sum">Combate e Dados (Might, Cunning, Wisdom)</summary>
+                <p data-i18n="rule_combat_body">
+                    Em combate, cada prisioneiro vivo rola seu Dado de Personagem simultaneamente. Símbolos iguais aos Dados de Capítulo do inimigo os removem. Dados de Capítulo não removidos contra-atacam causando dano. Faces com Escudo protegem quem as rolou caso o inimigo sobreviva à rodada.
+                </p>
+            </details>
+
+            <details>
+                <summary data-i18n="rule_ost_sum">Trilha Sonora Oficial (Themeborne)</summary>
+                <p data-i18n="rule_ost_body">Combine o som de correntes e batimentos deste app com a trilha oficial de Escape the Dark Castle:</p>
+                <div class="soundtrack-links">
+                    <a href="https://open.spotify.com/search/Escape%20the%20Dark%20Castle%20Themeborne" target="_blank" rel="noopener">Spotify</a>
+                    <a href="https://themeborne.bandcamp.com/" target="_blank" rel="noopener">Bandcamp</a>
+                    <a href="https://themeborne.com/pages/escape-the-dark-castle-rule-books" target="_blank" rel="noopener" data-i18n="official_manual_link">Manual Oficial (Themeborne)</a>
+                </div>
+            </details>
+        </div>
+    </div>
+
+    <!-- Outcome Modal (Victory / Defeat) -->
+    <div id="outcomeModal" class="modal hidden" role="dialog" aria-modal="true">
+        <div class="modal-content">
+            <div id="outcome-box" class="outcome-box">
+                <h2 id="outcome-title"></h2>
+                <p id="outcome-desc" style="color:var(--bone-dim); line-height:1.5;"></p>
+                <div class="outcome-actions">
+                    <button id="btn-outcome-undo" class="btn-secondary" onclick="undoFromOutcome()" data-i18n="btn_undo_damage">Desfazer Último Dano</button>
+                    <button class="btn-primary" style="width:auto; margin-top:0;" onclick="resetToSetup()" data-i18n="btn_new_game">Nova Partida</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const PRISONERS_DB = [
+            { id: 'abbot', name: 'Abbot', ptRole: 'Foco: Sabedoria (Wisdom)', enRole: 'Focus: Wisdom', icon: '★' },
+            { id: 'smith', name: 'Smith', ptRole: 'Foco: Força (Might)', enRole: 'Focus: Might', icon: '✊' },
+            { id: 'tailor', name: 'Tailor', ptRole: 'Foco: Astúcia (Cunning)', enRole: 'Focus: Cunning', icon: '◉' },
+            { id: 'miller', name: 'Miller', ptRole: 'Força & Astúcia', enRole: 'Might & Cunning', icon: '✊◉' },
+            { id: 'cook', name: 'Cook', ptRole: 'Força & Sabedoria', enRole: 'Might & Wisdom', icon: '✊★' },
+            { id: 'tanner', name: 'Tanner', ptRole: 'Astúcia & Sabedoria', enRole: 'Cunning & Wisdom', icon: '◉★' }
+        ];
+
+        const HP_BY_PLAYERS = { 1: 18, 2: 18, 3: 14, 4: 12 };
+        const STORAGE_KEY = 'boardbots_etdc_state_v1';
+
+        const I18N = {
+            pt: {
+                hero_kicker: 'Companheiro de Mesa • Jogo Base',
+                hero_sub: 'Correntes de HP, marcador YOU e descida pelos 15 capítulos do castelo.',
+                setup_players_title: 'Grupo de Prisioneiros',
+                p1_label: '1 Jogador', p1_sub: '2 Prisioneiros • 18 HP',
+                p2_label: '2 Jogadores', p2_sub: '2 Prisioneiros • 18 HP',
+                p3_label: '3 Jogadores', p3_sub: '3 Prisioneiros • 14 HP',
+                p4_label: '4 Jogadores', p4_sub: '4 Prisioneiros • 12 HP',
+                btn_start_escape: 'Iniciar Fuga do Castelo',
+                setup_checklist_title: 'Preparação Física da Mesa',
+                checklist_summary: 'Checklist do Jogo Base',
+                chk_1: 'Embaralhe as cartas de Capítulo padrão e separe <strong>15 cartas</strong> viradas para baixo para formar o baralho do Castelo.',
+                chk_2: 'Sorteie <strong>1 carta de Boss</strong> aleatória e coloque-a virada para baixo <em>abaixo</em> das 15 cartas de Capítulo.',
+                chk_3: 'Coloque a carta <strong>Start</strong> no topo do baralho do Castelo com a ilustração voltada para cima.',
+                chk_4: 'Embaralhe o baralho de <strong>Itens</strong> ao lado do Castelo e deixe os Dados de Capítulo pretos em uma reserva central.',
+                chk_5: 'Cada jogador pega a carta do seu Prisioneiro e o respectivo <strong>Dado de Personagem</strong> (no modo Solo, 1 jogador controla 2 prisioneiros).',
+                btn_prev_ch: 'Anterior',
+                btn_next_ch: 'Próximo Capítulo',
+                btn_boss_defeated: 'Boss Derrotado!',
+                chronicle_title: 'Crônica da Masmorra',
+                btn_undo: 'Desfazer',
+                credits_footer_html: '<strong>Escape the Dark Castle</strong> © Themeborne Ltd. Companheiro não-oficial por Thiago Colletes.',
+                bmc_btn: 'Me pague um café',
+                home_btn: 'Início',
+                help_title: 'Guia Rápido & Trilha Sonora',
+                rule_hp_sum: 'HP Inicial, Correntes e Morte Instantânea',
+                rule_hp_body: '• <strong>1 ou 2 jogadores:</strong> 18 HP iniciais cada (no modo Solo, 1 jogador controla 2 prisioneiros).<br>• <strong>3 jogadores:</strong> 14 HP iniciais cada.<br>• <strong>4 jogadores:</strong> 12 HP iniciais cada.<br>• O HP inicial também é o <strong>HP máximo</strong>. Se <strong>qualquer</strong> prisioneiro chegar a 0 HP, a fuga termina imediatamente em derrota para todo o grupo.',
+                rule_you_sum: 'O Marcador "YOU" e Turnos',
+                rule_you_body: 'O prisioneiro com o marcador YOU é quem vira a próxima carta de Capítulo e decide primeiro. Clique no botão YOU de outro prisioneiro para passar o marcador quando um efeito ou troca de turno exigir.',
+                rule_combat_sum: 'Combate e Dados (Might, Cunning, Wisdom)',
+                rule_combat_body: 'Em combate, cada prisioneiro vivo rola seu Dado de Personagem simultaneamente. Símbolos iguais aos Dados de Capítulo do inimigo os removem. Dados de Capítulo não removidos contra-atacam causando dano. Faces com Escudo protegem quem as rolou caso o inimigo sobreviva à rodada.',
+                rule_ost_sum: 'Trilha Sonora Oficial (Themeborne)',
+                rule_ost_body: 'Combine o som de correntes e batimentos deste app com a trilha oficial de Escape the Dark Castle:',
+                official_manual_link: 'Manual Oficial (Themeborne)',
+                btn_undo_damage: 'Desfazer Último Dano',
+                btn_new_game: 'Nova Partida',
+                slot_label: 'Prisioneiro',
+                custom_name_ph: 'Nome personalizado (opcional)',
+                ch_start_title: 'Entrada da Masmorra',
+                ch_start_sub: 'Carta Start revelada — prepare-se para descer.',
+                ch_step_title: 'Capítulo',
+                ch_step_sub: 'Vire a próxima carta do baralho do Castelo.',
+                ch_boss_title: 'O Confronto Final (Boss)',
+                ch_boss_sub: 'Derrote o Boss para escapar do Castelo Sombrio!',
+                defeat_title: 'A Morte Reivindicou um Prisioneiro',
+                defeat_desc: '{name} caiu a 0 HP nas profundezas do castelo. Em Escape the Dark Castle, quando um prisioneiro perece, a fuga termina para todos.',
+                victory_title: 'Vocês Escaparam!',
+                victory_desc: 'O Boss tombou e as portas do Castelo Sombrio se abriram. Todos os prisioneiros sobreviveram à escuridão!',
+                confirm_reset: 'Abandonar a fuga atual e voltar ao Setup?',
+                log_start: 'As pesadas portas se fecham. {count} prisioneiros iniciam a descida com {hp} HP cada.',
+                log_dmg: '{name} sofreu {delta} de dano nas correntes ({hp}/{max} HP).',
+                log_heal: '{name} recuperou {delta} de HP ({hp}/{max} HP).',
+                log_you: 'O marcador YOU passou para {name}.',
+                log_ch: 'Avançaram para o Capítulo {ch} de 15.',
+                log_boss: 'A câmara final se abre: o Boss aguarda!',
+                alive_lbl: 'Vivos:'
+            },
+            en: {
+                hero_kicker: 'Tabletop Companion • Base Game',
+                hero_sub: 'Shackle HP tracker, virtual YOU token, and 15-chapter castle descent.',
+                setup_players_title: 'Prisoner Party',
+                p1_label: '1 Player', p1_sub: '2 Prisoners • 18 HP',
+                p2_label: '2 Players', p2_sub: '2 Prisoners • 18 HP',
+                p3_label: '3 Players', p3_sub: '3 Prisoners • 14 HP',
+                p4_label: '4 Players', p4_sub: '4 Prisoners • 12 HP',
+                btn_start_escape: 'Begin the Escape',
+                setup_checklist_title: 'Physical Table Setup',
+                checklist_summary: 'Base Game Checklist',
+                chk_1: 'Shuffle the standard Chapter cards and deal <strong>15 face-down</strong> to form the Castle deck.',
+                chk_2: 'Draw <strong>1 random Boss card</strong> and place it face-down <em>underneath</em> the 15 Chapter cards.',
+                chk_3: 'Place the <strong>Start</strong> card on top of the Castle deck with the castle artwork facing up.',
+                chk_4: 'Shuffle the <strong>Item</strong> deck beside the Castle and place the black Chapter Dice in a central pool.',
+                chk_5: 'Each player takes a Prisoner card and their matching <strong>Character Die</strong> (in Solo, 1 player controls 2 prisoners).',
+                btn_prev_ch: 'Previous',
+                btn_next_ch: 'Next Chapter',
+                btn_boss_defeated: 'Boss Defeated!',
+                chronicle_title: 'Dungeon Chronicle',
+                btn_undo: 'Undo',
+                credits_footer_html: '<strong>Escape the Dark Castle</strong> © Themeborne Ltd. Unofficial companion by Thiago Colletes.',
+                bmc_btn: 'Buy me a coffee',
+                home_btn: 'Home',
+                help_title: 'Quick Rules & Soundtrack',
+                rule_hp_sum: 'Starting HP, Shackles & Instant Death',
+                rule_hp_body: '• <strong>1 or 2 players:</strong> 18 starting HP each (in Solo mode, 1 player controls 2 prisoners).<br>• <strong>3 players:</strong> 14 starting HP each.<br>• <strong>4 players:</strong> 12 starting HP each.<br>• Starting HP is also your <strong>maximum HP</strong>. If <strong>any</strong> prisoner reaches 0 HP, the game ends immediately in defeat for everyone.',
+                rule_you_sum: 'The "YOU" Token & Turns',
+                rule_you_body: 'The prisoner holding the YOU token reveals the next Chapter card and decides first. Tap another prisoner\'s YOU button to pass the token whenever required.',
+                rule_combat_sum: 'Combat & Dice (Might, Cunning, Wisdom)',
+                rule_combat_body: 'In combat, every living prisoner rolls their Character Die simultaneously. Matching symbols remove enemy Chapter Dice. Remaining Chapter Dice strike back. Shield faces protect the roller if the enemy survives the round.',
+                rule_ost_sum: 'Official Soundtrack (Themeborne)',
+                rule_ost_body: 'Pair this companion\'s chains and heartbeat SFX with the official Escape the Dark Castle soundtrack:',
+                official_manual_link: 'Official Rulebooks (Themeborne)',
+                btn_undo_damage: 'Undo Last Damage',
+                btn_new_game: 'New Game',
+                slot_label: 'Prisoner',
+                custom_name_ph: 'Custom name (optional)',
+                ch_start_title: 'Dungeon Entrance',
+                ch_start_sub: 'Start card revealed — prepare to descend.',
+                ch_step_title: 'Chapter',
+                ch_step_sub: 'Reveal the next card from the Castle deck.',
+                ch_boss_title: 'Final Confrontation (Boss)',
+                ch_boss_sub: 'Defeat the Boss to escape the Dark Castle!',
+                defeat_title: 'Death Claims a Prisoner',
+                defeat_desc: '{name} fell to 0 HP in the depths of the castle. In Escape the Dark Castle, when any prisoner dies, the escape ends for everyone.',
+                victory_title: 'You Escaped!',
+                victory_desc: 'The Boss has fallen and the gates of the Dark Castle swing open. Every prisoner survived the darkness!',
+                confirm_reset: 'Abandon the current escape and return to Setup?',
+                log_start: 'The heavy iron gates slam shut. {count} prisoners begin the descent with {hp} HP each.',
+                log_dmg: '{name} took {delta} damage on the shackles ({hp}/{max} HP).',
+                log_heal: '{name} recovered {delta} HP ({hp}/{max} HP).',
+                log_you: 'The YOU token passed to {name}.',
+                log_ch: 'Descended to Chapter {ch} of 15.',
+                log_boss: 'The final chamber opens: the Boss awaits!',
+                alive_lbl: 'Alive:'
+            }
+        };
+
+        let currentLang = localStorage.getItem('boardbots_lang') || 'pt';
+        let sfxEnabled = localStorage.getItem('boardbots_sfx_muted') !== '1';
+        let ambientActive = false;
+        let audioCtx = null;
+        let ambientNodes = null;
+        let heartbeatTimer = null;
+
+        let state = {
+            started: false,
+            playerCount: 2,
+            chapter: 0, // 0 = Start, 1..15 = Chapters, 16 = Boss
+            youIndex: 0,
+            prisoners: [],
+            logs: [],
+            history: []
+        };
+
+        function t(key, vars = {}) {
+            let str = (I18N[currentLang] && I18N[currentLang][key]) || I18N.pt[key] || key;
+            for (const [k, v] of Object.entries(vars)) {
+                str = str.replaceAll(`{${k}}`, v);
+            }
+            return str;
+        }
+
+        function setLang(lang) {
+            currentLang = lang;
+            localStorage.setItem('boardbots_lang', lang);
+            document.documentElement.lang = lang === 'pt' ? 'pt-BR' : 'en';
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.lang === lang);
+            });
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                el.textContent = t(el.dataset.i18n);
+            });
+            document.querySelectorAll('[data-i18n-html]').forEach(el => {
+                el.innerHTML = t(el.dataset.i18nHtml);
+            });
+            document.querySelectorAll('[data-i18n-aria]').forEach(el => {
+                el.setAttribute('aria-label', t(el.dataset.i18nAria));
+            });
+            if (!state.started) renderSetupSlots();
+            else renderGame();
+        }
+
+        /* Audio & Haptics */
+        function playSfx(name, vol = 0.55) {
+            if (!sfxEnabled) return;
+            if (window.ThemeKit && ThemeKit.playSfx) {
+                ThemeKit.playSfx(name, { volume: vol });
+            }
+        }
+
+        function ensureAudioCtx() {
+            if (!audioCtx) {
+                const Ctx = window.AudioContext || window.webkitAudioContext;
+                if (Ctx) audioCtx = new Ctx();
+            }
+            if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+            return audioCtx;
+        }
+
+        function playHeartbeatPulse() {
+            if (!sfxEnabled || !state.started) return;
+            const ctx = ensureAudioCtx();
+            if (!ctx) return;
+            const now = ctx.currentTime;
+            [0, 0.18].forEach((offset, idx) => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(idx === 0 ? 58 : 48, now + offset);
+                osc.frequency.exponentialRampToValueAtTime(28, now + offset + 0.14);
+                gain.gain.setValueAtTime(0.001, now + offset);
+                gain.gain.exponentialRampToValueAtTime(idx === 0 ? 0.18 : 0.12, now + offset + 0.02);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + offset + 0.15);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(now + offset);
+                osc.stop(now + offset + 0.16);
+            });
+        }
+
+        function updateHeartbeatLoop() {
+            if (heartbeatTimer) {
+                clearInterval(heartbeatTimer);
+                heartbeatTimer = null;
+            }
+            if (!state.started || !sfxEnabled) return;
+            const living = state.prisoners.filter(p => p.hp > 0);
+            if (living.length === 0) return;
+            const minHp = Math.min(...living.map(p => p.hp));
+            if (minHp <= 5) {
+                const intervalMs = Math.max(520, 480 + minHp * 110);
+                heartbeatTimer = setInterval(playHeartbeatPulse, intervalMs);
+            }
+        }
+
+        function toggleSfx() {
+            sfxEnabled = !sfxEnabled;
+            localStorage.setItem('boardbots_sfx_muted', sfxEnabled ? '0' : '1');
+            document.getElementById('btn-sfx-toggle').classList.toggle('active', sfxEnabled);
+            updateHeartbeatLoop();
+        }
+
+        function toggleAmbient() {
+            const btn = document.getElementById('btn-ambient');
+            ambientActive = !ambientActive;
+            btn.classList.toggle('active', ambientActive);
+            if (ambientActive) {
+                const ctx = ensureAudioCtx();
+                if (!ctx) return;
+                const osc = ctx.createOscillator();
+                const lfo = ctx.createOscillator();
+                const lfoGain = ctx.createGain();
+                const filter = ctx.createBiquadFilter();
+                const master = ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.value = 55;
+                filter.type = 'lowpass';
+                filter.frequency.value = 140;
+                lfo.frequency.value = 0.18;
+                lfoGain.gain.value = 45;
+                master.gain.value = 0.035;
+                lfo.connect(lfoGain);
+                lfoGain.connect(filter.frequency);
+                osc.connect(filter);
+                filter.connect(master);
+                master.connect(ctx.destination);
+                osc.start();
+                lfo.start();
+                ambientNodes = { osc, lfo, master };
+            } else if (ambientNodes) {
+                ambientNodes.osc.stop();
+                ambientNodes.lfo.stop();
+                ambientNodes = null;
+            }
+        }
+
+        /* Setup Logic */
+        function selectPlayerCount(count) {
+            playSfx('ui-click', 0.4);
+            state.playerCount = count;
+            document.querySelectorAll('.count-btn').forEach(btn => {
+                btn.classList.toggle('active', Number(btn.dataset.players) === count);
+            });
+            renderSetupSlots();
+        }
+
+        function renderSetupSlots() {
+            const slotCount = state.playerCount === 1 ? 2 : state.playerCount;
+            const container = document.getElementById('prisoners-setup-list');
+            const prev = Array.from(container.querySelectorAll('.prisoner-slot')).map(el => ({
+                charId: el.querySelector('select').value,
+                customName: el.querySelector('input').value
+            }));
+
+            container.innerHTML = '';
+            for (let i = 0; i < slotCount; i++) {
+                const defaultChar = PRISONERS_DB[i % PRISONERS_DB.length];
+                const chosenId = (prev[i] && prev[i].charId) || defaultChar.id;
+                const chosenChar = PRISONERS_DB.find(c => c.id === chosenId) || defaultChar;
+                const customName = (prev[i] && prev[i].customName) || '';
+
+                const slot = document.createElement('div');
+                slot.className = 'prisoner-slot';
+                slot.innerHTML = `
+                    <div class="prisoner-slot-head">
+                        <span>${t('slot_label')} ${i + 1}</span>
+                        <span>${HP_BY_PLAYERS[state.playerCount]} HP</span>
+                    </div>
+                    <select aria-label="${t('slot_label')} ${i + 1}" onchange="updateSlotTrait(this)">
+                        ${PRISONERS_DB.map(c => `<option value="${c.id}" ${c.id === chosenId ? 'selected' : ''}>${c.name}</option>`).join('')}
+                    </select>
+                    <input type="text" maxlength="20" value="${customName.replace(/"/g, '&quot;')}" placeholder="${t('custom_name_ph')}">
+                    <div class="trait-badge">${chosenChar.icon} <span>${currentLang === 'pt' ? chosenChar.ptRole : chosenChar.enRole}</span></div>
+                `;
+                container.appendChild(slot);
+            }
+        }
+
+        function updateSlotTrait(selectEl) {
+            const char = PRISONERS_DB.find(c => c.id === selectEl.value);
+            const badge = selectEl.parentElement.querySelector('.trait-badge');
+            if (char && badge) {
+                badge.innerHTML = `${char.icon} <span>${currentLang === 'pt' ? char.ptRole : char.enRole}</span>`;
+            }
+        }
+
+        function startGame() {
+            playSfx('card-shuffle', 0.6);
+            if ('vibrate' in navigator) navigator.vibrate(25);
+            const maxHp = HP_BY_PLAYERS[state.playerCount];
+            const slots = document.querySelectorAll('.prisoner-slot');
+            state.prisoners = Array.from(slots).map((slot, idx) => {
+                const charId = slot.querySelector('select').value;
+                const char = PRISONERS_DB.find(c => c.id === charId) || PRISONERS_DB[idx];
+                const custom = slot.querySelector('input').value.trim();
+                return {
+                    id: char.id,
+                    name: custom || char.name,
+                    charName: char.name,
+                    icon: char.icon,
+                    ptRole: char.ptRole,
+                    enRole: char.enRole,
+                    hp: maxHp,
+                    maxHp
+                };
+            });
+            state.started = true;
+            state.chapter = 0;
+            state.youIndex = 0;
+            state.history = [];
+            state.logs = [];
+            pushLog(t('log_start', { count: state.prisoners.length, hp: maxHp }), 'chapter');
+            saveState();
+            showGameView();
+        }
+
+        function showGameView() {
+            document.getElementById('view-setup').classList.add('hidden');
+            document.getElementById('view-game').classList.remove('hidden');
+            renderGame();
+        }
+
+        /* Game Actions */
+        function saveSnapshot() {
+            state.history.push(JSON.stringify({
+                chapter: state.chapter,
+                youIndex: state.youIndex,
+                prisoners: state.prisoners
+            }));
+            if (state.history.length > 30) state.history.shift();
+        }
+
+        function adjustHp(index, delta) {
+            const p = state.prisoners[index];
+            if (!p) return;
+            const nextHp = Math.max(0, Math.min(p.maxHp, p.hp + delta));
+            if (nextHp === p.hp) return;
+
+            saveSnapshot();
+            const diff = nextHp - p.hp;
+            p.hp = nextHp;
+            playSfx('token-place', 0.55);
+            if (diff < 0 && 'vibrate' in navigator) navigator.vibrate(25);
+
+            if (diff < 0) {
+                pushLog(t('log_dmg', { name: p.name, delta: Math.abs(diff), hp: p.hp, max: p.maxHp }), 'dmg');
+            } else {
+                pushLog(t('log_heal', { name: p.name, delta: diff, hp: p.hp, max: p.maxHp }), 'heal');
+            }
+
+            saveState();
+            renderGame();
+
+            if (p.hp === 0) {
+                triggerDefeat(p);
+            }
+        }
+
+        function setHpDirect(index, targetHp) {
+            const p = state.prisoners[index];
+            if (!p) return;
+            const clamped = Math.max(0, Math.min(p.maxHp, targetHp));
+            if (clamped !== p.hp) {
+                adjustHp(index, clamped - p.hp);
+            }
+        }
+
+        function passYou(index) {
+            if (state.youIndex === index) return;
+            saveSnapshot();
+            state.youIndex = index;
+            playSfx('turn-notify', 0.5);
+            pushLog(t('log_you', { name: state.prisoners[index].name }), 'chapter');
+            saveState();
+            renderGame();
+        }
+
+        function stepChapter(delta) {
+            const next = Math.max(0, Math.min(16, state.chapter + delta));
+            if (next === state.chapter) return;
+            saveSnapshot();
+            state.chapter = next;
+            playSfx('card-flip', 0.6);
+            if (next === 16) {
+                pushLog(t('log_boss'), 'chapter');
+            } else if (next > 0) {
+                pushLog(t('log_ch', { ch: next }), 'chapter');
+            }
+            saveState();
+            renderGame();
+        }
+
+        function undoLastAction() {
+            if (state.history.length === 0) return;
+            const snap = JSON.parse(state.history.pop());
+            state.chapter = snap.chapter;
+            state.youIndex = snap.youIndex;
+            state.prisoners = snap.prisoners;
+            playSfx('ui-click', 0.45);
+            saveState();
+            renderGame();
+        }
+
+        function undoFromOutcome() {
+            document.getElementById('outcomeModal').classList.add('hidden');
+            undoLastAction();
+        }
+
+        function triggerDefeat(prisoner) {
+            const box = document.getElementById('outcome-box');
+            box.className = 'outcome-box defeat';
+            document.getElementById('outcome-title').textContent = t('defeat_title');
+            document.getElementById('outcome-desc').textContent = t('defeat_desc', { name: prisoner.name });
+            document.getElementById('btn-outcome-undo').classList.remove('hidden');
+            document.getElementById('outcomeModal').classList.remove('hidden');
+            if ('vibrate' in navigator) navigator.vibrate([80, 50, 120]);
+        }
+
+        function triggerVictory() {
+            playSfx('turn-notify', 0.7);
+            const box = document.getElementById('outcome-box');
+            box.className = 'outcome-box victory';
+            document.getElementById('outcome-title').textContent = t('victory_title');
+            document.getElementById('outcome-desc').textContent = t('victory_desc');
+            document.getElementById('btn-outcome-undo').classList.add('hidden');
+            document.getElementById('outcomeModal').classList.remove('hidden');
+        }
+
+        function pushLog(text, type = '') {
+            const now = new Date();
+            const hh = String(now.getHours()).padStart(2, '0');
+            const mm = String(now.getMinutes()).padStart(2, '0');
+            state.logs.unshift({ time: `${hh}:${mm}`, text, type });
+            if (state.logs.length > 40) state.logs.pop();
+        }
+
+        /* Rendering */
+        function renderGame() {
+            // Chapter Tracker
+            const chBox = document.getElementById('chapter-num-box');
+            const chTitle = document.getElementById('chapter-title');
+            const chSub = document.getElementById('chapter-subtitle');
+            const btnBoss = document.getElementById('btn-boss-victory');
+
+            chBox.classList.toggle('boss', state.chapter === 16);
+            if (state.chapter === 0) {
+                chBox.textContent = 'START';
+                chTitle.textContent = t('ch_start_title');
+                chSub.textContent = t('ch_start_sub');
+                btnBoss.classList.add('hidden');
+            } else if (state.chapter === 16) {
+                chBox.textContent = 'BOSS';
+                chTitle.textContent = t('ch_boss_title');
+                chSub.textContent = t('ch_boss_sub');
+                btnBoss.classList.remove('hidden');
+            } else {
+                chBox.textContent = `${state.chapter}/15`;
+                chTitle.textContent = `${t('ch_step_title')} ${state.chapter}`;
+                chSub.textContent = t('ch_step_sub');
+                btnBoss.classList.add('hidden');
+            }
+
+            document.getElementById('btn-prev-chapter').disabled = state.chapter === 0;
+            document.getElementById('btn-next-chapter').disabled = state.chapter === 16;
+
+            const pips = document.getElementById('chapter-pips');
+            pips.innerHTML = '';
+            for (let i = 1; i <= 16; i++) {
+                const pip = document.createElement('div');
+                pip.className = 'pip' + (i === 16 ? ' boss-pip' : '') + (i < state.chapter ? ' done' : '') + (i === state.chapter ? ' current' : '');
+                pips.appendChild(pip);
+            }
+
+            // Prisoners Grid
+            const grid = document.getElementById('prisoners-grid');
+            grid.innerHTML = '';
+            state.prisoners.forEach((p, idx) => {
+                const isCritical = p.hp > 0 && p.hp <= 5;
+                const isDead = p.hp === 0;
+                const hasYou = state.youIndex === idx;
+                const card = document.createElement('article');
+                card.className = `prisoner-card ${hasYou ? 'has-you' : ''} ${isCritical ? 'critical' : ''} ${isDead ? 'dead' : ''}`;
+
+                let linksHtml = '';
+                for (let l = 1; l <= p.maxHp; l++) {
+                    linksHtml += `<span class="chain-link ${l > p.hp ? 'broken' : ''}" data-link="${l}"></span>`;
+                }
+
+                card.innerHTML = `
+                    <div class="prisoner-head">
+                        <div class="prisoner-identity">
+                            <h3>${escapeHtml(p.name)}</h3>
+                            <div class="prisoner-role">${p.icon} <span>${currentLang === 'pt' ? p.ptRole : p.enRole}</span></div>
+                        </div>
+                        <button class="you-btn ${hasYou ? 'active' : ''}" onclick="passYou(${idx})">YOU</button>
+                    </div>
+                    <div class="hp-readout-row">
+                        <div class="hp-number">
+                            <strong>${p.hp}</strong>
+                            <span>/ ${p.maxHp} HP</span>
+                        </div>
+                        <div class="hp-step-btns">
+                            <button class="hp-btn dmg" onclick="adjustHp(${idx}, -1)" ${p.hp <= 0 ? 'disabled' : ''}>-1</button>
+                            <button class="hp-btn" onclick="adjustHp(${idx}, 1)" ${p.hp >= p.maxHp ? 'disabled' : ''}>+1</button>
+                        </div>
+                    </div>
+                    <div class="chain-track" role="slider" aria-label="${escapeHtml(p.name)} HP" aria-valuemin="0" aria-valuemax="${p.maxHp}" aria-valuenow="${p.hp}" data-idx="${idx}">
+                        ${linksHtml}
+                    </div>
+                `;
+                grid.appendChild(card);
+
+                // Interactive drag/tap on chain links
+                const track = card.querySelector('.chain-track');
+                let dragging = false;
+                const pickFromPointer = (ev) => {
+                    const rect = track.getBoundingClientRect();
+                    const x = Math.max(0, Math.min(rect.width, ev.clientX - rect.left));
+                    const ratio = x / rect.width;
+                    const target = Math.round(ratio * p.maxHp);
+                    setHpDirect(idx, target);
+                };
+                track.addEventListener('pointerdown', (ev) => {
+                    dragging = true;
+                    track.setPointerCapture(ev.pointerId);
+                    pickFromPointer(ev);
+                });
+                track.addEventListener('pointermove', (ev) => {
+                    if (dragging) pickFromPointer(ev);
+                });
+                track.addEventListener('pointerup', () => { dragging = false; });
+                track.addEventListener('pointercancel', () => { dragging = false; });
+            });
+
+            // Chronicle & Undo
+            document.getElementById('btn-undo').disabled = state.history.length === 0;
+            const aliveCount = state.prisoners.filter(p => p.hp > 0).length;
+            document.getElementById('alive-summary').textContent = `${t('alive_lbl')} ${aliveCount}/${state.prisoners.length}`;
+
+            const logPanel = document.getElementById('logPanel');
+            logPanel.innerHTML = state.logs.map(l => `
+                <div class="log-entry ${l.type}">
+                    <span class="log-time">${l.time}</span>${escapeHtml(l.text)}
+                </div>
+            `).join('');
+
+            updateHeartbeatLoop();
+        }
+
+        function escapeHtml(str) {
+            return String(str).replace(/[&<>"']/g, s => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[s]));
+        }
+
+        function saveState() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        }
+
+        function loadState() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (!raw) return false;
+                const parsed = JSON.parse(raw);
+                if (parsed && parsed.started && Array.isArray(parsed.prisoners) && parsed.prisoners.length > 0) {
+                    state = parsed;
+                    return true;
+                }
+            } catch (e) { /* ignore */ }
+            return false;
+        }
+
+        function confirmReset() {
+            if (!state.started || confirm(t('confirm_reset'))) {
+                resetToSetup();
+            }
+        }
+
+        function resetToSetup() {
+            localStorage.removeItem(STORAGE_KEY);
+            state.started = false;
+            state.history = [];
+            state.logs = [];
+            updateHeartbeatLoop();
+            document.getElementById('outcomeModal').classList.add('hidden');
+            document.getElementById('view-game').classList.add('hidden');
+            document.getElementById('view-setup').classList.remove('hidden');
+            renderSetupSlots();
+        }
+
+        function openHelpModal() {
+            playSfx('ui-click', 0.4);
+            document.getElementById('helpModal').classList.remove('hidden');
+        }
+        function closeHelpModal() {
+            document.getElementById('helpModal').classList.add('hidden');
+        }
+
+        document.getElementById('helpModal').addEventListener('click', (e) => {
+            if (e.target.id === 'helpModal') closeHelpModal();
+        });
+
+        /* Init */
+        (function init() {
+            if (window.ThemeKit && ThemeKit.preloadSfx) {
+                ThemeKit.preloadSfx(['card-flip', 'card-shuffle', 'token-place', 'turn-notify', 'ui-click']);
+            }
+            document.getElementById('btn-sfx-toggle').classList.toggle('active', sfxEnabled);
+            const restored = loadState();
+            setLang(currentLang);
+            if (restored) {
+                showGameView();
+            }
+        })();
+    </script>
+</body>
+</html>
